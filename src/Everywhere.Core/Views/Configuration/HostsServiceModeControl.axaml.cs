@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data.Converters;
@@ -23,16 +23,16 @@ public sealed partial class HostsServiceModeControl(
     public HostProcessCoordinator Coordinator => coordinator;
 
     [RelayCommand]
-    private async Task ChangeInstallationAsync(ToggleSwitch sender)
+    private async Task ChangeInstallationAsync(bool shouldInstall)
     {
-        var shouldInstall = sender.IsChecked ?? false;
         try
         {
             var status = await coordinator.RefreshServiceModeStatusAsync();
-            sender.SetCurrentValue(ToggleButton.IsCheckedProperty, status.State == HostsServiceModeConfigurationState.CurrentExecutable);
-
             var request = shouldInstall ? await CreateInstallRequestAsync(status) : CreateUninstallRequest(status);
-            if (request is null) return;
+            if (request is null)
+            {
+                return;
+            }
 
             await coordinator.ChangeServiceModeAsync(request);
         }

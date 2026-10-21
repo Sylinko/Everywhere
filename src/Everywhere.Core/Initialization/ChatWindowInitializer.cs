@@ -6,6 +6,7 @@ using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Automation;
+using Everywhere.TextSelection;
 using Everywhere.Utilities;
 using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;

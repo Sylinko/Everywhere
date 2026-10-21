@@ -4,7 +4,7 @@
 
 This specification defines automatic text-selection monitoring on Windows and macOS: process ownership, asynchronous settings interaction, filtering, source lifetime, and clipboard fallback. Its acceptance criteria define required behavior, not a claim that native E2E verification is complete.
 
-Windows and macOS expose monitoring on a dedicated Text selection settings page. Main registers the Watcher, subscribes the chat input as its single owning result consumer, and restores saved monitoring intent after settings load. Monitoring remains disabled by default. The toolbar and the accessibility-only application editor are outside the current UI scope.
+Windows and macOS expose monitoring on a dedicated Text selection settings page. Main registers the Watcher, subscribes the chat input as its single owning result consumer, and restores saved monitoring intent after settings load. Automatic chat attachments and the floating toolbar have independent preferences; either can keep monitoring active. Both remain disabled by default. The accessibility-only application editor is outside the current UI scope.
 
 A successful observation adds or replaces a draft text-selection attachment. The attachment represents captured text prepared for sending, rather than a live mirror of another application's selection. Clicking elsewhere, clearing the external selection, disabling monitoring, or failing to read text preserves the attachment. Users remove it explicitly; ordinary draft submission and clearing retain their existing behavior. There is no automatic empty-selection clearing outcome in this feature.
 
@@ -14,7 +14,7 @@ Automation Host owns gesture observation, debounce, target/filter checks, access
 
 | Owner | Responsibility |
 | --- | --- |
-| Main monitoring service (retained, not registered) | Saved enablement, acknowledged control, filter configuration, connection restoration, and one owning consumer |
+| Main Controller and Watcher | Independent saved preferences, acknowledged control, filter configuration, connection restoration, and one owning consumer |
 | Automation session | One active monitor per authenticated connection; serialized start/stop/drain, source registration, and direct notifications |
 | Platform monitor | Native hooks, one executing detection and one latest pending trigger, finite accessibility reads, and clipboard fallback |
 | Shared acquisition Context | Identities and retentions for picker, text-selection, and other draft visual sources before chat association |
@@ -68,19 +68,20 @@ Check after a candidate gesture outside the hook callback and revalidate before 
 
 Do not use Dock window names such as `Fullscreen Backdrop` or private Spaces APIs for this feature. This contract does not change the separate Dock/activation behavior of Everywhere's own windows.
 
-## 4. Dormant Main Integration and Retained Control Contract
+## 4. Main Integration and Acknowledged Control
 
-`ChatWindowInitializer` subscribes the chat consumer before restoring the saved state. `TextSelectionMonitoringControl` exposes the shared acknowledged command, and restoration rejections are reported through a toast. Platform exclusion edits and fullscreen-policy changes are observed independently of the enablement command.
+`ChatWindowInitializer` subscribes the chat consumer before restoring the combined saved intent. `TextSelectionController` exposes separate Boolean commands for toolbar and automatic attachment preferences, with one shared `IsBusy` state. The settings page binds ShadUI's `AsyncToggleSwitch` directly to each preference, its command, and the shared busy state. Platform exclusion edits and fullscreen-policy changes are observed independently of these commands.
 
-Use the existing authenticated Automation connection and generated contracts. The process-wide Watcher exposes one non-concurrent `IAsyncRelayCommand<bool>` and the confirmed `IsEnabled` state. Settings persist that confirmed state; controls only observe it. Every settings view sees the same `IsRunning` value and operation result, including views created while a transition is already running.
+Use the existing authenticated Automation connection and generated contracts. The process-wide Watcher exposes one non-concurrent `IAsyncRelayCommand<bool>` and its monitoring intent as `IsEnabled`. The Controller requests native monitoring when either preference is enabled. If the effective monitoring state already matches, it commits only the changed preference without issuing a redundant Watcher command. During a transition, shared busy state prevents either preference from starting another operation.
 
-The initiating control checks `CanExecute` and immediately awaits `ExecuteAsync`. The Watcher commits `IsEnabled` and the persisted setting only after interpreting the Host result. Expected rejection faults that execution with a structured local exception; the initiating control presents its localized message once. Unexpected failures propagate through the same task. A control does not own, cancel, or restore the operation when it leaves the visual tree.
+The switch invokes its command with the desired Boolean state and keeps displaying the confirmed bound value. The Controller awaits the Watcher transition before committing an enabling preference. It owns failure logging and user-facing Toasts. The switch owns only presentation: immediate thumb feedback and a cancellable 200 ms delay before Loading. Shared busy state blocks all switches, but only the initiating switch displays pending feedback. Detaching a control cancels its presentation timer, not the application operation.
 
 | Operation | Completion meaning |
 | --- | --- |
-| Enable | Native listening is established with the latest configuration and Main's receiver is ready. Then the Watcher commits the enabled setting. |
+| Enable | Native listening is established with the latest configuration and Main's receiver is ready. Then the Controller commits the enabled preference. |
 | Enable rejected | Return a structured unsupported/permission/setup result, roll back partial setup, keep the switch off, and show one localized Toast. |
-| Disable | Main invalidates local acceptance immediately. Host detaches hooks, cancels work, and finishes necessary cleanup before acknowledging completion. Then the Watcher commits the disabled setting. |
+| Disable final consumer | Main invalidates local acceptance immediately. Host detaches hooks, cancels work, and finishes necessary cleanup before acknowledging completion. The Controller commits the disabled preference on completion, including when acknowledgment fails, because local delivery has already stopped. |
+| Disable one of two enabled consumers | Commit that preference without stopping native monitoring for the remaining consumer. |
 | Apply configuration | Main replaces the latest desired policy without changing enablement. If a monitor exists, Host accepts the newest complete snapshot; otherwise the snapshot is retained for the next start. |
 
 Expected control failures are application results. Reuse `VisualElementQueryFailureKind` where appropriate and carry user-facing messages as `IDynamicLocaleKey`; Toast resolves once. Native HRESULTs, stacks, and provider details remain Host diagnostics. Unexpected RPC failures retain the existing exception protocol. Failure to create a selection listener does not close a healthy Automation connection.
@@ -88,29 +89,29 @@ Expected control failures are application results. Reuse `VisualElementQueryFail
 ```mermaid
 sequenceDiagram
     participant UI as Settings UI
-    participant M as Main monitoring service
+    participant M as Main Controller and Watcher
     participant H as Automation Host
     UI->>M: Command(true)
-    UI->>UI: Keep confirmed value; Command.IsRunning
+    UI->>UI: Keep confirmed value; shared IsBusy
     M->>H: Start in shared acquisition Context
     alt Native listener established
         H-->>M: Started
-        M-->>UI: Watcher commits enabled setting
+        M-->>UI: Controller commits enabled preference
     else Unsupported or setup failure
         H-->>M: Explicit failure result
         M-->>UI: Stay off; show one Toast
     end
-    UI->>M: Command(false)
+    UI->>M: Command(false), final enabled consumer
     M->>M: Invalidate subscription acceptance
     M->>H: Stop addressed monitor
     H->>H: Detach hooks; cancel and finish cleanup
     H-->>M: Stopped
-    M-->>UI: Watcher commits disabled setting
+    M-->>UI: Controller commits disabled preference
 ```
 
-The toggle is a private implementation detail of each settings control. User input is immediately restored to the confirmed Watcher value while the shared command runs; only a Watcher property notification changes the displayed state. Configuration edits use a separate latest-value path and never execute the enablement command.
+The switch never writes an optimistic toggle into the settings. Only the bound confirmed preference changes its displayed state. Configuration edits use a separate latest-value path and never execute the enablement command.
 
-Restoration after a connection replacement has no initiating control. A definite unsupported or permission rejection commits the disabled state and raises one application-level notification for transient presentation. Temporary disconnection retains the confirmed enabled setting and produces no notification.
+Restoration after a connection replacement has no initiating control. A definite unsupported or permission rejection clears both saved preferences through the Controller and raises one application-level notification for transient presentation. Temporary disconnection retains the saved preferences and produces no notification.
 
 Main allocates a positive connection-scoped monitor ID. Repeating a start for the same identity and Context is idempotent; an old stop cannot disable a newer monitor. Start, stop, and drain share a serialized lifecycle: a replacement waits for its predecessor's cleanup, and repeated disposal awaits the same completion. Old and new instances therefore cannot overlap clipboard attempts.
 
