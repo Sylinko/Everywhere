@@ -16,12 +16,15 @@ namespace Everywhere.Core.Tests.Modding.Fixtures;
 /// </summary>
 public sealed class CollectibleSettingsMod : IMod, IAsyncDisposable
 {
+    private IModContext? _context;
     private SettingsEngine<CollectibleSettings>? _engine;
+    private IAsyncDisposable? _page;
     private IList<string>? _trace;
 
     /// <inheritdoc />
     public async ValueTask InitializeAsync(IModContext context, CancellationToken cancellationToken)
     {
+        _context = context;
         _trace = context.Services.GetRequiredService<IList<string>>();
         var settings = new CollectibleSettings();
         var options = new JsonSerializerOptions();
@@ -34,8 +37,15 @@ public sealed class CollectibleSettingsMod : IMod, IAsyncDisposable
             configureMigrations: services => services.AddSingleton(_trace).AddSettingsMigration<UpgradeSettings>(),
             cancellationToken: cancellationToken);
         _trace.Add("opened:" + context.ModId);
+        var registry = context.Services.GetRequiredService<IModSettingsRegistry>();
+        _page = registry.Register(context, () =>
+        {
+            _trace.Add("view:" + context.ModId);
+            return settings.SettingsItems;
+        });
+        context.Register(_page);
+        context.Services.GetRequiredService<ICollection<IAsyncDisposable>>().Add(_page);
         settings.Count++;
-        settings.IsEnabled = true;
         if (File.Exists(Path.Combine(context.DataDirectory, "fail-initialize")))
         {
             throw new InvalidOperationException("Initialization failed after settings migration.");
@@ -45,13 +55,14 @@ public sealed class CollectibleSettingsMod : IMod, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        if (_page is not null) await _page.DisposeAsync();
         if (_engine is not null)
         {
             _engine.Settings.Count++;
             await _engine.DisposeAsync();
         }
 
-        _trace?.Add("disposed");
+        _trace?.Add("disposed:" + _context?.StopReason);
     }
 }
 

@@ -17,6 +17,7 @@ This document defines the product contract and architecture. [Mod Developer Guid
 | SDK host imports, mod/entry model and platform selection | Fixture directory/source imports tested; full Windows build-directory import packages the AXAML sample; cross-platform validation pending |
 | Platform skipping and native loading | Implemented; unsupported entries stay enabled but skipped; Windows lazy native resolution and release tested with real DLLs  |
 | Public contract migration, SDK analyzers, generated manifests and packaging | Contracts and simple single-entry ZIP generation implemented; analyzers, multi-entry aggregation and complete asset policies pending |
+| Mod settings, settings UI, cache isolation and migrations | Generic engine, explicit metadata, lazy UI registry and temporary migrations implemented with lifecycle coverage; management page deferred |
 
 ## 1. Product contract
 
@@ -318,14 +319,6 @@ explicit mod-owned UI disposal. See [Known issues](03-Validation.md#known-issues
 registrations, AddOwner, class handlers, layout/render helpers, routed events and host-type mutations.
 Do not clear framework tables or host types indiscriminately.
 
-### Mod settings
-
-**Persistence and migrations implemented; UI registration remains separate work.** Mods may reuse
-context.OpenSettingsAsync with an independent document, explicitly supplied serializer options and
-a generated descriptor provider. SettingsEngine<TSettings> owns the returned document lifetime;
-SettingsInitializer is the internal application startup adapter. The entry owns final saving; migrations
-use temporary DI ownership and finish cleanup before committing the document. See the [settings specification](05-SettingsSpecification.md).
-
 ## 6. Applying changes and failures
 
 Apply has two execution stages: retire the affected running instances, then validate and activate the requested replacements against the survivors. There is no preservation of an invalid replacement's old dependency group, no rollback and no automatic retry against old dependency versions. An update can leave a previously working mod inactive even when its replacement error was discoverable before shutdown.
@@ -584,92 +577,21 @@ force-unload dependencies acquired by the OS or a library itself. macOS native r
 
 ### Chat tool registration
 
-NativeChatPlugin is the common base for in-process managed tools. BuiltInChatPlugin uses
-`builtin.{Name}`; ModChatPlugin uses `mod.{Name}`. Both use NativeChatFunction and appear in
-the manager's NativePlugins collection. MCP tools keep `mcp.{Id}` identities and their own collection.
-Mod tool-group names must be stable and unique within the mod namespace. Key identifies saved
-settings and approval rules; model-facing aliases and activation lifetimes must not change it.
-Registration ownership, not the Key prefix, determines whether functions use revocable proxies.
+Application-owned and mod-supplied chat tools share NativeChatPlugin and NativeChatFunction,
+with distinct stable identities. Dynamically registered tools use revocable proxies that preserve
+SK's execution pipeline. The complete contract, approval hooks, metadata ownership and author
+instructions are in [Chat Tool Integration](04-ChatToolIntegration.md).
 
-`IChatPluginManager.RegisterChatPlugin(NativeChatPlugin)` returns an asynchronous reversal handle.
-Discovery exposes the real chat-tool group, preserving its identity, settings, warnings and
-`GetAvailableFunctionsAsync` behavior. Each chat scope selects available functions through the
-existing enablement rules and then replaces registered functions with host-owned proxies. Snapshots
-copy host-owned display values rather than retaining the ChatPlugin subclass. Previously selected
-functions stay executable for the activation even if later discovery returns a different set.
+### Mod settings and settings pages
 
-The proxy separates persistent descriptions from execution state:
+**Implemented in the working tree; management page deferred.** Each mod may use the existing settings pipeline
+with its own model, explicit JSON metadata and `mods-data/<mod-id>/settings.json`. Application
+settings and mod settings are separate documents and lifetimes. Settings UI is an optional,
+revocable application contribution; IMod and the neutral engine gain no UI dependency.
 
-- Materialize parameter and return schemas through SK while the original function is alive. Retain
-  names, descriptions, required flags, original DefaultValue values and the resulting schemas.
-  Build new parameter metadata without ParameterType, UnderlyingMethod or serializer options.
-  Assign DefaultValue directly without a type whitelist, serialization or conversion; reference-type
-  defaults remain shared with the original metadata. A default that directly or indirectly references
-  mod objects or types can prevent collection while the snapshot is retained. Authors own these
-  references; the host does not erase defaults to force unloading, and unconfirmed collection requires
-  RestartRequired. Actual argument/default binding remains SK's responsibility.
-- Shallow-copy function metadata's AdditionalProperties into a new host-owned dictionary for each
-  proxy, including clones. Preserve all keys and values without filtering, serialization or conversion.
-  Later additions, removals or replacements in the source dictionary do not change the snapshot;
-  referenced values remain shared. Mod objects, delegates, types or containers that reference them
-  can keep the mod alive while a snapshot exists. Authors own this lifetime consequence; the host
-  does not clear retained chat metadata to force collection. Unconfirmed collection requires RestartRequired.
-- Keep the original function strongly owned by its registration and only weakly referenced by proxies.
-  Clone operations preserve that weak target and activation-specific admission callback. A short-lived
-  target clone supplies the snapshot's function/plugin aliases to SK's normal execution implementation.
-- Use the existing build-time SK patch to forward the execution core. Preserve the original public
-  invocation pipeline, kernel, filters, argument binding, service injection, cancellation and streaming.
-  Do not clone kernels, clear filters, parse arguments or convert results in the proxy.
-- Rebind `FunctionResult.Function` to the proxy using SK's copy constructor. Preserve the original
-  value, culture, metadata and rendered prompt. Do not replace mod exceptions with text exceptions.
-  The AIFunction entry delegates its existing SK argument/result handling to the original function.
-
-Closing registration rejects new calls before entering invocation filters and removes discovery.
-Its asynchronous disposal waits for admitted discovery, calls, post-invocation filters and streaming
-enumerator disposal. Permission/rendering callbacks are also excluded from retirement. The mod
-entry then disposes its tool and underlying resources; the manager does not dispose them prematurely.
-Old proxies stay invalid after a replacement activation with the same mod/function names.
-Optional advisory usage tracking is not part of this contract.
-
-Tool callbacks use BeforeCallHook and PermissionConsentHook. BeforeCallHook receives the original
-FunctionCallContent before approval, including calls without arguments, and returns optional display
-content. It must not perform the operation because approval can still deny the call.
-PermissionConsentHook receives FunctionCallContext and a per-invocation PermissionConsentRequest.
-It may change HeaderKey, RememberMasks and CustomOptions. True allows, false denies, and null
-continues the host's normal approval flow using the modified request. Existing bypass rules and
-FullAccess take precedence. Auto uses the existing reviewer; the hook does not open dialogs or
-write remembered rules. Both hooks are synchronous with no UI-thread guarantee. Registered
-snapshots forward them through weak references under the registration gate; closure prevents
-further mod callbacks. Request values can outlive the callback and must not retain mod objects.
-
-McpChatFunction supplies a static permission hook that prepares the MCP heading and the
-ToolConsentOption.BypassModApproval choice. ChatService applies that choice to the snapshot's
-stable Key for any tool group, without testing the original mod type. Approval does not use an
-IsMcp discriminator. Server connection management remains specific to MCP.
-
-Model-facing descriptions do not promise transparent CLR reflection: proxy ParameterType and
-UnderlyingMethod are absent. Code that needs the actual CLR metadata must access the original
-function while its activation is valid. Retaining that function or its types can prevent unloading.
-`NativeChatFunction` accepts optional JsonSerializerOptions and passes them directly to SK, allowing
-mod-owned converters and generated JSON metadata without introducing another binding pipeline.
-
-SK 1.75's method converter cache also strongly retains parameter Type keys. A separate build-time
-Core patch changes its cache call to use weak keys for collectible types, preserving the upstream
-converter factory unchanged. Noncollectible types keep the original cache. Both SK patches validate
-the pinned version and relevant method shape; upgrades require review. No cache is force-cleared.
-
-This contract removes implicit execution references from function descriptions and snapshots; it does not make
-explicit DefaultValue or AdditionalProperties values, arbitrary result values, result metadata,
-exceptions, arguments, filters, UI objects or third-party
-caches collectible. Preserve the existing chat persistence pipeline. For predictable hot unloading,
-return host-owned data or already materialized JSON, and use generated serialization where reflective
-caches would otherwise retain mod types. Such data choices belong to the mod, not an automatic
-host conversion. Unconfirmed collection still requires restart.
-
-Persistent chat/localization data must use host-owned key/value types. Formatted and aggregate
-locale keys copy their argument containers: C# collection expressions can otherwise create a
-collection type inside the mod and keep its assembly alive even when all elements are host values.
-This does not make mod-defined keys, arbitrary object values or UI controls safe to retain.
+The [Settings Specification](05-SettingsSpecification.md) owns persistence, registration, cache
+ownership, migration and failure contracts. The [Settings Developer Guide](06-SettingsDeveloperGuide.md)
+documents the concrete opening API, generated providers, page ownership and migration declarations.
 
 ### Package installation, updates and persistent data
 

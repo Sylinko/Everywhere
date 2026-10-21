@@ -316,6 +316,41 @@ Relevant sources: [property registry](https://github.com/AvaloniaUI/Avalonia/blo
 [render helpers](https://github.com/AvaloniaUI/Avalonia/blob/38402fc046e7f56298a7c9cedd51600e1ff6f9e0/src/Avalonia.Base/Visual.cs), and
 [routed-event registry](https://github.com/AvaloniaUI/Avalonia/blob/38402fc046e7f56298a7c9cedd51600e1ff6f9e0/src/Avalonia.Base/Interactivity/RoutedEventRegistry.cs).
 
+## Mod settings
+
+**Evidence: maintained tests against the generic settings engine, real collectible activations and
+Avalonia headless settings views.** ModSettingsTests loads separate copies of the fixture assembly
+through ModEngine. The fixture uses generated JSON and settings descriptors, GeneratedSettingsItems,
+a mod enum dictionary key and a mod-owned converter for System.Int32 keys.
+
+- Two activations use isolated documents and converter options. Settings UI is lazy, its view is stable,
+  and edits reach the same model. Hot retirement detaches items, saves final changes and confirms
+  collection even while the host retains old views and closed registration handles. A closed old handle
+  cannot remove a replacement's registration.
+- A migration that has committed is not repeated after a later initialization failure. Invalid model
+  data fails activation without replacing the file. Failed activations must collect, rather than
+  passing by requesting restart.
+- Process exit saves with an open view while the test UI thread cannot service dispatcher work.
+  This checks disposal beginning as Exit; it does not prove every native desktop quit sequence or an
+  exit overlapping an already-started hot stop. The application consumes settings views in the chat
+  tool page, but calls ApplyAsync only during startup. A future hot-reload entry point must coordinate
+  outstanding UI retirement before dispatcher shutdown.
+- ModSettingsMigrationTests checks ordered migration, delayed asynchronous disposal before commit,
+  borrowed-service ownership, first-run/current-version constructor skipping, invalid/newer-version
+  rejection and original-file preservation after migration, validation or disposal failure.
+- The application SettingsInitializer and migration regressions remain covered alongside these tests.
+
+The mounted-editor regression uses the production SettingsItemsControl and SettingsItemControl
+templates in an open headless window. A real ToggleSwitch updates the collectible model through
+the generated settings items. Hot removal must remove the editor, save the changed value and
+confirm collection while the host still retains the window and settings view.
+
+ChatPluginPageViewModelTests covers selection changes, worker-thread removal after UI delivery,
+and page disposal without any packaged mod or native runtime. It retains old tabs and bound host
+views, exercises the real editor template, and checks that retaining the catalog does not keep a
+disposed page alive through its collection-change subscription. These checks do not make
+registration disposal a completion barrier for asynchronous UI delivery.
+
 ## Remaining release gates
 
 - Complete native desktop exit validation and broader UI/patch callback-draining coverage. Optional
