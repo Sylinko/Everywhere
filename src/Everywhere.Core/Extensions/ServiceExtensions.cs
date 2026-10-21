@@ -72,7 +72,6 @@ public static class ServiceExtensions
                 .AddTransient<IAsyncInitializer, SettingsEngine>()
                 .AddTransient<SoftwareUpdateControl>()
                 .AddTransient<HostsStatusControl>()
-                .AddTransient<TextSelectionMonitoringControl>()
                 .AddTransient<TextSelectionApplicationsControl>()
                 .AddTransient<TextSelectionToolbarActionsControl>()
                 .AddTransient<TextSelectionToolbarPreview>()

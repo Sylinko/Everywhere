@@ -17,39 +17,21 @@
             Size="{DynamicResource FontSizeL}"
             ToolTip.Tip="{Binding Coordinator.ModeStatus?.State, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static v:HostsServiceModeControl.StateToolTipConverter}}"/>
 
-          <Panel>
-            <ToggleSwitch
-              x:Name="PART_ToggleSwitch" HorizontalAlignment="Center"
-              VerticalAlignment="Center"
-              Command="{Binding ChangeInstallationCommand, RelativeSource={RelativeSource TemplatedParent}}"
-              CommandParameter="{Binding $self}"
-              IsChecked="{Binding Coordinator.ModeStatus?.State, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static hosting:HostsServiceModeConfigurationState.CurrentExecutable}}">
-              <ToggleSwitch.IsVisible>
-                <MultiBinding Converter="{x:Static BoolConverters.And}">
-                  <Binding
-                    Path="!ChangeInstallationCommand.IsRunning"
-                    RelativeSource="{RelativeSource TemplatedParent}"/>
-                  <Binding
-                    Path="!Coordinator.IsServiceModeChanging"
-                    RelativeSource="{RelativeSource TemplatedParent}"/>
-                </MultiBinding>
-              </ToggleSwitch.IsVisible>
-            </ToggleSwitch>
-            <shadui:Loading
-              HorizontalAlignment="Center" VerticalAlignment="Center"
-              Size="{DynamicResource FontSizeM}">
-              <shadui:Loading.IsVisible>
-                <MultiBinding Converter="{x:Static BoolConverters.Or}">
-                  <Binding
-                    Path="ChangeInstallationCommand.IsRunning"
-                    RelativeSource="{RelativeSource TemplatedParent}"/>
-                  <Binding
-                    Path="Coordinator.IsServiceModeChanging"
-                    RelativeSource="{RelativeSource TemplatedParent}"/>
-                </MultiBinding>
-              </shadui:Loading.IsVisible>
-            </shadui:Loading>
-          </Panel>
+          <shadui:AsyncToggleSwitch
+            x:Name="PART_ToggleSwitch"
+            Command="{Binding ChangeInstallationCommand, RelativeSource={RelativeSource TemplatedParent}}"
+            IsChecked="{Binding Coordinator.ModeStatus?.State, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static hosting:HostsServiceModeConfigurationState.CurrentExecutable}}">
+            <shadui:AsyncToggleSwitch.IsBusy>
+              <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                <Binding
+                  Path="ChangeInstallationCommand.IsRunning"
+                  RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  Path="Coordinator.IsServiceModeChanging"
+                  RelativeSource="{RelativeSource TemplatedParent}"/>
+              </MultiBinding>
+            </shadui:AsyncToggleSwitch.IsBusy>
+          </shadui:AsyncToggleSwitch>
         </DockPanel>
       </ControlTemplate>
     </Setter>

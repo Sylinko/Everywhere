@@ -1,15 +1,18 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using Avalonia.Headless.NUnit;
+using CommunityToolkit.Mvvm.Input;
 using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.TextSelection;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 namespace Everywhere.Core.Tests.Configuration;
 
 public sealed class TextSelectionControllerTests
 {
-    [TestCase(TextSelectionFeature.AutomaticAttachment)]
-    [TestCase(TextSelectionFeature.Toolbar)]
-    public async Task SetEnabled_WhenOtherConsumerRemainsEnabled_KeepsMonitoringActive(TextSelectionFeature firstFeature)
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task SetEnabled_WhenOtherConsumerRemainsEnabled_KeepsMonitoringActive(bool isToolbarFirst)
     {
         var provider = Substitute.For<IServiceProvider>();
         var settings = new Settings(provider);
@@ -23,44 +26,48 @@ public sealed class TextSelectionControllerTests
             isMonitoringEnabled = isEnabled;
             return Task.CompletedTask;
         }));
-        using var controller = new TextSelectionController(settings, watcher);
-        var secondFeature = firstFeature == TextSelectionFeature.Toolbar ? TextSelectionFeature.AutomaticAttachment : TextSelectionFeature.Toolbar;
+        using var controller = new TextSelectionController(settings, watcher, NullLogger<TextSelectionController>.Instance);
+        var firstCommand = isToolbarFirst ? controller.SetToolbarEnabledCommand : controller.SetAutomaticAttachmentEnabledCommand;
+        var secondCommand = isToolbarFirst ? controller.SetAutomaticAttachmentEnabledCommand : controller.SetToolbarEnabledCommand;
 
-        await controller.SetEnabledCommand.ExecuteAsync(new(firstFeature, true));
-        await controller.SetEnabledCommand.ExecuteAsync(new(secondFeature, true));
-        await controller.SetEnabledCommand.ExecuteAsync(new(firstFeature, false));
+        await firstCommand.ExecuteAsync(true);
+        await secondCommand.ExecuteAsync(true);
+        await firstCommand.ExecuteAsync(false);
 
         Assert.Multiple(() =>
         {
             Assert.That(controller.IsMonitoringRequested, Is.True);
-            Assert.That(controller.IsAutomaticAttachmentEnabled, Is.EqualTo(secondFeature == TextSelectionFeature.AutomaticAttachment));
-            Assert.That(controller.IsToolbarEnabled, Is.EqualTo(secondFeature == TextSelectionFeature.Toolbar));
+            Assert.That(controller.IsAutomaticAttachmentEnabled, Is.EqualTo(isToolbarFirst));
+            Assert.That(controller.IsToolbarEnabled, Is.EqualTo(!isToolbarFirst));
             Assert.That(effectiveStates, Is.EqualTo(new[] { true }));
         });
 
-        await controller.SetEnabledCommand.ExecuteAsync(new(secondFeature, false));
+        await secondCommand.ExecuteAsync(false);
         Assert.That(controller.IsMonitoringRequested, Is.False);
         Assert.That(effectiveStates, Is.EqualTo(new[] { true, false }));
     }
 
-    [Test]
-    public void SetEnabled_WhenHostRejects_DoesNotCommitIntentOrPermitConcurrentChanges()
+    [AvaloniaTest]
+    public async Task SetEnabled_WhenHostRejects_DoesNotCommitIntentOrPermitConcurrentChanges()
     {
         var provider = Substitute.For<IServiceProvider>();
         var settings = new Settings(provider);
         var watcher = Substitute.For<ITextSelectionWatcher>();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         watcher.SetEnabledCommand.Returns(new AsyncRelayCommand<bool>(_ => completion.Task));
-        using var controller = new TextSelectionController(settings, watcher);
+        using var controller = new TextSelectionController(settings, watcher, NullLogger<TextSelectionController>.Instance);
 
-        var operation = controller.SetEnabledCommand.ExecuteAsync(new(TextSelectionFeature.Toolbar, true));
+        var operation = controller.SetToolbarEnabledCommand.ExecuteAsync(true);
         Assert.Multiple(() =>
         {
-            Assert.That(controller.SetEnabledCommand.CanExecute(new(TextSelectionFeature.AutomaticAttachment, true)), Is.False);
+            Assert.That(controller.IsBusy, Is.True);
+            Assert.That(controller.SetAutomaticAttachmentEnabledCommand.CanExecute(true), Is.False);
             Assert.That(settings.TextSelection.IsToolbarEnabled, Is.False);
         });
         completion.SetException(new InvalidOperationException("Native monitoring rejected."));
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await operation);
+        await operation;
         Assert.That(controller.IsMonitoringRequested, Is.False);
+        Assert.That(controller.IsBusy, Is.False);
+        Assert.That(controller.SetAutomaticAttachmentEnabledCommand.CanExecute(true), Is.True);
     }
 }

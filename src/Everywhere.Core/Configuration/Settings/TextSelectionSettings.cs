@@ -1,13 +1,14 @@
 ﻿using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
+using Everywhere.TextSelection;
 using Everywhere.Views;
 using Lucide.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using ShadUI;
 
 namespace Everywhere.Configuration;
 
@@ -41,23 +42,44 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.TextSelectionSettings_IsToolbarEnabled_Header)]
     [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
-    public SettingsControl<TextSelectionMonitoringControl> ToolbarMonitoringControl { get; } = new(sp => new TextSelectionMonitoringControl(
-        sp.GetRequiredService<TextSelectionController>(),
-        sp.GetRequiredService<ILogger<TextSelectionMonitoringControl>>())
-    {
-        Feature = TextSelectionFeature.Toolbar
-    });
+    public SettingsControl<AsyncToggleSwitch> ToolbarMonitoringControl { get; } = new(
+        sp =>
+        {
+            var controller = sp.GetRequiredService<TextSelectionController>();
+            var control = new AsyncToggleSwitch
+            {
+                Command = controller.SetToolbarEnabledCommand,
+                [!ToggleButton.IsCheckedProperty] = CompiledBinding.Create(
+                    (TextSelectionController source) => source.IsToolbarEnabled,
+                    source: controller,
+                    mode: BindingMode.OneWay),
+                [!AsyncToggleSwitch.IsBusyProperty] = CompiledBinding.Create(
+                    (TextSelectionController source) => source.IsBusy,
+                    source: controller),
+            };
+            return control;
+        },
+        isCacheEnabled: false);
 
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.TextSelectionSettings_ToolbarPreview_Header)]
-    [SettingsItem(Classes = ["FullWidth", "NoHeading"], Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    [SettingsItem(
+        IsVisibleBindingPath = nameof(IsToolbarEnabled),
+        Classes = ["FullWidth", "NoHeading"],
+        Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
     public SettingsControl<TextSelectionToolbarPreview> ToolbarPreview { get; } = new();
 
     /// <summary>
     /// Gets or sets the toolbar opacity, from 0.1 to fully opaque.
     /// </summary>
     [DynamicLocaleKey(LocaleKey.TextSelectionSettings_ToolbarOpacity_Header)]
-    [SettingsDoubleItem(Min = 0.1, Max = 1, Step = 0.05, IsTextBoxVisible = false, Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    [SettingsDoubleItem(
+        IsVisibleBindingPath = nameof(IsToolbarEnabled),
+        Min = 0.1,
+        Max = 1,
+        Step = 0.05,
+        IsTextBoxVisible = false,
+        Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
     public double ToolbarOpacity
     {
         get;
@@ -71,7 +93,9 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     [DynamicLocaleKey(
         LocaleKey.TextSelectionSettings_IsToolbarOpacityAdaptive_Header,
         LocaleKey.TextSelectionSettings_IsToolbarOpacityAdaptive_Description)]
-    [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    [SettingsItem(
+        IsVisibleBindingPath = nameof(IsToolbarEnabled),
+        Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
     public partial bool IsToolbarOpacityAdaptive { get; set; }
 
     /// <summary>
@@ -81,7 +105,9 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     [DynamicLocaleKey(
         LocaleKey.TextSelectionSettings_IsFreeformChatEnabled_Header,
         LocaleKey.TextSelectionSettings_IsFreeformChatEnabled_Description)]
-    [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    [SettingsItem(
+        IsVisibleBindingPath = nameof(IsToolbarEnabled),
+        Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
     public partial bool IsFreeformChatEnabled { get; set; } = true;
 
     /// <summary>
@@ -89,15 +115,23 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     /// </summary>
     [ObservableProperty]
     [DynamicLocaleKey(LocaleKey.TextSelectionSettings_VisibleActionCount_Header)]
-    [SettingsIntegerItem(Min = 0, Max = MaxVisibleActionCount, IsTextBoxVisible = false, Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    [SettingsIntegerItem(
+        IsVisibleBindingPath = nameof(IsToolbarEnabled),
+        Min = 0,
+        Max = MaxVisibleActionCount,
+        IsTextBoxVisible = false,
+        Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
     public partial int VisibleActionCount { get; set; } = 5;
 
     [SettingsItemIgnore]
-    public ObservableCollection<TextSelection.TextSelectionToolbarAction> ToolbarActions { get; } = [];
+    public ObservableCollection<TextSelectionToolbarAction> ToolbarActions { get; } = [];
 
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.Empty)]
-    [SettingsItem(Classes = ["FullWidth", "NoHeading"], Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    [SettingsItem(
+        IsVisibleBindingPath = nameof(IsToolbarEnabled),
+        Classes = ["FullWidth", "NoHeading"],
+        Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
     public SettingsControl<TextSelectionToolbarActionsControl> ToolbarActionsControl { get; } = new();
 
     /// <summary>
@@ -112,7 +146,24 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
         LocaleKey.TextSelectionSettings_IsAutomaticAttachmentEnabled_Header,
         LocaleKey.TextSelectionSettings_IsAutomaticAttachmentEnabled_Description)]
     [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_ChatWindow)]
-    public SettingsControl<TextSelectionMonitoringControl> AutomaticAttachmentControl { get; } = new();
+    public SettingsControl<AsyncToggleSwitch> AutomaticAttachmentControl { get; } = new(
+        sp =>
+        {
+            var controller = sp.GetRequiredService<TextSelectionController>();
+            var control = new AsyncToggleSwitch
+            {
+                Command = controller.SetAutomaticAttachmentEnabledCommand,
+                [!ToggleButton.IsCheckedProperty] = CompiledBinding.Create(
+                    (TextSelectionController source) => source.IsAutomaticAttachmentEnabled,
+                    source: controller,
+                    mode: BindingMode.OneWay),
+                [!AsyncToggleSwitch.IsBusyProperty] = CompiledBinding.Create(
+                    (TextSelectionController source) => source.IsBusy,
+                    source: controller),
+            };
+            return control;
+        },
+        isCacheEnabled: false);
 
     [ObservableProperty]
     [DynamicLocaleKey(
@@ -139,7 +190,10 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
 
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.Empty)]
-    [SettingsItem(Classes = ["FullWidth", "NoHeading"], Group = LocaleKey.TextSelectionSettings_Group_Advanced)]
+    [SettingsItem(
+        IsVisibleBindingPath = nameof(IsToolbarEnabled),
+        Classes = ["FullWidth", "NoHeading"],
+        Group = LocaleKey.TextSelectionSettings_Group_Advanced)]
     public SettingsControl<TextSelectionApplicationsControl> ToolbarExcludedApplicationsControl => new(sp =>
     {
         var control = sp.GetRequiredService<TextSelectionApplicationsControl>();
