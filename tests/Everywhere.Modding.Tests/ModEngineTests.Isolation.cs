@@ -37,7 +37,7 @@ public sealed partial class ModEngineTests
             }
             case "damaged":
             {
-                using var stream = File.OpenWrite(Path.Combine(source, "ModFixture.B.dll"));
+                await using var stream = File.OpenWrite(Path.Combine(source, "ModFixture.B.dll"));
                 stream.SetLength(16);
                 break;
             }
@@ -152,7 +152,7 @@ public sealed partial class ModEngineTests
         Assert.That(services.Events, Does.Not.Contain("initialize:fixture.b"));
         Assert.That(engine.Mods.Single(mod => mod.Id == "fixture.a").State, Is.EqualTo(ModState.Blocked));
         Assert.That(result.ResidentAssemblyNames, Is.EqualTo(new[] { "ModFixture.Resources" }));
-        Assert.That(result.Diagnostics.Any(diagnostic => diagnostic.ModId == "fixture.b" && diagnostic.Code == "InvalidEntryType"), Is.True);
+        Assert.That(result.Diagnostics.Any(diagnostic => diagnostic is { ModId: "fixture.b", Code: "InvalidEntryType" }), Is.True);
         AssertApplied(await engine.ApplyAsync([a, b]));
         AssertApplied(await engine.ApplyAsync([]));
     }
@@ -220,7 +220,7 @@ public sealed partial class ModEngineTests
         Assert.That(result.Status, Is.EqualTo(ModApplyStatus.CompletedWithErrors), Describe(result));
         Assert.That(result.ActiveModIds, Is.EqualTo(new[] { "resource.independent" }));
         Assert.That(engine.Mods.Single(mod => mod.Id == "fixture.a").State, Is.EqualTo(ModState.Blocked));
-        Assert.That(result.Diagnostics.Any(diagnostic => diagnostic.ModId == "fixture.b" && diagnostic.Code == "IncompatibleHost"), Is.True);
+        Assert.That(result.Diagnostics.Any(diagnostic => diagnostic is { ModId: "fixture.b", Code: "IncompatibleHost" }), Is.True);
         AssertApplied(await engine.ApplyAsync([]));
     }
 

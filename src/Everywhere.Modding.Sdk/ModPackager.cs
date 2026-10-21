@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text.Json;
+using Everywhere.Modding.Abstractions;
 using Everywhere.Modding.Packaging;
 
 namespace Everywhere.Modding.Sdk;
@@ -45,9 +46,10 @@ internal static class ModPackager
         var native = new List<string>();
         var content = new List<string>();
         var hasHostImplementationReference = false;
-        var contractName = typeof(Abstractions.IMod).Assembly.GetName().Name;
+        var contractName = typeof(IMod).Assembly.GetName().Name;
 
-        foreach (var outputItem in File.ReadAllLines(payloadList).Append(assemblyPath + "|" + Path.GetFileName(assemblyPath) + "|runtime")
+        foreach (var outputItem in File.ReadAllLines(payloadList)
+                     .Append(assemblyPath + "|" + Path.GetFileName(assemblyPath) + "|runtime")
                      .Distinct(StringComparer.OrdinalIgnoreCase))
         {
             var parts = outputItem.Split('|');

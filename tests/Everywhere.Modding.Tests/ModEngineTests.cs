@@ -1,9 +1,11 @@
-﻿using Everywhere.Modding.Hosting;
-using Everywhere.Modding.Hosting.Services;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Everywhere.Modding.Abstractions;
+using Everywhere.Modding.Hosting;
 using Everywhere.Modding.Hosting.Installation;
 using Everywhere.Modding.Hosting.Loading;
+using Everywhere.Modding.Hosting.Services;
 using Everywhere.Modding.Packaging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Everywhere.Modding.Tests;
 
@@ -86,7 +88,7 @@ public sealed partial class ModEngineTests
 
         Assert.That(result.Status, Is.EqualTo(ModApplyStatus.CompletedWithErrors), Describe(result));
         Assert.That(result.ResidentAssemblyNames, Is.Empty);
-        Assert.That(engine.Mods.Single().State, Is.EqualTo(Abstractions.ModState.Failed));
+        Assert.That(engine.Mods.Single().State, Is.EqualTo(ModState.Failed));
         Assert.That(engine.Mods.Single().IsEnabled, Is.True);
         Assert.That(
             services.Events,
@@ -205,7 +207,7 @@ public sealed partial class ModEngineTests
         var container = new HostServiceContainer(registrations);
         _containers.Add(container);
         return new ModEngine(
-            new HostAssemblyCatalog([typeof(Microsoft.Extensions.Logging.ILogger<>).Assembly.Location]),
+            new HostAssemblyCatalog([typeof(ILogger<>).Assembly.Location]),
             container,
             options ?? new ModEngineOptions
             {
@@ -332,7 +334,7 @@ public sealed partial class ModEngineTests
         /// <summary>
         /// Observes only host-owned lifecycle values from the collectible fixture.
         /// </summary>
-        internal Action<Abstractions.ModStopReason?>? ObserveStopReason { get; init; }
+        internal Action<ModStopReason?>? ObserveStopReason { get; init; }
 
         /// <summary>
         /// Gets or sets the next injected lifecycle behavior.

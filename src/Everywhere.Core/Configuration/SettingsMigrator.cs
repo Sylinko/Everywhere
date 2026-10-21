@@ -35,11 +35,11 @@ public class SettingsMigrator
     {
         _filePath = filePath;
         _services = services;
-        _migrations = [.. services.GetServices<SettingsMigrationRegistration>().OrderBy(m => m.Version)];
+        _migrations = services.GetServices<SettingsMigrationRegistration>().AsValueEnumerable().OrderBy(m => m.Version).ToArray();
         _logger = logger;
         _validateBeforeSave = validateBeforeSave;
 
-        if (_migrations.Select(m => m.Version).Distinct().Count() != _migrations.Length)
+        if (_migrations.AsValueEnumerable().Select(m => m.Version).Distinct().Count() != _migrations.Length)
         {
             throw new InvalidOperationException("Settings migrations must have unique versions.");
         }
@@ -98,7 +98,7 @@ public class SettingsMigrator
         var root = !fileExists && createDefaults is not null ? createDefaults() : ReadRoot(fileExists);
         if (targetVersion is not null)
         {
-            if (_migrations.Any(m => m.Version > targetVersion))
+            if (_migrations.AsValueEnumerable().Any(m => m.Version > targetVersion))
             {
                 throw new InvalidDataException("Migration targets must not exceed the declared settings version.");
             }
@@ -125,7 +125,7 @@ public class SettingsMigrator
                 throw new InvalidDataException($"Settings version {currentVersion} is newer than supported version {targetVersion}.");
             }
 
-            if (currentVersion < targetVersion && _migrations.LastOrDefault()?.Version != targetVersion)
+            if (currentVersion < targetVersion && _migrations.AsValueEnumerable().LastOrDefault()?.Version != targetVersion)
             {
                 throw new InvalidDataException($"No migration reaches settings version {targetVersion}.");
             }

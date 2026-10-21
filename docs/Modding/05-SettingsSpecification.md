@@ -141,11 +141,14 @@ unload limits. Closing a page is necessary cleanup, not proof of assembly collec
 ## Lifetime and final saving
 
 Persistence does not prescribe when a preference affects runtime work. Each mod documents that
-boundary and coordinates model access with the UI thread and any active operations.
+boundary. Everything captures ExecutablePath and InstanceName together on the UI thread at query start,
+then uses that immutable pair for connection attempts and native work. Edits use the existing generated
+text settings controls and automatic saving; they do not trigger reconnection. The next query reads the
+updated model without requiring a reload. Existing queries and user-owned processes are unaffected.
 
-Everything captures ExecutablePath and InstanceName together on the UI thread at query start.
-Connection attempts use that pair; edits take effect on the next query without interrupting active
-work or stopping user-owned processes. Its new settings document starts at format 1.0.0.
+Everything starts at settings format 1.0.0 with no migrations for its earlier WIP manual JSON format.
+Old development documents must be removed or replaced explicitly while the application is stopped;
+opening an unsupported document never silently overwrites it.
 
 The mod entry owns the settings engine and awaits final saving in its normal disposal path.
 IModContext.Register alone is insufficient: ordinary process exit skips the reversal queue.
@@ -158,12 +161,11 @@ released once or through an explicitly idempotent handle. Entry disposal precede
 reversal in the existing engine; simply waiting for that later reversal would be too late to prevent
 edits during final saving. When a mod-wide page is registered, the entry awaits its retained handle
 before disposing resources used by that page; later context reversal safely awaits the same completed
-handle. Tool-specific settings follow their chat registration and page lifetime instead. Completing a chat
-registration's disposal drains admitted tool calls, not pending UI delivery. Coordinate the editor's
-UI detachment before final saving; do not introduce a dispatcher wait into ordinary process exit.
-
-Everything removes its chat registration on the UI thread during hot retirement so the chat page
-detaches settings before final saving. Exit removes registration without a dispatcher wait.
+handle. Tool-specific settings follow their chat registration and page lifetime instead. Completing a
+chat registration's disposal drains admitted tool calls, not pending UI delivery. Coordinate the
+editor's UI detachment before final saving; do not add a dispatcher wait to ordinary process exit.
+Everything removes its chat registration on the UI thread during hot retirement so the chat page detaches its
+settings before final saving. Ordinary Exit removes registration without requiring a live dispatcher.
 
 Ordinary exit still saves settings, but cannot require a live UI dispatcher, new root-service
 resolution or execution of the reversal queue. Hot-stop UI coordination must not introduce a UI

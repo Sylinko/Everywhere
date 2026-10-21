@@ -73,10 +73,7 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
     /// <summary>
     /// Establishes the mod's resolution scope for Default-owned calls made during lifecycle callbacks.
     /// </summary>
-    internal AssemblyLoadContext.ContextualReflectionScope EnterScope(string name)
-    {
-        return _owners[name].EnterContextualReflection();
-    }
+    internal AssemblyLoadContext.ContextualReflectionScope EnterScope(string name) => _owners[name].EnterContextualReflection();
 
     /// <summary>
     /// Closes the retiring set and disposes each owner's static registrations before any owner is unloaded.
@@ -116,11 +113,11 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
             {
                 var error = await _pendingCleanup.WaitAsync(timeout).ConfigureAwait(false);
                 _pendingCleanup = null;
-                if (error is not null) return new ModActivation.CallbackResult(true, name + ": " + error);
+                if (error is not null) return new ModActivation.CallbackResult(true, $"{name}: {error}");
             }
             catch (TimeoutException)
             {
-                return new ModActivation.CallbackResult(false, name + ": assembly resource cleanup timed out; execution was not aborted.");
+                return new ModActivation.CallbackResult(false, $"{name}: assembly resource cleanup timed out; execution was not aborted.");
             }
         }
 
@@ -145,7 +142,7 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
             owner.Release();
         }
 
-        return references.ToArray();
+        return [.. references];
     }
 
     /// <summary>
@@ -191,7 +188,7 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
         internal NativeLibraryHandles NativeLibraries { get; } = new();
 
         private Assembly? _assembly;
-        private IReadOnlyDictionary<string, AssemblyArtifact> _satellites = new Dictionary<string, AssemblyArtifact>();
+        private Dictionary<string, AssemblyArtifact> _satellites = new();
         private readonly HashSet<string> _allowed = new(allowed, StringComparer.OrdinalIgnoreCase);
 
         /// <summary>

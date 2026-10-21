@@ -1,12 +1,17 @@
 ﻿# Mod Engine Specification
 
-This document defines the product contract and architecture. [Mod Developer Guide](02-ModDeveloperGuide.md) describes author responsibilities and available APIs. [Validation](03-Validation.md) records the evidence, deployment measurements and remaining release gates. These documents replace chronological implementation reports.
+This document defines the product contract and architecture. [Mod Developer Guide](02-ModDeveloperGuide.md) describes author responsibilities and available APIs. [Validation](03-Validation.md) records the evidence, deployment measurements and remaining release gates. The [documentation index](README.md) links the topic contracts and author guides. Each topic has one authoritative contract rather than a chronological implementation report.
 
 **Design status (2026-10-13):** the SDK authoring model, host-import workflows, mod/entry boundaries, platform selection and package installation/update contract in section 8 are agreed and ready for implementation. Design completion does not mean implementation completion or an immutable specification. Implementation may expose constraints that require substantial design changes. Record those findings, revise the affected contracts and developer instructions, and close the implementation and validation work before final merge.
 
 **Workspace implementation status:** the rewrite includes `Everywhere.Modding.Hosting`, BCL-only contracts in `Everywhere.Modding.Abstractions`, and a buildable initial SDK. Tests cover selected-file loading, optional dependency reconstruction, lifecycle cleanup and collection, ZIP installation, RID selection, directory/source SDK imports, and resource satellites. The application now imports original ZIPs and unpacked package folders at startup and supports reversible navigation contributions. A real packaged AXAML/I18N sample passes headless rendering and cleanup checks. Its remaining Avalonia property-metadata roots have been identified, and an isolated probe confirms collection after public-API cleanup; production integration of that cleanup is pending. Desktop manual validation, complete package management and the SDK release remain pending. Historical probe results are distinct from validation of the rewrite.
 
 **Status terminology:** implemented means code exists in the rewrite, not that every release gate has passed. Experimentally validated means demonstrated by the recorded probes only. Agreed / pending implementation defines the intended contract. Historical milestone descriptions elsewhere in this document do not establish that their entire regression suite has been ported. Open implementation decisions and incomplete capabilities must not be presented as supported features.
+
+Application and activation service ownership is defined in [Service Boundary](07-ServiceBoundary.md).
+The Autofac application container and activation scopes preserve host service identity and isolate
+collectible generic registrations. Maintained tests cover direct, lazy and keyed generic logging
+through independent mod retirement.
 
 | Area | Current status |
 |---|---|
@@ -15,8 +20,8 @@ This document defines the product contract and architecture. [Mod Developer Guid
 | Same-DLL optional methods/types, name-based resolution and whole-consumer reconstruction | Implemented; optional availability transitions tested |
 | Optional declarations, `RequiresMod`, `IModContext.Mods` and `IModCatalog` | Public contracts and runtime checks implemented; SDK declaration generation and analyzers pending |
 | SDK host imports, mod/entry model and platform selection | Fixture directory/source imports tested; full Windows build-directory import packages the AXAML sample; cross-platform validation pending |
-| Platform skipping and native loading | Implemented; unsupported entries stay enabled but skipped; Windows lazy native resolution and release tested with real DLLs  |
-| Public contract migration, SDK analyzers, generated manifests and packaging | Contracts and simple single-entry ZIP generation implemented; analyzers, multi-entry aggregation and complete asset policies pending |
+| Platform skipping and native loading | Implemented; unsupported entries stay enabled but skipped; Windows lazy native resolution and release tested with real DLLs and the Everything mod |
+| SDK analyzers, generated manifests and packaging | Contracts and single-entry ZIP generation implemented; analyzers, multi-entry aggregation and complete asset policies pending |
 | Mod settings, settings UI, cache isolation and migrations | Generic engine, explicit metadata, lazy UI registry and temporary migrations implemented with lifecycle coverage; management page deferred |
 
 ## 1. Product contract
@@ -257,11 +262,6 @@ Exit signals Stopping before joining a still-running initializer; initialization
 instance disposal can begin. Mod code owns stopping and draining
 its background users; the engine cannot discover those users automatically.
 
-Application and activation service ownership is defined in [Service Boundary](07-ServiceBoundary.md).
-The Autofac application container and activation scopes preserve host service identity and isolate
-collectible generic registrations. Maintained tests cover direct, lazy and keyed generic logging
-through independent mod retirement.
-
 Normal exit follows DI ownership: ModEngineManager is a concrete singleton registered with
 AddAsyncInitializer<ModEngineManager>(). Its deferred startup callback resolves that singleton;
 DI invokes its IAsyncDisposable implementation to dispose ModEngine. There is no IAsyncShutdown
@@ -397,7 +397,7 @@ flowchart TD
 
 Within Hosting, `Installation` owns `ModSourceCatalog`, `ModPackageStore` and `ModInstallation`; `Loading` owns PE inspection, load planning and assembly contexts; `Lifecycle` owns activation, context resources and catalog views. Shared `ModValidationException` belongs to Packaging so both build-time and runtime validation use the same diagnostic contract without a reverse dependency. Installation state is not part of the shared package declaration model.
 
-`Build.Modding.Hosting.targets` is imported by the Windows and macOS application projects to export the host reference contract and publish its descriptor. The descriptor is `mod-host.json`; build targets and serialized API fields use Mod terminology. `ModEngineManager` and Avalonia-specific integration stay in Everywhere.Core. A developer's mod uses Abstractions and any explicitly needed host APIs; SDK tool dependencies are not automatically runtime dependencies of that mod.
+`Build.Modding.Hosting.targets` is imported by the Windows and macOS application projects to export the host reference contract and publish `mod-host.json`. `ModEngineManager` and Avalonia-specific integration belong to Everywhere.Core. A developer's mod uses Abstractions and any explicitly needed host APIs; SDK tool dependencies are not automatically runtime dependencies of that mod.
 
 Lifecycle contracts reside in the single abstraction assembly; do not introduce a second incompatible IMod identity. The SDK supplies compilation references to the appropriate contract, but a mod package must not carry a competing runtime copy. This narrow contract dependency policy does not prohibit justified external dependencies in the SDK or engine.
 
@@ -573,7 +573,9 @@ merely because unload was requested. Ordinary process exit leaves module release
 
 Mods remain responsible for native clients, memory, threads and callbacks. Successful managed
 collection is not proof that an arbitrary native library stopped its own threads. The loader does not
-force-unload dependencies acquired by the OS or a library itself. macOS native resolution, custom loaders and arbitrary native libraries need their own validation before claiming hot-unload support.
+force-unload dependencies acquired by the OS or a library itself. Windows Everything is a concrete
+validated case; macOS native resolution, custom loaders and arbitrary native libraries need their
+own validation before claiming hot-unload support.
 
 ### Chat tool registration
 
@@ -642,13 +644,13 @@ Original sources and mod data belong under `~/.everywhere`; rebuildable runtime 
       1.1.0-<installation-id>/
     staging/<operation-id>/
   workspaces/yyyyMMdd/<chat-id-suffix>/ # Chat workspace: UTC creation date and final 12 hexadecimal ID characters
-  plugins/                            # Legacy chat-tool storage, not installed engine mods
-  cache/plugins/                      # Legacy chat-tool cache, including Puppeteer
+  plugins/                         # Legacy chat-tool storage, not installed engine mods
+  cache/plugins/                   # Legacy chat-tool cache, including Puppeteer
 ```
 
 The application-data `plugins` and `cache/plugins` directories retain their historical names. No automatic rename or migration is performed. They are separate from the engine's source directory at `~/.everywhere/mods` and its runtime copies under `cache/mods`. Existing dated chat workspaces in the legacy directory are left untouched; new conversations use the `workspaces` layout above.
 
-Each changed source gets a distinct installation directory. The version in its name is for readability; an installation ID distinguishes different builds with the same declared mod version. The startup import index uses a content fingerprint for reuse, not authentication or compatibility. Unchanged sources reuse completed installations; removing a source removes it from the next startup selection without deleting persistent mod data. Old installations may coexist on disk while only one source per mod is selected. Every ZIP/folder source for a duplicated mod ID is excluded rather than selecting a winner by filename or enumeration order. A broken source is diagnosed independently and does not prevent other sources from importing. Deferred cleanup of superseded copies remains implementation work.
+Each changed source gets a distinct installation directory. The version in its name is for readability; an installation ID distinguishes different builds with the same declared mod version. The startup import index uses a content fingerprint for reuse, not authentication or compatibility. Unchanged sources reuse completed installations; removing a source removes it from the next startup selection without deleting persistent mod data. Old installations may coexist on disk while only one source per mod is selected. ZIP/folder duplicates are rejected rather than ranked by filename or enumeration order. Deferred cleanup of superseded copies remains implementation work.
 
 For installation:
 
@@ -675,10 +677,6 @@ Treat installed package contents as read-only by contract, without requiring spe
 
 Delete a superseded installation only when no active or unconfirmed managed owner, resource user or native file user still needs it, and it is not retained by pending selection or rollback policy. Stopping the entrypoint alone is insufficient, especially when supporting assemblies remain shared. If deletion fails, defer cleanup and retry at a later safe opportunity such as startup; do not undo a successful activation because old files could not be deleted. In-process native unload remains a separate capability and may require restart before removal.
 
-ModSourceImportResult describes startup discovery, not a replacement desired set for a running
-engine. A failed import does not prove that the source was deliberately removed. A future live watcher
-must distinguish failed imports, explicit removal and replacement before applying runtime changes.
-
 The host may retain the previous successful installation for explicit reselection without keeping every historical version. Returning to old code does not roll back mod databases, configuration migrations or external side effects. No general data-rollback mechanism is required. The original ZIP or folder is the user-facing installation unit, not disposable cache. Removing it changes the next startup selection; it does not tear down an already running mod.
 
 Runtime copies and `sources.json` are derived cache content, not an independent record of installed membership. After Everywhere exits, the entire `cache/mods` directory may be deleted; the next startup imports the retained sources again and preserves `mods-data`. Runtime files must remain available while any managed, native or resource user still needs them: cache placement does not authorize eviction during use. Keep runtime copies out of the system temporary directory. No migration of previous development paths, automatic repair of damaged copies or indexes, or additional integrity scanning is introduced by this layout.
@@ -693,7 +691,6 @@ The management UI will present failures observed during import, activation or ru
 - If the old copy cannot be safely retired, report that the change requires restart. Do not delete active or unconfirmed owners' files; apply the normal pending-change lifecycle when the management UI implements it.
 
 Source-directory membership remains authoritative. A missing source is absent from the next startup selection, not a persistent "broken installation" entry; the host cannot infer accidental deletion. Retaining such an entry would require a separate future decision about persistent installation intent. Failure feedback does not require proactive per-file integrity checks or silent recovery.
-
 
 Package validation includes paths staying within the installation root, duplicate or case-colliding paths, and declared entry/file existence. The first format does not support archive symlink entries. This installation contract does not require a signing infrastructure, content-addressed package store, per-file backup system or continuous integrity scanning. Existing loader fingerprints still identify the inspected runtime artifacts.
 
@@ -726,20 +723,21 @@ The maintained SDK tests exercise directory and source imports with and without 
 
 ### Implementation closure and final merge
 
-The architecture above is complete enough to implement. The following work remains; none should be mistaken for an already delivered capability:
+The runtime, single-entry SDK packaging, host imports and settings integration are implemented. The remaining work is:
 
 | Area | Required closure |
 |---|---|
-| Public SDK/API | Contract migration and version policy; concrete project properties/items; entry declaration and inference diagnostics; analyzers, including optional and generated code |
-| Metadata and selection | Complete versioned schema; API/dependency range defaults and prerelease rules; provenance mapping; candidate ranking; multi-entry aggregation and cross-platform native validation; shared RID and framework selection tests |
-| Host imports | Source export and installed/bundle resolution; ownership-based exclusion including transitive libraries; XML availability; update invalidation; actual host/platform build matrix |
+| Public SDK/API | Published SDK resolver/package, entry declaration and inference diagnostics, analyzers for optional and generated code |
+| Metadata and selection | Complete versioned schema; dependency range defaults; provenance mapping; candidate ranking; multi-entry aggregation and cross-platform native validation; shared RID and framework selection tests |
+| Host imports | Published installation/bundle validation, XML availability and reference refresh after host changes across the supported platform build matrix |
 | Runtime integration | Optional entry disposal, registered reversal and ordinary DI exit are implemented; complete native desktop exit validation and Avalonia registration tracking/reversal |
-| Packaging and application | Implement the agreed ZIP/staging/installation-selection contract, separate persistent data, interrupted-operation recovery, restart handoff and deferred cleanup; validate further native/resource capabilities and unsupported cases |
+| Packaging and application | Persisted enablement and selection, interrupted-operation recovery, restart handoff and deferred cleanup; startup ZIP/folder imports, immutable installation copies and separate persistent data already exist |
+| Mod settings | Persistence, generators, UI registration and lifecycle tests implemented; management page and desktop acceptance remain separate; see [settings closure](05-SettingsSpecification.md#implementation-and-validation-closure) |
 | Developer workflow | Working templates and create/build/check/test operations, structured diagnostics, isolated tests and agent-facing instructions |
 
-Prioritize a real Avalonia mod with compiled AXAML, mod-owned I18N resources and an IMainViewNavigationTopLevelItem. Its validation must cover reversible navigation registration, changing language, removing a selected page, resource release and collection after repeated activations. Native resource ownership remains the mod's responsibility; implement necessary asset selection/loading without building a general forced native-unload mechanism ahead of concrete requirements.
-
-Some rows are implementation details within the completed design. Installation/update policy is agreed above, while further native libraries still need capability-specific lifetime validation. Advanced generic patching remains separate as stated in section 7. Do not describe the entire mod system as fully specified or implemented because the SDK and installation architecture is settled.
+The AXAML/I18N sample covers navigation and localization, but general Avalonia registration cleanup
+and repeated UI-mod collection remain open. Further native libraries need capability-specific
+lifetime validation. Advanced generic patching remains separate as stated in section 7.
 
 Before final merge, reconcile this specification and the developer guide with the actual implementation, complete applicable validation/release gates, and resolve every in-scope placeholder or explicitly agree its deferral and document the resulting limitation. No temporary workaround, failed experiment or unresolved contract may remain hidden behind an implemented status. If implementation invalidates an agreed approach, revise it here and update affected tooling/tests and examples before merging; preserving an earlier design is not itself a correctness requirement.
 
@@ -747,13 +745,11 @@ Before final merge, reconcile this specification and the developer guide with th
 
 Errors should identify mod/assembly identities, files and hashes, originating constraints and dependency paths, chosen/rejected candidates, affected mods, lifecycle phase and remediation. Keep stored diagnostics host-owned; serialize exception information instead of retaining collectible exception, Type, MethodInfo or delegate objects. Map codes to localized persistent UI messages at the application boundary.
 
-The runtime takes explicit selected files and a host catalog. At startup, the application discovers ZIP files and immediate child folders containing `mod.json` under `~/.everywhere/mods`. `ModSourceCatalog` imports or reuses immutable runtime copies before activation and returns successful, unambiguous installations separately from source diagnostics. The application logs source failures and continues with those installations. There is no recursive DLL discovery, watcher or management page. The engine isolates invalid or failed mods and their affected dependents while allowing unrelated mods to activate. Uncertain cleanup or collection requires restart and stops further loading. No highest-version or directory-order winner is chosen. This source-driven entry point does not yet implement persisted disablement, pending restart changes or automatic cleanup of superseded copies.
+The runtime takes explicit selected files and a host catalog. At startup, the application discovers ZIP files and immediate child folders containing `mod.json` under `~/.everywhere/mods`. `ModSourceCatalog` imports or reuses immutable runtime copies before activation. Broken sources are diagnosed independently; duplicate IDs exclude their competing sources. The engine validates the desired graph and isolates invalid or failed mods and their affected dependents while allowing unrelated mods to activate. Uncertain cleanup or collection instead requires restart and stops further loading. No highest-version or directory-order winner is chosen. This source-driven entry point does not implement recursive DLL discovery, live watching, a management page, persisted disablement, pending restart changes or automatic cleanup of superseded copies.
 
 Exit uses ordinary DI disposal of ModEngineManager and its engine, as described in section 5.
-App.Shutdown requests the Avalonia lifetime to close without invoking a special service shutdown phase.
-The mod-specific Avalonia ShutdownRequested interception and internal OS-classification accessor
-have been removed. The macOS delegate still routes ordinary Quit to the existing Avalonia lifetime,
-while allowing system-classified termination through without waiting for mod cleanup. Do not promise
+App.Shutdown requests the Avalonia lifetime to close. The macOS delegate routes ordinary Quit through
+that lifetime, while allowing system-classified termination without waiting for mod cleanup. Do not promise
 that the dispatcher or arbitrary services remain usable during final disposal. Native desktop quit,
 logout and system shutdown require platform validation; no forced/system termination path guarantees
 a callback or persistence.

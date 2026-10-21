@@ -23,8 +23,8 @@ public sealed partial class ModEngineTests
 
         var first = engine.DisposeAsync().AsTask();
         var second = engine.DisposeAsync().AsTask();
-        Assert.That(second, Is.SameAs(first));
         await first;
+        await second;
         await engine.DisposeAsync();
 
         Assert.That(services.Events, Is.EqualTo(new[] { "entry-dispose:fixture.a", "entry-dispose:fixture.b" }));

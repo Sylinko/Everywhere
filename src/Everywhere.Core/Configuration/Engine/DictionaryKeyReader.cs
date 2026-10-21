@@ -22,7 +22,7 @@ internal static class DictionaryKeyReader
     }
 
     /// <summary>
-    /// Closes the generic reader over a key type without capturing options or plugin services.
+    /// Closes the generic reader over a key type without capturing options or mod services.
     /// </summary>
     private static Func<string, JsonSerializerOptions, object?> CreateCore(Type keyType)
     {

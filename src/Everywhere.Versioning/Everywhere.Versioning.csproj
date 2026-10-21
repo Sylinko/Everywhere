@@ -3,7 +3,7 @@
   <PropertyGroup>
     <RootNamespace>Everywhere.Common</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Description>Version comparison and compatibility ranges shared by Everywhere and its plugin tools.</Description>
+    <Description>Version comparison and compatibility ranges shared by Everywhere and its mod tools.</Description>
   </PropertyGroup>
 
 </Project>

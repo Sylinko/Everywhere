@@ -1,10 +1,9 @@
-using System.Text.Json;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
-using ZLinq;
 
 namespace Everywhere.Configuration.Engine;
 
@@ -504,7 +503,7 @@ public class SettingsObjectDescriptor : ISettingsDescriptor
     private readonly Dictionary<string, ISettingsPropertyDescriptor> _propertiesByName;
 
     /// <summary>
-    /// Creates the shared descriptor base used by generated providers, including providers in plugin assemblies.
+    /// Creates the shared descriptor base used by generated providers, including providers in mod assemblies.
     /// </summary>
     protected internal SettingsObjectDescriptor(
         Type type,
