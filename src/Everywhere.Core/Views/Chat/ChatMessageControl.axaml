@@ -101,7 +101,7 @@
 
                 <v:ConditionalContentControl.FalseContent>
                   <DataTemplate x:DataType="chat:UserStrategyChatMessage">
-                    <Run
+                    <TextBlock
                       Foreground="{DynamicResource PrimaryColor}"
                       Text="{Binding Strategy.NameKey^}"/>
                   </DataTemplate>

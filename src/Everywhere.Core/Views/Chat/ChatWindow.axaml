@@ -1151,7 +1151,7 @@
 
               <shadui:SmoothBorder Background="{DynamicResource LightCardBackgroundColor}">
                 <v:ChatInputArea
-                  x:Name="ChatInputArea" Margin="6"
+                  x:Name="ChatInputArea" Padding="10,10,10,0"
                   CancelCommand="{Binding CancelCommand}"
                   ChatAttachmentItemsSource="{Binding ChatAttachments}"
                   Command="{Binding SendMessageCommand}"
@@ -1176,10 +1176,10 @@
                   </v:ChatInputArea.Transitions>
 
                   <v:ChatInputArea.ToolBarContent>
-                    <Grid
-                      Grid.Row="2" Grid.Column="0"
-                      ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="4">
-                      <Grid.Styles>
+                    <DockPanel
+                      HorizontalAlignment="Left" HorizontalSpacing="2"
+                      LastChildFill="False">
+                      <DockPanel.Styles>
                         <Style Selector="Button:flyout-open LayoutTransformControl">
                           <Style.Animations>
                             <Animation
@@ -1198,15 +1198,15 @@
                             </Animation>
                           </Style.Animations>
                         </Style>
-                      </Grid.Styles>
+                      </DockPanel.Styles>
 
                       <Button
-                        Classes="Ghost Rounded" Grid.Column="0"
+                        Classes="Ghost Rounded" DockPanel.Dock="Left"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_AddAttachmentMenuItem_ToolTip}}">
                         <Button.Flyout>
                           <Flyout Placement="Top">
                             <DockPanel
-                              Margin="2,4" VerticalSpacing="4">
+                              Margin="2,8,2,4" VerticalSpacing="4">
                               <TextBlock
                                 Classes="Muted" DockPanel.Dock="Top"
                                 HorizontalAlignment="Center">
@@ -1263,22 +1263,21 @@
                       </Button>
 
                       <v:ChatCustomAssistantSelector
-                        Grid.Column="1"
+                        DockPanel.Dock="Left"
                         ItemsSource="{Binding Settings.Model.CustomAssistants}"
                         SelectedItem="{Binding Settings.Model.SelectedCustomAssistant, Mode=TwoWay}"
                         ToolTip.Placement="Top"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_CustomAssistantSelector_ToolTip}}"/>
 
                       <v:ToolApprovalSelector
-                        Classes="Ghost" Grid.Column="2"
-                        Classes.Warning="{Binding EffectiveApprovalOption.IsDangerous}"
+                        Classes="Ghost" DockPanel.Dock="Left"
                         EffectiveItem="{Binding EffectiveApprovalOption}"
                         IsEnabled="{Binding !SelectApprovalModeCommand.IsRunning}"
                         IsVisible="{Binding Settings.Model.SelectedCustomAssistant?.Configuration.SupportsToolCall, TargetNullValue={x:False}}"
                         ItemsSource="{Binding ApprovalModeOptions}"
                         SelectItemCommand="{Binding SelectApprovalModeCommand}"
                         SelectedItem="{Binding SelectedApprovalOption, Mode=OneWay}"/>
-                    </Grid>
+                    </DockPanel>
                   </v:ChatInputArea.ToolBarContent>
 
                   <v:ChatInputArea.LeadingContentTemplate>
