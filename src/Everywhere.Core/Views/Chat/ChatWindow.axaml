@@ -183,8 +183,13 @@
               Content="{LucideIconContent History, Size=16}"
               FlowDirection="LeftToRight"
               IsChecked="{Binding PersistentState.IsChatWindowHistoryOpened, Mode=TwoWay}"
-              ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_History_ToolTip}}"
-              WindowDecorationProperties.ElementRole="User"/>
+              WindowDecorationProperties.ElementRole="User">
+              <ToolTip.Tip>
+                <v:KeyboardShortcutLabel
+                  Shortcut="Ctrl+H"
+                  Text="{I18N {x:Static LocaleKey.ChatWindow_History_ToolTip}}"/>
+              </ToolTip.Tip>
+            </ToggleButton>
 
             <Panel
               x:Name="BackgroundStatusIndicator"
@@ -229,17 +234,25 @@
             Classes="TitleBar"
             Command="{Binding ChatContextManager.CreateNewCommand}"
             Content="{LucideIconContent Plus, Size=20}"
-            HotKey="Ctrl+N"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_CreateNew_ToolTip}}"
-            WindowDecorationProperties.ElementRole="User"/>
+            HotKey="Ctrl+N" WindowDecorationProperties.ElementRole="User">
+            <ToolTip.Tip>
+              <v:KeyboardShortcutLabel
+                Shortcut="Ctrl+N"
+                Text="{I18N {x:Static LocaleKey.ChatWindow_CreateNew_ToolTip}}"/>
+            </ToolTip.Tip>
+          </Button>
 
           <ToggleButton
             Classes="TitleBar" Background="#00252525"
             BorderThickness="1.5" HotKey="Ctrl+D"
             IsChecked="{Binding #Self.IsWindowPinned, Mode=TwoWay}"
-            IsThreeState="True"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_TogglePin_ToolTip}}"
-            WindowDecorationProperties.ElementRole="User">
+            IsThreeState="True" WindowDecorationProperties.ElementRole="User">
+            <ToolTip.Tip>
+              <v:KeyboardShortcutLabel
+                Shortcut="Ctrl+D"
+                Text="{I18N {x:Static LocaleKey.ChatWindow_TogglePin_ToolTip}}"/>
+            </ToolTip.Tip>
+
             <LucideIcon Size="15"/>
           </ToggleButton>
 
@@ -247,9 +260,13 @@
             Classes="TitleBar Close"
             Command="{Binding CloseCommand}"
             Content="{LucideIconContent X, Size=20}"
-            HotKey="Ctrl+W"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_Close_ToolTip}}"
-            WindowDecorationProperties.ElementRole="User"/>
+            HotKey="Ctrl+W" WindowDecorationProperties.ElementRole="User">
+            <ToolTip.Tip>
+              <v:KeyboardShortcutLabel
+                Shortcut="Ctrl+W"
+                Text="{I18N {x:Static LocaleKey.ChatWindow_Close_ToolTip}}"/>
+            </ToolTip.Tip>
+          </Button>
         </StackPanel>
 
         <TextBlock
@@ -764,8 +781,12 @@
               <Button
                 Classes="Ghost Compact" Grid.Column="2"
                 Command="{Binding TextSearch.PreviousResultCommand}"
-                IsEnabled="{Binding TextSearch.HasMatches}"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Previous_ToolTip}}">
+                IsEnabled="{Binding TextSearch.HasMatches}">
+                <ToolTip.Tip>
+                  <v:KeyboardShortcutLabel
+                    Shortcut="Shift+Enter"
+                    Text="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Previous_ToolTip}}"/>
+                </ToolTip.Tip>
                 <LucideIcon
                   Kind="ChevronUp"
                   Size="{DynamicResource FontSizeM}"/>
@@ -773,16 +794,24 @@
               <Button
                 Classes="Ghost Compact" Grid.Column="3"
                 Command="{Binding TextSearch.NextResultCommand}"
-                IsEnabled="{Binding TextSearch.HasMatches}"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Next_ToolTip}}">
+                IsEnabled="{Binding TextSearch.HasMatches}">
+                <ToolTip.Tip>
+                  <v:KeyboardShortcutLabel
+                    Shortcut="Enter"
+                    Text="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Next_ToolTip}}"/>
+                </ToolTip.Tip>
                 <LucideIcon
                   Kind="ChevronDown"
                   Size="{DynamicResource FontSizeM}"/>
               </Button>
               <Button
                 Classes="Ghost Compact" Grid.Column="4"
-                Command="{Binding TextSearch.CloseSearchCommand}"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Close_ToolTip}}">
+                Command="{Binding TextSearch.CloseSearchCommand}">
+                <ToolTip.Tip>
+                  <v:KeyboardShortcutLabel
+                    Shortcut="Escape"
+                    Text="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Close_ToolTip}}"/>
+                </ToolTip.Tip>
                 <LucideIcon
                   Kind="X"
                   Size="{DynamicResource FontSizeM}"/>

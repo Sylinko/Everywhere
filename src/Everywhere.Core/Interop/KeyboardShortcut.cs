@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.ComponentModel;
+using System.Text;
 using System.Text.Json.Serialization;
 using Avalonia.Input;
 
@@ -9,6 +10,7 @@ namespace Everywhere.Interop;
 /// </summary>
 /// <param name="Key"></param>
 /// <param name="Modifiers"></param>
+[TypeConverter(typeof(KeyboardShortcutTypeConverter))]
 public readonly record struct KeyboardShortcut(Key Key, KeyModifiers Modifiers)
 {
     [JsonIgnore]

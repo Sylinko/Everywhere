@@ -22,7 +22,7 @@
               <!--  Watermarks Container  -->
               <Panel
                 HorizontalAlignment="Center" IsHitTestVisible="False"
-                IsVisible="{Binding !ShortcutParts.Count, RelativeSource={RelativeSource TemplatedParent}}">
+                IsVisible="{Binding DisplayShortcut.IsEmpty, RelativeSource={RelativeSource TemplatedParent}}">
                 <TextBlock
                   Classes="Muted" VerticalAlignment="Center"
                   IsVisible="{Binding !IsRecording, RelativeSource={RelativeSource TemplatedParent}}"
@@ -33,47 +33,9 @@
                   Text="{I18N {x:Static LocaleKey.KeyboardShortcutInputBox_SettingWatermark}}"/>
               </Panel>
 
-              <!--  Shortcut Items  -->
-              <ItemsControl
-                IsVisible="{Binding !!ShortcutParts.Count, RelativeSource={RelativeSource TemplatedParent}}"
-                ItemsSource="{TemplateBinding ShortcutParts}">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate>
-                    <StackPanel
-                      Orientation="Horizontal" Spacing="5"/>
-                  </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <ContentControl Content="{Binding}">
-                      <ContentControl.DataTemplates>
-                        <DataTemplate DataType="v:TextShortcutPart">
-                          <shadui:SmoothBorder
-                            Padding="6,2"
-                            Background="{DynamicResource LightCardBackgroundColor}"
-                            CornerRadius="8">
-                            <TextBlock
-                              FontSize="{DynamicResource FontSizeM}"
-                              FontWeight="SemiBold"
-                              Text="{Binding Text}"/>
-                          </shadui:SmoothBorder>
-                        </DataTemplate>
-                        <DataTemplate DataType="v:IconShortcutPart">
-                          <shadui:SmoothBorder
-                            Padding="6,2"
-                            Background="{DynamicResource LightCardBackgroundColor}"
-                            CornerRadius="8">
-                            <PathIcon
-                              Width="{DynamicResource FontSizeM}"
-                              Height="{DynamicResource LineHeightM}"
-                              Data="{Binding Icon}"/>
-                          </shadui:SmoothBorder>
-                        </DataTemplate>
-                      </ContentControl.DataTemplates>
-                    </ContentControl>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
+              <v:KeyboardShortcutPresenter
+                IsVisible="{Binding !DisplayShortcut.IsEmpty, RelativeSource={RelativeSource TemplatedParent}}"
+                Shortcut="{TemplateBinding DisplayShortcut}"/>
             </Panel>
 
             <Button
@@ -81,7 +43,7 @@
               Grid.Column="1" Margin="4,0,-2,0"
               Padding="2" VerticalAlignment="Center"
               Focusable="False"
-              IsVisible="{Binding !!ShortcutParts.Count, RelativeSource={RelativeSource TemplatedParent}}">
+              IsVisible="{Binding !DisplayShortcut.IsEmpty, RelativeSource={RelativeSource TemplatedParent}}">
               <LucideIcon
                 Foreground="{DynamicResource MutedColor}"
                 Kind="X"

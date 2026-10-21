@@ -1,0 +1,31 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:KeyboardShortcutLabel}"
+    TargetType="v:KeyboardShortcutLabel">
+    <Setter Property="Background" Value="{DynamicResource LightCardBackgroundColor}"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
+    <Setter Property="Padding" Value="2,0"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:KeyboardShortcutLabel">
+        <StackPanel
+          Orientation="Horizontal" Spacing="2">
+          <TextBlock
+            VerticalAlignment="Center"
+            Foreground="{TemplateBinding Foreground}"
+            Text="{TemplateBinding Text}"/>
+          <v:KeyboardShortcutPresenter
+            Classes="Compact"
+            Padding="{TemplateBinding Padding}"
+            VerticalAlignment="Center"
+            Background="{TemplateBinding Background}"
+            CornerRadius="{TemplateBinding CornerRadius}"
+            Foreground="{TemplateBinding Foreground}"
+            Shortcut="{TemplateBinding Shortcut}"/>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

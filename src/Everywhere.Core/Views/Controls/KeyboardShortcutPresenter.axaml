@@ -1,0 +1,44 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:KeyboardShortcutPresenter}"
+    TargetType="v:KeyboardShortcutPresenter">
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="IsHitTestVisible" Value="False"/>
+    <Setter Property="HorizontalAlignment" Value="Left"/>
+    <Setter Property="FontSize" Value="{DynamicResource FontSizeM}"/>
+    <Setter Property="Padding" Value="6,2"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
+    <Setter Property="Background" Value="{DynamicResource LightCardBackgroundColor}"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <shadui:SmoothBorder
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}"
+          CornerRadius="{TemplateBinding CornerRadius}"
+          IsVisible="{Binding !Shortcut.IsEmpty, RelativeSource={RelativeSource TemplatedParent}}">
+          <TextBlock
+            x:Name="PART_TextBlock"
+            Margin="{TemplateBinding Padding}"
+            VerticalAlignment="Center"
+            FontFamily="{TemplateBinding FontFamily}"
+            FontSize="{TemplateBinding FontSize}"
+            FontStyle="{TemplateBinding FontStyle}"
+            FontWeight="{TemplateBinding FontWeight}"
+            Foreground="{TemplateBinding Foreground}"
+            LineHeight="{TemplateBinding LineHeight}"/>
+        </shadui:SmoothBorder>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^.Compact">
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeS}"/>
+      <Setter Property="LineHeight" Value="{DynamicResource LineHeightS}"/>
+      <Setter Property="CornerRadius" Value="{DynamicResource MdCornerRadius}"/>
+      <Setter Property="Padding" Value="3,0"/>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

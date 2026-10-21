@@ -128,7 +128,7 @@
         <value>이미지</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
-        <value>도구를 사용하여 보조 기능 향상 (Ctrl+T)</value>
+        <value>도구를 사용하여 보조 기능 향상</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>도구</value>
@@ -203,7 +203,7 @@
         <value>디버그 창 열기</value>
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
-        <value>채팅 기록 (Ctrl+H)</value>
+        <value>채팅 기록</value>
     </data>
     <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
         <value>기록 검색</value>
@@ -215,13 +215,13 @@
         <value>현재 대화에서 찾기</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
-        <value>이전 결과 (Shift+Enter)</value>
+        <value>이전 결과</value>
     </data>
     <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
-        <value>다음 결과 (Enter)</value>
+        <value>다음 결과</value>
     </data>
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
-        <value>검색 닫기 (Esc)</value>
+        <value>검색 닫기</value>
     </data>
     <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
         <value>모든 메시지 검색</value>
@@ -233,10 +233,10 @@
         <value>도우미 메시지만 검색</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
-        <value>새 채팅 만들기 (Ctrl+N)</value>
+        <value>새 채팅 만들기</value>
     </data>
     <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
-        <value>닫기 (Esc)</value>
+        <value>닫기</value>
     </data>
     <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
         <value>여기에 파일을 드롭하세요</value>
@@ -528,7 +528,7 @@
         <value>Discord</value>
     </data>
     <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
-        <value>창 고정 (Ctrl+D)</value>
+        <value>창 고정</value>
     </data>
     <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
         <value>이전 상태 기억</value>
@@ -4585,5 +4585,14 @@
     </data>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>도구 모음 미리 보기</value>
+    </data>
+    <data name="Common_KeyboardKey_Enter" xml:space="preserve">
+        <value>엔터</value>
+    </data>
+    <data name="Common_KeyboardKey_Space" xml:space="preserve">
+        <value>스페이스</value>
+    </data>
+    <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
+        <value>백스페이스</value>
     </data>
 </root>
