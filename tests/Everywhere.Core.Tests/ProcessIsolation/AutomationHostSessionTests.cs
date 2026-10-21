@@ -1199,6 +1199,7 @@ public sealed class AutomationHostSessionTests
             ITextSelectionMonitorContext context,
             int mainProcessId,
             TextSelectionMonitoringConfiguration configuration,
+            TextSelectionDiagnostics diagnostics,
             Func<TextSelectionObservation, CancellationToken, ValueTask> publish)
         {
             _context = context;

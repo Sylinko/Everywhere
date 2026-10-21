@@ -30,11 +30,7 @@ public static partial class Program
                 return ProbeProviderHost.Run();
             }
 
-            if (args is ["--panel-discovery"])
-            {
-                results.Add(RunProbe("panel-discovery", ProbePanelDiscovery));
-            }
-            else if (args is ["--query-semantics"])
+            if (args is ["--query-semantics"])
             {
                 results.Add(RunProbe("query-semantics", ProbeQuerySemantics));
             }
@@ -45,14 +41,6 @@ public static partial class Program
             else if (args is ["--content-boundaries"])
             {
                 results.Add(RunProbe("content-boundaries", ProbeContentBoundaries));
-            }
-            else if (args is ["--provider-failure-survey"])
-            {
-                results.Add(RunProbe("provider-failure-survey", ProbeProviderFailureSurvey));
-            }
-            else if (args is ["--provider-failure-default-survey"])
-            {
-                results.Add(RunProbe("provider-failure-default-survey", ProbeProviderFailureDefaultSurvey));
             }
             else
             {

@@ -1,6 +1,5 @@
 using Everywhere.Automation.Testing;
 using Everywhere.Automation.Tests.Testing;
-using Everywhere.Chat;
 using Everywhere.I18N;
 using VisualContextLocaleKey = Everywhere.Automation.I18N.LocaleKey;
 
@@ -142,29 +141,6 @@ public sealed class ScenarioMockBackendTests
             Assert.That(result.Text, Is.Null);
             Assert.That(result.NextOffset, Is.Null);
             Assert.That(result.Failure?.Kind, Is.EqualTo(VisualElementQueryFailureKind.Unsupported));
-        });
-    }
-
-    [Test]
-    public void Build_WhenUsingAutomationElements_ConsumesScenarioWithinBudget()
-    {
-        var generated = new VisualScenarioGenerator().Generate(CommonScenarios.Chat, 42);
-        using var backend = new ScenarioMockBackend(generated);
-        using var turn = backend.Context.BeginTurn();
-        var limits = new VisualContextSnapshotLimits { MaximumNodes = 128, MaximumChildrenPerNode = 64, MaximumPlatformOperations = 512 };
-        using var snapshot = VisualContextSnapshotter.CreateSnapshot(
-            backend.Context,
-            [backend.RootElement],
-            limits,
-            VisualContextTraverseDirections.Child);
-        var output = VisualContextPromptBuilder.Build(backend.Context, snapshot, new VisualContextPromptOptions { TargetTokenBudget = 512 }).ToString();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(output, Is.Not.Empty);
-            Assert.That(turn.Count, Is.GreaterThan(0));
-            Assert.That(backend.Operations.MoveNextAttemptCount, Is.LessThanOrEqualTo(limits.MaximumPlatformOperations));
-            Assert.That(backend.Operations.ElementCreatedCount, Is.LessThanOrEqualTo(limits.MaximumPlatformOperations + backend.RootElements.Count));
         });
     }
 

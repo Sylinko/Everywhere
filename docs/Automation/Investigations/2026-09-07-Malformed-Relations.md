@@ -25,7 +25,7 @@ The first-child-chain comparison returned:
 
 Thus the sampled failure is not solely missing cache data. Useful deeper content exists, but cannot pass the current canonical-identity entry boundary. The production path safely stops that relation and exposes the failure. It does **not** provide useful Reqable document retrieval. This is an accepted best-effort limitation, not a blocker: retain bounded failure and local status without fallback IDs, pointer-based identities, or an anonymous-element architecture. Revisit only if broader application evidence justifies it.
 
-Local ignored evidence is under `tests/Everywhere.Automation.Windows.Tests/bin/Debug/net10.0-windows10.0.19041.0/artifacts/external-window/`: `measurements.json`, per-pass compact prompts, and the native edge trace. Names/content remain local; this document preserves only the diagnostic counts and identity comparison. Reproduce with `ExternalWindowProbeTests` and an open Reqable window.
+Local ignored evidence is under `tests/Everywhere.Automation.Windows.Tests/bin/Debug/net10.0-windows10.0.19041.0/artifacts/external-window/`: `measurements.json`, per-pass compact prompts, and the native edge trace. Names/content remain local; this document preserves only the diagnostic counts and identity comparison. The application-dependent observation test has been retired; deterministic adversarial tests retain the bounds and ownership contracts.
 
 ## WebView
 

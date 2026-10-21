@@ -46,7 +46,6 @@ The initial implementation is split by ownership:
 | `tests/Everywhere.Automation.WebView.TestApp` | Cross-platform native-browser host for non-deterministic real-web observations |
 | `tests/Everywhere.Automation.WebView.Probe` | Batch and Streamable HTTP MCP host for interactive real-web retrieval journeys; selects the production Windows or macOS Backend for the current target |
 | `tests/Everywhere.Automation.Windows.Tests` | Windows-only controlled-process and production UIA integration tests, with direct production references and MSBuild-generated TestApp launch paths |
-| `tests/Everywhere.Automation.Mac.Tests` | macOS-only production identity tests that document why ordinary VSTest hosting is insufficient for Objective-C runtime initialization |
 | `tests/Everywhere.Automation.Mac.Probes` | Native Microsoft.macOS app-host probes for production AX identity, timeout, batching, query, topology, state, and bounded-content behavior |
 
 `CefSharp.WinForms.NETCore` is referenced only by its isolated Windows TestApp. It is not a transitive dependency of production Visual Context, the shared scenario model, or the other TestApps.
@@ -180,7 +179,7 @@ Text observation has two independent boundaries. Provider liveness is protected 
 | macOS AX text | `ReadText` first reads `AXNumberOfCharacters` and requests the page at its UTF-16 offset through `AXStringForRange`; providers that lack ranged access, or reject a range invalidated by live mutation, fall back to a complete Value read and local slicing. | Provider failures stop the operation before fallback, so `AXUIElementSetMessagingTimeout` remains a one-message bound when the initial count call times out. A controlled Value-only element validates the fallback. |
 | macOS AX array attributes | Use `AXUIElementCopyAttributeValues(index, maxValues)` for large array-valued attributes such as children. | Array paging is not a substitute for ranged text and applies only when the attribute value is an array. |
 
-Providers do not all expose ranged text. Snapshot preserves whether a bounded preview is incomplete and reports either an exact UTF-16 total or a proven lower bound as `textLength=shown/total`. Snapshot makes no global completeness claim; tests assert observed content, concrete limitations, and resource release. The macOS native probe verifies exact `AXNumberOfCharacters`, positive and negative offsets, and UTF-16 surrogate handling against `NSTextView`, and verifies local paging against an AXValue-only AppKit element. The Windows probe compares bounded `GetText` latency and length with the historical `TextUnit.Character` experiment across WinForms, Avalonia, and Chromium. Production does not use provider-unit movement.
+Providers do not all expose ranged text. Snapshot preserves whether a bounded preview is incomplete and reports either an exact UTF-16 total or a proven lower bound as `textLength=shown/total`. Snapshot makes no global completeness claim; tests assert observed content, concrete limitations, and resource release. The macOS native probe verifies exact `AXNumberOfCharacters`, positive and negative offsets, and UTF-16 surrogate handling against `NSTextView`, and verifies local paging against an AXValue-only AppKit element. The retained Windows test verifies complete paging, mutation offsets, and recovery against controlled WinForms and Avalonia editors. The retired `TextUnit.Character` experiments do not define UTF-16 offsets or totals for the production reader; production uses bounded `GetText` and explicit exact/lower-bound reporting instead of provider-unit movement.
 
 ### 4.5 Lazy Collections
 
@@ -467,7 +466,7 @@ Each template uses seeded controls for text, counts, optional branches, and smal
 
 `AdversarialSnapshotTests` supplies malformed relations directly through the normal Element/Enumerator contracts, independently of the declarative UI tree. Three cases cover empty containers containing useful text, shared children/self/ancestor cycles, and endless duplicates stopped by either the operation or child budget. Assertions cover unique expansion, disposal, published-ID follow-up, and release after turn eviction; they do not require a globally complete Snapshot.
 
-For a read-only real-application probe, open the application's window and run `dotnet test tests/Everywhere.Automation.Windows.Tests --filter FullyQualifiedName~ExternalWindowProbeTests`. `EVERYWHERE_EXTERNAL_PROBE_PROCESS` selects its process name (default `Reqable`); `EVERYWHERE_EXTERNAL_PROBE_OUTPUT` optionally selects the local output directory. It never closes or modifies the external application. Three bounded Snapshot/Prompt passes check forest identity uniqueness, retained-ID querying, and identity-map return to its acquisition baseline after Snapshot disposal and turn eviction. The shared native topology diagnostic samples original COM references independently, including unidentified objects under a hard edge cap, without publishing synthetic identities. A short first-child-chain comparison uses the test project's existing legacy interop reference to compare cached and direct RuntimeIds; production interop is unchanged. Passing this probe verifies bounds and ownership, not completeness of the application's readable content or absence of all native leaks.
+One-time third-party UIA investigations are summarized in [Malformed Relation Boundary Verification](Investigations/2026-09-07-Malformed-Relations.md) and [Native WebView Parent Conflict](Investigations/2026-09-07-WebView-Parent-Conflict.md). The application-dependent observation tests have been retired; deterministic adversarial tests retain the traversal and ownership contracts.
 
 Mock tests may assert exact logical traversal and operation counts. Real-process tests primarily assert semantic anchors and invariants:
 
@@ -555,14 +554,14 @@ Long-text evaluation should cover Win32 and Avalonia multiline controls, reads t
 
 A minimal smoke scenario may be brought up on each real backend earlier if needed to keep the declarative model honest. Bulk backend coverage remains Phase 4.
 
-The controlled process smoke tier is explicit because it opens real windows. Building its Windows test project also builds the three scenario TestApps and the separate native WebView TestApp. It can be run on an interactive Windows desktop with:
+The controlled process smoke tier is explicit because it opens real windows. Building its Windows test project also builds the three local scenario TestApps. The native WebView TestApp remains owned by the separate real-web Probe. It can be run on an interactive Windows desktop with:
 
 ```powershell
 dotnet test tests/Everywhere.Automation.Windows.Tests/Everywhere.Automation.Windows.Tests.csproj `
   --filter TestCategory=ControlledTestApp -- NUnit.ExplicitMode=Relaxed
 ```
 
-This tier also retains an explicit two-MTA-thread Windows UIA compatibility probe. The threads are probe infrastructure, not the production Backend architecture. It obtains a retained root Element on one client/thread, then verifies scalar refresh and TreeWalker child navigation through the other for WinForms, Avalonia, and CefSharp. The probe waits for both native UIA clients to initialize before forcing the cross-client call so activation failure and retained-reference compatibility remain separate observations. It exercises the explicit unmanaged COM owners rather than relying on RCW lifetime.
+The retired cross-MTA Windows UIA characterization is summarized in [Platform Runtime](04-PlatformRuntime.md#84-empirical-windows-evidence). Controlled-target integration tests continue to exercise production acquisition, canonical identity, Screen composition, capture, and paged text reads.
 
 Temporary gaps that must be closed by later stages are recorded in [07-Migration](07-Migration.md) and [08-Verification](08-Verification.md) rather than hidden behind test-only fallbacks.
 

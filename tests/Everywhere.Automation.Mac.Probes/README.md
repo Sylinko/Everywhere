@@ -36,21 +36,12 @@ Pass `--capture` directly to the bundle executable for the focused pixel-contrac
 
 Pass `--query-semantics` to run only the focused root/relation contract. It additionally verifies that a non-window AX descendant reports `NativeWindowHandle` as unavailable without a provider failure or inheritance from its enclosing `AXWindow`.
 
-`WebViewAxDiagnostics.swift` is a temporary raw AX diagnostic for a running Native WebView TestApp. Compile it with `xcrun swiftc ... -framework ApplicationServices -framework Foundation`, then pass the host PID, decimal Quartz window number, and maximum depth. `--summary` records the cross-process PID/role/AXWindow chain without dumping every scalar value.
-
 The timeout probe starts the same native executable in a provider mode. That child creates an AppKit `NSWindow`, `NSTextField`, and `NSButton`, runs the normal `NSApplication` event loop, and accepts a small stdin protocol that can block and resume its main thread. The parent remains the AX client and owns cleanup of that exact child process.
 
 Future multi-display, permission-transition, full-screen Space, and additional third-party Value-only compatibility probes can be added here without introducing test-only hooks into the production backend.
 
-## Panel discovery diagnostic
+## Panel discovery conclusion
 
-Pass `--panel-discovery` directly to the bundle's `Contents/MacOS/Everywhere.Automation.Mac.Probes` executable to run the focused diagnostic instead of the full suite. It records provider-side AppKit state, raw AXWindows/AXChildren, focus and hit-test references, CFEqual comparisons, exact-ID Quartz information, and production NativeWindow resolution. State changes are cumulative, not independent experiments. The provider acknowledges each command on its main thread; this does not guarantee that application activation or Window Server state has settled. A successful diagnostic exit means observation completed, not that every state must resolve a window.
+On 2026-09-07 (macOS 15.7.3, Arm64, .NET 10.0.6), a focused investigation found that an inactive provider's `NSPanel` with `HidesOnDeactivate=true` could report `IsVisible=true` and `AccessibilityElement=true` while both `AXWindows` and the exact-ID Quartz window list omitted it. `MakeKeyAndOrderFront` alone did not restore discovery. Changing `HidesOnDeactivate` to false at the next step restored Quartz, AXWindows, and existing backend resolution; no accessibility override or floating-panel change was needed.
 
-On 2026-09-07 (macOS 15.7.3, Arm64, .NET 10.0.6):
-
-- One full-suite run passed all 12 probes without changing production window discovery, including panel, hidden/minimized windows, sheet ownership, and close behavior. This does not establish repeatability.
-- A subsequent focused run reproduced the missing panel. The provider reported `HidesOnDeactivate=true`, `Active=false`, `IsVisible=true`, `AccessibilityElement=true`, and `AXWindow/AXDialog`. AXWindows omitted the panel, and `CGWindowListCopyWindowInfo(IncludingWindow, panelId)` returned an empty array. Provider-side `IsVisible` alone was therefore insufficient evidence of a discoverable Window Server window.
-- Calling `MakeKeyAndOrderFront` did not establish activation in that run and did not restore discovery. Changing only `HidesOnDeactivate` to false at the next step restored the exact Quartz entry, AXWindows entry, and existing backend resolution. No AccessibilityElement override or floating-panel change was needed for this transition.
-- Later setting `FloatingPanel=true` produced Quartz layer 3 while preserving discovery. Focus and hit-test references sometimes compared CFEqual; the hit was the AXWindow itself, whose AXWindow attribute was absent. This is not evidence about descendant-to-window traversal.
-
-These observations identify an activation-sensitive fixture precondition, not an AXWindows-only production discovery gap. They do not prove every earlier failure had the same cause. Pending design confirmation: use a persistent panel for deterministic Z-order tests and retain a separate default auto-hiding-panel diagnostic. No production fallback or default fixture change has been applied; extraction into a standalone AppKit TestApp is paused at this decision.
+This identifies an activation-sensitive fixture precondition rather than an AXWindows-only production discovery gap. The transitions were cumulative, so they do not establish independent state behavior or explain every earlier failure. The one-time diagnostic has been retired; the native host's window-state and identity acceptance probes remain.

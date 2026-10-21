@@ -10,6 +10,7 @@ public interface ITextSelectionMonitorFactory
         ITextSelectionMonitorContext context,
         int mainProcessId,
         TextSelectionMonitoringConfiguration configuration,
+        TextSelectionDiagnostics diagnostics,
         Func<TextSelectionObservation, CancellationToken, ValueTask> publish);
 }
 
@@ -118,6 +119,7 @@ internal sealed class UnsupportedTextSelectionMonitorFactory : ITextSelectionMon
         ITextSelectionMonitorContext context,
         int mainProcessId,
         TextSelectionMonitoringConfiguration configuration,
+        TextSelectionDiagnostics diagnostics,
         Func<TextSelectionObservation, CancellationToken, ValueTask> publish) =>
         throw new NotSupportedException("Text-selection monitoring is unavailable on this platform.");
 }

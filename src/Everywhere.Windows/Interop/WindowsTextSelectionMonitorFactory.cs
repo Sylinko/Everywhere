@@ -13,11 +13,11 @@ using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Everywhere.Automation;
 using Everywhere.ProcessIsolation.Automation;
+using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.Utilities;
 using Everywhere.Windows.Automation;
 using Everywhere.Windows.Interop.UIAutomation;
 using Microsoft.Win32.SafeHandles;
-using Serilog;
 using Point = System.Drawing.Point;
 
 namespace Everywhere.Windows.Interop;
@@ -32,8 +32,9 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
         ITextSelectionMonitorContext context,
         int mainProcessId,
         TextSelectionMonitoringConfiguration configuration,
+        TextSelectionDiagnostics diagnostics,
         Func<TextSelectionObservation, CancellationToken, ValueTask> publish) =>
-        new TextSelectionDetector(context, mainProcessId, configuration, publish);
+        new TextSelectionDetector(context, mainProcessId, configuration, diagnostics, publish);
 
     /// <summary>
     /// Detects text selection using mouse hooks.
@@ -43,6 +44,7 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
     private sealed class TextSelectionDetector : ITextSelectionMonitor
     {
         private readonly ITextSelectionMonitorContext _context;
+        private readonly TextSelectionDiagnostics _diagnostics;
         private readonly Task _detectionWorker;
         private readonly Channel<DetectionTrigger> _pendingDetections = Channel.CreateBounded<DetectionTrigger>(
             new BoundedChannelOptions(1)
@@ -159,9 +161,11 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
             ITextSelectionMonitorContext context,
             int mainProcessId,
             TextSelectionMonitoringConfiguration configuration,
+            TextSelectionDiagnostics diagnostics,
             Func<TextSelectionObservation, CancellationToken, ValueTask> publish)
         {
             _context = context;
+            _diagnostics = diagnostics;
             _mainProcessId = checked((uint)mainProcessId);
             _configuration = configuration;
             _publish = publish;
@@ -300,10 +304,18 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
 
         private async Task ProcessDetectionsAsync()
         {
-            await foreach (var trigger in _pendingDetections.Reader.ReadAllAsync().ConfigureAwait(false))
+            try
             {
-                if (Volatile.Read(ref _isDisposed) != 0) break;
-                await BeginDetectAsync(trigger).ConfigureAwait(false);
+                await foreach (var trigger in _pendingDetections.Reader.ReadAllAsync().ConfigureAwait(false))
+                {
+                    if (Volatile.Read(ref _isDisposed) != 0) break;
+                    await BeginDetectAsync(trigger).ConfigureAwait(false);
+                }
+            }
+            catch (Exception exception)
+            {
+                _diagnostics.ReportFailure(HostLogLevel.Error, "detection worker", exception);
+                throw;
             }
         }
 
@@ -347,7 +359,7 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
             }
             catch (Exception ex)
             {
-                Log.ForContext<TextSelectionDetector>().Error(ex, "Error in BeginDetectAsync");
+                _diagnostics.ReportFailure(HostLogLevel.Warning, "detection attempt", ex);
             }
         }
 
@@ -390,6 +402,11 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
                                 if (queryResult?.Snapshot.ProcessId is not { } processId ||
                                     unchecked((uint)processId) != process.Value.ProcessId)
                                 {
+                                    if (queryResult?.Failure is { } failure)
+                                    {
+                                        _diagnostics.ReportFailure(HostLogLevel.Debug, "source query", failure);
+                                    }
+
                                     retention.Dispose();
                                     return (Source: null, ControlType: UIAutomationControlType.Unknown, Text: null);
                                 }
@@ -432,9 +449,7 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
                                                NotSupportedException or
                                                VisualElementProviderException)
                 {
-                    Log.ForContext<TextSelectionDetector>()
-                        .ForContext("Application", process.Value.ProcessName)
-                        .Debug(ex, "Accessibility selection read failed; evaluating clipboard fallback");
+                    _diagnostics.ReportFailure(HostLogLevel.Debug, "accessibility read", ex);
                 }
                 if (cancellationToken.IsCancellationRequested) return;
 
@@ -480,6 +495,10 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
                         if (observation is not null) await observation.DisposeAsync().ConfigureAwait(false);
                     }
                 }
+                else if (source?.Result.Failure is { } failure)
+                {
+                    _diagnostics.ReportFailure(HostLogLevel.Debug, "source query", failure);
+                }
 
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -493,18 +512,7 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
                     TimeoutException or
                     VisualElementProviderException;
 
-                if (isExpected)
-                {
-                    Log.ForContext<TextSelectionDetector>()
-                        .ForContext("Application", process?.ProcessName)
-                        .Debug(ex, "Text-selection detection could not complete during {Phase}", phase);
-                }
-                else
-                {
-                    Log.ForContext<TextSelectionDetector>()
-                        .ForContext("Application", process?.ProcessName)
-                        .Warning(ex, "Unexpected text-selection failure during {Phase}", phase);
-                }
+                _diagnostics.ReportFailure(isExpected ? HostLogLevel.Debug : HostLogLevel.Warning, phase, ex);
             }
             finally
             {

@@ -2,8 +2,8 @@ using PixelPoint = Avalonia.PixelPoint;
 using System.Threading.Channels;
 using Everywhere.Automation;
 using Everywhere.ProcessIsolation.Automation;
+using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.Utilities;
-using Serilog;
 
 namespace Everywhere.Mac.Interop;
 
@@ -17,8 +17,9 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
         ITextSelectionMonitorContext context,
         int mainProcessId,
         TextSelectionMonitoringConfiguration configuration,
+        TextSelectionDiagnostics diagnostics,
         Func<TextSelectionObservation, CancellationToken, ValueTask> publish) =>
-        new TextSelectionDetector(context, mainProcessId, configuration, publish);
+        new TextSelectionDetector(context, mainProcessId, configuration, diagnostics, publish);
 
     /// <summary>
     /// Detects text selection using mouse hooks.
@@ -28,6 +29,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
     private sealed class TextSelectionDetector : ITextSelectionMonitor
     {
         private readonly ITextSelectionMonitorContext _context;
+        private readonly TextSelectionDiagnostics _diagnostics;
         private readonly ReusableCancellationTokenSource _detectionCancellation = new();
         private readonly Task _detectionWorker;
         private readonly int _mainProcessId;
@@ -69,9 +71,11 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
             ITextSelectionMonitorContext context,
             int mainProcessId,
             TextSelectionMonitoringConfiguration configuration,
+            TextSelectionDiagnostics diagnostics,
             Func<TextSelectionObservation, CancellationToken, ValueTask> publish)
         {
             _context = context;
+            _diagnostics = diagnostics;
             _mainProcessId = mainProcessId;
             _configuration = configuration;
             _publish = publish;
@@ -179,7 +183,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
             }
             catch (Exception ex)
             {
-                Log.ForContext<TextSelectionDetector>().Error(ex, "Failed to get frontmost application");
+                _diagnostics.ReportFailure(HostLogLevel.Warning, "frontmost application", ex);
                 return;
             }
 
@@ -198,10 +202,18 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
 
         private async Task ProcessDetectionsAsync()
         {
-            await foreach (var trigger in _pendingDetections.Reader.ReadAllAsync().ConfigureAwait(false))
+            try
             {
-                if (Volatile.Read(ref _isDisposed) != 0) break;
-                await DetectAsync(trigger, trigger.CancellationToken).ConfigureAwait(false);
+                await foreach (var trigger in _pendingDetections.Reader.ReadAllAsync().ConfigureAwait(false))
+                {
+                    if (Volatile.Read(ref _isDisposed) != 0) break;
+                    await DetectAsync(trigger, trigger.CancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception exception)
+            {
+                _diagnostics.ReportFailure(HostLogLevel.Error, "detection worker", exception);
+                throw;
             }
         }
 
@@ -262,18 +274,18 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
                         if (observation is not null) await observation.DisposeAsync().ConfigureAwait(false);
                     }
                 }
+                else if (source?.Result.Failure is { } failure)
+                {
+                    _diagnostics.ReportFailure(HostLogLevel.Debug, "source query", failure);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
             }
             catch (Exception ex)
             {
-                if (ex is not (UnauthorizedAccessException or TimeoutException or NotSupportedException or VisualElementProviderException))
-                {
-                    Log.ForContext<TextSelectionDetector>()
-                        .ForContext("Application", trigger.ApplicationId)
-                        .Warning(ex, "Unexpected text-selection failure during {Phase}", phase);
-                }
+                var isExpected = ex is UnauthorizedAccessException or TimeoutException or NotSupportedException or VisualElementProviderException;
+                _diagnostics.ReportFailure(isExpected ? HostLogLevel.Debug : HostLogLevel.Warning, phase, ex);
             }
             finally
             {
@@ -306,7 +318,15 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
                         {
                             var request = new VisualElementQueryRequest(VisualElementFields.Id | VisualElementFields.ProcessId, 0);
                             var result = backend.Query(retention, VisualElementLocator.Focused, VisualElementResolution.Direct, request);
-                            if (result?.Snapshot.ProcessId != processId) return default;
+                            if (result?.Snapshot.ProcessId != processId)
+                            {
+                                if (result?.Failure is { } failure)
+                                {
+                                    _diagnostics.ReportFailure(HostLogLevel.Debug, "source query", failure);
+                                }
+
+                                return default;
+                            }
 
                             token.ThrowIfCancellationRequested();
                             var text = result.Element.GetSelectedText(TextSelectionTextBudget.MaximumNativeReadCharacters);
@@ -323,7 +343,15 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
                             for (var index = 0; index < MaximumSelectedTextChildProbes && children.MoveNext(); index++)
                             {
                                 var child = children.Current;
-                                if (!child.IsSuccess) break;
+                                if (!child.IsSuccess)
+                                {
+                                    if (child.Failure is { } failure)
+                                    {
+                                        _diagnostics.ReportFailure(HostLogLevel.Debug, "selection child query", failure);
+                                    }
+
+                                    break;
+                                }
                                 text = child.Result.Element.GetSelectedText(TextSelectionTextBudget.MaximumNativeReadCharacters);
                                 if (string.IsNullOrEmpty(text)) continue;
                                 retention.Retain(child.Result.Element);
@@ -350,7 +378,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or TimeoutException or NotSupportedException or VisualElementProviderException)
             {
-                // Log.ForContext<TextSelectionDetector>().Debug(ex, "Could not read selected text through the macOS Accessibility backend");
+                _diagnostics.ReportFailure(HostLogLevel.Debug, "accessibility read", ex);
             }
 
             using var applicationElement = AXUIElement.ElementFromPid(processId);
@@ -366,7 +394,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
             return observed;
         }
 
-        private static async ValueTask<string?> GetTextViaClipboardAsync(
+        private async ValueTask<string?> GetTextViaClipboardAsync(
             int pid,
             long mouseDownClipboardSequence,
             CancellationToken cancellationToken)
@@ -402,8 +430,9 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
             {
                 throw;
             }
-            catch
+            catch (Exception exception)
             {
+                _diagnostics.ReportFailure(HostLogLevel.Debug, "clipboard fallback", exception);
                 return null;
             }
             finally
@@ -471,7 +500,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
             return current.HotSpot == iBeam.HotSpot;
         }
 
-        private static bool TryReadClipboard(out string? text)
+        private bool TryReadClipboard(out string? text)
         {
             try
             {
@@ -483,14 +512,15 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
                 text = contentString;
                 return true;
             }
-            catch
+            catch (Exception exception)
             {
+                _diagnostics.ReportFailure(HostLogLevel.Debug, "clipboard read", exception);
                 text = null;
                 return false;
             }
         }
 
-        private static void WriteClipboard(string content)
+        private void WriteClipboard(string content)
         {
             if (string.IsNullOrEmpty(content))
             {
@@ -509,11 +539,11 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
             }
             catch (Exception ex)
             {
-                Log.ForContext<MacTextSelectionMonitorFactory>().Information(ex, "Failed to write clipboard.");
+                _diagnostics.ReportFailure(HostLogLevel.Warning, "clipboard restore", ex);
             }
         }
 
-        private static void ClearClipboard()
+        private void ClearClipboard()
         {
             try
             {
@@ -522,7 +552,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
             }
             catch (Exception ex)
             {
-                Log.ForContext<MacTextSelectionMonitorFactory>().Information(ex, "Failed to clear clipboard.");
+                _diagnostics.ReportFailure(HostLogLevel.Warning, "clipboard clear", ex);
             }
         }
 

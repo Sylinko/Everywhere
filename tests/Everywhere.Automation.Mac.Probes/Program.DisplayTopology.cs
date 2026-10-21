@@ -17,8 +17,8 @@ public static partial class Program
         var request = new VisualElementQueryRequest(VisualElementFields.Id | VisualElementFields.Type | VisualElementFields.Name | VisualElementFields.Bounds, 0);
         var oldResult = backend.Query(retention, VisualElementLocator.Default, VisualElementResolution.Screen, request) ??
             throw new InvalidOperationException("The topology probe did not resolve the primary Screen.");
-        var oldElement = oldResult.Element as ScreenVisualElement ??
-            throw new InvalidOperationException("The topology probe did not receive a ScreenVisualElement.");
+        var oldElement = oldResult.Element as CGDisplayVisualElement ??
+            throw new InvalidOperationException("The topology probe did not receive a CGDisplayVisualElement.");
 
         NSNotificationCenter.DefaultCenter.PostNotificationName(
             NSApplication.DidChangeScreenParametersNotification.ToString(),
@@ -28,8 +28,8 @@ public static partial class Program
         var staleResult = oldElement.Query(request);
         var newResult = backend.Query(retention, VisualElementLocator.Default, VisualElementResolution.Screen, request) ??
             throw new InvalidOperationException("The topology probe did not resolve the replacement primary Screen.");
-        var newElement = newResult.Element as ScreenVisualElement ??
-            throw new InvalidOperationException("The topology probe replacement was not a ScreenVisualElement.");
+        var newElement = newResult.Element as CGDisplayVisualElement ??
+            throw new InvalidOperationException("The topology probe replacement was not a CGDisplayVisualElement.");
 
         Require(!ReferenceEquals(before, after), "The screen-parameters notification did not replace the topology snapshot.");
         Require(after.Generation == checked(before.Generation + 1), "The screen-parameters notification did not advance the topology generation exactly once.");

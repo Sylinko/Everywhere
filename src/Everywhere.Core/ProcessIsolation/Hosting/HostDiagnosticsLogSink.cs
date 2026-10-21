@@ -22,6 +22,11 @@ internal sealed class HostDiagnosticsLogSink(ProcessRole role) : IHostDiagnostic
             logger = logger.ForContext("HostException", notification.ExceptionText);
         }
 
+        if (notification.Properties is { Count: > 0 } properties)
+        {
+            logger = logger.ForContext("HostProperties", properties, destructureObjects: true);
+        }
+
         logger.Write(ToSerilogLevel(notification.Level), "{HostMessage}", notification.Message);
         return ValueTask.CompletedTask;
     }

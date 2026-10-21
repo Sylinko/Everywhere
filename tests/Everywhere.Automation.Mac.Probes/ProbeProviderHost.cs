@@ -101,14 +101,6 @@ internal static class ProbeProviderHost
             {
                 switch (command)
                 {
-                    case "inspect-panel":
-                    case "panel-key":
-                    case "panel-deactivate":
-                    case "panel-accessible":
-                    case "panel-floating":
-                    case "panel-persistent":
-                        QueueProviderAction(() => InspectPanel(command));
-                        break;
                     case "block":
                         _providerGate.Reset();
                         NSApplication.SharedApplication.BeginInvokeOnMainThread(() =>
@@ -243,35 +235,6 @@ internal static class ProbeProviderHost
 
             window.OrderFrontRegardless();
             WriteStatus($"ORDERED\t{name}\t{GetWindowId(window)}");
-        }
-
-        private void InspectPanel(string command)
-        {
-            var panel = _panel ?? throw new InvalidOperationException("Prepare the window set before inspecting the panel.");
-            if (command == "panel-key") panel.MakeKeyAndOrderFront(null);
-            if (command == "panel-deactivate") NSApplication.SharedApplication.Deactivate();
-            if (command == "panel-accessible") panel.AccessibilityElement = true;
-            if (command == "panel-floating") panel.FloatingPanel = true;
-            if (command == "panel-persistent") panel.HidesOnDeactivate = false;
-            var frame = panel.Frame;
-            var observation = new
-            {
-                Command = command,
-                WindowId = GetWindowId(panel),
-                IsVisible = panel.IsVisible,
-                IsKey = panel.IsKeyWindow,
-                IsMain = panel.IsMainWindow,
-                IsApplicationActive = NSApplication.SharedApplication.Active,
-                IsAccessibilityElement = panel.AccessibilityElement,
-                IsAccessibilityHidden = panel.AccessibilityHidden,
-                Role = panel.AccessibilityRole,
-                Subrole = panel.AccessibilitySubrole,
-                HasHideOnDeactivate = panel.HidesOnDeactivate,
-                IsFloating = panel.FloatingPanel,
-                X = (double)(frame.X + frame.Width / 2),
-                Y = (double)(NSScreen.Screens[0].Frame.Height - frame.Y - frame.Height / 2),
-            };
-            WriteStatus("PANEL\t" + System.Text.Json.JsonSerializer.Serialize(observation));
         }
 
         private void HideSecondaryWindow()
