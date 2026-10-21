@@ -56,7 +56,7 @@ remain the original NuGet assemblies. The
 GetConverter cache call to weak-key storage for collectible types. Its original factory delegate is
 unchanged: no parameter parser or result converter is copied into Everywhere. Both donors require
 review when SK 1.75.0 or the checked method shapes change. See the
-[plugin contract](PluginEngine/01-Specification.md#chat-tool-registration).
+[plugin contract](Modding/01-Specification.md#chat-tool-registration).
 
 For replacement adapters, copy the complete implementation from the pinned upstream
 commit before making changes. Retain original cases, helper calls, ownership rules

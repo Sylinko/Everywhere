@@ -1,6 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <Compile Include="../Entry.cs" Link="Entry.cs" />
-    <ProjectReference Include="../../../../src/Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj" />
-  </ItemGroup>
-</Project>

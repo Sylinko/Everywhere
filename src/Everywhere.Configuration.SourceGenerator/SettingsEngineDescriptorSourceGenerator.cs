@@ -9,12 +9,12 @@ using Microsoft.CodeAnalysis;
 namespace Everywhere.Configuration.SourceGenerator;
 
 /// <summary>
-/// Generates SettingsEngine descriptor metadata for application settings and explicitly declared plugin roots.
+/// Generates SettingsEngine descriptor metadata for application settings and explicitly declared mod roots.
 /// </summary>
 /// <remarks>
 /// The generated provider mirrors <c>ReflectionSettingsDescriptorProvider</c>
 /// metadata without emitting reflection-based property accessors. The application root is automatic;
-/// plugin providers opt in with <c>GeneratedSettingsDescriptorAttribute</c>.
+/// mod providers opt in with <c>GeneratedSettingsDescriptorAttribute</c>.
 /// </remarks>
 [Generator(LanguageNames.CSharp)]
 public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenerator
@@ -57,12 +57,12 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             return new ProviderModel("Settings.GeneratedDescriptorProvider.g.cs", null, null, BuildModels(compilation, root, token));
         }).WithTrackingName("HostDescriptorModel");
 
-        var plugins = context.SyntaxProvider.ForAttributeWithMetadataName(
+        var mods = context.SyntaxProvider.ForAttributeWithMetadataName(
             "Everywhere.Configuration.GeneratedSettingsDescriptorAttribute",
             static (node, _) => node is TypeDeclarationSyntax,
             static (attributeContext, token) => AnalyzeProvider(attributeContext, token));
 
-        context.RegisterSourceOutput(plugins, static (production, result) =>
+        context.RegisterSourceOutput(mods, static (production, result) =>
         {
             foreach (var diagnostic in result.Diagnostics)
             {
@@ -70,11 +70,11 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             }
         });
 
-        var pluginModels = plugins.Select(static (result, _) => result.Model).WithTrackingName("PluginDescriptorModel");
+        var modModels = mods.Select(static (result, _) => result.Model).WithTrackingName("ModDescriptorModel");
         var hostSources = host.Select(static (model, token) => GenerateProvider(model, token)).WithTrackingName("HostDescriptorSource");
-        var pluginSources = pluginModels.Select(static (model, token) => GenerateProvider(model, token)).WithTrackingName("PluginDescriptorSource");
+        var modSources = modModels.Select(static (model, token) => GenerateProvider(model, token)).WithTrackingName("ModDescriptorSource");
         context.RegisterSourceOutput(hostSources, static (production, source) => Emit(production, source));
-        context.RegisterSourceOutput(pluginSources, static (production, source) => Emit(production, source));
+        context.RegisterSourceOutput(modSources, static (production, source) => Emit(production, source));
     }
 
     /// <summary>

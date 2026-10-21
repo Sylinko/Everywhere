@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>Shared mod manifests, host references and compatibility rules for Everywhere.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(MSBuildSDKsPath)/../PortableRuntimeIdentifierGraph.json"
+                      LogicalName="Everywhere.Modding.Packaging.PortableRuntimeIdentifierGraph.json"/>
+    <ProjectReference Include="../Everywhere.Modding.Abstractions/Everywhere.Modding.Abstractions.csproj"/>
+    <ProjectReference Include="../Everywhere.Versioning/Everywhere.Versioning.csproj"/>
+    <PackageReference Include="NuGet.Frameworks"/>
+  </ItemGroup>
+
+</Project>

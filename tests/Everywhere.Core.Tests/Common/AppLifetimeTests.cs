@@ -6,7 +6,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Initialization;
-using Everywhere.Plugin.Hosting.Services;
+using Everywhere.Modding.Hosting.Services;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 

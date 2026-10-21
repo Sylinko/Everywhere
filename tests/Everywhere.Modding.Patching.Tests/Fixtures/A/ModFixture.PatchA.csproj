@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="../Entry.cs" Link="Entry.cs" />
+    <ProjectReference Include="../../../../src/Everywhere.Modding.Abstractions/Everywhere.Modding.Abstractions.csproj" />
+    <PackageReference Include="MonoMod.RuntimeDetour" VersionOverride="25.3.6" />
+  </ItemGroup>
+</Project>

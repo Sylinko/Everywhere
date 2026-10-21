@@ -78,7 +78,7 @@
     <ProjectReference Include="..\..\3rd\Motion.Avalonia\src\Motion.Avalonia\Motion.Avalonia.csproj"/>
     <ProjectReference Include="..\..\3rd\shad-ui\src\ShadUI\ShadUI.csproj"/>
     <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj"/>
-    <ProjectReference Include="..\Everywhere.Plugin.Hosting\Everywhere.Plugin.Hosting.csproj"/>
+    <ProjectReference Include="..\Everywhere.Modding.Hosting\Everywhere.Modding.Hosting.csproj"/>
     <ProjectReference Include="..\..\patches\Everywhere.Patches.Contracts\Everywhere.Patches.Contracts.csproj"/>
     <ProjectReference Include="..\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>

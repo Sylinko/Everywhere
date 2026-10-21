@@ -28,9 +28,6 @@
     <Project Path="3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
     <Project Path="3rd/semantic-kernel-patch/Connectors.MistralAI/Connectors.MistralAI.csproj" />
   </Folder>
-  <Folder Name="/plugins/samples/">
-    <Project Path="plugins/samples/Everywhere.Plugin.Sample/Everywhere.Plugin.Sample.csproj" />
-  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
@@ -50,6 +47,15 @@
   <Folder Name="/I18N/">
     <Project Path="src/Everywhere.I18N.Abstractions/Everywhere.I18N.Abstractions.csproj" />
     <Project Path="src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" />
+  </Folder>
+  <Folder Name="/modding/">
+    <Project Path="src/Everywhere.Modding.Abstractions/Everywhere.Modding.Abstractions.csproj" />
+    <Project Path="src/Everywhere.Modding.Hosting/Everywhere.Modding.Hosting.csproj" />
+    <Project Path="src/Everywhere.Modding.Packaging/Everywhere.Modding.Packaging.csproj" />
+    <Project Path="src/Everywhere.Modding.Sdk/Everywhere.Modding.Sdk.csproj" />
+  </Folder>
+  <Folder Name="/mods/samples/">
+    <Project Path="mods/samples/Everywhere.Mods.Sample/Everywhere.Mods.Sample.csproj" />
   </Folder>
   <Folder Name="/patches/">
     <File Path="patches/Directory.Build.props" />
@@ -76,10 +82,10 @@
   <Folder Name="/tests/">
     <File Path="tests/Directory.Packages.props" />
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
-    <Project Path="tests/Everywhere.Plugin.Tests/Everywhere.Plugin.Tests.csproj" />
     <Project Path="tests/Everywhere.AI.Tests/Everywhere.AI.Tests.csproj" />
     <Project Path="tests/Everywhere.Automation.Tests/Everywhere.Automation.Tests.csproj" />
     <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
+    <Project Path="tests/Everywhere.Modding.Tests/Everywhere.Modding.Tests.csproj" />
     <Project Path="tests/Everywhere.Patches.SemanticKernel.Tests/Everywhere.Patches.SemanticKernel.Tests.csproj" />
     <Project Path="tests/Everywhere.ProcessIsolation.Tests/Everywhere.ProcessIsolation.Tests.csproj" />
     <Project Path="tests/Everywhere.Terminal.TestApp/Everywhere.Terminal.TestApp.csproj" />
@@ -103,11 +109,6 @@
     <File Path="tools/visual_tree_debugger.html" />
   </Folder>
   <Project Path="src/Everywhere.Abstractions/Everywhere.Abstractions.csproj" />
-  <Project Path="src/Everywhere.Versioning/Everywhere.Versioning.csproj" />
-  <Project Path="src/Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj" />
-  <Project Path="src/Everywhere.Plugin.Hosting/Everywhere.Plugin.Hosting.csproj" />
-  <Project Path="src/Everywhere.Plugin.Packaging/Everywhere.Plugin.Packaging.csproj" />
-  <Project Path="src/Everywhere.Plugin.Sdk/Everywhere.Plugin.Sdk.csproj" />
   <Project Path="src/Everywhere.Automation/Everywhere.Automation.csproj" />
   <Project Path="src/Everywhere.Cloud/Everywhere.Cloud.csproj" />
   <Project Path="src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj" />
@@ -118,6 +119,7 @@
   <Project Path="src/Everywhere.ProcessIsolation.SourceGenerator/Everywhere.ProcessIsolation.SourceGenerator.csproj" />
   <Project Path="src/Everywhere.Prompting/Everywhere.Prompting.csproj" />
   <Project Path="src/Everywhere.Terminal/Everywhere.Terminal.csproj" />
+  <Project Path="src/Everywhere.Versioning/Everywhere.Versioning.csproj" />
   <Project Path="src/Everywhere.Watchdog/Everywhere.Watchdog.csproj" />
   <Project Path="src/Everywhere.Windows/Everywhere.Windows.csproj" />
   <Project Path="src/Everywhere.Windows.Interop/Everywhere.Windows.Interop.csproj" />
