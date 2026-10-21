@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using System.Reflection;
 using System.Runtime.Loader;
 using Microsoft.Build.Framework;
@@ -8,10 +7,16 @@ using Task = Microsoft.Build.Utilities.Task;
 
 namespace Everywhere.BuildTask.Patcher;
 
-public partial class WeaveAssembliesTask : Task
+public class WeaveAssembliesTask : Task
 {
     [Required]
     public ITaskItem[] References { get; set; } = [];
+
+    /// <summary>
+    /// Implementation assemblies selected by the SDK for the current build.
+    /// </summary>
+    [Required]
+    public ITaskItem[] RuntimeAssemblies { get; set; } = [];
 
     [Required]
     public ITaskItem[] PatchAssemblies { get; set; } = [];
@@ -35,7 +40,7 @@ public partial class WeaveAssembliesTask : Task
             }
 
             // Map target assembly name → patch DLL path, using PatchTargets metadata
-            var patchMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var patchMap = new Dictionary<string, ITaskItem>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var patchAssembly in PatchAssemblies)
             {
@@ -48,44 +53,59 @@ public partial class WeaveAssembliesTask : Task
 
                 foreach (var target in patchTargets.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                 {
-                    patchMap[target] = patchAssembly.ItemSpec;
+                    patchMap[target] = patchAssembly;
                 }
             }
 
             var removed = new List<ITaskItem>();
             var added = new List<ITaskItem>();
 
-            // Gather dependency directories from references and patch assemblies.
-            // Also include lib/ counterparts of ref/ directories, so MonoMod can
-            // resolve runtime assemblies (ref/ assemblies contain only stubs).
-            var depDirs = References
-                .Select(r => Path.GetDirectoryName(r.ItemSpec))
-                .Concat(PatchAssemblies.Select(p => Path.GetDirectoryName(p.ItemSpec)))
-                .Where(d => !string.IsNullOrWhiteSpace(d) && Directory.Exists(d))
+            // Runtime assets have already been selected for the current TFM/RID and
+            // conflict-resolved by the SDK. Never infer implementation paths from ref/ paths.
+            var runtimeAssemblies = RuntimeAssemblies
+                .Where(item => string.Equals(Path.GetExtension(item.ItemSpec), ".dll", StringComparison.OrdinalIgnoreCase))
+                .DistinctBy(item => Path.GetFullPath(item.ItemSpec))
+                .ToLookup(item => Path.GetFileNameWithoutExtension(item.ItemSpec), StringComparer.OrdinalIgnoreCase);
+            var depDirs = RuntimeAssemblies
+                .Concat(References)
+                .Concat(PatchAssemblies)
+                .Select(item => Path.GetDirectoryName(item.ItemSpec))
                 .OfType<string>()
+                .Where(Directory.Exists)
                 .Distinct()
-                .ToList();
-
-            // For any ref/ directory, also add the corresponding lib/ directory
-            foreach (var dir in depDirs.ToArray())
-            {
-                var libDir = TryGetLibDirectory(dir);
-                if (libDir != null && !depDirs.Contains(libDir))
-                {
-                    depDirs.Add(libDir);
-                }
-            }
+                .ToArray();
 
             foreach (var reference in References)
             {
                 var refName = Path.GetFileNameWithoutExtension(reference.ItemSpec);
-                if (patchMap.TryGetValue(refName, out var patchDllPath))
+                if (patchMap.TryGetValue(refName, out var patchAssembly))
                 {
-                    // If the reference points to a ref/ assembly (e.g., NuGet ref/net8.0/),
-                    // resolve the corresponding lib/ assembly instead. Ref assemblies contain
-                    // stub method bodies and may include injected dummy methods (e.g., Avalonia's
-                    // NotClientImplementable enforcement) that break runtime behavior.
-                    var inputDllPath = ResolveLibAssembly(reference.ItemSpec);
+                    var patchDllPath = patchAssembly.ItemSpec;
+                    var frameworkName = reference.GetMetadata("FrameworkReferenceName");
+                    if (!string.IsNullOrEmpty(frameworkName))
+                    {
+                        // Platform SDK native registration tables may contain metadata tokens
+                        // from the original assembly. Cecil writing does not preserve those IDs.
+                        Log.LogError($"Weaving framework reference '{frameworkName}' is not supported: native SDK components may depend on stable metadata tokens.");
+                        continue;
+                    }
+                    var candidates = runtimeAssemblies[refName].ToArray();
+                    if (candidates.Length != 1)
+                    {
+                        Log.LogError($"Expected one SDK-selected runtime assembly for '{refName}', found {candidates.Length}: " +
+                            string.Join(", ", candidates.Select(item => item.ItemSpec)));
+                        continue;
+                    }
+
+                    var runtimeAssembly = candidates[0];
+                    var inputDllPath = runtimeAssembly.ItemSpec;
+                    var referenceIdentity = AssemblyName.GetAssemblyName(reference.ItemSpec);
+                    var runtimeIdentity = AssemblyName.GetAssemblyName(inputDllPath);
+                    if (!string.Equals(referenceIdentity.FullName, runtimeIdentity.FullName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log.LogError($"Runtime assembly identity '{runtimeIdentity}' does not match reference '{referenceIdentity}'.");
+                        continue;
+                    }
 
                     var outputDllPath = Path.Combine(OutputDirectory, Path.GetFileName(reference.ItemSpec));
 
@@ -106,7 +126,9 @@ public partial class WeaveAssembliesTask : Task
                     }
 
                     var taskAssemblyPath = typeof(WeaveAssembliesTask).Assembly.Location;
-                    if (IsOutputUpToDate(outputDllPath, inputDllPath, patchDllPath, taskAssemblyPath))
+                    var inputFingerprint = CreateInputFingerprint(inputDllPath, patchDllPath, taskAssemblyPath,
+                        typeof(MonoModder).Assembly.Location, typeof(Mono.Cecil.ModuleDefinition).Assembly.Location);
+                    if (IsOutputUpToDate(outputDllPath, inputFingerprint))
                     {
                         Log.LogMessage(MessageImportance.High, $"[Patcher] Up-to-date: {outputDllPath}");
                     }
@@ -122,6 +144,12 @@ public partial class WeaveAssembliesTask : Task
                         }
 
                         modder.Read();
+                        if (modder.Module.Assembly.CustomAttributes.Any(attribute =>
+                                attribute.AttributeType.FullName == "System.Runtime.CompilerServices.ReferenceAssemblyAttribute"))
+                        {
+                            Log.LogError($"The SDK-selected patch input is a reference assembly: {inputDllPath}");
+                            continue;
+                        }
                         modder.MapDependencies();
 
                         modder.ReadMod(patchDllPath);
@@ -165,13 +193,16 @@ public partial class WeaveAssembliesTask : Task
                         {
                             AssemblyLoadContext.Default.Resolving -= ResolveRuleAssembly;
                         }
+                        // A failed write must never leave a valid stamp beside a partial DLL.
+                        File.Delete(outputDllPath + ".inputs");
                         modder.Write();
+                        File.WriteAllText(outputDllPath + ".inputs", inputFingerprint);
 
                         Log.LogMessage(MessageImportance.High, $"[Patcher] Wrote patched DLL: {outputDllPath}");
                     }
 
-                    removed.Add(CloneItem(reference));
-                    added.Add(CloneItem(reference, outputDllPath));
+                    removed.Add(CloneItem(runtimeAssembly));
+                    added.Add(CloneItem(runtimeAssembly, outputDllPath));
                 }
             }
 
@@ -194,72 +225,20 @@ public partial class WeaveAssembliesTask : Task
         return clone;
     }
 
-    private static bool IsOutputUpToDate(string outputPath, params string[] inputPaths)
+    private static bool IsOutputUpToDate(string outputPath, string inputFingerprint)
     {
-        if (!File.Exists(outputPath))
-        {
-            return false;
-        }
-
-        var outputTime = File.GetLastWriteTimeUtc(outputPath);
-        foreach (var inputPath in inputPaths)
-        {
-            if (string.IsNullOrWhiteSpace(inputPath))
-            {
-                continue;
-            }
-
-            if (!File.Exists(inputPath) || File.GetLastWriteTimeUtc(inputPath) > outputTime)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        var stampPath = outputPath + ".inputs";
+        return File.Exists(outputPath) && File.Exists(stampPath) && File.ReadAllText(stampPath) == inputFingerprint;
     }
 
-    /// <summary>
-    /// If <paramref name="refAssemblyPath"/> is inside a NuGet <c>ref/</c> folder,
-    /// returns the corresponding <c>lib/</c> assembly path. Otherwise returns the
-    /// original path unchanged.
-    /// </summary>
-    private string ResolveLibAssembly(string refAssemblyPath)
+    private static string CreateInputFingerprint(params string[] inputPaths)
     {
-        if (!RefAssemblyPathRegex().IsMatch(refAssemblyPath))
-            return refAssemblyPath;
-
-        var sep = Path.DirectorySeparatorChar;
-        var refSeg = $"{sep}ref{sep}";
-        var libPath = refAssemblyPath.Replace(refSeg, $"{sep}lib{sep}");
-
-        if (File.Exists(libPath))
+        // Paths matter as well as timestamps: a TFM/RID or package change may select
+        // a different implementation whose timestamp is older than the cached output.
+        return string.Join("\n", inputPaths.Select(path =>
         {
-            Log.LogMessage(MessageImportance.High,
-                $"[Patcher] Resolved ref/ \u2192 lib/ assembly: {Path.GetFileName(refAssemblyPath)}");
-            return libPath;
-        }
-
-        Log.LogWarning($"[Patcher] ref/ assembly detected but no lib/ counterpart found: {refAssemblyPath}");
-        return refAssemblyPath;
+            var file = new FileInfo(path);
+            return $"{file.FullName}|{file.Length}|{file.LastWriteTimeUtc.Ticks}";
+        }));
     }
-
-    /// <summary>
-    /// If <paramref name="dir"/> is a NuGet <c>ref/tfm</c> directory,
-    /// returns the corresponding <c>lib/tfm</c> directory path.
-    /// </summary>
-    private static string? TryGetLibDirectory(string dir)
-    {
-        var sep = Path.DirectorySeparatorChar;
-        var refSeg = $"{sep}ref{sep}";
-        var idx = dir.LastIndexOf(refSeg, StringComparison.OrdinalIgnoreCase);
-        if (idx < 0) return null;
-
-        var libDir = string.Concat(dir.AsSpan(0, idx), $"{sep}lib{sep}", dir.AsSpan(idx + refSeg.Length));
-        return Directory.Exists(libDir) ? libDir : null;
-    }
-
-    // Regex to match NuGet package paths containing a ref/ segment:
-    //   .../packages/packageName/version/ref/tfm/Assembly.dll
-    [GeneratedRegex(@"[/\\]ref[/\\][^/\\]+[/\\]", RegexOptions.IgnoreCase | RegexOptions.Compiled, "zh-CN")]
-    private static partial Regex RefAssemblyPathRegex();
 }

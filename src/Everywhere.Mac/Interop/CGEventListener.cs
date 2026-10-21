@@ -1,5 +1,8 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using CoreFoundation;
 using Everywhere.Utilities;
+using ObjCRuntime;
 
 namespace Everywhere.Mac.Interop;
 
@@ -99,7 +102,7 @@ public class CGEventListener : IDisposable
             _runLoopSource = _eventTap.CreateRunLoopSource() ??
                 throw new InvalidOperationException("The macOS CoreGraphics event tap run-loop source could not be created.");
             _runLoop = CFRunLoop.Current;
-            _shutdownSource = new ShutdownSource(_runLoop);
+            _shutdownSource = ShutdownSource.Create(_runLoop);
             _runLoop.AddSource(_runLoopSource, CFRunLoop.ModeDefault);
             _runLoop.AddSource(_shutdownSource, CFRunLoop.ModeDefault);
         }
@@ -126,6 +129,8 @@ public class CGEventListener : IDisposable
                 if (_shutdownSource is { } shutdownSource) runLoop.RemoveSource(shutdownSource, CFRunLoop.ModeDefault);
             }
             _eventTap?.Invalidate();
+            // Stop native callbacks before CFRunLoopSourceCustom releases its GCHandle.
+            _shutdownSource?.Invalidate();
             DisposeHelper.DisposeToDefault(ref _runLoopSource);
             DisposeHelper.DisposeToDefault(ref _shutdownSource);
             DisposeHelper.DisposeToDefault(ref _eventTap);
@@ -173,12 +178,65 @@ public class CGEventListener : IDisposable
         return cgEventRef;
     }
 
-    private sealed class ShutdownSource(CFRunLoop runLoop) : CFRunLoopSourceCustom
+    private sealed class ShutdownSource : CFRunLoopSourceCustom
     {
+        private CFRunLoop? _runLoop;
+
+        // The SDK constructor passes a null handle to a validating base constructor.
+        // Create performs its initialization with a valid native handle instead.
+        private ShutdownSource() { }
+
+        /// <summary>
+        /// Creates the shutdown source without running the SDK's custom-source
+        /// constructor. Remove and invalidate it before disposing its callback root.
+        /// </summary>
+        public static unsafe ShutdownSource Create(CFRunLoop runLoop)
+        {
+            var source = (ShutdownSource)RuntimeHelpers.GetUninitializedObject(typeof(ShutdownSource));
+            var handle = IntPtr.Zero;
+            try
+            {
+                // GetUninitializedObject also skips our instance field initialization.
+                source._runLoop = runLoop;
+                ref var callbackHandle = ref GetCallbackHandle(source);
+                callbackHandle = GCHandle.Alloc(source);
+                handle = CFInterop.CreateRunLoopSource(GCHandle.ToIntPtr(callbackHandle), &Perform);
+                if (handle == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException("The macOS event listener shutdown source could not be created.");
+                }
+
+                // Preserve the SDK's handle validation and ownership contract without
+                // executing CFRunLoopSourceCustom's defective zero-handle bootstrap.
+                InitializeBase(source, handle, owns: true);
+                return source;
+            }
+            catch
+            {
+                // Before ownership transfers, the native source and callback handle
+                // are separate resources. Dispose frees the SDK field even on failure.
+                if (handle != IntPtr.Zero && source.Handle == IntPtr.Zero) CFInterop.CFRelease(handle);
+                source.Dispose();
+                throw;
+            }
+        }
+
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "gch")]
+        private static extern ref GCHandle GetCallbackHandle(CFRunLoopSourceCustom source);
+
+        [UnsafeAccessor(UnsafeAccessorKind.Method, Name = ".ctor")]
+        private static extern void InitializeBase(CFRunLoopSource source, NativeHandle handle, bool owns);
+
+        [UnmanagedCallersOnly]
+        private static void Perform(nint info)
+        {
+            if (GCHandle.FromIntPtr(info).Target is ShutdownSource source) source.OnPerform();
+        }
+
         protected override void OnSchedule(CFRunLoop loop, NSString mode) { }
 
         protected override void OnCancel(CFRunLoop loop, NSString mode) { }
 
-        protected override void OnPerform() => runLoop.Stop();
+        protected override void OnPerform() => _runLoop?.Stop();
     }
 }

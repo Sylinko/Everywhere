@@ -72,6 +72,7 @@
   <Folder Name="/tests/">
     <File Path="tests/Directory.Packages.props" />
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
+    <Project Path="tests/Everywhere.BuildTask.Patcher.Tests/Everywhere.BuildTask.Patcher.Tests.csproj" />
     <Project Path="tests/Everywhere.AI.Tests/Everywhere.AI.Tests.csproj" />
     <Project Path="tests/Everywhere.Automation.Tests/Everywhere.Automation.Tests.csproj" />
     <Project Path="tests/Everywhere.AvaloniaDesignerHost/Everywhere.AvaloniaDesignerHost.csproj" />

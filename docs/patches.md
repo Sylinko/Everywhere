@@ -40,7 +40,7 @@ This evolution abandons runtime injection in favor of physically rewriting the t
 
 1.  **The Weaving Tool:** We introduced a lightweight, cross-platform CLI tool (`Everywhere.BuildTask.Patcher`).
 2.  **Declarative Patching:** Patch logic is now written as standard C\# in isolated Donor projects (e.g., `Everywhere.Patches.Avalonia.Controls`). Instead of Harmony's Prefix/Postfix, we utilize `[MonoModPatch]` and `[MonoModReplace]` attributes. Private members are safely mapped using `extern` or private declarations, eliminating the need for `[UnsafeAccessor]` or reflection.
-3.  **Pipeline Interception:** [Build.Patches.targets](../src/Build.Patches.targets) runs after `ResolveAssemblyReferences`, resolves the official runtime DLLs (including `lib/` counterparts of `ref/` assemblies), and weaves the donor IL into intermediate output. It keeps `ReferencePath` unchanged for compilation, replaces `ReferenceCopyLocalPaths`, and replaces both `ResolvedFileToPublish` and `RuntimeCopyLocalItems` before publish postprocessing. Keeping these runtime and publish paths aligned allows ILLink to process the patched assemblies correctly. Donor projects are build dependencies rather than runtime references.
+3.  **Pipeline Interception:** [Build.Patches.targets](../src/Build.Patches.targets) runs after `ResolveAssemblyReferences`, consumes the SDK-selected implementation DLLs from `RuntimeCopyLocalItems`, `RuntimePackAsset`, and `ReferenceCopyLocalPaths`, and weaves the donor IL into intermediate output. It does not infer runtime paths from reference-assembly directory names. It keeps `ReferencePath` unchanged for compilation, replaces `ReferenceCopyLocalPaths`, and replaces `ResolvedFileToPublish`, `RuntimeCopyLocalItems`, and `RuntimePackAsset` before publish postprocessing. Keeping these runtime and publish paths aligned allows ILLink to process the patched assemblies correctly. Donor projects are build dependencies rather than runtime references.
 
 **Outcomes:**
 This approach generates perfectly standard, statically modified binaries containing zero runtime hooking overhead. It is completely transparent to our GitHub Actions CI/CD workflows and fully compatible with global code-signing pipelines (Certum for Windows, Apple Codesign for macOS). The modified third-party libraries inherit the primary application's digital signature, permanently resolving all anti-virus false positives and cross-platform distribution blockers.
@@ -60,3 +60,34 @@ replacement: MonoModReplace otherwise copies the donor's flags and loses the
 implicit interface implementation. The [Responses conversion donor](../patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/patch_OpenAIResponsesChatClient.cs)
 retains all original stream cases while correcting incomplete/failed evidence.
 These changes preserve SDK policy; application retries belong to the request layer.
+
+
+### Build lifecycle and framework boundary
+
+Weaving remains an `AfterTargets="ResolveAssemblyReferences"` operation. The SDK
+has already resolved runtime assets and handled package conflicts at that point;
+patching does not add build work to project evaluation, restore, or design-time
+builds. Donors remain ordinary build-order project references. Only assemblies
+also present in the consumer's compilation references are patched, so importing
+the shared targets does not force every available patch into every consumer.
+
+Each output records its input paths, sizes, and modification timestamps, including
+the donor and patching tools. Unchanged inputs preserve the DLL and stamp timestamps;
+selecting an older file from a different package, SDK, or RID still invalidates the
+cache. Outputs and stamps participate in MSBuild's `FileWrites` cleanup tracking.
+Runtime item metadata is retained when replacing paths; compilation references are
+not rewritten. Ambiguous runtime inputs and reference-only inputs fail the build.
+
+Framework references are not eligible for weaving. Platform SDKs may ship native
+Objective-C registration tables keyed by the managed assembly's metadata tokens.
+Cecil serialization can reorder TypeDef and MethodDef rows, invalidating those
+native tables even when the managed assembly loads and a narrow method test passes.
+The patcher rejects targets carrying the SDK's `FrameworkReferenceName` metadata;
+runtime-pack assets remain available for ordinary donor dependency resolution.
+
+An attempted Microsoft.macOS constructor patch was withdrawn after its rewritten
+TypeDef tokens mapped `AppKit.NSWindow` to `Foundation.NSDateInterval` and
+`UserNotifications.UNNotificationSound` to an unrelated VideoToolbox enum. A run-loop
+source probe did not exercise these Objective-C registration paths. macOS SDK
+workarounds must stay in application-owned interop unless the entire native
+registration contract can be preserved and verified.
