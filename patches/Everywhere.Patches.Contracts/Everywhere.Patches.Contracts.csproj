@@ -3,6 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Everywhere.Patches.Contracts</AssemblyName>
     <RootNamespace>Everywhere.Patches.Contracts</RootNamespace>
+    <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
     <NoWarn>$(NoWarn),CA1050</NoWarn>
   </PropertyGroup>
 

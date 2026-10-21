@@ -1,4 +1,7 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+using Avalonia.Threading;
+using Everywhere.Patches.Contracts.Interop;
+using Serilog;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
@@ -13,33 +16,82 @@ namespace Everywhere.Windows.Interop;
 /// <summary>
 /// Reference: Powertoys
 /// </summary>
-public sealed class WindowHelper : IWindowHelper
+public sealed class WindowHelper : IWindowHelper, IDisposable
 {
     private readonly ConditionalWeakTable<Window, WindowPropertiesState> _windowProperties = new();
 
+    private CoreWindowInputHost? _inputHost;
+
     public unsafe void SetWindowProperties(
         Window window,
-        bool? focusable = null,
+        WindowInputMode? inputMode = null,
         bool? hitTestVisible = null,
         WindowLayer? layer = null)
     {
-        if (focusable is null && hitTestVisible is null && layer is null) return;
+        if (inputMode is null && hitTestVisible is null && layer is null)
+        {
+            return;
+        }
 
         if (!_windowProperties.TryGetValue(window, out var properties))
         {
-            properties = new WindowPropertiesState(window, focusable, hitTestVisible, layer);
+            properties = new WindowPropertiesState(window, inputMode, hitTestVisible, layer);
             _windowProperties.Add(window, properties);
         }
         else
         {
-            properties.Update(focusable, hitTestVisible, layer);
+            properties.Update(inputMode, hitTestVisible, layer);
         }
 
-        if (focusable is { } isFocusable) window.Focusable = isFocusable;
-        if (hitTestVisible is { } isHitTestVisible) window.IsHitTestVisible = isHitTestVisible;
-        if (layer is { } windowLayer) window.Topmost = windowLayer >= WindowLayer.Topmost;
+        if (inputMode is { } mode)
+        {
+            if (_inputHost?.Capture is { } activeCapture && activeCapture.Target == window &&
+                mode != WindowInputMode.NonActivatingTextInput)
+            {
+                // A policy change revokes the owner's route, unlike explicit lease disposal.
+                // Notify it so its window and global watch cannot retain an inactive capture.
+                activeCapture.LoseCapture();
+            }
 
-        if (window.TryGetPlatformHandle() is not { } handle) return;
+            if (mode != WindowInputMode.NonActivatingTextInput)
+            {
+                properties.InputSource = 0;
+            }
+
+            window.Focusable = mode != WindowInputMode.NonActivating;
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            // patched interface
+            if (window.PlatformImpl is IWindowInputFeature feature)
+            {
+                feature.CanTakeFocusOnClick = mode == WindowInputMode.Normal;
+                if (mode == WindowInputMode.NonActivatingTextInput)
+                {
+                    properties.InputMethod ??= new WindowsTextInputMethod(window, feature);
+                    feature.TextInputMethod = properties.InputMethod;
+                }
+                else
+                {
+                    properties.InputMethod?.SetClient(null);
+                    feature.TextInputMethod = null;
+                }
+            }
+        }
+
+        if (hitTestVisible is { } isHitTestVisible)
+        {
+            window.IsHitTestVisible = isHitTestVisible;
+        }
+
+        if (layer is { } windowLayer)
+        {
+            window.Topmost = windowLayer >= WindowLayer.Topmost;
+        }
+
+        if (window.TryGetPlatformHandle() is not { } handle)
+        {
+            return;
+        }
+
         var hWnd = (HWND)handle.Handle;
         var style = (uint)PInvoke.GetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
         var exStyle = (uint)PInvoke.GetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
@@ -218,9 +270,7 @@ public sealed class WindowHelper : IWindowHelper
         // Briefly sharing an input queue with the current foreground thread makes the call succeed; this
         // is the same AttachThreadInput approach already used to focus native elements.
         var foregroundHwnd = PInvoke.GetForegroundWindow();
-        var foregroundThreadId = foregroundHwnd == HWND.Null
-            ? 0
-            : PInvoke.GetWindowThreadProcessId(foregroundHwnd, out _);
+        var foregroundThreadId = foregroundHwnd == HWND.Null ? 0 : PInvoke.GetWindowThreadProcessId(foregroundHwnd, out _);
         var currentThreadId = PInvoke.GetCurrentThreadId();
         var attached = false;
 
@@ -296,7 +346,15 @@ public sealed class WindowHelper : IWindowHelper
         {
             // Because we're only cloaking the window, bury it at the bottom in case something can
             // see it - e.g. some accessibility helper (note: this also removes the top-most status).
-            PInvoke.SetWindowPos(hWnd, HWND.HWND_BOTTOM, 0, 0, 0, 0, SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE);
+            // Do not give the hidden window native focus, including during ChatWindow preloading.
+            PInvoke.SetWindowPos(
+                hWnd,
+                HWND.HWND_BOTTOM,
+                0,
+                0,
+                0,
+                0,
+                SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
         }
 
     }
@@ -382,6 +440,95 @@ public sealed class WindowHelper : IWindowHelper
         return hasSystemCorners ? 8 : 0;
     }
 
+    /// <inheritdoc />
+    public bool TryPrepareInput(Window window)
+    {
+        Dispatcher.UIThread.VerifyAccess();
+        if (_inputHost?.Capture is not null ||
+            !_windowProperties.TryGetValue(window, out var properties) ||
+            properties.InputMode != WindowInputMode.NonActivatingTextInput || properties.InputMethod is null)
+        {
+            return false;
+        }
+
+        properties.InputSource = 0;
+        try
+        {
+            // Preparation belongs to the passive toolbar's appearance, before an editor exists.
+            // A successful RequestCapture in the host-creation callback did not reliably delegate
+            // input in our probes. A dispatcher yield was not a fix either. Keep the verified,
+            // natural boundary: prepare now, capture on the later explicit switch to editing.
+            if (_inputHost is null)
+            {
+                _inputHost = new CoreWindowInputHost();
+                Dispatcher.UIThread.ShutdownStarted += HandleDispatcherShutdownStarted;
+            }
+
+            properties.InputSource = TextInputNative.GetForegroundWindow();
+            return properties.InputSource != 0;
+        }
+        catch (Exception exception)
+        {
+            Log.Warning(exception, "Failed to prepare non-activating window input");
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public IWindowInputCapture? TryCaptureInput(Window window)
+    {
+        Dispatcher.UIThread.VerifyAccess();
+        if (!window.IsVisible || window.WindowState == WindowState.Minimized ||
+            _inputHost is not { Capture: null } host ||
+            !_windowProperties.TryGetValue(window, out var properties) ||
+            properties.InputMode != WindowInputMode.NonActivatingTextInput ||
+            properties.InputMethod is not { } method || properties.InputSource == 0 ||
+            TextInputNative.GetForegroundWindow() != properties.InputSource)
+        {
+            return null;
+        }
+
+        WindowsWindowInputCapture? candidate = null;
+        try
+        {
+            // Only acquire the already prepared route. Creating the host here would silently
+            // collapse the two-stage lifetime back into the first-use path that failed testing.
+            candidate = new WindowsWindowInputCapture(window, host, method);
+            candidate.Start();
+            return candidate;
+        }
+        catch (Exception exception)
+        {
+            candidate?.Dispose();
+            Log.Warning(exception, "Failed to capture non-activating window input");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Releases the UI thread's shared native input host during application shutdown.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_inputHost is null)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.VerifyAccess();
+        _inputHost.Dispose();
+        _inputHost = null;
+        Dispatcher.UIThread.ShutdownStarted -= HandleDispatcherShutdownStarted;
+    }
+
+    private void HandleDispatcherShutdownStarted(object? sender, EventArgs e)
+    {
+        // CoreWindow, its COM interfaces and RoUninitialize belong to this UI thread.
+        // Final service disposal may run on a worker after the dispatcher has stopped,
+        // so release the host here while its owning thread can still perform cleanup.
+        Dispose();
+    }
+
     public void InitializeWindow(Window window)
     {
     }
@@ -392,20 +539,35 @@ public sealed class WindowHelper : IWindowHelper
 
         public bool? IsHitTestVisible { get; private set; }
 
-        private bool? IsFocusable { get; set; }
+        public WindowsTextInputMethod? InputMethod { get; set; }
 
-        public WindowPropertiesState(Window window, bool? focusable, bool? hitTestVisible, WindowLayer? layer)
+        public nint InputSource { get; set; }
+
+        public WindowInputMode? InputMode { get; private set; }
+
+        public WindowPropertiesState(Window window, WindowInputMode? inputMode, bool? hitTestVisible, WindowLayer? layer)
         {
-            Update(focusable, hitTestVisible, layer);
+            Update(inputMode, hitTestVisible, layer);
             Win32Properties.AddWindowStylesCallback(window, ApplyStyles);
             Win32Properties.AddWndProcHookCallback(window, WndProcHookCallback);
         }
 
-        public void Update(bool? focusable, bool? hitTestVisible, WindowLayer? layer)
+        public void Update(WindowInputMode? inputMode, bool? hitTestVisible, WindowLayer? layer)
         {
-            if (focusable.HasValue) IsFocusable = focusable;
-            if (hitTestVisible.HasValue) IsHitTestVisible = hitTestVisible;
-            if (layer.HasValue) Layer = layer;
+            if (inputMode.HasValue)
+            {
+                InputMode = inputMode;
+            }
+
+            if (hitTestVisible.HasValue)
+            {
+                IsHitTestVisible = hitTestVisible;
+            }
+
+            if (layer.HasValue)
+            {
+                Layer = layer;
+            }
         }
 
         public (uint style, uint exStyle) ApplyStyles(uint style, uint exStyle)
@@ -423,20 +585,20 @@ public sealed class WindowHelper : IWindowHelper
                 exStyle |= (uint)WINDOW_EX_STYLE.WS_EX_LAYERED | (uint)WINDOW_EX_STYLE.WS_EX_TRANSPARENT;
             }
 
-            if (IsFocusable is true)
+            if (InputMode is WindowInputMode.Normal)
             {
                 exStyle &= ~(uint)WINDOW_EX_STYLE.WS_EX_NOACTIVATE;
             }
-            else if (IsFocusable is false)
+            else if (InputMode is WindowInputMode.NonActivating or WindowInputMode.NonActivatingTextInput)
             {
                 exStyle |= (uint)WINDOW_EX_STYLE.WS_EX_NOACTIVATE;
             }
 
-            if (IsFocusable is true)
+            if (InputMode is WindowInputMode.Normal)
             {
                 exStyle &= ~(uint)WINDOW_EX_STYLE.WS_EX_TOOLWINDOW;
             }
-            else if (IsFocusable is false)
+            else if (InputMode is WindowInputMode.NonActivating or WindowInputMode.NonActivatingTextInput)
             {
                 exStyle |= (uint)WINDOW_EX_STYLE.WS_EX_TOOLWINDOW;
             }
@@ -446,7 +608,10 @@ public sealed class WindowHelper : IWindowHelper
 
         private IntPtr WndProcHookCallback(IntPtr hWnd, uint msg, IntPtr wparam, IntPtr lparam, ref bool handled)
         {
-            if (IsFocusable is not false) return IntPtr.Zero;
+            if (InputMode is not (WindowInputMode.NonActivating or WindowInputMode.NonActivatingTextInput))
+            {
+                return IntPtr.Zero;
+            }
 
             if (msg == (uint)WINDOW_MESSAGE.WM_MOUSEACTIVATE)
             {

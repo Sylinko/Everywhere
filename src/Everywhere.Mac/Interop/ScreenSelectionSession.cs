@@ -39,7 +39,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         WindowHelper = windowHelper;
         _allowedModes = allowedModes;
         CurrentMode = initialMode;
-        windowHelper.SetWindowProperties(this, focusable: true, hitTestVisible: true, WindowLayer.Overlay);
+        windowHelper.SetWindowProperties(this, inputMode: WindowInputMode.Normal, hitTestVisible: true, WindowLayer.Overlay);
 
         // Use NSScreen to get accurate logical bounds and handle scaling
         var allScreens = NSScreen.Screens;
@@ -67,7 +67,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
             SetNsWindowPlacement(maskWindow, frame);
             windowHelper.SetWindowProperties(
                 maskWindow,
-                focusable: false,
+                inputMode: WindowInputMode.NonActivating,
                 hitTestVisible: false,
                 WindowLayer.Overlay + 1);
             MaskWindows[i] = maskWindow;
@@ -79,7 +79,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         SetNsWindowPlacement(ToolTipWindow, null);
         windowHelper.SetWindowProperties(
             ToolTipWindow,
-            focusable: false,
+            inputMode: WindowInputMode.NonActivating,
             hitTestVisible: false,
             WindowLayer.Overlay + 2);
 

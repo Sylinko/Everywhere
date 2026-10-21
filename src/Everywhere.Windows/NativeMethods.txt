@@ -140,3 +140,8 @@ FlashWindowEx
 SetProp
 RemoveProp
 WINDOWPOS
+
+RoInitialize
+RoUninitialize
+WindowsCreateString
+WindowsDeleteString

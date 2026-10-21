@@ -7,9 +7,8 @@ namespace Everywhere.Interop;
 /// not implemented yet.
 /// </summary>
 /// <remarks>
-/// Reports <see cref="IsSupported"/> as false and never dismisses, so features that depend on it can
-/// disable themselves rather than showing an overlay the user would be unable to dismiss. This is
-/// preferred over throwing, which would surface as a crash at an unrelated call site.
+/// Reports <see cref="IsSupported"/> as false and never dismisses. Overlays can remain usable
+/// through explicit close controls without global dismissal or pointer-distance effects.
 /// </remarks>
 public sealed class UnsupportedOverlayInputWatcher : IOverlayInputWatcher
 {
@@ -23,7 +22,9 @@ public sealed class UnsupportedOverlayInputWatcher : IOverlayInputWatcher
     {
         internal static readonly NoWatch Instance = new();
 
-        public void Update(PixelRect bounds, PixelRect? menuBounds = null) { }
+        public void Update(PixelRect bounds, IReadOnlyList<PixelRect>? popupBounds = null, IWindowInputCapture? inputCapture = null)
+        {
+        }
 
         public void Dispose() { }
     }

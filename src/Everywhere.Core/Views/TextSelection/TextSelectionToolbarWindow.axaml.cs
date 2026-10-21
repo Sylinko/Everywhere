@@ -1,14 +1,22 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Rendering.Composition;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Input;
+using Everywhere.AI;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.StrategyEngine;
 using Everywhere.TextSelection;
+using Serilog;
 using TextSelectionToolbarAction = Everywhere.TextSelection.TextSelectionToolbarAction;
 
 namespace Everywhere.Views;
 
 /// <summary>
-/// A small floating toolbar shown next to text the user has just selected in another application.
+/// Owns the floating toolbar's presentation, placement and input lifetime. Selection ownership and
+/// strategy execution remain with the service; this window never takes ownership of an attachment.
 /// </summary>
 public partial class TextSelectionToolbarWindow : Window
 {
@@ -23,38 +31,133 @@ public partial class TextSelectionToolbarWindow : Window
     private const int EdgeMargin = 6;
 
     /// <summary>
-    /// Where the window is parked for its first measurement pass, far outside any real display so the
-    /// unpositioned frame is never visible.
+    /// Where the window is parked while preparing its first frame for each appearance, so the
+    /// previous selection's retained surface is never revealed before the new content is rendered.
     /// </summary>
     private static readonly PixelPoint OffScreenPosition = new(-32000, -32000);
 
-    /// <summary>Gets the shared presentation control.</summary>
-    public TextSelectionToolbar Toolbar => ToolbarRoot;
-
-    /// <summary>Raised as toolbar content or monitor scaling changes the native hit-test region.</summary>
-    public event Action<PixelRect>? BoundsChanged;
+    /// <summary>
+    /// Gets the settings source bound by the window, independently of the selection service.
+    /// </summary>
+    public Settings Settings { get; }
 
     /// <summary>
-    /// Raised when the user picks an action. The toolbar does not act on the selection itself.
+    /// Submits a freeform draft to its business owner. True transfers the selection to the chat;
+    /// false retains the draft for retry. Invocation is synchronous and occurs after releasing input.
+    /// </summary>
+    public Func<string, CustomAssistant, bool>? SubmitFreeformChat { get; set; }
+
+    /// <summary>
+    /// Sends the current editor text through the host while keeping rejection non-destructive.
+    /// </summary>
+    public IRelayCommand<string> SendFreeformChatCommand { get; }
+
+    /// <summary>
+    /// Identifies the pointer-distance factor applied to the user's configured opacity.
+    /// </summary>
+    public static readonly DirectProperty<TextSelectionToolbarWindow, double> OpacityFactorProperty =
+        AvaloniaProperty.RegisterDirect<TextSelectionToolbarWindow, double>(nameof(OpacityFactor), o => o.OpacityFactor);
+
+    /// <summary>
+    /// Gets the quantized distance factor. The binding applies the user's opacity separately.
+    /// </summary>
+    public double OpacityFactor
+    {
+        get;
+        private set => SetAndRaise(OpacityFactorProperty, ref field, value);
+    } = 1d;
+
+    /// <summary>
+    /// Raised when the user picks an action. The window releases input before notifying the service.
     /// </summary>
     public event Action<Strategy>? ActionInvoked;
 
+    /// <summary>
+    /// Requests exclusion using the service's current selection identity, not the foreground window.
+    /// </summary>
+    public event Action? ExcludeApplicationRequested;
+
+    /// <summary>
+    /// Raised after the window is hidden and its input and presentation have been released.
+    /// The service can release its selection without calling back into the window.
+    /// </summary>
+    public event Action? Hidden;
+
     private readonly IWindowHelper _windowHelper;
+    private readonly IOverlayInputWatcher _inputWatcher;
 
     private PixelPoint _anchor;
+    private PixelRect _toolbarBounds;
+    private PixelRect? _menuBounds;
     private IReadOnlyList<TextSelectionToolbarItem> _items = [];
+    private bool _isPreparingPresentation;
 
-    public TextSelectionToolbarWindow(IWindowHelper windowHelper)
+    // Published on the UI thread; captures geometry without exposing mutable UI state to native hooks.
+    private Action<PixelPoint>? _updateOpacityFactor;
+
+    public TextSelectionToolbarWindow(IWindowHelper windowHelper, IOverlayInputWatcher inputWatcher, Settings settings)
     {
+        Settings = settings;
         _windowHelper = windowHelper;
+        _inputWatcher = inputWatcher;
+        SendFreeformChatCommand = new RelayCommand<string>(SendFreeformChat, CanSendFreeformChat);
         InitializeComponent();
 
-        windowHelper.SetWindowProperties(this, focusable: false, layer: WindowLayer.Overlay);
+        windowHelper.SetWindowProperties(this, inputMode: WindowInputMode.NonActivating, layer: WindowLayer.Overlay);
         ToolbarRoot.ActionInvoked += HandleActionInvoked;
+        ToolbarRoot.FreeformChatInputRequested += HandleFreeformChatInputRequested;
+        ToolbarRoot.FreeformChatExiting += HandleFreeformChatExiting;
+        ToolbarRoot.MenuBoundsChanged += HandleMenuBoundsChanged;
+        ToolbarRoot.CloseRequested += Hide;
+        ToolbarRoot.ExcludeApplicationRequested += () => ExcludeApplicationRequested?.Invoke();
         SizeChanged += (_, _) => UpdateBounds();
         ScalingChanged += (_, _) => UpdateBounds();
+        AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel);
     }
 
+    private bool CanSendFreeformChat(string? text)
+    {
+        return IsVisible && ToolbarRoot.IsFreeformChat && !string.IsNullOrWhiteSpace(text) &&
+            ToolbarRoot.SelectedCustomAssistant is not null && SubmitFreeformChat is not null &&
+            _inputEditor is not null && !IsInputComposing &&
+            (_isUsingActivatedInput || _inputCapture is { IsActive: true });
+    }
+
+    private void SendFreeformChat(string? text)
+    {
+        if (!CanSendFreeformChat(text) || text is null ||
+            ToolbarRoot.SelectedCustomAssistant is not { } assistant || SubmitFreeformChat is not { } submit)
+        {
+            return;
+        }
+
+        var editor = _inputEditor;
+        EndTextInput();
+        if (submit(text.Trim(), assistant))
+        {
+            Hide();
+        }
+        else if (IsVisible && ToolbarRoot.IsFreeformChat && editor is not null)
+        {
+            // A busy destination has not consumed anything. Restore this appearance's existing
+            // prepared route or ordinary activated input, without creating a new native host.
+            HandleFreeformChatInputRequested(editor);
+        }
+    }
+
+    private void HandleKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Handled || e.Key != Key.Escape || e.KeyModifiers != KeyModifiers.None ||
+            !ToolbarRoot.IsFreeformChat || IsInputComposing)
+        {
+            return;
+        }
+
+        ToolbarRoot.HandleEscape();
+        e.Handled = true;
+    }
+
+    /// <inheritdoc />
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         // The window lives for the lifetime of the application; only a real shutdown may close it.
@@ -67,40 +170,172 @@ public partial class TextSelectionToolbarWindow : Window
     }
 
     /// <summary>
-    /// Shows the toolbar with <paramref name="items"/>, positioned near <paramref name="anchor"/>.
+    /// Prepares the toolbar and reveals it near the selection after its first updated frame.
+    /// Keeps its matched strategy snapshot until hidden.
+    /// Returns false when neither a strategy action nor enabled freeform input is available.
     /// </summary>
-    /// <param name="items">Tools to offer. Must not be empty.</param>
+    /// <param name="items">Available tools; may be empty when freeform input is enabled.</param>
     /// <param name="anchor">Anchor point in physical screen pixels, normally the mouse pointer.</param>
-    /// <returns>The bounds the toolbar occupies, in physical screen pixels.</returns>
-    public PixelRect ShowFor(IReadOnlyList<TextSelectionToolbarItem> items, PixelPoint anchor)
+    /// <param name="canExcludeApplication">Whether the selection has an application identity that can be excluded.</param>
+    public bool ShowFor(IReadOnlyList<TextSelectionToolbarItem> items, PixelPoint anchor, bool canExcludeApplication)
     {
+        Dispatcher.UIThread.VerifyAccess();
+        ResetPresentation();
+
+        // This is deliberately earlier than the user's switch to the editor. The UI must keep
+        // the editor out of the visual tree in toolbar mode, not merely hide an already focused
+        // input control. Preparing the native host must not create a CoreText edit context.
+        _windowHelper.SetWindowProperties(this, inputMode: WindowInputMode.NonActivatingTextInput);
+        _isInputPrepared = _windowHelper.TryPrepareInput(this);
+
+        if (items.Count == 0 && !Settings.TextSelection.IsFreeformChatEnabled)
+        {
+            Hide();
+            return false;
+        }
+
         _anchor = anchor;
         _items = items;
         ToolbarRoot.Actions = items.AsValueEnumerable().Select(item => item.Action).ToArray();
-        ToolbarRoot.CloseMenu();
+        ToolbarRoot.CanExcludeApplication = canExcludeApplication;
 
+        // Start each selection from the main assistant, but keep later toolbar choices local.
+        // A two-way binding here would unexpectedly change the main chat's assistant.
+        ToolbarRoot.SelectedCustomAssistant = Settings.Model.SelectedCustomAssistant;
+
+        var transitions = ToolbarRoot.Transitions;
+        ToolbarRoot.SetCurrentValue(TransitionsProperty, null);
+        try
+        {
+            // Initialize the bound opacity before rendering, without fading from a previous selection.
+            OpacityFactor = 1d;
+            _isPreparingPresentation = true;
+            Position = OffScreenPosition;
+            if (!IsVisible)
+            {
+                Show();
+            }
+
+            // Layout updates controls, not the native window's retained surface. Keep the HWND
+            // off-screen until the compositor has rendered Actions instead of the previous editor.
+            // Size/scale callbacks must not reposition it early while this frame is pending.
+            _toolbarBounds = new PixelRect(Position, MeasuredPixelSize());
+            StartWatchingInput();
+            if (ElementComposition.GetElementVisual(this) is not { } visual)
+            {
+                Hide();
+                return false;
+            }
+
+            var rendered = visual.Compositor.RequestCompositionBatchCommitAsync().Rendered;
+            RevealAfterRenderAsync(rendered, _generation).Detach();
+            return true;
+        }
+        finally
+        {
+            ToolbarRoot.SetCurrentValue(TransitionsProperty, transitions);
+        }
+    }
+
+    private async Task RevealAfterRenderAsync(Task rendered, int generation)
+    {
+        try
+        {
+            await rendered.ConfigureAwait(false);
+            await Dispatcher.UIThread.InvokeAsync(
+                () =>
+                {
+                    // A selection can be dismissed or replaced while rendering. Reuse the input
+                    // watch's appearance generation so an old frame can never reveal a new session.
+                    if (generation != _generation || !IsVisible)
+                    {
+                        return;
+                    }
+
+                    var transitions = ToolbarRoot.Transitions;
+                    ToolbarRoot.SetCurrentValue(TransitionsProperty, null);
+                    try
+                    {
+                        Reposition(_anchor, MeasuredPixelSize());
+
+                        // Moving to the target monitor can change DesktopScaling and SizeToContent.
+                        // Re-measure there before publishing the rectangle used for outside clicks.
+                        _toolbarBounds = Reposition(_anchor, MeasuredPixelSize());
+                        _isPreparingPresentation = false;
+                        _windowHelper.RaiseWindow(this);
+                        UpdateInputWatch();
+                        UpdateOpacityTracking();
+                    }
+                    finally
+                    {
+                        ToolbarRoot.SetCurrentValue(TransitionsProperty, transitions);
+                    }
+                },
+                DispatcherPriority.Render);
+        }
+        catch (Exception exception)
+        {
+            Log.Warning(exception, "Failed to render the text selection toolbar before revealing it");
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (generation == _generation)
+                {
+                    Hide();
+                }
+            });
+        }
+    }
+
+    /// <inheritdoc />
+    public override void Hide()
+    {
+        // Native input must end before the HWND disappears. The visibility change then resets
+        // presentation and notifies the service. Also clean appearances that never became visible.
+        EndTextInput();
         if (!IsVisible)
         {
-            // The window has no platform handle until it is shown, and styles (including the
-            // DynamicResource-driven padding and corner radius) are not applied before then, so its
-            // content cannot be measured reliably yet. Show it off-screen first, where the
-            // pre-measurement position is invisible, then measure and move it into place.
-            Position = OffScreenPosition;
-            Show();
+            ResetPresentation();
         }
 
-        Reposition(anchor, MeasuredPixelSize());
+        base.Hide();
+    }
 
-        // Re-read the size after positioning. SizeToContent negotiates the size with the platform
-        // window, which is not guaranteed to have completed during the first layout pass after Show,
-        // and DesktopScaling only reflects the target monitor once the window sits on it. Both make the
-        // pre-move measurement unreliable, and the result is used as a hit-test rectangle by
-        // IOverlayInputWatcher: too small a rectangle would classify a click on our own button as
-        // "outside" and dismiss the toolbar before the button ever sees it.
-        var bounds = Reposition(anchor, MeasuredPixelSize());
-        _windowHelper.RaiseWindow(this);
+    /// <inheritdoc />
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
 
-        return bounds;
+        if (change.Property == IsVisibleProperty && !IsVisible)
+        {
+            ResetPresentation();
+            Hidden?.Invoke();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnClosed(EventArgs e)
+    {
+        ResetPresentation();
+        base.OnClosed(e);
+    }
+
+    private void ResetPresentation()
+    {
+        StopWatchingInput();
+        EndTextInput();
+        _isInputPrepared = false;
+        _isUsingActivatedInput = false;
+        _isPreparingPresentation = false;
+        _menuBounds = null;
+        _items = [];
+
+        // Visibility can change during construction, before InitializeComponent creates the root.
+        if (ToolbarRoot is { } toolbar)
+        {
+            toolbar.ResetFreeformChat();
+            toolbar.CloseMenu();
+            toolbar.Actions = null;
+        }
     }
 
     private void HandleActionInvoked(TextSelectionToolbarAction action)
@@ -109,21 +344,88 @@ public partial class TextSelectionToolbarWindow : Window
         var item = _items.FirstOrDefault(item => ReferenceEquals(item.Action, action));
         if (item is not null)
         {
+            // The hidden host must release the keyboard before strategy execution activates the main chat.
+            EndTextInput();
             ActionInvoked?.Invoke(item.Strategy);
         }
     }
 
-    private void UpdateBounds()
+    private void HandleMenuBoundsChanged(PixelRect? bounds)
     {
-        if (IsVisible) BoundsChanged?.Invoke(Reposition(_anchor, PixelSize.FromSize(Bounds.Size, DesktopScaling)));
+        _menuBounds = bounds;
+        UpdateInputWatch();
+        UpdateOpacityTracking();
     }
 
-    /// <inheritdoc />
-    protected override void OnClosed(EventArgs e)
+    private void UpdateBounds()
     {
-        _items = [];
-        ToolbarRoot.Actions = null;
-        base.OnClosed(e);
+        if (!IsVisible || _isPreparingPresentation)
+        {
+            return;
+        }
+
+        _toolbarBounds = Reposition(_anchor, PixelSize.FromSize(Bounds.Size, DesktopScaling));
+        UpdateInputWatch();
+        UpdateOpacityTracking();
+    }
+
+    private void UpdateOpacityTracking()
+    {
+        if (!IsVisible || _isPreparingPresentation)
+        {
+            return;
+        }
+
+        if (_inputWatch is null || !Settings.TextSelection.IsToolbarOpacityAdaptive)
+        {
+            Volatile.Write(ref _updateOpacityFactor, null);
+            OpacityFactor = 1d;
+            return;
+        }
+
+        // Bounds and scaling change on the UI thread. Publish only their copied values to the hook;
+        // each revision owns its latest step so an old queued update cannot overwrite a new appearance.
+        var scale = DesktopScaling;
+        var bounds = _toolbarBounds.ToRect(scale);
+        var menuBounds = _menuBounds?.ToRect(scale);
+        var opacityStep = CalculateStep(_inputWatcher.PointerPosition ?? _anchor);
+        var isUpdateQueued = 0;
+
+        Volatile.Write(ref _updateOpacityFactor, UpdateFactor);
+        OpacityFactor = opacityStep / 20d;
+
+        int CalculateStep(PixelPoint pointerPoint)
+        {
+            var point = new Point(pointerPoint.X / scale, pointerPoint.Y / scale);
+            return (int)Math.Round(TextSelectionToolbar.CalculateOpacityFactor(point, bounds, menuBounds) * 20d);
+        }
+
+        void UpdateFactor(PixelPoint position)
+        {
+            var step = CalculateStep(position);
+            // ReSharper disable once AccessToModifiedClosure
+            if (Interlocked.Exchange(ref opacityStep, step) == step)
+            {
+                return;
+            }
+
+            if (Interlocked.Exchange(ref isUpdateQueued, 1) != 0)
+            {
+                return;
+            }
+
+            // Quantize before dispatching, with at most one pending UI update per geometry revision.
+            Dispatcher.UIThread.Post(() =>
+            {
+                Interlocked.Exchange(ref isUpdateQueued, 0);
+                if (_updateOpacityFactor != UpdateFactor || !IsVisible)
+                {
+                    return;
+                }
+
+                OpacityFactor = Volatile.Read(ref opacityStep) / 20d;
+            });
+        }
     }
 
     /// <summary>

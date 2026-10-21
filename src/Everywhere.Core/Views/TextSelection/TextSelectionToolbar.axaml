@@ -3,6 +3,12 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:ts="clr-namespace:Everywhere.TextSelection" xmlns:v="clr-namespace:Everywhere.Views"
   x:Name="Self">
+  <UserControl.Styles>
+    <!--  Keep the delegated native input owner while interacting with assistant submenus.  -->
+    <Style Selector="Popup">
+      <Setter Property="TakesFocusFromNativeControl" Value="False"/>
+    </Style>
+  </UserControl.Styles>
   <UserControl.Transitions>
     <Transitions>
       <DoubleTransition
@@ -29,114 +35,243 @@
         </Style>
       </Panel.Styles>
 
-      <DockPanel MaxWidth="640">
-        <Button
-          x:Name="MoreButton" Classes="Ghost Compact"
-          DockPanel.Dock="Right" VerticalAlignment="Stretch"
-          Focusable="False"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbar_More}}">
-          <LucideIcon
-            Kind="EllipsisVertical"
-            Size="{DynamicResource FontSizeM}"/>
-          <Button.Flyout>
-            <MenuFlyout
-              Closed="HandleMenuClosed" HorizontalOffset="12"
-              Opened="HandleMenuOpened" Placement="BottomEdgeAlignedRight"
-              VerticalOffset="4">
-              <MenuFlyout.ItemsSource>
-                <shadui:CompositeCollection>
-                  <shadui:CompositeCollection ItemsSource="{Binding #Self.OverflowActions}">
-                    <shadui:CompositeCollection.ItemTemplate>
-                      <DataTemplate x:DataType="ts:TextSelectionToolbarAction">
-                        <MenuItem
-                          Click="HandleActionClick"
-                          FontSize="{DynamicResource FontSizeS}"
-                          Header="{Binding NameKey^}"
-                          ToolTip.Placement="Right">
-                          <MenuItem.Icon>
-                            <v:IconPresenter
-                              Background="{x:Null}"
-                              FontSize="{DynamicResource FontSizeM}"
-                              Foreground="{DynamicResource ForegroundColor}"
-                              Icon="{Binding DisplayIcon}"
-                              IconSize="{DynamicResource FontSizeM}"/>
-                          </MenuItem.Icon>
-                          <ToolTip.Tip>
-                            <StackPanel MaxWidth="240">
-                              <TextBlock Text="{Binding NameKey^}"/>
-                              <TextBlock
-                                Classes="Caption"
-                                IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                Text="{Binding DescriptionKey^}"
-                                TextWrapping="Wrap"/>
-                            </StackPanel>
-                          </ToolTip.Tip>
-                        </MenuItem>
-                      </DataTemplate>
-                    </shadui:CompositeCollection.ItemTemplate>
-                  </shadui:CompositeCollection>
-                  <Separator IsVisible="{Binding #Self.OverflowActions.Count}"/>
-                  <MenuItem
-                    Click="HandleExcludeApplicationClick"
-                    FontSize="{DynamicResource FontSizeS}"
-                    Header="{I18N {x:Static LocaleKey.TextSelectionToolbar_ExcludeApplication}}"
-                    IsEnabled="{Binding #Self.CanExcludeApplication}">
-                    <MenuItem.Icon>
-                      <LucideIcon
-                        Kind="EyeOff"
-                        Size="{DynamicResource FontSizeM}"/>
-                    </MenuItem.Icon>
-                  </MenuItem>
-                </shadui:CompositeCollection>
-              </MenuFlyout.ItemsSource>
-            </MenuFlyout>
-          </Button.Flyout>
-        </Button>
+      <v:ConditionalContentControl
+        x:Name="ModeContent" AnimateContentSize="True"
+        ClipToBounds="False"
+        Condition="{Binding #Self.IsFreeformChat}"
+        ContentSizeTransitionDuration="0:0:0.2"
+        ContentSizeTransitionEasing="{x:Static shadui:EaseOutBack.Soft}"
+        IsCached="True"
+        IsTransitionReversed="{Binding !#Self.IsFreeformChat}">
+        <v:ConditionalContentControl.PageTransition>
+          <CompositePageTransition>
+            <PageSlide
+              FillMode="None" SlideInEasing="CubicEaseInOut"
+              SlideOutEasing="CubicEaseInOut" Duration="0:0:0.2"/>
+            <CrossFade
+              FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"
+              FillMode="None" Duration="0:0:0.25"/>
+          </CompositePageTransition>
+        </v:ConditionalContentControl.PageTransition>
 
-        <ItemsControl ItemsSource="{Binding #Self.VisibleActions}">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <StackPanel Orientation="Horizontal"/>
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-
-          <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="ts:TextSelectionToolbarAction">
+        <v:ConditionalContentControl.FalseContent>
+          <DataTemplate>
+            <DockPanel
+              MaxWidth="640" VerticalAlignment="Center">
               <Button
                 Classes="Ghost Compact" Padding="6,4"
-                VerticalAlignment="Stretch" Click="HandleActionClick"
-                Focusable="False">
+                VerticalAlignment="Stretch" Click="HandleEnterFreeformChatClick"
+                Focusable="False"
+                IsVisible="{Binding #Self.IsFreeformChatEnabled}">
                 <ToolTip.Tip>
-                  <StackPanel MaxWidth="240">
-                    <TextBlock Text="{Binding NameKey^}"/>
-                    <TextBlock
-                      Classes="Caption"
-                      IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                      Text="{Binding DescriptionKey^}"
-                      TextWrapping="Wrap"/>
-                  </StackPanel>
+                  <TextBlock Text="{I18N {x:Static LocaleKey.TextSelectionToolbar_EnterFreeformChat}}"/>
                 </ToolTip.Tip>
 
-                <StackPanel
-                  Orientation="Horizontal" Spacing="4">
-                  <v:IconPresenter
-                    VerticalAlignment="Center"
-                    Background="{x:Null}"
-                    FontSize="{DynamicResource FontSizeM}"
-                    Foreground="{DynamicResource ForegroundColor}"
-                    Icon="{Binding DisplayIcon}"
-                    IconSize="{DynamicResource FontSizeM}"/>
-                  <TextBlock
-                    MaxWidth="120" VerticalAlignment="Center"
-                    IsVisible="{Binding IsLabelVisible}"
-                    Text="{Binding NameKey^}"
-                    TextTrimming="CharacterEllipsis"/>
-                </StackPanel>
+                <shadui:ButtonAssist.Icon>
+                  <Image>
+                    <DrawingImage>
+                      <DrawingImage.Drawing>
+                        <DrawingGroup ClipGeometry="M0,0 V18 H18 V0 H0 Z">
+                          <GeometryDrawing
+                            Brush="{DynamicResource PrimaryColor}"
+                            Geometry="F1 M18,18z M0,0z M9,1C4.589,1 1,4.589 1,9 1,10.396 1.371,11.776 2.062,12.971 2.3,13.417 1.967,14.973 1.22,15.72 1.011,15.929 0.944,16.242 1.05,16.518 1.156,16.794 1.415,16.983 1.71,16.999 1.789,17.003 1.87,17.005 1.951,17.005 3.096,17.005 4.486,16.598 5.391,16.134 6.066,16.477 6.781,16.721 7.522,16.862 8.006,16.954 8.504,17 9,17 13.411,17 17,13.411 17,9.00000000000001 17,4.58900000000001 13.411,1 9,1z M5.5,10C4.948,10 4.5,9.551 4.5,9 4.5,8.449 4.948,8 5.5,8 6.052,8 6.5,8.449 6.5,9 6.5,9.551 6.052,10 5.5,10z M9,10C8.448,10 8,9.551 8,9 8,8.449 8.448,8 9,8 9.552,8 10,8.449 10,9 10,9.551 9.552,10 9,10z M12.5,10C11.948,10 11.5,9.551 11.5,9 11.5,8.449 11.948,8 12.5,8 13.052,8 13.5,8.449 13.5,9 13.5,9.551 13.052,10 12.5,10z"/>
+                        </DrawingGroup>
+                      </DrawingImage.Drawing>
+                    </DrawingImage>
+                  </Image>
+                </shadui:ButtonAssist.Icon>
               </Button>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </DockPanel>
+
+              <Button
+                x:Name="MoreButton" Classes="Ghost Compact"
+                DockPanel.Dock="Right" VerticalAlignment="Stretch"
+                Focusable="False"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbar_More}}">
+                <LucideIcon
+                  Kind="EllipsisVertical"
+                  Size="{DynamicResource FontSizeM}"/>
+                <Button.Flyout>
+                  <MenuFlyout
+                    Closed="HandleMenuClosed" HorizontalOffset="12"
+                    Opened="HandleMenuOpened" Placement="BottomEdgeAlignedRight"
+                    VerticalOffset="4">
+                    <MenuFlyout.ItemsSource>
+                      <shadui:CompositeCollection>
+                        <shadui:CompositeCollection ItemsSource="{Binding #Self.OverflowActions}">
+                          <shadui:CompositeCollection.ItemTemplate>
+                            <DataTemplate x:DataType="ts:TextSelectionToolbarAction">
+                              <MenuItem
+                                Click="HandleActionClick"
+                                FontSize="{DynamicResource FontSizeS}"
+                                Header="{Binding NameKey^}"
+                                ToolTip.Placement="Right">
+                                <MenuItem.Icon>
+                                  <v:IconPresenter
+                                    Background="{x:Null}"
+                                    FontSize="{DynamicResource FontSizeM}"
+                                    Foreground="{DynamicResource ForegroundColor}"
+                                    Icon="{Binding DisplayIcon}"
+                                    IconSize="{DynamicResource FontSizeM}"/>
+                                </MenuItem.Icon>
+                                <ToolTip.Tip>
+                                  <StackPanel MaxWidth="240">
+                                    <TextBlock Text="{Binding NameKey^}"/>
+                                    <TextBlock
+                                      Classes="Caption"
+                                      IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                      Text="{Binding DescriptionKey^}"
+                                      TextWrapping="Wrap"/>
+                                  </StackPanel>
+                                </ToolTip.Tip>
+                              </MenuItem>
+                            </DataTemplate>
+                          </shadui:CompositeCollection.ItemTemplate>
+                        </shadui:CompositeCollection>
+                        <Separator IsVisible="{Binding #Self.OverflowActions.Count}"/>
+                        <MenuItem
+                          Click="HandleExcludeApplicationClick"
+                          FontSize="{DynamicResource FontSizeS}"
+                          Header="{I18N {x:Static LocaleKey.TextSelectionToolbar_ExcludeApplication}}"
+                          IsVisible="{Binding #Self.CanExcludeApplication}">
+                          <MenuItem.Icon>
+                            <LucideIcon
+                              Kind="EyeOff"
+                              Size="{DynamicResource FontSizeM}"/>
+                          </MenuItem.Icon>
+                        </MenuItem>
+                      </shadui:CompositeCollection>
+                    </MenuFlyout.ItemsSource>
+                  </MenuFlyout>
+                </Button.Flyout>
+              </Button>
+
+              <ItemsControl ItemsSource="{Binding #Self.VisibleActions}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal"/>
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="ts:TextSelectionToolbarAction">
+                    <Button
+                      Classes="Ghost Compact" Padding="6,4"
+                      VerticalAlignment="Stretch" Click="HandleActionClick"
+                      Focusable="False">
+                      <ToolTip.Tip>
+                        <StackPanel MaxWidth="240">
+                          <TextBlock Text="{Binding NameKey^}"/>
+                          <TextBlock
+                            Classes="Caption"
+                            IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Text="{Binding DescriptionKey^}"
+                            TextWrapping="Wrap"/>
+                        </StackPanel>
+                      </ToolTip.Tip>
+
+                      <StackPanel
+                        Orientation="Horizontal" Spacing="4">
+                        <v:IconPresenter
+                          VerticalAlignment="Center"
+                          Background="{x:Null}"
+                          FontSize="{DynamicResource FontSizeM}"
+                          Foreground="{DynamicResource ForegroundColor}"
+                          Icon="{Binding DisplayIcon}"
+                          IconSize="{DynamicResource FontSizeM}"/>
+                        <TextBlock
+                          MaxWidth="120" VerticalAlignment="Center"
+                          IsVisible="{Binding IsLabelVisible}"
+                          Text="{Binding NameKey^}"
+                          TextTrimming="CharacterEllipsis"/>
+                      </StackPanel>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </DockPanel>
+          </DataTemplate>
+        </v:ConditionalContentControl.FalseContent>
+
+        <v:ConditionalContentControl.TrueContent>
+          <DataTemplate>
+            <v:ChatInputArea
+              Classes="Compact" MinWidth="360"
+              VerticalAlignment="Center" ClipToBounds="False"
+              Command="{Binding #Self.FreeformChatCommand}"
+              CustomAssistantItemsSource="{Binding #Self.CustomAssistants}"
+              PlaceholderText="{I18N {x:Static LocaleKey.TextSelectionToolbar_ChatInputArea_PlaceholderText}}"
+              SelectedCustomAssistant="{Binding #Self.SelectedCustomAssistant, Mode=TwoWay}"
+              ShouldClearTextOnSubmit="False"
+              Text="{Binding #Self.FreeformChatText, Mode=TwoWay}">
+              <v:ChatInputArea.IsSendButtonEnabled>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding
+                    Converter="{x:Static ObjectConverters.IsNotNull}"
+                    Path="#Self.FreeformChatCommand"/>
+                  <Binding
+                    Converter="{x:Static ObjectConverters.IsNotNull}"
+                    Path="#Self.SelectedCustomAssistant"/>
+                  <Binding
+                    Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
+                    Path="#Self.FreeformChatText"/>
+                </MultiBinding>
+              </v:ChatInputArea.IsSendButtonEnabled>
+              <v:ChatInputArea.ToolBarContent>
+                <DockPanel LastChildFill="False">
+                  <DockPanel.Styles>
+                    <Style Selector="Button:flyout-open LayoutTransformControl">
+                      <Style.Animations>
+                        <Animation
+                          Easing="CubicEaseInOut" FillMode="Forward"
+                          Duration="0:0:0.15">
+                          <KeyFrame Cue="0%">
+                            <Setter Property="ScaleTransform.ScaleY" Value="0.90"/>
+                            <Setter Property="ScaleTransform.ScaleX" Value="0.90"/>
+                            <Setter Property="Opacity" Value="0"/>
+                          </KeyFrame>
+                          <KeyFrame Cue="100%">
+                            <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+                            <Setter Property="ScaleTransform.ScaleX" Value="1"/>
+                            <Setter Property="Opacity" Value="1"/>
+                          </KeyFrame>
+                        </Animation>
+                      </Style.Animations>
+                    </Style>
+                  </DockPanel.Styles>
+
+                  <Button
+                    Classes="Ghost Compact" DockPanel.Dock="Left"
+                    Padding="4" VerticalAlignment="Center"
+                    Click="HandleExitFreeformChatClick" Focusable="False"
+                    IsEnabled="True">
+                    <ToolTip.Tip>
+                      <v:KeyboardShortcutLabel
+                        Shortcut="Escape"
+                        Text="{I18N {x:Static LocaleKey.TextSelectionToolbar_ExitFreeformChat}}"/>
+                    </ToolTip.Tip>
+
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="4">
+                      <LucideIcon
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource ForegroundColor}"
+                        Kind="ArrowLeft"
+                        Size="{DynamicResource FontSizeL}"/>
+                    </StackPanel>
+                  </Button>
+
+                  <v:ChatCustomAssistantSelector
+                    Classes="Compact" DockPanel.Dock="Left"
+                    ItemsSource="{Binding #Self.CustomAssistants}"
+                    Loaded="HandleAssistantSelectorLoaded"
+                    SelectedItem="{Binding #Self.SelectedCustomAssistant, Mode=TwoWay}"
+                    ToolTip.Placement="Top"/>
+                </DockPanel>
+              </v:ChatInputArea.ToolBarContent>
+            </v:ChatInputArea>
+          </DataTemplate>
+        </v:ConditionalContentControl.TrueContent>
+      </v:ConditionalContentControl>
 
       <Button
         x:Name="CloseButton" Classes="Outline Compact"

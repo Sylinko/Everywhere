@@ -1,10 +1,23 @@
 ﻿<Window
   x:Class="Everywhere.Views.TextSelectionToolbarWindow" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" x:Name="Self"
   Title="Everywhere" Background="Transparent"
   CanResize="False" Focusable="False"
   ShowActivated="False" ShowInTaskbar="False"
   SizeToContent="WidthAndHeight" Topmost="True"
   TransparencyLevelHint="Transparent" WindowDecorations="None">
-  <v:TextSelectionToolbar x:Name="ToolbarRoot"/>
+  <v:TextSelectionToolbar
+    x:Name="ToolbarRoot"
+    CustomAssistants="{Binding #Self.Settings.Model.CustomAssistants}"
+    FreeformChatCommand="{Binding #Self.SendFreeformChatCommand}"
+    IsFreeformChatEnabled="{Binding #Self.Settings.TextSelection.IsFreeformChatEnabled}"
+    VisibleActionCount="{Binding #Self.Settings.TextSelection.VisibleActionCount}">
+    <v:TextSelectionToolbar.Opacity>
+      <MultiBinding Converter="{x:Static vc:DoubleConverters.Product}">
+        <Binding Path="#Self.Settings.TextSelection.ToolbarOpacity"/>
+        <Binding Path="#Self.OpacityFactor"/>
+      </MultiBinding>
+    </v:TextSelectionToolbar.Opacity>
+  </v:TextSelectionToolbar>
 </Window>

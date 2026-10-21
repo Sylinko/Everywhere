@@ -13,6 +13,14 @@ public interface IChatService
     bool SendMessage(ChatContext chatContext, UserChatMessage message);
 
     /// <summary>
+    /// Sends using the supplied assistant without changing the global assistant selection.
+    /// Returns false when the destination is busy; ownership of the message's attachments then stays with the caller.
+    /// Accepted messages may carry acquisition-context anchors, which are moved during visual processing.
+    /// This method is only safe to call on the UI thread.
+    /// </summary>
+    bool SendMessage(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant);
+
+    /// <summary>
     /// Edit a previously sent user message. This will create a branch in the chat history. This method is NOT thread safe.
     /// </summary>
     /// <param name="oldNode"></param>

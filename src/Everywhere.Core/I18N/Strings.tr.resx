@@ -4586,6 +4586,21 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Araç Çubuğu Önizlemesi</value>
     </data>
+    <data name="TextSelectionToolbar_EnterFreeformChat" xml:space="preserve">
+        <value>Serbest giriş</value>
+    </data>
+    <data name="TextSelectionToolbar_ExitFreeformChat" xml:space="preserve">
+        <value>Geri</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Header" xml:space="preserve">
+        <value>Serbest girişe izin ver</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Description" xml:space="preserve">
+        <value>Tıklandığında asistanınıza serbestçe soru sorabileceğiniz bir giriş alanı açan bir düğme gösterir.</value>
+    </data>
+    <data name="TextSelectionToolbar_ChatInputArea_PlaceholderText" xml:space="preserve">
+        <value>Seçili metin hakkında asistana sor...</value>
+    </data>
     <data name="Common_KeyboardKey_Enter" xml:space="preserve">
         <value>Enter</value>
     </data>

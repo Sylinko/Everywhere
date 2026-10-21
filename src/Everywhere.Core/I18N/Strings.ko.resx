@@ -4586,6 +4586,21 @@
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>도구 모음 미리 보기</value>
     </data>
+    <data name="TextSelectionToolbar_EnterFreeformChat" xml:space="preserve">
+        <value>자유 입력</value>
+    </data>
+    <data name="TextSelectionToolbar_ExitFreeformChat" xml:space="preserve">
+        <value>뒤로</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Header" xml:space="preserve">
+        <value>자유 입력 허용</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Description" xml:space="preserve">
+        <value>버튼을 표시하며, 클릭하면 입력 상자가 열려 어시스턴트에게 자유롭게 질문할 수 있습니다.</value>
+    </data>
+    <data name="TextSelectionToolbar_ChatInputArea_PlaceholderText" xml:space="preserve">
+        <value>선택한 텍스트에 대해 어시스턴트에게 질문...</value>
+    </data>
     <data name="Common_KeyboardKey_Enter" xml:space="preserve">
         <value>엔터</value>
     </data>

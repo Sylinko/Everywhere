@@ -1,8 +1,12 @@
 ﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
+using CommunityToolkit.Mvvm.Input;
+using Everywhere.AI;
 using Everywhere.Configuration;
 using Everywhere.Utilities;
 using TextSelectionToolbarAction = Everywhere.TextSelection.TextSelectionToolbarAction;
@@ -15,6 +19,18 @@ namespace Everywhere.Views;
 /// </summary>
 public partial class TextSelectionToolbar : UserControl
 {
+    public static readonly StyledProperty<bool> IsFreeformChatEnabledProperty =
+        AvaloniaProperty.Register<TextSelectionToolbar, bool>(nameof(IsFreeformChatEnabled));
+
+    public static readonly DirectProperty<TextSelectionToolbar, bool> IsFreeformChatProperty =
+        AvaloniaProperty.RegisterDirect<TextSelectionToolbar, bool>(nameof(IsFreeformChat), o => o.IsFreeformChat);
+
+    public static readonly StyledProperty<IReadOnlyList<CustomAssistant>?> CustomAssistantsProperty =
+        AvaloniaProperty.Register<TextSelectionToolbar, IReadOnlyList<CustomAssistant>?>(nameof(CustomAssistants));
+
+    public static readonly StyledProperty<CustomAssistant?> SelectedCustomAssistantProperty =
+        AvaloniaProperty.Register<TextSelectionToolbar, CustomAssistant?>(nameof(SelectedCustomAssistant));
+
     public static readonly StyledProperty<IReadOnlyList<TextSelectionToolbarAction>?> ActionsProperty =
         AvaloniaProperty.Register<TextSelectionToolbar, IReadOnlyList<TextSelectionToolbarAction>?>(nameof(Actions));
 
@@ -23,6 +39,67 @@ public partial class TextSelectionToolbar : UserControl
 
     public static readonly StyledProperty<bool> CanExcludeApplicationProperty =
         AvaloniaProperty.Register<TextSelectionToolbar, bool>(nameof(CanExcludeApplication), true);
+
+    public static readonly StyledProperty<string?> FreeformChatTextProperty =
+        AvaloniaProperty.Register<TextSelectionToolbar, string?>(nameof(FreeformChatText));
+
+    public static readonly StyledProperty<IRelayCommand<string>?> FreeformChatCommandProperty =
+        AvaloniaProperty.Register<TextSelectionToolbar, IRelayCommand<string>?>(nameof(FreeformChatCommand));
+
+    /// <summary>
+    /// Gets or sets the draft retained while switching modes within one selection.
+    /// </summary>
+    public string? FreeformChatText
+    {
+        get => GetValue(FreeformChatTextProperty);
+        set => SetValue(FreeformChatTextProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the host's submission command. A preview leaves this unset.
+    /// The host clears the draft only after accepting it.
+    /// </summary>
+    public IRelayCommand<string>? FreeformChatCommand
+    {
+        get => GetValue(FreeformChatCommandProperty);
+        set => SetValue(FreeformChatCommandProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether the freeform chat feature is enabled.
+    /// </summary>
+    public bool IsFreeformChatEnabled
+    {
+        get => GetValue(IsFreeformChatEnabledProperty);
+        set => SetValue(IsFreeformChatEnabledProperty, value);
+    }
+
+    /// <summary>
+    /// Gets whether the toolbar is currently presenting its freeform editor.
+    /// </summary>
+    public bool IsFreeformChat
+    {
+        get;
+        private set => SetAndRaise(IsFreeformChatProperty, ref field, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the collection of custom assistants available for selection in the toolbar.
+    /// </summary>
+    public IReadOnlyList<CustomAssistant>? CustomAssistants
+    {
+        get => GetValue(CustomAssistantsProperty);
+        set => SetValue(CustomAssistantsProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the currently selected custom assistant in the toolbar.
+    /// </summary>
+    public CustomAssistant? SelectedCustomAssistant
+    {
+        get => GetValue(SelectedCustomAssistantProperty);
+        set => SetValue(SelectedCustomAssistantProperty, value);
+    }
 
     /// <summary>
     /// Gets or sets the ordered tools offered by the host.
@@ -58,6 +135,16 @@ public partial class TextSelectionToolbar : UserControl
     public event Action<TextSelectionToolbarAction>? ActionInvoked;
 
     /// <summary>
+    /// Supplies the lazily attached editor to an interactive host. Settings previews leave this unwired.
+    /// </summary>
+    public event Action<ChatTextEditor>? FreeformChatInputRequested;
+
+    /// <summary>
+    /// Releases host input before the editor starts transitioning out of the presentation.
+    /// </summary>
+    public event Action? FreeformChatExiting;
+
+    /// <summary>
     /// Requests dismissal of this presentation without changing persisted preferences.
     /// </summary>
     public event Action? CloseRequested;
@@ -77,6 +164,8 @@ public partial class TextSelectionToolbar : UserControl
     /// </summary>
     public event Action<PixelPoint>? MenuPointerMoved;
 
+    private PopupFlyoutBase? _menuFlyout;
+    private PopupFlyoutBase? _assistantFlyout;
     private Control? _menuPresenter;
     private IDisposable? _menuOpacityBinding;
     private PixelRect? _menuBounds;
@@ -119,7 +208,9 @@ public partial class TextSelectionToolbar : UserControl
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        ExitFreeformChat();
         CloseMenu();
+        ObserveAssistantFlyout(null);
         _isAttached = false;
         if (_observedActions is not null) _observedActions.CollectionChanged -= HandleActionsChanged;
         _observedActions = null;
@@ -190,11 +281,27 @@ public partial class TextSelectionToolbar : UserControl
     /// <summary>
     /// Closes the menu before its host is hidden or reused for another selection.
     /// </summary>
-    public void CloseMenu() => MoreButton.Flyout?.Hide();
+    public void CloseMenu() => _menuFlyout?.Hide();
+
+    /// <summary>
+    /// Closes an open menu first, otherwise returns from editing to the tools.
+    /// The input host must give an active input-method composition priority over this action.
+    /// </summary>
+    public void HandleEscape()
+    {
+        if (_menuFlyout is not null)
+        {
+            CloseMenu();
+            return;
+        }
+
+        ExitFreeformChat();
+    }
 
     private void HandleMenuOpened(object? sender, EventArgs e)
     {
-        _menuPresenter = (sender as MenuFlyout)?.Popup.Child;
+        _menuFlyout = sender as PopupFlyoutBase;
+        _menuPresenter = _menuFlyout?.Popup.Child;
         if (_menuPresenter is not null)
         {
             // The flyout caches its presenter; keep this subscription scoped to the open menu.
@@ -215,8 +322,14 @@ public partial class TextSelectionToolbar : UserControl
             _menuPresenter = null;
         }
 
+        _menuFlyout = null;
         _menuBounds = null;
         MenuBoundsChanged?.Invoke(null);
+
+        if (IsFreeformChat)
+        {
+            RequestFreeformChatInput();
+        }
     }
 
     private void HandleMenuLayoutUpdated(object? sender, EventArgs e) => UpdateMenuBounds();
@@ -246,6 +359,99 @@ public partial class TextSelectionToolbar : UserControl
     private void HandleCloseClick(object? sender, RoutedEventArgs e) => CloseRequested?.Invoke();
 
     private void HandleExcludeApplicationClick(object? sender, RoutedEventArgs e) => ExcludeApplicationRequested?.Invoke();
+
+    private void HandleEnterFreeformChatClick(object? sender, RoutedEventArgs e)
+    {
+        if (!IsFreeformChatEnabled)
+        {
+            return;
+        }
+
+        CloseMenu();
+        IsFreeformChat = true;
+
+        // ConditionalContentControl builds its branch during measure, not on the Boolean change.
+        // Complete normal layout before handing the editor to the host. No delay or retry is needed;
+        // native preparation already ran when the passive toolbar appeared, in an earlier interaction.
+        UpdateLayout();
+        RequestFreeformChatInput();
+    }
+
+    private void HandleExitFreeformChatClick(object? sender, RoutedEventArgs e)
+    {
+        ExitFreeformChat();
+    }
+
+    /// <summary>
+    /// Returns to the tools, releasing delegated input before the outgoing editor animates away.
+    /// </summary>
+    public void ExitFreeformChat()
+    {
+        if (!IsFreeformChat)
+        {
+            return;
+        }
+
+        FreeformChatExiting?.Invoke();
+        IsFreeformChat = false;
+        CloseMenu();
+    }
+
+    /// <summary>
+    /// Resets a pooled window to its passive presentation without animating a previous editor.
+    /// Cached branches remain reusable, but the editor is detached from the visual tree.
+    /// </summary>
+    public void ResetFreeformChat()
+    {
+        ExitFreeformChat();
+        SetCurrentValue(FreeformChatTextProperty, null);
+        ModeContent.UpdateContentWithoutTransition();
+    }
+
+    private void RequestFreeformChatInput()
+    {
+        // Read the current branch rather than the whole toolbar: an outgoing transition presenter
+        // may still contain another visual until its animation completes.
+        if (IsFreeformChat && ModeContent.Content is ChatInputArea area &&
+            area.GetVisualDescendants().OfType<ChatTextEditor>().FirstOrDefault() is { } editor)
+        {
+            FreeformChatInputRequested?.Invoke(editor);
+        }
+    }
+
+    private void HandleAssistantSelectorLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (sender is ChatCustomAssistantSelector selector)
+        {
+            var button = selector.GetVisualDescendants().OfType<Button>()
+                .FirstOrDefault(button => button.Flyout is PopupFlyoutBase);
+            ObserveAssistantFlyout(button?.Flyout as PopupFlyoutBase);
+        }
+    }
+
+    private void ObserveAssistantFlyout(PopupFlyoutBase? flyout)
+    {
+        if (ReferenceEquals(_assistantFlyout, flyout))
+        {
+            return;
+        }
+
+        if (_assistantFlyout is { } previous)
+        {
+            previous.Opened -= HandleMenuOpened;
+            previous.Closed -= HandleMenuClosed;
+        }
+
+        _assistantFlyout = flyout;
+        if (flyout is not null)
+        {
+            // The popup has its own HWND but belongs to this input surface. Opening it must not
+            // replace the hidden CoreWindow's native focus. Logical menu focus remains available.
+            flyout.Popup.TakesFocusFromNativeControl = false;
+            flyout.Opened += HandleMenuOpened;
+            flyout.Closed += HandleMenuClosed;
+        }
+    }
 
     private void HandleActionClick(object? sender, RoutedEventArgs e)
     {

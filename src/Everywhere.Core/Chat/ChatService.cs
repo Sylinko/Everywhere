@@ -101,8 +101,12 @@ public sealed partial class ChatService : IChatService
 
     public bool SendMessage(ChatContext chatContext, UserChatMessage message)
     {
-        var customAssistant = _settings.Model.SelectedCustomAssistant;
+        return SendMessage(chatContext, message, _settings.Model.SelectedCustomAssistant);
+    }
 
+    /// <inheritdoc />
+    public bool SendMessage(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant)
+    {
         return chatContext.TryExecute(
             async cancellationToken =>
             {
@@ -111,8 +115,10 @@ public sealed partial class ChatService : IChatService
 
                 try
                 {
-                    await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
+                    // Once accepted, retain the user's content even if preparation of the visual
+                    // context fails. External composers do not keep a second copy in the main draft.
                     var userNode = chatContext.Add(message);
+                    await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
                     var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                         chatContext,
                         userNode,
@@ -401,8 +407,20 @@ public sealed partial class ChatService : IChatService
             foreach (var attachment in visualElementAttachments)
             {
                 if (!attachment.IsElementValid || attachment.Anchor is not { } anchor) continue;
+
+                // The main draft may already have moved its anchors. Independent composers hand
+                // them over only after acceptance; moving an already-owned anchor is a no-op.
+                var destinationAnchor = await _visualService.MoveAnchorAsync(
+                    chatContext.VisualState,
+                    anchor,
+                    cancellationToken: cancellationToken);
+                if (!ReferenceEquals(anchor, destinationAnchor))
+                {
+                    attachment.ReplaceAnchor(anchor, destinationAnchor);
+                }
+
                 validAttachments.Add(attachment);
-                anchors.Add(anchor);
+                anchors.Add(destinationAnchor);
             }
 
             if (anchors.Count == 0) return;

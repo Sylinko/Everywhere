@@ -26,6 +26,12 @@ public sealed class OverlayInputWatcher : OverlayInputWatcherBase
     private IDisposable? _keyboardHook;
 
     /// <inheritdoc />
+    protected override bool IsInputPopup(IWindowInputCapture capture, PixelPoint point)
+    {
+        return capture is WindowsWindowInputCapture windowsCapture && windowsCapture.ContainsInputPopup(point);
+    }
+
+    /// <inheritdoc />
     protected override void StartWatching()
     {
         _mouseHook = LowLevelHook.CreateMouseHook(OnMouseInput);

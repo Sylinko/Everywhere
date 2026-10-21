@@ -93,22 +93,54 @@ public sealed class WindowHelper : IWindowHelper
     /// </summary>
     public void SetWindowProperties(
         Window window,
-        bool? focusable = null,
+        WindowInputMode? inputMode = null,
         bool? hitTestVisible = null,
         WindowLayer? layer = null)
     {
-        if (focusable is null && hitTestVisible is null && layer is null) return;
+        if (inputMode is null && hitTestVisible is null && layer is null)
+        {
+            return;
+        }
 
         var properties = _windowProperties.GetValue(window, static _ => new WindowPropertiesState());
         if (hitTestVisible.HasValue) properties.IsHitTestVisible = hitTestVisible;
         if (layer.HasValue) properties.Layer = layer;
 
-        if (focusable is { } isFocusable) window.Focusable = isFocusable;
-        if (hitTestVisible is { } isHitTestVisible) window.IsHitTestVisible = isHitTestVisible;
-        if (layer is { } windowLayer) window.Topmost = windowLayer >= WindowLayer.Topmost;
-        if (GetNativeWindow(window) is not { } nativeWindow) return;
+        if (inputMode is { } mode)
+        {
+            window.Focusable = mode == WindowInputMode.Normal;
+        }
+
+        if (hitTestVisible is { } isHitTestVisible)
+        {
+            window.IsHitTestVisible = isHitTestVisible;
+        }
+
+        if (layer is { } windowLayer)
+        {
+            window.Topmost = windowLayer >= WindowLayer.Topmost;
+        }
+
+        if (GetNativeWindow(window) is not { } nativeWindow)
+        {
+            return;
+        }
 
         ApplyWindowProperties(nativeWindow, properties);
+    }
+
+    /// <inheritdoc />
+    public bool TryPrepareInput(Window window)
+    {
+        // macOS input delegation has not been implemented. The caller can explicitly choose
+        // ordinary activated input; preparation itself must never activate the window.
+        return false;
+    }
+
+    /// <inheritdoc />
+    public IWindowInputCapture? TryCaptureInput(Window window)
+    {
+        return null;
     }
 
     private void ApplyWindowProperties(NSWindow nativeWindow, WindowPropertiesState properties)

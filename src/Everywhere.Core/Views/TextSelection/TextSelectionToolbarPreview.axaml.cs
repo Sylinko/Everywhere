@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Everywhere.Configuration;
@@ -27,7 +28,13 @@ public partial class TextSelectionToolbarPreview : UserControl
     {
         Settings = settings.TextSelection;
         _actionsManager = actionsManager;
+
         InitializeComponent();
+
+        PreviewToolbar[!TextSelectionToolbar.CustomAssistantsProperty] = CompiledBinding.Create(
+            (ModelSettings model) => model.CustomAssistants,
+            source: settings.Model);
+        PreviewToolbar.SelectedCustomAssistant = settings.Model.SelectedCustomAssistant;
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -74,6 +81,7 @@ public partial class TextSelectionToolbarPreview : UserControl
         PreviewToolbar.MenuBoundsChanged -= HandleMenuBoundsChanged;
         PreviewToolbar.MenuPointerMoved -= HandleMenuPointerMoved;
         PreviewToolbar.Actions = null;
+        PreviewToolbar.ResetFreeformChat();
 
         base.OnDetachedFromVisualTree(e);
     }

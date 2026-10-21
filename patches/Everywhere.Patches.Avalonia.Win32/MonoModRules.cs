@@ -16,7 +16,7 @@ internal static class MonoModRules
             modder = MonoModRulesManager.Modder;
             if (modder.Module.GetType("Avalonia.Win32.WindowImpl") is not { } windowImpl)
             {
-                modder.Log("[Everywhere] Avalonia.Win32.WindowImpl was not found; composition bridge was not injected.");
+                modder.Log("[Everywhere] Avalonia.Win32.WindowImpl was not found; window feature bridges were not injected.");
                 return;
             }
 
@@ -39,7 +39,7 @@ internal static class MonoModRules
 
             if (contractsModule?.Assembly?.Name is not { } contractsAssemblyName)
             {
-                modder.Log("[Everywhere] Everywhere.Patches.Contracts could not be resolved; composition bridge was not injected.");
+                modder.Log("[Everywhere] Everywhere.Patches.Contracts could not be resolved; window feature bridges were not injected.");
                 return;
             }
 
@@ -59,30 +59,34 @@ internal static class MonoModRules
                 modder.Module.AssemblyReferences.Add(contractsReference);
             }
 
-            var feature = new TypeReference(
-                "Everywhere.Patches.Contracts.Interop",
-                "IWindowCompositionFeature",
-                modder.Module,
-                contractsReference);
-
-#pragma warning disable CS8602
             var interfaces = windowImpl.Interfaces ??
                 throw new InvalidOperationException("Avalonia.Win32.WindowImpl does not expose an interface collection.");
-#pragma warning restore CS8602
-            foreach (var implementation in interfaces)
-            {
-                if (implementation.InterfaceType.FullName == feature.FullName)
-                {
-                    return;
-                }
-            }
 
-            interfaces.Add(new InterfaceImplementation(feature));
-            modder.Log("[Everywhere] Injected IWindowCompositionFeature into Avalonia.Win32.WindowImpl.");
+            foreach (var name in new[] { "IWindowCompositionFeature", "IWindowInputFeature" })
+            {
+                var feature = new TypeReference("Everywhere.Patches.Contracts.Interop", name, modder.Module, contractsReference);
+                var isPresent = false;
+                foreach (var implementation in interfaces)
+                {
+                    if (implementation.InterfaceType.FullName == feature.FullName)
+                    {
+                        isPresent = true;
+                        break;
+                    }
+                }
+
+                if (isPresent)
+                {
+                    continue;
+                }
+
+                interfaces.Add(new InterfaceImplementation(feature));
+                modder.Log($"[Everywhere] Injected {name} into Avalonia.Win32.WindowImpl.");
+            }
         }
         catch (Exception exception)
         {
-            modder?.Log($"[Everywhere] Composition bridge injection failed: {exception}");
+            modder?.Log($"[Everywhere] Window feature bridge injection failed: {exception}");
             throw;
         }
     }
