@@ -13,21 +13,6 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
-        <value>Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_Description" xml:space="preserve">
-        <value>Verwenden Sie Everything (eine leistungsstarke lokale Dateisuchmaschine), um nach Dateien auf Ihrem Computer zu suchen.</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
-        <value>Dateien über Everything suchen</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
-        <value>{0} Elemente gefunden</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Verwenden Sie Everything, um Dateien zu suchen.</value>
-    </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere läuft derzeit mit Administratorrechten. Drag &amp; Drop von normalen Anwendungen könnte nicht funktionieren, und die Aktionen des Assistenten haben höhere Systemrechte.</value>
     </data>

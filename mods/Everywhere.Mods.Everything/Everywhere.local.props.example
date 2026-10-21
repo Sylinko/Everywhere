@@ -1,0 +1,6 @@
+﻿<Project>
+  <PropertyGroup>
+    <!-- Optional: replace source import with an existing mod-capable Windows build directory. -->
+    <!-- <EverywhereHost>C:/path/to/Everywhere</EverywhereHost> -->
+  </PropertyGroup>
+</Project>

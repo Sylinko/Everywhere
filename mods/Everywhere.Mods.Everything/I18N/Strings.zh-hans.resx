@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="Everything_Header" xml:space="preserve">
+    <value>Everything</value>
+  </data>
+  <data name="Everything_Description" xml:space="preserve">
+    <value>使用 Everything (一个高性能本地文件搜索引擎) 搜索计算机上的文件。</value>
+  </data>
+  <data name="Everything_SearchFiles_Header" xml:space="preserve">
+    <value>使用 Everything 搜索文件</value>
+  </data>
+  <data name="Everything_SearchFiles_DetailMessage" xml:space="preserve">
+    <value>找到了 {0} 个项目</value>
+  </data>
+  <data name="Everything_SearchFiles_Description" xml:space="preserve">
+    <value>使用 Everything 搜索文件。</value>
+  </data>
+  <data name="Everything_ExecutablePath_Header" xml:space="preserve">
+    <value>Everything 程序路径</value>
+  </data>
+  <data name="Everything_ExecutablePath_Description" xml:space="preserve">
+    <value>选填 Everything.exe 的绝对路径，仅在指定实例未运行时用于启动。留空则自动查找已安装的程序。修改后，下一次查询生效。</value>
+  </data>
+  <data name="Everything_InstanceName_Header" xml:space="preserve">
+    <value>Everything 实例名称</value>
+  </data>
+  <data name="Everything_InstanceName_Description" xml:space="preserve">
+    <value>选填准确的实例名称。留空则使用 Everything 1.4 默认实例或 1.5a 实例。修改后，下一次查询生效。</value>
+  </data>
+</root>

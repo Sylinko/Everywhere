@@ -149,7 +149,7 @@
     <PackageVersion Include="OfficeCLI" Version="999.20261010.4" />
     <PackageVersion Include="Porta.Pty" Version="999.20261001.1" />
     <PackageVersion Include="Porta.Pty.Native" Version="999.20261001.1" />
-    <PackageVersion Include="EverythingNetCore" Version="999.20261001.3" />
+    <PackageVersion Include="EverythingNetCore" Version="999.20261016.4" />
     <PackageVersion Include="MessagePack" Version="999.20261001.1" />
     <PackageVersion Include="MessagePack.Annotations" Version="999.20261001.1" />
     <PackageVersion Include="MessagePackAnalyzer" Version="999.20261001.1" />

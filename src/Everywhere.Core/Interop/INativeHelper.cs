@@ -1,5 +1,4 @@
-﻿using System.Runtime.Versioning;
-using Avalonia.Input;
+﻿using Avalonia.Input;
 using Avalonia.Media.Imaging;
 
 namespace Everywhere.Interop;
@@ -27,12 +26,6 @@ public interface INativeHelper
     /// Check if the application is installed in the system.
     /// </summary>
     bool IsInstalled { get; }
-
-    /// <summary>
-    /// Check if the current user is an administrator (aka UAC on Windows).
-    /// </summary>
-    [SupportedOSPlatform("windows")]
-    bool IsAdministrator { get; }
 
     /// <summary>
     /// Check if the application is set to start with the system as User.

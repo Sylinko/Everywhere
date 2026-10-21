@@ -30,8 +30,6 @@ public class NativeHelper(IEventHelper eventHelper) : INativeHelper
 
     public bool IsInstalled => File.Exists("/usr/bin/Everywhere");
 
-    public bool IsAdministrator => Environment.UserName == "root";
-
     public bool IsStartupEnabled
     {
         get => File.Exists(ShortcutFile);

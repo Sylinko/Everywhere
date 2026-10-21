@@ -21,11 +21,11 @@ public interface IChatPluginManager
     IReadOnlyBindableList<McpChatPlugin> McpPlugins { get; }
 
     /// <summary>
-    /// Publishes the real plugin for discovery and creates weak, revocable functions for chat snapshots.
+    /// Publishes a mod-supplied tool for discovery and creates weak, revocable functions for chat snapshots.
     /// Close the returned registration before disposing the tool's native or managed resources.
     /// Its disposal removes the contribution and waits for discovery, calls, filters and streams already in progress.
     /// </summary>
-    IAsyncDisposable RegisterChatPlugin(NativeChatPlugin plugin);
+    IAsyncDisposable RegisterChatPlugin(ModChatPlugin plugin);
 
     /// <summary>
     /// Creates a new MCP plugin based on the provided configuration.

@@ -13,21 +13,6 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
-        <value>Her Şey</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_Description" xml:space="preserve">
-        <value>Everything'i (yüksek performanslı yerel dosya arama motoru) kullanarak bilgisayarınızdaki dosyaları arayın.</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
-        <value>Everything ile Dosya Ara</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
-        <value>{0} Öğe Bulundu</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Everything ile dosyaları arayın.</value>
-    </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere şu anda yönetici olarak çalışıyor. Normal uygulamalardan sürükleyip bırakma işlemleri kullanılamayabilir ve asistanın gerçekleştirdiği işlemler daha yüksek sistem izinlerine sahip olacaktır.</value>
     </data>

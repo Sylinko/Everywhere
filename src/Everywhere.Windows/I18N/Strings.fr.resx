@@ -13,21 +13,6 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
-        <value>Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_Description" xml:space="preserve">
-        <value>Utilisez Everything (un moteur de recherche de fichiers local haute performance) pour rechercher des fichiers sur votre ordinateur.</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
-        <value>Rechercher des fichiers via Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
-        <value>{0} Éléments Trouvés</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Recherchez des fichiers avec Everything.</value>
-    </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere fonctionne actuellement avec des droits d'administrateur. Le glisser-déposer depuis des applications ordinaires peut ne pas fonctionner, et les actions effectuées par l'assistant auront des privilèges système accrus.</value>
     </data>

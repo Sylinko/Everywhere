@@ -207,7 +207,7 @@ _toolsRegistration = context.Services.GetRequiredService<IChatPluginManager>()
 context.Register(_toolsRegistration);
 ```
 
-No IModSettingsRegistry registration is needed for this route.
+No IModSettingsRegistry registration is needed for this route. Everything uses this route only.
 Each tool group can expose its own settings. A mod may additionally register a mod-wide entry,
 showing common settings or other model sections. Sharing a model does not require sharing a Control
 between display locations, nor does adding an editor create another settings document.
@@ -221,6 +221,14 @@ Ordinary Exit must not depend on a live dispatcher. See the
 Document when edits affect running work. Capture UI-owned preferences on the UI thread before
 starting background operations if they need a consistent snapshot. Persistence does not make a
 sequence of separate user edits transactional.
+
+Everything closes chat registration on the UI thread during hot unload, then disposes its work
+and settings engine. On Exit it closes registration without dispatching. The next query captures
+both connection preferences on the UI thread, without reconnecting merely because an edit occurs.
+
+For generated settings attributes, a file-local using does not apply to the generated file.
+Use fully qualified LocaleKey expressions or import the locale namespace globally. Everything
+uses an explicit MSBuild Using item for this purpose.
 
 Prefer the existing GeneratedSettingsItems path, which is covered by the collectible settings fixture.
 A reflection Binding comparison retained the mod assembly; the specific framework root is not yet

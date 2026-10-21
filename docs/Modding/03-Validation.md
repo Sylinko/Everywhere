@@ -351,6 +351,30 @@ views, exercises the real editor template, and checks that retaining the catalog
 disposed page alive through its collection-change subscription. These checks do not make
 registration disposal a completion barrier for asynchronous UI delivery.
 
+## Everything extraction (2026-10-22)
+
+Everything is packaged as everywhere.everything for Windows x64. Its entry, EverythingNetCore
+999.20261016.4 wrapper, SDK 2/3 native DLLs, bundled executable, icon, license notices and 12
+satellites belong to the mod ZIP, not the Windows host. The package exposes 13 name/description
+languages and English/Simplified Chinese README files. A simulated osx-arm64 selection skips
+the Windows entry without executing it.
+
+The explicit EverythingModTests package test runs two isolated Everything 1.5 user instances with
+different indexes. Across two activations it checks query-time preference changes, automatic/final
+saving, generated settings keys, the embedded icon, old-call revocation and managed/native unload.
+It retains an old chat settings tab and bound host control during collection. Both user processes
+survive mod removal and never enter Watchdog. The independent mounted-editor regression covers
+production editor detachment separately. See the [build/test instructions](../../mods/Everywhere.Mods.Everything/README.md).
+
+Reversible chat registration now accepts ModChatPlugin only. A same-named built-in/mod regression
+checks that built-in functions retain their ordinary snapshot identity and remain callable after
+the mod retires, while the old mod functions are revoked. NativePlugins remains their shared UI list;
+MCP connection ownership is unchanged.
+
+Private startup with a compatible running 1.5 service or an elevated token, starting a stopped user
+installation, native desktop presentation and exit remain acceptance cases. The automated package
+test does not install services, request elevation or modify the user's existing Everything instance.
+
 ## Remaining release gates
 
 - Complete native desktop exit validation and broader UI/patch callback-draining coverage. Optional

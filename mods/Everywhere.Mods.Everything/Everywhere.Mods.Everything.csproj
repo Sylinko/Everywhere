@@ -1,0 +1,99 @@
+﻿<Project>
+  <Import Project="../../src/Everywhere.Modding.Sdk/Sdk/Sdk.props"/>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Version>1.0.0</Version>
+    <EverywhereModToolsDirectory>$(MSBuildThisFileDirectory)../../src/Everywhere.Modding.Sdk/bin/$(Configuration)/net10.0</EverywhereModToolsDirectory>
+    <EverywhereHost Condition="'$(EverywhereHost)' == ''">$(MSBuildThisFileDirectory)../../src/Everywhere.Windows/Everywhere.Windows.csproj</EverywhereHost>
+    <EverywhereHostVersion>[1.0.0]</EverywhereHostVersion>
+    <EverywhereModId>everywhere.everything</EverywhereModId>
+    <EverywhereModPlatform>win-x64</EverywhereModPlatform>
+    <EverywhereModEntryType>Everywhere.Mods.Everything.EverythingMod</EverywhereModEntryType>
+    <EverywhereI18NNamespace>Everywhere.Mods.Everything.I18N</EverywhereI18NNamespace>
+    <RootNamespace>Everywhere.Mods.Everything</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EverywhereModLocalization Include="en">
+      <Name>Everything</Name>
+      <Description>Use Everything (a high-performance local file search engine) to search for files on your computer.</Description>
+      <Readme>README.md</Readme>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="de">
+      <Name>Everything</Name>
+      <Description>Verwenden Sie Everything (eine leistungsstarke lokale Dateisuchmaschine), um nach Dateien auf Ihrem Computer zu suchen.</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="es">
+      <Name>Everything</Name>
+      <Description>Utiliza Everything (un motor de búsqueda de archivos local de alto rendimiento) para buscar archivos en tu computadora.</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="fr">
+      <Name>Everything</Name>
+      <Description>Utilisez Everything (un moteur de recherche de fichiers local haute performance) pour rechercher des fichiers sur votre ordinateur.</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="it">
+      <Name>Everything</Name>
+      <Description>Usa Everything (un motore di ricerca file locale ad alte prestazioni) per cercare file sul tuo computer.</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="ja">
+      <Name>Everything</Name>
+      <Description>Everything（高性能なローカルファイル検索エンジン）を使用して、コンピュータ上のファイルを検索します。</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="ko">
+      <Name>Everything</Name>
+      <Description>Everything(고성능 로컬 파일 검색 엔진)을 사용하여 컴퓨터에서 파일을 검색합니다.</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="pt-br">
+      <Name>Everything</Name>
+      <Description>Use o Everything (um mecanismo de busca de arquivos local de alto desempenho) para procurar arquivos no computador.</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="ru">
+      <Name>Everything</Name>
+      <Description>Используйте Everything (высокопроизводительный локальный поисковый движок) для поиска файлов на вашем компьютере.</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="tr">
+      <Name>Her Şey</Name>
+      <Description>Everything'i (yüksek performanslı yerel dosya arama motoru) kullanarak bilgisayarınızdaki dosyaları arayın.</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="zh-hans">
+      <Name>Everything</Name>
+      <Description>使用 Everything (一个高性能本地文件搜索引擎) 搜索计算机上的文件。</Description>
+      <Readme>README.zh-Hans.md</Readme>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="zh-hant-hk">
+      <Name>Everything</Name>
+      <Description>使用 Everything（一個高效能的本地檔案搜尋引擎）來搜尋您電腦上的檔案。</Description>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="zh-hant">
+      <Name>Everything</Name>
+      <Description>使用 Everything（一個高效能的本地文件搜尋引擎）來搜尋您電腦上的文件。</Description>
+    </EverywhereModLocalization>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm"/>
+    <PackageReference Include="EverythingNetCore" GeneratePathProperty="true"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference
+      Include="../../src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj"
+      ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference
+      Include="../../src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj"
+      ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Everywhere.Mods.Everything.I18N"/>
+    <EmbeddedResource Include="Assets/Everything.svg"/>
+    <Content
+      Include="$(PkgEverythingNetCore)/LICENSE" Link="Licenses/EverythingNetCore.txt"
+      CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
+  <Import Project="../../src/Build.I18N.targets"/>
+  <Import Project="../../src/Everywhere.Modding.Sdk/Sdk/Sdk.targets"/>
+</Project>

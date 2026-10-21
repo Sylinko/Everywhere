@@ -6,10 +6,10 @@ public partial class ChatPluginManager
 {
     // Keep closed entries while a discovery reader still holds the plugin. Such readers must not
     // accidentally treat a retired contribution as a permanent built-in tool.
-    private readonly ConditionalWeakTable<NativeChatPlugin, ChatPluginRegistration> _registrations = new();
+    private readonly ConditionalWeakTable<ModChatPlugin, ChatPluginRegistration> _registrations = new();
 
     /// <inheritdoc />
-    public IAsyncDisposable RegisterChatPlugin(NativeChatPlugin plugin)
+    public IAsyncDisposable RegisterChatPlugin(ModChatPlugin plugin)
     {
         var registration = new ChatPluginRegistration(plugin, this);
         _nativePluginsSource.Edit(list =>
@@ -39,7 +39,7 @@ public partial class ChatPluginManager
     /// Owns a tool activation. Discovery exposes the real plugin; chat scopes get weak proxies.
     /// Closing admission drains discovery, execution, filters and streaming before plugin resources are released.
     /// </summary>
-    private sealed class ChatPluginRegistration(NativeChatPlugin plugin, ChatPluginManager manager) : IAsyncDisposable
+    private sealed class ChatPluginRegistration(ModChatPlugin plugin, ChatPluginManager manager) : IAsyncDisposable
     {
         private readonly Lock _gate = new();
         // Ownership is intentional: dynamically discovered functions must survive until this activation closes.
@@ -47,7 +47,7 @@ public partial class ChatPluginManager
         private readonly HashSet<NativeChatFunction> _functions = [];
         private readonly TaskCompletionSource _drained = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private NativeChatPlugin? _plugin = plugin;
+        private ModChatPlugin? _plugin = plugin;
         private bool _isClosed;
         private int _activeCalls;
 
@@ -65,7 +65,7 @@ public partial class ChatPluginManager
 
                 try
                 {
-                    // DI may dispose discovery before the plugin entry during normal application exit.
+                    // DI may dispose discovery before the mod entry during normal application exit.
                     if (!manager._isDisposed && plugin is not null) manager._nativePluginsSource.Remove(plugin);
                 }
                 finally

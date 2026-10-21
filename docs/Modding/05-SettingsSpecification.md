@@ -90,8 +90,8 @@ or dispose a mod service scope. Remove the host-held settings items and factory 
 the activation service scope retires; see [Service Boundary](07-ServiceBoundary.md).
 
 The chat tool page reads ChatPlugin.SettingsItems for both built-in and mod-supplied tools.
-Override that property to expose a tool's own settings. A tool may share its settings model
-with an entry-owned persistence engine and its runtime operations.
+Override that property to expose a tool's own settings. Everything supplies its two generated items
+through EverythingChatPlugin.SettingsItems, sharing the same model with its engine and queries.
 No mod-wide registration or tool-to-mod-ID association is needed for this entry.
 
 Removing the selected tool clears selection and detail tabs. The settings tab also clears its
@@ -143,6 +143,10 @@ unload limits. Closing a page is necessary cleanup, not proof of assembly collec
 Persistence does not prescribe when a preference affects runtime work. Each mod documents that
 boundary and coordinates model access with the UI thread and any active operations.
 
+Everything captures ExecutablePath and InstanceName together on the UI thread at query start.
+Connection attempts use that pair; edits take effect on the next query without interrupting active
+work or stopping user-owned processes. Its new settings document starts at format 1.0.0.
+
 The mod entry owns the settings engine and awaits final saving in its normal disposal path.
 IModContext.Register alone is insufficient: ordinary process exit skips the reversal queue.
 An optional mod-wide settings registration is a reversible contribution, not the owner of persistence.
@@ -157,6 +161,9 @@ before disposing resources used by that page; later context reversal safely awai
 handle. Tool-specific settings follow their chat registration and page lifetime instead. Completing a chat
 registration's disposal drains admitted tool calls, not pending UI delivery. Coordinate the editor's
 UI detachment before final saving; do not introduce a dispatcher wait into ordinary process exit.
+
+Everything removes its chat registration on the UI thread during hot retirement so the chat page
+detaches settings before final saving. Exit removes registration without a dispatcher wait.
 
 Ordinary exit still saves settings, but cannot require a live UI dispatcher, new root-service
 resolution or execution of the reversal queue. Hot-stop UI coordination must not introduce a UI

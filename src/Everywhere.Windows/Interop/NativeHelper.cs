@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Security;
-using System.Security.Principal;
 using Windows.Data.Xml.Dom;
 using Windows.Networking.Connectivity;
 using Windows.UI.Notifications;
@@ -27,16 +26,6 @@ public class NativeHelper : INativeHelper
     private static string ProcessFullPath => Path.GetFullPath(Environment.ProcessPath.NotNull());
 
     public bool IsInstalled => InstallationIdentity.IsCurrentRegisteredInstallation(ProcessFullPath);
-
-    public bool IsAdministrator
-    {
-        get
-        {
-            var identity = WindowsIdentity.GetCurrent();
-            var principal = new WindowsPrincipal(identity);
-            return principal.IsInRole(WindowsBuiltInRole.Administrator);
-        }
-    }
 
     public bool IsStartupEnabled
     {

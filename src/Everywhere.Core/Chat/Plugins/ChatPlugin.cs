@@ -161,7 +161,7 @@ public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction
 }
 
 /// <summary>
-/// Common implementation for in-process managed chat tools, whether built in or supplied by a plugin.
+/// Common implementation for in-process managed chat tools, whether built in or supplied by a mod.
 /// </summary>
 /// <param name="name"></param>
 public abstract class NativeChatPlugin(string name) : ChatPlugin<NativeChatFunction>(name)

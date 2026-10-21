@@ -13,21 +13,6 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
-        <value>Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_Description" xml:space="preserve">
-        <value>Everything（高性能なローカルファイル検索エンジン）を使用して、コンピュータ上のファイルを検索します。</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
-        <value>Everythingでファイルを検索</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
-        <value>{0} 件のアイテムが見つかりました</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Everything を使用してファイルを検索します。</value>
-    </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere は現在管理者として実行されています。通常のアプリからのドラッグ＆ドロップは使用できない場合があり、アシスタントが実行する操作はより高いシステム権限を持ちます。</value>
     </data>

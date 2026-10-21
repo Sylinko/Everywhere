@@ -566,8 +566,9 @@ yourself, you own its lifetime and must validate whether release is safe.
 
 Executables are content, not DLLs to preload. Launch only when needed and explicitly distinguish
 user-owned from mod-owned processes. Mutable configuration/databases belong in DataDirectory;
-copy an executable there first if it writes beside itself. Native lifetime validation remains
-specific to each library and platform.
+copy an executable there first if it writes beside itself. The
+[Everything mod](../../mods/Everywhere.Mods.Everything/README.md) demonstrates this for Windows x64.
+Native lifetime validation remains specific to each library and platform.
 
 ### Register chat tools without retaining their implementation
 
