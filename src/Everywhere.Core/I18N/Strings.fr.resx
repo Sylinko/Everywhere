@@ -128,7 +128,7 @@
         <value>Image</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
-        <value>Utiliser des outils pour améliorer les capacités de l'assistant (Ctrl+T)</value>
+        <value>Utiliser des outils pour améliorer les capacités de l'assistant</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>Outils</value>
@@ -203,7 +203,7 @@
         <value>Ouvrir la fenêtre de débogage</value>
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
-        <value>Historique des discussions (Ctrl+H)</value>
+        <value>Historique des discussions</value>
     </data>
     <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Rechercher dans l'historique</value>
@@ -215,13 +215,13 @@
         <value>Chercher dans la conversation actuelle</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
-        <value>Résultat précédent (Shift+Entrée)</value>
+        <value>Résultat précédent</value>
     </data>
     <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
-        <value>Résultat suivant (Entrée)</value>
+        <value>Résultat suivant</value>
     </data>
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
-        <value>Fermer la recherche (Échap)</value>
+        <value>Fermer la recherche</value>
     </data>
     <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
         <value>Rechercher tous les messages</value>
@@ -233,10 +233,10 @@
         <value>Rechercher uniquement les messages de l'assistant</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
-        <value>Créer une nouvelle discussion (Ctrl+N)</value>
+        <value>Créer une nouvelle discussion</value>
     </data>
     <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
-        <value>Fermer (Échap)</value>
+        <value>Fermer</value>
     </data>
     <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
         <value>Déposez des fichiers ici</value>
@@ -528,7 +528,7 @@
         <value>Discord</value>
     </data>
     <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
-        <value>Épingler la fenêtre (Ctrl+D)</value>
+        <value>Épingler la fenêtre</value>
     </data>
     <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
         <value>Se souvenir du statut précédent</value>
@@ -4585,5 +4585,14 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
     </data>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Aperçu de la barre d'outils</value>
+    </data>
+    <data name="Common_KeyboardKey_Enter" xml:space="preserve">
+        <value>Entrée</value>
+    </data>
+    <data name="Common_KeyboardKey_Space" xml:space="preserve">
+        <value>Espace</value>
+    </data>
+    <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
+        <value>Retour arrière</value>
     </data>
 </root>

@@ -128,7 +128,7 @@
         <value>Изображение</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
-        <value>Используйте инструменты для расширения возможностей ассистента (Ctrl+T)</value>
+        <value>Используйте инструменты для расширения возможностей ассистента</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>Инструменты</value>
@@ -203,7 +203,7 @@
         <value>Открыть окно отладки</value>
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
-        <value>История чата (Ctrl+H)</value>
+        <value>История чата</value>
     </data>
     <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Поиск истории</value>
@@ -215,13 +215,13 @@
         <value>Найти в текущем разговоре</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
-        <value>Предыдущий результат (Shift+Enter)</value>
+        <value>Предыдущий результат</value>
     </data>
     <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
-        <value>Следующий результат (Enter)</value>
+        <value>Следующий результат</value>
     </data>
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
-        <value>Закрыть поиск (Esc)</value>
+        <value>Закрыть поиск</value>
     </data>
     <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
         <value>Искать все сообщения</value>
@@ -233,10 +233,10 @@
         <value>Искать только сообщения помощника</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
-        <value>Создать новый чат (Ctrl+N)</value>
+        <value>Создать новый чат</value>
     </data>
     <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
-        <value>Закрыть (Esc)</value>
+        <value>Закрыть</value>
     </data>
     <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
         <value>Перетащите файлы сюда</value>
@@ -528,7 +528,7 @@
         <value>Discord</value>
     </data>
     <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
-        <value>Закрепить окно (Ctrl+D)</value>
+        <value>Закрепить окно</value>
     </data>
     <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
         <value>Запомнить предыдущий статус</value>
@@ -4585,5 +4585,14 @@
     </data>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Предварительный просмотр панели инструментов</value>
+    </data>
+    <data name="Common_KeyboardKey_Enter" xml:space="preserve">
+        <value>Ввод</value>
+    </data>
+    <data name="Common_KeyboardKey_Space" xml:space="preserve">
+        <value>Пробел</value>
+    </data>
+    <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
+        <value>Backspace</value>
     </data>
 </root>

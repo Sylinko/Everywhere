@@ -73,6 +73,8 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/GlowBorder.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconPresenter.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/KeyboardShortcutLabel.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/KeyboardShortcutPresenter.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/PromptAdvancedEditorControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/PromptTemplateEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/TextDifferenceEditor.axaml"/>

@@ -128,7 +128,7 @@
         <value>圖片</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
-        <value>使用工具增強助手功能 (Ctrl+T)</value>
+        <value>使用工具增強助手能力</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>工具</value>
@@ -203,7 +203,7 @@
         <value>開啟除錯視窗</value>
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
-        <value>聊天記錄 (Ctrl+H)</value>
+        <value>聊天記錄</value>
     </data>
     <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
         <value>搜尋歷史記錄</value>
@@ -215,13 +215,13 @@
         <value>在當前對話中查找</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
-        <value>上一个結果 (Shift+Enter)</value>
+        <value>上一个結果</value>
     </data>
     <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
-        <value>下一个結果 (Enter)</value>
+        <value>下一个結果</value>
     </data>
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
-        <value>關閉搜尋 (Esc)</value>
+        <value>關閉搜尋</value>
     </data>
     <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
         <value>搜索所有消息</value>
@@ -233,10 +233,10 @@
         <value>僅搜索助手消息</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
-        <value>建立新聊天 (Ctrl+N)</value>
+        <value>建立新聊天</value>
     </data>
     <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
-        <value>關閉 (Esc)</value>
+        <value>關閉</value>
     </data>
     <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
         <value>將檔案拖放在這裡</value>
@@ -528,7 +528,7 @@
         <value>Discord</value>
     </data>
     <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
-        <value>固定視窗 (Ctrl+D)</value>
+        <value>固定視窗</value>
     </data>
     <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
         <value>記住先前狀態</value>
@@ -4585,5 +4585,14 @@
     </data>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>工具列預覽</value>
+    </data>
+    <data name="Common_KeyboardKey_Enter" xml:space="preserve">
+        <value>回車</value>
+    </data>
+    <data name="Common_KeyboardKey_Space" xml:space="preserve">
+        <value>空格</value>
+    </data>
+    <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
+        <value>退格</value>
     </data>
 </root>

@@ -128,7 +128,7 @@
         <value>Image</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
-        <value>Use tools to enhance assistant capabilities (Ctrl+T)</value>
+        <value>Use tools to enhance assistant capabilities</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>Tools</value>
@@ -203,7 +203,7 @@
         <value>Open Debug Window</value>
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
-        <value>Chat History (Ctrl+H)</value>
+        <value>Chat History</value>
     </data>
     <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Search history</value>
@@ -215,13 +215,13 @@
         <value>Find in conversation</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
-        <value>Previous result (Shift+Enter)</value>
+        <value>Previous result</value>
     </data>
     <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
-        <value>Next result (Enter)</value>
+        <value>Next result</value>
     </data>
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
-        <value>Close search (Esc)</value>
+        <value>Close search</value>
     </data>
     <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
         <value>Search all messages</value>
@@ -233,10 +233,10 @@
         <value>Search only assistant messages</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
-        <value>Create New Chat (Ctrl+N)</value>
+        <value>Create New Chat</value>
     </data>
     <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
-        <value>Close (Esc)</value>
+        <value>Close</value>
     </data>
     <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
         <value>Drop files here</value>
@@ -528,7 +528,7 @@
         <value>Discord</value>
     </data>
     <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
-        <value>Pin Window (Ctrl+D)</value>
+        <value>Pin Window</value>
     </data>
     <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
         <value>Remember Previous Status</value>
@@ -4585,5 +4585,14 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Toolbar Preview</value>
+    </data>
+    <data name="Common_KeyboardKey_Enter" xml:space="preserve">
+        <value>Enter</value>
+    </data>
+    <data name="Common_KeyboardKey_Space" xml:space="preserve">
+        <value>Space</value>
+    </data>
+    <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
+        <value>Backspace</value>
     </data>
 </root>

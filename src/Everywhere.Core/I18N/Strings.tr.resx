@@ -128,7 +128,7 @@
         <value>Fotoğraf</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
-        <value>Araçları kullanarak asistan yeteneklerini geliştirin (Ctrl+T)</value>
+        <value>Araçları kullanarak asistan yeteneklerini geliştirin</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>Araçlar</value>
@@ -203,7 +203,7 @@
         <value>Hata Ayıklama Penceresini Aç</value>
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
-        <value>Sohbet Geçmişi (Ctrl+H)</value>
+        <value>Sohbet Geçmişi</value>
     </data>
     <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Geçmişi Ara</value>
@@ -215,13 +215,13 @@
         <value>Mevcut Sohbette Ara</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
-        <value>Önceki Sonuç (Shift+Enter)</value>
+        <value>Önceki Sonuç</value>
     </data>
     <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
-        <value>Sonraki Sonuç (Enter)</value>
+        <value>Sonraki Sonuç</value>
     </data>
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
-        <value>Aramayı Kapat (Esc)</value>
+        <value>Aramayı Kapat</value>
     </data>
     <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
         <value>Tüm mesajları ara</value>
@@ -233,10 +233,10 @@
         <value>Sadece asistan mesajlarını ara</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
-        <value>Yeni Sohbet Oluşturun (Ctrl+N)</value>
+        <value>Yeni Sohbet Oluşturun</value>
     </data>
     <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
-        <value>Kapat (Esc)</value>
+        <value>Kapat</value>
     </data>
     <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
         <value>Dosyaları buraya bırakın</value>
@@ -528,7 +528,7 @@
         <value>Discord</value>
     </data>
     <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
-        <value>Pencereyi Sabitle (Ctrl+D)</value>
+        <value>Pencereyi Sabitle</value>
     </data>
     <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
         <value>Önceki durumu hatırla</value>
@@ -4585,5 +4585,14 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     </data>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Araç Çubuğu Önizlemesi</value>
+    </data>
+    <data name="Common_KeyboardKey_Enter" xml:space="preserve">
+        <value>Enter</value>
+    </data>
+    <data name="Common_KeyboardKey_Space" xml:space="preserve">
+        <value>Boşluk</value>
+    </data>
+    <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
+        <value>Geri Sil</value>
     </data>
 </root>

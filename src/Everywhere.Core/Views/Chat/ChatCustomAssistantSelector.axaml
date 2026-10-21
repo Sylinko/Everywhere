@@ -477,8 +477,13 @@
                         <ToggleSwitch
                           Grid.Column="3" VerticalAlignment="Center"
                           IsChecked="{Binding IsToolCallEnabled}"
-                          IsEnabled="{Binding Configuration.SupportsToolCall}"
-                          ToolTip.Tip="{I18N {x:Static LocaleKey.ChatCustomAssistantSelector_ToolCall_ToolTip}}"/>
+                          IsEnabled="{Binding Configuration.SupportsToolCall}">
+                          <ToolTip.Tip>
+                            <v:KeyboardShortcutLabel
+                              Shortcut="Ctrl+T"
+                              Text="{I18N {x:Static LocaleKey.ChatCustomAssistantSelector_ToolCall_ToolTip}}"/>
+                          </ToolTip.Tip>
+                        </ToggleSwitch>
 
                         <Button
                           Classes="Ghost Compact NoPadding" Grid.Column="4"

@@ -128,7 +128,7 @@
         <value>图像</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
-        <value>使用工具强化助手能力 (Ctrl+T)</value>
+        <value>使用工具强化助手能力</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>工具</value>
@@ -203,7 +203,7 @@
         <value>打开调试窗口</value>
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
-        <value>对话历史 (Ctrl+H)</value>
+        <value>对话历史</value>
     </data>
     <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
         <value>搜索历史记录</value>
@@ -215,13 +215,13 @@
         <value>在当前对话中查找</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
-        <value>上一个结果 (Shift+Enter)</value>
+        <value>上一个结果</value>
     </data>
     <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
-        <value>下一个结果 (Enter)</value>
+        <value>下一个结果</value>
     </data>
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
-        <value>关闭搜索 (Esc)</value>
+        <value>关闭搜索</value>
     </data>
     <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
         <value>搜索全部消息</value>
@@ -233,10 +233,10 @@
         <value>仅搜索助手消息</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
-        <value>创建新对话 (Ctrl+N)</value>
+        <value>创建新对话</value>
     </data>
     <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
-        <value>关闭 (Esc)</value>
+        <value>关闭</value>
     </data>
     <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
         <value>在此处拖放文件</value>
@@ -528,7 +528,7 @@
         <value>Discord</value>
     </data>
     <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
-        <value>固定窗口 (Ctrl+D)</value>
+        <value>固定窗口</value>
     </data>
     <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
         <value>记住之前的状态</value>
@@ -4583,5 +4583,14 @@
     </data>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>工具栏预览</value>
+    </data>
+    <data name="Common_KeyboardKey_Enter" xml:space="preserve">
+        <value>回车</value>
+    </data>
+    <data name="Common_KeyboardKey_Space" xml:space="preserve">
+        <value>空格</value>
+    </data>
+    <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
+        <value>退格</value>
     </data>
 </root>

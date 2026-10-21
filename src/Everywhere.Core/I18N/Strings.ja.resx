@@ -128,7 +128,7 @@
         <value>画像</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
-        <value>ツールを使用してアシスタントの機能を強化 (Ctrl+T)</value>
+        <value>ツールを使用してアシスタントの機能を強化</value>
     </data>
     <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>ツール</value>
@@ -203,7 +203,7 @@
         <value>デバッグウィンドウを開く</value>
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
-        <value>チャット履歴 (Ctrl+H)</value>
+        <value>チャット履歴</value>
     </data>
     <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
         <value>履歴を検索</value>
@@ -215,13 +215,13 @@
         <value>現在の会話を検索</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
-        <value>前の結果 (Shift+Enter)</value>
+        <value>前の結果</value>
     </data>
     <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
-        <value>次の結果 (Enter)</value>
+        <value>次の結果</value>
     </data>
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
-        <value>検索を閉じる (Esc)</value>
+        <value>検索を閉じる</value>
     </data>
     <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
         <value>すべてのメッセージを検索</value>
@@ -233,10 +233,10 @@
         <value>アシスタントのメッセージのみを検索</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
-        <value>新しいチャットを作成 (Ctrl+N)</value>
+        <value>新しいチャットを作成</value>
     </data>
     <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
-        <value>閉じる (Esc)</value>
+        <value>閉じる</value>
     </data>
     <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
         <value>ここにファイルをドロップ</value>
@@ -528,7 +528,7 @@
         <value>Discord</value>
     </data>
     <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
-        <value>ウィンドウを固定 (Ctrl+D)</value>
+        <value>ウィンドウを固定</value>
     </data>
     <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
         <value>前の状態を記憶</value>
@@ -4585,5 +4585,14 @@
     </data>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>ツールバーのプレビュー</value>
+    </data>
+    <data name="Common_KeyboardKey_Enter" xml:space="preserve">
+        <value>エンター</value>
+    </data>
+    <data name="Common_KeyboardKey_Space" xml:space="preserve">
+        <value>スペース</value>
+    </data>
+    <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
+        <value>バックスペース</value>
     </data>
 </root>
