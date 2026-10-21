@@ -17,7 +17,6 @@ namespace Everywhere.Mac.Interop;
 public sealed class WindowHelper : IWindowHelper
 {
     private readonly ConditionalWeakTable<Window, WindowPropertiesState> _windowProperties = new();
-    private readonly HashSet<int> _overlayWindowNumbers = [];
 
     private int OpenedWindowCount
     {
@@ -82,10 +81,6 @@ public sealed class WindowHelper : IWindowHelper
     private void HandleWindowClosed(Window window, RoutedEventArgs args)
     {
         if (window is not ChatWindow and not VisualElementEffectWindow) OpenedWindowCount--;
-        if (GetNativeWindow(window) is { } nativeWindow)
-        {
-            _overlayWindowNumbers.Remove((int)nativeWindow.WindowNumber);
-        }
     }
 
     /// <summary>
@@ -152,15 +147,6 @@ public sealed class WindowHelper : IWindowHelper
         if (properties.Layer is not { } layer) return;
         if (layer >= WindowLayer.Overlay)
         {
-            _overlayWindowNumbers.Add((int)nativeWindow.WindowNumber);
-        }
-        else
-        {
-            _overlayWindowNumbers.Remove((int)nativeWindow.WindowNumber);
-        }
-
-        if (layer >= WindowLayer.Overlay)
-        {
             nativeWindow.CollectionBehavior |=
                 NSWindowCollectionBehavior.CanJoinAllSpaces |
                 NSWindowCollectionBehavior.FullScreenAuxiliary;
@@ -182,98 +168,39 @@ public sealed class WindowHelper : IWindowHelper
             window.Topmost ?
                 WindowLayer.Topmost :
                 WindowLayer.Normal;
-        if ((int)layer >= (int)WindowLayer.Overlay)
-        {
-            _overlayWindowNumbers.Add((int)nativeWindow.WindowNumber);
-        }
-
         ApplyWindowLayer(nativeWindow, layer);
         nativeWindow.OrderFrontRegardless();
     }
 
     /// <summary>
-    /// Gets the effective visibility of the window, considering its occlusion state.
+    /// Gets whether the window is shown, independently of other windows obscuring it.
     /// </summary>
     /// <param name="window">The Avalonia window.</param>
-    /// <returns>True if the window is truly visible on screen.</returns>
-    public bool GetEffectiveVisible(Window window)
-    {
-        if (GetNativeWindow(window) is not { } nativeWindow) return window.IsVisible;
-
-        // NSWindow.IsVisible checks if the window is on-screen.
-        // NSWindow.OcclusionState tells us if it's obscured by other windows.
-        // A window is effectively visible if it's marked as visible and not fully occluded.
-        var isVisible = nativeWindow.IsVisible;
-        var isOccluded = (nativeWindow.OcclusionState & NSWindowOcclusionState.Visible) == 0;
-
-        return isVisible && !isOccluded;
-    }
+    /// <returns>True if the native window is shown.</returns>
+    public bool GetEffectiveVisible(Window window) => GetNativeWindow(window)?.IsVisible ?? window.IsVisible;
 
     public bool? IsRegionCovered(Window window, PixelRect bounds)
     {
-        if (GetNativeWindow(window) is not { } nativeWindow || bounds.Width <= 0 || bounds.Height <= 0)
+        if (GetNativeWindow(window) is not { } nativeWindow || bounds.Width <= 0 || bounds.Height <= 0 ||
+            CGDisplayTopology.Current.Primary is not { } primaryDisplay)
         {
             return null;
         }
 
-        var windowInfoPointer = CGInterop.CGWindowListCopyWindowInfo(CGWindowListOption.OnScreenOnly, 0);
-        if (windowInfoPointer == 0) return null;
-
-        try
+        var targetWindowNumber = nativeWindow.WindowNumber;
+        foreach (var samplePoint in CreateSamplePoints(bounds))
         {
-            var windowInfo = Runtime.GetNSObject<NSArray>(windowInfoPointer);
-            if (windowInfo is null) return null;
-
-            using var numberKey = new NSString("kCGWindowNumber");
-            using var boundsKey = new NSString("kCGWindowBounds");
-            using var alphaKey = new NSString("kCGWindowAlpha");
-            using var xKey = new NSString("X");
-            using var yKey = new NSString("Y");
-            using var widthKey = new NSString("Width");
-            using var heightKey = new NSString("Height");
-
-            var targetWindowNumber = (int)nativeWindow.WindowNumber;
-            var samplePoints = CreateSamplePoints(bounds);
-            for (nuint i = 0; i < windowInfo.Count; i++)
-            {
-                var dictionary = windowInfo.GetItem<NSDictionary>(i);
-                if (dictionary is null ||
-                    !dictionary.TryGetValue(numberKey, out var numberObject) ||
-                    numberObject is not NSNumber number)
-                {
-                    continue;
-                }
-
-                var windowNumber = number.Int32Value;
-                if (windowNumber == targetWindowNumber) return true;
-                if (_overlayWindowNumbers.Contains(windowNumber)) continue;
-
-                if (dictionary.TryGetValue(alphaKey, out var alphaObject) &&
-                    alphaObject is NSNumber { DoubleValue: <= 0d })
-                {
-                    continue;
-                }
-
-                if (!dictionary.TryGetValue(boundsKey, out var boundsObject) ||
-                    boundsObject is not NSDictionary boundsDictionary ||
-                    !boundsDictionary.TryGetValue(xKey, out var xObject) || xObject is not NSNumber x ||
-                    !boundsDictionary.TryGetValue(yKey, out var yObject) || yObject is not NSNumber y ||
-                    !boundsDictionary.TryGetValue(widthKey, out var widthObject) || widthObject is not NSNumber width ||
-                    !boundsDictionary.TryGetValue(heightKey, out var heightObject) || heightObject is not NSNumber height)
-                {
-                    continue;
-                }
-
-                var candidateBounds = new CGRect(x.DoubleValue, y.DoubleValue, width.DoubleValue, height.DoubleValue);
-                if (samplePoints.Any(candidateBounds.Contains)) return false;
-            }
-
-            return null;
+            // Avalonia uses top-left desktop points; AppKit hit-testing uses the
+            // primary display's bottom-left origin, including for other displays.
+            var point = new CGPoint(samplePoint.X, primaryDisplay.Bounds.Height - samplePoint.Y);
+            // Native hit-testing skips transparent regions and mouse-transparent
+            // overlays. Window-list rectangles can include a full-screen Dock surface.
+            var hit = NSWindow.WindowNumberAtPoint(point, 0);
+            if (hit == 0) return null;
+            if (hit != targetWindowNumber) return false;
         }
-        finally
-        {
-            CFInterop.CFRelease(windowInfoPointer);
-        }
+
+        return true;
     }
 
     private static CGPoint[] CreateSamplePoints(PixelRect bounds)

@@ -90,6 +90,8 @@ public static class Program
             throw new InvalidOperationException("The macOS Automation Host must initialize AppKit on the process main thread.");
         }
 
+        // Match Main's AppKit configuration for the input and detection workers.
+        NSApplication.CheckForIllegalCrossThreadCalls = false;
         NSApplication.Init();
         var application = NSApplication.SharedApplication;
         application.ActivationPolicy = NSApplicationActivationPolicy.Prohibited;

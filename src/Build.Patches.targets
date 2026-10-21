@@ -76,6 +76,7 @@
 
     <Everywhere.BuildTask.Patcher.WeaveAssembliesTask
         References="@(ReferencePath)"
+        RuntimeAssemblies="@(RuntimeCopyLocalItems);@(RuntimePackAsset);@(ReferenceCopyLocalPaths)"
         PatchAssemblies="@(PatchAssembly)"
         OutputDirectory="$(IntermediateOutputPath)Patched\">
       <Output TaskParameter="RemovedReferences" ItemName="_RemovedReferences" />
@@ -89,12 +90,13 @@
            IL1035 and stripping their internal dependency graphs. -->
       <ReferenceCopyLocalPaths Remove="@(_RemovedReferences)" />
       <ReferenceCopyLocalPaths Include="@(_AddedReferences)" />
+      <FileWrites Include="@(_AddedReferences);@(_AddedReferences -> '%(Identity).inputs');@(_AddedReferences -> '%(Identity).mdb')" />
     </ItemGroup>
   </Target>
 
   <!--
     Replace patched DLLs in the publish file list for app bundle creation (macOS/iOS) and ILLink.
-    We must patch BOTH ResolvedFileToPublish and RuntimeCopyLocalItems BEFORE _ComputeAssembliesToPostprocessOnPublish.
+    Keep ResolvedFileToPublish, RuntimeCopyLocalItems, and RuntimePackAsset aligned before _ComputeAssembliesToPostprocessOnPublish.
     This ensures the SDK's internal JoinItems matches the paths correctly and assigns PostprocessAssembly="true",
     which is required for ILLink to treat them as input assemblies.
   -->
@@ -113,7 +115,14 @@
       <Output TaskParameter="ItemsToAdd" ItemName="_RuntimeCopyLocalItemsToAdd" />
     </Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask>
 
+    <Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask OriginalItems="@(RuntimePackAsset)" ReplacementItems="@(_AddedReferences)">
+      <Output TaskParameter="ItemsToRemove" ItemName="_RuntimePackAssetsToRemove" />
+      <Output TaskParameter="ItemsToAdd" ItemName="_RuntimePackAssetsToAdd" />
+    </Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask>
+
     <ItemGroup>
+      <RuntimePackAsset Remove="@(_RuntimePackAssetsToRemove)" />
+      <RuntimePackAsset Include="@(_RuntimePackAssetsToAdd)" />
       <ResolvedFileToPublish Remove="@(_PublishItemsToRemove)" />
       <ResolvedFileToPublish Include="@(_PublishItemsToAdd)" />
       
