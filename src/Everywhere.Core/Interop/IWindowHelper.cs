@@ -26,11 +26,38 @@ public interface IWindowHelper
     /// <summary>
     /// Updates selected native input and z-order properties of a window without suppressing normal activation or focus notifications.
     /// </summary>
+    /// <remarks>
+    /// Configure the input mode on the UI thread before logically focusing an editor. Changing the
+    /// input mode while an editor is focused requires clearing and restoring its logical focus.
+    /// </remarks>
     /// <param name="window">The target window.</param>
-    /// <param name="focusable">Whether ordinary user interaction may activate the window and give it keyboard focus, or <see langword="null" /> to leave it unchanged.</param>
+    /// <param name="inputMode">The native activation and logical input policy, or <see langword="null" /> to leave it unchanged.</param>
     /// <param name="hitTestVisible">Whether the window receives pointer input, or <see langword="null" /> to leave it unchanged.</param>
     /// <param name="layer">The requested native window layer, or <see langword="null" /> to leave it unchanged.</param>
-    void SetWindowProperties(Window window, bool? focusable = null, bool? hitTestVisible = null, WindowLayer? layer = null);
+    void SetWindowProperties(Window window, WindowInputMode? inputMode = null, bool? hitTestVisible = null, WindowLayer? layer = null);
+
+    /// <summary>
+    /// Prepares a native input host without capturing input or creating an editor context.
+    /// Call on the UI thread when showing a non-activating text-input window in its passive mode.
+    /// </summary>
+    /// <remarks>
+    /// Configure <see cref="WindowInputMode.NonActivatingTextInput" /> first. The later capture must
+    /// originate from a separate user interaction, after normal message processing has resumed.
+    /// Preparation records the foreground source window; a changed source invalidates capture.
+    /// Returns false when the platform or native input route is unavailable. Never activates the window.
+    /// </remarks>
+    bool TryPrepareInput(Window window);
+
+    /// <summary>
+    /// Captures input for a visible, previously prepared window without changing the foreground window.
+    /// Call on the UI thread after attaching and laying out the editor, then logically focus that editor.
+    /// </summary>
+    /// <remarks>
+    /// Returns null when unsupported, unprepared, unavailable or already captured. This method does not
+    /// initialize a native host, pump messages, or retry. Hiding, minimizing or closing the window ends
+    /// capture; disposing the returned lease ends it explicitly. The caller owns the lease.
+    /// </remarks>
+    IWindowInputCapture? TryCaptureInput(Window window);
 
     /// <summary>
     /// Raises the window within its configured native layer without activating it.

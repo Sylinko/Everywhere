@@ -4586,6 +4586,21 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Symbolleistenvorschau</value>
     </data>
+    <data name="TextSelectionToolbar_EnterFreeformChat" xml:space="preserve">
+        <value>Freie Eingabe</value>
+    </data>
+    <data name="TextSelectionToolbar_ExitFreeformChat" xml:space="preserve">
+        <value>Zurück</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Header" xml:space="preserve">
+        <value>Freie Eingabe zulassen</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Description" xml:space="preserve">
+        <value>Zeigt eine Schaltfläche, über die sich ein Eingabefeld öffnet, in dem Sie den Assistenten frei befragen können.</value>
+    </data>
+    <data name="TextSelectionToolbar_ChatInputArea_PlaceholderText" xml:space="preserve">
+        <value>Assistenten zum ausgewählten Text fragen...</value>
+    </data>
     <data name="Common_KeyboardKey_Enter" xml:space="preserve">
         <value>Eingabe</value>
     </data>

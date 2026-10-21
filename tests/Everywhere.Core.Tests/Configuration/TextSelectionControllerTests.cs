@@ -12,9 +12,6 @@ public sealed class TextSelectionControllerTests
     public async Task SetEnabled_WhenOtherConsumerRemainsEnabled_KeepsMonitoringActive(TextSelectionFeature firstFeature)
     {
         var provider = Substitute.For<IServiceProvider>();
-        var dismissWatcher = Substitute.For<IOverlayInputWatcher>();
-        dismissWatcher.IsSupported.Returns(true);
-        provider.GetService(typeof(IOverlayInputWatcher)).Returns(dismissWatcher);
         var settings = new Settings(provider);
         var watcher = Substitute.For<ITextSelectionWatcher>();
         var effectiveStates = new List<bool>();
@@ -50,9 +47,6 @@ public sealed class TextSelectionControllerTests
     public void SetEnabled_WhenHostRejects_DoesNotCommitIntentOrPermitConcurrentChanges()
     {
         var provider = Substitute.For<IServiceProvider>();
-        var dismissWatcher = Substitute.For<IOverlayInputWatcher>();
-        dismissWatcher.IsSupported.Returns(true);
-        provider.GetService(typeof(IOverlayInputWatcher)).Returns(dismissWatcher);
         var settings = new Settings(provider);
         var watcher = Substitute.For<ITextSelectionWatcher>();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

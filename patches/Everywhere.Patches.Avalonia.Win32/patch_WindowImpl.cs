@@ -9,7 +9,7 @@ using static Avalonia.Win32.Interop.UnmanagedMethods;
 namespace Everywhere.Patches.Avalonia.Win32;
 
 [MonoModPatch("Avalonia.Win32.WindowImpl")]
-internal class patch_WindowImpl : IWindowCompositionFeature
+internal partial class patch_WindowImpl : IWindowCompositionFeature
 {
     [MonoModIgnore]
     private readonly IInputRoot? _owner = null;

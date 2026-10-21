@@ -4586,6 +4586,21 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Anteprima della barra degli strumenti</value>
     </data>
+    <data name="TextSelectionToolbar_EnterFreeformChat" xml:space="preserve">
+        <value>Input libero</value>
+    </data>
+    <data name="TextSelectionToolbar_ExitFreeformChat" xml:space="preserve">
+        <value>Indietro</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Header" xml:space="preserve">
+        <value>Consenti input libero</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Description" xml:space="preserve">
+        <value>Mostra un pulsante che apre un campo di input in cui puoi rivolgere liberamente domande all'assistente.</value>
+    </data>
+    <data name="TextSelectionToolbar_ChatInputArea_PlaceholderText" xml:space="preserve">
+        <value>Chiedi all'assistente informazioni sul testo selezionato...</value>
+    </data>
     <data name="Common_KeyboardKey_Enter" xml:space="preserve">
         <value>Invio</value>
     </data>

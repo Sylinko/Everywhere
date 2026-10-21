@@ -4586,6 +4586,21 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Aperçu de la barre d'outils</value>
     </data>
+    <data name="TextSelectionToolbar_EnterFreeformChat" xml:space="preserve">
+        <value>Saisie libre</value>
+    </data>
+    <data name="TextSelectionToolbar_ExitFreeformChat" xml:space="preserve">
+        <value>Retour</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Header" xml:space="preserve">
+        <value>Autoriser la saisie libre</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Description" xml:space="preserve">
+        <value>Affiche un bouton qui ouvre un champ de saisie permettant d'interroger librement l'assistant.</value>
+    </data>
+    <data name="TextSelectionToolbar_ChatInputArea_PlaceholderText" xml:space="preserve">
+        <value>Interroger l'assistant sur le texte sélectionné...</value>
+    </data>
     <data name="Common_KeyboardKey_Enter" xml:space="preserve">
         <value>Entrée</value>
     </data>

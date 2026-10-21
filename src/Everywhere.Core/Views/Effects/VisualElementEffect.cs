@@ -70,7 +70,7 @@ public sealed class VisualElementEffect(IWindowHelper windowHelper, ILogger<Visu
             {
                 effectWindow = new VisualElementEffectWindow();
                 windowHelper.InitializeWindow(effectWindow);
-                windowHelper.SetWindowProperties(effectWindow, focusable: false, hitTestVisible: false, WindowLayer.Overlay);
+                windowHelper.SetWindowProperties(effectWindow, inputMode: WindowInputMode.NonActivating, hitTestVisible: false, WindowLayer.Overlay);
                 _effectWindows.Add(effectWindow);
             }
 

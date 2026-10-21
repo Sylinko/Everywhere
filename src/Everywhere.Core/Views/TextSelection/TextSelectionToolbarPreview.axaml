@@ -30,6 +30,7 @@
       <v:TextSelectionToolbar
         x:Name="PreviewToolbar" Margin="0,-10,0,10"
         HorizontalAlignment="Center" VerticalAlignment="Center"
+        IsFreeformChatEnabled="{Binding #Self.Settings.IsFreeformChatEnabled}"
         VisibleActionCount="{Binding #Self.Settings.VisibleActionCount}"/>
     </Panel>
   </Border>

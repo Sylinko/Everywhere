@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.AI;
 using Everywhere.Automation;
 using Everywhere.Chat;
 using Everywhere.Collections;
@@ -908,6 +909,8 @@ public sealed partial class ChatWindowViewModel :
                         attachment.Dispose();
                     }
 
+                    // ReSharper disable once AccessToDisposedClosure
+                    // ReSharper disable once AccessToModifiedClosure
                     list.Insert(0, pendingAttachment);
                 });
             }
@@ -926,6 +929,34 @@ public sealed partial class ChatWindowViewModel :
     #endregion
 
     #region Strategy Engine
+
+    /// <summary>
+    /// Submits a standalone selection message without consuming or replacing the main window's draft.
+    /// On acceptance, the chat service owns its attachments and a borrowed selection leaves the draft.
+    /// On rejection, the caller retains ownership.
+    /// This method must be called on the UI thread.
+    /// </summary>
+    public bool SendTextSelectionMessage(UserChatMessage message, CustomAssistant assistant)
+    {
+        PrepareChatWindowActivation();
+
+        if (!_chatService.SendMessage(ChatContextManager.Current, message, assistant))
+        {
+            return false;
+        }
+
+        // Do not cancel editing, select a strategy or change draft text. Only the exact attachments
+        // adopted by this message leave the draft; unrelated attachments remain available.
+        _chatAttachmentsSource.Edit(list =>
+        {
+            foreach (var attachment in message.Attachments)
+            {
+                list.Remove(attachment);
+            }
+        });
+
+        return true;
+    }
 
     /// <summary>
     /// Takes ownership of a text selection, opens the chat window and runs <paramref name="strategy"/> against it.
@@ -952,6 +983,8 @@ public sealed partial class ChatWindowViewModel :
 
             _chatAttachmentsSource.Edit(list =>
             {
+                // ReSharper disable once AccessToDisposedClosure
+                // ReSharper disable once AccessToModifiedClosure
                 foreach (var previous in list.OfType<TextSelectionAttachment>().ToArray())
                 {
                     list.Remove(previous);
@@ -965,6 +998,8 @@ public sealed partial class ChatWindowViewModel :
                     (removed as IDisposable)?.Dispose();
                 }
 
+                // ReSharper disable once AccessToDisposedClosure
+                // ReSharper disable once AccessToModifiedClosure
                 list.Insert(0, selection);
                 isAdopted = true;
             });

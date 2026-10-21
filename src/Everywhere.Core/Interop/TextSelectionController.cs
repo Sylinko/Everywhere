@@ -37,9 +37,9 @@ public sealed class TextSelectionController : ObservableObject, IDisposable
     public bool IsToolbarEnabled => _settings.TextSelection.IsToolbarEnabled;
 
     /// <summary>
-    /// Gets the effective monitoring intent for consumers supported on this platform.
+    /// Gets the combined monitoring intent, independently of optional overlay input observation.
     /// </summary>
-    public bool IsMonitoringRequested => IsAutomaticAttachmentEnabled || (IsToolbarEnabled && _settings.TextSelection.IsToolbarSupported);
+    public bool IsMonitoringRequested => IsAutomaticAttachmentEnabled || IsToolbarEnabled;
 
     /// <summary>
     /// Gets the shared operation whose running state disables both settings switches.
@@ -60,11 +60,10 @@ public sealed class TextSelectionController : ObservableObject, IDisposable
     private async Task SetEnabledAsync(TextSelectionFeatureChange? change)
     {
         if (change is null) return;
-        if (change.Feature == TextSelectionFeature.Toolbar && change.IsEnabled && !_settings.TextSelection.IsToolbarSupported) return;
 
         var isAttachmentEnabled = change.Feature == TextSelectionFeature.AutomaticAttachment ? change.IsEnabled : IsAutomaticAttachmentEnabled;
         var isToolbarEnabled = change.Feature == TextSelectionFeature.Toolbar ? change.IsEnabled : IsToolbarEnabled;
-        var shouldMonitor = isAttachmentEnabled || (isToolbarEnabled && _settings.TextSelection.IsToolbarSupported);
+        var shouldMonitor = isAttachmentEnabled || isToolbarEnabled;
 
         if (shouldMonitor == _watcher.IsEnabled)
         {
@@ -108,10 +107,7 @@ public sealed class TextSelectionController : ObservableObject, IDisposable
         {
             // Neither consumer can remain advertised as active after native monitoring was rejected.
             Commit(new TextSelectionFeatureChange(TextSelectionFeature.AutomaticAttachment, false));
-            if (_settings.TextSelection.IsToolbarSupported)
-            {
-                Commit(new TextSelectionFeatureChange(TextSelectionFeature.Toolbar, false));
-            }
+            Commit(new TextSelectionFeatureChange(TextSelectionFeature.Toolbar, false));
         });
     }
 

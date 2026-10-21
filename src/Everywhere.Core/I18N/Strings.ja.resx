@@ -4586,6 +4586,21 @@
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>ツールバーのプレビュー</value>
     </data>
+    <data name="TextSelectionToolbar_EnterFreeformChat" xml:space="preserve">
+        <value>自由入力</value>
+    </data>
+    <data name="TextSelectionToolbar_ExitFreeformChat" xml:space="preserve">
+        <value>戻る</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Header" xml:space="preserve">
+        <value>自由入力の許可</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Description" xml:space="preserve">
+        <value>ボタンを表示し、クリックすると入力欄が開き、アシスタントに自由に質問できます。</value>
+    </data>
+    <data name="TextSelectionToolbar_ChatInputArea_PlaceholderText" xml:space="preserve">
+        <value>選択したテキストについてアシスタントに質問...</value>
+    </data>
     <data name="Common_KeyboardKey_Enter" xml:space="preserve">
         <value>エンター</value>
     </data>

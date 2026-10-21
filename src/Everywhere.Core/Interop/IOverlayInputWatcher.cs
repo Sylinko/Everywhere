@@ -6,7 +6,7 @@
 /// <remarks>
 /// <para>
 /// This exists because a non-activating overlay cannot rely on losing focus. Overlays that call
-/// <see cref="IWindowHelper.SetWindowProperties"/> with <c>focusable: false</c> never receive activation in the first
+/// <see cref="IWindowHelper.SetWindowProperties"/> with a non-activating input mode never receive activation in the first
 /// place, so <c>Window.Deactivated</c> never fires and the usual "hide on blur" approach is
 /// unavailable. Dismissal has to be inferred from global input instead.
 /// </para>
@@ -24,7 +24,7 @@ public interface IOverlayInputWatcher
 {
     /// <summary>
     /// Whether this platform can observe global input. When false, <see cref="Watch"/> returns a
-    /// no-op handle and callers should not show an overlay that depends on being dismissed.
+    /// no-op handle. Callers must provide another way to close an overlay when observation is unavailable.
     /// </summary>
     bool IsSupported { get; }
 
@@ -72,8 +72,13 @@ public interface IOverlayInputWatcher
 public interface IOverlayInputWatch : IDisposable
 {
     /// <summary>
-    /// Updates the toolbar and optional menu rectangles, in Avalonia screen coordinates, and re-arms the watch if it has already
-    /// fired. While a menu is present, its clicks, scrolling, and navigation keys must not dismiss the toolbar.
+    /// Updates the overlay and interactive popup rectangles in Avalonia screen coordinates and re-arms
+    /// the watch. Popup bounds are copied. A supplied capture selects editing dismissal rules: keyboard
+    /// input and scrolling inside the overlay do not dismiss it. The watch never owns or disposes the capture.
     /// </summary>
-    void Update(PixelRect bounds, PixelRect? menuBounds = null);
+    /// <remarks>
+    /// The caller must clear the supplied capture when it ends. Hook callbacks do not read its
+    /// UI-thread state. Include interactive popups only, not passive preedit or tooltip windows.
+    /// </remarks>
+    void Update(PixelRect bounds, IReadOnlyList<PixelRect>? popupBounds = null, IWindowInputCapture? inputCapture = null);
 }

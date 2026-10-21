@@ -31,10 +31,6 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
 
     public const int MaxVisibleActionCount = 12;
 
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public bool IsToolbarSupported => GetRequiredService<IOverlayInputWatcher>().IsSupported;
-
     /// <summary>
     /// Gets or sets the last acknowledged toolbar intent, independently of automatic attachment capture.
     /// </summary>
@@ -44,7 +40,7 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
 
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.TextSelectionSettings_IsToolbarEnabled_Header)]
-    [SettingsItem(IsEnabledBindingPath = nameof(IsToolbarSupported), Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
     public SettingsControl<TextSelectionMonitoringControl> ToolbarMonitoringControl { get; } = new(sp => new TextSelectionMonitoringControl(
         sp.GetRequiredService<TextSelectionController>(),
         sp.GetRequiredService<ILogger<TextSelectionMonitoringControl>>())
@@ -58,6 +54,17 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     public SettingsControl<TextSelectionToolbarPreview> ToolbarPreview { get; } = new();
 
     /// <summary>
+    /// Gets or sets the toolbar opacity, from 0.1 to fully opaque.
+    /// </summary>
+    [DynamicLocaleKey(LocaleKey.TextSelectionSettings_ToolbarOpacity_Header)]
+    [SettingsDoubleItem(Min = 0.1, Max = 1, Step = 0.05, IsTextBoxVisible = false, Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    public double ToolbarOpacity
+    {
+        get;
+        set => SetProperty(ref field, double.IsNaN(value) ? 1d : Math.Clamp(value, 0.1d, 1d));
+    } = 1d;
+
+    /// <summary>
     /// Gets or sets whether the toolbar fades as the pointer moves away.
     /// </summary>
     [ObservableProperty]
@@ -68,15 +75,14 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     public partial bool IsToolbarOpacityAdaptive { get; set; }
 
     /// <summary>
-    /// Gets or sets the toolbar opacity, from 0.1 to fully opaque.
+    /// Gets or sets whether the freeform chat is enabled.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.TextSelectionSettings_ToolbarOpacity_Header)]
-    [SettingsDoubleItem(Min = 0.1, Max = 1, Step = 0.05, IsTextBoxVisible = false, Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
-    public double ToolbarOpacity
-    {
-        get;
-        set => SetProperty(ref field, double.IsNaN(value) ? 1d : Math.Clamp(value, 0.1d, 1d));
-    } = 1d;
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.TextSelectionSettings_IsFreeformChatEnabled_Header,
+        LocaleKey.TextSelectionSettings_IsFreeformChatEnabled_Description)]
+    [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
+    public partial bool IsFreeformChatEnabled { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the number of tools shown directly. Remaining tools are available in the menu.

@@ -4586,6 +4586,21 @@
     <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
         <value>Предварительный просмотр панели инструментов</value>
     </data>
+    <data name="TextSelectionToolbar_EnterFreeformChat" xml:space="preserve">
+        <value>Свободный ввод</value>
+    </data>
+    <data name="TextSelectionToolbar_ExitFreeformChat" xml:space="preserve">
+        <value>Назад</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Header" xml:space="preserve">
+        <value>Разрешить свободный ввод</value>
+    </data>
+    <data name="TextSelectionSettings_IsFreeformChatEnabled_Description" xml:space="preserve">
+        <value>Показывает кнопку, при нажатии на которую открывается поле ввода, где можно свободно задавать вопросы ассистенту.</value>
+    </data>
+    <data name="TextSelectionToolbar_ChatInputArea_PlaceholderText" xml:space="preserve">
+        <value>Спросите помощника о выделенном тексте...</value>
+    </data>
     <data name="Common_KeyboardKey_Enter" xml:space="preserve">
         <value>Ввод</value>
     </data>

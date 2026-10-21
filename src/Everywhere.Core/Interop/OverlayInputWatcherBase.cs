@@ -62,6 +62,12 @@ public abstract class OverlayInputWatcherBase : IOverlayInputWatcher
     protected abstract void StopWatching();
 
     /// <summary>
+    /// Identifies native input-method UI belonging to this capture. Called on a native observation
+    /// thread; implementations must not read Avalonia objects or the capture's UI-thread properties.
+    /// </summary>
+    protected virtual bool IsInputPopup(IWindowInputCapture capture, PixelPoint point) => false;
+
+    /// <summary>
     /// Publishes a native pointer change. No allocation or UI work is performed on the input path.
     /// </summary>
     protected void UpdatePointerPosition(PixelPoint point)
@@ -96,7 +102,10 @@ public abstract class OverlayInputWatcherBase : IOverlayInputWatcher
         using var scope = _syncLock.EnterScope();
         foreach (var registration in _registrations)
         {
-            if (registration.MenuBounds?.Contains(point) != true) registration.Dismiss();
+            if (!registration.ContainsPopup(point) && !(registration.HasInputCapture && registration.Contains(point)))
+            {
+                registration.Dismiss();
+            }
         }
     }
 
@@ -108,7 +117,10 @@ public abstract class OverlayInputWatcherBase : IOverlayInputWatcher
         using var scope = _syncLock.EnterScope();
         foreach (var registration in _registrations)
         {
-            if (!isMenuNavigation || registration.MenuBounds is null) registration.Dismiss();
+            if (!registration.HasInputCapture && (!isMenuNavigation || !registration.HasPopups))
+            {
+                registration.Dismiss();
+            }
         }
     }
 
@@ -131,21 +143,39 @@ public abstract class OverlayInputWatcherBase : IOverlayInputWatcher
         Action<PixelPoint> onPointerMoved
     ) : IOverlayInputWatch
     {
-        public PixelRect? MenuBounds { get; private set; }
+        public bool HasPopups => _popupBounds.Length != 0;
+
+        public bool HasInputCapture => _inputCapture is not null;
 
         private PixelRect _bounds = bounds;
+        private PixelRect[] _popupBounds = [];
+        private IWindowInputCapture? _inputCapture;
         private bool _isCompleted;
         private bool _isDisposed;
 
-        public bool Contains(PixelPoint point) => _bounds.Contains(point) || MenuBounds?.Contains(point) == true;
+        public bool Contains(PixelPoint point) => _bounds.Contains(point) || ContainsPopup(point);
 
-        public void Update(PixelRect bounds, PixelRect? menuBounds = null)
+        public bool ContainsPopup(PixelPoint point)
+        {
+            foreach (var popup in _popupBounds)
+            {
+                if (popup.Contains(point))
+                {
+                    return true;
+                }
+            }
+
+            return _inputCapture is { } capture && owner.IsInputPopup(capture, point);
+        }
+
+        public void Update(PixelRect bounds, IReadOnlyList<PixelRect>? popupBounds = null, IWindowInputCapture? inputCapture = null)
         {
             using var scope = owner._syncLock.EnterScope();
             if (_isDisposed) return;
 
             _bounds = bounds;
-            MenuBounds = menuBounds;
+            _popupBounds = popupBounds?.ToArray() ?? [];
+            _inputCapture = inputCapture;
             _isCompleted = false;
         }
 
@@ -169,6 +199,8 @@ public abstract class OverlayInputWatcherBase : IOverlayInputWatcher
             {
                 if (_isDisposed) return;
                 _isDisposed = true;
+                _inputCapture = null;
+                _popupBounds = [];
             }
 
             owner.Remove(this);

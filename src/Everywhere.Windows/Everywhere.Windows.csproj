@@ -7,6 +7,7 @@
     <SelfContained>true</SelfContained>
     <TargetFramework>$(TargetFrameworkPrefix)-windows10.0.19041.0</TargetFramework>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
     <ApplicationIcon>..\..\img\Everywhere.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <IsDeploymentTarget>true</IsDeploymentTarget>

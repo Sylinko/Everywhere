@@ -52,7 +52,7 @@ public sealed partial class WindowsScreenSelectionService
             CurrentMode = initialMode;
             windowHelper.SetWindowProperties(
                 this,
-                focusable: true,
+                inputMode: WindowInputMode.Normal,
                 hitTestVisible: true,
                 WindowLayer.Overlay);
 
@@ -66,7 +66,7 @@ public sealed partial class WindowsScreenSelectionService
                 var maskWindow = new ScreenSelectionMaskWindow(screen.Bounds);
                 windowHelper.SetWindowProperties(
                     maskWindow,
-                    focusable: false,
+                    inputMode: WindowInputMode.NonActivating,
                     hitTestVisible: false,
                     WindowLayer.Overlay + 1);
                 MaskWindows[i] = maskWindow;
@@ -78,7 +78,7 @@ public sealed partial class WindowsScreenSelectionService
             ToolTipWindow = new ScreenSelectionToolTipWindow(nativeHelper, allowedModes, initialMode);
             windowHelper.SetWindowProperties(
                 ToolTipWindow,
-                focusable: false,
+                inputMode: WindowInputMode.NonActivating,
                 hitTestVisible: false,
                 WindowLayer.Overlay + 2);
         }
