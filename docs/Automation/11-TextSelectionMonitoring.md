@@ -177,7 +177,13 @@ The connection-level receiver stays bound while monitoring is disabled. It assum
 | Monitoring setup failure | Report once and keep/return the switch off without failing healthy Automation operations. |
 | Connection loss | Invalidate old resources and restore saved intent through the connection lifecycle. |
 
-Cancellation by supersession or stop is normal completion. Known access failure, provider timeout, and disappeared target retain Debug diagnostics; unexpected faults receive one Warning with exception and phase. Do not classify every `InvalidOperationException` as expected or erase diagnostics with a bare catch. Log application identity and phase, never selected text or clipboard content. Background read failures do not produce individual Toasts.
+Cancellation by supersession or stop is normal completion. Known access failure, provider timeout, and disappeared target retain Debug diagnostics; unexpected attempt failures receive Warning, and an unexpected detection-worker exit receives Error. Do not classify every `InvalidOperationException` as expected or erase diagnostics with a bare catch. Background read failures do not produce individual Toasts.
+
+Each session passes a monitor-scoped `TextSelectionDiagnostics` into the platform factory. It reports through the existing `IHostDiagnosticsRpc`; Main's `HostDiagnosticsLogSink` records the role, source and structured `HostProperties` through the application logger. Hosts do not initialize Entrance, DI, file logging or telemetry. Reporting is asynchronous and best effort: transport failure cannot fail a selection, trigger retries or recursively log another failure. Diagnostic severity follows Main's configured log level; Debug entries may be filtered in release builds.
+
+The diagnostic payload contains a fixed operation phase, Context/monitor IDs, exception type, underlying exception type/HRESULT and method stack without file information. A normalized provider failure also includes its classification. Never include selection or clipboard text, source snapshots, application paths, exception messages, exception Data or an unrestricted `Exception.ToString()`. The optional scalar dictionary in `HostLogNotification` carries these fields without serializing exception objects.
+
+Source-query failure and selected-text availability are independent. Main accepts an available pushed anchor with its structured query failure, just as it does for explicitly acquired anchors. After delivering the selected text, Main records one Warning containing the failure kind, available/missing fields and resource/revision IDs. The Host reports normalized source failures only when no successful observation will carry them to Main. Fresh operations retain their normal error behavior; accepting the initial anchor does not suppress later provider errors.
 
 ### 6.2 Text Budget and Future File Attachments
 

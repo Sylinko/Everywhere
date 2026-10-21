@@ -1,6 +1,5 @@
 using Avalonia;
 using Everywhere.Automation.TestApp;
-using Everywhere.Chat;
 using Everywhere.Windows.Automation;
 
 namespace Everywhere.Automation.Windows.Tests;
@@ -123,56 +122,11 @@ public sealed class ControlledTestAppTests
         }
     }
 
-    [Test]
-    [Explicit("Launches the native WebView host, accesses a real webpage, and saves the production VisualQuery projection for manual inspection.")]
-    [Platform("Win")]
-    [Category("ControlledTestApp")]
-    [Category("RealWebsiteProbe")]
-    public async Task QueryVisual_WhenNativeWebViewLoadsRealWebsite_SavesAgentProjection()
-    {
-        var executablePath = GetExecutablePath("webview");
-        Assert.That(File.Exists(executablePath), Is.True, "Build the WebView TestApp before running this probe.");
-        var address = Environment.GetEnvironmentVariable("EVERYWHERE_WEBVIEW_PROBE_URL") ?? "https://example.com/";
-        Assert.That(Uri.TryCreate(address, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps), Is.True, "EVERYWHERE_WEBVIEW_PROBE_URL must be an absolute HTTP or HTTPS address.");
-        var (controller, ready) = await TestAppProcessController.StartAsync(executablePath, "real-web", 0, TimeSpan.FromSeconds(45), default, "--url", address);
-        await using (controller)
-        {
-            await Task.Delay(TimeSpan.FromMilliseconds(750));
-            using var visualElementBackend = new WindowsVisualElementBackend();
-            using var visualContext = new VisualContext();
-            using var acquisitionRetention = visualContext.CreateRetention();
-            var rootHandle = (nint)ready.Roots.Single().NativeHandle;
-            var root = visualElementBackend.Query(acquisitionRetention, VisualElementLocator.FromNativeWindow(rootHandle), VisualElementResolution.TopLevel) ?? throw new InvalidOperationException("The Windows reader did not resolve the native WebView probe window.");
-            using var turn = visualContext.BeginTurn();
-            var rendered = (await new VisualQuery(visualContext).ExecuteAsync(
-                new ElementTarget { Element = root.Element },
-                new VisualQueryRequest { Directions = VisualContextTraverseDirections.Child, Limit = VisualQueryRequest.MaximumLimit },
-                VisualContextPromptOptions.Default with { TargetTokenBudget = 16_384 })).Content;
-            turn.Complete();
-
-            var configuredOutputPath = Environment.GetEnvironmentVariable("EVERYWHERE_WEBVIEW_PROBE_OUTPUT");
-            var outputPath = Path.GetFullPath(configuredOutputPath ?? Path.Combine(TestContext.CurrentContext.WorkDirectory, "artifacts", "webview-real-web.visual-context.txt"));
-            var outputDirectory = Path.GetDirectoryName(outputPath);
-            if (!string.IsNullOrEmpty(outputDirectory)) Directory.CreateDirectory(outputDirectory);
-            await File.WriteAllTextAsync(outputPath, rendered);
-            TestContext.Progress.WriteLine($"Saved native WebView real-web VisualQuery projection to: {outputPath}");
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(ready.Kind, Is.EqualTo(TestAppStatusKind.Ready));
-                Assert.That(rendered, Does.StartWith("<visual-context"));
-                Assert.That(rendered, Does.Contain("<Document"), "The real webpage did not expose the native browser's semantic document through UIA.");
-                Assert.That(new FileInfo(outputPath).Length, Is.GreaterThan(0));
-            });
-        }
-    }
-
     private static string GetExecutablePath(string backend) => backend switch
     {
         "winforms" => ControlledTestAppPaths.WinForms,
         "avalonia" => ControlledTestAppPaths.Avalonia,
         "cefsharp" => ControlledTestAppPaths.CefSharp,
-        "webview" => ControlledTestAppPaths.WebView,
         _ => throw new ArgumentOutOfRangeException(nameof(backend), backend, null),
     };
 }

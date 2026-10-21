@@ -152,8 +152,13 @@ public class RemoteVisualContext : RpcSafeHandle
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(anchorId, 0);
 
-        observation.ThrowIfFailed();
-        if (!observation.IsAvailable) throw new InvalidDataException("A pushed Automation anchor must contain an available source observation.");
+        // As with AcquireAnchorAsync, retain the initial query's failure information on the
+        // anchor instead of discarding an available source and its separately captured text.
+        if (!observation.IsAvailable)
+        {
+            throw new InvalidDataException("A pushed Automation anchor must contain an available source observation.");
+        }
+
         var contextLease = AcquireLease();
         try
         {

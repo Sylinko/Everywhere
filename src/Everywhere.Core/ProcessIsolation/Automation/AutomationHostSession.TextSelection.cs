@@ -1,4 +1,5 @@
 using Everywhere.Automation;
+using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.ProcessIsolation.Rpc;
 
 namespace Everywhere.ProcessIsolation.Automation;
@@ -54,17 +55,27 @@ public sealed partial class AutomationHostSession
             }
 
             ITextSelectionMonitor monitor;
+            var connection = _connection ?? throw new InvalidOperationException("The Automation Host is not bound to an RPC connection.");
+            var diagnostics = new TextSelectionDiagnostics(
+                new HostDiagnosticsRpcClient(connection), request.ContextId, request.MonitorId);
             try
             {
                 monitor = _textSelectionMonitorFactory.Create(
                     context,
                     request.MainProcessId,
                     request.Configuration,
+                    diagnostics,
                     (observation, token) => PublishTextSelectionAsync(context, request.ContextId, request.MonitorId, observation, token));
             }
             catch (Exception exception) when (MapTextSelectionSetupFailure(exception) is { } failure)
             {
+                diagnostics.ReportFailure(HostLogLevel.Warning, "monitor setup", exception);
                 return failure;
+            }
+            catch (Exception exception)
+            {
+                diagnostics.ReportFailure(HostLogLevel.Error, "monitor setup", exception);
+                throw;
             }
             var registration = new TextSelectionMonitorRegistration(this, request.ContextId, request.MonitorId, monitor);
             lock (_textSelectionGate)
@@ -314,10 +325,6 @@ public sealed partial class AutomationHostSession
                     _ => LocaleKey.ChatWindowSettings_TextSelectionMonitoring_SetupFailed,
                 }),
         };
-        Serilog.Log.ForContext<AutomationHostSession>().Warning(
-            exception,
-            "Failed to start native text-selection monitoring with failure kind {FailureKind}.",
-            kind);
         return result;
     }
 

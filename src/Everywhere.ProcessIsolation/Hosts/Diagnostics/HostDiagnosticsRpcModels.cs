@@ -40,4 +40,8 @@ public sealed partial class HostLogNotification
     /// <summary>Optional rendered exception details.</summary>
     [Key(3)]
     public string? ExceptionText { get; init; }
+
+    /// <summary>Optional diagnostic scalar values, excluding application content and paths.</summary>
+    [Key(4)]
+    public Dictionary<string, string>? Properties { get; init; }
 }

@@ -164,7 +164,7 @@ The Context guarantee is: while the last element for a RuntimeId remains retaine
 
 ### 8.4 Empirical Windows Evidence
 
-Retained probes on Windows 11 build 26100 with .NET 10.0.11 observed:
+Characterization probes on Windows 11 build 26100 with .NET 10.0.11 observed:
 
 - an element obtained through client A could execute `BuildUpdatedCache` on another MTA worker with client B's CacheRequest;
 - transaction timeout followed the client/cache request used for the current call rather than the worker/client that originally obtained the element;
@@ -173,7 +173,7 @@ Retained probes on Windows 11 build 26100 with .NET 10.0.11 observed:
 - sharing a client did not eliminate native returned-element allocations;
 - concurrent `CUIAutomation8`/ContentViewWalker initialization sometimes returned `E_FAIL`, so Windows serializes only that one-time initialization segment.
 
-These probes support the current shared immutable-policy client and RuntimeId identity map. They are characterization evidence, not a documented guarantee of every Windows/UIAutomationCore version. The probe code remains intentionally available for future baselines.
+These probes support the current shared immutable-policy client and RuntimeId identity map. They are characterization evidence, not a documented guarantee of every Windows/UIAutomationCore version. The one-time probe code has been retired; these version-scoped observations preserve the rationale for the current ownership model.
 
 ## 9. Screen and UIA Composition
 

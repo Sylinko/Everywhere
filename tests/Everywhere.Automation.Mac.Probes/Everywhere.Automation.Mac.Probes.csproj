@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>$(TargetFrameworkPrefix)-macos</TargetFramework>
-    <TargetPlatformVersion>26.2</TargetPlatformVersion>
+    <TargetPlatformVersion>26.5</TargetPlatformVersion>
     <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
     <ApplicationId>com.sylinko.everywhere.automation-probes</ApplicationId>
     <ApplicationManifest>Info.plist</ApplicationManifest>

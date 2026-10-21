@@ -578,13 +578,30 @@ public sealed class AutomationTextSelectionWatcher : ObservableObject, ITextSele
                 anchor,
                 () => IsDeliveryCurrent(connection, notification.MonitorId, revision, subscription))
             {
-                PointerPosition = notification.PointerX is { } x && notification.PointerY is { } y ? new PixelPoint(x, y) : null,
+                PointerPosition = notification is { PointerX: { } x, PointerY: { } y } ? new PixelPoint(x, y) : null,
                 ApplicationIdentity = notification.ApplicationIdentity
             };
             anchor = null;
             try
             {
-                if (subscription.TryPublish(data)) data = null;
+                if (subscription.TryPublish(data))
+                {
+                    data = null;
+                    if (notification.Source is { FailureKind: { } failureKind } source)
+                    {
+                        // Log only diagnostic enums and resource identities. Source snapshots and
+                        // provider messages may contain application text, so never include them here.
+                        _logger.LogWarning(
+                            "Accepted text selection with a source query failure. FailureKind {FailureKind}, AvailableFields {AvailableFields}, MissingFields {MissingFields}, ContextId {ContextId}, MonitorId {MonitorId}, Revision {Revision}, AnchorId {AnchorId}",
+                            failureKind,
+                            source.AvailableFields,
+                            source.MissingFields,
+                            notification.ContextId,
+                            notification.MonitorId,
+                            revision,
+                            notification.AnchorId);
+                    }
+                }
             }
             finally
             {
