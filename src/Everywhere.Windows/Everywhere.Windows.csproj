@@ -82,6 +82,7 @@
     <TrimmerRootAssembly Include="CSharpMath.Avalonia"/>
     <TrimmerRootAssembly Include="DirectWriteForwarder"/>
     <TrimmerRootAssembly Include="ExCSS"/>
+    <TrimmerRootAssembly Include="HtmlAgilityPack"/>
     <TrimmerRootAssembly Include="MessagePack"/>
     <TrimmerRootAssembly Include="MicroCom.Runtime"/>
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore"/>
@@ -96,6 +97,7 @@
     <TrimmerRootAssembly Include="OllamaSharp"/>
     <TrimmerRootAssembly Include="OpenAI"/>
     <TrimmerRootAssembly Include="PuppeteerSharp"/>
+    <TrimmerRootAssembly Include="ReverseMarkdown"/>
     <TrimmerRootAssembly Include="Serilog"/>
     <TrimmerRootAssembly Include="ShadUI"/>
     <TrimmerRootAssembly Include="SharpGen.Runtime"/>
