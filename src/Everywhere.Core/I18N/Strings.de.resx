@@ -4616,10 +4616,10 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     <data name="Common_OpenLink" xml:space="preserve">
         <value>Link öffnen</value>
     </data>
-    <data name="Common_CopyLinkText" xml:space="preserve">
-        <value>Linktext kopieren</value>
-    </data>
     <data name="Common_CopyLink" xml:space="preserve">
         <value>Link kopieren</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>Linktext kopieren</value>
     </data>
 </root>

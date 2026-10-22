@@ -4616,10 +4616,10 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="Common_OpenLink" xml:space="preserve">
         <value>Open link</value>
     </data>
-    <data name="Common_CopyLinkText" xml:space="preserve">
-        <value>Copy link text</value>
-    </data>
     <data name="Common_CopyLink" xml:space="preserve">
         <value>Copy link</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>Copy link text</value>
     </data>
 </root>

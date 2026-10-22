@@ -4616,10 +4616,10 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="Common_OpenLink" xml:space="preserve">
         <value>Apri link</value>
     </data>
-    <data name="Common_CopyLinkText" xml:space="preserve">
-        <value>Copia testo del collegamento</value>
-    </data>
     <data name="Common_CopyLink" xml:space="preserve">
         <value>Copia link</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>Copia testo del collegamento</value>
     </data>
 </root>

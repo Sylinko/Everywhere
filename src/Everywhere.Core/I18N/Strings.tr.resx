@@ -4616,10 +4616,10 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="Common_OpenLink" xml:space="preserve">
         <value>Bağlantıyı aç</value>
     </data>
-    <data name="Common_CopyLinkText" xml:space="preserve">
-        <value>Bağlantı metnini kopyala</value>
-    </data>
     <data name="Common_CopyLink" xml:space="preserve">
         <value>Bağlantıyı kopyala</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>Bağlantı metnini kopyala</value>
     </data>
 </root>
