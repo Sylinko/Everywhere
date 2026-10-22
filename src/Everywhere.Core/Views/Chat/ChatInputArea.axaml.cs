@@ -25,7 +25,11 @@ public sealed class ChatInputArea : TemplatedControl
     /// Projects the send-key setting into the shortcut displayed by the send button's tooltip.
     /// </summary>
     public static IValueConverter SendShortcutConverter { get; } = new FuncValueConverter<bool, KeyboardShortcut>(
-        shouldPressControl => new KeyboardShortcut(Key.Enter, shouldPressControl ? KeyModifiers.Control : KeyModifiers.None));
+        shouldPressControl =>
+        {
+            var modifier = OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
+            return new KeyboardShortcut(Key.Enter, shouldPressControl ? modifier : KeyModifiers.None);
+        });
 
     public static readonly StyledProperty<string?> TextProperty =
         AvaloniaProperty.Register<ChatInputArea, string?>(nameof(Text));

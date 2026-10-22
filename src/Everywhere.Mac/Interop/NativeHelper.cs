@@ -170,7 +170,9 @@ public sealed class NativeHelper : INativeHelper
         if (!Path.IsPathFullyQualified(path))
         {
             using var url = NSWorkspace.SharedWorkspace.UrlForApplication(identityOrPath);
-            if (url.Path is not { } applicationPath)
+            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+            // macios SDK has nullable annotation issues, so we need to check for null here.
+            if (url?.Path is not { } applicationPath)
             {
                 return null;
             }

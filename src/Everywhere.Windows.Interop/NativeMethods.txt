@@ -21,3 +21,8 @@ SafeArrayUnaccessData
 SysAllocStringLen
 SysFreeString
 VariantClear
+
+ICoreWindowInterop
+IInspectable
+RoGetActivationFactory
+WindowsCreateString
