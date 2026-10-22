@@ -23,7 +23,7 @@
             ContentDataBinding="{Binding RelativeSource={RelativeSource TemplatedParent}}"
             ItemIndex="{TemplateBinding ReviewKind, Converter={x:Static vc:Int32Converters.FromEnum}}">
             <!--  Update  -->
-            <ControlTemplate x:DataType="v:TextDifferenceSummaryView">
+            <DataTemplate x:DataType="v:TextDifferenceSummaryView">
               <HyperlinkButton
                 Padding="0" HorizontalAlignment="Left"
                 Command="{Binding OpenFileCommand}"
@@ -38,10 +38,10 @@
                   </I18N>
                 </HyperlinkButton.Content>
               </HyperlinkButton>
-            </ControlTemplate>
+            </DataTemplate>
 
             <!--  Create  -->
-            <ControlTemplate x:DataType="v:TextDifferenceSummaryView">
+            <DataTemplate x:DataType="v:TextDifferenceSummaryView">
               <HyperlinkButton
                 Padding="0" HorizontalAlignment="Left"
                 Command="{Binding OpenFileCommand}"
@@ -56,10 +56,10 @@
                   </I18N>
                 </HyperlinkButton.Content>
               </HyperlinkButton>
-            </ControlTemplate>
+            </DataTemplate>
 
             <!--  Delete  -->
-            <ControlTemplate x:DataType="v:TextDifferenceSummaryView">
+            <DataTemplate x:DataType="v:TextDifferenceSummaryView">
               <HyperlinkButton
                 Padding="0" HorizontalAlignment="Left"
                 Command="{Binding OpenFileCommand}"
@@ -74,10 +74,10 @@
                   </I18N>
                 </HyperlinkButton.Content>
               </HyperlinkButton>
-            </ControlTemplate>
+            </DataTemplate>
 
             <!--  MoveAndUpdate  -->
-            <ControlTemplate x:DataType="v:TextDifferenceSummaryView">
+            <DataTemplate x:DataType="v:TextDifferenceSummaryView">
               <HyperlinkButton
                 Padding="0" HorizontalAlignment="Left"
                 Command="{Binding OpenFileCommand}"
@@ -95,10 +95,10 @@
                   </I18N>
                 </HyperlinkButton.Content>
               </HyperlinkButton>
-            </ControlTemplate>
+            </DataTemplate>
 
             <!--  Move  -->
-            <ControlTemplate x:DataType="v:TextDifferenceSummaryView">
+            <DataTemplate x:DataType="v:TextDifferenceSummaryView">
               <HyperlinkButton
                 Padding="0" HorizontalAlignment="Left"
                 Command="{Binding OpenFileCommand}"
@@ -116,7 +116,7 @@
                   </I18N>
                 </HyperlinkButton.Content>
               </HyperlinkButton>
-            </ControlTemplate>
+            </DataTemplate>
           </v:LazyIndexedContentControl>
 
           <StackPanel

@@ -64,18 +64,18 @@
       </Border.FlowDirection>
 
       <DockPanel LastChildFill="True">
-        <v:Eva
-          x:Name="Eva" DockPanel.Dock="Left"
+        <v:Evy
+          x:Name="Evy" DockPanel.Dock="Left"
           Width="36" Height="36"
           Margin="0,0,0,-4" FlowDirection="LeftToRight"
           IsThinking="{Binding IsBusy}"
           WindowDecorationProperties.ElementRole="User">
-          <v:Eva.Effect>
+          <v:Evy.Effect>
             <DropShadowEffect
               OffsetX="1.5" OffsetY="1.5"
               Opacity="0.3"/>
-          </v:Eva.Effect>
-        </v:Eva>
+          </v:Evy.Effect>
+        </v:Evy>
 
         <StackPanel
           DockPanel.Dock="Right" VerticalAlignment="Center"
@@ -489,20 +489,20 @@
                               VerticalAlignment="Center"
                               ItemIndex="{Binding States, Converter={x:Static vc:Int32Converters.FromEnum}}">
                               <!--  None  -->
-                              <shadui:EmptyControlTemplate/>
+                              <shadui:EmptyDataTemplate/>
 
                               <!--  Busy  -->
-                              <ControlTemplate>
+                              <DataTemplate x:DataType="chat:ChatContextMetadata">
                                 <LucideIcon
                                   Margin="0,0,8,0" HorizontalAlignment="Center"
                                   VerticalAlignment="Center"
                                   Foreground="{DynamicResource WarningColor60}"
                                   Kind="CircleDashed"
                                   Size="{DynamicResource FontSizeS}"/>
-                              </ControlTemplate>
+                              </DataTemplate>
 
                               <!--  HasNotification & Busy  -->
-                              <ControlTemplate>
+                              <DataTemplate x:DataType="chat:ChatContextMetadata">
                                 <Border
                                   Width="{DynamicResource FontSizeM}"
                                   Height="{DynamicResource FontSizeM}"
@@ -515,10 +515,10 @@
                                     FontSize="{DynamicResource FontSizeXs}"
                                     Text="1"/>
                                 </Border>
-                              </ControlTemplate>
+                              </DataTemplate>
 
                               <!--  HasNotification  -->
-                              <ControlTemplate>
+                              <DataTemplate x:DataType="chat:ChatContextMetadata">
                                 <Border
                                   Width="{DynamicResource FontSizeM}"
                                   Height="{DynamicResource FontSizeM}"
@@ -531,7 +531,7 @@
                                     FontSize="{DynamicResource FontSizeXs}"
                                     Text="1"/>
                                 </Border>
-                              </ControlTemplate>
+                              </DataTemplate>
                             </v:LazyIndexedContentControl>
 
                             <TextBlock
@@ -1044,29 +1044,30 @@
                           Grid.Column="0" HorizontalAlignment="Center"
                           VerticalAlignment="Center"
                           ItemIndex="{Binding Status, Converter={x:Static vc:Int32Converters.FromEnum}}">
+
                           <!--  NotStarted  -->
-                          <ControlTemplate>
+                          <DataTemplate x:DataType="p:ChatPluginTodoItem">
                             <LucideIcon
                               Foreground="{DynamicResource MutedColor}"
                               Kind="Circle"
                               Size="{DynamicResource FontSizeM}"/>
-                          </ControlTemplate>
+                          </DataTemplate>
 
                           <!--  In progress  -->
-                          <ControlTemplate>
+                          <DataTemplate x:DataType="p:ChatPluginTodoItem">
                             <LucideIcon
                               Foreground="{DynamicResource WarningColor60}"
                               Kind="CircleDashed"
                               Size="{DynamicResource FontSizeM}"/>
-                          </ControlTemplate>
+                          </DataTemplate>
 
                           <!--  Completed  -->
-                          <ControlTemplate>
+                          <DataTemplate x:DataType="p:ChatPluginTodoItem">
                             <LucideIcon
                               Foreground="{DynamicResource SuccessColor60}"
                               Kind="CircleCheckBig"
                               Size="{DynamicResource FontSizeM}"/>
-                          </ControlTemplate>
+                          </DataTemplate>
                         </v:LazyIndexedContentControl>
 
                         <TextBlock

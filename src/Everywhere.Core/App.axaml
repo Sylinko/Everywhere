@@ -69,7 +69,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemsControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SoftwareUpdateControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/ConditionalContentControl.axaml"/>
-        <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/Eva.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/Evy.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/GlowBorder.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconPresenter.axaml"/>

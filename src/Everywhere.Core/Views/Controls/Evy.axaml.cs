@@ -8,10 +8,10 @@ namespace Everywhere.Views;
 [PseudoClasses(IdlePseudoClass, ThinkingPseudoClass, LookingPseudoClass)]
 [TemplatePart(Name = EyesContainerPartName, Type = typeof(Control), IsRequired = true)]
 [TemplatePart(Name = EyesPartName, Type = typeof(Control), IsRequired = true)]
-public class Eva : TemplatedControl
+public class Evy : TemplatedControl
 {
     public static readonly StyledProperty<bool> IsIdleAnimationEnabledProperty =
-        AvaloniaProperty.Register<Eva, bool>(nameof(IsIdleAnimationEnabled));
+        AvaloniaProperty.Register<Evy, bool>(nameof(IsIdleAnimationEnabled));
 
     public bool IsIdleAnimationEnabled
     {
@@ -20,7 +20,7 @@ public class Eva : TemplatedControl
     }
 
     public static readonly StyledProperty<bool> IsThinkingProperty =
-        AvaloniaProperty.Register<Eva, bool>(nameof(IsThinking));
+        AvaloniaProperty.Register<Evy, bool>(nameof(IsThinking));
 
     public bool IsThinking
     {
@@ -39,7 +39,7 @@ public class Eva : TemplatedControl
     private Control? _eyes;
     private TopLevel? _topLevel;
 
-    public Eva()
+    public Evy()
     {
         UpdatePseudoClass();
     }
@@ -106,7 +106,7 @@ public class Eva : TemplatedControl
     }
 
     /// <summary>
-    /// Make Eva look at the given point.
+    /// Make Evy look at the given point.
     /// </summary>
     /// <remarks>
     /// Adjusts the margin of the eyes image to simulate eye movement.

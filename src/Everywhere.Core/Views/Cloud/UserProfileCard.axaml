@@ -12,7 +12,7 @@
           ContentDataBinding="{Binding RelativeSource={RelativeSource TemplatedParent}}"
           ItemIndex="{Binding CloudClient.LoginStatus, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:Int32Converters.FromEnum}}">
           <!--  Logged Out State  -->
-          <ControlTemplate x:DataType="v:UserProfileCard">
+          <DataTemplate x:DataType="v:UserProfileCard">
             <StackPanel Spacing="16">
               <!--  App Logo and Branding  -->
               <StackPanel
@@ -47,10 +47,10 @@
                 Content="{I18N {x:Static LocaleKey.UserProfilePresenter_CancelLoginButton_Content}}"
                 IsVisible="{Binding LoginCommand.IsRunning}"/>
             </StackPanel>
-          </ControlTemplate>
+          </DataTemplate>
 
           <!--  Logged In State  -->
-          <ControlTemplate x:DataType="v:UserProfileCard">
+          <DataTemplate x:DataType="v:UserProfileCard">
             <StackPanel Spacing="4">
               <Interaction.Behaviors>
                 <AttachedToVisualTreeTrigger>
@@ -261,7 +261,7 @@
                   </v:LazyIndexedContentControl.IsVisible>
 
                   <!--  Active  -->
-                  <ControlTemplate x:DataType="cloud:SubscriptionInformation">
+                  <DataTemplate x:DataType="cloud:SubscriptionInformation">
                     <TextBlock
                       Classes="Muted Small" TextWrapping="Wrap">
                       <TextBlock.Text>
@@ -272,10 +272,10 @@
                         </I18N>
                       </TextBlock.Text>
                     </TextBlock>
-                  </ControlTemplate>
+                  </DataTemplate>
 
                   <!--  Trialing  -->
-                  <ControlTemplate x:DataType="cloud:SubscriptionInformation">
+                  <DataTemplate x:DataType="cloud:SubscriptionInformation">
                     <TextBlock Classes="Caption">
                       <TextBlock.Text>
                         <I18N Key="{x:Static LocaleKey.UserProfilePresenter_TrialUntilTextBlock_Text}">
@@ -285,10 +285,10 @@
                         </I18N>
                       </TextBlock.Text>
                     </TextBlock>
-                  </ControlTemplate>
+                  </DataTemplate>
 
                   <!--  Cancelling  -->
-                  <ControlTemplate x:DataType="cloud:SubscriptionInformation">
+                  <DataTemplate x:DataType="cloud:SubscriptionInformation">
                     <TextBlock Classes="Caption">
                       <TextBlock.Text>
                         <I18N Key="{x:Static LocaleKey.UserProfilePresenter_EndsOnTextBlock_Text}">
@@ -298,13 +298,13 @@
                         </I18N>
                       </TextBlock.Text>
                     </TextBlock>
-                  </ControlTemplate>
+                  </DataTemplate>
 
                   <!--  Unpaid  -->
-                  <x:Null/>
+                  <shadui:EmptyDataTemplate/>
 
                   <!--  Expired  -->
-                  <ControlTemplate x:DataType="cloud:SubscriptionInformation">
+                  <DataTemplate x:DataType="cloud:SubscriptionInformation">
                     <TextBlock Classes="Caption">
                       <TextBlock.Text>
                         <I18N Key="{x:Static LocaleKey.UserProfilePresenter_ExpiredDaysAgoTextBlock_Text}">
@@ -312,7 +312,7 @@
                         </I18N>
                       </TextBlock.Text>
                     </TextBlock>
-                  </ControlTemplate>
+                  </DataTemplate>
                 </v:LazyIndexedContentControl>
               </StackPanel>
 
@@ -451,10 +451,10 @@
                   Content="{I18N {x:Static LocaleKey.UserProfilePresenter_LogoutButton_Content}}"/>
               </StackPanel>
             </StackPanel>
-          </ControlTemplate>
+          </DataTemplate>
 
           <!--  Auto Logging In State  -->
-          <ControlTemplate x:DataType="v:UserProfileCard">
+          <DataTemplate x:DataType="v:UserProfileCard">
             <StackPanel
               HorizontalAlignment="Center" Spacing="8">
               <Image
@@ -470,10 +470,10 @@
                   TextWrapping="Wrap"/>
               </StackPanel>
             </StackPanel>
-          </ControlTemplate>
+          </DataTemplate>
 
           <!--  Error State  -->
-          <ControlTemplate x:DataType="v:UserProfileCard">
+          <DataTemplate x:DataType="v:UserProfileCard">
             <StackPanel Spacing="4">
               <StackPanel
                 Margin="0,0,0,12" HorizontalAlignment="Center"
@@ -516,7 +516,7 @@
                 Content="{I18N {x:Static LocaleKey.Common_Cancel}}"
                 IsVisible="{Binding LoginCommand.IsRunning}"/>
             </StackPanel>
-          </ControlTemplate>
+          </DataTemplate>
         </v:LazyIndexedContentControl>
       </ControlTemplate>
     </Setter>

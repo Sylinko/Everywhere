@@ -17,7 +17,7 @@
       <RowDefinition MinHeight="200"/>
     </Grid.RowDefinitions>
 
-    <v:Eva
+    <v:Evy
       Grid.Row="1" Grid.Column="0"
       Width="48" Height="48"
       Margin="24,8,4,-4" VerticalAlignment="Top"

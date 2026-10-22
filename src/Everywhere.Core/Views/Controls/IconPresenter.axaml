@@ -32,7 +32,7 @@
             ClipToBounds="False"
             ContentDataBinding="{TemplateBinding Icon}"
             ItemIndex="{Binding Icon?.Type, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue=-1}">
-            <ControlTemplate x:DataType="common:ColoredIcon">
+            <DataTemplate x:DataType="common:ColoredIcon">
               <LucideIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 Kind="{Binding Kind}"
@@ -48,9 +48,9 @@
                   </MultiBinding>
                 </LucideIcon.Foreground>
               </LucideIcon>
-            </ControlTemplate>
+            </DataTemplate>
 
-            <ControlTemplate x:DataType="common:ColoredIcon">
+            <DataTemplate x:DataType="common:ColoredIcon">
               <TextBlock
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 FontSize="{Binding $parent[v:IconPresenter].FontSize}"
@@ -67,7 +67,7 @@
                   </MultiBinding>
                 </TextBlock.Foreground>
               </TextBlock>
-            </ControlTemplate>
+            </DataTemplate>
           </v:LazyIndexedContentControl>
         </Border>
       </ControlTemplate>

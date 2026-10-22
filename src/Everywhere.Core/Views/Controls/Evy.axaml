@@ -2,18 +2,18 @@
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:v="using:Everywhere.Views">
   <Design.PreviewWith>
-    <v:Eva
+    <v:Evy
       Width="128" Height="128"/>
   </Design.PreviewWith>
 
   <ControlTheme
-    x:Key="{x:Type v:Eva}"
-    TargetType="v:Eva">
+    x:Key="{x:Type v:Evy}"
+    TargetType="v:Evy">
     <Setter Property="ClipToBounds" Value="False"/>
     <Setter Property="UseLayoutRounding" Value="False"/>
     <Setter Property="Template">
       <Setter.Value>
-        <ControlTemplate TargetType="v:Eva">
+        <ControlTemplate TargetType="v:Evy">
           <Viewbox ClipToBounds="False">
             <Panel>
               <Image

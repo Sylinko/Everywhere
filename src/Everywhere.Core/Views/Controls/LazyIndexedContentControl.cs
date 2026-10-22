@@ -1,5 +1,4 @@
 ﻿using System.Collections.Specialized;
-using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.LogicalTree;
@@ -44,8 +43,14 @@ public class LazyIndexedContentControl : ContentControl
         set => SetValue(ContentDataBindingProperty, value);
     }
 
+    /// <summary>
+    /// Gets the collection of data templates used to generate the content for this control.
+    /// </summary>
+    /// <remarks>
+    /// Note that `DataTemplate`s must use x:DataType to specify the type because `DataTemplates` will validate that each template has a DataType set.
+    /// </remarks>
     [Content]
-    public IAvaloniaList<IControlTemplate?> ItemTemplates { get; }
+    public new DataTemplates DataTemplates => base.DataTemplates;
 
     /// <summary>
     /// Initializes the static members of the <see cref="LazyIndexedContentControl"/> class.
@@ -72,8 +77,7 @@ public class LazyIndexedContentControl : ContentControl
     /// </summary>
     public LazyIndexedContentControl()
     {
-        ItemTemplates = new AvaloniaList<IControlTemplate?>();
-        ItemTemplates.CollectionChanged += OnItemTemplatesChanged;
+        DataTemplates.CollectionChanged += OnItemTemplatesChanged;
     }
 
     /// <summary>
@@ -117,9 +121,9 @@ public class LazyIndexedContentControl : ContentControl
         }
 
         var index = ItemIndex;
-        if (index >= 0 && index < ItemTemplates.Count)
+        if (index >= 0 && index < DataTemplates.Count)
         {
-            var control = ItemTemplates[index]?.Build(this)?.Result;
+            var control = DataTemplates[index].Build(this);
             control?.DataContext = ContentDataBinding ?? DataContext;
             Content = control;
         }
