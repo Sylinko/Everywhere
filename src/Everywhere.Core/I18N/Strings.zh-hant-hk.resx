@@ -4616,10 +4616,10 @@
     <data name="Common_OpenLink" xml:space="preserve">
         <value>開啟連結</value>
     </data>
-    <data name="Common_CopyLinkText" xml:space="preserve">
-        <value>複製連結文字</value>
-    </data>
     <data name="Common_CopyLink" xml:space="preserve">
         <value>複製連結</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>複製連結文字</value>
     </data>
 </root>

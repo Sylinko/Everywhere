@@ -4616,10 +4616,10 @@
     <data name="Common_OpenLink" xml:space="preserve">
         <value>링크 열기</value>
     </data>
-    <data name="Common_CopyLinkText" xml:space="preserve">
-        <value>링크 텍스트 복사</value>
-    </data>
     <data name="Common_CopyLink" xml:space="preserve">
         <value>링크 복사</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>링크 텍스트 복사</value>
     </data>
 </root>

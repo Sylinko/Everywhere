@@ -4616,10 +4616,10 @@ Se continuar, a outra cópia encerrará o modo de serviço.</value>
     <data name="Common_OpenLink" xml:space="preserve">
         <value>Abrir link</value>
     </data>
-    <data name="Common_CopyLinkText" xml:space="preserve">
-        <value>Copiar texto do link</value>
-    </data>
     <data name="Common_CopyLink" xml:space="preserve">
         <value>Copiar link</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>Copiar texto do link</value>
     </data>
 </root>
