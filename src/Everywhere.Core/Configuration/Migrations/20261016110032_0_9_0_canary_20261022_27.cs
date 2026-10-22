@@ -6,9 +6,9 @@ namespace Everywhere.Configuration.Migrations;
 /// <summary>
 /// Moves the previously hidden selection settings into their dedicated category.
 /// </summary>
-public sealed class _20261016110032_0_9_0_canary_20261016_27 : SettingsMigration
+public sealed class _20261016110032_0_9_0_canary_20261022_27 : SettingsMigration
 {
-    public override SemanticVersion Version => new(0, 9, 0, 0, "canary.20261016.27");
+    public override SemanticVersion Version => new(0, 9, 0, 0, "canary.20261022.27");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks => [MigrateSelection];
 

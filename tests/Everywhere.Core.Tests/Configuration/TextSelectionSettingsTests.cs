@@ -46,7 +46,7 @@ public sealed class TextSelectionSettingsTests
             }
             """)?.AsObject() ?? throw new InvalidOperationException();
 
-        Assert.That(new _20261016110032_0_9_0_canary_20261016_27().Migrate(root), Is.True);
+        Assert.That(new _20261016110032_0_9_0_canary_20261022_27().Migrate(root), Is.True);
         var selection = root["TextSelection"]?.AsObject() ?? throw new InvalidOperationException();
         Assert.Multiple(() =>
         {
@@ -58,7 +58,7 @@ public sealed class TextSelectionSettingsTests
             Assert.That(root["ChatWindow"]?["IsTextSelectionFullscreenExcluded"], Is.Null);
         });
 
-        Assert.That(new _20261016110032_0_9_0_canary_20261016_27().Migrate(root), Is.False);
+        Assert.That(new _20261016110032_0_9_0_canary_20261022_27().Migrate(root), Is.False);
     }
 
     [Test]
@@ -79,7 +79,7 @@ public sealed class TextSelectionSettingsTests
             }
             """)?.AsObject() ?? throw new InvalidOperationException();
 
-        Assert.That(new _20261016110032_0_9_0_canary_20261016_27().Migrate(root), Is.True);
+        Assert.That(new _20261016110032_0_9_0_canary_20261022_27().Migrate(root), Is.True);
 
         Assert.Multiple(() =>
         {
