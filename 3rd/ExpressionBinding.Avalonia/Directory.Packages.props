@@ -2,8 +2,7 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
-    <AvaloniaVersion>12.1.2</AvaloniaVersion>
-    <ParlotSourceGeneratorVersion>2.0.0-preview-783</ParlotSourceGeneratorVersion>
+    <AvaloniaVersion>12.0.0</AvaloniaVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Avalonia">
@@ -15,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Parsing">
-    <PackageVersion Include="Parlot.SourceGenerator" Version="$(ParlotSourceGeneratorVersion)" />
+    <PackageVersion Include="Parlot.SourceGenerator" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
