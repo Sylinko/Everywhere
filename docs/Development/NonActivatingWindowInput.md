@@ -26,11 +26,11 @@ Esc uses the existing delegated Avalonia key route: active composition belongs t
 
 ## Platform API and observation
 
-`IWindowHelper.TryPrepareInput(window)` configures the native host without requesting capture or creating a CoreText context. It records the foreground source. `TryCaptureInput(window)` requires the prepared route, a visible non-minimized window and the same source. Both are synchronous UI-thread methods. Preparation returns false and capture returns null when unavailable; neither activates the overlay as a fallback. One native capture may exist at a time.
+`IWindowHelper.TryPrepareInput(window)` prepares the platform route without acquiring input. On Windows it initializes the native host without creating a CoreText context; on macOS it validates the non-activating panel. It records the foreground source. `TryCaptureInput(window)` requires the prepared route, a visible non-minimized window and the same source. Both are synchronous UI-thread methods. Preparation returns false and capture returns null when unavailable; neither activates the application as a fallback. One native capture may exist at a time.
 
 These are intentionally separate operations. First-use probes that created the host and requested capture in the same interaction sometimes returned success and focused the hidden host without delegating real input. An added dispatcher yield did not resolve that behavior. The accepted route prepares while the passive toolbar is appearing and captures on the later explicit editing interaction. There is no fixed delay, message pump, polling or automatic retry.
 
-`WindowInputMode.Normal` retains ordinary activation. `NonActivating` is for passive overlays and pickers. `NonActivatingTextInput` allows logical focus and installs the platform input adapter, but does not itself prepare or capture. Configure it before logically focusing an editor.
+`WindowInputMode.Normal` retains ordinary activation. `NonActivating` is for passive overlays and pickers. `NonActivatingTextInput` allows logical focus and, on Windows, installs the platform input adapter. macOS uses the existing Avalonia native view and input-method implementation. This mode does not itself prepare or capture. Configure it before logically focusing an editor.
 
 The window supplies its current lease on **every** overlay-watch geometry update and clears it synchronously before release. Keyboard input and scrolling inside the editor no longer dismiss an editing toolbar; outside pointer interaction still does. The watcher observes through the existing Windows LLHook / macOS CGEvent pipelines and never suppresses input. Hook callbacks consume copied geometry, not Avalonia objects. Interactive menus are included; passive preedit/tooltip windows are not. Pointer distance is quantized in 0.05 steps on the hook thread before coalescing UI updates. Geometry revisions reject obsolete opacity callbacks, and appearance generations reject obsolete dismissal callbacks after hide/reuse.
 
@@ -50,13 +50,25 @@ The CoreWindow exposes `ITextInputConsumer` (IID `a9d00ab3-2fef-41a0-b0ad-4b2129
 
 `WindowsUdk.UI.Input.Text.TextInputCapture` exposes Current through statics IID `efb97a91-0252-56e1-96f7-7d444006f569`, slot 6. The returned current-thread object has RequestCapture/ReleaseCapture at slots 6/7. `WindowsWindowInputCapture` owns one request/release pair and the subscriptions for lifetime, layout and key forwarding. The CoreText context stops before native capture releases. The helper releases its shared host on the UI dispatcher's ShutdownStarted event; later service disposal has no native host left to release on a worker thread.
 
-These ordinals and private COM layouts were investigated on Windows 11 build 26100.9711. The 19041 build target does not establish runtime compatibility with Windows 10. Missing exports or interfaces fail through the preparation/capture boundary; the toolbar then chooses ordinary activated editing on the user's explicit chat-entry interaction.
+`Everywhere.Windows.Interop/TextInput` contains the ordinal imports and private, non-owning COM ABI structs. They reuse CsWin32's `IUnknown`, generic interface queries, SDK-defined `ICoreWindowInterop`, `IInspectable` vtable prefix and `HRESULT`. `DesktopTextInputInterop` exposes only the narrow operations needed by the host, without leaking assembly-local generated types. `CoreWindowInputHost` retains ownership of returned references and releases capture, closes the CoreWindow, releases producer/window references and uninitializes WinRT in the original UI-thread order. The ABI layer has no finalizer or automatic input acquisition.
+
+These ordinals and private COM layouts were investigated on Windows 11 build 26100.9711. The user also confirmed the input route works in a Windows 10 build 19041 virtual machine. These are runtime observations, independent of the 19041 compilation target; other builds remain unverified. Missing exports or interfaces fail through the preparation/capture boundary; the toolbar then chooses ordinary activated editing on the user's explicit chat-entry interaction.
 
 The MonoMod Win32 patch exposes `IWindowInputFeature`, disables `WindowImpl.ShouldTakeFocusOnClick` and replaces the platform `ITextInputMethodImpl`. Existing native styles and `WM_MOUSEACTIVATE` handling stay in place. Normal activation/focus messages continue through Avalonia; no DispatchProxy, CBT hook or Activate interception is required.
 
 `WindowsTextInputMethod` adapts CoreText to the editor's ordinary `TextInputMethodClient`. Intermediate composition uses `SetPreeditText` and the existing AvaloniaEdit preedit presentation; committed text enters Avalonia's raw text-input pipeline once. Navigation and shortcuts use raw key events. CoreText may mark navigation handled before Avalonia has seen it, so that native flag alone must not discard the event. CharacterReceived and WM_CHAR are not a second text-delivery channel.
 
 Avalonia supplies the caret rectangle in top-level logical coordinates. CoreText receives the actual physical screen caret and text-view bounds. Movement and scaling notify layout changes; an extra editor-offset transform would be incorrect.
+
+## macOS native route
+
+`TextSelectionToolbarWindow` is created with `AvaloniaNativeWindowFactory.CreatePanel` and `IsNonActivating = true`. The native object must be an `NSPanel` with the `NonactivatingPanel` style from creation.
+
+`WindowHelper.TryPrepareInput` validates that panel and records the frontmost application's process ID. The later capture checks the same source, the visible non-minimized panel and its existing Avalonia `NSView`. `MacWindowInputCapture.Start` makes the panel key with `MakeKeyAndOrderFront` and sets that view as first responder. It never activates `NSApplication`; the source application remains frontmost while the panel receives keyboard input.
+
+AppKit and Avalonia's existing native input implementation deliver committed text, marked text and candidate-window layout to `ChatTextEditor`. There is no hidden CoreWindow, private Windows-style input producer or second text-delivery path. `IsComposing` queries the view's `hasMarkedText` state so local Escape handling can leave active composition to the IME.
+
+The capture observes `DidResignKeyNotification`, hiding, minimization and close. Involuntary loss disposes the lease and notifies the toolbar. Explicit release removes observers, resets the existing Avalonia input method to clear marked text/preedit and resigns panel key status before clearing helper ownership. All of this runs on the UI thread; release does not activate or restore the source application. The existing CGEvent pipeline continues to observe overlay dismissal and pointer distance rather than forwarding text input.
 
 ## Evidence and remaining boundaries
 
@@ -76,4 +88,4 @@ Known boundaries:
 - Native popup hit testing accepts this toolbar's same-thread popup owner chains and IME-class windows owned by the capture thread. Candidate UI in a separate process needs ownership evidence before exemption from outside-click dismissal.
 - Releasing through Ctrl+Alt+F10 while modifiers are held could leave Notepad in Alt menu mode; Esc restores typing. Mouse-close passed. Do not infer physically stuck modifiers or synthesize corrective keys from that observation.
 - Upstream AvaloniaEdit current-line text and selection offsets warrant separate investigation if a failure appears. The accepted editing scenarios did not reproduce an offset bug; no speculative editor-client rewrite is included. Leading attachment content and involuntary-loss/reentry need checking with their actual UI flows.
-- macOS explicitly returns false/null for preparation/capture, so the toolbar uses ordinary activated editing. Existing CGEvent observation remains available outside that editing mode; native non-activating text delegation requires a separate implementation.
+- macOS requires the non-activating `NSPanel` and its existing native view. If either is unavailable or capture cannot preserve the prepared source, the shared ordinary activated-input fallback remains available.

@@ -2,7 +2,7 @@
   x:Class="Everywhere.Views.TextSelectionToolbar" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:ts="clr-namespace:Everywhere.TextSelection" xmlns:v="clr-namespace:Everywhere.Views"
-  x:Name="Self">
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" x:Name="Self">
   <UserControl.Styles>
     <!--  Keep the delegated native input owner while interacting with assistant submenus.  -->
     <Style Selector="Popup">
@@ -87,6 +87,14 @@
                 DockPanel.Dock="Right" VerticalAlignment="Stretch"
                 Focusable="False"
                 ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbar_More}}">
+                <Button.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                    <Binding
+                      Converter="{x:Static vc:Int32Converters.IsNotZero}"
+                      Path="#Self.OverflowActions.Count"/>
+                    <Binding Path="#Self.CanExcludeApplication"/>
+                  </MultiBinding>
+                </Button.IsVisible>
                 <LucideIcon
                   Kind="EllipsisVertical"
                   Size="{DynamicResource FontSizeM}"/>
@@ -127,7 +135,16 @@
                             </DataTemplate>
                           </shadui:CompositeCollection.ItemTemplate>
                         </shadui:CompositeCollection>
-                        <Separator IsVisible="{Binding #Self.OverflowActions.Count}"/>
+                        <Separator>
+                          <Separator.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                              <Binding
+                                Converter="{x:Static vc:Int32Converters.IsNotZero}"
+                                Path="#Self.OverflowActions.Count"/>
+                              <Binding Path="#Self.CanExcludeApplication"/>
+                            </MultiBinding>
+                          </Separator.IsVisible>
+                        </Separator>
                         <MenuItem
                           Click="HandleExcludeApplicationClick"
                           FontSize="{DynamicResource FontSizeS}"
