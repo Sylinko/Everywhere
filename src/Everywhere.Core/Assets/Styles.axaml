@@ -207,6 +207,41 @@ ul, ol { padding-left: 2em; }
   <Style Selector="md|MarkdownRenderer">
     <Setter Property="CodeBlockColorTheme" Value="{DynamicResource ColorTheme}"/>
 
+    <Setter Property="ContextFlyout">
+      <MenuFlyout Placement="Pointer">
+        <MenuItem
+          x:Name="MarkdownRendererContextFlyoutCopyItem"
+          Command="{Binding $parent[md:MarkdownRenderer].Copy}"
+          Header="{I18N {x:Static LocaleKey.Common_Copy}}"
+          Icon="{LucideIconContent Copy}"
+          InputGesture="{Binding $parent[md:MarkdownRenderer].CopyGesture}"
+          IsEnabled="{Binding $parent[md:MarkdownRenderer].CanCopy}"/>
+        <MenuItem
+          Command="{Binding $parent[md:MarkdownRenderer].SelectAll}"
+          Header="{I18N {x:Static LocaleKey.Common_SelectAll}}"
+          Icon="{LucideIconContent ScanText}"
+          InputGesture="Ctrl+A"/>
+      </MenuFlyout>
+    </Setter>
+
+    <Setter Property="LinkContextMenu">
+      <Template>
+        <ContextMenu>
+          <MenuItem
+            Command="{Binding OpenCommand, x:DataType=md:Link}"
+            Header="{I18N {x:Static LocaleKey.Common_OpenLink}}"
+            Icon="{LucideIconContent ExternalLink}"/>
+          <MenuItem
+            Command="{Binding CopyCommand, x:DataType=md:Link}"
+            Header="{I18N {x:Static LocaleKey.Common_CopyLink}}"
+            Icon="{LucideIconContent Copy}"/>
+          <MenuItem
+            Command="{Binding CopyTextCommand, x:DataType=md:Link}"
+            Header="{I18N {x:Static LocaleKey.Common_CopyLinkText}}"/>
+        </ContextMenu>
+      </Template>
+    </Setter>
+
     <Style Selector="^ StackPanel">
       <Setter Property="Spacing" Value="6"/>
     </Style>

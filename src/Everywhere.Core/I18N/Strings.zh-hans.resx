@@ -4608,4 +4608,16 @@
     <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
         <value>退格</value>
     </data>
+    <data name="Common_SelectAll" xml:space="preserve">
+        <value>全选</value>
+    </data>
+    <data name="Common_OpenLink" xml:space="preserve">
+        <value>打开链接</value>
+    </data>
+    <data name="Common_CopyLink" xml:space="preserve">
+        <value>复制链接</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>复制链接文本</value>
+    </data>
 </root>

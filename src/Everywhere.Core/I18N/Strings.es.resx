@@ -4610,4 +4610,16 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     <data name="Common_KeyboardKey_Backspace" xml:space="preserve">
         <value>Retroceso</value>
     </data>
+    <data name="Common_SelectAll" xml:space="preserve">
+        <value>Seleccionar todo</value>
+    </data>
+    <data name="Common_OpenLink" xml:space="preserve">
+        <value>Abrir enlace</value>
+    </data>
+    <data name="Common_CopyLinkText" xml:space="preserve">
+        <value>Copiar texto del vínculo</value>
+    </data>
+    <data name="Common_CopyLink" xml:space="preserve">
+        <value>Copiar enlace</value>
+    </data>
 </root>

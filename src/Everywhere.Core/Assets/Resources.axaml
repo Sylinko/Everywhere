@@ -10,6 +10,12 @@
     <GradientStop Offset="1" Color="#5DFFFFFF"/>
   </LinearGradientBrush>
 
+  <ControlTheme
+    x:Key="{x:Type LucideIcon}"
+    TargetType="LucideIcon">
+    <Setter Property="Size" Value="{DynamicResource FontSizeL}"/>
+  </ControlTheme>
+
   <GeometryGroup
     x:Key="McpIconGeometry" FillRule="EvenOdd">
     <GeometryGroup.Transform>

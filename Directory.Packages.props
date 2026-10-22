@@ -8,7 +8,7 @@
     <SentryVersion>6.10.0</SentryVersion>
     <AvaloniaVersion>12.1.3</AvaloniaVersion>
     <AvaloniaEditVersion>12.0.0</AvaloniaEditVersion>
-    <LiveMarkdownVersion>2.4.0</LiveMarkdownVersion>
+    <LiveMarkdownVersion>2.5.1</LiveMarkdownVersion>
     <SkiaSharpVersion>4.148.0</SkiaSharpVersion>
     <XamlBehaviorsVersion>12.0.7</XamlBehaviorsVersion>
     <TikTokenVersion>6.0.0</TikTokenVersion>

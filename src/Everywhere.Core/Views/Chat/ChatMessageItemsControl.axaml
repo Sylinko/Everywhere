@@ -1,11 +1,10 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:v="using:Everywhere.Views">
+  xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:ChatMessageItemsControl}"
     TargetType="v:ChatMessageItemsControl">
     <Setter Property="ClipToBounds" Value="False"/>
-    <Setter Property="md:MarkdownTextBlock.IsSelectionScope" Value="True"/>
     <Setter Property="Template">
       <ControlTemplate>
         <ItemsPresenter x:Name="PART_ItemsPresenter">
