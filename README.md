@@ -1,4 +1,4 @@
-<a id="readme-top"></a>
+﻿<a id="readme-top"></a>
 
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README-zh-cn.md">前往中文版本 »</a>
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README-ja-jp.md">日本語バージョン »</a>
@@ -201,7 +201,7 @@
 
 ## 🤝 Contributing
 
-We love open source and welcome your brilliant ideas and code contributions (Pull Requests)! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for code styling guidelines and local compilation instructions.
+We love open source and welcome your brilliant ideas and code contributions (Pull Requests)! Please see [CONTRIBUTING.md](.github/CONTRIBUTING.md) for code styling guidelines and local compilation instructions.
 
 Check our [Build Guide](docs/build.md) for detailed instructions on how to set up the development environment and build the project locally.
 
