@@ -1,11 +1,11 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Avalonia.Input;
 using Everywhere.Extensions;
 using Everywhere.Interop;
 
 namespace Everywhere.Linux.Interop;
 
-public class NativeHelper(IEventHelper eventHelper) : INativeHelper
+public partial class NativeHelper(IEventHelper eventHelper) : INativeHelper
 {
     private static string AutostartFolder => 
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config/autostart");

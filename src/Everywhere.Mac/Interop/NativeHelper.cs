@@ -1,8 +1,9 @@
-﻿using Bitmap = Avalonia.Media.Imaging.Bitmap;
-using Avalonia.Input;
+﻿using Avalonia.Input;
 using Everywhere.Interop;
 using Network;
+using UniformTypeIdentifiers;
 using UserNotifications;
+using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
 namespace Everywhere.Mac.Interop;
 
@@ -164,6 +165,34 @@ public sealed class NativeHelper : INativeHelper
     }
 
     /// <inheritdoc />
+    public Task MoveToTrashAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken = default)
+    {
+        return Task.Run(
+            () =>
+            {
+                using var pool = new NSAutoreleasePool();
+                using var manager = new NSFileManager();
+                foreach (var path in paths)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    using var url = NSUrl.FromFilename(path);
+                    // TrashItem is synchronous and cannot be interrupted. Wait for it before honoring cancellation.
+                    var hasTrashed = manager.TrashItem(url, out var trashedUrl, out var error);
+                    using (trashedUrl)
+                    using (error)
+                    {
+                        if (!hasTrashed)
+                        {
+                            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+                            throw new IOException($"Could not move '{path}' to the trash: {error?.LocalizedDescription ?? "Unknown error"}");
+                        }
+                    }
+                }
+            },
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
     public NativeApplicationInfo? GetApplicationInfo(string identityOrPath)
     {
         var path = identityOrPath;
@@ -209,7 +238,7 @@ public sealed class NativeHelper : INativeHelper
     {
         using var image = path is not null && Directory.Exists(path) ?
             NSWorkspace.SharedWorkspace.IconForFile(path) :
-            NSWorkspace.SharedWorkspace.GetIcon(UniformTypeIdentifiers.UTTypes.ApplicationBundle);
+            NSWorkspace.SharedWorkspace.GetIcon(UTTypes.ApplicationBundle);
         using var tiff = image.AsTiff();
         if (tiff is null)
         {

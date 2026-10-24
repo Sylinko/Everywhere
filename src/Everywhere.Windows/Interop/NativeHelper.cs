@@ -13,6 +13,7 @@ using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Avalonia.Input;
 using Everywhere.Extensions;
 using Everywhere.Interop;
+using Everywhere.Windows.Interop.Shell;
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
@@ -146,6 +147,42 @@ public class NativeHelper : INativeHelper
         if (fullPath.IsNullOrWhiteSpace()) return;
         var args = $"/e,/select,\"{fullPath}\"";
         Process.Start(new ProcessStartInfo("explorer.exe", args) { UseShellExecute = true });
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Each call creates a dedicated STA thread so Shell operations do not block
+    /// the application's shared message window. Intended for infrequent, user-initiated
+    /// operations; submit related paths in one batch rather than starting concurrent
+    /// calls for individual files.
+    /// </remarks>
+    public Task MoveToTrashAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken = default)
+    {
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        // Shell file operations require an STA. Keep their progress UI and COM lifetime off the app dispatcher.
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                ShellInterop.MoveToTrash(paths, cancellationToken);
+                completion.SetResult();
+            }
+            catch (OperationCanceledException exception)
+            {
+                completion.SetCanceled(exception.CancellationToken);
+            }
+            catch (Exception exception)
+            {
+                completion.SetException(exception);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "MoveToTrashAsync"
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return completion.Task;
     }
 
     /// <inheritdoc />

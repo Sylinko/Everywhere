@@ -7,23 +7,6 @@ namespace Everywhere.Interop;
 public interface INativeHelper
 {
     /// <summary>
-    /// Resolves an absolute application path or saved native application identity without launching it.
-    /// Returns null when the application cannot be resolved.
-    /// </summary>
-    NativeApplicationInfo? GetApplicationInfo(string identityOrPath);
-
-    /// <summary>
-    /// Resolves the application owning a selected window's process. Does not fall back to a process-name rule.
-    /// </summary>
-    NativeApplicationInfo? GetApplicationInfo(int processId);
-
-    /// <summary>
-    /// Loads a platform application icon, or the platform default when the path is null or unavailable.
-    /// The caller owns and must dispose the returned bitmap.
-    /// </summary>
-    Bitmap? GetApplicationIcon(string? path);
-
-    /// <summary>
     /// Check if the application is installed in the system.
     /// </summary>
     bool IsInstalled { get; }
@@ -65,4 +48,31 @@ public interface INativeHelper
     /// </summary>
     /// <param name="fullPath"></param>
     void OpenFileLocation(string fullPath);
+
+    /// <summary>
+    /// Moves the supplied files or directories to the platform trash. Never falls back to permanent deletion.
+    /// Cancellation stops further work and requests interruption where supported, without rolling back
+    /// completed items. The task completes only after native work stops; cancellation arriving after
+    /// all items have completed does not turn success into cancellation.
+    /// </summary>
+    /// <exception cref="OperationCanceledException">The token or native progress UI canceled the operation.</exception>
+    /// <exception cref="IOException">An item could not be moved to the trash; earlier items may have completed.</exception>
+    Task MoveToTrashAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resolves an absolute application path or saved native application identity without launching it.
+    /// Returns null when the application cannot be resolved.
+    /// </summary>
+    NativeApplicationInfo? GetApplicationInfo(string identityOrPath);
+
+    /// <summary>
+    /// Resolves the application owning a selected window's process. Does not fall back to a process-name rule.
+    /// </summary>
+    NativeApplicationInfo? GetApplicationInfo(int processId);
+
+    /// <summary>
+    /// Loads a platform application icon, or the platform default when the path is null or unavailable.
+    /// The caller owns and must dispose the returned bitmap.
+    /// </summary>
+    Bitmap? GetApplicationIcon(string? path);
 }

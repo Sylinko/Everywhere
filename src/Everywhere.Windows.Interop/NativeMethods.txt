@@ -26,3 +26,11 @@ ICoreWindowInterop
 IInspectable
 RoGetActivationFactory
 WindowsCreateString
+
+FileOperation
+IFileOperation
+IFileOperationProgressSink
+SHCreateItemFromParsingName
+_TRANSFER_SOURCE_FLAGS
+CoInitializeEx
+CoUninitialize
