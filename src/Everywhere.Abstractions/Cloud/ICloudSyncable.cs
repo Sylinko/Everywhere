@@ -1,9 +1,7 @@
 ﻿namespace Everywhere.Cloud;
 
 /// <summary>
-/// Defines a contract for entities that must be synchronized with the remote cloud storage.
-/// Implementing this interface allows the SyncSaveChangesInterceptor to automatically
-/// assign monotonic version numbers upon modification.
+/// Describes the legacy v1 database entity shape retained for migration.
 /// </summary>
 public interface ICloudSyncable
 {
@@ -23,8 +21,7 @@ public interface ICloudSyncable
     /// <summary>
     /// The monotonic synchronization version number.
     /// <para>
-    /// This value is automatically managed by the database context interceptor.
-    /// It increments globally for every insert or update operation across the database.
+    /// Older versions assigned this value through the synchronization save interceptor.
     /// 0 indicates the entity is not versioned/broken.
     /// -1 indicates the entity is pulled from the cloud but has never been modified locally.
     /// </para>

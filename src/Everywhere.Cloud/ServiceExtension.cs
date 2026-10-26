@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Everywhere.Common;
-using Everywhere.Database;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Cloud;
@@ -15,10 +14,6 @@ public static class ServiceExtension
             services.AddSingleton<OAuthCloudClient>();
             services.AddSingleton<ICloudClient>(x => x.GetRequiredService<OAuthCloudClient>());
             services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<OAuthCloudClient>());
-
-            services.AddSingleton<CloudChatDbSynchronizer>();
-            services.AddSingleton<IChatDbSynchronizer>(x => x.GetRequiredService<CloudChatDbSynchronizer>());
-            services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<CloudChatDbSynchronizer>());
 
             services.AddSingleton<OfficialModelProvider>();
             services.AddSingleton<IOfficialModelProvider>(x => x.GetRequiredService<OfficialModelProvider>());
