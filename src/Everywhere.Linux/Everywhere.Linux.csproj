@@ -10,10 +10,17 @@
     <ApplicationIcon>..\..\img\Everywhere.ico</ApplicationIcon>
     <IsDeploymentTarget>true</IsDeploymentTarget>
     <UseAppHost>true</UseAppHost>
+    <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Interop\**\*.cs" />
+    <Compile Include="Interop\LinuxNativeMessageBox.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Wayland" />
     <PackageReference Include="GirCore.GObject-2.0" />
     <PackageReference Include="OfficeCLI" />
     <PackageReference Include="SkiaSharp" />
@@ -24,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj" />
+    <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj" />
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
