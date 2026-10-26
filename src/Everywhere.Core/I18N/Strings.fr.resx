@@ -2311,7 +2311,7 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
         <value>Interroge une région limitée autour d’une cible visuelle de type élément ou composite.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Inscrivez-vous pour des crédits gratuits et accédez à des modèles populaires prêts à l'emploi. D'autres fonctionnalités comme la synchronisation cloud sont en cours de déploiement...</value>
+        <value>Inscrivez-vous pour des crédits gratuits et accédez à des modèles populaires prêts à l'emploi.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Se Connecter</value>
@@ -2388,21 +2388,6 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Tableau de bord</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Synchronisation Cloud des Conversations</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Une fois activé, vos historiques de chat seront automatiquement synchronisés entre plusieurs appareils</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Dernière synchronisation réussie le {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Erreur lors de la dernière synchronisation</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Synchronisation en cours...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Je veux configurer le modèle moi-même</value>
@@ -4621,5 +4606,8 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copier le texte du lien</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>Les conversations sont stockées sur cet appareil. Leur synchronisation cloud est indisponible dans cette version.</value>
     </data>
 </root>

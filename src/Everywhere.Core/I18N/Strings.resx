@@ -2311,7 +2311,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Query a bounded region around a visual element.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Sign up for free credits and get access to popular models right out of the box. More features like cloud sync are coming soon...</value>
+        <value>Sign up for free credits and get access to popular models right out of the box.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Login</value>
@@ -2388,21 +2388,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Profile Dashboard</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Chat Cloud Sync</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Enabling this will automatically sync your chat history across devices</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Last synchronized {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Last synchronization error</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Syncing...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>I'll Configure the Model Myself</value>
@@ -4621,5 +4606,8 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copy link text</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>Chats are stored on this device. Chat cloud sync is unavailable in this version.</value>
     </data>
 </root>

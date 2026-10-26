@@ -2311,7 +2311,7 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
         <value>Consulta una región acotada alrededor de un objetivo visual de tipo elemento o compuesto.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Regístrate para obtener créditos gratuitos y acceder a modelos populares listos para usar. Más funciones como sincronización en la nube estarán disponibles pronto...</value>
+        <value>Regístrate para obtener créditos gratuitos y acceder a modelos populares listos para usar.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Iniciar Sesión</value>
@@ -2388,21 +2388,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Perfil</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Sincronización en la Nube</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Al activarlo, tus registros de chat se sincronizarán automáticamente entre varios dispositivos</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Última sincronización exitosa {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Error en la última sincronización</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Sincronizando...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Quiero Configurar el Modelo Yo Mismo</value>
@@ -4621,5 +4606,8 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copiar texto del vínculo</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>Los chats se guardan en este dispositivo. La sincronización en la nube no está disponible en esta versión.</value>
     </data>
 </root>

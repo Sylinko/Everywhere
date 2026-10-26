@@ -2311,7 +2311,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Bir öğe veya bileşik görsel hedefin çevresindeki sınırlı bir bölgeyi sorgular.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Kaydolduğunuzda ücretsiz puanlar kazanın, kullanıma hazır popüler modellere erişin. Bulut senkronizasyonu gibi özellikler de sürekli olarak ekleniyor...</value>
+        <value>Kaydolduğunuzda ücretsiz puanlar kazanın, kullanıma hazır popüler modellere erişin.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Giriş Yap</value>
@@ -2388,21 +2388,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Kişisel Sayfa</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Sohbet Bulut Senkronizasyonu</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Açıldığında sohbet geçmişiniz otomatik olarak birden fazla cihaz arasında senkronize edilecektir</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Son başarılı senkronizasyon {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Son senkronizasyonda hata oluştu</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Eşitleniyor...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Kendim Modeli Yapılandırmak İstiyorum</value>
@@ -4621,5 +4606,8 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Bağlantı metnini kopyala</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>Sohbetler bu cihazda saklanır. Bu sürümde sohbet bulut senkronizasyonu kullanılamaz.</value>
     </data>
 </root>

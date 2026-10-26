@@ -2311,7 +2311,7 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
         <value>Consulta uma região limitada ao redor de um alvo visual do tipo elemento ou composto.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Cadastre-se e ganhe créditos gratuitos, com acesso a modelos populares prontos para uso. Novas funcionalidades, como sincronização em nuvem, estão a caminho…</value>
+        <value>Cadastre-se e ganhe créditos gratuitos, com acesso a modelos populares prontos para uso.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Entrar</value>
@@ -2388,21 +2388,6 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Abrir Painel</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Sincronização na Nuvem</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Quando ativada, suas conversas serão sincronizadas automaticamente entre dispositivos.</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Última sincronização bem-sucedida: {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Erro na última sincronização</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Sincronizando...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Configurar modelo manualmente</value>
@@ -4621,5 +4606,8 @@ Se continuar, a outra cópia encerrará o modo de serviço.</value>
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copiar texto do link</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>As conversas são armazenadas neste dispositivo. A sincronização na nuvem não está disponível nesta versão.</value>
     </data>
 </root>

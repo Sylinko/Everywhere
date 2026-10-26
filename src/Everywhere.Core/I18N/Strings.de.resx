@@ -2311,7 +2311,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
         <value>Fragt einen begrenzten Bereich um ein visuelles Element- oder Verbundziel ab.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Registrieren Sie sich für kostenlose Credits und erhalten Sie sofort einsatzbereite gängige Modelle. Weitere Funktionen wie Cloud-Synchronisierung werden kontinuierlich hinzugefügt...</value>
+        <value>Registrieren Sie sich für kostenlose Credits und erhalten Sie sofort einsatzbereite gängige Modelle.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Anmelden</value>
@@ -2388,21 +2388,6 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Persönliches Dashboard</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Cloud-Synchronisierung</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Aktiviert, um deine Chatverläufe automatisch zwischen mehreren Geräten zu synchronisieren</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Zuletzt erfolgreich synchronisiert {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Letzte Synchronisierung fehlgeschlagen</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Synchronisierung läuft...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Ich möchte das Modell selbst konfigurieren</value>
@@ -4621,5 +4606,8 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Linktext kopieren</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>Chats werden auf diesem Gerät gespeichert. Die Chat-Cloud-Synchronisierung ist in dieser Version nicht verfügbar.</value>
     </data>
 </root>

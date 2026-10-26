@@ -377,68 +377,9 @@
                 Spacing="4">
                 <Separator/>
 
-                <Grid
-                  Margin="12,0" ColumnDefinitions="Auto,*,Auto,Auto"
-                  ColumnSpacing="6">
-                  <LucideIcon
-                    Grid.Column="0" Kind="CloudSync"
-                    Size="{DynamicResource FontSizeL}"
-                    ToolTip.Placement="Top"
-                    ToolTip.Tip="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggle_Tip}}"/>
-                  <TextBlock
-                    Grid.Column="1" VerticalAlignment="Center"
-                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"/>
-                  <ToggleSwitch
-                    Grid.Column="2" DockPanel.Dock="Right"
-                    VerticalAlignment="Center"
-                    IsChecked="{Binding Path=PersistentState.IsCloudSyncEnabled, Mode=TwoWay}"/>
-                  <LucideIcon
-                    Grid.Column="3" Kind="CircleQuestionMark"
-                    Size="{DynamicResource FontSizeS}"
-                    ToolTip.Placement="Top"
-                    ToolTip.Tip="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggle_Tip}}"/>
-                </Grid>
-
-                <StackPanel
-                  x:Name="SyncStatusPanel" Margin="12,0"
-                  IsVisible="{Binding Path=PersistentState.IsCloudSyncEnabled, Mode=TwoWay}"
-                  Spacing="4">
-                  <TextBlock
-                    Classes="Caption Muted"
-                    IsVisible="{Binding Path=PersistentState.LastCloudSynchronized, Converter={x:Static ObjectConverters.IsNotNull}}">
-                    <TextBlock.Text>
-                      <I18N Key="{x:Static LocaleKey.UserProfilePresenter_LastSynchronizedTextBlock_Text}">
-                        <Binding
-                          Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
-                          Path="PersistentState.LastCloudSynchronized" StringFormat="{}{0:g}"/>
-                      </I18N>
-                    </TextBlock.Text>
-                  </TextBlock>
-
-                  <StackPanel
-                    IsVisible="{Binding Path=CloudSynchronizer.IsCloudSyncing}"
-                    Orientation="Horizontal" Spacing="4">
-                    <shadui:Loading Size="{DynamicResource FontSizeS}"/>
-                    <TextBlock
-                      Classes="Caption Muted"
-                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_SynchronizingTextBlock_Text}}"/>
-                  </StackPanel>
-
-                  <StackPanel
-                    IsVisible="{Binding Path=PersistentState.LastCloudSynchronizationErrorMessageKey, Converter={x:Static ObjectConverters.IsNotNull}}"
-                    Orientation="Horizontal" Spacing="4">
-                    <TextBlock
-                      Classes="Caption"
-                      Foreground="{DynamicResource WarningColor}"
-                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_LastSynchronizationErrorTextBlock_Text}}"/>
-                    <LucideIcon
-                      Foreground="{DynamicResource WarningColor}"
-                      Kind="CircleQuestionMark"
-                      Size="{DynamicResource FontSizeS}"
-                      ToolTip.Placement="Top"
-                      ToolTip.Tip="{Binding Path=PersistentState.LastCloudSynchronizationErrorMessageKey^, FallbackValue={x:Null}}"/>
-                  </StackPanel>
-                </StackPanel>
+                <TextBlock
+                  Margin="12,4" TextWrapping="Wrap"
+                  Text="{I18N {x:Static LocaleKey.UserProfilePresenter_LocalChatStorage_Text}}"/>
 
                 <Separator/>
 

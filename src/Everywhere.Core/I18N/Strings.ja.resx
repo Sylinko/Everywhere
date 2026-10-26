@@ -2311,7 +2311,7 @@
         <value>要素または複合ビジュアルターゲットの周囲にある範囲を限定して照会します。</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>登録すると無料ポイントがもらえ、すぐに使える主流モデルを手に入れられます。さらに、クラウド同期などの機能も続々登場中……</value>
+        <value>登録すると無料ポイントがもらえ、すぐに使える主流モデルを手に入れられます。</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>ログイン</value>
@@ -2388,21 +2388,6 @@
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>ダッシュボード</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>対話のクラウド同期</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>有効にすると、複数のデバイス間でチャット履歴が自動的に同期されます。</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>最後の同期: {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>最近の同期でエラーが発生しました。</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>同期中...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>自分でモデルを設定する</value>
@@ -4621,5 +4606,8 @@
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>リンクテキストをコピー</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>チャットはこのデバイスに保存されます。このバージョンではチャットのクラウド同期は利用できません。</value>
     </data>
 </root>

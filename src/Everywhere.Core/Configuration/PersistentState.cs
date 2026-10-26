@@ -97,24 +97,6 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
-    public bool IsCloudSyncEnabled
-    {
-        get => Get(false);
-        set => Set(value);
-    }
-
-    public DateTimeOffset? LastCloudSynchronized
-    {
-        get => Get<DateTimeOffset?>();
-        set => Set(value);
-    }
-
-    public IDynamicLocaleKey? LastCloudSynchronizationErrorMessageKey
-    {
-        get => Get<IDynamicLocaleKey?>();
-        set => Set(value);
-    }
-
     /// <summary>
     /// Gets or sets the last successful update discovery time on this device.
     /// </summary>

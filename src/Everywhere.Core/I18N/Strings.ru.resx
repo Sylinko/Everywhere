@@ -2311,7 +2311,7 @@
         <value>Запрашивает ограниченную область вокруг визуальной цели типа элемента или композиции.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Зарегистрируйтесь и получите бесплатные кредиты, чтобы использовать популярные модели. Функции, такие как облачная синхронизация, будут добавлены в дальнейшем...</value>
+        <value>Зарегистрируйтесь и получите бесплатные кредиты, чтобы использовать популярные модели.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Войти</value>
@@ -2388,21 +2388,6 @@
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Личный кабинет</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Облачная синхронизация диалогов</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>После включения ваши чаты будут автоматически синхронизироваться между устройствами</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Последняя успешная синхронизация {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Ошибка последней синхронизации</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Синхронизация...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Я сам настрою модель</value>
@@ -4621,5 +4606,8 @@
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Копировать текст ссылки</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>Чаты хранятся на этом устройстве. Облачная синхронизация чатов недоступна в этой версии.</value>
     </data>
 </root>

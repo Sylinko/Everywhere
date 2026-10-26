@@ -122,7 +122,6 @@ jobs:
         CLIENT_ID: ${{ secrets.CLIENT_ID }}
         AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
         ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
-        CLOUD_SYNC_BASE_URL: ${{ vars.CLOUD_SYNC_BASE_URL }}
       run: |
         dotnet publish src/Everywhere.Windows/Everywhere.Windows.csproj `
           -c Release `
@@ -133,7 +132,6 @@ jobs:
           -p:ClientId="$env:CLIENT_ID" `
           -p:AIGatewayBaseUrl="$env:AI_GATEWAY_BASE_URL" `
           -p:AccountBaseUrl="$env:ACCOUNT_BASE_URL" `
-          -p:CloudSyncBaseUrl="$env:CLOUD_SYNC_BASE_URL" `
           -o ./publish `
           --no-restore
 

@@ -15,12 +15,6 @@ namespace Everywhere.Database;
 [method: DynamicDependency(DynamicallyAccessedMemberTypes.AllConstructors, typeof(DateTimeToTicksConverter))]
 public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbContext(options)
 {
-    /// <summary>
-    /// Indicates whether a synchronization operation is currently in progress.
-    /// This flag can be used to prevent <see cref="SyncSaveChangesInterceptor"/> modifications during sync.
-    /// </summary>
-    public bool IsSyncing { get; set; }
-
     public DbSet<ChatContextEntity> Chats => Set<ChatContextEntity>();
     public DbSet<ChatNodeEntity> Nodes => Set<ChatNodeEntity>();
     public DbSet<NodeBlobEntity> NodeBlobs => Set<NodeBlobEntity>();
@@ -88,13 +82,6 @@ public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbC
         });
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        base.OnConfiguring(optionsBuilder);
-
-        optionsBuilder.AddInterceptors(new SyncSaveChangesInterceptor());
-    }
-
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
         builder
@@ -119,28 +106,9 @@ public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory
         await using var dbContext = await dbFactory.CreateDbContextAsync(cancellationToken);
         await dbContext.Database.MigrateAsync(cancellationToken);
 
-        await EnsureSyncMetadataAsync(dbContext, cancellationToken);
         await EnsureRootNodeIdsMigratedAsync(dbContext, cancellationToken);
 
         logger.LogInformation("Chat database initialized.");
-    }
-
-    private async Task EnsureSyncMetadataAsync(ChatDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var meta = await dbContext.Set<CloudSyncMetadataEntity>().FirstOrDefaultAsync(m => m.Id == CloudSyncMetadataEntity.SingletonId, cancellationToken);
-        if (meta is not null) return;
-
-        logger.LogInformation("Initializing sync metadata...");
-
-        meta = new CloudSyncMetadataEntity
-        {
-            Id = CloudSyncMetadataEntity.SingletonId,
-            LocalVersion = 0,
-            LastPushedVersion = -1,
-            LastPulledVersion = -1
-        };
-        dbContext.SyncMetadata.Add(meta);
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private async Task EnsureRootNodeIdsMigratedAsync(ChatDbContext dbContext, CancellationToken cancellationToken)
