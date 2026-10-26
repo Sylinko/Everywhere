@@ -302,7 +302,12 @@ public sealed partial class ChatWindow :
             }
         }
 
-        return new Size(width, height);
+        // Window's custom measure path must honor the same limits as its
+        // native surface. Otherwise a compositor-enforced minimum leaves the
+        // content narrower than the window and misaligns capture targets.
+        return new Size(
+            Math.Max(MinWidth, Math.Min(width, MaxWidth)),
+            Math.Max(MinHeight, Math.Min(height, MaxHeight)));
     }
 
     protected override void OnLostFocus(FocusChangedEventArgs e)

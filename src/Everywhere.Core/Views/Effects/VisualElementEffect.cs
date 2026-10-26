@@ -70,11 +70,11 @@ public sealed class VisualElementEffect(IWindowHelper windowHelper, ILogger<Visu
             {
                 effectWindow = new VisualElementEffectWindow();
                 windowHelper.InitializeWindow(effectWindow);
-                windowHelper.SetWindowProperties(effectWindow, inputMode: WindowInputMode.NonActivating, hitTestVisible: false, WindowLayer.Overlay);
                 _effectWindows.Add(effectWindow);
             }
 
             effectWindow.SetPlacement(screens[index]);
+            windowHelper.SetWindowProperties(effectWindow, inputMode: WindowInputMode.NonActivating, hitTestVisible: false, WindowLayer.Overlay);
         }
 
         for (var extraIndex = _effectWindows.Count - 1; extraIndex >= index; extraIndex--)
