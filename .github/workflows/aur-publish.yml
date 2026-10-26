@@ -1,4 +1,4 @@
-name: Notify Everywhere-AUR
+name: Notify AUR maintainer
 
 on:
   release:
@@ -30,6 +30,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EVERYWHERE_AUR_DISPATCH_TOKEN: ${{ secrets.EVERYWHERE_AUR_DISPATCH_TOKEN }}
-          AUR_MIRROR_REPOSITORY: ${{ vars.AUR_MIRROR_REPOSITORY || 'pasical/Everywhere-AUR' }}
+          AUR_MIRROR_REPOSITORY: ${{ vars.AUR_MIRROR_REPOSITORY }}
           RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
         run: python3 scripts/notify-aur.py
