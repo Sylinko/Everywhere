@@ -16,6 +16,10 @@ public sealed class TextSelectionSettingsTests
     [TestCase("com.example.Editor", "com.example.Editor", true)]
     [TestCase("com.example.Editor", "com.example.editor", false)]
     [TestCase("com.example.*", "com.example.Editor", false)]
+#elif LINUX
+    [TestCase("/usr/bin/editor", "/usr/bin/editor", true)]
+    [TestCase("/usr/bin/editor", "/usr/bin/Editor", false)]
+    [TestCase("/usr/bin/*", "/usr/bin/editor", false)]
 #else
 #error Implement application identity matching tests for this platform.
 #endif
