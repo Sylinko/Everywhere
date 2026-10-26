@@ -7,17 +7,19 @@
   ShowActivated="False" ShowInTaskbar="False"
   SizeToContent="WidthAndHeight" Topmost="True"
   TransparencyLevelHint="Transparent" WindowDecorations="None">
-  <v:TextSelectionToolbar
-    x:Name="ToolbarRoot"
-    CustomAssistants="{Binding #Self.Settings.Model.CustomAssistants}"
-    FreeformChatCommand="{Binding #Self.SendFreeformChatCommand}"
-    IsFreeformChatEnabled="{Binding #Self.Settings.TextSelection.IsFreeformChatEnabled}"
-    VisibleActionCount="{Binding #Self.Settings.TextSelection.VisibleActionCount}">
-    <v:TextSelectionToolbar.Opacity>
-      <MultiBinding Converter="{x:Static vc:DoubleConverters.Product}">
-        <Binding Path="#Self.Settings.TextSelection.ToolbarOpacity"/>
-        <Binding Path="#Self.OpacityFactor"/>
-      </MultiBinding>
-    </v:TextSelectionToolbar.Opacity>
-  </v:TextSelectionToolbar>
+  <Panel x:Name="PresentationRoot" Opacity="0">
+    <v:TextSelectionToolbar
+      x:Name="ToolbarRoot"
+      CustomAssistants="{Binding #Self.Settings.Model.CustomAssistants}"
+      FreeformChatCommand="{Binding #Self.SendFreeformChatCommand}"
+      IsFreeformChatEnabled="{Binding #Self.Settings.TextSelection.IsFreeformChatEnabled}"
+      VisibleActionCount="{Binding #Self.Settings.TextSelection.VisibleActionCount}">
+      <v:TextSelectionToolbar.Opacity>
+        <MultiBinding Converter="{x:Static vc:DoubleConverters.Product}">
+          <Binding Path="#Self.Settings.TextSelection.ToolbarOpacity"/>
+          <Binding Path="#Self.OpacityFactor"/>
+        </MultiBinding>
+      </v:TextSelectionToolbar.Opacity>
+    </v:TextSelectionToolbar>
+  </Panel>
 </Window>
