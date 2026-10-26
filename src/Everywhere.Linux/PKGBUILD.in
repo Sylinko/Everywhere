@@ -1,0 +1,47 @@
+# Maintainer: Pasical <pasicalyang@gmail.com>
+# Rendered by Everywhere-AUR/scripts/sync_release.py; submit out/PKGBUILD.
+pkgname=everywhere-bin
+pkgver=@PKGVER@
+pkgrel=1
+pkgdesc='Context-aware AI assistant for your desktop'
+arch=(@ARCHES@)
+url='https://github.com/Sylinko/Everywhere'
+license=('BSL-1.1')
+depends=('glibc' 'gcc-libs' 'zlib' 'openssl' 'icu' 'fontconfig' 'libx11' 'libice' 'libsm' 'libxext' 'libxcb' 'libxrandr' 'libxrender' 'libxi' 'libxcursor' 'wayland' 'libxkbcommon' 'glib2' 'at-spi2-core' 'xdg-utils' 'desktop-file-utils')
+optdepends=('grim: Hyprland screenshot capture' 'wl-clipboard: Wayland text-selection monitoring' 'libnotify: desktop notifications')
+provides=('everywhere')
+conflicts=('everywhere')
+_upstream_tag='@TAG@'
+_mirror_repository='@REPOSITORY@'
+_base="https://github.com/${_mirror_repository}/releases/download/${_upstream_tag}"
+source=("${_base}/LICENSE" "${_base}/Everywhere-icon.png")
+sha256sums=('@LICENSE_SHA256@' '@ICON_SHA256@')
+@ARCH_SOURCES@
+noextract=("Everywhere-Linux-x64-${_upstream_tag}.tar.zst" "Everywhere-Linux-arm64-${_upstream_tag}.tar.zst")
+
+package() {
+    local runtime
+    case "$CARCH" in
+        x86_64) runtime=x64 ;;
+        aarch64) runtime=arm64 ;;
+        *) return 1 ;;
+    esac
+    install -d "$pkgdir/opt/Everywhere" "$pkgdir/usr/bin"
+    bsdtar -xf "$srcdir/Everywhere-Linux-${runtime}-${_upstream_tag}.tar.zst" -C "$pkgdir/opt/Everywhere" --no-same-owner
+    chmod 755 "$pkgdir/opt/Everywhere/Everywhere" "$pkgdir/opt/Everywhere/Everywhere.Watchdog"
+    ln -s /opt/Everywhere/Everywhere "$pkgdir/usr/bin/Everywhere"
+    install -Dm644 "$srcdir/Everywhere-icon.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/Everywhere.png"
+    install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -d "$pkgdir/usr/share/applications"
+    cat > "$pkgdir/usr/share/applications/Everywhere.desktop" <<'EOF'
+[Desktop Entry]
+Name=Everywhere
+Comment=A context-aware AI assistant for your desktop.
+Exec=/usr/bin/Everywhere %U
+Icon=Everywhere
+Type=Application
+Terminal=false
+Categories=Utility;
+Keywords=AI;tool;
+EOF
+}

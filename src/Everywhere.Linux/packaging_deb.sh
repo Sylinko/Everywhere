@@ -1,104 +1,56 @@
-#! /usr/bin/sh
-if [ "$#" -lt 2 ]; then
-    echo "More args required:"
-    echo "ARCH: same with Runtime ID. e.g. linux-x64"
-    echo "VERSION: package version"
-    echo "Usage: packaging_deb.sh ARCH VERSION [BIN_DIR]"
-    exit 1
-fi 
+#!/usr/bin/env bash
+set -euo pipefail
 
-WORKSPACE=$(pwd)
-SHELLFOLDER=$(cd "$(dirname "$0")";pwd)
-cd $WORKSPACE
-
-BINARCH="$1"
-VERSION="$2"
-BINDIR="$SHELLFOLDER/bin/Release/net10.0/$BINARCH"
-if [ -z "$3" ]; then
-    echo "Using default bin path: $BINDIR"
-else
-    BINDIR="$3"
-fi
-PACKAGINGPATH="/tmp/Everywhere"
-INSTALLPATH="/opt/Everywhere"
-PROJECTROOT="$SHELLFOLDER/../.."
-ARCHSUFFIX="${BINARCH#*-}"
-
-if [ -x "$(command -v "dpkg-deb")" ]; then
-    echo "Packaging .deb for $BINARCH ..."
-else      
-    echo "dpkg-deb not found. Please install 'dpkg-dev' with apt in advance."
+if (( $# < 2 || $# > 3 )); then
+    echo 'Usage: packaging_deb.sh linux-{x64,arm64} VERSION [PUBLISH_DIR]' >&2
     exit 1
 fi
-
-rid_to_deb_arch() {
-    case "$1" in
-        linux-x64)     echo "amd64" ;;
-        linux-arm64)   echo "arm64" ;;
-        *)
-            echo "Unsupported RID suffix: $1" >&2
-            return 1
-            ;;
-    esac
-}
-
-DEBARCH=$(rid_to_deb_arch $BINARCH) || { echo "Invalid arch"; exit 1; }
-rm -rf "$PACKAGINGPATH"
-mkdir -p "$PACKAGINGPATH/DEBIAN"
-mkdir -p "$PACKAGINGPATH$INSTALLPATH"
-cp -r "$BINDIR"/* "$PACKAGINGPATH$INSTALLPATH"
-cp "$SHELLFOLDER/../../img/Everywhere.ico" "$PACKAGINGPATH$INSTALLPATH"
-cd "$PACKAGINGPATH"
-cat > "$PACKAGINGPATH$INSTALLPATH/Everywhere.desktop" <<EOF
+workspace=$PWD
+script_dir=$(cd -- "$(dirname -- "$0")" && pwd)
+runtime=$1
+version=$2
+case "$runtime" in
+    linux-x64) deb_arch=amd64; asset_arch=x64 ;;
+    linux-arm64) deb_arch=arm64; asset_arch=arm64 ;;
+    *) echo "Unsupported RID: $runtime" >&2; exit 1 ;;
+esac
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-canary\.[0-9.]+)?$ ]] || { echo 'Invalid version' >&2; exit 1; }
+deb_version=${version/-canary./~canary.}
+publish_dir=$(cd -- "${3:-$script_dir/bin/Release/net10.0/$runtime/publish}" && pwd)
+test -x "$publish_dir/Everywhere"
+test -x "$publish_dir/Everywhere.Watchdog"
+package_dir=$(mktemp -d)
+trap 'rm -rf "$package_dir"' EXIT
+install -d "$package_dir/DEBIAN" "$package_dir/opt/Everywhere" "$package_dir/usr/bin"
+cp -a "$publish_dir/." "$package_dir/opt/Everywhere/"
+ln -s /opt/Everywhere/Everywhere "$package_dir/usr/bin/Everywhere"
+install -Dm644 "$script_dir/../../img/Everywhere-icon.png" "$package_dir/usr/share/icons/hicolor/256x256/apps/Everywhere.png"
+install -Dm644 "$script_dir/../../LICENSE" "$package_dir/usr/share/doc/everywhere/copyright"
+install -d "$package_dir/usr/share/applications"
+cat > "$package_dir/usr/share/applications/Everywhere.desktop" <<'EOF'
 [Desktop Entry]
 Name=Everywhere
 Comment=A context-aware AI assistant for your desktop.
-Exec=/usr/bin/Everywhere
-X-KDE-StartupNotify=true
-Icon=$INSTALLPATH/Everywhere.ico
+Exec=/usr/bin/Everywhere %U
+Icon=Everywhere
 Type=Application
 Terminal=false
-Categories=Utility
+Categories=Utility;
 Keywords=AI;tool;
 EOF
-
-cat > DEBIAN/control <<EOF
-Package: Everywhere
-Version: $VERSION
-Architecture: $DEBARCH
-Maintainer: Sylinko 
-Description: Everywhere
-Depends: libc6,libx11-6,libglib2.0-0,libatspi2.0-0
+desktop-file-validate "$package_dir/usr/share/applications/Everywhere.desktop"
+cat > "$package_dir/DEBIAN/control" <<EOF
+Package: everywhere
+Version: $deb_version
+Architecture: $deb_arch
+Maintainer: Sylinko
+Description: Context-aware AI assistant for your desktop
+Depends: libc6, libgcc-s1, libstdc++6, zlib1g, libssl3, libicu74 | libicu76 | libicu72, libfontconfig1, libx11-6, libice6, libsm6, libxext6, libxcb1, libxrandr2, libxrender1, libxi6, libxcursor1, libwayland-client0, libxkbcommon0, libglib2.0-0, libatspi2.0-0, xdg-utils, desktop-file-utils
+Recommends: libnotify-bin
+Suggests: grim, wl-clipboard
 Section: utils
 Priority: optional
 Homepage: https://everywhere.sylinko.com
 EOF
-
-cat > DEBIAN/postinst <<EOF
-#!/bin/sh
-set -e
-
-# Create symlink
-ln -sf "$INSTALLPATH/Everywhere" /usr/bin/Everywhere
-desktop-file-install "$INSTALLPATH/Everywhere.desktop"
-
-exit 0
-EOF
-
-chmod +x DEBIAN/postinst
-
-cat > DEBIAN/prerm <<EOF
-#!/bin/sh
-set -e
-
-rm -f $HOME/.config/systemd/user/graphical-session.target.wants/Everywhere.service
-rm -f $HOME/.config/systemd/user/Everywhere.service
-# Remove symlink on uninstall
-rm -f /usr/bin/Everywhere
-
-exit 0
-EOF
-
-chmod +x DEBIAN/prerm
-
-dpkg-deb --build "$PACKAGINGPATH/" "$WORKSPACE/Everywhere-Linux-$ARCHSUFFIX-v$VERSION.deb" 
+chmod 755 "$package_dir" "$package_dir/DEBIAN"
+dpkg-deb --root-owner-group --build "$package_dir" "$workspace/Everywhere-Linux-${asset_arch}-v${version}.deb"
