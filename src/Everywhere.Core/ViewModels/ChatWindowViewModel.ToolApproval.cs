@@ -1,4 +1,4 @@
-using System.Reactive.Linq;
+﻿using System.Reactive.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat;
@@ -63,7 +63,7 @@ partial class ChatWindowViewModel
         LifetimeDisposables.Add(
             ChatContextManager.WhenValueChanged(manager => manager.Current)
                 .Select(context =>
-                    context is null ? Observable.Return<GenerationContext?>(null) : context.WhenValueChanged(chat => chat.GenerationContext))
+                    context is { } runtime ? runtime.WhenValueChanged(chat => chat.GenerationContext) : Observable.Return<GenerationContext?>(null))
                 .Switch()
                 .Select(generation => generation is { IsConversationTurn: true } ?
                     generation.ApprovalState.WhenValueChanged(state => state.Mode) :

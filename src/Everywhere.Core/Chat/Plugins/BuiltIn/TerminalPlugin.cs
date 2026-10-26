@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
 using Everywhere.Chat.Permissions;
@@ -102,7 +102,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
 
         // The command preview remains a single lightweight TextBlock while the detailed terminal
         // block below is created only when the activity item is explicitly expanded.
-        userInterface.ActivityPreview = new ChatPluginCommandActivityPreview(command);
+        await userInterface.SetActivityPreviewAsync(new ChatPluginCommandActivityPreview(command));
 
         var (shellPath, shellType) = DetectShell();
         if (shellType == ShellType.Unknown)
@@ -150,7 +150,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             Name = "Everywhere-Terminal",
             Cols = terminalDimensions.Columns,
             Rows = terminalDimensions.Rows,
-            Cwd = chatContext.EnsureWorkingDirectory(),
+            Cwd = chatContext.WorkingDirectory,
             App = shellPath,
             CommandLine = shellArgs ?? [],
             VerbatimCommandLine = true,
@@ -183,7 +183,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 terminalRuns.Add(run);
 
                 var displayBlock = new ChatPluginTerminalDisplayBlock(shellType, run, session);
-                userInterface.DisplaySink.AppendBlock(displayBlock);
+                await userInterface.DisplaySink.AppendBlockAsync(displayBlock);
 
                 try
                 {
@@ -191,7 +191,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 }
                 finally
                 {
-                    displayBlock.Complete(run.ExitCode);
+                    await chatContext.DispatchAsync(() => displayBlock.Complete(run.ExitCode));
                 }
             }
 

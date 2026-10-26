@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Avalonia.Platform.Storage;
 using Everywhere.Chat;
 using Everywhere.Chat.Permissions;
@@ -423,7 +423,8 @@ public class FileSystemPluginTests
             var settings = new Settings(Substitute.For<IServiceProvider>());
             var displaySink = new ChatPluginDisplaySink();
             var userInterface = Substitute.For<IChatPluginUserInterface>();
-            userInterface.DisplaySink.Returns(displaySink);
+            var output = CreateDisplaySink(displaySink);
+            userInterface.DisplaySink.Returns(output);
             var consentCount = 0;
             userInterface.RequestConsentAsync(
                     Arg.Any<string?>(),
@@ -473,8 +474,9 @@ public class FileSystemPluginTests
     [Test]
     public async Task ApplyPatchAsync_WorkingDirectoryPath_SkipsConsent()
     {
-        var chatContext = new ChatContext();
-        var root = Path.Combine(chatContext.EnsureWorkingDirectory(), "patch-test-" + Guid.NewGuid().ToString("N"));
+        using var chatContext = new ChatData();
+        await using var runtime = new RootChatContext(chatContext, null);
+        var root = Path.Combine(((ChatContext)runtime).WorkingDirectory, "patch-test-" + Guid.NewGuid().ToString("N"));
         var path = Path.Combine(root, "source.txt");
         Directory.CreateDirectory(root);
         await File.WriteAllTextAsync(path, "old\n");
@@ -491,7 +493,7 @@ public class FileSystemPluginTests
                 *** End Patch
                 """;
 
-            await InvokeApplyPatchAsync(CreatePlugin(), userInterface, patch, chatContext);
+            await InvokeApplyPatchAsync(CreatePlugin(), userInterface, patch, runtime);
 
             await userInterface.DidNotReceive().RequestConsentAsync(
                 Arg.Any<string?>(),
@@ -506,7 +508,6 @@ public class FileSystemPluginTests
         finally
         {
             if (Directory.Exists(root)) Directory.Delete(root, true);
-            chatContext.Dispose();
         }
     }
 
@@ -524,7 +525,8 @@ public class FileSystemPluginTests
             CreateFileLinkOrIgnore(linkPath, "target.txt");
             var settings = new Settings(Substitute.For<IServiceProvider>());
             var userInterface = Substitute.For<IChatPluginUserInterface>();
-            userInterface.DisplaySink.Returns(new ChatPluginDisplaySink());
+            var output = CreateDisplaySink(new ChatPluginDisplaySink());
+            userInterface.DisplaySink.Returns(output);
             userInterface.RequestConsentAsync(
                     Arg.Any<string?>(),
                     Arg.Any<IDynamicLocaleKey>(),
@@ -695,13 +697,25 @@ public class FileSystemPluginTests
         }
     }
 
+    private static IChatPluginDisplaySink CreateDisplaySink(ChatPluginDisplaySink output)
+    {
+        var sink = Substitute.For<IChatPluginDisplaySink>();
+        sink.AppendBlockAsync(Arg.Any<ChatPluginDisplayBlock>()).Returns(call =>
+        {
+            output.AppendBlock(call.Arg<ChatPluginDisplayBlock>());
+            return Task.CompletedTask;
+        });
+        return sink;
+    }
+
     private static IChatPluginUserInterface CreateUserInterface(
         bool consent,
         ChatPluginDisplaySink? displaySink = null,
         Action<ChatPluginDisplayBlock?>? onConsent = null)
     {
         var userInterface = Substitute.For<IChatPluginUserInterface>();
-        userInterface.DisplaySink.Returns(displaySink ?? new ChatPluginDisplaySink());
+        var output = CreateDisplaySink(displaySink ?? new ChatPluginDisplaySink());
+        userInterface.DisplaySink.Returns(output);
         userInterface.RequestConsentAsync(
                 Arg.Any<string?>(),
                 Arg.Any<IDynamicLocaleKey>(),
@@ -725,6 +739,7 @@ public class FileSystemPluginTests
         string destination,
         string operation)
     {
+        await using var runtime = new RootChatContext(new ChatData(), null);
         var method = typeof(FileSystemPlugin).GetMethod(
             "TransferPathAsync",
             BindingFlags.Instance | BindingFlags.NonPublic);
@@ -740,7 +755,7 @@ public class FileSystemPluginTests
             [
                 userInterface,
                 Substitute.For<IStorageProvider>(),
-                new ChatContext(),
+                runtime,
                 source,
                 destination,
                 operationValue,
@@ -755,6 +770,7 @@ public class FileSystemPluginTests
         string patch,
         ChatContext? chatContext = null)
     {
+        await using var runtime = chatContext is null ? new RootChatContext(new ChatData(), null) : null;
         var method = typeof(FileSystemPlugin).GetMethod(
             "ApplyPatchAsync",
             BindingFlags.Instance | BindingFlags.NonPublic);
@@ -764,7 +780,7 @@ public class FileSystemPluginTests
             [
                 userInterface,
                 Substitute.For<IStorageProvider>(),
-                chatContext ?? new ChatContext(),
+                chatContext ?? runtime ?? throw new AssertionException("Missing runtime."),
                 patch,
                 CancellationToken.None
             ]);
@@ -780,6 +796,7 @@ public class FileSystemPluginTests
         IReadOnlyList<string> paths,
         bool recursive)
     {
+        await using var runtime = new RootChatContext(new ChatData(), null);
         var method = typeof(FileSystemPlugin).GetMethod(
             "DeletePathsAsync",
             BindingFlags.Instance | BindingFlags.NonPublic);
@@ -790,7 +807,7 @@ public class FileSystemPluginTests
             [
                 userInterface,
                 Substitute.For<IStorageProvider>(),
-                new ChatContext(),
+                runtime,
                 paths,
                 recursive,
                 CancellationToken.None

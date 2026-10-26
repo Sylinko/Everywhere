@@ -1,4 +1,4 @@
-using LiveMarkdown.Avalonia;
+﻿using LiveMarkdown.Avalonia;
 
 namespace Everywhere.Chat;
 
@@ -13,29 +13,31 @@ internal static class ChatTextSearcher
     /// </summary>
     public static MarkdownTextProjector SharedMarkdownTextProjector { get; } = new();
 
-    public static bool Contains(
+    public static async Task<bool> ContainsAsync(
         ChatContext context,
         TextSearchPattern pattern,
         MarkdownTextProjector markdownProjector,
         CancellationToken cancellationToken)
     {
-        // Keep the DynamicData edit lock limited to capturing stable message references.
-        // Markdown projection can be expensive and must run after the collection lock is released.
-        var messages = context.Read(items =>
-        {
-            var result = new ChatMessage[items.Count];
-            for (var i = 0; i < items.Count; i++)
-            {
-                result[i] = items[i].Message;
-            }
-
-            return result;
-        });
-
-        foreach (var message in messages)
+        // Search only the captured selected branch. A match can stop loading early; neither
+        // off-branch turns nor their payloads are required for history-list filtering.
+        var nodes = context.Data.Items;
+        foreach (var node in nodes)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (Contains(message, pattern, markdownProjector, cancellationToken)) return true;
+            if (!node.IsMessageLoaded)
+            {
+                if (node.Turn is { } turn)
+                {
+                    await context.EnsureTurnLoadedAsync(turn, cancellationToken);
+                }
+                else
+                {
+                    await context.EnsureTurnLoadedAsync(null, cancellationToken);
+                }
+            }
+
+            if (Contains(node.Message, pattern, markdownProjector, cancellationToken)) return true;
         }
 
         return false;
@@ -59,19 +61,16 @@ internal static class ChatTextSearcher
         CancellationToken cancellationToken)
     {
         var sources = new List<string>();
-        message.Edit(spans =>
+        foreach (var span in message.Items)
         {
-            foreach (var span in spans)
+            cancellationToken.ThrowIfCancellationRequested();
+            if (span is not AssistantChatMessageTextSpan textSpan || textSpan.ContentMarkdownBuilder.Length == 0)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (span is not AssistantChatMessageTextSpan textSpan || textSpan.ContentMarkdownBuilder.Length == 0)
-                {
-                    continue;
-                }
-
-                sources.Add(textSpan.ContentMarkdownBuilder.ToString());
+                continue;
             }
-        });
+
+            sources.Add(textSpan.ContentMarkdownBuilder.ToString());
+        }
 
         if (sources.Count == 0) return false;
 

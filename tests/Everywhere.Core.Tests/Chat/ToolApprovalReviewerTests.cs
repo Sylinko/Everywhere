@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia.Headless.NUnit;
 using Everywhere.AI;
@@ -275,10 +275,11 @@ public sealed class ToolApprovalReviewerTests
                 var type when type == typeof(ILogger<ChatService>) => Substitute.For<ILogger<ChatService>>(),
                 _ => null
             }).ToArray());
+            var chatContext = new RootChatContext(new ChatData(), null);
             var generation = new GenerationContext(new Kernel(), _mixin, Substitute.For<IPromptRenderer>(), "constraints",
-                Modalities.Text, 80, -1, new GenerationApprovalState(ToolApprovalMode.Auto), true);
+                Modalities.Text, 80, -1, new GenerationApprovalState(ToolApprovalMode.Auto), true, chatContext.Data.RootNode);
             var function = plugin.GetChatFunctions().First();
-            _context = new FunctionCallContext(generation.Kernel, new ChatContext(), plugin, function,
+            _context = new FunctionCallContext(generation.Kernel, chatContext, plugin, function,
                 new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")),
                 new FunctionCallContent(function.KernelFunction.Name, id: Guid.NewGuid().ToString(), arguments: new KernelArguments()),
                 new ObservableToolRulesets(), generation, InvokeReviewAsync);
@@ -332,8 +333,9 @@ public sealed class ToolApprovalReviewerTests
 
         public void Dispose()
         {
-            _context.Dispose();
-            _context.ChatContext.Dispose();
+            _context.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _context.ChatContext.Root.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _context.ChatContext.Data.Dispose();
             _mixin.Dispose();
             _client.Dispose();
         }

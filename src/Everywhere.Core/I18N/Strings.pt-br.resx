@@ -2428,9 +2428,6 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     <data name="Common_Undo" xml:space="preserve">
         <value>Desfazer</value>
     </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>“{0}” removido</value>
-    </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>Exibição</value>
     </data>

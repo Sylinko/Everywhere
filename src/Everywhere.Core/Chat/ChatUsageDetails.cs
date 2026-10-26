@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using MessagePack;
+﻿using MessagePack;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
 using OpenAI.Chat;
@@ -7,8 +6,22 @@ using OpenAI.Chat;
 namespace Everywhere.Chat;
 
 [MessagePackObject]
-public partial class ChatUsageDetails : ObservableObject
+public partial class ChatUsageDetails
 {
+    [IgnoreMember]
+    public ChatMessageNode? Owner { get; set; }
+
+    private void SetProperty<T>(ref T field, T value)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value))
+        {
+            return;
+        }
+
+        field = value;
+        Owner?.NotifyMessageChanged(isDurable: true);
+    }
+
     /// <remarks>
     /// This flag describes only the current model invocation. It is ignored during serialization,
     /// so it remains false after deserialization even when persisted token counts are present.
@@ -20,56 +33,72 @@ public partial class ChatUsageDetails : ObservableObject
     /// Gets the number of input tokens used. Including <see cref="CachedInputTokenCount"/>
     /// </summary>
     [Key(0)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CachedInputHitRate))]
-    public partial long InputTokenCount { get; set; }
+    public long InputTokenCount
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     /// <summary>
     /// Gets the number of cached input tokens used.
     /// </summary>
     [Key(1)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CachedInputHitRate))]
-    public partial long CachedInputTokenCount { get; set; }
+    public long CachedInputTokenCount
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     /// <summary>
     /// Gets the number of output tokens used. Including <see cref="ReasoningTokenCount"/>
     /// </summary>
     [Key(2)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(TokensPerSecond))]
-    public partial long OutputTokenCount { get; set; }
+    public long OutputTokenCount
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     /// <summary>
     /// Gets the number of reasoning tokens used.
     /// </summary>
     [Key(3)]
-    [ObservableProperty]
-    public partial long ReasoningTokenCount { get; set; }
+    public long ReasoningTokenCount
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     /// <summary>
     /// Gets the total number of tokens used.
     /// </summary>
     [Key(4)]
-    [ObservableProperty]
-    public partial long TotalTokenCount { get; set; }
+    public long TotalTokenCount
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     /// <summary>
     /// Gets the total generation time in seconds. Time before first token and function invoking are not included.
     /// </summary>
     [Key(5)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(TokensPerSecond))]
-    public partial double TotalGenerationSeconds { get; set; }
+    public double TotalGenerationSeconds
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     /// <summary>
     /// Gets whether the model API explicitly reported the cached input token count.
     /// This distinguishes an actual zero cache hit rate from providers that omit cache usage data.
     /// </summary>
     [Key(6)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CachedInputHitRate))]
-    public partial bool HasCachedInputTokenCount { get; set; }
+    public bool HasCachedInputTokenCount
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [IgnoreMember]
     public double TokensPerSecond => TotalGenerationSeconds > 0d ? OutputTokenCount / TotalGenerationSeconds : 0d;

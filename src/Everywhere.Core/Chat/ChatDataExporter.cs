@@ -2,15 +2,29 @@
 
 namespace Everywhere.Chat;
 
-public static class ChatContextExporter
+public static class ChatDataExporter
 {
     // TODO: make this a proper export service with DI and support for multiple formats (Markdown, HTML, PDF, etc.)
     // TODO: add support for exporting attachments (images, files, etc.) and include them in the exported file or as separate files.
     // TODO: make it more beautiful and readable with proper formatting, headings, and styling.
-    public static async Task ExportAsMarkdown(ChatContext chatContext, Stream outputStream, CancellationToken cancellationToken = default)
+    public static async Task ExportAsMarkdown(ChatContext context, Stream outputStream, CancellationToken cancellationToken = default)
     {
+        // Export the branch chosen when the operation began, even if the view switches while
+        // historical bodies are loading. Other turns and their branches remain cold.
+        var chatData = context.Data;
+        var path = chatData.Items;
+        foreach (var turn in path.Select(node => node.Turn).OfType<ChatTurn>().Distinct())
+        {
+            await context.EnsureTurnLoadedAsync(turn, cancellationToken);
+        }
+
+        if (path.Any(node => node.Turn is null && !node.IsMessageLoaded))
+        {
+            await context.EnsureTurnLoadedAsync(null, cancellationToken);
+        }
+
         var markdownBuilder = new StringBuilder();
-        var metadata = chatContext.Metadata;
+        var metadata = chatData.Metadata;
 
         markdownBuilder
             .Append("# ")
@@ -33,7 +47,7 @@ public static class ChatContextExporter
 
         markdownBuilder.AppendLine("---").AppendLine();
 
-        foreach (var chatMessage in chatContext.Items.AsValueEnumerable().Select(node => node.Message))
+        foreach (var chatMessage in path.Select(node => node.Message))
         {
             switch (chatMessage)
             {
@@ -148,6 +162,6 @@ public static class ChatContextExporter
         var markdownContent = markdownBuilder.ToString();
 
         await using var writer = new StreamWriter(outputStream, Encoding.UTF8);
-        await writer.WriteAsync(markdownContent);
+        await writer.WriteAsync(markdownContent.AsMemory(), cancellationToken);
     }
 }

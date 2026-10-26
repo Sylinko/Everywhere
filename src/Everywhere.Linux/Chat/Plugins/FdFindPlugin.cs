@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using DynamicData;
@@ -134,7 +134,7 @@ public sealed class FdFindPlugin : BuiltInChatPlugin
 
             var finalResults = query.Take(maxCount).ToArray();
 
-            displaySink.AppendDynamicLocaleKey(
+            await displaySink.AppendDynamicLocaleKeyAsync(
                 new FormattedDynamicLocaleKey(
                     LocaleKey.Linux_BuiltInChatPlugin_FdFind_SearchFiles_DetailMessage,
                     new DirectLocaleKey(finalResults.Length.ToString())));
