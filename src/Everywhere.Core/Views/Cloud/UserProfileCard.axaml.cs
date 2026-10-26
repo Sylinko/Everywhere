@@ -1,5 +1,4 @@
-﻿using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
+﻿using Avalonia.Controls.Primitives;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -62,13 +61,7 @@ public sealed partial class UserProfileCard : TemplatedControl
     [RelayCommand]
     private Task<bool> GetSupportAsync() => OpenUrlAsync(CloudConstants.GetSupportUrl);
 
-    private Task<bool> OpenUrlAsync(string url)
-    {
-        if (TopLevel.GetTopLevel(this)?.Launcher is { } launcher)
-        {
-            return launcher.LaunchUriAsync(new Uri(url));
-        }
-
-        return Task.FromResult(false);
-    }
+    // The card can live in a native flyout, whose launcher bypasses the
+    // application's desktop integration and can inherit its private profile.
+    private static Task<bool> OpenUrlAsync(string url) => App.Launcher.LaunchUriAsync(new Uri(url));
 }

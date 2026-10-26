@@ -15,6 +15,7 @@ using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Extensions;
+using Everywhere.Interop;
 using Everywhere.Messages;
 using GnomeStack.Os.Secrets;
 using Microsoft.Extensions.Logging;
@@ -74,6 +75,12 @@ public sealed partial class OAuthCloudClient :
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
+    private static bool IsAccountConfigured()
+    {
+        return Uri.TryCreate(CloudConstants.AccountBaseUrl, UriKind.Absolute, out var endpoint) &&
+            endpoint.Scheme == Uri.UriSchemeHttps && !string.IsNullOrWhiteSpace(CloudConstants.ClientId);
+    }
+
     public async Task LoginAsync(CancellationToken cancellationToken)
     {
         // Coordinate with silent login instead of racing it.
@@ -82,6 +89,12 @@ public sealed partial class OAuthCloudClient :
         try
         {
             LastLoginErrorKey = null;
+            if (!IsAccountConfigured())
+            {
+                throw new HandledException(
+                    new InvalidOperationException("The build has no valid account endpoint or public OAuth client ID."),
+                    new DynamicLocaleKey(LocaleKey.OAuthCloudClient_AccountNotConfigured));
+            }
 
             if (await TryGetExistingSessionTokenForLoginAsync(cancellationToken) != null)
             {
@@ -92,20 +105,30 @@ public sealed partial class OAuthCloudClient :
                 return;
             }
 
+            if (App.Launcher is IUriSchemeHandler callback && !await callback.EnsureUriSchemeHandlerAsync(new Uri(RedirectUri)))
+            {
+                throw new HandledException(
+                    new InvalidOperationException("The application URI callback could not be registered."),
+                    new DynamicLocaleKey(LocaleKey.OAuthCloudClient_CallbackRegistrationFailed));
+            }
+
             LoginStatus = CloudClientLoginStatus.NotLoggedIn;
             using var flow = new InteractiveOAuthFlow(_httpClientFactory, cancellationToken);
             _activeAuthFlow = flow; // Expose to the message receiver for URL callbacks
 
             var authorizeUrl = flow.BuildAuthorizeUrl();
-            _logger.LogDebug("Starting login flow. Auth URL: {AuthorizeUrl}", authorizeUrl);
-            await App.Launcher.LaunchUriAsync(new Uri(authorizeUrl));
+            _logger.LogDebug("Starting the interactive account login flow.");
+            if (!await App.Launcher.LaunchUriAsync(new Uri(authorizeUrl)))
+            {
+                throw new InvalidOperationException("The desktop could not open the authorization URL in its default browser.");
+            }
 
             // Wait for the OS protocol callback or timeout (managed entirely within the flow context)
             var code = await flow.WaitForCode();
 
             LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
             var tokenData = await flow.ExchangeCodeAsync(code);
-            _session.SetToken(tokenData);
+            await Task.Run(() => _session.SetToken(tokenData), cancellationToken);
             await ReloadUserDataAsync(true, cancellationToken);
 
             LoginStatus = CloudClientLoginStatus.LoggedIn;
@@ -341,6 +364,10 @@ public sealed partial class OAuthCloudClient :
     public Task InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (!IsAccountConfigured())
+        {
+            return Task.CompletedTask;
+        }
 
         // Fire and forget the initialization to avoid blocking app startup.
         lock (_initializeTaskGate)
@@ -360,7 +387,13 @@ public sealed partial class OAuthCloudClient :
         {
             LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
             LastLoginErrorKey = null;
+#if LINUX
+            // Secret Service may wait for an unavailable or locked keyring. Keep the native
+            // synchronous lookup off the UI thread; resume here before updating login state.
+            await Task.Run(_session.LoadFromVault).ConfigureAwait(true);
+#else
             _session.LoadFromVault();
+#endif
 
             // Try to refresh token and restore user data silently if a refresh token exists
             if (_session.HasRefreshToken)

@@ -19,6 +19,9 @@
     <Project Path="patches/Everywhere.Patches.Contracts/Everywhere.Patches.Contracts.csproj" />
     <Project Path="patches/Everywhere.Patches.SemanticKernel/Everywhere.Patches.SemanticKernel.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Everywhere.Linux.Tests/Everywhere.Linux.Tests.csproj" />
+  </Folder>
   <Project Path="src/Everywhere.Abstractions/Everywhere.Abstractions.csproj" />
   <Project Path="src/Everywhere.Automation/Everywhere.Automation.csproj" />
   <Project Path="src/Everywhere.Cloud/Everywhere.Cloud.csproj" />
