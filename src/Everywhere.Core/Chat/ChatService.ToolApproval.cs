@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Everywhere.AI;
@@ -19,9 +19,9 @@ partial class ChatService
         ToolApprovalScope? scope,
         CancellationToken cancellationToken)
     {
-        var generation = context.GenerationContext;
+        var generationContext = context.GenerationContext;
         KernelMixin? selectedMixin = null;
-        var mixin = generation.KernelMixin;
+        var mixin = generationContext.KernelMixin;
         try
         {
             if (!_settings.SystemAssistant.ToolApproval.AutoSelect)
@@ -36,7 +36,8 @@ partial class ChatService
 
             var filePlugin = _chatPluginManager.BuiltInPlugins.AsValueEnumerable().OfType<FileSystemPlugin>().First();
             var reviewer = new ToolApprovalReviewer(this, context, mixin, filePlugin, _settings.SystemAssistant.AllowApprovalFileReads);
-            return await reviewer.ReviewAsync(BuildApprovalInput(context, scope), cancellationToken);
+            var input = await BuildApprovalInputAsync(context, scope, cancellationToken);
+            return await reviewer.ReviewAsync(input, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -71,13 +72,19 @@ partial class ChatService
         }
     }
 
-    private static string BuildApprovalInput(FunctionCallContext context, ToolApprovalScope? scope)
+    private static async Task<string> BuildApprovalInputAsync(
+        FunctionCallContext context,
+        ToolApprovalScope? scope,
+        CancellationToken cancellationToken)
     {
         var generation = context.GenerationContext;
-        var messages = ChatHistoryBuilder.SelectContextMessages(
-            context.ChatContext.Items,
+        var historySelection = await ChatHistoryBuilder.SelectContextMessagesAsync(
+            context.ChatContext,
+            generation.GetPath(),
             generation.MaxContextRounds,
-            generation.KernelMixin.Configuration.ContextLimit);
+            generation.KernelMixin.Configuration.ContextLimit,
+            cancellationToken);
+        var messages = historySelection.Messages;
         var history = new List<ToolApprovalHistoryEntry>();
         foreach (var message in messages)
         {
@@ -161,7 +168,7 @@ partial class ChatService
         var function = context.ChatFunction.KernelFunction;
         var input = new ToolApprovalInput
         {
-            Environment = new ToolApprovalEnvironment(context.ChatContext.EnsureWorkingDirectory()),
+            Environment = new ToolApprovalEnvironment(context.ChatContext.WorkingDirectory),
             ExecutionConstraints = generation.SystemPrompt,
             EffectiveHistory = history,
             PendingAction = new ToolApprovalAction
@@ -198,7 +205,7 @@ partial class ChatService
         bool canReadFiles
     )
     {
-        private readonly ReviewTools _tools = new(fileSystemPlugin, context.ChatContext.EnsureWorkingDirectory());
+        private readonly ReviewTools _tools = new(fileSystemPlugin, context.ChatContext.WorkingDirectory);
 
         /// <summary>The first executed submission is the terminal result of this review.</summary>
         private ToolApprovalResult? _decision;
@@ -277,10 +284,7 @@ partial class ChatService
             foreach (var function in reviewPlugin) function.Metadata.PluginName = null;
 
             var corrections = 0;
-            var ownerNode = context.ChatContext.GetAllNodes().FirstOrDefault(node =>
-                node.Message is AssistantChatMessage assistant && assistant.Items
-                    .OfType<AssistantChatMessageFunctionCallSpan>()
-                    .Any(span => span.Items.Contains(context.FunctionCallChatMessage)));
+            var ownerNode = context.GenerationContext.CurrentAssistantNode;
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -289,8 +293,8 @@ partial class ChatService
                     history,
                     mixin.GetPromptExecutionSettings(FunctionChoiceBehavior.Auto(autoInvoke: false)),
                     kernel,
-                    context.ChatContext.Metadata.Id,
-                    ownerNode?.Id ?? FindMessageNode(context.ChatContext, context.FunctionCallChatMessage)?.Id,
+                    context.ChatContext.Data.Metadata.Id,
+                    ownerNode?.Id ?? context.FunctionCallChatMessage.Owner?.Id,
                     StatisticsModelInvocationPurpose.ToolApproval,
                     context.ChatContext,
                     ownerNode?.Message ?? context.FunctionCallChatMessage,

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Simplified Chinese (简体中文) -->
 <root>
     <resheader name="resmimetype">
@@ -2428,9 +2428,6 @@
     <data name="Common_Undo" xml:space="preserve">
         <value>撤销</value>
     </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>已删除“{0}”</value>
-    </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>显示</value>
     </data>
@@ -4607,5 +4604,47 @@
     </data>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>聊天保存在本机，此版本暂不支持聊天云同步。</value>
+    </data>
+    <data name="ChatHistory_Archive" xml:space="preserve">
+        <value>已归档聊天</value>
+    </data>
+    <data name="ChatHistory_Archive_Action" xml:space="preserve">
+        <value>归档聊天</value>
+    </data>
+    <data name="ChatHistory_Restore" xml:space="preserve">
+        <value>恢复聊天</value>
+    </data>
+    <data name="ChatHistory_Delete_Title" xml:space="preserve">
+        <value>永久删除聊天</value>
+    </data>
+    <data name="ChatHistory_Delete_Confirmation" xml:space="preserve">
+        <value>这会从此设备永久删除该归档聊天及其所有分支，且无法撤销。附件文件和旧版本数据库不会被删除。</value>
+    </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>请先停止此聊天中的任务，再永久删除。</value>
+    </data>
+    <data name="ChatHistory_CloseTemporary" xml:space="preserve">
+        <value>关闭临时聊天</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>你的聊天数据已升级</value>
+    </data>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>聊天现在采用按轮次组织的数据结构，历史读取也更高效。你可以归档聊天，并在历史列表中恢复。</value>
+    </data>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>我们保留了原来的 chat.db，旧版 Everywhere 仍可读取。此后，新旧版本的聊天变化分别保存，不会互通。</value>
+    </data>
+    <data name="ChatUpgrade_LocalOnly" xml:space="preserve">
+        <value>此版本的聊天保存在本机，聊天云同步暂不可用。</value>
+    </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>将旧版本聊天数据库移到回收站（保留附件文件）</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>继续使用</value>
+    </data>
+    <data name="ChatUpgrade_TrashFailed" xml:space="preserve">
+        <value>部分旧版本数据库文件未能移到回收站。升级后的聊天仍可正常使用。</value>
     </data>
 </root>

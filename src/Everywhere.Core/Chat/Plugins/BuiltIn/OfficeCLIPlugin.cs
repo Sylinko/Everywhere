@@ -49,8 +49,8 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
         string commandLine,
         CancellationToken cancellationToken)
     {
-        userInterface.ActivityPreview = new ChatPluginCommandActivityPreview(commandLine);
-        userInterface.DisplaySink.AppendBlock(new ChatPluginCodeBlockDisplayBlock(commandLine, "bash"));
+        await userInterface.SetActivityPreviewAsync(new ChatPluginCommandActivityPreview(commandLine));
+        await userInterface.DisplaySink.AppendBlockAsync(new ChatPluginCodeBlockDisplayBlock(commandLine, "bash"));
 
         if (commandLine.StartsWith("officecli"))
         {

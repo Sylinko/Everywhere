@@ -2428,9 +2428,6 @@
     <data name="Common_Undo" xml:space="preserve">
         <value>실행 취소</value>
     </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>“{0}”이(가) 삭제되었습니다.</value>
-    </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>디스플레이</value>
     </data>

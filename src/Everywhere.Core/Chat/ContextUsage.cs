@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Everywhere.Chat;
 
@@ -87,9 +87,8 @@ public sealed record ContextUsageSnapshot(
 /// Stable, non-persisted binding surface for the most recent provider context measurement.
 /// </summary>
 /// <remarks>
-/// All mutations and the resulting <see cref="ObservableObject.PropertyChanged"/> notifications
-/// must occur on the Avalonia UI thread. Callers running on worker threads must dispatch before
-/// updating this state.
+/// The runtime publishes immutable snapshots without waiting for a view. UI subscribers marshal
+/// notifications at their own boundary; shutdown does not depend on rendering the final state.
 /// </remarks>
 public sealed partial class ContextUsageState : ObservableObject
 {
@@ -168,9 +167,8 @@ public enum ContextCompactionPhase
 /// Observable state for the current context compression operation.
 /// </summary>
 /// <remarks>
-/// All mutations and the resulting <see cref="ObservableObject.PropertyChanged"/> notifications
-/// must occur on the Avalonia UI thread. Callers running on worker threads must dispatch before
-/// updating this state.
+/// The runtime publishes immutable snapshots without waiting for a view. UI subscribers marshal
+/// notifications at their own boundary; shutdown does not depend on rendering the final state.
 /// </remarks>
 public sealed partial class ContextCompactionState : ObservableObject
 {

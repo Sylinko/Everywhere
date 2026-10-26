@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json;
 using Everywhere.AI;
 using Everywhere.Chat;
@@ -18,26 +18,51 @@ namespace Everywhere.Core.Tests.Chat;
 public sealed class GenerationApprovalTests
 {
     [Test]
-    public void BuildApprovalInput_WithAttachmentsAndStructuredArguments_PreservesExplicitContract()
+    public void GenerationContext_WhenCompressionAdvancesTail_KeepsWritableAssistantAndExecutionBranch()
     {
         using var mixin = CreateMixin();
-        var context = new ChatContext();
-        context.Add(new UserChatMessage("Run the task", [new TextAttachment(new DirectLocaleKey("source"), "task content 中文")]));
-        using var invocation = CreateInvocation(context, CreateGeneration(mixin), (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
+        using var data = new ChatData();
+        data.Add(new UserChatMessage("request", []));
+        var assistant = data.Add(new AssistantChatMessage());
+        var generation = CreateGeneration(mixin, data);
+        var compression = generation.Append(new ContextCompressionChatMessage(data.RootNode.Id, "model", ContextCompressionTrigger.Automatic, null, null));
+        Assert.That(generation.CurrentAssistantNode, Is.SameAs(assistant));
+        Assert.That(generation.AppendTailNode, Is.SameAs(compression));
+
+        var alternative = data.CreateBranchOn(assistant, new AssistantChatMessage());
+        var nextAssistant = generation.Append(new AssistantChatMessage());
+        Assert.Multiple(() =>
+        {
+            Assert.That(nextAssistant.Parent, Is.SameAs(compression));
+            Assert.That(generation.CurrentAssistantNode, Is.SameAs(nextAssistant));
+            Assert.That(generation.GetPath(), Does.Not.Contain(alternative));
+            Assert.That(data.Items[^1], Is.SameAs(alternative));
+        });
+    }
+
+    [Test]
+    public async Task BuildApprovalInput_WithAttachmentsAndStructuredArguments_PreservesExplicitContract()
+    {
+        using var mixin = CreateMixin();
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
+        data.Add(new UserChatMessage("Run the task", [new TextAttachment(new DirectLocaleKey("source"), "task content 中文")]));
+        await using var invocation = CreateInvocation(runtime, CreateGeneration(mixin, data), (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
         var arguments = invocation.FunctionCallContent.Arguments ?? throw new AssertionException("Missing arguments.");
         arguments["enabled"] = true;
         arguments["limit"] = 12;
         arguments["optional"] = null;
         using var structure = JsonDocument.Parse("""{ "paths": ["task.py"], "nested": { "safe": false } }""");
         arguments["data"] = structure.RootElement.Clone();
-        var method = typeof(ChatService).GetMethod("BuildApprovalInput", BindingFlags.Static | BindingFlags.NonPublic)
+        var method = typeof(ChatService).GetMethod("BuildApprovalInputAsync", BindingFlags.Static | BindingFlags.NonPublic)
             ?? throw new AssertionException("Missing approval input builder.");
         var paths = new[] { "task.py" };
         var scope = ToolApprovalScope.Create("File operation", new ToolApprovalFileScope(paths, true),
             ToolApprovalInputJsonSerializerContext.ForPrompt.ToolApprovalFileScope);
         paths[0] = "changed.py";
-        var input = method.Invoke(null, [invocation, scope]) as string
-            ?? throw new AssertionException("Missing approval input.");
+        var inputTask = method.Invoke(null, [invocation, scope, CancellationToken.None]) as Task<string>
+            ?? throw new AssertionException("Missing approval input task.");
+        var input = await inputTask;
         using var json = JsonDocument.Parse(input);
         var root = json.RootElement;
         var pending = root.GetProperty("PENDING_ACTION").GetProperty("Arguments");
@@ -62,17 +87,18 @@ public sealed class GenerationApprovalTests
     public async Task RequestConsentAsync_AfterImmediateChange_PreservesEnteredModeAndChangesNextInvocation()
     {
         using var mixin = CreateMixin();
-        var generation = CreateGeneration(mixin);
-        var context = new ChatContext();
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
+        var generation = CreateGeneration(mixin, data);
         var reviews = 0;
         Task<ToolApprovalResult> ReviewAsync(FunctionCallContext _, ToolApprovalScope? scope, CancellationToken token)
         {
             reviews++;
             return Task.FromResult(ToolApprovalResult.Deny("not authorized"));
         }
-        using var first = CreateInvocation(context, generation, ReviewAsync);
+        await using var first = CreateInvocation(runtime, generation, ReviewAsync);
         generation.ApprovalState.Mode = ToolApprovalMode.FullAccess;
-        using var next = CreateInvocation(context, generation, ReviewAsync);
+        await using var next = CreateInvocation(runtime, generation, ReviewAsync);
         var firstDecision = await first.RequestConsentAsync("forced", new DirectLocaleKey("test"));
         var nextDecision = await next.RequestConsentAsync("forced", new DirectLocaleKey("test"));
         Assert.Multiple(() =>
@@ -89,37 +115,44 @@ public sealed class GenerationApprovalTests
     public async Task RequestConsentAsync_WithRememberedScope_DoesNotInvokeReviewer()
     {
         using var mixin = CreateMixin();
-        var context = new ChatContext();
-        using var invocation = CreateInvocation(context, CreateGeneration(mixin), (_, _, _) =>
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
+        await using var invocation = CreateInvocation(runtime, CreateGeneration(mixin, data), (_, _, _) =>
             throw new AssertionException("Remembered consent must bypass review."));
-        context.ToolBypassApprovalRulesets[ToolSettingsKey.ForPermission(invocation.ChatPlugin, invocation.ChatFunction, "path")] = true;
+        runtime.ToolBypassApprovalRulesets[ToolSettingsKey.ForPermission(invocation.ChatPlugin, invocation.ChatFunction, "path")] = true;
         var decision = await invocation.RequestConsentAsync("path", new DirectLocaleKey("test"));
         Assert.That(decision.IsAccepted, Is.True);
     }
 
     [Test]
-    public void GenerationContext_WithChild_SharesOnlyApprovalState()
+    public async Task GenerationContext_WithChild_SharesEnvironmentButNotGeneration()
     {
         using var mixin = CreateMixin();
-        var generation = CreateGeneration(mixin);
-        var context = new ChatContext();
-        typeof(ChatContext).GetProperty(nameof(ChatContext.GenerationContext))?.SetValue(context, generation);
-        var child = context.ForkSubagent("test child");
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
+        var generation = CreateGeneration(mixin, data);
+        typeof(ChatContext).GetProperty(nameof(ChatContext.GenerationContext))?.SetValue(runtime, generation);
+        var child = runtime.CreateNested("test child");
         generation.ApprovalState.Mode = ToolApprovalMode.FullAccess;
         Assert.Multiple(() =>
         {
             Assert.That(child.InheritedApprovalState, Is.SameAs(generation.ApprovalState));
             Assert.That(child.InheritedApprovalState?.Mode, Is.EqualTo(ToolApprovalMode.FullAccess));
             Assert.That(child.GenerationContext, Is.Null);
+            Assert.That(child.WorkingDirectory, Is.EqualTo(((ChatContext)runtime).WorkingDirectory));
+            Assert.That(child.UserInterfaceBroker, Is.SameAs(runtime.UserInterfaceBroker));
+            Assert.That(child.VisualState, Is.Not.SameAs(runtime.VisualState));
         });
     }
 
     [Test]
-    public void EnterFunctionCallContext_WhenSuppressed_RestoresAmbientValue()
+    public async Task EnterFunctionCallContext_WhenSuppressed_RestoresAmbientValue()
     {
         using var mixin = CreateMixin();
-        var generation = CreateGeneration(mixin);
-        using var first = CreateInvocation(new ChatContext(), generation, (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
+        var generation = CreateGeneration(mixin, data);
+        await using var first = CreateInvocation(runtime, generation, (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
         using (generation.EnterFunctionCallContext(first))
         {
             using (generation.SuppressFunctionCallContext()) Assert.That(generation.FunctionCallContext.Value, Is.Null);
@@ -131,8 +164,8 @@ public sealed class GenerationApprovalTests
     private static KernelMixin CreateMixin() => Substitute.For<KernelMixin>(new AdvancedAssistantConfiguration(),
         new ModelConnection(ModelProviderSchema.OpenAI, "https://example.invalid", null, new HttpClient(), null));
 
-    private static GenerationContext CreateGeneration(KernelMixin mixin) => new(new Kernel(), mixin, Substitute.For<IPromptRenderer>(),
-        "constraints", Modalities.Text, 80, -1, new GenerationApprovalState(ToolApprovalMode.Auto), true);
+    private static GenerationContext CreateGeneration(KernelMixin mixin, ChatData data) => new(new Kernel(), mixin, Substitute.For<IPromptRenderer>(),
+        "constraints", Modalities.Text, 80, -1, new GenerationApprovalState(ToolApprovalMode.Auto), true, data.Items[^1]);
 
     private static FunctionCallContext CreateInvocation(ChatContext context, GenerationContext generation,
         Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> review)

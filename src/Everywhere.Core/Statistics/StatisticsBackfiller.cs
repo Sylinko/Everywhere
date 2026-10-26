@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using Everywhere.Chat;
 using Everywhere.Common;
@@ -46,7 +46,7 @@ public sealed class StatisticsDbInitializer(
 /// but old title-generation and visual context details are only reliable for new events.
 /// </remarks>
 public sealed class StatisticsBackfiller(
-    IDbContextFactory<ChatDbContext> chatDbFactory,
+    IDbContextFactory<ChatV2DbContext> chatDbFactory,
     IDbContextFactory<StatisticsDbContext> statisticsDbFactory,
     ILogger<StatisticsBackfiller> logger,
     INotificationPublisher<StatisticsBackfiller> notificationPublisher
@@ -98,7 +98,7 @@ public sealed class StatisticsBackfiller(
         }
     }
 
-    private async static Task BackfillTopicAsync(StatisticsDbContext statisticsDb, ChatContextEntity chat)
+    private async static Task BackfillTopicAsync(StatisticsDbContext statisticsDb, ChatV2Entity chat)
     {
         var device = await EnsureDeviceAsync(statisticsDb);
         var exists = await statisticsDb.TopicEvents.AnyAsync(x => x.DeviceId == device.Id && x.ChatContextId == chat.Id);
@@ -115,14 +115,14 @@ public sealed class StatisticsBackfiller(
             });
     }
 
-    private async Task BackfillChatNodesAsync(StatisticsDbContext statisticsDb, ChatDbContext chatDb, ChatContextEntity chat)
+    private async Task BackfillChatNodesAsync(StatisticsDbContext statisticsDb, ChatV2DbContext chatDb, ChatV2Entity chat)
     {
         var device = await EnsureDeviceAsync(statisticsDb);
         var rows = await chatDb.Nodes.AsNoTracking().Where(x => x.ChatContextId == chat.Id).ToListAsync();
         var rowsById = rows.AsValueEnumerable().ToDictionary(x => x.Id);
         var toolMessages = new List<(int SpanIndex, int MessageIndex, FunctionCallChatMessage Message)>();
 
-        foreach (var assistantRow in rows.Where(x => x.Author == "assistant"))
+        foreach (var assistantRow in rows.Where(x => x.MessageKind == ChatMessageKind.Assistant))
         {
             AssistantChatMessage? assistantMessage;
             try
@@ -136,9 +136,10 @@ public sealed class StatisticsBackfiller(
             }
 
             if (assistantMessage is null) continue;
+            using var ownedMessage = assistantMessage;
 
             Guid? turnId = null;
-            if (assistantRow.ParentId is { } parentId && rowsById.TryGetValue(parentId, out var parentRow) && parentRow.Author == "user")
+            if (assistantRow.TurnId is { } userNodeId && rowsById.TryGetValue(userNodeId, out var userRow))
             {
                 turnId = Guid.CreateVersion7();
                 statisticsDb.TurnEvents.Add(
@@ -147,7 +148,7 @@ public sealed class StatisticsBackfiller(
                         Id = turnId.Value,
                         DeviceId = device.Id,
                         ChatContextId = chat.Id,
-                        UserChatNodeId = parentRow.Id,
+                        UserChatNodeId = userRow.Id,
                         AssistantChatNodeId = assistantRow.Id,
                         Kind = StatisticsTurnKind.Send,
                         CreatedAt = assistantRow.CreatedAt
@@ -179,18 +180,16 @@ public sealed class StatisticsBackfiller(
             }
 
             toolMessages.Clear();
-            assistantMessage.Edit(spans =>
+            var spans = assistantMessage.Items;
+            for (var spanIndex = 0; spanIndex < spans.Count; spanIndex++)
             {
-                for (var spanIndex = 0; spanIndex < spans.Count; spanIndex++)
+                if (spans[spanIndex] is not AssistantChatMessageFunctionCallSpan span)
                 {
-                    if (spans[spanIndex] is not AssistantChatMessageFunctionCallSpan span) continue;
-
-                    span.Edit(functionCalls =>
-                    {
-                        toolMessages.AddRange(functionCalls.Select((t, i) => (spanIndex, messageIndex: i, t)));
-                    });
+                    continue;
                 }
-            });
+
+                toolMessages.AddRange(span.Items.Select((tool, index) => (spanIndex, messageIndex: index, tool)));
+            }
 
             foreach (var (spanIndex, messageIndex, toolMessage) in toolMessages)
             {

@@ -2428,9 +2428,6 @@
     <data name="Common_Undo" xml:space="preserve">
         <value>元に戻す</value>
     </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>「{0}」を削除しました</value>
-    </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>表示</value>
     </data>

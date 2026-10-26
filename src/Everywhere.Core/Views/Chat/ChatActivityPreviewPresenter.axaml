@@ -188,7 +188,7 @@
               MaxWidth="200"
               FontSize="{DynamicResource FontSizeS}"
               MaxLines="1"
-              Text="{Binding ChatContext.Metadata.Topic}"
+              Text="{Binding ChatData.Metadata.Topic}"
               TextTrimming="CharacterEllipsis"/>
           </Button>
         </DataTemplate>

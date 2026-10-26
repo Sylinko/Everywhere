@@ -1,4 +1,4 @@
-using Everywhere.Database;
+﻿using Everywhere.Database;
 using Everywhere.Statistics.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,17 +54,17 @@ internal sealed class StatisticsDbContextFactory(DbContextOptions<StatisticsDbCo
 
 internal sealed class ChatTestDatabase : IDisposable
 {
-    public ChatDbContextFactory Factory { get; }
+    public ChatV2DbContextFactory Factory { get; }
 
     private readonly string _path;
 
     private ChatTestDatabase(string path)
     {
         _path = path;
-        var options = new DbContextOptionsBuilder<ChatDbContext>()
+        var options = new DbContextOptionsBuilder<ChatV2DbContext>()
             .UseSqlite($"Data Source={path};Pooling=False")
             .Options;
-        Factory = new ChatDbContextFactory(options);
+        Factory = new ChatV2DbContextFactory(options);
 
         using var db = Factory.CreateDbContext();
         db.Database.Migrate();
@@ -91,11 +91,11 @@ internal sealed class ChatTestDatabase : IDisposable
     }
 }
 
-internal sealed class ChatDbContextFactory(DbContextOptions<ChatDbContext> options)
-    : IDbContextFactory<ChatDbContext>
+internal sealed class ChatV2DbContextFactory(DbContextOptions<ChatV2DbContext> options)
+    : IDbContextFactory<ChatV2DbContext>
 {
-    public ChatDbContext CreateDbContext() => new(options);
+    public ChatV2DbContext CreateDbContext() => new(options);
 
-    public ValueTask<ChatDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
+    public ValueTask<ChatV2DbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
         ValueTask.FromResult(CreateDbContext());
 }

@@ -47,10 +47,11 @@ public sealed class RequestRecoveryTests
         meterListener.Start();
         var recorder = Substitute.For<IStatisticsRecorder>();
         var chatService = CreateService(recorder);
-        using var context = new ChatContext();
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
         var message = new AssistantChatMessage { IsBusy = true };
-        context.Add(new UserChatMessage("hello", []));
-        context.Add(message);
+        data.Add(new UserChatMessage("hello", []));
+        data.Add(message);
         var metadataReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var allowOutput = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var sdkParents = new List<string?>();
@@ -60,7 +61,7 @@ public sealed class RequestRecoveryTests
         using var mixin = new TestMixin(service, 0);
         var request = typeof(ChatService).GetMethod("GetStreamingChatMessageContentsAsync", BindingFlags.NonPublic | BindingFlags.Instance)
             ?? throw new MissingMethodException();
-        var task = request.Invoke(chatService, [new Kernel(), mixin, context, new ChatHistory(), message,
+        var task = request.Invoke(chatService, [new Kernel(), mixin, runtime, new ChatHistory(), message,
             StatisticsModelInvocationPurpose.ChatResponse, CancellationToken.None]) as Task ?? throw new InvalidOperationException();
         await metadataReceived.Task;
         try { Assert.That(firstOutputMeasurements, Is.Empty); }
@@ -100,12 +101,14 @@ public sealed class RequestRecoveryTests
         {
             var recorder = Substitute.For<IStatisticsRecorder>();
             var chatService = CreateService(recorder);
-            using var context = new ChatContext();
+            using var data = new ChatData();
+            await using var runtime = new RootChatContext(data, null);
             var message = new AssistantChatMessage { IsBusy = true };
             var committed = new AssistantChatMessageTextSpan("committed");
             if (hasCommittedOutput) message.AddSpan(committed);
-            context.Add(new UserChatMessage("hello", []));
-            context.Add(message);
+            data.Add(new UserChatMessage("hello", []));
+            data.Add(message);
+            await runtime.Presentation.PrepareInitialWindowAsync();
             var service = Substitute.For<IChatCompletionService>();
             var sendCount = 0;
             var retryRows = new List<BusyActivityItemPresentationRow>();
@@ -114,7 +117,7 @@ public sealed class RequestRecoveryTests
             using var mixin = new TestMixin(service, 2);
             var request = typeof(ChatService).GetMethod("GetStreamingChatMessageContentsAsync", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?? throw new MissingMethodException();
-            var task = request.Invoke(chatService, [new Kernel(), mixin, context, new ChatHistory([new(AuthorRole.User, "fixed")]), message,
+            var task = request.Invoke(chatService, [new Kernel(), mixin, runtime, new ChatHistory([new(AuthorRole.User, "fixed")]), message,
                 StatisticsModelInvocationPurpose.ChatResponse, CancellationToken.None]) as Task ?? throw new InvalidOperationException();
             await task;
             Dispatcher.UIThread.RunJobs();
@@ -126,7 +129,7 @@ public sealed class RequestRecoveryTests
                 Assert.That(message.Items.OfType<AssistantChatMessageTextSpan>().Select(span => span.Content),
                     Is.EqualTo(hasCommittedOutput ? new[] { "committed", "recovered" } : new[] { "recovered" }));
                 if (hasCommittedOutput) Assert.That(message.Items.First(), Is.SameAs(committed));
-                Assert.That(context.Presentation.Rows.OfType<ActivityGroupPresentationRow>()
+                Assert.That(runtime.Presentation.Rows.OfType<ActivityGroupPresentationRow>()
                     .SelectMany(group => group.Items).OfType<BusyActivityItemPresentationRow>(), Is.Empty);
             });
             await recorder.Received(3).CompleteModelInvocationAsync(Arg.Any<Guid>(), Arg.Any<ChatUsageDetails>(), Arg.Any<DateTimeOffset>(),
@@ -138,9 +141,9 @@ public sealed class RequestRecoveryTests
                 if (number > 1)
                 {
                     Dispatcher.UIThread.RunJobs();
-                    retryRows.Add(context.Presentation.Rows.OfType<ActivityGroupPresentationRow>()
+                    retryRows.Add(runtime.Presentation.Rows.OfType<ActivityGroupPresentationRow>()
                         .SelectMany(group => group.Items).OfType<BusyActivityItemPresentationRow>().Single());
-                    Assert.That(context.Presentation.Rows.OfType<PendingAssistantPresentationRow>(), Is.Empty);
+                    Assert.That(runtime.Presentation.Rows.OfType<PendingAssistantPresentationRow>(), Is.Empty);
                 }
                 if (number <= 2)
                     throw new HttpRequestException("Proxy connection refused", new System.Net.Sockets.SocketException(10061));
@@ -162,7 +165,8 @@ public sealed class RequestRecoveryTests
         ActivitySource.AddActivityListener(listener);
         var recorder = Substitute.For<IStatisticsRecorder>();
         var chatService = CreateService(recorder);
-        using var context = new ChatContext();
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
         var message = new AssistantChatMessage { IsBusy = true };
         message.AddSpan(new AssistantChatMessageTextSpan("committed"));
         var tool = new FunctionCallChatMessage(Lucide.Avalonia.LucideIconKind.Hammer, new DirectLocaleKey("tool"));
@@ -173,8 +177,9 @@ public sealed class RequestRecoveryTests
         tools.Add(tool);
         message.AddSpan(tools);
         message.Metadata = message.Metadata.SetItem("checkpoint", "original");
-        context.Add(new UserChatMessage("hello", []));
-        context.Add(message);
+        data.Add(new UserChatMessage("hello", []));
+        data.Add(message);
+        await runtime.Presentation.PrepareInitialWindowAsync();
         var service = Substitute.For<IChatCompletionService>();
         var sendCount = 0;
         service.GetStreamingChatMessageContentsAsync(Arg.Any<ChatHistory>(), Arg.Any<PromptExecutionSettings>(), Arg.Any<Kernel>(), Arg.Any<CancellationToken>())
@@ -182,7 +187,7 @@ public sealed class RequestRecoveryTests
         using var mixin = new TestMixin(service, 1);
         var request = typeof(ChatService).GetMethod("GetStreamingChatMessageContentsAsync", BindingFlags.NonPublic | BindingFlags.Instance)
             ?? throw new MissingMethodException();
-        var task = request.Invoke(chatService, [new Kernel(), mixin, context, new ChatHistory([new(AuthorRole.User, "fixed")]), message,
+        var task = request.Invoke(chatService, [new Kernel(), mixin, runtime, new ChatHistory([new(AuthorRole.User, "fixed")]), message,
             StatisticsModelInvocationPurpose.ChatResponse, CancellationToken.None]) as Task ?? throw new InvalidOperationException();
         await task;
         Dispatcher.UIThread.RunJobs();
@@ -193,7 +198,7 @@ public sealed class RequestRecoveryTests
             Assert.That(message.Items, Does.Contain(tools));
             Assert.That(tool.Results.Length, Is.EqualTo(1));
             Assert.That(message.Metadata.GetValueOrDefault("checkpoint"), Is.EqualTo("original"));
-            Assert.That(context.Presentation.Rows.OfType<BusyActivityItemPresentationRow>(), Is.Empty);
+            Assert.That(runtime.Presentation.Rows.OfType<BusyActivityItemPresentationRow>(), Is.Empty);
         });
         Assert.Multiple(() =>
         {
@@ -222,21 +227,22 @@ public sealed class RequestRecoveryTests
     }
 
     [AvaloniaTest]
-    public void Assistant_WhenCanceledAndReloaded_PreservesStopWithoutErrorOrNoResponse()
+    public async Task Assistant_WhenCanceledAndReloaded_PreservesStopWithoutErrorOrNoResponse()
     {
         var original = new AssistantChatMessage { IsCanceled = true };
         var restored = MessagePackSerializer.Deserialize<AssistantChatMessage>(MessagePackSerializer.Serialize(original));
-        using var context = new ChatContext();
-        context.Add(new UserChatMessage("hello", []));
-        context.Add(restored);
-        Dispatcher.UIThread.RunJobs();
+        using var data = new ChatData();
+        data.Add(new UserChatMessage("hello", []));
+        data.Add(restored);
+        await using var runtime = new RootChatContext(data, null);
+        await runtime.Presentation.PrepareInitialWindowAsync();
         Assert.Multiple(() =>
         {
             Assert.That(restored.IsCanceled, Is.True);
             Assert.That(restored.ErrorMessageKey, Is.Null);
-            Assert.That(context.Presentation.Rows.OfType<AssistantCanceledPresentationRow>().ToArray(), Has.Length.EqualTo(1));
-            Assert.That(context.Presentation.Rows.OfType<AssistantErrorPresentationRow>(), Is.Empty);
-            Assert.That(context.Presentation.Rows.OfType<NoResponsePresentationRow>(), Is.Empty);
+            Assert.That(runtime.Presentation.Rows.OfType<AssistantCanceledPresentationRow>().ToArray(), Has.Length.EqualTo(1));
+            Assert.That(runtime.Presentation.Rows.OfType<AssistantErrorPresentationRow>(), Is.Empty);
+            Assert.That(runtime.Presentation.Rows.OfType<NoResponsePresentationRow>(), Is.Empty);
         });
     }
 
@@ -259,7 +265,8 @@ public sealed class RequestRecoveryTests
     [AvaloniaTest]
     public async Task ContextOperation_WhenParentCancels_StopsChildAndReleasesBusyState()
     {
-        using var context = new ChatContext();
+        using var data = new ChatData();
+        await using var context = new RootChatContext(data, null);
         using var parent = new CancellationTokenSource();
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var task = context.ExecuteAsync(async token =>
@@ -327,7 +334,8 @@ public sealed class RequestRecoveryTests
     [AvaloniaTest]
     public async Task ContextOperation_WhenChildStops_DoesNotCancelParentToken()
     {
-        using var context = new ChatContext();
+        using var data = new ChatData();
+        await using var context = new RootChatContext(data, null);
         using var parent = new CancellationTokenSource();
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var task = context.ExecuteAsync(async token =>

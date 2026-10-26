@@ -1,4 +1,4 @@
-<ResourceDictionary
+﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
@@ -26,10 +26,10 @@
                   <v:ConditionalContentControl.Condition>
                     <MultiBinding Converter="{x:Static v:TerminalView.StatusConverter}">
                       <Binding
-                        Path="DisplayBlock?.FinishedAt"
+                        Path="State?.FinishedAt"
                         RelativeSource="{RelativeSource TemplatedParent}"/>
                       <Binding
-                        Path="DisplayBlock?.ExitCode"
+                        Path="State?.ExitCode"
                         RelativeSource="{RelativeSource TemplatedParent}"/>
                     </MultiBinding>
                   </v:ConditionalContentControl.Condition>
@@ -41,10 +41,10 @@
                           <I18N Key="{I18N {x:Static LocaleKey.TerminalView_SuccessToolTip_Tip}}">
                             <Binding
                               Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
-                              Path="$parent[v:TerminalView].DisplayBlock?.CreatedAt"/>
+                              Path="$parent[v:TerminalView].State?.CreatedAt"/>
                             <Binding
                               Converter="{x:Static vc:CommonConverters.TimeSpanToSeconds}"
-                              ConverterParameter="N" Path="$parent[v:TerminalView].DisplayBlock?.Elapsed"/>
+                              ConverterParameter="N" Path="$parent[v:TerminalView].State?.Elapsed"/>
                           </I18N>
                         </ToolTip.Tip>
 
@@ -63,12 +63,12 @@
                           <I18N Key="{I18N {x:Static LocaleKey.TerminalView_ErrorToolTip_Tip}}">
                             <Binding
                               Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
-                              Path="$parent[v:TerminalView].DisplayBlock?.CreatedAt"/>
+                              Path="$parent[v:TerminalView].State?.CreatedAt"/>
                             <Binding
                               Converter="{x:Static vc:CommonConverters.TimeSpanToSeconds}"
-                              ConverterParameter="N" Path="$parent[v:TerminalView].DisplayBlock?.Elapsed"/>
+                              ConverterParameter="N" Path="$parent[v:TerminalView].State?.Elapsed"/>
                             <Binding
-                              Path="$parent[v:TerminalView].DisplayBlock?.ExitCode" TargetNullValue="null"/>
+                              Path="$parent[v:TerminalView].State?.ExitCode" TargetNullValue="null"/>
                           </I18N>
                         </ToolTip.Tip>
 
@@ -89,9 +89,9 @@
 
                 <md:CodeBlock
                   Grid.Column="1"
-                  Code="{Binding DisplayBlock?.Command, RelativeSource={RelativeSource TemplatedParent}}"
+                  Code="{Binding State?.Command, RelativeSource={RelativeSource TemplatedParent}}"
                   IsCodeWrapped="True"
-                  Language="{Binding DisplayBlock?.ShellType, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:CommonConverters.ObjectToString}}">
+                  Language="{Binding State?.ShellType, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:CommonConverters.ObjectToString}}">
                   <md:CodeBlock.Template>
                     <ControlTemplate TargetType="md:CodeBlock">
                       <md:MarkdownTextBlock

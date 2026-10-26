@@ -15,9 +15,9 @@ public enum ChatContextMetadataStates
     HasNotification = 0x2
 }
 
-/// <summary>Chat context metadata persisted along with the object graph.</summary>
+/// <summary>Chat data metadata persisted along with the object graph.</summary>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, DateTimeOffset dateModified, string? topic) : ObservableObject
+public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeOffset dateModified, string? topic) : ObservableObject
 {
     /// <summary>
     /// Stable ID (Guid v7) to align with database primary key.
@@ -58,15 +58,6 @@ public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, Da
         }
     }
 
-    /// <summary>
-    /// Indicates whether the topic is being generated.
-    /// </summary>
-    [IgnoreMember]
-    public AtomicBoolean IsGeneratingTopic => new(ref _isGeneratingTopicAtomic);
-
-    [IgnoreMember]
-    private int _isGeneratingTopicAtomic;
-
     [IgnoreMember]
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActualTopic))]
@@ -78,30 +69,35 @@ public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, Da
 
     [IgnoreMember]
     [ObservableProperty]
-    public partial ChatContextMetadataStates States { get; set; }
+    public partial ChatContextMetadataStates States { get; internal set; }
 
     /// <summary>
-    /// Indicates whether the context is temporarily deleted and not yet removed from the database.
-    /// Used for undo functionality and to prevent immediate hard deletion.
+    /// Gets the local archive timestamp. Stored in the conversation row, not embedded child payloads.
     /// </summary>
     [IgnoreMember]
-    public bool IsTemporaryDeleted { get; set; }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsArchived))]
+    public partial DateTimeOffset? ArchivedAt { get; internal set; }
+
+    /// <summary>
+    /// Gets whether this conversation belongs to the archive rather than the active history listing.
+    /// </summary>
+    [IgnoreMember]
+    public bool IsArchived => ArchivedAt.HasValue;
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
 
-        // DateModified is advanced by ChatContext when a node changes. ChatContext sends the
-        // context-bearing notification after updating it, so do not emit a second metadata-only
-        // message for that path. Other metadata changes (for example Topic) have no owning
-        // context available here and continue to use the metadata-only notification.
-        if (e.PropertyName != nameof(DateModified))
+        // Data changes publish after dirty tracking, and runtime states publish from their owner.
+        // Keep one notification per change rather than repeating it here.
+        if (e.PropertyName is not (nameof(DateModified) or nameof(States)))
         {
-            WeakReferenceMessenger.Default.Send(new ChatContextMetadataChangedMessage(null, this, e.PropertyName));
+            WeakReferenceMessenger.Default.Send(new ChatContextMetadataChangedMessage(this, e.PropertyName));
         }
     }
 
-    public override bool Equals(object? obj) => obj is ChatContextMetadata other && Id == other.Id;
+    public override bool Equals(object? obj) => obj is ChatMetadata other && Id == other.Id;
 
     public override int GetHashCode() => Id.GetHashCode();
 }

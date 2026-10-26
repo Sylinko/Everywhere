@@ -1,4 +1,4 @@
-namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
+﻿namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 
 /// <summary>
 /// Coordinates review of every file in one patch before any commit is started.
@@ -44,7 +44,7 @@ public sealed class PatchReviewSession : IDisposable
             if (decision is PatchNoChangesFileDecision) continue;
 
             item.DisplayBlock.CompleteReview();
-            displaySink.AppendBlock(item.DisplayBlock);
+            await displaySink.AppendBlockAsync(item.DisplayBlock);
         }
 
         return decisions;

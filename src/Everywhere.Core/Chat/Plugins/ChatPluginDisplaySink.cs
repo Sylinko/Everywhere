@@ -1,124 +1,98 @@
-﻿using Everywhere.Common;
-using MessagePack;
+﻿using MessagePack;
 using MessagePack.Formatters;
 
 namespace Everywhere.Chat.Plugins;
 
+/// <summary>
+/// Stores durable display blocks. This is a model collection, not a plugin execution service;
+/// attached collections are mutated only within their root conversation's execution domain.
+/// </summary>
 [MessagePackObject(SuppressSourceGeneration = true)]
 [MessagePackFormatter(typeof(ChatPluginDisplaySinkFormatter))]
-public sealed class ChatPluginDisplaySink : IReadOnlyList<ChatPluginDisplayBlock>, ISourceList<ChatPluginDisplayBlock>, IChatPluginDisplaySink
+public sealed class ChatPluginDisplaySink : IReadOnlyList<ChatPluginDisplayBlock>, IDisposable
 {
-    public int Count => _itemsSource.Count;
+    public int Count => Items.Count;
 
-    public IObservable<int> CountChanged => _itemsSource.CountChanged;
+    public IReadOnlyList<ChatPluginDisplayBlock> Items => Volatile.Read(ref _items);
 
-    public IReadOnlyList<ChatPluginDisplayBlock> Items => _itemsSource.Items;
+    public ChatPluginDisplayBlock this[int index] => Items[index];
 
-    public ChatPluginDisplayBlock this[int index] => _itemsSource.Items[index];
+    /// <summary>
+    /// Signals structural changes for standalone views or the owning function. Descendant content
+    /// changes notify their node directly rather than bubbling through every container.
+    /// </summary>
+    public event EventHandler? Changed;
 
-    private readonly SourceList<ChatPluginDisplayBlock> _itemsSource = new();
+    private IReadOnlyList<ChatPluginDisplayBlock> _items = Array.Empty<ChatPluginDisplayBlock>();
+    private ChatMessageNode? _owner;
+    private bool _isDisposed;
 
-    public void AppendBlock(ChatPluginDisplayBlock block)
+    internal void SetOwner(ChatMessageNode? owner)
     {
-        _itemsSource.Add(block);
+        _owner = owner;
+        foreach (var block in _items)
+        {
+            block.Owner = owner;
+        }
     }
 
-    public void Add(ChatPluginDisplayBlock block)
-    {
-        _itemsSource.Add(block);
-    }
+    public void AppendBlock(ChatPluginDisplayBlock block) => AppendBlocks(new[] { block });
+
+    public void Add(ChatPluginDisplayBlock block) => AppendBlock(block);
 
     public void AppendBlocks(IEnumerable<ChatPluginDisplayBlock> blocks)
     {
-        _itemsSource.AddRange(blocks);
-    }
+        var added = blocks.ToArray();
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
+        foreach (var block in added)
+        {
+            block.Owner = _owner;
+        }
 
-    public IChatPluginDisplaySink AppendContainer()
-    {
-        var groupBlock = new ChatPluginContainerDisplayBlock();
-        _itemsSource.Add(groupBlock);
-        return groupBlock.DisplaySink;
+        Volatile.Write(ref _items, _items.Concat(added).ToArray());
+
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     public void AppendText(string text, string? className = null)
     {
-        _itemsSource.Add(new ChatPluginTextDisplayBlock(text, className));
-    }
-
-    public void AppendDynamicLocaleKey(IDynamicLocaleKey resourceKey, string? className = null)
-    {
-        _itemsSource.Add(new ChatPluginDynamicLocaleKeyDisplayBlock(resourceKey, className));
-    }
-
-    public ThreadSafeObservableStringBuilder AppendMarkdown()
-    {
-        var markdownBlock = new ChatPluginMarkdownDisplayBlock();
-        _itemsSource.Add(markdownBlock);
-        return markdownBlock.MarkdownBuilder;
+        AppendBlock(new ChatPluginTextDisplayBlock(text, className));
     }
 
     public IProgress<double> AppendProgress(IDynamicLocaleKey headerKey)
     {
         var progressBlock = new ChatPluginProgressDisplayBlock(headerKey);
-        _itemsSource.Add(progressBlock);
+        AppendBlock(progressBlock);
         return progressBlock.ProgressReporter;
     }
 
-    public void AppendFileReferences(params IReadOnlyList<ChatPluginFileReference> references)
+
+    public void AppendSubagent(ChatData chatData)
     {
-        _itemsSource.Add(new ChatPluginFileReferencesDisplayBlock(references));
+        AppendBlock(new ChatPluginSubagentDisplayBlock(chatData));
     }
 
-    public void AppendUrls(IReadOnlyList<ChatPluginUrl> urls)
-    {
-        _itemsSource.Add(new ChatPluginUrlsDisplayBlock(urls));
-    }
-
-    public void AppendSeparator(double thickness = 1)
-    {
-        _itemsSource.Add(new ChatPluginSeparatorDisplayBlock(thickness));
-    }
-
-    public void AppendCodeBlock(string code, string? language = null)
-    {
-        _itemsSource.Add(new ChatPluginCodeBlockDisplayBlock(code, language));
-    }
-
-    public void AppendSubagent(ChatContext chatContext)
-    {
-        _itemsSource.Add(new ChatPluginSubagentDisplayBlock(chatContext));
-    }
-
-    public IEnumerator<ChatPluginDisplayBlock> GetEnumerator() => _itemsSource.Items.GetEnumerator();
+    public IEnumerator<ChatPluginDisplayBlock> GetEnumerator() => Items.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    public IObservable<IChangeSet<ChatPluginDisplayBlock>> Connect(Func<ChatPluginDisplayBlock, bool>? predicate = null)
-    {
-        return _itemsSource.Connect(predicate);
-    }
-
-    public IObservable<IChangeSet<ChatPluginDisplayBlock>> Preview(Func<ChatPluginDisplayBlock, bool>? predicate = null)
-    {
-        return _itemsSource.Preview(predicate);
-    }
-
-    public void Edit(Action<IExtendedList<ChatPluginDisplayBlock>> updateAction)
-    {
-        _itemsSource.Edit(updateAction);
-    }
-
     public void Dispose()
     {
-        _itemsSource.Edit(list =>
+        if (_isDisposed)
         {
-            foreach (var disposable in list.AsValueEnumerable().OfType<IDisposable>())
+            return;
+        }
+
+        _isDisposed = true;
+        _owner = null;
+        foreach (var block in _items)
+        {
+            block.Owner = null;
+            if (block is IDisposable disposable)
             {
                 disposable.Dispose();
             }
-        });
-
-        _itemsSource.Dispose();
+        }
     }
 }
 

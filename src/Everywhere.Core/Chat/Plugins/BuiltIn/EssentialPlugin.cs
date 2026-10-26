@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Text;
 using System.Text.Json.Serialization;
 using Everywhere.AI;
@@ -82,14 +82,18 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         CancellationToken cancellationToken = default)
     {
         // Fork a temporary chat context for the subagent
-        var forkedChatContext = chatContext.ForkSubagent(title);
-        var userNode = forkedChatContext.Add(new UserChatMessage(prompt, []));
-        var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-        var assistantNode = forkedChatContext.Add(assistantChatMessage);
+        var (nestedContext, userNode, assistantNode) = await chatContext.DispatchAsync(() =>
+        {
+            var child = chatContext.CreateNested(title);
+            var user = child.Data.Add(new UserChatMessage(prompt, []));
+            var assistantMessage = new AssistantChatMessage { IsBusy = true };
+            return (child, user, child.Data.Add(assistantMessage));
+        });
+        var forkedChatContext = nestedContext.Data;
 
-        // Display the chat context in the UI
-        userInterface.ActivityPreview = new ChatPluginSubagentActivityPreview(forkedChatContext);
-        userInterface.DisplaySink.AppendSubagent(forkedChatContext);
+        // Display the chat data in the UI
+        await userInterface.SetActivityPreviewAsync(new ChatPluginSubagentActivityPreview(forkedChatContext));
+        await userInterface.DisplaySink.AppendSubagentAsync(forkedChatContext);
 
         var specializations = specialization?.ToLower() switch
         {
@@ -112,18 +116,18 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
             _ => DefaultPrompts.DefaultSystemPrompt
         };
 
-        // The subagent has its own ChatContext and FunctionCallContext. Do not let the parent
+        // The subagent has its own ChatData and FunctionCallContext. Do not let the parent
         // tool's ambient invocation context leak into nested kernel-service resolution while the
         // child generation is waiting for model output or user consent.
         using var parentFunctionCallContextScope = chatContext.GenerationContext?.SuppressFunctionCallContext();
         var generationResult = default(ChatGenerationResult);
         try
         {
-            await forkedChatContext.ExecuteAsync(
+            await nestedContext.ExecuteAsync(
                 async childToken =>
                 {
                     generationResult = await chatService.GenerateAsync(
-                        forkedChatContext,
+                        nestedContext,
                         specializedAssistant,
                         assistantNode,
                         CompressionBoundary.Before(userNode),
@@ -156,7 +160,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Header,
         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Description)]
-    private static string ManageTodo(
+    private static async Task<string> ManageTodo(
         [FromKernelServices] ChatContext chatContext,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description(
@@ -204,14 +208,17 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                     }
                 }
 
-                chatContext.UserInterfaceBroker.TodoItems.SourceList.Reset(
-                    items.Select(static item => item.Status is not null ?
-                        item :
-                        item with
-                        {
-                            Status = ChatPluginTodoStatus.NotStarted
-                        }));
-                displaySink.AppendDynamicLocaleKey(
+                await chatContext.DispatchAsync(() =>
+                {
+                    chatContext.UserInterfaceBroker.TodoItems.SourceList.Reset(
+                        items.Select(static item => item.Status is not null ?
+                            item :
+                            item with
+                            {
+                                Status = ChatPluginTodoStatus.NotStarted
+                            }));
+                });
+                await displaySink.AppendDynamicLocaleKeyAsync(
                     new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Reset,
                         new DirectLocaleKey(items.Count)));
@@ -235,46 +242,49 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
             case TodoAction.Update:
             {
                 HandledFunctionInvokingException? error = null;
-                chatContext.UserInterfaceBroker.TodoItems.SourceList.Edit(list =>
+                await chatContext.DispatchAsync(() =>
                 {
-                    var ids = new HashSet<int>();
-                    foreach (var item in items)
+                    chatContext.UserInterfaceBroker.TodoItems.SourceList.Edit(list =>
                     {
-                        if (!ids.Add(item.Id))
+                        var ids = new HashSet<int>();
+                        foreach (var item in items)
                         {
-                            error = new HandledFunctionInvokingException(
-                                HandledFunctionInvokingExceptionType.ArgumentError,
-                                nameof(items),
-                                new ArgumentException($"Todo item ID {item.Id} is duplicated in update action.", nameof(items)));
-                            return;
-                        }
-
-                        if (list.AsValueEnumerable().All(i => i.Id != item.Id))
-                        {
-                            error = new HandledFunctionInvokingException(
-                                HandledFunctionInvokingExceptionType.ArgumentError,
-                                nameof(items),
-                                new ArgumentException($"Todo item ID {item.Id} does not exist and cannot be added by update action.", nameof(items)));
-                            return;
-                        }
-                    }
-
-                    foreach (var item in items)
-                    {
-                        for (var index = 0; index < list.Count; index++)
-                        {
-                            if (list[index].Id != item.Id) continue;
-
-                            var currentItem = list[index];
-                            list[index] = currentItem with
+                            if (!ids.Add(item.Id))
                             {
-                                Title = item.Title ?? currentItem.Title,
-                                Description = item.Description ?? currentItem.Description,
-                                Status = item.Status ?? currentItem.Status
-                            };
-                            break;
+                                error = new HandledFunctionInvokingException(
+                                    HandledFunctionInvokingExceptionType.ArgumentError,
+                                    nameof(items),
+                                    new ArgumentException($"Todo item ID {item.Id} is duplicated in update action.", nameof(items)));
+                                return;
+                            }
+
+                            if (list.AsValueEnumerable().All(i => i.Id != item.Id))
+                            {
+                                error = new HandledFunctionInvokingException(
+                                    HandledFunctionInvokingExceptionType.ArgumentError,
+                                    nameof(items),
+                                    new ArgumentException($"Todo item ID {item.Id} does not exist and cannot be added by update action.", nameof(items)));
+                                return;
+                            }
                         }
-                    }
+
+                        foreach (var item in items)
+                        {
+                            for (var index = 0; index < list.Count; index++)
+                            {
+                                if (list[index].Id != item.Id) continue;
+
+                                var currentItem = list[index];
+                                list[index] = currentItem with
+                                {
+                                    Title = item.Title ?? currentItem.Title,
+                                    Description = item.Description ?? currentItem.Description,
+                                    Status = item.Status ?? currentItem.Status
+                                };
+                                break;
+                            }
+                        }
+                    });
                 });
 
                 if (error != null)
@@ -282,7 +292,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                     throw error;
                 }
 
-                displaySink.AppendDynamicLocaleKey(
+                await displaySink.AppendDynamicLocaleKeyAsync(
                     new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Update,
                         new DirectLocaleKey(items.Count)));
@@ -292,48 +302,46 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
             case TodoAction.Read:
             {
                 var stringBuilder = new StringBuilder();
-                chatContext.UserInterfaceBroker.TodoItems.SourceList.Edit(list =>
+                var list = chatContext.UserInterfaceBroker.TodoItems.SourceList.Items;
+                await displaySink.AppendDynamicLocaleKeyAsync(
+                    new FormattedDynamicLocaleKey(
+                        LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Read,
+                        new DirectLocaleKey(list.Count)));
+
+                stringBuilder.Append("Todo (").Append(list.Count).AppendLine(")");
+
+                foreach (var item in list)
                 {
-                    displaySink.AppendDynamicLocaleKey(
-                        new FormattedDynamicLocaleKey(
-                            LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Read,
-                            new DirectLocaleKey(list.Count)));
-
-                    stringBuilder.Append("Todo (").Append(list.Count).AppendLine(")");
-
-                    foreach (var item in list)
-                    {
-                        stringBuilder
-                            .Append("- ")
-                            .Append(
-                                item.Status switch
-                                {
-                                    null or ChatPluginTodoStatus.NotStarted => "[ ]",
-                                    ChatPluginTodoStatus.InProgress => "[~]",
-                                    ChatPluginTodoStatus.Completed => "[x]",
-                                    _ => "[?]"
-                                })
-                            .Append(" #")
-                            .Append(item.Id)
-                            .Append(' ')
-                            .AppendLine((item.Title ?? string.Empty).ReplaceLineEndings(" ").Trim());
-
-                        if (!string.IsNullOrWhiteSpace(item.Description))
-                        {
-                            foreach (var line in item.Description.Trim().ReplaceLineEndings("\n").Split('\n'))
+                    stringBuilder
+                        .Append("- ")
+                        .Append(
+                            item.Status switch
                             {
-                                stringBuilder.Append("  > ").AppendLine(line);
-                            }
+                                null or ChatPluginTodoStatus.NotStarted => "[ ]",
+                                ChatPluginTodoStatus.InProgress => "[~]",
+                                ChatPluginTodoStatus.Completed => "[x]",
+                                _ => "[?]"
+                            })
+                        .Append(" #")
+                        .Append(item.Id)
+                        .Append(' ')
+                        .AppendLine((item.Title ?? string.Empty).ReplaceLineEndings(" ").Trim());
+
+                    if (!string.IsNullOrWhiteSpace(item.Description))
+                    {
+                        foreach (var line in item.Description.Trim().ReplaceLineEndings("\n").Split('\n'))
+                        {
+                            stringBuilder.Append("  > ").AppendLine(line);
                         }
                     }
-                });
+                }
 
                 return stringBuilder.TrimEnd().ToString();
             }
             case TodoAction.Clear:
             {
-                chatContext.UserInterfaceBroker.TodoItems.SourceList.Clear();
-                displaySink.AppendDynamicLocaleKey(new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Clear));
+                await chatContext.DispatchAsync(() => chatContext.UserInterfaceBroker.TodoItems.SourceList.Clear());
+                await displaySink.AppendDynamicLocaleKeyAsync(new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Clear));
                 return "Cleared todo list.";
             }
             default:
@@ -368,7 +376,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                 new ArgumentException("At least one question must be provided.", nameof(questions)));
         }
 
-        userInterface.DisplaySink.AppendDynamicLocaleKey(
+        await userInterface.DisplaySink.AppendDynamicLocaleKeyAsync(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_Essential_AskUserQuestion_Prompt,
                 new DirectLocaleKey(questions.Count)));

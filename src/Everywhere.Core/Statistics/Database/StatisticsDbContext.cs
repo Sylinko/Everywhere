@@ -139,7 +139,7 @@ public sealed class TopicEventEntity
     public string? Topic { get; init; }
 
     /// <summary>
-    /// Uses ChatContext.CreatedAt, not the first user message time.
+    /// Uses ChatData.Metadata.DateCreated, not the first user message time.
     /// </summary>
     public required DateTimeOffset CreatedAt { get; init; }
 }

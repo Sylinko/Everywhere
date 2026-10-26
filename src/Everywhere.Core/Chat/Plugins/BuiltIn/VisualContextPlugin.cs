@@ -82,18 +82,17 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     {
         var (id, response) = await _visualService.ListWindowsAsync(chatContext.VisualState, cancellationToken: cancellationToken);
 
-        displaySink.AppendDynamicLocaleKey(
+        await displaySink.AppendDynamicLocaleKeyAsync(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_ListWindows_WindowCount,
                 new DirectLocaleKey(response.RepresentedTargetCount)));
-        _statisticsRecorder.RecordVisualContextAsync(
+        await _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     null,
-                    chatContext.Metadata.Id,
+                    chatContext.Data.Metadata.Id,
                     StatisticsVisualContextSource.VisualContextPlugin,
                     ElementCount: response.RepresentedTargetCount),
-                CancellationToken.None)
-            .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+                CancellationToken.None);
 
         Guid? visualContextId = response.RepresentedTargetCount > 0 ? id : null;
         return new VisualTextFunctionResult(visualContextId, response.Content);
@@ -123,7 +122,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                 await _statisticsRecorder.RecordVisualContextAsync(
                     new StatisticsVisualContextDraft(
                         null,
-                        chatContext.Metadata.Id,
+                        chatContext.Data.Metadata.Id,
                         StatisticsVisualContextSource.ScreenCapture,
                         ScreenshotCount: 1,
                         ImageCount: 1),
@@ -184,18 +183,17 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             cancellationToken);
         scanScope.Complete();
 
-        displaySink.AppendDynamicLocaleKey(
+        await displaySink.AppendDynamicLocaleKeyAsync(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Result,
                 new DirectLocaleKey(result.RepresentedTargetCount)));
-        _statisticsRecorder.RecordVisualContextAsync(
+        await _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     null,
-                    chatContext.Metadata.Id,
+                    chatContext.Data.Metadata.Id,
                     StatisticsVisualContextSource.VisualContextPlugin,
                     ElementCount: result.RepresentedTargetCount),
-                CancellationToken.None)
-            .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+                CancellationToken.None);
 
         return new VisualTextFunctionResult(visualContextId, result.Content);
     }
@@ -266,7 +264,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             new ChatPluginDynamicLocaleKeyDisplayBlock(actionsKey),
         };
 
-        userInterface.DisplaySink.AppendBlock(detailBlock);
+        await userInterface.DisplaySink.AppendBlockAsync(detailBlock);
 
         var consent = await userInterface.RequestConsentAsync(
             null,
