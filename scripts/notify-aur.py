@@ -11,7 +11,10 @@ from github_release import find_release
 def main():
     source = os.environ["GITHUB_REPOSITORY"]
     tag = os.environ["RELEASE_TAG"]
-    target = os.environ.get("AUR_MIRROR_REPOSITORY", "pasical/Everywhere-AUR")
+    target = os.environ.get("AUR_MIRROR_REPOSITORY", "").strip()
+    if not target:
+        print("AUR notification is not configured; the official release remains available.")
+        return
     if not re.fullmatch(r"v\d+\.\d+\.\d+(?:-canary\.[0-9.]+)?", tag):
         raise ValueError("Unsupported release tag.")
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", target):
