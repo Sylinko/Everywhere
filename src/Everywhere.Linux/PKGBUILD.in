@@ -1,5 +1,5 @@
 # Maintainer: Pasical <pasicalyang@gmail.com>
-# Rendered by Everywhere-AUR/scripts/sync_release.py; submit out/PKGBUILD.
+# Reference template for downstream AUR maintainers; render before submission.
 pkgname=everywhere-bin
 pkgver=@PKGVER@
 pkgrel=1
