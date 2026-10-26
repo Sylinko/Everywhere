@@ -1,5 +1,13 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+
+if (( $# < 5 || $# > 6 )); then
+    echo 'Usage: build-appimage.sh RID ASSET_NAME PUBLISH_DIR BUILD_PROJECT VERSION [SEMANTIC_VERSION]' >&2
+    exit 1
+fi
+SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
+PROJECT_ROOT=$(cd -- "$SCRIPT_DIR/../.." && pwd)
+cd "$PROJECT_ROOT"
 
 RUNTIME_ARCH=$1
 ASSET_NAME=$2
@@ -11,7 +19,7 @@ SEMANTIC_VERSION=${6:-$VERSION}
 case $RUNTIME_ARCH in
     "linux-x64")   ARCH="x86_64" ;;
     "linux-arm64") ARCH="aarch64" ;;
-    *)             ARCH="x86_64" ;;
+    *)             echo "Unsupported runtime: $RUNTIME_ARCH" >&2; exit 1 ;;
 esac
 
 APP_NAME="Everywhere"
@@ -33,7 +41,7 @@ if [[ "$BUILD_PROJECT" == "true" ]]; then
     VERSION_PREFIX="${VERSION%%-*}"
     echo "Building project for runtime '$RUNTIME_ARCH'..."
     dotnet clean Everywhere.Linux.slnx -c Release
-    dotnet restore Everywhere.Linux.slnx
+    dotnet restore Everywhere.Linux.slnx -r "$RUNTIME_ARCH"
     dotnet publish src/Everywhere.Linux/Everywhere.Linux.csproj -c Release -r "$RUNTIME_ARCH" -o "$PUBLISH_DIR" /p:Version="$VERSION_PREFIX" /p:SemanticVersion="$SEMANTIC_VERSION" --self-contained true --no-restore
 fi
 
@@ -43,6 +51,8 @@ if [ ! -d "$PUBLISH_DIR" ]; then
 fi
 
 echo "==== Starting AppImage Build for $ARCH ===="
+test -x "$PUBLISH_DIR/Everywhere"
+test -x "$PUBLISH_DIR/Everywhere.Watchdog"
 
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin"
@@ -70,7 +80,7 @@ cat > "$APPDIR/AppRun" <<EOF
 SELF=\$(readlink -f "\$0")
 HERE=\${SELF%/*}
 export PATH="\$HERE/usr/bin:\$PATH"
-export LD_LIBRARY_PATH="\$HERE/usr/lib/$APP_NAME:\$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="\$HERE/usr/lib/$APP_NAME:\${LD_LIBRARY_PATH:-}"
 exec "\$HERE/usr/lib/$APP_NAME/$APP_NAME" "\$@"
 EOF
 chmod +x "$APPDIR/AppRun"
@@ -84,8 +94,9 @@ RUNTIME_FILE="runtime-${ARCH}"
 
 if [ ! -f "$RUNTIME_FILE" ]; then
     echo "Downloading runtime from $RUNTIME_URL..."
-    curl -L "$RUNTIME_URL" -o "$RUNTIME_FILE"
+    curl --fail --location --retry 3 "$RUNTIME_URL" -o "$RUNTIME_FILE"
 fi
+test -s "$RUNTIME_FILE"
 chmod +x "$RUNTIME_FILE"
 
 mkdir -p "$OUTPUT_DIR"
