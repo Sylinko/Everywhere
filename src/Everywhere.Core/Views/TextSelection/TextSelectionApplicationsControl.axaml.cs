@@ -170,7 +170,7 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
         try
         {
             // AppKit image representations are accessed on the main thread; Windows shell extraction may block.
-#if WINDOWS
+#if WINDOWS || LINUX
             await Task.Run(
                 () =>
                 {
@@ -277,6 +277,8 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
 #elif MACOS
                                 Patterns = ["*.app"],
                                 AppleUniformTypeIdentifiers = ["com.apple.application-bundle"],
+#elif LINUX
+                                Patterns = ["*.desktop", "*"],
 #else
 #error Implement the application file picker for this platform.
 #endif
@@ -392,7 +394,7 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
     {
         get
         {
-#if MACOS
+#if MACOS || LINUX
             return StringComparer.Ordinal;
 #elif WINDOWS
             return StringComparer.OrdinalIgnoreCase;
@@ -441,6 +443,12 @@ public sealed partial class TextSelectionApplicationsPresentation : ObservableVa
     public IDynamicLocaleKey ManualHint { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_ProcessNameHint);
 
     public IDynamicLocaleKey ManualPlaceholder { get; } = new DirectLocaleKey("Code.exe");
+#elif LINUX
+    public IDynamicLocaleKey ManualLabel { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_AddApplication);
+
+    public IDynamicLocaleKey ManualHint { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_ChooseApplication);
+
+    public IDynamicLocaleKey ManualPlaceholder { get; } = new DirectLocaleKey("/usr/bin/ghostty");
 #else
 #error Define the manual application identity editor for this platform.
 #endif
@@ -475,6 +483,8 @@ public sealed partial class TextSelectionApplicationsPresentation : ObservableVa
 #elif WINDOWS
         var isValid = identity.Length > 4 && identity.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
             identity.IndexOfAny(['\\', '/', ':', '*', '?', '"', '<', '>', '|']) < 0 && !identity.Any(char.IsControl);
+#elif LINUX
+        var isValid = Path.IsPathFullyQualified(identity) && !identity.Any(char.IsControl);
 #else
 #error Implement manual application identity validation for this platform.
 #endif
