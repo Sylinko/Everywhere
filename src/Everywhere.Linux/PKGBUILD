@@ -7,7 +7,7 @@ pkgdesc="Context-aware AI assistant for your desktop. Ready to respond intellige
 arch=('x86_64')
 url="https://github.com/Sylinko/Everywhere"
 license=('BSL-1.1')
-depends=('dotnet-runtime' 'fontconfig' 'libx11' 'libice' 'libsm' 'hicolor-icon-theme')
+depends=('dotnet-runtime' 'fontconfig' 'libx11' 'libice' 'libsm' 'hicolor-icon-theme' 'desktop-file-utils')
 provides=('everywhere')
 conflicts=('everywhere')
 
