@@ -55,11 +55,20 @@ public static class RpcRuntimeIdentity
 
     /// <summary>
     /// Returns the operating-system desktop/login session identifier exposed by
-    /// the current process. Unix environments without a process session API use
+    /// the current process. Hyprland uses its compositor instance, which remains
+    /// shared across terminal jobs and independently launched processes.
+    /// Unix environments without a process session API use
     /// their session environment variable and finally a stable default value.
     /// </summary>
     public static string GetDesktopSessionId()
     {
+        if (OperatingSystem.IsLinux() &&
+            Environment.GetEnvironmentVariable("HYPRLAND_INSTANCE_SIGNATURE") is { Length: > 0 } compositorInstance)
+        {
+            // A POSIX session identifies a job/terminal, not the Wayland desktop.
+            return "hyprland:" + compositorInstance;
+        }
+
         try
         {
             using var process = Process.GetCurrentProcess();
