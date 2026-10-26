@@ -94,14 +94,14 @@ public sealed class WebPlugin : BuiltInChatPlugin
         _logger.LogDebug("Performing web search with query: {Query}, count: {Count}", query, count);
         using var connector = CreateConnector();
 
-        displaySink.AppendDynamicLocaleKey(
+        await displaySink.AppendDynamicLocaleKeyAsync(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_Web_WebSearch_Searching,
                 new DirectLocaleKey(query)));
 
         var results = (await connector.SearchAsync(query, count, cancellationToken).ConfigureAwait(false)).AsValueEnumerable().ToArray();
 
-        displaySink.AppendUrls(
+        await displaySink.AppendUrlsAsync(
             results
                 .AsValueEnumerable()
                 .Select(r => new ChatPluginUrl(r.Link, new DirectLocaleKey((r.Name ?? r.Value).SafeSubstring(0, 64))))
@@ -163,12 +163,12 @@ public sealed class WebPlugin : BuiltInChatPlugin
         // The invocation preview contains only validated URIs. Host labels and favicon locations
         // are derived by the View, where AsyncImageLoader can reuse its normal image cache instead
         // of making the plugin fetch presentation metadata.
-        userInterface.ActivityPreview = new ChatPluginUrlsActivityPreview(validatedUrls);
+        await userInterface.SetActivityPreviewAsync(new ChatPluginUrlsActivityPreview(validatedUrls));
 
         // Keep one compact durable URL block for the explicitly expanded history view. This
         // replaces the previous per-worker "visiting" text blocks, which were transient status
         // messages but were unnecessarily serialized as detailed output.
-        displaySink.AppendUrls(
+        await displaySink.AppendUrlsAsync(
             validatedUrls
                 .AsValueEnumerable()
                 .Select(uri => new ChatPluginUrl(uri.AbsoluteUri, new DirectLocaleKey(uri.Host)))

@@ -11,16 +11,16 @@ namespace Everywhere.Statistics;
 public interface IStatisticsRecorder
 {
     /// <summary>
-    /// Records the topic row for a chat context if it has not been recorded on this device.
+    /// Records the topic row for a conversation if it has not been recorded on this device.
     /// </summary>
-    Task<Guid?> RecordTopicAsync(ChatContext chatContext, CancellationToken cancellationToken = default);
+    Task<Guid?> RecordTopicAsync(ChatData chatData, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Records a user-request turn and ensures the owning topic is present.
     /// </summary>
     /// <returns>The created turn event id, or <c>null</c> when statistics recording is disabled or failed.</returns>
     Task<Guid?> RecordTurnAsync(
-        ChatContext chatContext,
+        ChatData chatData,
         ChatMessageNode? userNode,
         StatisticsTurnKind kind,
         CancellationToken cancellationToken = default);

@@ -18,7 +18,7 @@ public sealed class StatisticsRecorderTests
             database.Factory,
             settings,
             NullLogger<StatisticsRecorder>.Instance);
-        var chatContext = new ChatContext();
+        var chatContext = new ChatData();
         chatContext.Metadata.Topic = "Statistics plan";
         var userMessage = new UserChatMessage("please implement this", []);
         chatContext.Add(userMessage);
@@ -139,7 +139,7 @@ public sealed class StatisticsRecorderTests
             database.Factory,
             settings,
             NullLogger<StatisticsRecorder>.Instance);
-        var chatContext = new ChatContext();
+        var chatContext = new ChatData();
         chatContext.Add(new UserChatMessage("do not count me", []));
 
         var topicId = await recorder.RecordTopicAsync(chatContext);

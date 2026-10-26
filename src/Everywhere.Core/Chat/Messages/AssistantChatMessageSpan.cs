@@ -1,9 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using Everywhere.Collections;
-using Everywhere.Common;
-using LiveMarkdown.Avalonia;
 using MessagePack;
 
 namespace Everywhere.Chat;
@@ -17,8 +13,52 @@ namespace Everywhere.Chat;
 [Union(2, typeof(AssistantChatMessageReasoningSpan))]
 [Union(3, typeof(AssistantChatMessageImageSpan))]
 [Union(4, typeof(AssistantChatMessageVisualContextResetSpan))]
-public abstract partial class AssistantChatMessageSpan : ObservableObject
+public abstract partial class AssistantChatMessageSpan
 {
+    /// <summary>
+    /// Gets the direct change destination shared with its owning assistant and nested tools.
+    /// </summary>
+    [IgnoreMember]
+    [JsonIgnore]
+    public ChatMessageNode? Owner
+    {
+        get;
+        internal set
+        {
+            if (ReferenceEquals(field, value))
+            {
+                return;
+            }
+
+            field = value;
+            OnOwnerChanged(value);
+        }
+    }
+
+    /// <summary>
+    /// Transfers descendant ownership without subscribing to descendant property events.
+    /// </summary>
+    protected virtual void OnOwnerChanged(ChatMessageNode? owner) { }
+
+    /// <summary>
+    /// Invalidates the owning turn and records this node's durable mutation.
+    /// </summary>
+    protected void NotifyChanged()
+    {
+        Owner?.NotifyMessageChanged(isDurable: true);
+    }
+
+    protected void SetProperty<T>(ref T field, T value)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value))
+        {
+            return;
+        }
+
+        field = value;
+        NotifyChanged();
+    }
+
     /// <summary>
     /// Gets whether this span contains model output, independently of tool execution completion.
     /// Application-generated notices do not count as model output.
@@ -28,22 +68,29 @@ public abstract partial class AssistantChatMessageSpan : ObservableObject
     public abstract bool HasOutputContent { get; }
 
     [Key(0)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ElapsedSeconds))]
-    public partial DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAt
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = DateTimeOffset.UtcNow;
 
     [Key(1)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ElapsedSeconds))]
-    public partial DateTimeOffset? FinishedAt { get; set; }
+    public DateTimeOffset? FinishedAt
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [IgnoreMember]
     [JsonIgnore]
     public double ElapsedSeconds => FinishedAt.HasValue ? Math.Max((FinishedAt.Value - CreatedAt).TotalSeconds, 0) : 0;
 
     [Key(2)]
-    [ObservableProperty]
-    public partial MetadataDictionary Metadata { get; set; }
+    public MetadataDictionary Metadata
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
@@ -56,7 +103,7 @@ public sealed partial class AssistantChatMessageTextSpan : AssistantChatMessageS
 
     [IgnoreMember]
     [JsonIgnore]
-    public ThreadSafeObservableStringBuilder ContentMarkdownBuilder => EnsureContentMarkdownBuilder();
+    public ChatTextBuffer ContentMarkdownBuilder => EnsureContentMarkdownBuilder();
 
     [Key(3)]
     public string? Content
@@ -70,20 +117,20 @@ public sealed partial class AssistantChatMessageTextSpan : AssistantChatMessageS
         }
     }
 
-    [IgnoreMember] private ThreadSafeObservableStringBuilder? _contentMarkdownBuilder;
+    [IgnoreMember] private ChatTextBuffer? _contentMarkdownBuilder;
 
     [MemberNotNull(nameof(_contentMarkdownBuilder))]
-    private ThreadSafeObservableStringBuilder EnsureContentMarkdownBuilder()
+    private ChatTextBuffer EnsureContentMarkdownBuilder()
     {
         if (_contentMarkdownBuilder != null) return _contentMarkdownBuilder;
-        _contentMarkdownBuilder = new ThreadSafeObservableStringBuilder();
+        _contentMarkdownBuilder = new ChatTextBuffer();
         _contentMarkdownBuilder.Changed += HandleContentMarkdownBuilderChanged;
         return _contentMarkdownBuilder;
     }
 
-    private void HandleContentMarkdownBuilderChanged(in ObservableStringBuilderChangedEventArgs e)
+    private void HandleContentMarkdownBuilderChanged(object? sender, EventArgs e)
     {
-        OnPropertyChanged(nameof(Content));
+        NotifyChanged();
     }
 
     public void Dispose()
@@ -101,114 +148,93 @@ public sealed partial class AssistantChatMessageTextSpan : AssistantChatMessageS
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class AssistantChatMessageFunctionCallSpan : AssistantChatMessageSpan, IHaveChatAttachments, ISourceList<FunctionCallChatMessage>
+public sealed partial class AssistantChatMessageFunctionCallSpan : AssistantChatMessageSpan, IHaveChatAttachments, IDisposable
 {
     /// <inheritdoc />
     [IgnoreMember]
     [JsonIgnore]
-    public override bool HasOutputContent => _functionCallsSource.Items.AsValueEnumerable().Any(static message => !message.Calls.IsEmpty);
+    public override bool HasOutputContent => Items.Any(message => !message.Calls.IsEmpty);
+
+    /// <summary>
+    /// Gets the function-call reference snapshot, independent of a dispatcher or binding collection.
+    /// </summary>
+    [IgnoreMember]
+    [JsonIgnore]
+    public IReadOnlyList<FunctionCallChatMessage> FunctionCalls => Volatile.Read(ref _functionCalls);
+
+    [IgnoreMember]
+    public IReadOnlyList<FunctionCallChatMessage> Items => FunctionCalls;
+
+    [IgnoreMember]
+    public int Count => FunctionCalls.Count;
 
     [IgnoreMember]
     [JsonIgnore]
-    public IReadOnlyBindableList<FunctionCallChatMessage> FunctionCalls { get; }
-
-    [IgnoreMember]
-    [JsonIgnore]
-    public IEnumerable<ChatAttachment> Attachments =>
-        _functionCallsSource.Items.SelectMany(functionCallChatMessage => functionCallChatMessage.Attachments);
+    public IEnumerable<ChatAttachment> Attachments => FunctionCalls.SelectMany(message => message.Attachments);
 
     [Key(3)]
     private IEnumerable<FunctionCallChatMessage> SerializableFunctionCalls
     {
-        get => _functionCallsSource.Items;
-        set => _functionCallsSource.Edit(list => list.Reset(value));
+        get => FunctionCalls;
+        set => _functionCalls = value.ToArray();
     }
 
-    [IgnoreMember] private readonly SourceList<FunctionCallChatMessage> _functionCallsSource = new();
-    [IgnoreMember] private readonly IDisposable _functionCallsConnection;
-    [IgnoreMember] private readonly IDisposable _functionCallsPersistenceConnection;
+    [IgnoreMember] private IReadOnlyList<FunctionCallChatMessage> _functionCalls = [];
+    [IgnoreMember] private bool _isDisposed;
 
     [SerializationConstructor]
-    public AssistantChatMessageFunctionCallSpan()
-    {
-        FunctionCalls = _functionCallsSource
-            .Connect()
-            .ObserveOnAvaloniaDispatcher()
-            .DisposeMany()
-            .BindEx(out _functionCallsConnection);
+    public AssistantChatMessageFunctionCallSpan() { }
 
-        // FunctionCallChatMessage owns mutable calls, results, and display blocks. Observe
-        // those messages through DynamicData so additions, removals, and replacements are
-        // detached automatically when the function-call span is disposed.
-        _functionCallsPersistenceConnection = _functionCallsSource
-            .Connect()
-            .AutoRefresh()
-            .Subscribe(_ => OnPropertyChanged(nameof(FunctionCalls)));
+    public AssistantChatMessageFunctionCallSpan(FunctionCallChatMessage initialFunctionCall)
+    {
+        _functionCalls = [initialFunctionCall];
     }
 
-    public AssistantChatMessageFunctionCallSpan(FunctionCallChatMessage initialFunctionCall) : this()
+    public AssistantChatMessageFunctionCallSpan(IEnumerable<FunctionCallChatMessage> initialFunctionCalls)
     {
-        _functionCallsSource.Add(initialFunctionCall);
+        _functionCalls = [.. initialFunctionCalls];
     }
 
-    public AssistantChatMessageFunctionCallSpan(IEnumerable<FunctionCallChatMessage> initialFunctionCalls) : this()
-    {
-        _functionCallsSource.AddRange(initialFunctionCalls);
-    }
-
-    public void Add(FunctionCallChatMessage functionCall)
-    {
-        _functionCallsSource.Add(functionCall);
-    }
+    public void Add(FunctionCallChatMessage functionCall) => AddRange([functionCall]);
 
     public void AddRange(IEnumerable<FunctionCallChatMessage> functionCalls)
     {
-        _functionCallsSource.AddRange(functionCalls);
+        var added = functionCalls.ToArray();
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
+        foreach (var message in added)
+        {
+            message.Owner = Owner;
+        }
+
+        Volatile.Write(ref _functionCalls, _functionCalls.Concat(added).ToArray());
+
+        NotifyChanged();
     }
 
+    /// <inheritdoc />
+    protected override void OnOwnerChanged(ChatMessageNode? owner)
+    {
+        foreach (var message in _functionCalls)
+        {
+            message.Owner = owner;
+        }
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
-        _functionCallsPersistenceConnection.Dispose();
-
-        _functionCallsSource.Edit(list =>
+        if (_isDisposed)
         {
-            foreach (var disposable in list.AsValueEnumerable())
-            {
-                disposable.Dispose();
-            }
-        });
+            return;
+        }
 
-        _functionCallsSource.Dispose();
-        _functionCallsConnection.Dispose();
+        _isDisposed = true;
+        foreach (var message in _functionCalls)
+        {
+            message.Owner = null;
+            message.Dispose();
+        }
     }
-
-    #region ISourceList<FunctionCallChatMessage> Implementation
-
-    [IgnoreMember]
-    public int Count => _functionCallsSource.Count;
-
-    [IgnoreMember]
-    public IObservable<int> CountChanged => _functionCallsSource.CountChanged;
-
-    [IgnoreMember]
-    public IReadOnlyList<FunctionCallChatMessage> Items => _functionCallsSource.Items;
-
-    public IObservable<IChangeSet<FunctionCallChatMessage>> Connect(Func<FunctionCallChatMessage, bool>? predicate = null)
-    {
-        return _functionCallsSource.Connect(predicate);
-    }
-
-    public IObservable<IChangeSet<FunctionCallChatMessage>> Preview(Func<FunctionCallChatMessage, bool>? predicate = null)
-    {
-        return _functionCallsSource.Preview(predicate);
-    }
-
-    public void Edit(Action<IExtendedList<FunctionCallChatMessage>> updateAction)
-    {
-        _functionCallsSource.Edit(updateAction);
-    }
-
-    #endregion
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
@@ -220,7 +246,7 @@ public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMes
     public override bool HasOutputContent => _reasoningMarkdownBuilder is { Length: > 0 };
 
     [IgnoreMember]
-    public ThreadSafeObservableStringBuilder ReasoningMarkdownBuilder => EnsureReasoningMarkdownBuilder();
+    public ChatTextBuffer ReasoningMarkdownBuilder => EnsureReasoningMarkdownBuilder();
 
     /// <summary>
     /// The reasoning output in Markdown format for serialization.
@@ -237,7 +263,7 @@ public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMes
         }
     }
 
-    [IgnoreMember] private ThreadSafeObservableStringBuilder? _reasoningMarkdownBuilder;
+    [IgnoreMember] private ChatTextBuffer? _reasoningMarkdownBuilder;
 
     [SerializationConstructor]
     public AssistantChatMessageReasoningSpan() { }
@@ -248,17 +274,17 @@ public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMes
     }
 
     [MemberNotNull(nameof(_reasoningMarkdownBuilder))]
-    private ThreadSafeObservableStringBuilder EnsureReasoningMarkdownBuilder()
+    private ChatTextBuffer EnsureReasoningMarkdownBuilder()
     {
         if (_reasoningMarkdownBuilder != null) return _reasoningMarkdownBuilder;
-        _reasoningMarkdownBuilder = new ThreadSafeObservableStringBuilder();
+        _reasoningMarkdownBuilder = new ChatTextBuffer();
         _reasoningMarkdownBuilder.Changed += HandleReasoningMarkdownBuilderChanged;
         return _reasoningMarkdownBuilder;
     }
 
-    private void HandleReasoningMarkdownBuilderChanged(in ObservableStringBuilderChangedEventArgs e)
+    private void HandleReasoningMarkdownBuilderChanged(object? sender, EventArgs e)
     {
-        OnPropertyChanged(nameof(ReasoningOutput));
+        NotifyChanged();
     }
 
     public void Dispose()
@@ -278,13 +304,15 @@ public partial class AssistantChatMessageImageSpan : AssistantChatMessageSpan, I
     // TODO: if we want to support multiple images in a single span, we can change this to a list of FileAttachment and update the Attachments property accordingly.
     // TODO: video output and other media types can be added in the future as well, just rename `AssistantChatMessageImageSpan` to `AssistantChatMessageMediaSpan` and add a list of media attachments.
     [Key(3)]
-    [ObservableProperty]
-    public partial FileAttachment? ImageOutput { get; set; }
+    public FileAttachment? ImageOutput
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [IgnoreMember]
     [JsonIgnore]
-    public IEnumerable<ChatAttachment> Attachments =>
-        ImageOutput is not null ? new[] { ImageOutput } : Array.Empty<ChatAttachment>();
+    public IEnumerable<ChatAttachment> Attachments => ImageOutput is not null ? new[] { ImageOutput } : Array.Empty<ChatAttachment>();
 }
 
 /// <summary>

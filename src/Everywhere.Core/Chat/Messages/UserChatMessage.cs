@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using MessagePack;
+﻿using MessagePack;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Everywhere.Chat;
@@ -7,6 +6,9 @@ namespace Everywhere.Chat;
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
 public partial class UserChatMessage : ChatMessage, IHaveChatAttachments, IHaveVisualReferences
 {
+    /// <inheritdoc />
+    public override ChatMessageKind Kind => ChatMessageKind.User;
+
     public override AuthorRole Role => AuthorRole.User;
 
     /// <summary>
@@ -14,19 +16,29 @@ public partial class UserChatMessage : ChatMessage, IHaveChatAttachments, IHaveV
     /// Including attachments converted prompts that are invisible to the user.
     /// </summary>
     [Key(0)]
-    [ObservableProperty]
-    public partial string Content { get; set; }
+    public string Content
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(1)]
-    public IReadOnlyList<ChatAttachment> Attachments { get; set; }
+    public IReadOnlyList<ChatAttachment> Attachments
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [IgnoreMember]
     IEnumerable<ChatAttachment> IHaveChatAttachments.Attachments => Attachments;
 
     /// <inheritdoc />
     [Key(2)]
-    [ObservableProperty]
-    public partial Guid? VisualContextId { get; internal set; }
+    public Guid? VisualContextId
+    {
+        get;
+        internal set => SetProperty(ref field, value);
+    }
 
     [Key(3)]
     public override DateTimeOffset CreatedAt { get; }
@@ -48,4 +60,7 @@ public partial class UserChatMessage : ChatMessage, IHaveChatAttachments, IHaveV
         Attachments = attachments;
         CreatedAt = createdAt;
     }
+
+    /// <inheritdoc />
+    public override ChatUserState Capture() => new(Content, Attachments);
 }

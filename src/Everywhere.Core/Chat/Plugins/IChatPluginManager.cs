@@ -74,6 +74,7 @@ public interface IChatPluginManager
     Task<IChatPluginScope> CreateScopeAsync(
         Assistant assistant,
         ChatContext chatContext,
+        ChatMessageNode ownerNode,
         IToolRulesets? toolRulesets,
         CancellationToken cancellationToken);
 }

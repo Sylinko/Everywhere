@@ -23,7 +23,7 @@ public sealed class StatisticsRecorder(
     private int? _deviceId;
 
     /// <inheritdoc />
-    public Task<Guid?> RecordTopicAsync(ChatContext chatContext, CancellationToken cancellationToken = default) =>
+    public Task<Guid?> RecordTopicAsync(ChatData chatData, CancellationToken cancellationToken = default) =>
         SafeAsync<Guid?>(
             async token =>
             {
@@ -32,7 +32,7 @@ public sealed class StatisticsRecorder(
                 var deviceId = await EnsureDeviceAsync(token);
                 await using var db = await dbFactory.CreateDbContextAsync(token);
                 var exists = await db.TopicEvents.AnyAsync(
-                    x => x.DeviceId == deviceId && x.ChatContextId == chatContext.Metadata.Id,
+                    x => x.DeviceId == deviceId && x.ChatContextId == chatData.Metadata.Id,
                     token);
                 if (exists) return null;
 
@@ -42,9 +42,9 @@ public sealed class StatisticsRecorder(
                     {
                         Id = id,
                         DeviceId = deviceId,
-                        ChatContextId = chatContext.Metadata.Id,
-                        Topic = chatContext.Metadata.Topic.SafeSubstring(0, 64),
-                        CreatedAt = chatContext.Metadata.DateCreated
+                        ChatContextId = chatData.Metadata.Id,
+                        Topic = chatData.Metadata.Topic.SafeSubstring(0, 64),
+                        CreatedAt = chatData.Metadata.DateCreated
                     });
                 await db.SaveChangesAsync(token);
                 return id;
@@ -53,7 +53,7 @@ public sealed class StatisticsRecorder(
 
     /// <inheritdoc />
     public Task<Guid?> RecordTurnAsync(
-        ChatContext chatContext,
+        ChatData chatData,
         ChatMessageNode? userNode,
         StatisticsTurnKind kind,
         CancellationToken cancellationToken = default) =>
@@ -62,7 +62,7 @@ public sealed class StatisticsRecorder(
             {
                 if (!settings.Common.IsStatisticsEnabled) return null;
 
-                await RecordTopicAsync(chatContext, token);
+                await RecordTopicAsync(chatData, token);
                 var deviceId = await EnsureDeviceAsync(token);
                 var id = Guid.CreateVersion7();
                 await using var db = await dbFactory.CreateDbContextAsync(token);
@@ -71,7 +71,7 @@ public sealed class StatisticsRecorder(
                     {
                         Id = id,
                         DeviceId = deviceId,
-                        ChatContextId = chatContext.Metadata.Id,
+                        ChatContextId = chatData.Metadata.Id,
                         UserChatNodeId = userNode?.Id,
                         Kind = kind,
                         CreatedAt = DateTimeOffset.UtcNow

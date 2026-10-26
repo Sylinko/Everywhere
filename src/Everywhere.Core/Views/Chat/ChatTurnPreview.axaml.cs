@@ -1,5 +1,4 @@
-using System.ComponentModel;
-using System.Text;
+﻿using System.Text;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Everywhere.Chat;
@@ -8,7 +7,7 @@ using Markdig;
 namespace Everywhere.Views;
 
 /// <summary>
-/// A bounded preview with a font-relative minimum size and subscriptions only to running assistants.
+/// A bounded preview with a font-relative minimum size and one invalidation subscription to its realized turn.
 /// </summary>
 public sealed partial class ChatTurnPreview : UserControl
 {
@@ -44,10 +43,11 @@ public sealed partial class ChatTurnPreview : UserControl
 
     private string? _questionSource;
     private string? _answerSource;
-    private readonly HashSet<AssistantChatMessage> _runningAssistants = [];
+    private ChatTurn? _turn;
     private ChatTurnNavigationIndex? _index;
     private ChatTurnNavigationIndex.Entry? _entry;
-    private bool _isRefreshQueued;
+    private int _isRefreshQueued;
+    private CancellationTokenSource? _loadCancellation;
 
     /// <summary>
     /// Creates the preview visual tree.
@@ -79,16 +79,38 @@ public sealed partial class ChatTurnPreview : UserControl
     }
 
     /// <summary>
-    /// Reads the turn and observes its active assistants. Branch updates can add another assistant
-    /// after compression without replacing the preview or subscriptions to unchanged messages.
+    /// Observes the native turn. Compression and continuation keep the same preview identity.
     /// </summary>
     private void ObserveEntry()
     {
         if (Entry is not { } entry) return;
         _index = entry.Index;
         _entry = entry;
+        _turn = entry.Turn;
+        if (_turn is not null)
+        {
+            _turn.Invalidated += HandleTurnInvalidated;
+        }
+
         _index.Changed += HandleIndexChanged;
-        Refresh();
+        LoadPreviewAsync(entry).Detach();
+    }
+
+    private async Task LoadPreviewAsync(ChatTurnNavigationIndex.Entry entry)
+    {
+        _loadCancellation = new CancellationTokenSource();
+        var cancellationToken = _loadCancellation.Token;
+        try
+        {
+            await entry.Index.Context.EnsureTurnLoadedAsync(entry.Turn, cancellationToken);
+            if (!cancellationToken.IsCancellationRequested && ReferenceEquals(_entry, entry))
+            {
+                Refresh();
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
     }
 
     /// <summary>
@@ -96,9 +118,22 @@ public sealed partial class ChatTurnPreview : UserControl
     /// </summary>
     private void Release()
     {
+        _loadCancellation?.Cancel();
+        _loadCancellation?.Dispose();
+        _loadCancellation = null;
+        _questionSource = null;
+        _answerSource = null;
+        Question.Text = null;
+        Answer.Text = null;
+        Answer.IsVisible = false;
+        StatusRegion.IsVisible = false;
+        ResponseLineCount = 0;
         if (_index is not null) _index.Changed -= HandleIndexChanged;
-        foreach (var assistant in _runningAssistants) assistant.PropertyChanged -= HandleAssistantChanged;
-        _runningAssistants.Clear();
+        if (_turn is not null)
+        {
+            _turn.Invalidated -= HandleTurnInvalidated;
+            _turn = null;
+        }
         _index = null;
         _entry = null;
     }
@@ -107,21 +142,12 @@ public sealed partial class ChatTurnPreview : UserControl
 
     private void Refresh()
     {
-        if (_index is not { } index || _entry is not { } entry) return;
-        var messages = index.GetMessages(entry).ToList();
-        var assistants = messages.OfType<AssistantChatMessage>().ToList();
-        foreach (var assistant in _runningAssistants.ToArray())
-        {
-            if (assistant.IsBusy && assistants.Contains(assistant)) continue;
-            assistant.PropertyChanged -= HandleAssistantChanged;
-            _runningAssistants.Remove(assistant);
-        }
-        foreach (var assistant in assistants)
-        {
-            if (assistant.IsBusy && _runningAssistants.Add(assistant))
-                assistant.PropertyChanged += HandleAssistantChanged;
-        }
+        if (_entry is not { } entry) return;
+        var nodes = entry.Turn.SelectedNodes;
+        if (nodes.Any(node => !node.IsMessageLoaded)) return;
 
+        var messages = nodes.Select(node => node.Message).ToList();
+        var assistants = messages.OfType<AssistantChatMessage>().ToList();
         var question = entry.Node.Message switch
         {
             UserChatMessage user when !string.IsNullOrWhiteSpace(user.Content) => user.Content,
@@ -134,8 +160,7 @@ public sealed partial class ChatTurnPreview : UserControl
         var answer = new StringBuilder();
         foreach (var message in assistants)
         {
-            // Read the model snapshot, not the asynchronously bound Spans collection. Completion
-            // can precede UI delivery of its final additions, but the source is already complete.
+            // Limit preview allocation independently of the size of the retained turn.
             foreach (var span in message.Items.OfType<AssistantChatMessageTextSpan>())
             {
                 var remaining = 768 - answer.Length - (answer.Length > 0 ? 1 : 0);
@@ -207,27 +232,18 @@ public sealed partial class ChatTurnPreview : UserControl
         header :
         new StringBuilder(header).Append('\n').Append(LocaleKey.ChatPresentationRowPresenter_NoResponse.I18N()).ToString();
 
-    private void HandleAssistantChanged(object? sender, PropertyChangedEventArgs e)
+    private void HandleTurnInvalidated(object? sender, EventArgs e)
     {
-        if (e.PropertyName is not
-            nameof(AssistantChatMessage.Spans) and not
-            nameof(AssistantChatMessage.IsBusy) and not
-            nameof(AssistantChatMessage.ErrorMessageKey)) return;
-
-        // This is the sole worker-to-UI boundary. Coalesce notifications within a dispatcher turn,
-        // with no timer, delayed completion, or per-span subscription graph.
-        Dispatcher.UIThread.PostOnDemand(() =>
+        // Clear the ingress flag before capture so a concurrent append schedules another pass.
+        if (Interlocked.Exchange(ref _isRefreshQueued, 1) != 0)
         {
-            if (_isRefreshQueued) return;
+            return;
+        }
 
-            _isRefreshQueued = true;
-            Dispatcher.UIThread.Post(
-                () =>
-                {
-                    _isRefreshQueued = false;
-                    Refresh();
-                },
-                DispatcherPriority.Background);
-        });
+        Dispatcher.UIThread.Post(() =>
+        {
+            Interlocked.Exchange(ref _isRefreshQueued, 0);
+            Refresh();
+        }, DispatcherPriority.Background);
     }
 }

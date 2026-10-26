@@ -1,4 +1,4 @@
-using System.Diagnostics.Metrics;
+﻿using System.Diagnostics.Metrics;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using Avalonia.Input;
@@ -81,7 +81,10 @@ public sealed partial class ChatWindowViewModel :
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EditMessageNodeCommand))]
-    public partial ChatMessageNode? EditingMessageNode { get; private set; }
+    [NotifyPropertyChangedFor(nameof(EditingMessageNode))]
+    private partial ChatEditTarget? EditingTarget { get; set; }
+
+    public ChatMessageNode? EditingMessageNode => EditingTarget?.Node;
 
     public bool CanEdit => !IsBusy && EditingMessageNode is null;
 
@@ -188,7 +191,7 @@ public sealed partial class ChatWindowViewModel :
 
         LifetimeDisposables.Add(
             ChatContextManager.WhenValueChanged(x => x.Current)
-                .Select(context => context is null ? Observable.Return(false) : context.WhenValueChanged(x => x.IsBusy))
+                .Select(context => context is { } runtime ? runtime.WhenValueChanged(x => x.IsBusy) : Observable.Return(false))
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(HandleCurrentChatContextIsBusyChanged)
@@ -554,7 +557,7 @@ public sealed partial class ChatWindowViewModel :
 
         var editingMessageNode = EditingMessageNode;
         var submittedStrategy = SelectedStrategy;
-        var destinationContext = editingMessageNode?.Context ?? ChatContextManager.Current;
+        var destinationContext = EditingTarget?.Context ?? ChatContextManager.Current;
         var submittedAttachments = _chatAttachmentsSource.Items.ToArray();
         try
         {
@@ -584,7 +587,7 @@ public sealed partial class ChatWindowViewModel :
         }
 
         var isAccepted = editingMessageNode is not null ?
-            _chatService.Edit(editingMessageNode, userMessage) :
+            _chatService.Edit(destinationContext, editingMessageNode, userMessage) :
             _chatService.SendMessage(destinationContext, userMessage);
 
         if (!isAccepted)
@@ -615,7 +618,7 @@ public sealed partial class ChatWindowViewModel :
         var textBeforeEdit = ChatInputAreaText;
         var strategyCommandBeforeEdit = SelectedStrategy;
 
-        EditingMessageNode = userChatMessageNode;
+        EditingTarget = new ChatEditTarget(ChatContextManager.Current, userChatMessageNode);
         ChatInputAreaText = userChatMessage.Content;
         SelectedStrategy = userChatMessage.As<UserStrategyChatMessage>()?.Strategy;
 
@@ -637,7 +640,7 @@ public sealed partial class ChatWindowViewModel :
 
         var snapshot = _snapshotBeforeEdit;
         _snapshotBeforeEdit = null;
-        EditingMessageNode = null;
+        EditingTarget = null;
         ChatAttachment[] discardedAttachments = [];
         _chatAttachmentsSource.Edit(list =>
         {
@@ -658,7 +661,7 @@ public sealed partial class ChatWindowViewModel :
 
         var snapshot = _snapshotBeforeEdit;
         _snapshotBeforeEdit = null;
-        EditingMessageNode = null;
+        EditingTarget = null;
         _chatAttachmentsSource.Edit(list =>
         {
             var attachmentsAddedWhileSubmitting = list.ToArray();
@@ -676,13 +679,13 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void RetryMessageNode(ChatMessageNode chatMessageNode)
     {
-        _chatService.Retry(chatMessageNode);
+        _chatService.Retry(ChatContextManager.Current, chatMessageNode);
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void ContinueMessageNode(ChatMessageNode chatMessageNode)
     {
-        _chatService.Continue(chatMessageNode);
+        _chatService.Continue(ChatContextManager.Current, chatMessageNode);
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
@@ -713,7 +716,7 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
-    private async Task ExportMarkdownAsync(ChatContextMetadata metadata, CancellationToken cancellationToken)
+    private async Task ExportMarkdownAsync(ChatMetadata metadata, CancellationToken cancellationToken)
     {
         var chatContext = await ChatContextManager.LoadChatContextAsync(metadata, cancellationToken);
         if (chatContext is null)
@@ -764,14 +767,14 @@ public sealed partial class ChatWindowViewModel :
         try
         {
             await using var stream = await storageFile.OpenWriteAsync();
-            await ChatContextExporter.ExportAsMarkdown(chatContext, stream, cancellationToken);
+            await ChatDataExporter.ExportAsMarkdown(chatContext, stream, cancellationToken);
             exportPath = storageFile.TryGetLocalPath() ?? exportPath;
         }
         catch (Exception e)
         {
             e = HandledSystemException.Handle(e);
 
-            _logger.LogError(e, "Failed to export chat context to markdown file.");
+            _logger.LogError(e, "Failed to export chat data to markdown file.");
 
             ToastHost
                 .CreateToast(LocaleKey.ChatWindowViewModel_ExportMarkdown_FailedToSaveFile.I18N())
@@ -807,9 +810,9 @@ public sealed partial class ChatWindowViewModel :
     private void UpdateCurrentContextUsageModel()
     {
         var assistant = Settings.Model.SelectedCustomAssistant;
-        ChatContextManager.Current.ContextUsage.UpdateModel(
+        ChatContextManager.Current.UpdateContextUsageModelAsync(
             assistant?.Configuration.ModelId,
-            assistant?.Configuration.ContextLimit ?? 0);
+            assistant?.Configuration.ContextLimit ?? 0).Detach(_logger.ToExceptionHandler());
     }
 
     partial void OnIsBusyChanged(bool value)
@@ -1036,4 +1039,5 @@ public sealed partial class ChatWindowViewModel :
     #endregion
 
     private sealed record ChatInputAreaSnapshot(string? Text, IReadOnlyList<ChatAttachment>? Attachments, Strategy? Strategy);
+    private sealed record ChatEditTarget(ChatContext Context, ChatMessageNode Node);
 }

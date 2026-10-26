@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
@@ -6,8 +6,8 @@ using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Everywhere.Chat.Plugins;
-using Everywhere.Extensions;
 using Everywhere.Utilities;
 using LiveMarkdown.Avalonia;
 using Serilog;
@@ -64,6 +64,24 @@ public sealed class TerminalView : TemplatedControl
         set => SetValue(ColorThemeProperty, value);
     }
 
+    /// <summary>
+    /// Defines the captured completion status; terminal output uses its independent line bridge.
+    /// </summary>
+    public static readonly DirectProperty<TerminalView, ChatTerminalState?> StateProperty =
+        AvaloniaProperty.RegisterDirect<TerminalView, ChatTerminalState?>(nameof(State), view => view.State);
+
+    /// <summary>
+    /// Gets the current immutable command and completion values.
+    /// </summary>
+    public ChatTerminalState? State
+    {
+        get => _state;
+        private set => SetAndRaise(StateProperty, ref _state, value);
+    }
+
+    private ChatTerminalState? _state;
+    private ChatPluginTerminalDisplayBlock? _observedBlock;
+    private int _isStatusRefreshQueued;
     private CodeBlock? _outputCodeBlock;
     private TerminalCodeBlockBridge? _outputBridge;
 
@@ -87,6 +105,7 @@ public sealed class TerminalView : TemplatedControl
     {
         base.OnAttachedToVisualTree(e);
 
+        ObserveStatus();
         StartOutputBridge();
     }
 
@@ -94,6 +113,7 @@ public sealed class TerminalView : TemplatedControl
     {
         base.OnDetachedFromVisualTree(e);
 
+        ReleaseStatus();
         DisposeHelper.DisposeToDefault(ref _outputBridge);
     }
 
@@ -103,10 +123,53 @@ public sealed class TerminalView : TemplatedControl
 
         if (change.Property == DisplayBlockProperty)
         {
+            ReleaseStatus();
+            State = DisplayBlock is { } block ? ChatTerminalState.Capture(block) : null;
+            if (VisualRoot is not null)
+            {
+                ObserveStatus();
+            }
+
             DisposeHelper.DisposeToDefault(ref _outputBridge);
             _outputCodeBlock?.Inlines.Clear();
             StartOutputBridge();
         }
+    }
+
+    private void ObserveStatus()
+    {
+        _observedBlock = DisplayBlock;
+        if (_observedBlock is not null)
+        {
+            _observedBlock.Invalidated += HandleStatusInvalidated;
+            State = ChatTerminalState.Capture(_observedBlock);
+        }
+    }
+
+    private void ReleaseStatus()
+    {
+        if (_observedBlock is not null)
+        {
+            _observedBlock.Invalidated -= HandleStatusInvalidated;
+            _observedBlock = null;
+        }
+    }
+
+    private void HandleStatusInvalidated(object? sender, EventArgs e)
+    {
+        if (Interlocked.Exchange(ref _isStatusRefreshQueued, 1) != 0)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            Interlocked.Exchange(ref _isStatusRefreshQueued, 0);
+            if (_observedBlock is { } block)
+            {
+                State = ChatTerminalState.Capture(block);
+            }
+        });
     }
 
     private void StartOutputBridge()

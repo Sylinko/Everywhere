@@ -12,16 +12,16 @@ partial class ChatService
 {
     private async Task<CompressionResult> CompactContextAsync(
         ChatContext chatContext,
-        GenerationContext context,
+        GenerationContext generationContext,
         ContextCompressionTrigger trigger,
         CompressionBoundary boundary,
         CancellationToken cancellationToken)
     {
         // Select from one branch snapshot before adding the attempt's timeline row.
-        var nodes = chatContext.Items;
+        var nodes = generationContext.GetPath();
         var boundaryIndex = ResolveCompressionBoundary(nodes, boundary);
         var coveredThroughNodeId = boundaryIndex >= 0 ? nodes[boundaryIndex].Id : Guid.Empty;
-        var configuration = context.KernelMixin.Configuration;
+        var configuration = generationContext.KernelMixin.Configuration;
         var usageBefore = chatContext.ContextUsage.Snapshot;
         var compressionMessage = new ContextCompressionChatMessage(
             coveredThroughNodeId,
@@ -31,7 +31,7 @@ partial class ChatService
             configuration.ContextLimit > 0 ? configuration.ContextLimit : null);
 
         await using var compactionScope = await chatContext.BeginContextCompactionAsync();
-        var compressionNode = chatContext.Add(compressionMessage);
+        var compressionNode = await chatContext.DispatchAsync(() => generationContext.Append(compressionMessage));
 
         try
         {
@@ -52,14 +52,17 @@ partial class ChatService
                     nodes
                         .AsValueEnumerable()
                         .Skip(boundaryIndex + 1)
-                        .Where(static node => node.Message is ContextCompressionChatMessage { HasSummary: true }))
+                        .Where(static node => node.SummaryThroughNodeId.HasValue))
                 .ToArray();
 
-            var messages = ChatHistoryBuilder.SelectContextMessages(
+            var selection = await ChatHistoryBuilder.SelectContextMessagesAsync(
+                chatContext,
                 sourceNodes,
-                context.MaxContextRounds,
+                generationContext.MaxContextRounds,
                 configuration.ContextLimit,
-                out var wasSourceHistoryTrimmed).ToList();
+                cancellationToken);
+            var messages = selection.Messages.ToList();
+            var wasSourceHistoryTrimmed = selection.WasHistoryTrimmed;
 
             string summary;
             while (true)
@@ -69,7 +72,7 @@ partial class ChatService
                 {
                     summary = await RequestCompressionSummaryAsync(
                         chatContext,
-                        context,
+                        generationContext,
                         messages,
                         compressionNode,
                         cancellationToken);
@@ -85,7 +88,7 @@ partial class ChatService
                 }
                 catch (Exception ex)
                 {
-                    var handledException = ChatExceptionNormalizer.Handle(ex, context.KernelMixin, new ChatRequestFailureContext(cancellationToken));
+                    var handledException = ChatExceptionNormalizer.Handle(ex, generationContext.KernelMixin, new ChatRequestFailureContext(cancellationToken));
                     if (ChatExceptionNormalizer.GetFinalFailure(handledException) is not HandledChatException.InvalidRequest.ContextLengthExceeded ||
                         !TryTrimOldestConversationUnit(messages))
                     {
@@ -96,25 +99,25 @@ partial class ChatService
                 }
             }
 
-            compressionMessage.Complete(summary, wasSourceHistoryTrimmed, DateTimeOffset.UtcNow);
+            await chatContext.DispatchAsync(() => compressionMessage.Complete(summary, wasSourceHistoryTrimmed, DateTimeOffset.UtcNow));
             await chatContext.MarkContextCompactedAsync(configuration.ModelId, configuration.ContextLimit);
             return new CompressionResult(true, null);
         }
         catch (OperationCanceledException ex) when (IsCallerCancellation(ex, cancellationToken))
         {
-            compressionMessage.Cancel(DateTimeOffset.UtcNow);
+            await chatContext.DispatchAsync(() => compressionMessage.Cancel(DateTimeOffset.UtcNow));
             throw;
         }
         catch (ContextCompressionOutputException ex)
         {
-            compressionMessage.Fail(new DynamicLocaleKey(ex.LocaleKey), DateTimeOffset.UtcNow);
+            await chatContext.DispatchAsync(() => compressionMessage.Fail(new DynamicLocaleKey(ex.LocaleKey), DateTimeOffset.UtcNow));
             _logger.LogWarning(ex, "Context compression returned an invalid response");
             return new CompressionResult(false, ex);
         }
         catch (Exception ex)
         {
-            ex = ChatExceptionNormalizer.Handle(ex, context.KernelMixin, new ChatRequestFailureContext(cancellationToken));
-            compressionMessage.Fail(ex.GetFriendlyMessage(), DateTimeOffset.UtcNow);
+            ex = ChatExceptionNormalizer.Handle(ex, generationContext.KernelMixin, new ChatRequestFailureContext(cancellationToken));
+            await chatContext.DispatchAsync(() => compressionMessage.Fail(ex.GetFriendlyMessage(), DateTimeOffset.UtcNow));
             _logger.LogError(ex, "Failed to compact chat context");
             return new CompressionResult(false, ex);
         }
@@ -175,17 +178,19 @@ partial class ChatService
 
     private async Task<string> RequestCompressionSummaryAsync(
         ChatContext chatContext,
-        GenerationContext context,
+        GenerationContext generationContext,
         IReadOnlyList<ChatMessage> messages,
         ChatMessageNode compressionNode,
         CancellationToken cancellationToken)
     {
+        var chatData = chatContext.Data;
         var chatHistory = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
-            context.PromptRenderer,
-            context.SystemPrompt,
+            generationContext.PromptRenderer,
+            generationContext.SystemPrompt,
             messages,
-            context.InputModalities,
-            cancellationToken);
+            generationContext.InputModalities,
+            cancellationToken,
+            context: chatContext);
 
         if (chatHistory.Count <= 1)
         {
@@ -197,11 +202,11 @@ partial class ChatService
         chatHistory.AddUserMessage(DefaultPrompts.ContextCompressionPrompt);
 
         var response = await ReadResponseAsync(
-            context.KernelMixin,
+            generationContext.KernelMixin,
             chatHistory,
-            context.KernelMixin.GetPromptExecutionSettings(FunctionChoiceBehavior.None()),
-            context.Kernel,
-            chatContext.Metadata.Id,
+            generationContext.KernelMixin.GetPromptExecutionSettings(FunctionChoiceBehavior.None()),
+            generationContext.Kernel,
+            chatData.Metadata.Id,
             compressionNode.Id,
             StatisticsModelInvocationPurpose.ContextCompression,
             chatContext,
@@ -225,12 +230,31 @@ partial class ChatService
         return summary;
     }
 
-    private static ContextCompressionTrigger? ResolvePendingAutomaticCompressionTrigger(ChatContext chatContext, int contextCompressionThreshold)
+    private static async Task<ContextCompressionTrigger?> ResolvePendingAutomaticCompressionTriggerAsync(
+        ChatContext chatContext,
+        int contextCompressionThreshold,
+        CancellationToken cancellationToken)
     {
-        var nodes = chatContext.Items;
+        var chatData = chatContext.Data;
+        var nodes = chatContext.GenerationContext?.GetPath() ?? chatData.Items;
         for (var i = nodes.Count - 1; i >= 0; i--)
         {
-            if (nodes[i].Message is not ContextCompressionChatMessage compression) continue;
+            var node = nodes[i];
+            if (node.MessageKind != ChatMessageKind.Compression)
+            {
+                continue;
+            }
+
+            if (node.Turn is { } turn)
+            {
+                await chatContext.EnsureTurnLoadedAsync(turn, cancellationToken);
+            }
+            else
+            {
+                await chatContext.EnsureTurnLoadedAsync(null, cancellationToken);
+            }
+
+            var compression = (ContextCompressionChatMessage)node.Message;
             if (compression.NeedsAutomaticCompaction) return compression.Trigger;
             break;
         }

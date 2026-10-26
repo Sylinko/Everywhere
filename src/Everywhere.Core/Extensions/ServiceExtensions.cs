@@ -1,4 +1,4 @@
-using Everywhere.AI;
+﻿using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
 using Everywhere.Automation;
@@ -115,10 +115,14 @@ public static class ServiceExtensions
 
         public IServiceCollection AddDatabaseAndStorage() =>
             services
-                .AddDbContextFactory<ChatDbContext>((_, options) =>
+                .AddDbContextFactory<ChatV2DbContext>((_, options) =>
                 {
-                    var dbPath = RuntimeConstants.GetDatabasePath("chat.db");
-                    options.UseSqlite($"Data Source={dbPath}");
+                    var dbPath = RuntimeConstants.GetDatabasePath("chat-v2.db");
+                    options.UseSqlite(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                    {
+                        DataSource = dbPath,
+                        ForeignKeys = true,
+                    }.ToString());
                 })
                 // Prompt Manager owns an isolated database. The built-in default prompt is virtual
                 // and is provided by IDefaultPromptProvider rather than inserted into this database.
@@ -136,13 +140,20 @@ public static class ServiceExtensions
                 .AddSingleton<IPromptService, PromptService>()
                 .AddSingleton<IAssistantPromptReferenceService, AssistantPromptReferenceService>()
                 .AddSingleton<IBlobStorage, BlobStorage>()
-                .AddSingleton<IChatContextStorage, ChatContextStorage>()
+                .AddSingleton<IChatContextStorage, ChatTurnStorage>()
+                .AddSingleton(provider => new ChatStoreUpgradeService(
+                    provider.GetRequiredService<IDbContextFactory<ChatV2DbContext>>(),
+                    RuntimeConstants.GetDatabasePath("chat.db"),
+                    provider.GetRequiredService<INativeHelper>()))
                 .AddSingleton<NotificationCenter>()
                 .AddSingleton<INotificationCenter>(x => x.GetRequiredService<NotificationCenter>())
                 .AddSingleton(typeof(INotificationPublisher<>), typeof(NotificationPublisher<>))
                 .AddSingleton<IStatisticsRecorder, StatisticsRecorder>()
                 .AddSingleton<IStatisticsService, StatisticsService>()
-                .AddTransient<IAsyncInitializer, ChatDbInitializer>()
+                .AddTransient<IAsyncInitializer>(provider => new ChatV2StoreInitializer(
+                    provider.GetRequiredService<IDbContextFactory<ChatV2DbContext>>(),
+                    RuntimeConstants.GetDatabasePath("chat.db"),
+                    provider.GetRequiredService<ILogger<ChatV2StoreInitializer>>()))
                 .AddTransient<IAsyncInitializer, PromptDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsBackfiller>();

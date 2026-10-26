@@ -9,7 +9,16 @@ public static class DisposeHelper
         disposable.Dispose();
         disposable = default;
     }
-    
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void CancelAndDisposeToDefault(ref CancellationTokenSource? cancellationTokenSource)
+    {
+        if (cancellationTokenSource is null) return;
+        cancellationTokenSource.Cancel();
+        cancellationTokenSource.Dispose();
+        cancellationTokenSource = null;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void FreeHGlobalToNull(ref IntPtr ptr)
     {

@@ -1,4 +1,4 @@
-using MessagePack;
+﻿using MessagePack;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Everywhere.Chat;
@@ -9,6 +9,9 @@ namespace Everywhere.Chat;
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
 public sealed partial class VisualContextResetChatMessage : ChatMessage
 {
+    /// <inheritdoc />
+    public override ChatMessageKind Kind => ChatMessageKind.VisualContextReset;
+
     /// <inheritdoc />
     public override AuthorRole Role => new("user");
 
@@ -41,4 +44,7 @@ public sealed partial class VisualContextResetChatMessage : ChatMessage
 
     /// <inheritdoc />
     public override string ToString() => Content;
+
+    /// <inheritdoc />
+    public override ChatMessageState? Capture() => null;
 }

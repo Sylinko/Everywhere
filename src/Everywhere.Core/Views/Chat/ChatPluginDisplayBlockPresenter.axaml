@@ -14,14 +14,14 @@
       <ControlTemplate TargetType="v:ChatPluginDisplayBlockPresenter">
         <ContentPresenter
           x:Name="PART_ContentPresenter"
-          Content="{TemplateBinding Content}"
+          Content="{TemplateBinding Snapshot}"
           ContentTemplate="{TemplateBinding ContentTemplate}"/>
       </ControlTemplate>
     </Setter>
 
     <Setter Property="shadui:BindingAssist.DataTemplates">
       <DataTemplates>
-        <DataTemplate DataType="plugins:ChatPluginContainerDisplayBlock">
+        <DataTemplate DataType="v:ChatContainerBlockState">
           <ItemsControl ItemsSource="{Binding Children}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
@@ -53,10 +53,10 @@
         </DataTemplate>
 
         <DataTemplate DataType="plugins:ChatPluginMarkdownDisplayBlock">
-          <md:MarkdownRenderer MarkdownBuilder="{Binding MarkdownBuilder}"/>
+          <v:ChatMarkdownRenderer Source="{Binding MarkdownBuilder}"/>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginProgressDisplayBlock">
+        <DataTemplate DataType="v:ChatProgressBlockState">
           <StackPanel Spacing="4">
             <TextBlock Text="{Binding HeaderKey^}"/>
             <ProgressBar
@@ -66,7 +66,7 @@
           </StackPanel>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginFileReferencesDisplayBlock">
+        <DataTemplate DataType="v:ChatFileReferencesBlockState">
           <StackPanel Spacing="4">
             <TextBlock
               Classes="Muted"
@@ -112,7 +112,7 @@
           </StackPanel>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginFileDifferenceDisplayBlock">
+        <DataTemplate DataType="v:ChatDifferenceBlockState">
           <v:TextDifferenceSummaryView
             AddedLineCount="{Binding AddedLineCount}"
             CanReview="{Binding CanReview}"
@@ -190,18 +190,18 @@
             Language="{Binding Language}"/>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginSubagentDisplayBlock">
+        <DataTemplate DataType="v:ChatSubagentBlockState">
           <Button
             Classes="Ghost Compact" HorizontalAlignment="Left"
             Command="{Binding $parent[v:ChatMessageItemsControl].OpenSubagentCommand}"
-            CommandParameter="{Binding}"
+            CommandParameter="{Binding Block}"
             CornerRadius="{DynamicResource FullCornerRadius}"
             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginDisplayBlockPresenter_OpenSubagent}}">
             <TextBlock
               MaxWidth="200"
               FontSize="{DynamicResource FontSizeS}"
               MaxLines="1"
-              Text="{Binding ChatContext.Metadata.Topic}"
+              Text="{Binding Topic}"
               TextTrimming="CharacterEllipsis"/>
           </Button>
         </DataTemplate>

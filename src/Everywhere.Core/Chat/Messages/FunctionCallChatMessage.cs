@@ -2,7 +2,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -19,12 +18,18 @@ namespace Everywhere.Chat;
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAttachments, IDisposable
 {
+    /// <inheritdoc />
+    public override ChatMessageKind Kind => ChatMessageKind.FunctionCall;
+
     [IgnoreMember]
     public override AuthorRole Role => AuthorRole.Tool;
 
     [Key(1)]
-    [ObservableProperty]
-    public partial LucideIconKind Icon { get; set; }
+    public LucideIconKind Icon
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     /// <summary>
     /// Obsolete: Use HeaderKey instead.
@@ -37,11 +42,18 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 #pragma warning restore CA1822
 
     [Key(3)]
-    public string? Content { get; set; }
+    public string? Content
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(4)]
-    [ObservableProperty]
-    public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
+    public IDynamicLocaleKey? ErrorMessageKey
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(5)]
     public override DateTimeOffset CreatedAt { get; }
@@ -53,18 +65,22 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public ImmutableArray<FunctionResultContent> Results => _results;
 
     [Key(8)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ElapsedSeconds))]
-    [NotifyPropertyChangedFor(nameof(SerializableDisplayBlocks))] // Notify for serialization purposes
-    public partial DateTimeOffset FinishedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset FinishedAt
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = DateTimeOffset.UtcNow;
 
     [IgnoreMember]
     [JsonIgnore]
     public double ElapsedSeconds => Math.Max((FinishedAt - CreatedAt).TotalSeconds, 0);
 
     [Key(9)]
-    [ObservableProperty]
-    public partial IDynamicLocaleKey? HeaderKey { get; set; }
+    public IDynamicLocaleKey? HeaderKey
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(10)]
     private IEnumerable<ChatPluginDisplayBlock> SerializableDisplayBlocks => _displaySink.Items;
@@ -83,13 +99,13 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// to the full details of the function calls and results they are meant to represent.
     /// </remarks>
     [IgnoreMember]
-    public IReadOnlyBindableList<ChatPluginDisplayBlock> DisplayBlocks { get; }
+    public IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks => _displaySink.Items;
 
     /// <summary>
     /// The display sink that holds the display blocks for this function call message.
     /// </summary>
     [IgnoreMember]
-    public IChatPluginDisplaySink DisplaySink => _displaySink;
+    public ChatPluginDisplaySink DisplaySink => _displaySink;
 
     /// <summary>
     /// Gets the most recently updated preview among the tool invocations that are still active in
@@ -136,8 +152,6 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 
     [IgnoreMember] private readonly ChatPluginDisplaySink _displaySink = new();
     [IgnoreMember] private readonly ConcurrentDictionary<string, ActivityPresentationSlot> _activityPresentationSlots = new();
-    [IgnoreMember] private readonly CompositeDisposable _disposables = new(2);
-    [IgnoreMember] private readonly IDisposable _displayPersistenceConnection;
 
     [IgnoreMember] private ImmutableArray<FunctionCallContent> _calls = [];
     [IgnoreMember] private ImmutableArray<FunctionResultContent> _results = [];
@@ -167,7 +181,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         FinishedAt = finishedAt;
 
         // Populate the display sink with the deserialized blocks
-        if (displayBlocks is not null) _displaySink.Reset(displayBlocks);
+        if (displayBlocks is not null) _displaySink.AppendBlocks(displayBlocks);
     }
 
     public FunctionCallChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey) : this()
@@ -179,22 +193,30 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 
     private FunctionCallChatMessage()
     {
-        // Set up the DynamicData pipeline
-        DisplayBlocks = _displaySink
-            .Connect()
-            .ObserveOnAvaloniaDispatcher()
-            .BindEx(_disposables);
-
-        // Keep persistence observation independent from the UI binding. DynamicData owns
-        // the per-block subscriptions and removes them when blocks leave the sink, which
-        // prevents a completed or discarded block from retaining this message.
-        _displayPersistenceConnection = _displaySink
-            .Connect()
-            .AutoRefresh()
-            .Subscribe(_ => OnPropertyChanged(nameof(DisplayBlocks)));
-
-        _disposables.Add(_displaySink);
+        _displaySink.Changed += HandleDisplayBlocksChanged;
     }
+
+    /// <inheritdoc />
+    public override ChatFunctionState Capture()
+    {
+        var isRunning = IsBusy;
+        return new ChatFunctionState(
+            Icon,
+            HeaderKey,
+            Content,
+            ActivityPreview,
+            ErrorMessageKey,
+            CreatedAt,
+            isRunning ? null : FinishedAt,
+            isRunning,
+            IsWaitingForUserInput,
+            DisplayBlocks);
+    }
+
+    private void HandleDisplayBlocksChanged(object? sender, EventArgs e) => NotifyChanged();
+
+    /// <inheritdoc />
+    protected override void OnOwnerChanged(ChatMessageNode? owner) => _displaySink.SetOwner(owner);
 
     /// <summary>
     /// Adds a function call and notifies owners that the serialized call list changed.
@@ -203,8 +225,8 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// </summary>
     public void AddCall(FunctionCallContent call)
     {
-        ImmutableInterlocked.Update(ref _calls, static (calls, item) => calls.Add(item), call);
-        OnPropertyChanged(nameof(Calls));
+        ImmutableInterlocked.InterlockedExchange(ref _calls, _calls.Add(call));
+        NotifyChanged();
     }
 
     /// <summary>
@@ -212,9 +234,8 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// </summary>
     public void AddResult(FunctionResultContent result)
     {
-        ImmutableInterlocked.Update(ref _results, static (results, item) => results.Add(item), result);
-        OnPropertyChanged(nameof(Results));
-        OnPropertyChanged(nameof(Attachments));
+        ImmutableInterlocked.InterlockedExchange(ref _results, _results.Add(result));
+        NotifyChanged();
     }
 
     /// <summary>
@@ -224,8 +245,8 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// The slot itself is stable for the invocation lifetime and carries both its latest lightweight
     /// preview and its transient user-input wait count. Updating either value never mutates the
     /// registry, so a late writer cannot accidentally re-register a slot after its invocation has
-    /// ended. The concurrent dictionary is needed only for the much rarer registration/removal
-    /// operations when multiple tool invocations overlap.
+    /// ended. Runtime registration and cleanup use the root execution domain; the concurrent
+    /// dictionary lets the UI enumerate those slots without synchronizing its snapshot reads.
     /// </remarks>
     internal ActivityPresentationSlot RegisterActivityPresentation(string invocationId)
     {
@@ -248,17 +269,17 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         if (slot.IsWaitingForUserInput) NotifyUserInputWaitChanged();
     }
 
-    private long NextActivityPreviewRevision() => Interlocked.Increment(ref _activityPreviewRevision);
+    private long NextActivityPreviewRevision() => ++_activityPreviewRevision;
 
-    private void NotifyActivityPreviewChanged() => OnPropertyChanged(nameof(ActivityPreview));
+    private void NotifyActivityPreviewChanged() => NotifyChanged(isDurable: false);
 
-    private void NotifyUserInputWaitChanged() => OnPropertyChanged(nameof(IsWaitingForUserInput));
+    private void NotifyUserInputWaitChanged() => NotifyChanged(isDurable: false);
 
     public void Dispose()
     {
         _activityPresentationSlots.Clear();
-        _displayPersistenceConnection.Dispose();
-        _disposables.Dispose();
+        _displaySink.Changed -= HandleDisplayBlocksChanged;
+        _displaySink.Dispose();
     }
 
     /// <summary>
@@ -278,7 +299,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
             set
             {
                 var revision = value is null ? 0 : owner.NextActivityPreviewRevision();
-                Interlocked.Exchange(ref _snapshot, new ActivityPreviewSnapshot(value, revision));
+                Volatile.Write(ref _snapshot, new ActivityPreviewSnapshot(value, revision));
                 owner.NotifyActivityPreviewChanged();
             }
         }
@@ -296,8 +317,11 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         /// </summary>
         public void EnterUserInputWait()
         {
-            if (Interlocked.Increment(ref _userInputWaitCount) == 1)
+            Volatile.Write(ref _userInputWaitCount, _userInputWaitCount + 1);
+            if (_userInputWaitCount == 1)
+            {
                 owner.NotifyUserInputWaitChanged();
+            }
         }
 
         /// <summary>
@@ -306,9 +330,13 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         /// </summary>
         public void ExitUserInputWait()
         {
-            var count = Interlocked.Decrement(ref _userInputWaitCount);
+            var count = _userInputWaitCount - 1;
+            Volatile.Write(ref _userInputWaitCount, count);
             Debug.Assert(count >= 0, "User-input wait scopes must be exited exactly once.");
-            if (count == 0) owner.NotifyUserInputWaitChanged();
+            if (count == 0)
+            {
+                owner.NotifyUserInputWaitChanged();
+            }
         }
     }
 

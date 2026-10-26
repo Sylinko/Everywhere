@@ -1,11 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Interop;
 using Everywhere.Terminal;
-using LiveMarkdown.Avalonia;
 using Lucide.Avalonia;
 using MessagePack;
 
@@ -27,7 +24,56 @@ namespace Everywhere.Chat.Plugins;
 [Union(9, typeof(ChatPluginCodeBlockDisplayBlock))]
 [Union(10, typeof(ChatPluginSubagentDisplayBlock))]
 [Union(11, typeof(ChatPluginTerminalDisplayBlock))]
-public abstract partial class ChatPluginDisplayBlock : ObservableObject;
+public abstract partial class ChatPluginDisplayBlock
+{
+    /// <summary>
+    /// Gets the direct persistence and turn-invalidation destination, if this block belongs to chat.
+    /// Standalone consent/review blocks remain usable without an owner.
+    /// </summary>
+    [IgnoreMember]
+    public ChatMessageNode? Owner
+    {
+        get;
+        internal set
+        {
+            if (ReferenceEquals(field, value))
+            {
+                return;
+            }
+
+            field = value;
+            OnOwnerChanged(value);
+        }
+    }
+
+    /// <summary>
+    /// Assigns descendant ownership or reconnects an explicit embedded-data durability bridge.
+    /// </summary>
+    protected virtual void OnOwnerChanged(ChatMessageNode? owner) { }
+
+    /// <summary>
+    /// Signals changed values to a realized standalone block, such as consent or terminal status.
+    /// Chat persistence and turn rendering are notified directly through Owner.
+    /// </summary>
+    public event EventHandler? Invalidated;
+
+    protected void NotifyChanged()
+    {
+        Owner?.NotifyMessageChanged(isDurable: true);
+        Invalidated?.Invoke(this, EventArgs.Empty);
+    }
+
+    protected void SetProperty<T>(ref T field, T value)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value))
+        {
+            return;
+        }
+
+        field = value;
+        NotifyChanged();
+    }
+}
 
 /// <summary>
 /// Represents a container block that can hold other display blocks.
@@ -36,35 +82,27 @@ public abstract partial class ChatPluginDisplayBlock : ObservableObject;
 public sealed partial class ChatPluginContainerDisplayBlock : ChatPluginDisplayBlock, IEnumerable<ChatPluginDisplayBlock>, IDisposable
 {
     /// <summary>
-    /// Gets the child display blocks of this container for MVVM binding.
-    /// WARNING that this collection is not strongly synchronized, but it is observed on the UI dispatcher.
+    /// Gets a stable reference snapshot of this container's children.
     /// </summary>
     [IgnoreMember]
-    public IReadOnlyBindableList<ChatPluginDisplayBlock> Children { get; }
+    public IReadOnlyList<ChatPluginDisplayBlock> Children => _displaySink.Items;
 
     [IgnoreMember]
-    public IChatPluginDisplaySink DisplaySink => _displaySink;
+    public ChatPluginDisplaySink DisplaySink => _displaySink;
 
     [Key(0)] private readonly ChatPluginDisplaySink _displaySink;
-    [IgnoreMember] private readonly IDisposable _displaySinkConnection;
-    [IgnoreMember] private readonly IDisposable _displaySinkPersistenceConnection;
 
     [SerializationConstructor]
     private ChatPluginContainerDisplayBlock(ChatPluginDisplaySink displaySink)
     {
         _displaySink = displaySink;
-        Children = _displaySink
-            .Connect()
-            .ObserveOnAvaloniaDispatcher()
-            .BindEx(out _displaySinkConnection);
-
-        // Bubble changes from nested blocks to the owning container. DynamicData keeps
-        // subscriptions aligned with the child collection, including removals and resets.
-        _displaySinkPersistenceConnection = _displaySink
-            .Connect()
-            .AutoRefresh()
-            .Subscribe(_ => OnPropertyChanged(nameof(Children)));
+        _displaySink.Changed += HandleChildrenChanged;
     }
+
+    private void HandleChildrenChanged(object? sender, EventArgs e) => NotifyChanged();
+
+    /// <inheritdoc />
+    protected override void OnOwnerChanged(ChatMessageNode? owner) => _displaySink.SetOwner(owner);
 
     public ChatPluginContainerDisplayBlock() : this(new ChatPluginDisplaySink()) { }
 
@@ -82,9 +120,8 @@ public sealed partial class ChatPluginContainerDisplayBlock : ChatPluginDisplayB
 
     public void Dispose()
     {
-        _displaySinkPersistenceConnection.Dispose();
+        _displaySink.Changed -= HandleChildrenChanged;
         _displaySink.Dispose();
-        _displaySinkConnection.Dispose();
     }
 }
 
@@ -111,7 +148,7 @@ public sealed partial class ChatPluginDynamicLocaleKeyDisplayBlock(IDynamicLocal
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class ChatPluginMarkdownDisplayBlock : ChatPluginDisplayBlock, IDisposable
 {
-    public ThreadSafeObservableStringBuilder MarkdownBuilder { get; } = new();
+    public ChatTextBuffer MarkdownBuilder { get; } = new();
 
     [Key(0)]
     private string Markdown
@@ -125,9 +162,9 @@ public sealed partial class ChatPluginMarkdownDisplayBlock : ChatPluginDisplayBl
         MarkdownBuilder.Changed += HandleMarkdownBuilderChanged;
     }
 
-    private void HandleMarkdownBuilderChanged(in ObservableStringBuilderChangedEventArgs e)
+    private void HandleMarkdownBuilderChanged(object? sender, EventArgs e)
     {
-        OnPropertyChanged(nameof(Markdown));
+        NotifyChanged();
     }
 
     public void Dispose()
@@ -137,17 +174,26 @@ public sealed partial class ChatPluginMarkdownDisplayBlock : ChatPluginDisplayBl
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginProgressDisplayBlock(IDynamicLocaleKey headerKey) : ChatPluginDisplayBlock
+public sealed partial class ChatPluginProgressDisplayBlock(IDynamicLocaleKey headerKey) : ChatPluginDisplayBlock, IProgress<double>
 {
-    [field: AllowNull, MaybeNull]
-    public Progress<double> ProgressReporter => field ??= new Progress<double>(value => Progress = value);
+    /// <summary>
+    /// Gets a synchronous reporter; reported values reach the model before Report returns.
+    /// </summary>
+    [IgnoreMember]
+    public IProgress<double> ProgressReporter => this;
+
+    /// <inheritdoc />
+    public void Report(double value) => Progress = value;
 
     [Key(0)]
     public IDynamicLocaleKey HeaderKey { get; } = headerKey;
 
     [Key(1)]
-    [ObservableProperty]
-    public partial double Progress { get; set; }
+    public double Progress
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 }
 
 /// <summary>
@@ -211,7 +257,11 @@ public sealed partial class ChatPluginFileReferencesDisplayBlock(params IReadOnl
     public IReadOnlyList<ChatPluginFileReference> References { get; } = references.AsValueEnumerable().Take(10).ToArray();
 
     [Key(1)]
-    public int TotalReferenceCount { get; set; } = references.Count;
+    public int TotalReferenceCount
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = references.Count;
 
     [IgnoreMember]
     public bool HasMoreReferences => TotalReferenceCount > References.Count;
@@ -228,14 +278,18 @@ public sealed partial class ChatPluginFileReferencesDisplayBlock(params IReadOnl
 public sealed partial class ChatPluginFileDifferenceDisplayBlock : ChatPluginDisplayBlock
 {
     [Key(0)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanReview))]
-    public partial TextDifference? Difference { get; private set; }
+    public TextDifference? Difference
+    {
+        get;
+        private set => SetProperty(ref field, value);
+    }
 
     [Key(1)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanReview))]
-    public partial string? OriginalText { get; private set; }
+    public string? OriginalText
+    {
+        get;
+        private set => SetProperty(ref field, value);
+    }
 
     [Key(2)]
     public TextDifferenceReviewKind ReviewKind { get; }
@@ -379,21 +433,43 @@ public sealed partial class ChatPluginCodeBlockDisplayBlock(string code, string?
 }
 
 /// <summary>
-/// Represents a display block that contains a chat context, allowing the user to view and interact with a specific chat session.
+/// Displays an embedded conversation while retaining its persisted data.
 /// </summary>
 /// <remarks>
-/// Owns the ChatContext and will dispose it when this block is disposed. This is important to prevent memory leaks and ensure that resources are released properly.
+/// Owns the ChatData and will dispose it when this block is disposed. This is important to prevent memory leaks and ensure that resources are released properly.
 /// </remarks>
-/// <param name="chatContext"></param>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginSubagentDisplayBlock(ChatContext chatContext) : ChatPluginDisplayBlock, IDisposable
+public sealed partial class ChatPluginSubagentDisplayBlock : ChatPluginDisplayBlock, IDisposable
 {
     [Key(0)]
-    public ChatContext ChatContext { get; } = chatContext;
+    public ChatData ChatData { get; }
+
+    /// <summary>
+    /// Owns embedded conversation data and bridges its durable changes to this block's current owner.
+    /// </summary>
+    public ChatPluginSubagentDisplayBlock(ChatData chatData)
+    {
+        ChatData = chatData;
+        ChatData.DurableChanged += HandleChildChanged;
+        ChatData.Metadata.PropertyChanged += HandleMetadataChanged;
+    }
+
+    private void HandleChildChanged(object? sender, EventArgs e) => NotifyChanged();
+
+    private void HandleMetadataChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatMetadata.Topic))
+        {
+            HandleChildChanged(sender, e);
+        }
+    }
 
     public void Dispose()
     {
-        ChatContext.Dispose();
+        Owner = null;
+        ChatData.DurableChanged -= HandleChildChanged;
+        ChatData.Metadata.PropertyChanged -= HandleMetadataChanged;
+        ChatData.Dispose();
     }
 }
 
@@ -413,13 +489,18 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
     public TerminalRun? Run { get; }
 
     [Key(3)]
-    [ObservableProperty]
-    public partial int? ExitCode { get; private set; }
+    public int? ExitCode
+    {
+        get;
+        private set => SetProperty(ref field, value);
+    }
 
     [Key(4)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Elapsed))]
-    public partial DateTimeOffset? FinishedAt { get; private set; }
+    public DateTimeOffset? FinishedAt
+    {
+        get;
+        private set => SetProperty(ref field, value);
+    }
 
     [IgnoreMember]
     public TimeSpan Elapsed => (FinishedAt ?? DateTimeOffset.UtcNow) - CreatedAt;

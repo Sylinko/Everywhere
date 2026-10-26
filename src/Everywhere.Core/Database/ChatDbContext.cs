@@ -1,16 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Everywhere.Cloud;
-using Everywhere.Common;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Extensions.Logging;
 
 namespace Everywhere.Database;
 
 /// <summary>
-/// EF Core DbContext for local chat storage.
+/// Historical v1 schema retained for migration tooling. Application services use ChatV2DbContext.
 /// </summary>
 [method: DynamicDependency(DynamicallyAccessedMemberTypes.AllConstructors, typeof(DateTimeToTicksConverter))]
 public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbContext(options)
@@ -91,75 +89,6 @@ public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbC
 
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.AllConstructors)]
     private class DateTimeOffsetToTicksConverter() : ValueConverter<DateTimeOffset, long>(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
-}
-
-public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory, ILogger<ChatDbInitializer> logger) : IAsyncInitializer
-{
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Database;
-
-    public async Task InitializeAsync(CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        logger.LogInformation("Initializing chat database...");
-
-        await using var dbContext = await dbFactory.CreateDbContextAsync(cancellationToken);
-        await dbContext.Database.MigrateAsync(cancellationToken);
-
-        await EnsureRootNodeIdsMigratedAsync(dbContext, cancellationToken);
-
-        logger.LogInformation("Chat database initialized.");
-    }
-
-    private async Task EnsureRootNodeIdsMigratedAsync(ChatDbContext dbContext, CancellationToken cancellationToken)
-    {
-        // 1. Check if there are any legacy root nodes (Id == Guid.Empty)
-        var hasLegacyRootNodes = await dbContext.Nodes.AnyAsync(x => x.Id == Guid.Empty, cancellationToken);
-        if (!hasLegacyRootNodes) return;
-
-        logger.LogInformation("Migrating legacy Root Nodes (Guid.Empty) to Version-0 deterministic IDs...");
-
-        // 2. Get all ChatContextIds that need migration
-        // Note: Only select IDs to avoid loading entire entities into memory, saving IO
-        var targetIds = await dbContext.Nodes
-            .AsNoTracking()
-            .Where(x => x.Id == Guid.Empty)
-            .Select(x => x.ChatContextId)
-            .ToListAsync(cancellationToken);
-
-        // 3. Start migration
-        // It's recommended to use ExecuteUpdateAsync (EF Core 7+), as it generates SQL directly,
-        // avoiding the "Load -> Modify PK -> Save" operation that would cause errors
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            foreach (var chatId in targetIds)
-            {
-                var oldRootId = Guid.Empty;
-                var newRootId = Guid.CreateVersion7().SetVersion(0);
-
-                // A. First update all child nodes (where ParentId points to old Root, change to new Root)
-                await dbContext.Nodes
-                    .Where(n => n.ChatContextId == chatId && n.ParentId == oldRootId)
-                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.ParentId, newRootId), cancellationToken);
-
-                // B. Update the Root node's primary key itself
-                // Note: Directly modifying PKs is not allowed in EF Core, but ExecuteUpdate bypasses this via SQL, so it's feasible.
-                // The WHERE clause must include all primary key columns (ChatContextId, Id)
-                await dbContext.Nodes
-                    .Where(n => n.ChatContextId == chatId && n.Id == oldRootId)
-                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.Id, newRootId), cancellationToken);
-            }
-
-            await transaction.CommitAsync(cancellationToken);
-            logger.LogInformation("Successfully migrated {Count} root nodes.", targetIds.Count);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to migrate root nodes. Data remains in legacy state.");
-            throw;
-        }
-    }
 }
 
 /// <summary>

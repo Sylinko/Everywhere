@@ -4,6 +4,7 @@ using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Everywhere.AI;
 using Everywhere.Chat;
+using Everywhere.Views;
 using Everywhere.Core.I18N;
 using Everywhere.I18N;
 using MessagePack;
@@ -189,67 +190,70 @@ public sealed class ContextCompressionTests
     [AvaloniaTest]
     public async Task BeginContextCompactionAsync_WhenScopeIsDisposed_RestoresIdleState()
     {
-        using var context = new ChatContext();
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
 
-        await using (await context.BeginContextCompactionAsync())
+        await using (await runtime.BeginContextCompactionAsync())
         {
-            Assert.That(context.ContextCompaction.IsRunning, Is.True);
+            Assert.That(runtime.ContextCompaction.IsRunning, Is.True);
         }
 
-        Assert.That(context.ContextCompaction.IsRunning, Is.False);
+        Assert.That(runtime.ContextCompaction.IsRunning, Is.False);
     }
 
     [Test]
-    public void ResolvePendingAutomaticCompressionTrigger_WhenAutomaticAttemptFailed_RetriesOnNextOperation()
+    public async Task ResolvePendingAutomaticCompressionTrigger_WhenAutomaticAttemptFailed_RetriesOnNextOperation()
     {
-        using var context = new ChatContext();
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
         var failure = CreateRunningCompression(ContextCompressionTrigger.ContextLengthRecovery);
         failure.Fail(new DirectLocaleKey("failed"), DateTimeOffset.UtcNow);
-        context.Add(failure);
+        data.Add(failure);
 
-        var trigger = ResolvePendingAutomaticCompressionTrigger(context);
+        var trigger = await ResolvePendingAutomaticCompressionTrigger(runtime);
 
         Assert.That(trigger, Is.EqualTo(ContextCompressionTrigger.ContextLengthRecovery));
     }
 
     [Test]
-    public void ResolvePendingAutomaticCompressionTrigger_WhenManualAttemptFailed_UsesUsageThresholdOnly()
+    public async Task ResolvePendingAutomaticCompressionTrigger_WhenManualAttemptFailed_UsesUsageThresholdOnly()
     {
-        using var context = new ChatContext();
+        using var data = new ChatData();
+        await using var runtime = new RootChatContext(data, null);
         var failure = CreateRunningCompression(ContextCompressionTrigger.Manual);
         failure.Fail(new DirectLocaleKey("failed"), DateTimeOffset.UtcNow);
-        context.Add(failure);
+        data.Add(failure);
 
-        Assert.That(ResolvePendingAutomaticCompressionTrigger(context), Is.Null);
+        Assert.That(await ResolvePendingAutomaticCompressionTrigger(runtime), Is.Null);
 
-        context.ContextUsage.Report(
+        runtime.ContextUsage.Report(
             CreateUsage(160_000),
             "test-model",
             200_000);
 
         Assert.That(
-            ResolvePendingAutomaticCompressionTrigger(context),
+            await ResolvePendingAutomaticCompressionTrigger(runtime),
             Is.EqualTo(ContextCompressionTrigger.Automatic));
 
-        Assert.That(ResolvePendingAutomaticCompressionTrigger(context, 90), Is.Null);
+        Assert.That(await ResolvePendingAutomaticCompressionTrigger(runtime, 90), Is.Null);
         Assert.That(
-            ResolvePendingAutomaticCompressionTrigger(context, 75),
+            await ResolvePendingAutomaticCompressionTrigger(runtime, 75),
             Is.EqualTo(ContextCompressionTrigger.Automatic));
     }
 
     [Test]
     public void ResolveCompressionBoundary_WhenBeforeCurrentUser_LeavesNewUserInSuffix()
     {
-        using var context = new ChatContext();
-        context.Add(new UserChatMessage("old request", []));
+        using var data = new ChatData();
+        data.Add(new UserChatMessage("old request", []));
         var oldAssistant = Assistant("old response");
-        context.Add(oldAssistant);
-        var userNode = context.Add(new UserChatMessage("new request", []));
+        data.Add(oldAssistant);
+        var userNode = data.Add(new UserChatMessage("new request", []));
         var pendingAssistant = new AssistantChatMessage { IsBusy = true };
-        context.Add(pendingAssistant);
+        data.Add(pendingAssistant);
 
-        var boundary = ResolveCompressionBoundary(context, CompressionBoundary.Before(userNode));
-        var oldAssistantNode = context.Items.Single(node => ReferenceEquals(node.Message, oldAssistant));
+        var boundary = ResolveCompressionBoundary(data, CompressionBoundary.Before(userNode));
+        var oldAssistantNode = data.Items.Single(node => ReferenceEquals(node.Message, oldAssistant));
 
         Assert.That(boundary, Is.EqualTo(oldAssistantNode.Id));
     }
@@ -353,22 +357,23 @@ public sealed class ContextCompressionTests
     }
 
     [AvaloniaTest]
-    public void DisplayItems_WhenCompressionChangesState_KeepsTerminalRowsAndHidesRestartOrphan()
+    public async Task Presentation_WhenCompressionChangesState_KeepsTerminalRowsAndHidesRestartOrphan()
     {
-        using var context = new ChatContext();
+        using var data = new ChatData();
         var running = CreateRunningCompression(ContextCompressionTrigger.Manual);
         var serialized = MessagePackSerializer.Serialize<ChatMessage>(running);
         var restartOrphan = MessagePackSerializer.Deserialize<ChatMessage>(serialized);
 
-        context.Add(running);
+        data.Add(running);
         running.Complete("summary", false, DateTimeOffset.UtcNow);
-        context.Add(restartOrphan);
-        Dispatcher.UIThread.RunJobs();
+        data.Add(restartOrphan);
+        await using var runtime = new RootChatContext(data, null);
+        await runtime.Presentation.PrepareInitialWindowAsync();
 
         Assert.Multiple(() =>
         {
-            Assert.That(context.Items.Select(node => node.Message).ToArray(), Has.Length.EqualTo(3));
-            Assert.That(context.DisplayItems.Select(node => node.Message), Is.EqualTo(new[] { running }));
+            Assert.That(data.Items.Select(node => node.Message).ToArray(), Has.Length.EqualTo(3));
+            Assert.That(runtime.Presentation.Rows.OfType<ChatMessagePresentationRow>().Select(row => row.Node.Message), Is.EqualTo(new[] { running }));
             Assert.That(restartOrphan.IsHidden, Is.True);
         });
     }
@@ -422,17 +427,18 @@ public sealed class ContextCompressionTests
         return usage;
     }
 
-    private static ContextCompressionTrigger? ResolvePendingAutomaticCompressionTrigger(
-        ChatContext context,
+    private static Task<ContextCompressionTrigger?> ResolvePendingAutomaticCompressionTrigger(
+        ChatContext data,
         int contextCompressionThreshold = ContextUsageSnapshot.DefaultCompressionThresholdPercentage) =>
         InvokeResolvePendingAutomaticCompressionTrigger(
             null,
-            context,
-            contextCompressionThreshold);
+            data,
+            contextCompressionThreshold,
+            CancellationToken.None);
 
-    private static Guid ResolveCompressionBoundary(ChatContext context, CompressionBoundary boundary)
+    private static Guid ResolveCompressionBoundary(ChatData data, CompressionBoundary boundary)
     {
-        var nodes = context.Items;
+        var nodes = data.Items;
         var boundaryIndex = InvokeResolveCompressionBoundary(null, nodes, boundary);
         return boundaryIndex >= 0 ? nodes[boundaryIndex].Id : Guid.Empty;
     }
@@ -445,11 +451,12 @@ public sealed class ContextCompressionTests
         return method.Invoke(null, [messages]) is true;
     }
 
-    [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "ResolvePendingAutomaticCompressionTrigger")]
-    private static extern ContextCompressionTrigger? InvokeResolvePendingAutomaticCompressionTrigger(
+    [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "ResolvePendingAutomaticCompressionTriggerAsync")]
+    private static extern Task<ContextCompressionTrigger?> InvokeResolvePendingAutomaticCompressionTrigger(
         ChatService? klass,
-        ChatContext context,
-        int contextCompressionThreshold);
+        ChatContext data,
+        int contextCompressionThreshold,
+        CancellationToken cancellationToken);
 
     [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "ResolveCompressionBoundary")]
     private static extern int InvokeResolveCompressionBoundary(

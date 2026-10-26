@@ -6,6 +6,9 @@ namespace Everywhere.Chat;
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
 public sealed partial class UserStrategyChatMessage : UserChatMessage
 {
+    /// <inheritdoc />
+    public override ChatMessageKind Kind => ChatMessageKind.UserStrategy;
+
     [Key(4)]
     public Strategy Strategy { get; }
 
@@ -32,5 +35,11 @@ public sealed partial class UserStrategyChatMessage : UserChatMessage
     {
         Strategy = strategy;
         PreprocessorResult = preprocessorResult;
+    }
+
+    /// <inheritdoc />
+    public override ChatUserStrategyState Capture()
+    {
+        return new ChatUserStrategyState(Content, Attachments, Strategy.NameKey);
     }
 }

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -16,6 +16,7 @@ using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Activation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
+using Everywhere.Storage;
 using Everywhere.Views;
 using LiveMarkdown.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,6 +58,8 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
     private Task? _initializationTask;
     private Task? _activationTask;
+    private bool _isShutdownInProgress;
+    private bool _isShutdownPrepared;
 
     // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
     // arrive while the first error dialog is still open; without this guard every nested exception
@@ -102,9 +105,33 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     /// </summary>
     public void Shutdown(int exitCode = 0)
     {
-        if (ApplicationLifetime is IControlledApplicationLifetime lifetime)
+        Dispatcher.UIThread.VerifyAccess();
+        if (!_isShutdownInProgress && ApplicationLifetime is IControlledApplicationLifetime lifetime)
         {
+            _isShutdownInProgress = true;
+            ShutdownCoreAsync(lifetime, exitCode).Detach(NativeMessageBox.ExceptionHandler);
+        }
+    }
+
+    private async Task ShutdownCoreAsync(IControlledApplicationLifetime lifetime, int exitCode)
+    {
+        try
+        {
+            // Startup can own a dialog whose cancellation and continuations require the dispatcher.
+            // Drain startup before stopping the UI loop.
+            await _initializationCancellation.CancelAsync();
+            if (_initializationTask is { } initializationTask)
+            {
+                await initializationTask;
+            }
+
+            _isShutdownPrepared = true;
             lifetime.Shutdown(exitCode);
+        }
+        catch
+        {
+            _isShutdownInProgress = false;
+            throw;
         }
     }
 
@@ -272,6 +299,16 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
         {
             case IClassicDesktopStyleApplicationLifetime desktop:
             {
+                desktop.ShutdownRequested += (_, args) =>
+                {
+                    if (_isShutdownPrepared)
+                    {
+                        return;
+                    }
+
+                    args.Cancel = true;
+                    Shutdown();
+                };
                 desktop.Exit += (_, _) => _initializationCancellation.Cancel();
 
                 if (!Design.IsDesignMode)
@@ -309,6 +346,7 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
                 RecordAppLaunchMetric();
                 TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
                 ShowMainWindowOnNeeded();
+                await ShowChatUpgradeNoticeAsync(cancellationToken);
 
                 if (_activationServer is not null)
                 {
@@ -329,7 +367,8 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
                     NativeMessageBoxButtons.Ok,
                     NativeMessageBoxIcon.Error);
 
-                Shutdown(1);
+                // Do not make startup await a shutdown that is itself draining startup.
+                Dispatcher.UIThread.Post(() => Shutdown(1));
             }
         }
     }
@@ -444,6 +483,47 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     }
 
     public void ShowMainWindow() => ShowWindow<MainView>();
+
+    private async Task ShowChatUpgradeNoticeAsync(CancellationToken cancellationToken)
+    {
+        var upgrade = serviceProvider.GetRequiredService<ChatStoreUpgradeService>();
+        if (!await upgrade.NeedsNoticeAsync(cancellationToken))
+        {
+            return;
+        }
+
+        ShowMainWindow();
+        var notice = new ChatUpgradeNoticeView();
+        var result = await DialogManager.CreateDialog(
+                notice,
+                LocaleKey.ChatUpgrade_Title.I18N(),
+                _transientWindows[typeof(MainView)])
+            .WithPrimaryButton(LocaleKey.ChatUpgrade_Continue.I18N())
+            .ShowAsync(cancellationToken);
+        if (result != DialogResult.Primary)
+        {
+            return;
+        }
+
+        if (notice.ShouldTrashLegacyDatabase)
+        {
+            try
+            {
+                await upgrade.TrashLegacyDatabaseAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                // Canceling the native trash dialog does not cancel acknowledgment of the completed upgrade.
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                Log.Warning(exception, "Could not move all previous-version chat database files to the trash.");
+                ToastManager.Error(LocaleKey.Common_Error.I18N(), LocaleKey.ChatUpgrade_TrashFailed.I18N());
+            }
+        }
+
+        await upgrade.AcknowledgeAsync(cancellationToken);
+    }
 
     public void ShowDebugWindow() => ShowWindow<VisualTreeDebugger>();
 

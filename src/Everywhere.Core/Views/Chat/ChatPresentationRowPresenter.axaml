@@ -1,6 +1,6 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:c="using:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
   xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
@@ -30,9 +30,7 @@
 
     <Setter Property="shadui:BindingAssist.DataTemplates">
       <DataTemplates>
-        <DataTemplate x:DataType="v:ChatMessagePresentationRow">
-          <v:ChatMessageNodeControl Node="{Binding Node}"/>
-        </DataTemplate>
+        <v:ChatMessageControlTemplate/>
 
         <DataTemplate x:DataType="v:PendingAssistantPresentationRow">
           <StackPanel
@@ -368,12 +366,7 @@
             IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
             VerticalSpacing="2">
             <v:ActivityMarker.IsRunning>
-              <MultiBinding Converter="{x:Static BoolConverters.And}">
-                <Binding Path="Assistant.IsBusy"/>
-                <Binding
-                  Converter="{x:Static ObjectConverters.IsNull}"
-                  Path="ReasoningSpan.FinishedAt"/>
-              </MultiBinding>
+              <Binding Path="State.IsRunning"/>
             </v:ActivityMarker.IsRunning>
             <v:ActivityMarker.Icon>
               <LucideIcon
@@ -393,7 +386,7 @@
               <TextBlock
                 Classes="Muted Caption" VerticalAlignment="Center"
                 IsHitTestVisible="False" MaxLines="1"
-                Text="{Binding ReasoningSpan.ReasoningOutput}"
+                Text="{Binding State.Text}"
                 TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
             </v:ActivityMarker.SecondaryHeader>
 
@@ -401,7 +394,7 @@
               <MultiBinding Converter="{x:Static BoolConverters.And}">
                 <Binding
                   Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
-                  Path="ReasoningSpan.ReasoningOutput"/>
+                  Path="State.Text"/>
                 <Binding Path="$self.IsRunning"/>
                 <Binding
                   Converter="{x:Static BoolConverters.Not}"
@@ -423,7 +416,7 @@
                     <SelectableTextBlock
                       FontSize="{DynamicResource FontSizeS}"
                       Foreground="{DynamicResource MutedColor}"
-                      Text="{Binding ReasoningSpan?.ReasoningOutput}"
+                      Text="{Binding State.Text}"
                       TextWrapping="Wrap"/>
                   </ScrollViewer>
                 </DataTemplate>
@@ -435,14 +428,14 @@
         <DataTemplate x:DataType="v:FunctionCallActivityItemPresentationRow">
           <v:ActivityMarker
             Margin="4,0" HorizontalSpacing="8"
-            IsExpandable="{Binding FunctionCall.DisplayBlocks.Count, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+            IsExpandable="{Binding State.DisplayBlocks.Count, Converter={x:Static vc:Int32Converters.IsNotZero}}"
             IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
-            IsRunning="{Binding FunctionCall.IsBusy}"
+            IsRunning="{Binding State.IsRunning}"
             VerticalSpacing="2">
             <v:ActivityMarker.Icon>
               <LucideIcon
                 shadui:Timeline.Anchor="{Binding $self.Bounds, Converter={x:Static shadui:TimelineConverters.HalfRect}}"
-                Kind="{Binding FunctionCall.Icon}"
+                Kind="{Binding State.Icon}"
                 Size="{DynamicResource FontSizeL}"/>
             </v:ActivityMarker.Icon>
 
@@ -454,7 +447,7 @@
                   <MultiBinding Converter="{x:Static shadui:BasicConverters.FirstNotNullOrEmpty}">
                     <Binding
                       FallbackValue="{x:Null}"
-                      Path="FunctionCall.HeaderKey^"/>
+                      Path="State.HeaderKey^"/>
                     <Binding Path="FallbackHeaderKey^"/>
                   </MultiBinding>
                 </TextBlock.Text>
@@ -469,14 +462,14 @@
                   opted into the structured preview channel yet.
                 -->
                 <v:ChatActivityPreviewPresenter
-                  Content="{Binding FunctionCall.ActivityPreview}"
-                  IsVisible="{Binding FunctionCall.ActivityPreview, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                  Content="{Binding State.ActivityPreview}"
+                  IsVisible="{Binding State.ActivityPreview, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                 <TextBlock
                   Classes="Muted" VerticalAlignment="Center"
                   FontSize="{DynamicResource FontSizeS}"
-                  IsVisible="{Binding FunctionCall.ActivityPreview, Converter={x:Static ObjectConverters.IsNull}}"
+                  IsVisible="{Binding State.ActivityPreview, Converter={x:Static ObjectConverters.IsNull}}"
                   MaxLines="1"
-                  Text="{Binding FunctionCall.Content}"
+                  Text="{Binding State.Content}"
                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
               </Grid>
             </v:ActivityMarker.SecondaryHeader>
@@ -486,12 +479,12 @@
                 <MultiBinding Converter="{x:Static BoolConverters.Or}">
                   <Binding
                     Converter="{x:Static ObjectConverters.IsNotNull}"
-                    Path="FunctionCall.ActivityPreview"/>
+                    Path="State.ActivityPreview"/>
                   <Binding
                     Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
-                    Path="FunctionCall.Content"/>
+                    Path="State.Content"/>
                 </MultiBinding>
-                <Binding Path="FunctionCall.IsBusy"/>
+                <Binding Path="State.IsRunning"/>
                 <Binding
                   Converter="{x:Static BoolConverters.Not}"
                   Path="IsExpanded"/>
@@ -506,7 +499,7 @@
             <v:ConditionalContentControl Condition="{Binding IsExpanded}">
               <v:ConditionalContentControl.TrueContent>
                 <DataTemplate x:DataType="v:FunctionCallActivityItemPresentationRow">
-                  <ItemsControl ItemsSource="{Binding FunctionCall.DisplayBlocks}">
+                  <ItemsControl ItemsSource="{Binding State.DisplayBlocks}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
                         <v:ChatPluginDisplayBlockPresenter
@@ -558,9 +551,8 @@
         <DataTemplate x:DataType="v:AssistantTextOutputPresentationRow">
           <md:MarkdownRenderer
             Margin="4,8"
-            DocumentUpdate="{Binding CachedDocumentUpdate, Mode=TwoWay}"
-            LinkCommand="{Binding $parent[v:ChatMessageItemsControl].OpenUrlCommand}"
-            MarkdownBuilder="{Binding RenderingMarkdownBuilder}">
+            DocumentUpdate="{Binding Markdown.DocumentUpdate}"
+            LinkCommand="{Binding $parent[v:ChatMessageItemsControl].OpenUrlCommand}">
             <Interaction.Behaviors>
               <in:ChatTextSearchSurfaceBehavior
                 Coordinator="{Binding $parent[v:ChatMessageItemsControl].TextSearch}"
@@ -574,7 +566,7 @@
           <Image
             MaxHeight="{Binding $parent[ContentControl].Bounds.Width}"
             Margin="4,8"
-            Source="{Binding ImageSpan.ImageOutput.Image, FallbackValue={x:Null}}"/>
+            Source="{Binding ImageOutput.Image, FallbackValue={x:Null}}"/>
         </DataTemplate>
 
         <DataTemplate x:DataType="v:AssistantErrorPresentationRow">
@@ -588,7 +580,7 @@
               CornerRadius="{DynamicResource 2XlCornerRadius}">
               <StackPanel Spacing="8">
                 <SelectableTextBlock
-                  Text="{Binding Assistant.ErrorMessageKey^, FallbackValue={x:Null}}"
+                  Text="{Binding State.ErrorMessageKey^, FallbackValue={x:Null}}"
                   TextWrapping="Wrap"/>
 
                 <StackPanel
@@ -606,10 +598,10 @@
                     shadui:ButtonAssist.Icon="{LucideIconContent Eye}"
                     shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
                     Command="{Binding $parent[v:ChatMessageItemsControl].ShowErrorDetailsCommand}"
-                    CommandParameter="{Binding Assistant.Error}"
+                    CommandParameter="{Binding State.Error}"
                     Content="{I18N {x:Static LocaleKey.ChatRequest_ErrorDetails}}"
                     Focusable="False"
-                    IsVisible="{Binding Assistant.Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                    IsVisible="{Binding State.Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                   <Button
                     x:Name="ContinueButton" Classes="Secondary Compact"
                     HorizontalAlignment="Right"
@@ -621,7 +613,7 @@
                     Focusable="False">
                     <Button.IsVisible>
                       <MultiBinding Converter="{x:Static BoolConverters.And}">
-                        <Binding Path="IsTerminal"/>
+                        <Binding Path="IsContinuationTarget"/>
                         <Binding Path="!$parent[v:ChatMessageItemsControl].IsReadonly"/>
                       </MultiBinding>
                     </Button.IsVisible>
@@ -645,7 +637,7 @@
               Focusable="False">
               <Button.IsVisible>
                 <MultiBinding Converter="{x:Static BoolConverters.And}">
-                  <Binding Path="IsTerminal"/>
+                  <Binding Path="IsContinuationTarget"/>
                   <Binding Path="!$parent[v:ChatMessageItemsControl].IsReadonly"/>
                 </MultiBinding>
               </Button.IsVisible>
@@ -667,9 +659,9 @@
             Margin="4,0" Spacing="3">
             <v:ConditionalContentControl
               Condition="{Binding $parent[v:ChatMessageItemsControl].ShowStatistics}"
-              ContentDataBinding="{Binding AssistantMessage, Mode=OneTime}">
+              ContentDataBinding="{Binding State}">
               <v:ConditionalContentControl.TrueContent>
-                <DataTemplate x:DataType="chat:AssistantChatMessage">
+                <DataTemplate x:DataType="c:ChatAssistantState">
                   <SelectableTextBlock
                     Classes="Muted" HorizontalAlignment="Left"
                     FontSize="11" TextWrapping="Wrap">
@@ -715,26 +707,26 @@
 
             <v:ConditionalContentControl
               Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly, Mode=OneTime}"
-              ContentDataBinding="{Binding AssistantNode, Mode=OneTime}">
+              ContentDataBinding="{Binding Branch, Mode=OneTime}">
               <v:ConditionalContentControl.FalseContent>
-                <DataTemplate x:DataType="chat:ChatMessageNode">
+                <DataTemplate x:DataType="v:ChatBranchSelection">
                   <v:ChatMessageOperationPanel>
                     <NumericUpDown
                       Margin="0,0,4,0"
-                      IsVisible="{Binding Parent?.ChoiceCount, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
-                      Maximum="{Binding Parent?.ChoiceCount, FallbackValue=1}"
+                      IsVisible="{Binding ChoiceCount, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
+                      Maximum="{Binding ChoiceCount, FallbackValue=1}"
                       Minimum="1"
-                      Value="{Binding Parent?.ChoiceIndex, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
+                      Value="{Binding ChoiceIndex, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
                     <Button
                       Classes="Ghost Minimal"
                       Command="{Binding $parent[v:ChatMessageItemsControl].RetryMessageNodeCommand}"
-                      CommandParameter="{Binding Mode=OneTime}"
+                      CommandParameter="{Binding Node, Mode=OneTime}"
                       Content="{LucideIconContent RefreshCcw}"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_RetryButton_Content}}"/>
                     <Button
                       Classes="Ghost Minimal"
                       Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand}"
-                      CommandParameter="{Binding Message, Mode=OneTime}"
+                      CommandParameter="{Binding Node.Message, Mode=OneTime}"
                       Content="{LucideIconContent Copy}"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
                       <Interaction.Behaviors>

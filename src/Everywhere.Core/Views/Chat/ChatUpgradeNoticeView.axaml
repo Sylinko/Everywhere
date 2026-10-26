@@ -1,0 +1,22 @@
+﻿<UserControl
+  x:Class="Everywhere.Views.ChatUpgradeNoticeView" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Name="Self"
+  MaxWidth="440">
+  <StackPanel Spacing="16">
+    <TextBlock
+      Text="{I18N {x:Static LocaleKey.ChatUpgrade_Body}}"
+      TextWrapping="Wrap"/>
+    <TextBlock
+      Text="{I18N {x:Static LocaleKey.ChatUpgrade_Compatibility}}"
+      TextWrapping="Wrap"/>
+    <TextBlock
+      Classes="Muted"
+      Text="{I18N {x:Static LocaleKey.ChatUpgrade_LocalOnly}}"
+      TextWrapping="Wrap"/>
+    <CheckBox IsChecked="{Binding #Self.ShouldTrashLegacyDatabase, Mode=TwoWay}">
+      <TextBlock
+        Text="{I18N {x:Static LocaleKey.ChatUpgrade_TrashPrevious}}"
+        TextWrapping="Wrap"/>
+    </CheckBox>
+  </StackPanel>
+</UserControl>

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Serialization;
@@ -154,7 +154,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             }
         }
 
-        displaySink.AppendBlocks(detailBlock);
+        await displaySink.AppendBlocksAsync(detailBlock);
 
         FormattableString script;
         switch (action)
@@ -339,7 +339,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             }
         }
 
-        displaySink.AppendBlocks(detailBlock);
+        await displaySink.AppendBlocksAsync(detailBlock);
 
         FormattableString script;
         switch (action)
@@ -443,7 +443,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         };
 
         // Don't show consent because it already shows before calling this function
-        displaySink.AppendBlocks(detailBlock);
+        await displaySink.AppendBlocksAsync(detailBlock);
 
         return await RunAppleScriptAsync(
             $$"""
@@ -473,7 +473,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             new ChatPluginDynamicLocaleKeyDisplayBlock(
                 new FormattedDynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Detail_Query, new DirectLocaleKey(query))),
         };
-        displaySink.AppendBlocks(detailBlock);
+        await displaySink.AppendBlocksAsync(detailBlock);
 
         return await RunAppleScriptAsync(
             $"""
@@ -562,7 +562,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
                 showDetails: false);
         }
 
-        displaySink.AppendBlocks(detailBlock);
+        await displaySink.AppendBlocksAsync(detailBlock);
 
         FormattableString script;
         switch (action)
@@ -633,7 +633,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             new ChatPluginDynamicLocaleKeyDisplayBlock(
                 new FormattedDynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Detail_Url, new DirectLocaleKey(url))),
         };
-        displaySink.AppendBlocks(detailBlock);
+        await displaySink.AppendBlocksAsync(detailBlock);
 
         return await RunAppleScriptAsync($"open location \"{url}\"", cancellationToken);
     }
@@ -679,7 +679,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
                 showDetails: false);
         }
 
-        displaySink.AppendBlocks(detailBlock);
+        await displaySink.AppendBlocksAsync(detailBlock);
 
         var rawResult = await RunRawAppleScriptAsync(script, cancellationToken);
         return TokenHelper.Omit(rawResult, maxTokenCount: 40000);

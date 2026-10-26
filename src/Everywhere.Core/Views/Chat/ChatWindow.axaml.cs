@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -97,6 +98,7 @@ public sealed partial class ChatWindow :
         _logger = logger;
 
         InitializeComponent();
+        ChatMessages.SetViewportActive(IsVisible && WindowState != WindowState.Minimized);
 
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel, true);
         ViewModel.TextSearch.FocusRequested += HandleTextSearchFocusRequested;
@@ -205,20 +207,27 @@ public sealed partial class ChatWindow :
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == IsVisibleProperty)
+        if (change.Property == IsVisibleProperty || change.Property == WindowStateProperty)
         {
-            var isVisible = change.NewValue is true;
-            ViewModel.IsOpened = isVisible;
-            _modelAvailabilityPresenter.SetActive(isVisible);
+            if (change.Property == IsVisibleProperty)
+            {
+                ViewModel.IsOpened = IsVisible;
+            }
+            var isActive = IsVisible && WindowState != WindowState.Minimized;
+            _modelAvailabilityPresenter.SetActive(isActive);
+            ChatMessages.SetViewportActive(isActive);
 
             DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
-            if (!isVisible)
+            if (!isActive)
             {
                 _pendingHiddenCompaction = DispatcherTimer.RunOnce(
                     () =>
                     {
                         _pendingHiddenCompaction = null;
-                        if (!IsVisible) ChatMessages.CompactCurrentViewport();
+                        if (!IsVisible || WindowState == WindowState.Minimized)
+                        {
+                            ChatMessages.CompactCurrentViewport();
+                        }
                     },
                     TimeSpan.FromSeconds(1));
             }
@@ -327,21 +336,28 @@ public sealed partial class ChatWindow :
 
     void IRecipient<FlashChatWindowMessage>.Receive(FlashChatWindowMessage message)
     {
-        Dispatcher.Invoke(() =>
+        // Notifications are presentation-only. A producer may finish after the UI loop has exited.
+        Dispatcher.PostOnDemand(() =>
         {
+            if (_canCloseWindow) return;
             if (!IsFocused) _windowHelper.RequestUserAttention(this);
 
             if (!_windowHelper.GetEffectiveVisible(this) && message.Prompt is { Length: > 0 } prompt)
             {
-                _nativeHelper.ShowDesktopNotificationAsync(prompt).ContinueWith(t =>
-                {
-                    if (t is { IsCompletedSuccessfully: true, Result: true })
-                    {
-                        Dispatcher.Invoke(() => RequestCloaked(false));
-                    }
-                });
+                ShowDesktopNotificationAsync(prompt).Detach(_logger.ToExceptionHandler());
             }
         });
+    }
+
+    private async Task ShowDesktopNotificationAsync(string prompt)
+    {
+        if (await _nativeHelper.ShowDesktopNotificationAsync(prompt).ConfigureAwait(false))
+        {
+            Dispatcher.PostOnDemand(() =>
+            {
+                if (!_canCloseWindow) RequestCloaked(false);
+            });
+        }
     }
 
     void IRecipient<ApplicationMessage>.Receive(ApplicationMessage message)
@@ -406,6 +422,27 @@ public sealed partial class ChatWindow :
             _windowHelper.SetCloaked(this, false);
             ChatInputArea.Focus();
         }
+    }
+
+    private void HandleTemporaryChatClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleButton toggle)
+        {
+            var context = ViewModel.ChatContextManager.Current;
+            context.SetTemporaryAsync(toggle.IsChecked == true).Detach(PART_ToastHost.ToExceptionHandler());
+        }
+    }
+
+    private void HandleTopicEditorPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property != ShadUI.EditableTextBlock.TextProperty ||
+            sender is not ShadUI.EditableTextBlock { IsEditing: true, DataContext: ChatMetadata metadata } editor ||
+            editor.Text == metadata.Topic)
+        {
+            return;
+        }
+
+        ViewModel.ChatContextManager.RenameAsync(metadata, editor.Text).Detach(PART_ToastHost.ToExceptionHandler());
     }
 
     private void HandleChatInputAreaTextChanged(object? sender, TextChangedEventArgs e)

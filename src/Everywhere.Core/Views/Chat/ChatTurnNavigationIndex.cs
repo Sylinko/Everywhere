@@ -1,7 +1,6 @@
-using System.Globalization;
+﻿using System.Globalization;
+using Avalonia.Threading;
 using Everywhere.Chat;
-using Everywhere.Common;
-using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Everywhere.Views;
 
@@ -22,51 +21,59 @@ public sealed class ChatTurnNavigationIndex : IDisposable
     public IReadOnlyList<PreviewItem> PreviewItems => _previewItems;
 
     /// <summary>
+    /// Gets the runtime used to load a turn when its preview becomes visible.
+    /// </summary>
+    public ChatContext Context { get; }
+
+    /// <summary>
     /// Raised after a branch change has been applied on the UI thread.
     /// </summary>
     public event Action? Changed;
 
-    private readonly List<ChatMessageNode> _nodes = [];
     private readonly List<Entry> _turns = [];
     private readonly List<PreviewItem> _previewItems = [];
-    private readonly IDisposable _subscription;
+    private int _isRefreshQueued;
+    private bool _isDisposed;
 
     /// <summary>
-    /// Observes the visible selected branch of the supplied context.
+    /// Indexes native turn identities without materializing any message bodies.
     /// </summary>
     public ChatTurnNavigationIndex(ChatContext context)
     {
-        _subscription = context
-            .ConnectDisplayItems()
-            .ObserveOnAvaloniaDispatcher()
-            .Clone(_nodes)
-            .Subscribe(_ =>
+        Context = context;
+        context.Data.BranchChanged += HandleBranchChanged;
+        Reconcile();
+    }
+
+    private void HandleBranchChanged(object? sender, EventArgs e)
+    {
+        if (Interlocked.Exchange(ref _isRefreshQueued, 1) != 0)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            Interlocked.Exchange(ref _isRefreshQueued, 0);
+            if (_isDisposed)
             {
-                Reconcile();
-                Changed?.Invoke();
-            });
+                return;
+            }
+
+            Reconcile();
+            Changed?.Invoke();
+        });
     }
 
     private void Reconcile()
     {
-        // Only structural branch notifications visit the full index; rendering and preview reads
-        // never scan history. Reuse entries by node identity when edits replace a branch suffix.
-        var existing = _turns.AsValueEnumerable().ToDictionary(turn => turn.Node);
-        var position = 0;
-        for (var i = 0; i < _nodes.Count; i++)
+        // Structural notifications visit only the turn index, never message payloads.
+        var existing = _turns.ToDictionary(entry => entry.Turn);
+        _turns.Clear();
+        foreach (var turn in Context.Data.SelectedTurns)
         {
-            var node = _nodes[i];
-            if (node.Message.Role != AuthorRole.User) continue;
-
-            if (position > 0) _turns[position - 1].End = i;
-            if (!existing.TryGetValue(node, out var entry)) entry = new Entry(this, node);
-            entry.Start = i;
-            entry.End = _nodes.Count;
-            if (position < _turns.Count) _turns[position] = entry;
-            else _turns.Add(entry);
-            position++;
+            _turns.Add(existing.TryGetValue(turn, out var entry) ? entry : new Entry(this, turn));
         }
-        if (position < _turns.Count) _turns.RemoveRange(position, _turns.Count - position);
 
         ReconcilePreviewItems();
     }
@@ -80,7 +87,7 @@ public sealed class ChatTurnNavigationIndex : IDisposable
         for (var i = 0; i < _turns.Count; i++)
         {
             var turn = _turns[i];
-            var date = DateOnly.FromDateTime(turn.Node.Message.CreatedAt.ToLocalTime().Date);
+            var date = DateOnly.FromDateTime(turn.Node.CreatedAt.ToLocalTime().Date);
             if (date != previousDate)
             {
                 if (!existingHeaders.TryGetValue(turn, out var header) || header.Date != date)
@@ -100,16 +107,12 @@ public sealed class ChatTurnNavigationIndex : IDisposable
         }
     }
 
-    /// <summary>
-    /// Enumerates only the messages belonging to this indexed turn.
-    /// </summary>
-    public IEnumerable<ChatMessage> GetMessages(Entry entry)
-    {
-        for (var i = entry.Start; i < entry.End; i++) yield return _nodes[i].Message;
-    }
-
     /// <inheritdoc />
-    public void Dispose() => _subscription.Dispose();
+    public void Dispose()
+    {
+        _isDisposed = true;
+        Context.Data.BranchChanged -= HandleBranchChanged;
+    }
 
     /// <summary>
     /// A measured item in the polymorphic turn-preview sequence.
@@ -133,24 +136,19 @@ public sealed class ChatTurnNavigationIndex : IDisposable
     }
 
     /// <summary>
-    /// A stable user-node identity and its current range in the visible branch.
+    /// A stable native turn identity, independent of body loading and the materialized window.
     /// </summary>
-    public sealed class Entry(ChatTurnNavigationIndex index, ChatMessageNode node) : PreviewItem(index)
+    public sealed class Entry(ChatTurnNavigationIndex index, ChatTurn turn) : PreviewItem(index)
     {
         /// <summary>
-        /// Gets the user message to reveal when the turn is activated.
+        /// Gets the native turn represented by this entry.
         /// </summary>
-        public ChatMessageNode Node { get; } = node;
+        public ChatTurn Turn { get; } = turn;
 
         /// <summary>
-        /// Gets or sets the first index of the node in the visible branch.
+        /// Gets the user node to reveal when the turn is activated.
         /// </summary>
-        public int Start { get; set; }
-
-        /// <summary>
-        /// Gets or sets the first index after the node in the visible branch.
-        /// </summary>
-        public int End { get; set; }
+        public ChatMessageNode Node => Turn.UserNode;
     }
 
     /// <summary>

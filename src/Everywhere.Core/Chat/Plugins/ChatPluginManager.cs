@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Threading;
@@ -388,6 +388,7 @@ public class ChatPluginManager : IChatPluginManager
     public async Task<IChatPluginScope> CreateScopeAsync(
         Assistant assistant,
         ChatContext chatContext,
+        ChatMessageNode ownerNode,
         IToolRulesets? toolRulesets,
         CancellationToken cancellationToken)
     {
@@ -407,10 +408,14 @@ public class ChatPluginManager : IChatPluginManager
 
                 if (plugin is McpChatPlugin mcpChatPlugin)
                 {
-                    startingMcpActivity ??= await chatContext.Presentation.SetBusyActivityAsync(
-                        LucideIconKind.Server,
-                        new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp),
-                        removeAfterCompletion: false);
+                    if (startingMcpActivity is null)
+                    {
+                        startingMcpActivity = await chatContext.DispatchAsync(() => chatContext.Data.StartActivity(
+                            LucideIconKind.Server,
+                            new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp),
+                            removeAfterCompletion: false,
+                            owner: ownerNode.Message));
+                    }
 
                     try
                     {
@@ -446,7 +451,7 @@ public class ChatPluginManager : IChatPluginManager
         }
         finally
         {
-            startingMcpActivity?.Dispose();
+            await chatContext.DispatchAsync(() => startingMcpActivity?.Dispose());
         }
     }
 

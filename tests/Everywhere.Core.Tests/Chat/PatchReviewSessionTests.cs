@@ -1,6 +1,7 @@
-using Everywhere.Chat.Plugins;
+﻿using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 using Everywhere.Common;
+using NSubstitute;
 
 namespace Everywhere.Core.Tests.Chat;
 
@@ -45,7 +46,7 @@ public class PatchReviewSessionTests
                     callbackCount++;
                     return Task.FromResult(RequestConsentResult.Accept);
                 },
-                sink,
+                CreateDisplaySink(sink),
                 CancellationToken.None);
 
             Assert.Multiple(() =>
@@ -105,7 +106,7 @@ public class PatchReviewSessionTests
                     Assert.That(item.File.ReviewPath, Is.EqualTo(ResolveFinalPath(Path.Combine(root, "file.txt"))));
                     return Task.FromResult(RequestConsentResult.Accept);
                 },
-                sink,
+                CreateDisplaySink(sink),
                 CancellationToken.None);
 
             Assert.Multiple(() =>
@@ -148,7 +149,7 @@ public class PatchReviewSessionTests
                     item.Difference.AddRange(TextChange.Insert(0, "incorrect diff projection\n"));
                     return Task.FromResult(RequestConsentResult.Accept);
                 },
-                sink,
+                CreateDisplaySink(sink),
                 CancellationToken.None);
 
             Assert.That(((PatchContentFileDecision)decisions.Single()).Content, Is.EqualTo("new\n"));
@@ -189,7 +190,7 @@ public class PatchReviewSessionTests
                     item.Difference.GetFilteredChanges(default).Last().IsAccepted = false;
                     return Task.FromResult(RequestConsentResult.Accept);
                 },
-                sink,
+                CreateDisplaySink(sink),
                 CancellationToken.None);
 
             Assert.That(((PatchContentFileDecision)decisions.Single()).Content, Is.EqualTo("ONE\nmiddle\ntwo\n"));
@@ -230,7 +231,7 @@ public class PatchReviewSessionTests
                     });
                     return Task.FromResult(RequestConsentResult.Accept);
                 },
-                sink,
+                CreateDisplaySink(sink),
                 CancellationToken.None);
 
             Assert.Multiple(() =>
@@ -281,7 +282,7 @@ public class PatchReviewSessionTests
                     callbackCount++;
                     return Task.FromResult(RequestConsentResult.Accept);
                 },
-                sink,
+                CreateDisplaySink(sink),
                 CancellationToken.None);
 
             Assert.Multiple(() =>
@@ -328,7 +329,7 @@ public class PatchReviewSessionTests
 
             var decisions = await session.ReviewAsync(
                 static (_, _) => Task.FromResult(RequestConsentResult.Deny("Keep the original path.")),
-                sink,
+                CreateDisplaySink(sink),
                 CancellationToken.None);
 
             Assert.Multiple(() =>
@@ -376,7 +377,7 @@ public class PatchReviewSessionTests
                     rejectedChange.ReviewComment = "Keep this wording.";
                     return Task.FromResult(RequestConsentResult.Accept);
                 },
-                sink,
+                CreateDisplaySink(sink),
                 CancellationToken.None);
             var decision = (PatchRejectedFileDecision)decisions.Single();
 
@@ -391,6 +392,17 @@ public class PatchReviewSessionTests
         {
             DeleteTemporaryDirectory(root);
         }
+    }
+
+    private static IChatPluginDisplaySink CreateDisplaySink(ChatPluginDisplaySink output)
+    {
+        var sink = Substitute.For<IChatPluginDisplaySink>();
+        sink.AppendBlockAsync(Arg.Any<ChatPluginDisplayBlock>()).Returns(call =>
+        {
+            output.AppendBlock(call.Arg<ChatPluginDisplayBlock>());
+            return Task.CompletedTask;
+        });
+        return sink;
     }
 
     private static async Task<PatchPlan> BuildAsync(string patch, string root) =>

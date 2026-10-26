@@ -1,6 +1,5 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
 using MessagePack;
 using Microsoft.SemanticKernel.ChatCompletion;
 
@@ -34,15 +33,14 @@ public enum ContextCompressionTrigger
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class ContextCompressionChatMessage : ChatMessage
 {
+    /// <inheritdoc />
+    public override ChatMessageKind Kind => ChatMessageKind.Compression;
+
     /// <summary>
     /// Gets the summary returned by the model. A null or empty value means that the attempt did not complete successfully.
     /// </summary>
     [Key(0)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSummary))]
-    [NotifyPropertyChangedFor(nameof(HeaderKey))]
-    [NotifyPropertyChangedFor(nameof(NeedsAutomaticCompaction))]
-    public partial string? Summary { get; private set; }
+    public string? Summary { get; private set; }
 
     /// <summary>
     /// Gets the last node covered by <see cref="Summary"/>. Messages after this node remain as an
@@ -81,10 +79,7 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
     /// Raw provider responses and exception details are not persisted here.
     /// </summary>
     [Key(6)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HeaderKey))]
-    [NotifyPropertyChangedFor(nameof(NeedsAutomaticCompaction))]
-    public partial IDynamicLocaleKey? ErrorMessageKey { get; private set; }
+    public IDynamicLocaleKey? ErrorMessageKey { get; private set; }
 
     /// <summary>
     /// Gets a value indicating whether source history was omitted by the round limit or removed
@@ -109,9 +104,7 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
 
     /// <summary>Gets the persisted stopped outcome for manual and automatic compression.</summary>
     [Key(10)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HeaderKey))]
-    public partial bool IsCanceled { get; private set; }
+    public bool IsCanceled { get; private set; }
 
 
     [IgnoreMember]
@@ -208,7 +201,8 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
     }
 
     /// <summary>
-    /// Completes the attempt with a provider-facing summary.
+    /// Completes the attempt with a provider-facing summary. Durable notification follows all
+    /// outcome fields so an overlapping save cannot acknowledge a partially completed transition.
     /// </summary>
     public void Complete(string summary, bool wasSourceHistoryTrimmed, DateTimeOffset finishedAt)
     {
@@ -218,6 +212,7 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
         WasSourceHistoryTrimmed = wasSourceHistoryTrimmed;
         FinishedAt = finishedAt;
         IsBusy = false;
+        NotifyChanged();
     }
 
     /// <summary>Completes cooperative cancellation without a failure banner or summary.</summary>
@@ -226,6 +221,7 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
         IsCanceled = true;
         FinishedAt = finishedAt;
         IsBusy = false;
+        NotifyChanged();
     }
 
     /// <summary>
@@ -238,19 +234,7 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
         ErrorMessageKey = errorMessageKey;
         FinishedAt = finishedAt;
         IsBusy = false;
-    }
-
-    /// <summary>
-    /// IsBusy is declared on ChatMessage, so NotifyPropertyChangedFor cannot propagate its changes
-    /// to HeaderKey and NeedsAutomaticCompaction on this derived message.
-    /// </summary>
-    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
-    {
-        base.OnPropertyChanged(e);
-        if (e.PropertyName != nameof(IsBusy)) return;
-
-        OnPropertyChanged(nameof(HeaderKey));
-        OnPropertyChanged(nameof(NeedsAutomaticCompaction));
+        NotifyChanged();
     }
 
     public override string ToString() =>
@@ -261,4 +245,10 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
          {Summary}
          </conversation-summary>
          """;
+
+    /// <inheritdoc />
+    public override ChatCompressionState Capture()
+    {
+        return new ChatCompressionState(HeaderKey, ErrorMessageKey, IsBusy);
+    }
 }

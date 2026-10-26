@@ -135,7 +135,7 @@ public sealed partial class EverythingPlugin : BuiltInChatPlugin
 
         await EnsureEverythingRunningAsync();
 
-        return await Task.Run(
+        var (count, result) = await Task.Run(
                 () =>
                 {
                     using var everything = new Everything();
@@ -145,12 +145,10 @@ public sealed partial class EverythingPlugin : BuiltInChatPlugin
                         .Select(CreateFileRecord)
                         .ToArray();
 
-                    displaySink.AppendDynamicLocaleKey(
-                        new FormattedDynamicLocaleKey(
-                            LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage,
-                            new DirectLocaleKey(everything.Count.ToString())));
-
-                    if (records.Length == 0) return "No results found.";
+                    if (records.Length == 0)
+                    {
+                        return (everything.Count, "No results found.");
+                    }
 
                     // Iterative OmitTo: consume remaining budget per record, stop when exhausted.
                     // File records are similarly-sized so proportional QoS allocation is unnecessary.
@@ -175,10 +173,16 @@ public sealed partial class EverythingPlugin : BuiltInChatPlugin
                     var omitted = records.Length - included;
                     if (omitted > 0) sb.Append("... ").Append(omitted).AppendLine(" more result(s) (omitted due to token budget)");
 
-                    return sb.ToString();
+                    return (everything.Count, sb.ToString());
                 },
                 cancellationToken)
             .WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
+
+        await displaySink.AppendDynamicLocaleKeyAsync(
+            new FormattedDynamicLocaleKey(
+                LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage,
+                new DirectLocaleKey(count.ToString())));
+        return result;
 
         static FileRecord CreateFileRecord(ISearchResult result)
         {

@@ -1,6 +1,6 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:c="using:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
   xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
@@ -54,7 +54,7 @@
     <Setter Property="ClipToBounds" Value="False"/>
     <Setter Property="shadui:BindingAssist.DataTemplates">
       <DataTemplates>
-        <DataTemplate x:DataType="chat:UserStrategyChatMessage">
+        <DataTemplate x:DataType="c:ChatUserStrategyState">
           <StackPanel
             Classes="ChatMessage User" Margin="36,0,0,0"
             HorizontalAlignment="Right" Background="Transparent"
@@ -75,14 +75,14 @@
               Classes="ChatBubble" HorizontalAlignment="Right">
               <Classes.Editing>
                 <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
-                  <Binding Path="$parent[v:ChatMessageNodeControl].Node"/>
+                  <Binding Path="$parent[v:ChatMessageControl].Row.Node"/>
                   <Binding Path="$parent[v:ChatMessageItemsControl].EditingMessageNode"/>
                 </MultiBinding>
               </Classes.Editing>
 
               <v:ConditionalContentControl Condition="{Binding Content, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                 <v:ConditionalContentControl.TrueContent>
-                  <DataTemplate x:DataType="chat:UserStrategyChatMessage">
+                  <DataTemplate x:DataType="c:ChatUserStrategyState">
                     <md:MarkdownTextBlock>
                       <Interaction.Behaviors>
                         <in:ChatTextSearchSurfaceBehavior
@@ -93,17 +93,17 @@
 
                       <Run
                         Foreground="{DynamicResource PrimaryColor}"
-                        Text="{Binding Strategy.NameKey^}"/>
+                        Text="{Binding StrategyNameKey^}"/>
                       <Run Text="{Binding Content}"/>
                     </md:MarkdownTextBlock>
                   </DataTemplate>
                 </v:ConditionalContentControl.TrueContent>
 
                 <v:ConditionalContentControl.FalseContent>
-                  <DataTemplate x:DataType="chat:UserStrategyChatMessage">
+                  <DataTemplate x:DataType="c:ChatUserStrategyState">
                     <TextBlock
                       Foreground="{DynamicResource PrimaryColor}"
-                      Text="{Binding Strategy.NameKey^}"/>
+                      Text="{Binding StrategyNameKey^}"/>
                   </DataTemplate>
                 </v:ConditionalContentControl.FalseContent>
               </v:ConditionalContentControl>
@@ -115,22 +115,22 @@
 
             <v:ConditionalContentControl
               Condition="{Binding IsReadonly, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}, Mode=OneTime}"
-              ContentDataBinding="{Binding Node, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageNodeControl}}}">
+              ContentDataBinding="{Binding Row.Branch, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageControl}}}">
               <v:ConditionalContentControl.FalseContent>
-                <DataTemplate x:DataType="chat:ChatMessageNode">
+                <DataTemplate x:DataType="v:ChatBranchSelection">
                   <v:ChatMessageOperationPanel>
                     <NumericUpDown
                       x:Name="ChoiceSelector" Margin="0,0,4,0"
-                      IsVisible="{Binding Parent.ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
-                      Maximum="{Binding Parent.ChoiceCount, FallbackValue=1}"
+                      IsVisible="{Binding ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
+                      Maximum="{Binding ChoiceCount, FallbackValue=1}"
                       Minimum="1"
-                      Value="{Binding Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
+                      Value="{Binding ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
                     <Button
                       Classes="Ghost Minimal"
                       shadui:ButtonAssist.Icon="{LucideIconContent SquarePen}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                       Command="{Binding $parent[v:ChatMessageItemsControl].EditMessageNodeCommand}"
-                      CommandParameter="{Binding Mode=OneTime}"
+                      CommandParameter="{Binding Node, Mode=OneTime}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
                     <Button
@@ -138,7 +138,7 @@
                       shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                       Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand}"
-                      CommandParameter="{Binding Message, Mode=OneTime}"
+                      CommandParameter="{Binding Node.Message, Mode=OneTime}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
                       <Interaction.Behaviors>
@@ -152,7 +152,7 @@
           </StackPanel>
         </DataTemplate>
 
-        <DataTemplate DataType="chat:UserChatMessage">
+        <DataTemplate DataType="c:ChatUserState">
           <StackPanel
             Classes="ChatMessage User" Margin="36,0,0,0"
             HorizontalAlignment="Right" Background="Transparent"
@@ -169,7 +169,7 @@
               IsVisible="{Binding Content, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
               <Classes.Editing>
                 <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
-                  <Binding Path="$parent[v:ChatMessageNodeControl].Node"/>
+                  <Binding Path="$parent[v:ChatMessageControl].Row.Node"/>
                   <Binding Path="$parent[v:ChatMessageItemsControl].EditingMessageNode"/>
                 </MultiBinding>
               </Classes.Editing>
@@ -189,22 +189,22 @@
 
             <v:ConditionalContentControl
               Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly, Mode=OneTime}"
-              ContentDataBinding="{Binding $parent[v:ChatMessageNodeControl].Node, Mode=OneTime}">
+              ContentDataBinding="{Binding $parent[v:ChatMessageControl].Row.Branch}">
               <v:ConditionalContentControl.FalseContent>
-                <DataTemplate x:DataType="chat:ChatMessageNode">
+                <DataTemplate x:DataType="v:ChatBranchSelection">
                   <v:ChatMessageOperationPanel>
                     <NumericUpDown
                       x:Name="ChoiceSelector" Margin="0,0,4,0"
-                      IsVisible="{Binding Parent.ChoiceCount, FallbackValue={x:False}, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
-                      Maximum="{Binding Parent.ChoiceCount, FallbackValue=1}"
+                      IsVisible="{Binding ChoiceCount, FallbackValue={x:False}, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
+                      Maximum="{Binding ChoiceCount, FallbackValue=1}"
                       Minimum="1"
-                      Value="{Binding Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
+                      Value="{Binding ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
                     <Button
                       Classes="Ghost Minimal"
                       shadui:ButtonAssist.Icon="{LucideIconContent SquarePen}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                       Command="{Binding $parent[v:ChatMessageItemsControl].EditMessageNodeCommand, Mode=OneTime}"
-                      CommandParameter="{Binding Mode=OneTime}"
+                      CommandParameter="{Binding Node, Mode=OneTime}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
                     <Button
@@ -212,7 +212,7 @@
                       shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                       Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand, Mode=OneTime}"
-                      CommandParameter="{Binding Message, Mode=OneTime}"
+                      CommandParameter="{Binding Node.Message, Mode=OneTime}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
                       <Interaction.Behaviors>
@@ -226,7 +226,7 @@
           </StackPanel>
         </DataTemplate>
 
-        <DataTemplate DataType="chat:UserActionChatMessage">
+        <DataTemplate DataType="c:ChatUserActionState">
           <StackPanel
             Margin="36,0,0,0" HorizontalAlignment="Right"
             Background="Transparent" Orientation="Vertical"
@@ -244,7 +244,7 @@
           </StackPanel>
         </DataTemplate>
 
-        <DataTemplate DataType="chat:ContextCompressionChatMessage">
+        <DataTemplate DataType="c:ChatCompressionState">
           <Grid
             Margin="8,4" ColumnDefinitions="*,Auto,*"
             ColumnSpacing="8"
@@ -302,7 +302,7 @@
           </Grid>
         </DataTemplate>
 
-        <DataTemplate DataType="chat:ActionChatMessage">
+        <DataTemplate DataType="c:ChatActionState">
           <v:ChatActionBubble
             ElapsedSeconds="{Binding ElapsedSeconds}"
             Header="{Binding HeaderKey^, FallbackValue={x:Null}}"
@@ -319,14 +319,14 @@
           </v:ChatActionBubble>
         </DataTemplate>
 
-        <DataTemplate DataType="chat:FunctionCallChatMessage">
+        <DataTemplate DataType="c:ChatFunctionState">
           <!--  Don't show elapsed time for function calls, since they may be waiting for user input and the time would be meaningless  -->
           <v:ChatActionBubble
             x:Name="FunctionCallChatActionBubble" AdornerLayer.IsClipEnabled="False"
             ClipToBounds="False"
             Header="{Binding HeaderKey^, FallbackValue={x:Null}}"
             Icon="{Binding Icon}"
-            IsBusy="{Binding IsBusy}"
+            IsBusy="{Binding IsRunning}"
             IsError="{Binding ErrorMessageKey, Converter={x:Static ObjectConverters.IsNotNull}}">
             <AdornerLayer.Adorner>
               <shadui:Badge

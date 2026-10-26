@@ -2428,9 +2428,6 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="Common_Undo" xml:space="preserve">
         <value>Annuler</value>
     </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>« {0} » supprimé</value>
-    </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>Affichage</value>
     </data>

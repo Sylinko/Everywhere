@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Lucide.Avalonia;
+﻿using Lucide.Avalonia;
 using MessagePack;
 using Microsoft.SemanticKernel.ChatCompletion;
 
@@ -11,12 +10,18 @@ namespace Everywhere.Chat;
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class UserActionChatMessage : ChatMessage
 {
+    /// <inheritdoc />
+    public override ChatMessageKind Kind => ChatMessageKind.UserAction;
+
     [IgnoreMember]
     public override AuthorRole Role => new("user");
 
     [Key(0)]
-    [ObservableProperty]
-    public partial LucideIconKind Icon { get; set; }
+    public LucideIconKind Icon
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(1)]
     public IDynamicLocaleKey? HeaderKey { get; }
@@ -48,4 +53,7 @@ public sealed partial class UserActionChatMessage : ChatMessage
     }
 
     public override string? ToString() => Content;
+
+    /// <inheritdoc />
+    public override ChatUserActionState Capture() => new(Icon, HeaderKey);
 }

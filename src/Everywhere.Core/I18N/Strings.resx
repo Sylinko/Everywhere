@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- English -->
 <root>
     <resheader name="resmimetype">
@@ -2428,9 +2428,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="Common_Undo" xml:space="preserve">
         <value>Undo</value>
     </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>&quot;{0}&quot; is deleted</value>
-    </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>Display</value>
     </data>
@@ -4609,5 +4606,47 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>Chats are stored on this device. Chat cloud sync is unavailable in this version.</value>
+    </data>
+    <data name="ChatHistory_Archive" xml:space="preserve">
+        <value>Archived chats</value>
+    </data>
+    <data name="ChatHistory_Archive_Action" xml:space="preserve">
+        <value>Archive chat</value>
+    </data>
+    <data name="ChatHistory_Restore" xml:space="preserve">
+        <value>Restore chat</value>
+    </data>
+    <data name="ChatHistory_Delete_Title" xml:space="preserve">
+        <value>Permanently delete chat</value>
+    </data>
+    <data name="ChatHistory_Delete_Confirmation" xml:space="preserve">
+        <value>This permanently deletes this archived chat and all its branches from this device. This cannot be undone. Attachment files and the previous-version database are not deleted.</value>
+    </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>Stop this chat before permanently deleting it.</value>
+    </data>
+    <data name="ChatHistory_CloseTemporary" xml:space="preserve">
+        <value>Close temporary chat</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>Your chat data has been upgraded</value>
+    </data>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>Chats now use a turn-based structure with more efficient history loading. You can archive chats and restore them from the history list.</value>
+    </data>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>Your previous chat.db has been kept for older versions of Everywhere. From now on, changes in the new and old versions are saved separately and do not appear in each other.</value>
+    </data>
+    <data name="ChatUpgrade_LocalOnly" xml:space="preserve">
+        <value>Chats in this version are stored on this device. Chat cloud sync is currently unavailable.</value>
+    </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>Move the previous-version chat database to the trash (keep attachment files)</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>Continue</value>
+    </data>
+    <data name="ChatUpgrade_TrashFailed" xml:space="preserve">
+        <value>Some previous-version database files could not be moved to the trash. Your upgraded chats are ready to use.</value>
     </data>
 </root>
