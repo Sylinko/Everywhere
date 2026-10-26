@@ -73,6 +73,21 @@ public static class VisualContextSnapshotter
             string? FailureStatus
         )
         {
+            /// <summary>
+            /// A failed coordinate query does not invalidate the identity, text
+            /// or child relation supplied by an embedded accessibility tree.
+            /// </summary>
+            public bool CanReadStructure
+            {
+                get
+                {
+                    return FailureKind is null ||
+                        (FailureKind is VisualElementQueryFailureKind.Timeout or VisualElementQueryFailureKind.Unsupported or VisualElementQueryFailureKind.ProviderFailure) &&
+                        MissingFields == VisualElementFields.Bounds &&
+                        AvailableFields.HasFlag(VisualElementFields.Id | VisualElementFields.Type | VisualElementFields.Name | VisualElementFields.States);
+                }
+            }
+
             public static Observation FromResult(VisualElementQueryResult result) => new(
                 result.Element,
                 result.Snapshot,
@@ -370,7 +385,7 @@ public static class VisualContextSnapshotter
             ApplyRelation(work, node!);
             ObserveQueryStatus(node!, observation);
             ContinueRelation(work);
-            if (isNewNode && work.Observation.FailureKind is null && !_shouldStop)
+            if (isNewNode && work.Observation.CanReadStructure && !_shouldStop)
             {
                 ExpandNode(work, node!);
             }
@@ -378,7 +393,7 @@ public static class VisualContextSnapshotter
 
         private Observation CompleteObservation(Observation structuralObservation)
         {
-            if (structuralObservation.FailureKind is not null)
+            if (!structuralObservation.CanReadStructure)
             {
                 return structuralObservation with { MissingFields = structuralObservation.MissingFields | VisualElementFields.Text };
             }
@@ -423,8 +438,8 @@ public static class VisualContextSnapshotter
                 },
                 availableFields,
                 VisualElementFields.All & ~availableFields,
-                textObservation.FailureKind,
-                textObservation.FailureStatus);
+                textObservation.FailureKind ?? structuralObservation.FailureKind,
+                textObservation.FailureStatus ?? structuralObservation.FailureStatus);
         }
 
         private VisualContextSnapshotNode CreateNode(TraversalWork work, Observation observation)

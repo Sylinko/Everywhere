@@ -6,6 +6,26 @@ namespace Everywhere.Automation.Tests;
 /// <summary>Exercises malformed provider relations independently of the declarative UI scenario tree.</summary>
 public sealed class AdversarialSnapshotTests
 {
+    [TestCase(VisualElementFields.Bounds, true)]
+    [TestCase(VisualElementFields.Name, false)]
+    public void Snapshot_WhenOnlyBoundsFail_PreservesReadableTextAndChildren(VisualElementFields failedFields, bool shouldTraverse)
+    {
+        using var context = new VisualContext();
+        using var acquisition = context.CreateRetention();
+        var nodes = CreateNodes(context, acquisition);
+        nodes[0].Children = [nodes[3]];
+        nodes[0].PartialFailureFields = failedFields;
+        using var snapshot = VisualContextSnapshotter.CreateSnapshot(context, [nodes[0]], allowedTraverseDirections: VisualContextTraverseDirections.Child);
+        var observed = Flatten(snapshot.Roots).ToArray();
+        Assert.Multiple(() =>
+        {
+            Assert.That(observed.Select(node => node.Element).Contains(nodes[3]), Is.EqualTo(shouldTraverse));
+            Assert.That(snapshot.Roots[0].MissingFields.HasFlag(failedFields), Is.True);
+            Assert.That(snapshot.Roots[0].Status, Is.Not.Empty);
+            if (shouldTraverse) Assert.That(observed.Single(node => ReferenceEquals(node.Element, nodes[3])).Snapshot.TextPreview, Is.EqualTo("Useful content"));
+        });
+    }
+
     [Test]
     public void Snapshot_WhenRelationsContainCyclesAndSharedChildren_PreservesUsefulContentAndReleasesOwners()
     {
@@ -213,8 +233,17 @@ public sealed class AdversarialSnapshotTests
 
         public VisualElementQueryFailureKind? TextFailureKind { get; set; }
 
+        public VisualElementFields? PartialFailureFields { get; set; }
+
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request)
         {
+            if (PartialFailureFields is { } missing)
+            {
+                return new VisualElementQueryResult(this,
+                    new VisualElementSnapshot(Id, VisualElementType.Panel, VisualElementStates.None, "Partial container", null, false, null, null, null),
+                    request.RequestedFields & ~missing, request.RequestedFields & missing,
+                    new VisualElementQueryFailure(VisualElementQueryFailureKind.Timeout, null));
+            }
             if (QueryFailureKind is not { } failureKind)
             {
                 return new VisualElementQueryResult(this,
