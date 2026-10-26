@@ -1,0 +1,3 @@
+﻿[*.cs]
+csharp_preserve_single_line_blocks = false
+csharp_preserve_single_line_statements = false
