@@ -3,8 +3,6 @@ using Avalonia.Controls.Primitives;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Cloud;
 using Everywhere.Common;
-using Everywhere.Configuration;
-using Everywhere.Database;
 
 namespace Everywhere.Views;
 
@@ -20,10 +18,6 @@ public sealed partial class UserProfileCard : TemplatedControl
         get => GetValue(ShowActionsButtonProperty);
         set => SetValue(ShowActionsButtonProperty, value);
     }
-
-    public PersistentState PersistentState { get; } = ServiceLocator.Resolve<PersistentState>();
-
-    public IChatDbSynchronizer CloudSynchronizer { get; } = ServiceLocator.Resolve<IChatDbSynchronizer>();
 
     /// <summary>
     /// make this static so that busy state can be shared across all instances of UserProfileCard,

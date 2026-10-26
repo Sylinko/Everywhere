@@ -2311,7 +2311,7 @@
         <value>查询视觉元素周围的有界区域。</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>注册即享免费积分，获得开箱即用的主流模型。更有云同步等功能持续上线中……</value>
+        <value>注册即享免费积分，获得开箱即用的主流模型。</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>登录</value>
@@ -2388,21 +2388,6 @@
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>个人主页</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>对话云同步</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>开启后将会自动在多个设备间同步你的聊天记录</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>上次成功同步 {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>最近一次同步出错</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>正在同步...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>我要自己配置模型</value>
@@ -4619,5 +4604,8 @@
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>复制链接文本</value>
+    </data>
+    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
+        <value>聊天保存在本机，此版本暂不支持聊天云同步。</value>
     </data>
 </root>
