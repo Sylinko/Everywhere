@@ -37,7 +37,7 @@ public static partial class RuntimeConstants
     static RuntimeConstants()
     {
         DeviceId = EnsureDeviceId();
-        WritableFolderPath = EnsureDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Everywhere"));
+        WritableFolderPath = EnsureDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify), "Everywhere"));
         BinFolderPath = EnsureDirectory(Path.Combine(WritableFolderPath, "bin"));
         CacheFolderPath = EnsureDirectory(Path.Combine(WritableFolderPath, "cache"));
         ConfigurationFolderPath = EnsureDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".everywhere"));
@@ -88,7 +88,7 @@ public static partial class RuntimeConstants
     {
         // Store the device ID in a file within the local application data folder to ensure it persists across sessions on the same machine
         var baseFolderPath =
-            EnsureDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Everywhere"));
+            EnsureDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify), "Everywhere"));
         var deviceIdFilePath = Path.Combine(baseFolderPath, ".device_id");
 
         var fileInfo = new FileInfo(deviceIdFilePath);
