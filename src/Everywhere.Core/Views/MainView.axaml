@@ -33,6 +33,12 @@
   </v:ReactiveUserControl.Styles>
 
   <DockPanel x:Name="RootPanel">
+    <!-- Native Linux windows have no system title bar to reserve this space. -->
+    <DockPanel.Margin>
+      <OnPlatform
+        x:TypeArguments="Thickness" Default="0"
+        Linux="0,32,0,0"/>
+    </DockPanel.Margin>
     <Interaction.Behaviors>
       <AdaptiveBehavior SourceControl="{Binding $parent[TopLevel]}">
         <AdaptiveClassSetter

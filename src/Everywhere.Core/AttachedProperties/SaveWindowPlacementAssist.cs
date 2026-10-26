@@ -105,6 +105,9 @@ public static class SaveWindowPlacementAssist
     {
         if (KeyValueStorage.Get<WindowPlacement?>($"WindowPlacement.{key}") is not { } placement) return;
 
+        // Select the destination before asking the platform for desktop scaling.
+        // Native Wayland desktop coordinates are logical even on a dense output.
+        window.Position = placement.Position;
         double x, y;
         if (window.Screens.All.Count == 0)
         {
@@ -117,7 +120,7 @@ public static class SaveWindowPlacementAssist
             var targetScreen = window.Screens.ScreenFromPoint(placement.Position)
                 ?? window.Screens.Primary
                 ?? window.Screens.All.FirstOrDefault();
-            var scaling = targetScreen?.Scaling ?? 1.0;
+            var scaling = window.DesktopScaling;
 
             var screenBounds = targetScreen?.WorkingArea ?? default;
             var actualWidth = placement.Width <= 0 ? 200d : placement.Width * scaling;
@@ -156,7 +159,7 @@ public static class SaveWindowPlacementAssist
     private static void SaveWindowPlacement(string key, Window window)
     {
         // Do not save placement if the window is minimized
-        if (window.WindowState == WindowState.Minimized) return;
+        if (!window.IsVisible || window.WindowState == WindowState.Minimized) return;
 
         key = $"WindowPlacement.{key}";
 
@@ -165,9 +168,9 @@ public static class SaveWindowPlacementAssist
         {
             var (width, height) = window.SizeToContent switch
             {
-                SizeToContent.Width => (-1, (int)window.Height),
-                SizeToContent.Height => ((int)window.Width, -1),
-                SizeToContent.Manual => ((int)window.Width, (int)window.Height),
+                SizeToContent.Width => (-1, (int)window.ClientSize.Height),
+                SizeToContent.Height => ((int)window.ClientSize.Width, -1),
+                SizeToContent.Manual => ((int)window.ClientSize.Width, (int)window.ClientSize.Height),
                 _ => (-1, -1)
             };
 
