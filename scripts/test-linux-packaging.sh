@@ -24,10 +24,11 @@ test "$(dpkg-deb -f "$deb" Package)" = everywhere
 test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
 test "$(dpkg-deb -f "$deb" Version)" = 1.2.3~canary.20261026.1
 dpkg-deb -x "$deb" unpacked-deb
+dpkg-deb -e "$deb" unpacked-control
 test -L unpacked-deb/usr/bin/Everywhere
 test -x unpacked-deb/opt/Everywhere/Everywhere.Watchdog
 desktop-file-validate unpacked-deb/usr/share/applications/Everywhere.desktop
-test ! -e unpacked-deb/DEBIAN/prerm
+test ! -e unpacked-control/prerm
 bash src/Everywhere.Linux/build-appimage.sh "$runtime" "$asset" ./publish false "$version"
 appimage="Releases/Everywhere-${asset}-v${version}.AppImage"
 "$appimage" --appimage-extract >/dev/null
