@@ -4484,6 +4484,9 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
         <value>Enter a valid exact application identity. Paths and wildcards are not supported here.</value>
     </data>
+    <data name="TextSelectionApplications_InvalidExecutablePath" xml:space="preserve">
+        <value>Enter an absolute path to the application's executable, for example /usr/bin/ghostty.</value>
+    </data>
     <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
         <value>This application rule is already in the list.</value>
     </data>
