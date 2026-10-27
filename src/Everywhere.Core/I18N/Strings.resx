@@ -4493,6 +4493,9 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
         <value>Include the .exe extension. Matches all processes with this name, regardless of installation location; ignores case. Wildcards are not supported.</value>
     </data>
+    <data name="TextSelectionApplications_ExecutablePathHint" xml:space="preserve">
+        <value>Enter the absolute path to the application's executable, for example /usr/bin/ghostty. Matching is case-sensitive; wildcards are not supported.</value>
+    </data>
     <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
         <value>Add by bundle ID…</value>
     </data>

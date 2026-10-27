@@ -446,7 +446,7 @@ public sealed partial class TextSelectionApplicationsPresentation : ObservableVa
 #elif LINUX
     public IDynamicLocaleKey ManualLabel { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_AddApplication);
 
-    public IDynamicLocaleKey ManualHint { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_ChooseApplication);
+    public IDynamicLocaleKey ManualHint { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_ExecutablePathHint);
 
     public IDynamicLocaleKey ManualPlaceholder { get; } = new DirectLocaleKey("/usr/bin/ghostty");
 #else
