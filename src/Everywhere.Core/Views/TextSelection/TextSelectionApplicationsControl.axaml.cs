@@ -488,7 +488,12 @@ public sealed partial class TextSelectionApplicationsPresentation : ObservableVa
 #else
 #error Implement manual application identity validation for this platform.
 #endif
-        return isValid ? ValidationResult.Success : new ValidationResult(LocaleKey.TextSelectionApplications_InvalidIdentity.I18N());
+#if LINUX
+        var errorKey = LocaleKey.TextSelectionApplications_InvalidExecutablePath;
+#else
+        var errorKey = LocaleKey.TextSelectionApplications_InvalidIdentity;
+#endif
+        return isValid ? ValidationResult.Success : new ValidationResult(errorKey.I18N());
     }
 }
 
