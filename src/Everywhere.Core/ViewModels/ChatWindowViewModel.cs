@@ -328,7 +328,10 @@ public sealed partial class ChatWindowViewModel :
             }
             finally
             {
-                if (isOpened || bitmap is not null) WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+                if (isOpened || bitmap is not null)
+                {
+                    WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+                }
             }
             using var screenshot = bitmap;
             if (bitmap is null) return;

@@ -7,16 +7,30 @@ import subprocess
 
 
 def find_release(repository, tag):
-    result = subprocess.run(["gh", "api", f"repos/{repository}/releases/tags/{tag}"],
-                            text=True, capture_output=True)
+    result = subprocess.run(
+        ["gh", "api", f"repos/{repository}/releases/tags/{tag}"],
+        text=True,
+        capture_output=True,
+    )
     if result.returncode == 0:
         return json.loads(result.stdout)
     if "HTTP 404" not in result.stderr:
         raise RuntimeError(result.stderr)
-    pages = subprocess.run(["gh", "api", f"repos/{repository}/releases?per_page=100",
-                            "--paginate", "--slurp"], check=True, text=True, capture_output=True)
-    return next((release for page in json.loads(pages.stdout) for release in page
-                 if release["tag_name"] == tag), None)
+    pages = subprocess.run(
+        ["gh", "api", f"repos/{repository}/releases?per_page=100", "--paginate", "--slurp"],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    return next(
+        (
+            release
+            for page in json.loads(pages.stdout)
+            for release in page
+            if release["tag_name"] == tag
+        ),
+        None,
+    )
 
 
 def main():

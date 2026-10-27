@@ -15,14 +15,22 @@ public sealed class AdversarialSnapshotTests
         var nodes = CreateNodes(context, acquisition);
         nodes[0].Children = [nodes[3]];
         nodes[0].PartialFailureFields = failedFields;
-        using var snapshot = VisualContextSnapshotter.CreateSnapshot(context, [nodes[0]], allowedTraverseDirections: VisualContextTraverseDirections.Child);
+        using var snapshot = VisualContextSnapshotter.CreateSnapshot(
+            context,
+            [nodes[0]],
+            allowedTraverseDirections: VisualContextTraverseDirections.Child);
         var observed = Flatten(snapshot.Roots).ToArray();
         Assert.Multiple(() =>
         {
             Assert.That(observed.Select(node => node.Element).Contains(nodes[3]), Is.EqualTo(shouldTraverse));
             Assert.That(snapshot.Roots[0].MissingFields.HasFlag(failedFields), Is.True);
             Assert.That(snapshot.Roots[0].Status, Is.Not.Empty);
-            if (shouldTraverse) Assert.That(observed.Single(node => ReferenceEquals(node.Element, nodes[3])).Snapshot.TextPreview, Is.EqualTo("Useful content"));
+            if (shouldTraverse)
+            {
+                Assert.That(
+                    observed.Single(node => ReferenceEquals(node.Element, nodes[3])).Snapshot.TextPreview,
+                    Is.EqualTo("Useful content"));
+            }
         });
     }
 
@@ -239,9 +247,20 @@ public sealed class AdversarialSnapshotTests
         {
             if (PartialFailureFields is { } missing)
             {
-                return new VisualElementQueryResult(this,
-                    new VisualElementSnapshot(Id, VisualElementType.Panel, VisualElementStates.None, "Partial container", null, false, null, null, null),
-                    request.RequestedFields & ~missing, request.RequestedFields & missing,
+                return new VisualElementQueryResult(
+                    this,
+                    new VisualElementSnapshot(
+                        Id,
+                        VisualElementType.Panel,
+                        VisualElementStates.None,
+                        "Partial container",
+                        null,
+                        false,
+                        null,
+                        null,
+                        null),
+                    request.RequestedFields & ~missing,
+                    request.RequestedFields & missing,
                     new VisualElementQueryFailure(VisualElementQueryFailureKind.Timeout, null));
             }
             if (QueryFailureKind is not { } failureKind)
