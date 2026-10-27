@@ -5,7 +5,9 @@ repo_root=$(cd "$(dirname "$0")/.." && pwd)
 fixture=$(mktemp -d)
 trap 'rm -rf "$fixture"' EXIT
 mkdir -p "$fixture/src/Everywhere.Linux" "$fixture/img" "$fixture/publish"
-cp "$repo_root/src/Everywhere.Linux/packaging_deb.sh" "$repo_root/src/Everywhere.Linux/build-appimage.sh" "$fixture/src/Everywhere.Linux/"
+cp "$repo_root/src/Everywhere.Linux/packaging_deb.sh" \
+    "$repo_root/src/Everywhere.Linux/build-appimage.sh" \
+    "$fixture/src/Everywhere.Linux/"
 cp "$repo_root/img/Everywhere-icon.png" "$fixture/img/"
 cp "$repo_root/LICENSE" "$fixture/"
 printf '#!/bin/sh\nprintf "packaging-fixture\\n"\n' > "$fixture/publish/Everywhere"
@@ -14,9 +16,17 @@ chmod +x "$fixture/publish/Everywhere" "$fixture/publish/Everywhere.Watchdog"
 cd "$fixture"
 version=1.2.3-canary.20261026.1
 case "$runtime" in
-    linux-x64) asset=Linux-x64; arch=amd64 ;;
-    linux-arm64) asset=Linux-arm64; arch=arm64 ;;
-    *) exit 1 ;;
+    linux-x64)
+        asset=Linux-x64
+        arch=amd64
+        ;;
+    linux-arm64)
+        asset=Linux-arm64
+        arch=arm64
+        ;;
+    *)
+        exit 1
+        ;;
 esac
 bash src/Everywhere.Linux/packaging_deb.sh "$runtime" "$version" ./publish
 deb="Everywhere-${asset}-v${version}.deb"
