@@ -12,10 +12,11 @@ foreign-window races do not install a global Xlib error handler in Avalonia.
 shapes. The shared AT-SPI and picker/capture pipeline remain available.
 
 The first target is one X screen at scale 1 and a standard little-endian 32-bit
-TrueColor pixel layout. RandR output enumeration, mixed DPI, global shortcuts,
-shortcut recording and text-selection assistance remain unported. They must not
-be presented as successful registrations. Main uses an explicit unavailable
-shortcut listener, while the authenticated Input Host remains healthy and idle.
+TrueColor pixel layout. RandR output enumeration, mixed DPI, global shortcuts
+and text-selection assistance remain unported. Global registration requests fail
+locally. Focused shortcut recording uses the common `LinuxShortcutListener`
+implementation and `IKeyboardShortcutScope`, while the authenticated Input Host
+remains healthy and idle.
 
 An explicit X11 session takes precedence over inherited Wayland/Hyprland markers.
 Main selects Avalonia X11 directly rather than falling back from Wayland.

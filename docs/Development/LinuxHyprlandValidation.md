@@ -21,7 +21,11 @@ dotnet test tests/Everywhere.ProcessIsolation.Tests/Everywhere.ProcessIsolation.
 The Linux suite covers session selection, geometry transforms, IPC bounds,
 AT-SPI role/state mapping, PRIMARY handling, desktop capability contracts and
 window policies. Shared tests cover missing-geometry semantics, shortcut recording,
-account-link routing and RPC notification ordering with reverse requests.
+account-link routing and the original duplex RPC request/response behavior.
+Linux tests also exercise recording without a global backend and without a
+shortcut editor. The upstream Input Host ordering tests can still fail because
+this port deliberately retains upstream RPC dispatch; report those separately
+from focused-recording and native compositor acceptance.
 
 ## Controlled desktop setup
 
