@@ -9,7 +9,9 @@ using Everywhere.Linux.Wayland;
 using Everywhere.Linux.X11;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
+using Everywhere.ProcessIsolation.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
 namespace Everywhere.Linux.Desktop;
@@ -54,7 +56,7 @@ public sealed class LinuxDesktopServices
     }
 
     /// <summary>
-    /// Registers Main's desktop services and only the global-input implementation that is actually available.
+    /// Registers Main's desktop services, shared focused shortcut recording and the available global backend.
     /// </summary>
     public static IServiceCollection AddServices(IServiceCollection services)
     {
@@ -66,10 +68,12 @@ public sealed class LinuxDesktopServices
         if (desktop.Kind == LinuxDesktopKind.Hyprland)
         {
             services.AddInputHostShortcutListener();
+            services.Replace(ServiceDescriptor.Singleton<IShortcutListener>(sp =>
+                new LinuxShortcutListener(sp.GetRequiredService<InputHostShortcutListener>())));
         }
         else
         {
-            services.AddSingleton<IShortcutListener, UnavailableShortcutListener>();
+            services.AddSingleton<IShortcutListener>(new LinuxShortcutListener(null));
         }
 
         return services;

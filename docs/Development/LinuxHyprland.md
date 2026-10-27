@@ -76,8 +76,9 @@ native input methods can supply preedit, candidates and committed text.
 Linux peers authenticate Unix socket UID/PID credentials and the executable image.
 Hyprland RPC identity uses `HYPRLAND_INSTANCE_SIGNATURE`, allowing independently
 launched jobs in the same compositor to share endpoints without joining different
-compositor sessions. Input notifications run in receive order without blocking
-the reader needed by reverse requests and responses.
+compositor sessions. The port retains upstream RPC notification dispatch. Its
+existing Input Host ordering race is a shared upstream issue, separate from the
+focused Linux recording path.
 
 Input Host retains one owned binding per chord per installation and refreshes the
 relay target after Host recovery. Hyprland's `bind:remove()` removes every binding
@@ -85,12 +86,20 @@ with a chord, so inactive owned handles are disabled and their relay commands
 cleared instead. Dormant handles can be reused until configuration is replaced.
 Lua strings use Lua-compatible escaping. Other owners' bindings are preserved.
 
-During shortcut recording the existing capture lease pauses Everywhere's global
-bindings. The current Input Host contract supplies named shortcut notifications,
-not layout-aware raw key events for a focused control. Linux therefore records
-Avalonia key events delivered to the focused shortcut editor, preserving the
-framework's key/modifier translation. Cancellation, focus loss, detachment and
-Host replacement retain the previous configured shortcut and release the lease.
+`LinuxShortcutListener` implements focused recording through the original
+`IKeyboardShortcutScope` contract. It observes Avalonia key events at application
+windows and publishes recording changes and completion; the shared editor does
+not contain Linux key handlers. The same recorder is available to all Linux
+desktop backends, independently of global shortcut support.
+
+On Hyprland the recorder also owns an Input Host capture lease, which pauses only
+Everywhere's global bindings and restores them when recording ends. This lease
+uses the existing asynchronous desired-state protocol; returning a scope is not
+an acknowledgement that the compositor has already applied suspension. The
+Host never receives or retransmits the focused recording keys. Cancellation,
+focus loss, detachment and Host replacement retain the configured shortcut and
+release key subscriptions and the suspension lease. Other desktop backends
+record locally without starting an unsupported global-input Host operation.
 
 Web and account links use `LinuxDesktopLauncher` and the session OpenURI portal,
 including account actions hosted in native flyouts. The portal connection remains

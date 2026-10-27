@@ -189,9 +189,6 @@ public partial class KeyboardShortcutInputBox : TemplatedControl
         }
 
         IsRecording = false;
-#if LINUX
-        _pendingShortcut = default;
-#endif
         _shortcutScope?.PressingShortcutChanged -= HandleShortcutScopePressingShortcutChanged;
         _shortcutScope?.ShortcutFinished -= HandleShortcutScopeShortcutFinished;
         DisposeHelper.DisposeToDefault(ref _shortcutScope);

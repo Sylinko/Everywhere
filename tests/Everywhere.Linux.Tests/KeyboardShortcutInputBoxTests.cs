@@ -1,5 +1,4 @@
-﻿#if LINUX
-using System.Reflection;
+﻿using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
@@ -7,10 +6,11 @@ using Avalonia.Input;
 using Avalonia.Input.Raw;
 using Everywhere.Common;
 using Everywhere.Interop;
+using Everywhere.Linux.Desktop;
 using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Everywhere.Core.Tests.Views;
+namespace Everywhere.Linux.Tests;
 
 [NonParallelizable]
 public sealed class KeyboardShortcutInputBoxTests
@@ -102,6 +102,71 @@ public sealed class KeyboardShortcutInputBoxTests
         Assert.That(target.Control.Shortcut, Is.EqualTo(new KeyboardShortcut(Key.P, KeyModifiers.Control)));
     }
 
+    [AvaloniaTest]
+    public void MissingGlobalBackend_RecordFocusedChord_DoesNotRequireAnInputHost()
+    {
+        using var target = new Target(hasGlobalShortcuts: false);
+        target.Control.EnterRecordingModeCommand.Execute(null);
+        target.Window.KeyPress(Key.K, RawInputModifiers.Control, PhysicalKey.None, null);
+        target.Window.KeyRelease(Key.K, RawInputModifiers.Control, PhysicalKey.None, null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(target.Control.Shortcut, Is.EqualTo(new KeyboardShortcut(Key.K, KeyModifiers.Control)));
+            Assert.That(target.Control.IsRecording, Is.False);
+        });
+        Assert.Throws<NotSupportedException>(() =>
+            ServiceLocator.Resolve<IShortcutListener>().Register(Target.Original, () => { }));
+    }
+
+    [AvaloniaTest]
+    public void FocusedButton_RecordThroughScope_PublishesWithoutARecordingControl()
+    {
+        using var target = new Target(hasGlobalShortcuts: false);
+        target.Other.Focus();
+        var listener = ServiceLocator.Resolve<IShortcutListener>();
+        using var scope = listener.StartCaptureKeyboardShortcut();
+        var observed = new List<KeyboardShortcut>();
+        var completed = default(KeyboardShortcut);
+        scope.PressingShortcutChanged += (_, shortcut) => observed.Add(shortcut);
+        scope.ShortcutFinished += (_, shortcut) => completed = shortcut;
+
+        Assert.That(listener.StartCaptureKeyboardShortcut(), Is.SameAs(scope));
+        target.Window.KeyPress(Key.K, RawInputModifiers.Control, PhysicalKey.None, null);
+        target.Window.KeyRelease(Key.K, RawInputModifiers.Control, PhysicalKey.None, null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(observed, Is.EqualTo(new[] { new KeyboardShortcut(Key.K, KeyModifiers.Control) }));
+            Assert.That(completed, Is.EqualTo(new KeyboardShortcut(Key.K, KeyModifiers.Control)));
+            Assert.That(scope.IsDisposed, Is.True);
+        });
+    }
+
+    [AvaloniaTest]
+    public void ReleasedScope_LaterKeysAndOldHostCancellation_DoNotAffectANewRecording()
+    {
+        using var target = new Target();
+        var listener = ServiceLocator.Resolve<IShortcutListener>();
+        using var oldScope = listener.StartCaptureKeyboardShortcut();
+        var globalCapture = target.Listener.Scope;
+        var observed = 0;
+        oldScope.PressingShortcutChanged += (_, _) => observed++;
+        oldScope.Dispose();
+
+        target.Control.EnterRecordingModeCommand.Execute(null);
+        globalCapture.Cancel();
+        target.Window.KeyPress(Key.P, RawInputModifiers.Alt, PhysicalKey.None, null);
+        target.Window.KeyRelease(Key.P, RawInputModifiers.Alt, PhysicalKey.None, null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(observed, Is.Zero);
+            Assert.That(target.Control.Shortcut, Is.EqualTo(new KeyboardShortcut(Key.P, KeyModifiers.Alt)));
+            Assert.That(globalCapture.IsDisposed, Is.True);
+        });
+    }
+
     private sealed class Target : IDisposable
     {
         public static KeyboardShortcut Original { get; } = new(Key.E, KeyModifiers.Control | KeyModifiers.Shift);
@@ -120,10 +185,12 @@ public sealed class KeyboardShortcutInputBoxTests
         private readonly object? _previousProvider;
         private readonly ServiceProvider _provider;
 
-        public Target()
+        public Target(bool hasGlobalShortcuts = true)
         {
             _previousProvider = _locator.GetValue(null);
-            _provider = new ServiceCollection().AddSingleton<IShortcutListener>(Listener).BuildServiceProvider();
+            _provider = new ServiceCollection()
+                .AddSingleton<IShortcutListener>(new LinuxShortcutListener(hasGlobalShortcuts ? Listener : null))
+                .BuildServiceProvider();
             _locator.SetValue(null, _provider);
             Panel.Children.Add(Control);
             Panel.Children.Add(Other);
@@ -184,4 +251,3 @@ public sealed class KeyboardShortcutInputBoxTests
         public void Dispose() => IsDisposed = true;
     }
 }
-#endif

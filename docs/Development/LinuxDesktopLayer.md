@@ -4,8 +4,10 @@
 
 The repository still builds separate platform packages from one source tree.
 This adaptation layer is compiled only by `Everywhere.Linux`. Shared Automation,
-Core and RPC changes support geometry failures, placement, shortcut recording
-and ordered input notifications through their existing cross-platform contracts. Hyprland retains the full current integration. A minimal EWMH X11 backend and
+Core and RPC integration support geometry failures, placement, session identity
+and input through their existing cross-platform contracts. RPC notification
+dispatch remains unchanged from upstream. Hyprland retains the full current
+integration. A minimal EWMH X11 backend and
 ordinary Plasma/GNOME Wayland windows are now available as contributor starting
 points. The latter intentionally provide no global state, selection overlays,
 silent capture or global shortcuts. niri remains unimplemented.

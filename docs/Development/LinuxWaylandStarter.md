@@ -9,9 +9,11 @@ while explicitly rejecting overlay roles and unsupported global window policies.
 `UnavailableWaylandStateProvider`, `UnavailableWaylandScreenCapturer` and
 `UnavailableWaylandSelectionService` mark global observation, silent capture and
 interactive picking as unported. The selection service rejects requests before
-creating a surface. Shortcuts, text-selection assistance and input recording are
-also unported; Main uses a local unavailable shortcut listener instead of an RPC
-proxy that would repeatedly restart an unsupported Input Host.
+creating a surface. Global shortcut registration and text-selection assistance
+remain unported. Focused shortcut recording uses `LinuxShortcutListener` and the
+shared `IKeyboardShortcutScope` contract; it requires no compositor-specific
+keyboard hook. Unsupported global registrations fail locally rather than
+repeatedly restarting an unsupported Input Host.
 
 This is a starting point for desktop contributors, not feature parity with
 Hyprland. Future desktop work should replace the unavailable capabilities at the
