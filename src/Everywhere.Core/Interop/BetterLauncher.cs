@@ -78,14 +78,14 @@ public sealed class BetterBclLauncher : ILauncher
 
     private static async Task<bool> LaunchLinuxAsync(string urlOrFile)
     {
-        // This fallback also serves local files. Pass the target as one argument,
-        // never through a shell: OAuth query strings and file names may contain
-        // spaces and shell metacharacters.
-        var start = new ProcessStartInfo("xdg-open")
+        // GIO reports whether the desktop accepted the launch without waiting for
+        // the target application to exit. Pass the target as one argument because
+        // OAuth query strings and file names may contain shell metacharacters.
+        var start = new ProcessStartInfo("gio")
         {
             UseShellExecute = false,
             CreateNoWindow = true,
-            ArgumentList = { urlOrFile }
+            ArgumentList = { "open", urlOrFile }
         };
         try
         {

@@ -45,7 +45,7 @@ Version: $deb_version
 Architecture: $deb_arch
 Maintainer: Sylinko
 Description: Context-aware AI assistant for your desktop
-Depends: libc6, libgcc-s1, libstdc++6, zlib1g, libssl3, libicu74 | libicu76 | libicu72, libfontconfig1, libx11-6, libice6, libsm6, libxext6, libxcb1, libxrandr2, libxrender1, libxi6, libxcursor1, libwayland-client0, libxkbcommon0, libglib2.0-0, libatspi2.0-0, xdg-utils, desktop-file-utils
+Depends: libc6, libgcc-s1, libstdc++6, zlib1g, libssl3, libicu74 | libicu76 | libicu72, libfontconfig1, libx11-6, libice6, libsm6, libxext6, libxcb1, libxrandr2, libxrender1, libxi6, libxcursor1, libwayland-client0, libxkbcommon0, libglib2.0-0, libglib2.0-bin, libatspi2.0-0, xdg-utils, desktop-file-utils
 Recommends: libnotify-bin
 Suggests: grim, wl-clipboard
 Section: utils
