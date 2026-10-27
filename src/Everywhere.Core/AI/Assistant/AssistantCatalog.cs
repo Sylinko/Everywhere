@@ -194,6 +194,8 @@ public sealed class AssistantCatalog(IPresetModelProvider presetModels, IOfficia
         var resolution = ResolveOfficialModel(configuration);
         var items = catalog.Definitions
             .AsValueEnumerable()
+            .OrderBy(static definition => definition.Model.ModelId.Split('/', 2)[0], StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static definition => definition.Model, ModelDefinitionComparer.Shared)
             .Select(definition => new AssistantCatalogItem(
                 ScopeId,
                 definition.Model,
