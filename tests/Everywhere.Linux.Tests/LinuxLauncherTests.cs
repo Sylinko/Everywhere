@@ -16,15 +16,15 @@ public sealed class LinuxLauncherTests
         try
         {
             var capturePath = Path.Combine(directory, "arguments.txt");
-            var executable = Path.Combine(directory, "xdg-open");
+            var executable = Path.Combine(directory, "gio");
             await File.WriteAllTextAsync(executable,
-                $"#!/bin/sh\nprintf '%s\\n' \"$#\" \"$1\" > '{capturePath}'\nexit {exitCode}\n");
+                $"#!/bin/sh\nprintf '%s\\n' \"$#\" \"$1\" \"$2\" > '{capturePath}'\nexit {exitCode}\n");
             File.SetUnixFileMode(executable, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
             Environment.SetEnvironmentVariable("PATH", directory);
             var uri = new Uri(target);
             var isLaunched = await BetterBclLauncher.Shared.LaunchUriAsync(uri);
             Assert.That(isLaunched, Is.EqualTo(isExpected));
-            Assert.That(await File.ReadAllLinesAsync(capturePath), Is.EqualTo(new[] { "1", uri.AbsoluteUri }));
+            Assert.That(await File.ReadAllLinesAsync(capturePath), Is.EqualTo(new[] { "2", "open", uri.AbsoluteUri }));
             Assert.That(File.Exists(Path.Combine(directory, "unwanted")), Is.False);
         }
         finally
