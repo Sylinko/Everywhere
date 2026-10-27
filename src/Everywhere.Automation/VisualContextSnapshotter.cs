@@ -82,7 +82,9 @@ public static class VisualContextSnapshotter
                 get
                 {
                     return FailureKind is null ||
-                        (FailureKind is VisualElementQueryFailureKind.Timeout or VisualElementQueryFailureKind.Unsupported or VisualElementQueryFailureKind.ProviderFailure) &&
+                        (FailureKind is VisualElementQueryFailureKind.Timeout or
+                            VisualElementQueryFailureKind.Unsupported or
+                            VisualElementQueryFailureKind.ProviderFailure) &&
                         MissingFields == VisualElementFields.Bounds &&
                         AvailableFields.HasFlag(VisualElementFields.Id | VisualElementFields.Type | VisualElementFields.Name | VisualElementFields.States);
                 }
