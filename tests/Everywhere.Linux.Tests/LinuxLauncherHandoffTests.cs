@@ -10,7 +10,7 @@ public sealed class LinuxLauncherHandoffTests
     [TestCase(false)]
     public async Task LaunchUri_WithIsolatedAssociation_ReportsHandoffWithoutWaiting(bool hasRegisteredHandler)
     {
-        var directory = Path.Combine(Path.GetTempPath(), "everywhere-launcher-handoff-" + Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "everywhere launcher handoff " + Guid.NewGuid().ToString("N"));
         var variables = new Dictionary<string, string>
         {
             ["XDG_DATA_HOME"] = Path.Combine(directory, "data"),
@@ -26,13 +26,18 @@ public sealed class LinuxLauncherHandoffTests
 
         try
         {
-            var handlerPath = Path.Combine(directory, "handler.sh");
+            var handlerPath = Path.Combine(directory, "handler \"\\$`%.sh");
             await File.WriteAllTextAsync(handlerPath,
                 $"#!/bin/sh\nprintf '%s\\n' \"$$\" \"$1\" > '{capturePath}.pending'\n/bin/mv '{capturePath}.pending' '{capturePath}'\nexec /bin/sleep 120\n");
             if (hasRegisteredHandler)
             {
+                // Desktop entry strings are unescaped before Exec arguments are parsed.
+                var escapedHandlerPath = handlerPath.Replace("\\", "\\\\").Replace("\"", "\\\"")
+                    .Replace("`", "\\`").Replace("$", "\\$").Replace("%", "%%");
+                var handlerArgument = "\"" + escapedHandlerPath.Replace("\\", "\\\\")
+                    .Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t") + "\"";
                 await File.WriteAllTextAsync(Path.Combine(applications, "everywhere-launcher-test.desktop"),
-                    $"[Desktop Entry]\nType=Application\nName=Everywhere launcher test\nExec=/bin/sh {handlerPath} %u\nTerminal=false\nMimeType=x-scheme-handler/everywhere-launcher-test;\n");
+                    $"[Desktop Entry]\nType=Application\nName=Everywhere launcher test\nExec=/bin/sh {handlerArgument} %u\nTerminal=false\nMimeType=x-scheme-handler/everywhere-launcher-test;\n");
             }
 
             await File.WriteAllTextAsync(Path.Combine(variables["XDG_CONFIG_HOME"], "mimeapps.list"),
