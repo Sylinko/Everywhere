@@ -34,6 +34,41 @@ public sealed class AdversarialSnapshotTests
         });
     }
 
+    [TestCase(VisualElementQueryFailureKind.ElementUnavailable, 1, true, "Element became unavailable during query")]
+    [TestCase(VisualElementQueryFailureKind.Timeout, 2, true, "Element query timed out")]
+    [TestCase(VisualElementQueryFailureKind.ProviderFailure, 2, true, "Element query failed in the platform provider")]
+    [TestCase(null, 2, false, null)]
+    public void Snapshot_WhenBoundsTimeoutPrecedesTextRead_PreservesBothFailureObservations(
+        VisualElementQueryFailureKind? textFailureKind,
+        int maximumProviderFailures,
+        bool shouldStop,
+        string? textFailureStatus)
+    {
+        using var context = new VisualContext();
+        using var acquisition = context.CreateRetention();
+        var nodes = CreateNodes(context, acquisition);
+        nodes[0].Children = [nodes[3]];
+        nodes[0].PartialFailureFields = VisualElementFields.Bounds;
+        nodes[0].TextFailureKind = textFailureKind;
+
+        using var snapshot = VisualContextSnapshotter.CreateSnapshot(
+            context,
+            [nodes[0]],
+            new VisualContextSnapshotLimits { MaximumProviderFailures = maximumProviderFailures },
+            VisualContextTraverseDirections.Child);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(snapshot.Roots[0].Status, Does.Contain("Element query timed out"));
+            if (textFailureStatus is not null)
+            {
+                Assert.That(snapshot.Roots[0].Status, Does.Contain(textFailureStatus));
+            }
+            Assert.That(snapshot.Status.Contains("Snapshot provider-failure limit reached"), Is.EqualTo(shouldStop));
+            Assert.That(snapshot.Roots[0].Children, Has.Count.EqualTo(shouldStop ? 0 : 1));
+        });
+    }
+
     [Test]
     public void Snapshot_WhenRelationsContainCyclesAndSharedChildren_PreservesUsefulContentAndReleasesOwners()
     {
