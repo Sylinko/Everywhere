@@ -321,7 +321,7 @@ public sealed partial class ChatWindowViewModel :
             // Hide the chat window to avoid picking itself
             var isOpened = IsOpened;
             if (isOpened) WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
-            Bitmap? bitmap = null;
+            var bitmap = default(Bitmap?);
             try
             {
                 bitmap = await _screenSelectionService.TakeScreenshotAsync(_visualService.AcquisitionContext, null, cancellationToken);
