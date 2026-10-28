@@ -24,4 +24,9 @@ public enum LinuxDesktopKind
     /// The GNOME Wayland desktop integration.
     /// </summary>
     GnomeWayland,
+
+    /// <summary>
+    /// The Niri Wayland compositor integration.
+    /// </summary>
+    NiriWayland,
 }

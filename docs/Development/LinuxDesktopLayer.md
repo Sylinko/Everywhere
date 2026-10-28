@@ -8,9 +8,11 @@ Core and RPC integration support geometry failures, placement, session identity
 and input through their existing cross-platform contracts. RPC notification
 dispatch remains unchanged from upstream. Hyprland retains the full current
 integration. A minimal EWMH X11 backend and
-ordinary Plasma/GNOME Wayland windows are now available as contributor starting
-points. The latter intentionally provide no global state, selection overlays,
-silent capture or global shortcuts. niri remains unimplemented.
+ordinary Plasma/GNOME/Niri Wayland windows are now available as contributor starting
+points. The latter intentionally provide no global state, selection overlays or
+silent capture. Plasma/GNOME and portal-capable X11 sessions use the user-approved
+GlobalShortcuts portal; Niri still requires an external compositor binding and
+reuses the standard Wayland UI backend.
 
 `Desktop/LinuxDesktopServices.cs` is the per-process composition root. It selects
 the explicitly inherited desktop backend, constructs its three services and
