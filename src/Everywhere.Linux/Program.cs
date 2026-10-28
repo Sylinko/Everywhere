@@ -173,6 +173,21 @@ public static class Program
             builder = builder.UseWaylandWithFallback();
         }
 
+        if (desktop.IsStandardWayland)
+        {
+            // Avalonia 12.1 recreates hidden Wayland surfaces without restoring
+            // the no-decoration request. Keep client decorations consistent
+            // across Hide/Show on desktops that offer server decorations.
+#pragma warning disable AVALONIA_WAYLAND_FORCE_CSD
+            builder = builder.With(new WaylandPlatformOptions { ForceDrawnDecorations = true });
+#pragma warning restore AVALONIA_WAYLAND_FORCE_CSD
+        }
+
+        if (desktop.Kind != LinuxDesktopKind.Hyprland)
+        {
+            builder = builder.AfterSetup(_ => StandardDesktopWindowAppearance.InstallStyles());
+        }
+
         return builder.AfterPlatformServicesSetup(_ =>
             {
                 BetterBclLauncher.Shared = new LinuxDesktopLauncher(BetterBclLauncher.Shared);

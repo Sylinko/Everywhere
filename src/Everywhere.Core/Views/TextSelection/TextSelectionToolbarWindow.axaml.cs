@@ -232,8 +232,8 @@ public partial class TextSelectionToolbarWindow : Window
             // Initialize the bound opacity before rendering, without fading from a previous selection.
             OpacityFactor = 1d;
             _isPreparingPresentation = true;
-            PresentationRoot.Opacity = 0;
 #if LINUX
+            PresentationRoot.Opacity = 0;
             // Wayland compositors can constrain off-screen toplevels back to the
             // output center. Prepare at the real anchor, with transparent content
             // until both its first frame and its native placement are ready.

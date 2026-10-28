@@ -242,7 +242,16 @@ public sealed partial class ChatWindow :
     {
         base.OnResized(e);
 
+#if LINUX
+        // A manual resize can be reported as a layout change by the windowing backend.
+        if (e.Reason != WindowResizeReason.User &&
+            (e.Reason != WindowResizeReason.Layout || SizeToContent != SizeToContent.Manual))
+        {
+            return;
+        }
+#else
         if (e.Reason != WindowResizeReason.User) return;
+#endif
 
         if (e.ClientSize.NearlyEquals(new Size(MinWidth, MinHeight)))
         {
@@ -302,12 +311,16 @@ public sealed partial class ChatWindow :
             }
         }
 
+#if LINUX
         // Window's custom measure path must honor the same limits as its
         // native surface. Otherwise a compositor-enforced minimum leaves the
         // content narrower than the window and misaligns capture targets.
         return new Size(
             Math.Max(MinWidth, Math.Min(width, MaxWidth)),
             Math.Max(MinHeight, Math.Min(height, MaxHeight)));
+#else
+        return new Size(width, height);
+#endif
     }
 
     protected override void OnLostFocus(FocusChangedEventArgs e)

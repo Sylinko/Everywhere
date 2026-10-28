@@ -128,7 +128,12 @@ public sealed partial class OAuthCloudClient :
 
             LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
             var tokenData = await flow.ExchangeCodeAsync(code);
+#if LINUX
+            // Secret Service can block while unlocking the user's keyring.
             await Task.Run(() => _session.SetToken(tokenData), cancellationToken);
+#else
+            _session.SetToken(tokenData);
+#endif
             await ReloadUserDataAsync(true, cancellationToken);
 
             LoginStatus = CloudClientLoginStatus.LoggedIn;
