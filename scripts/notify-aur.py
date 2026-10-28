@@ -47,6 +47,7 @@ def main():
         text=True,
         check=True,
         env=environment,
+        timeout=120,
     )
     print(f"Dispatched {tag} to {target}.")
 

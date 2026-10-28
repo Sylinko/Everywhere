@@ -49,13 +49,35 @@ class NotificationTests(unittest.TestCase):
             self.assertEqual(json.loads(kwargs["input"]), {
                 "ref": "main", "inputs": {"tag": "v1.2.3-canary.1", "publish_aur": True}})
             self.assertEqual(kwargs["env"]["GH_TOKEN"], "test-only-token")
+            self.assertEqual(kwargs["timeout"], 120)
+
+    def test_dispatch_timeout_is_not_reported_as_success(self):
+        release = {"draft": False, "assets": [{"name": "Everywhere-Linux-x64-v1.2.3-canary.1.tar.zst",
+                                              "state": "uploaded", "size": 123}]}
+        with patch.object(notify, "find_release", return_value=release), \
+                patch.object(notify.subprocess, "run", side_effect=subprocess.TimeoutExpired("gh api", 120)):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                notify.main()
+
+    def test_release_lookup_timeout_is_not_treated_as_missing_release(self):
+        with patch.object(github_release.subprocess, "run", side_effect=subprocess.TimeoutExpired("gh api", 120)):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                github_release.find_release("Sylinko/Everywhere", "v1.2.3")
+
+    def test_paginated_release_lookup_timeout_is_not_treated_as_missing_release(self):
+        responses = [subprocess.CompletedProcess([], 1, "", "HTTP 404"),
+                     subprocess.TimeoutExpired("gh api", 120)]
+        with patch.object(github_release.subprocess, "run", side_effect=responses):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                github_release.find_release("Sylinko/Everywhere", "v1.2.3")
 
     def test_draft_is_found_in_paginated_list_after_tag_endpoint_404(self):
         draft = {"tag_name": "v1.2.3", "draft": True}
         responses = [subprocess.CompletedProcess([], 1, "", "HTTP 404"),
                      subprocess.CompletedProcess([], 0, json.dumps([[{"tag_name": "other"}], [draft]]), "")]
-        with patch.object(github_release.subprocess, "run", side_effect=responses):
+        with patch.object(github_release.subprocess, "run", side_effect=responses) as run:
             self.assertEqual(github_release.find_release("Sylinko/Everywhere", "v1.2.3"), draft)
+            self.assertTrue(all(call.kwargs["timeout"] == 120 for call in run.call_args_list))
 
     def test_network_error_is_not_treated_as_missing_release(self):
         response = subprocess.CompletedProcess([], 1, "", "TLS handshake timeout")

@@ -11,6 +11,7 @@ def find_release(repository, tag):
         ["gh", "api", f"repos/{repository}/releases/tags/{tag}"],
         text=True,
         capture_output=True,
+        timeout=120,
     )
     if result.returncode == 0:
         return json.loads(result.stdout)
@@ -21,6 +22,7 @@ def find_release(repository, tag):
         check=True,
         text=True,
         capture_output=True,
+        timeout=120,
     )
     return next(
         (
