@@ -3,6 +3,7 @@ using System.IO.Pipes;
 using System.Security.Cryptography;
 using System.Text;
 using Avalonia.Input;
+using Everywhere.Linux.Desktop;
 using Everywhere.Linux.Hyprland;
 using Everywhere.Linux.ProcessIsolation;
 using Everywhere.ProcessIsolation.Hosting;
@@ -60,7 +61,7 @@ public sealed class HyprlandInputHostSession : IProcessRoleSession, IInputHostRp
             var activeRegistrations = request.CaptureId == 0 ? request.KeyboardRegistrations : [];
             var commands = activeRegistrations.Select(item =>
             {
-                var key = KeyName((Key)item.Key);
+                var key = LinuxKeySymbol.FromKey((Key)item.Key);
                 var modifiers = (KeyModifiers)item.Modifiers;
                 var parts = new List<string>();
                 if (modifiers.HasFlag(KeyModifiers.Control))
@@ -273,52 +274,4 @@ public sealed class HyprlandInputHostSession : IProcessRoleSession, IInputHostRp
     }
 
     private static string ShellQuote(string value) => "'" + value.Replace("'", "'\"'\"'") + "'";
-    private static string KeyName(Key key)
-    {
-        return key switch
-        {
-            Key.Enter => "Return",
-            Key.Escape => "Escape",
-            Key.Space => "space",
-            Key.Back => "BackSpace",
-            Key.Tab => "Tab",
-            Key.Delete => "Delete",
-            Key.Insert => "Insert",
-            Key.Home => "Home",
-            Key.End => "End",
-            Key.PageUp => "Prior",
-            Key.PageDown => "Next",
-            Key.CapsLock => "Caps_Lock",
-            Key.NumLock => "Num_Lock",
-            Key.Scroll => "Scroll_Lock",
-            Key.PrintScreen => "Print",
-            Key.Pause => "Pause",
-            Key.Apps => "Menu",
-            Key.Add => "KP_Add",
-            Key.Subtract => "KP_Subtract",
-            Key.Multiply => "KP_Multiply",
-            Key.Divide => "KP_Divide",
-            Key.Decimal => "KP_Decimal",
-            Key.OemPlus => "equal",
-            Key.OemMinus => "minus",
-            Key.OemComma => "comma",
-            Key.OemPeriod => "period",
-            Key.Oem1 => "semicolon",
-            Key.Oem2 => "slash",
-            Key.Oem3 => "grave",
-            Key.Oem4 => "bracketleft",
-            Key.Oem5 => "backslash",
-            Key.Oem6 => "bracketright",
-            Key.Oem7 => "apostrophe",
-            Key.Left => "Left",
-            Key.Right => "Right",
-            Key.Up => "Up",
-            Key.Down => "Down",
-            >= Key.A and <= Key.Z => key.ToString(),
-            >= Key.D0 and <= Key.D9 => ((int)key - (int)Key.D0).ToString(CultureInfo.InvariantCulture),
-            >= Key.F1 and <= Key.F24 => key.ToString(),
-            >= Key.NumPad0 and <= Key.NumPad9 => "KP_" + ((int)key - (int)Key.NumPad0).ToString(CultureInfo.InvariantCulture),
-            _ => throw new NotSupportedException($"The Hyprland shortcut key {key} has no registered keysym mapping."),
-        };
-    }
 }

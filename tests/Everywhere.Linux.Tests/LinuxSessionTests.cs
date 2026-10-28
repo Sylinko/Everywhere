@@ -34,6 +34,8 @@ public sealed class LinuxSessionTests
     [TestCase("GNOME", LinuxDesktopKind.GnomeWayland)]
     [TestCase("ubuntu:GNOME", LinuxDesktopKind.GnomeWayland)]
     [TestCase("GNOME-Classic:GNOME", LinuxDesktopKind.GnomeWayland)]
+    [TestCase("niri", LinuxDesktopKind.NiriWayland)]
+    [TestCase("test:NIRI", LinuxDesktopKind.NiriWayland)]
     public void ExplicitWaylandDesktop_WithInheritedHyprlandMarker_LeavesGlobalCapabilitiesUnavailable(
         string currentDesktop,
         LinuxDesktopKind expectedKind)
@@ -49,6 +51,7 @@ public sealed class LinuxSessionTests
             Environment.SetEnvironmentVariable("HYPRLAND_INSTANCE_SIGNATURE", "inherited-parent");
             var desktop = LinuxDesktopServices.Create();
             Assert.That(desktop.Kind, Is.EqualTo(expectedKind));
+            Assert.That(desktop.IsStandardWayland, Is.True);
             Assert.That(desktop.CreateOverlayInputWatcher().IsSupported, Is.False);
             Assert.That(desktop.Compositor.StackingOrderKind, Is.EqualTo(WindowStackingOrderKind.Unavailable));
             Assert.ThrowsAsync<NotSupportedException>(async () => await desktop.Compositor.GetOutputsAsync());

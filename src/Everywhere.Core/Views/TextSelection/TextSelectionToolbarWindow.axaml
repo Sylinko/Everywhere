@@ -7,7 +7,10 @@
   ShowActivated="False" ShowInTaskbar="False"
   SizeToContent="WidthAndHeight" Topmost="True"
   TransparencyLevelHint="Transparent" WindowDecorations="None">
-  <Panel x:Name="PresentationRoot" Opacity="0">
+  <Panel x:Name="PresentationRoot">
+    <Panel.Opacity>
+      <OnPlatform x:TypeArguments="x:Double" Default="1" Linux="0"/>
+    </Panel.Opacity>
     <v:TextSelectionToolbar
       x:Name="ToolbarRoot"
       CustomAssistants="{Binding #Self.Settings.Model.CustomAssistants}"
