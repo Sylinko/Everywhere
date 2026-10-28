@@ -368,6 +368,7 @@ public static class VisualContextSnapshotter
             var id = work.Observation.Element.Id;
             var isNewNode = !_nodes.TryGetValue(id, out var node);
             var observation = work.Observation;
+            var textObservation = default(Observation?);
             if (isNewNode)
             {
                 if (_nodes.Count >= limits.MaximumNodes)
@@ -376,7 +377,7 @@ public static class VisualContextSnapshotter
                     return;
                 }
 
-                observation = CompleteObservation(observation);
+                observation = CompleteObservation(observation, out textObservation);
                 node = CreateNode(work, observation);
                 _nodes.Add(id, node);
                 if (node.Snapshot.Type == VisualElementType.TopLevel)
@@ -386,6 +387,10 @@ public static class VisualContextSnapshotter
 
             ApplyRelation(work, node!);
             ObserveQueryStatus(node!, observation);
+            if (textObservation is { } textResult)
+            {
+                ObserveQueryStatus(node!, textResult);
+            }
             ContinueRelation(work);
             if (isNewNode && work.Observation.CanReadStructure && !_shouldStop)
             {
@@ -393,8 +398,9 @@ public static class VisualContextSnapshotter
             }
         }
 
-        private Observation CompleteObservation(Observation structuralObservation)
+        private Observation CompleteObservation(Observation structuralObservation, out Observation? textObservation)
         {
+            textObservation = null;
             if (!structuralObservation.CanReadStructure)
             {
                 return structuralObservation with { MissingFields = structuralObservation.MissingFields | VisualElementFields.Text };
@@ -414,10 +420,10 @@ public static class VisualContextSnapshotter
                 return structuralObservation with { MissingFields = structuralObservation.MissingFields | VisualElementFields.Text };
             }
 
-            Observation textObservation;
+            var textResult = default(Observation);
             try
             {
-                textObservation = Observation.FromTextResult(
+                textResult = Observation.FromTextResult(
                     structuralObservation.Element,
                     structuralObservation.Element.ReadText(
                         0,
@@ -426,22 +432,24 @@ public static class VisualContextSnapshotter
             }
             catch (Exception exception) when (VisualElementFailure.IsRecoverable(exception))
             {
-                textObservation = Observation.FromException(structuralObservation.Element, exception, VisualElementFields.Text);
+                textResult = Observation.FromException(structuralObservation.Element, exception, VisualElementFields.Text);
             }
 
-            var availableFields = structuralObservation.AvailableFields | textObservation.AvailableFields;
+            // Each provider call keeps its own status and contribution to the failure budget.
+            textObservation = textResult;
+            var availableFields = structuralObservation.AvailableFields | textResult.AvailableFields;
             return new Observation(
                 structuralObservation.Element,
                 structuralObservation.Snapshot with
                 {
-                    TextPreview = textObservation.Snapshot.TextPreview,
-                    HasMoreText = textObservation.Snapshot.HasMoreText,
-                    TotalTextLength = textObservation.Snapshot.TotalTextLength,
+                    TextPreview = textResult.Snapshot.TextPreview,
+                    HasMoreText = textResult.Snapshot.HasMoreText,
+                    TotalTextLength = textResult.Snapshot.TotalTextLength,
                 },
                 availableFields,
                 VisualElementFields.All & ~availableFields,
-                textObservation.FailureKind ?? structuralObservation.FailureKind,
-                textObservation.FailureStatus ?? structuralObservation.FailureStatus);
+                structuralObservation.FailureKind,
+                structuralObservation.FailureStatus);
         }
 
         private VisualContextSnapshotNode CreateNode(TraversalWork work, Observation observation)
