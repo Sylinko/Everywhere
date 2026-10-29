@@ -151,7 +151,16 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
         }
     }
 
-    public bool IsUpdateButtonVisible => UpdateAction != UpdatePageAction.Hidden;
+    public bool IsUpdateButtonVisible
+    {
+        get => UpdateAction != UpdatePageAction.Hidden &&
+               (!IsTerminalUpdate || UpdateAction is UpdatePageAction.Retry or UpdatePageAction.Cancel);
+    }
+
+    /// <summary>
+    /// Gets whether installation is managed outside the graphical application.
+    /// </summary>
+    public bool IsTerminalUpdate => SoftwareUpdater.TerminalUpdateHandler is not null;
 
     /// <summary>
     /// Gets the live-localized action label, including the selected version where applicable.
@@ -367,6 +376,19 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
 
     private async Task<IEnumerable<ReleaseInfo>> LoadRemoteVersionHistoryAsync(UpdateChannel channel, CancellationToken cancellationToken)
     {
+        if (SoftwareUpdater.TerminalUpdateHandler is { } terminalHandler)
+        {
+            var releases = await terminalHandler.GetReleasesAsync(channel, cancellationToken);
+            return releases.Select(release => new ReleaseInfo
+            {
+                Tag = release.Metadata.Tag,
+                PublishedDate = release.Metadata.PublishedAt,
+                HtmlUrl = release.ReleaseUri,
+                ReleaseNotes = release.Notes,
+                IsCurrent = IsCurrentVersion(release.Metadata.Tag)
+            });
+        }
+
         using var httpClient = _httpClientFactory.CreateClient();
         var channelName = channel.ToString();
         using var request = new HttpRequestMessage(
@@ -478,7 +500,10 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
         }
 
         var target = UpdateTarget;
-        if (target is null) return;
+        if (target is null || IsTerminalUpdate)
+        {
+            return;
+        }
 
         try
         {

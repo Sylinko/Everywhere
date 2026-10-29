@@ -5015,4 +5015,10 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>The request exceeds the service’s input limits.</value>
     </data>
+    <data name="TerminalUpdate_CopyCommand" xml:space="preserve">
+        <value>Copy command</value>
+    </data>
+    <data name="TerminalUpdate_PasteHint" xml:space="preserve">
+        <value>Paste into your terminal to update.</value>
+    </data>
 </root>

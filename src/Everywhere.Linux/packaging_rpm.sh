@@ -36,6 +36,7 @@ trap 'rm -rf "$package_dir"' EXIT
 install -d "$package_dir/payload/opt/Everywhere" "$package_dir/payload/usr/bin"
 cp -a "$publish_dir/." "$package_dir/payload/opt/Everywhere/"
 ln -s /opt/Everywhere/Everywhere "$package_dir/payload/usr/bin/Everywhere"
+ln -s /opt/Everywhere/Everywhere "$package_dir/payload/usr/bin/ew"
 install -Dm644 "$script_dir/../../img/Everywhere-icon.png" "$package_dir/payload/usr/share/icons/hicolor/256x256/apps/Everywhere.png"
 install -Dm644 "$script_dir/../../LICENSE" "$package_dir/payload/usr/share/licenses/everywhere/LICENSE"
 install -d "$package_dir/payload/usr/share/applications"
@@ -62,7 +63,7 @@ URL: https://everywhere.sylinko.com
 # Dependencies are explicit because the self-contained .NET payload includes
 # optional native backends that must not become unconditional requirements.
 AutoReqProv: no
-Requires: glibc, libgcc, libstdc++, zlib, openssl-libs, libicu
+Requires: python3 >= 3.9, glibc, libgcc, libstdc++, zlib, openssl-libs, libicu
 Requires: fontconfig, libX11, libICE, libSM, libXext, libxcb
 Requires: libXrandr, libXrender, libXi, libXcursor, libwayland-client.so.0()(64bit), libxkbcommon
 Requires: glib2, at-spi2-core, xdg-utils, desktop-file-utils
@@ -78,6 +79,7 @@ cp -a "$package_dir/payload/." "%{buildroot}/"
 %files
 /opt/Everywhere
 /usr/bin/Everywhere
+/usr/bin/ew
 /usr/share/applications/com.Sylinko.Everywhere.desktop
 /usr/share/icons/hicolor/256x256/apps/Everywhere.png
 %license /usr/share/licenses/everywhere/LICENSE

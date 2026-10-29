@@ -1,4 +1,6 @@
-﻿using Avalonia.Controls.Primitives;
+﻿using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -20,6 +22,11 @@ public partial class SoftwareUpdateControl(
 
     public ISoftwareUpdater SoftwareUpdater { get; } = softwareUpdater;
 
+    /// <summary>
+    /// Gets whether the current platform uses terminal-managed updates.
+    /// </summary>
+    public bool IsTerminalUpdate => SoftwareUpdater.TerminalUpdateHandler is not null;
+
     public static readonly StyledProperty<IDynamicLocaleKey?> UpdateOrCheckTitleProperty = AvaloniaProperty.Register<SoftwareUpdateControl, IDynamicLocaleKey?>(
         nameof(UpdateOrCheckTitle));
 
@@ -35,6 +42,20 @@ public partial class SoftwareUpdateControl(
         UpdateOrCheckTitle = new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text);
         if (SoftwareUpdater.DisplayUpdate is not null)
         {
+            if (IsTerminalUpdate)
+            {
+                try
+                {
+                    var clipboard = TopLevel.GetTopLevel(this)?.Clipboard ?? throw new InvalidOperationException("Clipboard is unavailable.");
+                    await clipboard.SetTextAsync("ew update");
+                    ToastManager.Success(LocaleKey.Common_Copied.I18N(), LocaleKey.TerminalUpdate_PasteHint.I18N());
+                }
+                catch (Exception ex)
+                {
+                    ToastManager.Error(LocaleKey.Common_Error.I18N(), ex.GetFriendlyMessage());
+                }
+                return;
+            }
             serviceProvider.GetRequiredService<MainViewModel>().NavigateTo(serviceProvider.GetRequiredService<ChangeLogView>());
             return;
         }
