@@ -4607,4 +4607,10 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>Sohbetler bu cihazda saklanır. Bu sürümde sohbet bulut senkronizasyonu kullanılamaz.</value>
     </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Sohbeti yeniden adlandır</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Kısa ve okunması kolay tutulması önerilir</value>
+    </data>
 </root>

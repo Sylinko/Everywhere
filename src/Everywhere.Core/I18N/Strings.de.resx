@@ -4607,4 +4607,10 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>Chats werden auf diesem Gerät gespeichert. Die Chat-Cloud-Synchronisierung ist in dieser Version nicht verfügbar.</value>
     </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Chat umbenennen</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Empfehlung: kurz und gut lesbar halten</value>
+    </data>
 </root>

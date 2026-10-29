@@ -4607,4 +4607,10 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>Los chats se guardan en este dispositivo. La sincronización en la nube no está disponible en esta versión.</value>
     </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Cambiar nombre del chat</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Se recomienda mantenerlo breve y fácil de leer</value>
+    </data>
 </root>

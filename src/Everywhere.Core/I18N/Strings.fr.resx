@@ -4607,4 +4607,10 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>Les conversations sont stockées sur cet appareil. Leur synchronisation cloud est indisponible dans cette version.</value>
     </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Renommer la conversation</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Il est recommandé de rester bref et facile à lire</value>
+    </data>
 </root>

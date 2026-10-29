@@ -4649,4 +4649,10 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="ChatUpgrade_TrashFailed" xml:space="preserve">
         <value>Some previous-version database files could not be moved to the trash. Your upgraded chats are ready to use.</value>
     </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Rename chat</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Keep it short and easy to read</value>
+    </data>
 </root>
