@@ -6,7 +6,7 @@ fixture=$(mktemp -d)
 trap 'rm -rf "$fixture"' EXIT
 mkdir -p "$fixture/src/Everywhere.Linux" "$fixture/img" "$fixture/publish"
 cp "$repo_root/src/Everywhere.Linux/packaging_deb.sh" \
-    "$repo_root/src/Everywhere.Linux/build-appimage.sh" \
+    "$repo_root/src/Everywhere.Linux/packaging_rpm.sh" \
     "$fixture/src/Everywhere.Linux/"
 cp "$repo_root/img/Everywhere-icon.png" "$fixture/img/"
 cp "$repo_root/LICENSE" "$fixture/"
@@ -19,10 +19,12 @@ case "$runtime" in
     linux-x64)
         asset=Linux-x64
         arch=amd64
+        rpm_arch=x86_64
         ;;
     linux-arm64)
         asset=Linux-arm64
         arch=arm64
+        rpm_arch=aarch64
         ;;
     *)
         exit 1
@@ -41,10 +43,16 @@ desktop-file-validate unpacked-deb/usr/share/applications/com.Sylinko.Everywhere
 grep -q "StartupWMClass=Everywhere" unpacked-deb/usr/share/applications/com.Sylinko.Everywhere.desktop
 dpkg-deb -f "$deb" Depends | grep -q "libicu78"
 test ! -e unpacked-control/prerm
-bash src/Everywhere.Linux/build-appimage.sh "$runtime" "$asset" ./publish false "$version"
-appimage="Releases/Everywhere-${asset}-v${version}.AppImage"
-"$appimage" --appimage-extract >/dev/null
-test "$(env -u LD_LIBRARY_PATH squashfs-root/AppRun)" = packaging-fixture
-test -x squashfs-root/usr/lib/Everywhere/Everywhere.Watchdog
-desktop-file-validate squashfs-root/com.Sylinko.Everywhere.desktop
-echo "DEB and AppImage packaging fixtures passed for $runtime."
+bash src/Everywhere.Linux/packaging_rpm.sh "$runtime" "$version" ./publish
+rpm="Everywhere-${asset}-v${version}.rpm"
+test "$(rpm -qp --queryformat '%{NAME}' "$rpm")" = everywhere
+test "$(rpm -qp --queryformat '%{ARCH}' "$rpm")" = "$rpm_arch"
+test "$(rpm -qp --queryformat '%{VERSION}' "$rpm")" = 1.2.3~canary.20261026.1
+rpm -qp --requires "$rpm" | grep -qx libicu
+mkdir unpacked-rpm
+(cd unpacked-rpm && rpm2cpio "../$rpm" | cpio -idm --quiet)
+test -L unpacked-rpm/usr/bin/Everywhere
+test -x unpacked-rpm/opt/Everywhere/Everywhere.Watchdog
+desktop-file-validate unpacked-rpm/usr/share/applications/com.Sylinko.Everywhere.desktop
+cmp publish/Everywhere unpacked-rpm/opt/Everywhere/Everywhere
+echo "DEB and RPM packaging fixtures passed for $runtime."

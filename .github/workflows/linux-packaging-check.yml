@@ -36,6 +36,6 @@ jobs:
       - uses: actions/checkout@v6
         with:
           lfs: true
-      - run: sudo apt-get update && sudo apt-get install -y squashfs-tools zstd desktop-file-utils
+      - run: sudo apt-get update && sudo apt-get install -y rpm cpio zstd desktop-file-utils
       - run: bash scripts/test-linux-packaging.sh ${{ matrix.runtime }}
       - run: python3 -m unittest discover -s tests/automation -v

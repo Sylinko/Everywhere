@@ -65,7 +65,7 @@ jobs:
     - name: Install packaging and NativeAOT dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang zlib1g-dev dpkg-dev squashfs-tools zstd desktop-file-utils
+        sudo apt-get install -y clang zlib1g-dev dpkg-dev rpm zstd desktop-file-utils
 
     - name: Publish
       env:
@@ -98,14 +98,14 @@ jobs:
       run: |
         tar -I 'zstd -19 -T0' -cf Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.tar.zst -C ./publish .
 
-    - name: Build AppImage
+    - name: Build RPM Package
       run: |
-        bash src/Everywhere.Linux/build-appimage.sh ${{ matrix.runtime }} ${{ matrix.asset_name }} ./publish false "$VERSION" "$SEMANTIC_VERSION"
+        bash src/Everywhere.Linux/packaging_rpm.sh ${{ matrix.runtime }} "$VERSION" ./publish
 
     - name: Validate package metadata
       run: |
         dpkg-deb --info "Everywhere-${{ matrix.asset_name }}-v${VERSION}.deb"
-        test -s "Releases/Everywhere-${{ matrix.asset_name }}-v${VERSION}.AppImage"
+        rpm -qpi "Everywhere-${{ matrix.asset_name }}-v${VERSION}.rpm"
         test -s "Everywhere-${{ matrix.asset_name }}-v${VERSION}.tar.zst"
 
     - name: Collect Linux assets
@@ -115,7 +115,7 @@ jobs:
         if-no-files-found: error
         path: |
           Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.deb
-          Releases/Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.AppImage
+          Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.rpm
           Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.tar.zst
 
   release-linux:
@@ -154,7 +154,7 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.deb
-            release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.AppImage
+            release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.rpm
             release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.tar.zst
 
   notify-aur:
