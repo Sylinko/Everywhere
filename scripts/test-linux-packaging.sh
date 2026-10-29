@@ -37,7 +37,9 @@ dpkg-deb -x "$deb" unpacked-deb
 dpkg-deb -e "$deb" unpacked-control
 test -L unpacked-deb/usr/bin/Everywhere
 test -x unpacked-deb/opt/Everywhere/Everywhere.Watchdog
-desktop-file-validate unpacked-deb/usr/share/applications/Everywhere.desktop
+desktop-file-validate unpacked-deb/usr/share/applications/com.Sylinko.Everywhere.desktop
+grep -q "StartupWMClass=Everywhere" unpacked-deb/usr/share/applications/com.Sylinko.Everywhere.desktop
+dpkg-deb -f "$deb" Depends | grep -q "libicu78"
 test ! -e unpacked-control/prerm
 bash src/Everywhere.Linux/build-appimage.sh "$runtime" "$asset" ./publish false "$version"
 appimage="Releases/Everywhere-${asset}-v${version}.AppImage"
