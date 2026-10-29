@@ -433,18 +433,6 @@ public sealed partial class ChatWindow :
         }
     }
 
-    private void HandleTopicEditorPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-    {
-        if (e.Property != ShadUI.EditableTextBlock.TextProperty ||
-            sender is not ShadUI.EditableTextBlock { IsEditing: true, DataContext: ChatMetadata metadata } editor ||
-            editor.Text == metadata.Topic)
-        {
-            return;
-        }
-
-        ViewModel.ChatContextManager.RenameAsync(metadata, editor.Text).Detach(PART_ToastHost.ToExceptionHandler());
-    }
-
     private void HandleChatInputAreaTextChanged(object? sender, TextChangedEventArgs e)
     {
         if (IsWindowPinned == false)

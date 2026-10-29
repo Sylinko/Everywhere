@@ -65,10 +65,6 @@ public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeO
 
     [IgnoreMember]
     [ObservableProperty]
-    public partial bool IsRenaming { get; set; }
-
-    [IgnoreMember]
-    [ObservableProperty]
     public partial ChatContextMetadataStates States { get; internal set; }
 
     /// <summary>

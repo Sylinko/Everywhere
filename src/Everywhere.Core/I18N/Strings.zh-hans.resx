@@ -4647,4 +4647,10 @@
     <data name="ChatUpgrade_TrashFailed" xml:space="preserve">
         <value>部分旧版本数据库文件未能移到回收站。升级后的聊天仍可正常使用。</value>
     </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>重命名聊天</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>推荐保持简短易读</value>
+    </data>
 </root>

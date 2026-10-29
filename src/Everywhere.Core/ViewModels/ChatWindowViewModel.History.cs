@@ -1,4 +1,7 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using Avalonia.Controls;
+using Avalonia.Xaml.Interactions.Custom;
+using Avalonia.Xaml.Interactivity;
+using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat;
 using ShadUI;
 
@@ -6,6 +9,36 @@ namespace Everywhere.ViewModels;
 
 partial class ChatWindowViewModel
 {
+    [RelayCommand]
+    private async Task RenameChatAsync(ChatMetadata metadata)
+    {
+        var textBox = new TextBox
+        {
+            Text = metadata.Topic,
+            PlaceholderText = LocaleKey.ChatContext_Metadata_Topic_Default.I18N(), // no need to bind
+            [ControlAssist.LabelProperty] = LocaleKey.ChatHistory_RenameDialog_Label.I18N(),
+            [Interaction.BehaviorsProperty] = new BehaviorCollection
+            {
+                new AutoFocusBehavior(),
+                new TextBoxSelectAllOnGotFocusBehavior()
+            },
+            MaxLength = 100,
+            MinWidth = 280
+        };
+
+        var result = await DialogHost
+            .CreateDialog(textBox, LocaleKey.ChatHistory_RenameDialog_Title.I18N())
+            .WithPrimaryButton(LocaleKey.Common_OK.I18N())
+            .WithCancelButton(LocaleKey.Common_Cancel.I18N())
+            .ShowAsync();
+        if (result != DialogResult.Primary)
+        {
+            return;
+        }
+
+        await ExecuteHistoryOperationAsync(() => ChatContextManager.RenameAsync(metadata, textBox.Text));
+    }
+
     [RelayCommand]
     private Task ArchiveChatAsync(ChatMetadata metadata)
     {
