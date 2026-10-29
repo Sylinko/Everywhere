@@ -83,11 +83,6 @@ public abstract partial class ChatContext(
     public bool IsBusy => Root.HasOperation(this);
 
     /// <summary>
-    /// Tracks the background title operation in the root execution domain, not in persisted metadata.
-    /// </summary>
-    public bool IsGeneratingTopic { get; internal set; }
-
-    /// <summary>
     /// Gets the stable UI-thread-owned projection. Runtime work never creates it implicitly.
     /// Views borrow the projection; detaching a view does not release it.
     /// </summary>
