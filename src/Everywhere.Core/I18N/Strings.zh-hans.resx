@@ -4614,11 +4614,11 @@
     <data name="ChatHistory_Restore" xml:space="preserve">
         <value>恢复聊天</value>
     </data>
-    <data name="ChatHistory_Delete_Title" xml:space="preserve">
-        <value>永久删除聊天</value>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>永久删除</value>
     </data>
-    <data name="ChatHistory_Delete_Confirmation" xml:space="preserve">
-        <value>这会从此设备永久删除该归档聊天及其所有分支，且无法撤销。附件文件和旧版本数据库不会被删除。</value>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>这会从此设备永久删除该聊天及其所有分支，且无法撤销，确定吗？</value>
     </data>
     <data name="ChatHistory_Delete_Running" xml:space="preserve">
         <value>请先停止此聊天中的任务，再永久删除。</value>
@@ -4652,5 +4652,8 @@
     </data>
     <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
         <value>推荐保持简短易读</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>删除聊天</value>
     </data>
 </root>

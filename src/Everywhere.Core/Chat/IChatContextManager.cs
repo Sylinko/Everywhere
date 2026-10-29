@@ -75,7 +75,7 @@ public interface IChatContextManager : IIncrementalLoader
     Task RestoreAsync(ChatMetadata metadata);
 
     /// <summary>
-    /// Deletes an inactive archived conversation after the presentation obtains confirmation.
+    /// Deletes an inactive conversation after the presentation obtains confirmation.
     /// </summary>
     Task DeletePermanentlyAsync(ChatMetadata metadata);
 

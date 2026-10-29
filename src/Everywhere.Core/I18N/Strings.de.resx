@@ -4613,4 +4613,13 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
         <value>Empfehlung: kurz und gut lesbar halten</value>
     </data>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>Endgültig löschen</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>Dadurch werden dieser Chat und alle seine Verzweigungen dauerhaft von diesem Gerät gelöscht, und dies kann nicht rückgängig gemacht werden. Sind Sie sicher?</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>Chat löschen</value>
+    </data>
 </root>

@@ -476,7 +476,6 @@ public sealed class ChatV2MigrationTests
         using var manager = new ChatContextManager(
             new Settings(new ServiceCollection().BuildServiceProvider()), storage, NullLogger<ChatContextManager>.Instance);
         var runtime = ChatStorageTestExtensions.AttachRoot(manager, data);
-        await manager.ArchiveAsync(data.Metadata);
         await using (var db = files.Factory.CreateDbContext())
         {
             await db.Database.ExecuteSqlRawAsync("CREATE TRIGGER RejectDelete BEFORE DELETE ON Chats BEGIN SELECT RAISE(ABORT, 'delete failed'); END");

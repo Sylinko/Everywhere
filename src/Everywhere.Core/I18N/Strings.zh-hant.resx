@@ -4613,4 +4613,13 @@
     <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
         <value>建議保持簡短易讀</value>
     </data>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>永久刪除</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>這會從此裝置永久刪除該聊天及其所有分支，且無法復原，確定嗎？</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>刪除聊天</value>
+    </data>
 </root>
