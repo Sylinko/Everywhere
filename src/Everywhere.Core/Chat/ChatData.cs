@@ -79,6 +79,7 @@ public sealed partial class ChatData : ObservableObject, IDisposable
         foreach (var node in messageNodes.Append(rootNode))
         {
             node.Data = this;
+            node.SortChildren();
             foreach (var childId in node.Children) _messageNodeMap[childId].Parent = node;
         }
 

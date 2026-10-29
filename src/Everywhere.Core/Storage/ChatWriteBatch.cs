@@ -39,14 +39,14 @@ public sealed record ChatWriteBatch(ChatMetadataWrite Metadata, IReadOnlyList<Ch
 /// <summary>
 /// Captured metadata fields written by ordinary saves. Archive state has its own explicit operation.
 /// </summary>
-public sealed record ChatMetadataWrite(Guid Id, string? Topic, DateTimeOffset DateCreated, DateTimeOffset DateModified)
+public sealed record ChatMetadataWrite(Guid Id, string? Topic, DateTimeOffset DateCreated, DateTimeOffset DateModified, bool IsTemporary)
 {
     /// <summary>
     /// Captures the current metadata without retaining its observable object.
     /// </summary>
     public static ChatMetadataWrite Capture(ChatMetadata metadata)
     {
-        return new ChatMetadataWrite(metadata.Id, metadata.Topic, metadata.DateCreated, metadata.DateModified);
+        return new ChatMetadataWrite(metadata.Id, metadata.Topic, metadata.DateCreated, metadata.DateModified, metadata.IsTemporary);
     }
 }
 

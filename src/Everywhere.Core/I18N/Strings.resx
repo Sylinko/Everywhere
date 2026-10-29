@@ -272,7 +272,7 @@
         <value>Type shortcut...</value>
     </data>
     <data name="ChatContext_Metadata_Topic_Default" xml:space="preserve">
-        <value>Unnamed Session</value>
+        <value>Unnamed chat</value>
     </data>
     <data name="ChatAttachment_RemoveButton_ToolTip" xml:space="preserve">
         <value>Remove</value>
@@ -1513,8 +1513,8 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Date</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>Rename Chat</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>Rename</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>Delete Chat</value>
@@ -2700,9 +2700,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>The tool's return result is incorrect: {0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>Temporary Chat: Once enabled, the current chat will not be saved and will be deleted when switching or starting a new conversation.</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(Optional) {0}</value>
@@ -4607,14 +4604,14 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>Chats are stored on this device. Chat cloud sync is unavailable in this version.</value>
     </data>
-    <data name="ChatHistory_Archive" xml:space="preserve">
-        <value>Archived chats</value>
+    <data name="ChatHistory_Archived" xml:space="preserve">
+        <value>Archived</value>
     </data>
-    <data name="ChatHistory_Archive_Action" xml:space="preserve">
-        <value>Archive chat</value>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Archive</value>
     </data>
-    <data name="ChatHistory_Restore" xml:space="preserve">
-        <value>Restore chat</value>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Unarchive</value>
     </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Permanently delete</value>
@@ -4624,9 +4621,6 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="ChatHistory_Delete_Running" xml:space="preserve">
         <value>Stop this chat before permanently deleting it.</value>
-    </data>
-    <data name="ChatHistory_CloseTemporary" xml:space="preserve">
-        <value>Close temporary chat</value>
     </data>
     <data name="ChatUpgrade_Title" xml:space="preserve">
         <value>Your chat data has been upgraded</value>
@@ -4649,6 +4643,15 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="ChatUpgrade_TrashFailed" xml:space="preserve">
         <value>Some previous-version database files could not be moved to the trash. Your upgraded chats are ready to use.</value>
     </data>
+    <data name="ChatHistory_Pinned" xml:space="preserve">
+        <value>Pinned</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Pin to top</value>
+    </data>
+    <data name="ChatHistory_Unpin" xml:space="preserve">
+        <value>Unpin</value>
+    </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>Rename chat</value>
     </data>
@@ -4657,5 +4660,26 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Delete chat</value>
+    </data>
+    <data name="ChatHistory_Recent" xml:space="preserve">
+        <value>Recent</value>
+    </data>
+    <data name="ChatHistory_Temporary" xml:space="preserve">
+        <value>Temporary</value>
+    </data>
+    <data name="ChatHistory_Persist" xml:space="preserve">
+        <value>Keep chat</value>
+    </data>
+    <data name="ChatHistory_TemporaryNotice" xml:space="preserve">
+        <value>Temporary chat. Automatically deleted when Everywhere exits.</value>
+    </data>
+    <data name="ChatHistory_TemporaryDescription" xml:space="preserve">
+        <value>Start a temporary chat. It will be automatically deleted when Everywhere exits.</value>
+    </data>
+    <data name="ChatHistory_PersistDescription" xml:space="preserve">
+        <value>Keep this temporary chat as a regular chat. It will not be automatically deleted when Everywhere exits.</value>
+    </data>
+    <data name="ChatHistory_Empty" xml:space="preserve">
+        <value>No chats to display</value>
     </data>
 </root>

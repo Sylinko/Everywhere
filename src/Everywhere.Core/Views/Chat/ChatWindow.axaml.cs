@@ -1,7 +1,7 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AttachedProperties;
 using Everywhere.Chat;
-using Everywhere.Collections;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Interop;
@@ -30,8 +29,11 @@ public sealed partial class ChatWindow :
     IRecipient<FlashChatWindowMessage>,
     IRecipient<ApplicationMessage>
 {
-    public IReadOnlyBindableList<DynamicNotification> ModelAvailabilityNotifications =>
-        _modelAvailabilityPresenter.Notifications;
+    /// <summary>
+    /// Gets the model and temporary-chat notices displayed above the input area.
+    /// </summary>
+    public ObservableCollection<DynamicNotification> ChatInputNotifications =>
+        _inputNotificationPresenter.Notifications;
 
     /// <summary>
     /// Defines the <see cref="IsWindowPinned"/> property.
@@ -58,6 +60,7 @@ public sealed partial class ChatWindow :
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
     private readonly ChatModelAvailabilityPresenter _modelAvailabilityPresenter;
+    private readonly ChatInputNotificationPresenter _inputNotificationPresenter;
     private readonly ILogger<ChatWindow> _logger;
     private IDisposable? _pendingHiddenCompaction;
 
@@ -97,6 +100,10 @@ public sealed partial class ChatWindow :
         _visualElementEffect = visualElementEffect;
         _logger = logger;
 
+        _inputNotificationPresenter = new ChatInputNotificationPresenter(
+            ViewModel.ChatContextManager,
+            _modelAvailabilityPresenter.Notifications,
+            ViewModel.PersistChatCommand);
         InitializeComponent();
         ChatMessages.SetViewportActive(IsVisible && WindowState != WindowState.Minimized);
 
@@ -165,6 +172,23 @@ public sealed partial class ChatWindow :
                     RequestCloaked(true);
                 }
 
+                e.Handled = true;
+                break;
+            }
+            case { Key: Key.G } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
+            {
+                if (TemporaryChatButton.IsVisible && TemporaryChatButton.IsEffectivelyEnabled)
+                {
+                    var isTemporary = !ViewModel.ChatContextManager.Current.Data.Metadata.IsTemporary;
+                    ViewModel.SetTemporaryChatCommand.Execute(isTemporary);
+                    e.Handled = true;
+                }
+                break;
+            }
+            case { Key: Key.F } when e.KeyModifiers.IsApplicationShortcutModifierOnly(KeyModifiers.Shift):
+            {
+                HistorySearchToggle.IsChecked = !HistorySearchToggle.IsChecked;
+                SwitchHistorySearch();
                 e.Handled = true;
                 break;
             }
@@ -424,12 +448,27 @@ public sealed partial class ChatWindow :
         }
     }
 
-    private void HandleTemporaryChatClicked(object? sender, RoutedEventArgs e)
+    private void HandleHistorySearchClicked(object? sender, RoutedEventArgs e)
     {
-        if (sender is ToggleButton toggle)
+        SwitchHistorySearch();
+    }
+
+    private void SwitchHistorySearch()
+    {
+        if (HistorySearchToggle.IsChecked == true)
         {
-            var context = ViewModel.ChatContextManager.Current;
-            context.SetTemporaryAsync(toggle.IsChecked == true).Detach(PART_ToastHost.ToExceptionHandler());
+            _persistentState.IsChatWindowHistoryOpened = true;
+            Dispatcher.UIThread.Post(
+                () =>
+                {
+                    HistorySearchBox.Focus();
+                    HistorySearchBox.SelectAll();
+                },
+                DispatcherPriority.Input);
+        }
+        else
+        {
+            ViewModel.ChatContextManager.HistorySearchQuery = null;
         }
     }
 
@@ -478,6 +517,7 @@ public sealed partial class ChatWindow :
 
         DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
         _settings.Model.PropertyChanged -= HandleModelSettingsChanged;
+        _inputNotificationPresenter.Dispose();
         _modelAvailabilityPresenter.Dispose();
 
         base.OnClosed(e);

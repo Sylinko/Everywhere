@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Korean (한국어) -->
 <root>
     <resheader name="resmimetype">
@@ -1513,8 +1513,8 @@
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>날짜</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>채팅 이름 변경</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>이름 변경</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>채팅 삭제</value>
@@ -2700,9 +2700,6 @@
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>도구의 반환 결과가 잘못되었습니다: {0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>임시 채팅: 활성화하면 현재 채팅이 저장되지 않으며, 대화 전환 또는 새 대화 시 삭제됩니다.</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(선택 사항) {0}</value>
@@ -4607,19 +4604,28 @@
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>채팅은 이 기기에 저장됩니다. 이 버전에서는 채팅 클라우드 동기화를 사용할 수 없습니다.</value>
     </data>
-    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
-        <value>채팅 이름 바꾸기</value>
-    </data>
-    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
-        <value>짧고 읽기 쉽게 유지하는 것을 권장합니다</value>
-    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>영구 삭제</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>이 채팅과 모든 분기가 이 기기에서 영구적으로 삭제되며 되돌릴 수 없습니다. 계속하시겠습니까?</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>보관</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>보관 취소</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>채팅 이름 바꾸기</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>짧고 읽기 쉽게 유지하는 것을 권장합니다</value>
+    </data>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>채팅 삭제</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>상단에 고정</value>
     </data>
 </root>

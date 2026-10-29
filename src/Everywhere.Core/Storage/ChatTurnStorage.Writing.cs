@@ -22,8 +22,10 @@ partial class ChatTurnStorage
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         await db.Database.ExecuteSqlInterpolatedAsync(
             $"""
-            INSERT INTO Chats (Id, Topic, CreatedAt, UpdatedAt) VALUES ({chatId}, {topic}, {createdAt}, {updatedAt})
-            ON CONFLICT (Id) DO UPDATE SET Topic = excluded.Topic, UpdatedAt = excluded.UpdatedAt
+            INSERT INTO Chats (Id, Topic, CreatedAt, UpdatedAt, IsTemporary)
+            VALUES ({chatId}, {topic}, {createdAt}, {updatedAt}, {batch.Metadata.IsTemporary})
+            ON CONFLICT (Id) DO UPDATE SET Topic = excluded.Topic, UpdatedAt = excluded.UpdatedAt,
+                IsTemporary = excluded.IsTemporary
             """,
             cancellationToken);
 
@@ -64,6 +66,25 @@ partial class ChatTurnStorage
         await db.Chats.Where(row => row.Id == chatId).ExecuteDeleteAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task SetPinnedAsync(Guid chatId, bool isPinned, CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var affected = await db.Chats.Where(row => row.Id == chatId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.IsPinned, isPinned), cancellationToken);
+        if (affected == 0)
+        {
+            throw new KeyNotFoundException($"Conversation {chatId} does not exist.");
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteTemporaryChatsAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await db.Chats.Where(row => row.IsTemporary).ExecuteDeleteAsync(cancellationToken);
+    }
+
     private async Task SetArchiveStateAsync(Guid chatId, DateTimeOffset? archivedAt, CancellationToken cancellationToken)
     {
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
@@ -82,7 +103,7 @@ partial class ChatTurnStorage
         {
             await db.Database.ExecuteSqlInterpolatedAsync(
                 $"""
-                UPDATE Nodes SET ParentId = {node.ParentId}, TurnId = {node.TurnId}, SiblingOrder = {node.SiblingOrder},
+                UPDATE Nodes SET ParentId = {node.ParentId}, TurnId = {node.TurnId},
                     ChoiceChildId = {node.ChoiceChildId}, UpdatedAt = {node.UpdatedAt.UtcTicks}
                 WHERE ChatContextId = {chatId} AND Id = {node.Id}
                 """,
@@ -92,12 +113,12 @@ partial class ChatTurnStorage
 
         await db.Database.ExecuteSqlInterpolatedAsync(
             $"""
-            INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, SiblingOrder, ChoiceChildId,
+            INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId,
                 MessageKind, SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
-            VALUES ({chatId}, {node.Id}, {node.ParentId}, {node.TurnId}, {node.SiblingOrder}, {node.ChoiceChildId},
+            VALUES ({chatId}, {node.Id}, {node.ParentId}, {node.TurnId}, {node.ChoiceChildId},
                 {(int)node.MessageKind}, {write.SummaryThroughNodeId}, {write.Payload}, {node.CreatedAt.UtcTicks}, {node.UpdatedAt.UtcTicks})
             ON CONFLICT (ChatContextId, Id) DO UPDATE SET
-                ParentId = excluded.ParentId, TurnId = excluded.TurnId, SiblingOrder = excluded.SiblingOrder,
+                ParentId = excluded.ParentId, TurnId = excluded.TurnId,
                 ChoiceChildId = excluded.ChoiceChildId, MessageKind = excluded.MessageKind,
                 SummaryThroughNodeId = excluded.SummaryThroughNodeId, Payload = excluded.Payload, UpdatedAt = excluded.UpdatedAt
             """,

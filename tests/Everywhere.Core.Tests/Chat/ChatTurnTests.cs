@@ -11,6 +11,42 @@ namespace Everywhere.Core.Tests.Chat;
 public sealed class ChatTurnTests
 {
     [AvaloniaTest]
+    public void Restore_WhenSiblingTimesTie_SortsByUuidAndPreservesLegacyChoice()
+    {
+        var time = DateTimeOffset.UtcNow.AddDays(1);
+        var firstId = Guid.Parse("00000001-0000-0000-8000-000000000000");
+        var secondId = Guid.Parse("00000100-0000-0000-8000-000000000000");
+        var message = new UserChatMessage("request", []);
+        var first = new ChatMessageNode(firstId, ChatMessageKind.User, time, time);
+        var second = new ChatMessageNode(secondId, ChatMessageKind.User, time, time);
+
+        // Exercise the old index-based wire representation, not a test-only construction API.
+        var buffer = new System.Buffers.ArrayBufferWriter<byte>();
+        var writer = new MessagePackWriter(buffer);
+        writer.WriteArrayHeader(4);
+        MessagePackSerializer.Serialize(ref writer, Guid.NewGuid());
+        MessagePackSerializer.Serialize<ChatMessage>(ref writer, new RootChatMessage());
+        MessagePackSerializer.Serialize(ref writer, new[] { secondId, firstId });
+        writer.Write(0);
+        writer.Flush();
+        var root = MessagePackSerializer.Deserialize<ChatMessageNode>(buffer.WrittenMemory);
+        using var data = new ChatData(new ChatMetadata(Guid.NewGuid(), time, time, null), [second, first], root);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.Children, Is.EqualTo(new[] { firstId, secondId }));
+            Assert.That(root.ChoiceChildId, Is.EqualTo(secondId));
+            Assert.That(root.ChoiceIndex, Is.EqualTo(1));
+            Assert.That(data.Items[^1], Is.SameAs(second));
+        });
+
+        // A delayed message is inserted by its creation time, without stealing the selection.
+        var delayed = data.Append(root, message, shouldSelectChild: false);
+        Assert.That(root.Children[0], Is.EqualTo(delayed.Id));
+        Assert.That(root.ChoiceChildId, Is.EqualTo(secondId));
+    }
+
+    [AvaloniaTest]
     public void CompressionOutcome_WhenSaveCapturesAtNotification_PersistsTheCompleteOutcome()
     {
         foreach (var outcome in new[] { "Complete", "Cancel", "Fail" })
@@ -233,9 +269,8 @@ public sealed class ChatTurnTests
         {
             Assert.That(original.Parent, Is.SameAs(user));
             Assert.That(appended.Parent, Is.SameAs(user));
-            Assert.That(user.Children, Is.EqualTo(new[] { original.Id, appended.Id }));
+            Assert.That(user.Children, Is.EquivalentTo(new[] { original.Id, appended.Id }));
             Assert.That(appended.Children, Is.Empty);
-            Assert.That(appended.SiblingOrder, Is.GreaterThan(original.SiblingOrder));
         });
     }
 

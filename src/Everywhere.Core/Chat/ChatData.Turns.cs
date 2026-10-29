@@ -108,7 +108,6 @@ partial class ChatData
                 node.Id,
                 node.Parent?.Id,
                 node.Turn?.Id,
-                node.SiblingOrder,
                 node.ChoiceChildId,
                 node.MessageKind,
                 node.CreatedAt,
@@ -147,7 +146,6 @@ partial class ChatData
         {
             Data = this,
             Parent = parent,
-            SiblingOrder = parent.Children.Count,
         };
         AssignTurn(node);
         _messageNodeMap.TryAdd(node.Id, node);
@@ -240,10 +238,9 @@ partial class ChatData
         pending.Push(RootNode);
         while (pending.TryPop(out var parent))
         {
-            for (var index = 0; index < parent.Children.Count; index++)
+            foreach (var childId in parent.Children)
             {
-                var child = _messageNodeMap[parent.Children[index]];
-                child.SiblingOrder = index;
+                var child = _messageNodeMap[childId];
                 AssignTurn(child);
                 pending.Push(child);
             }
@@ -276,6 +273,7 @@ partial class ChatData
         var turns = nodes.AsValueEnumerable().Where(node => node.Turn?.UserNode == node).Select(node => node.Turn).OfType<ChatTurn>().ToArray();
         Volatile.Write(ref _selectedTurns, turns);
         Interlocked.Increment(ref _branchRevision);
+        OnPropertyChanged(nameof(HasHistory));
         BranchChanged?.Invoke(this, EventArgs.Empty);
     }
 }
@@ -287,7 +285,6 @@ public readonly record struct ChatNodeTopologySnapshot(
     Guid Id,
     Guid? ParentId,
     Guid? TurnId,
-    long SiblingOrder,
     Guid? ChoiceChildId,
     ChatMessageKind MessageKind,
     DateTimeOffset CreatedAt,

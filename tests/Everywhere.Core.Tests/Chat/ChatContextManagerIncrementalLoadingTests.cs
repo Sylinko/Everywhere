@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Avalonia.Headless.NUnit;
+﻿using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Everywhere.Chat;
 using Everywhere.Configuration;
@@ -383,7 +382,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             NullLogger<ChatContextManager>.Instance);
 
     private static ChatMetadata[] Flatten(ChatContextManager manager) =>
-        manager.AllHistory.SelectMany(group => group.MetadataList).ToArray();
+        manager.AllHistory.SelectMany(group => group.Items).ToArray();
 
     private static ChatMetadata Metadata(string topic, int minutesAgo)
     {
@@ -458,19 +457,43 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             return Deleter?.Invoke(chatId) ?? Task.CompletedTask;
         }
 
-        public async IAsyncEnumerable<ChatMetadata> QueryChatContextsAsync(
-            int take,
-            Guid? startAfterId = null,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default,
-            bool isArchived = false)
+        public Task DeleteTemporaryChatsAsync(CancellationToken cancellationToken = default)
         {
-            var startIndex = startAfterId is { } cursor ? metadata.Select(item => item.Id).ToList().IndexOf(cursor) + 1 : 0;
-            foreach (var item in metadata.Skip(startIndex).Where(item => item.IsArchived == isArchived).Take(take))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                yield return item;
-                await Task.Yield();
-            }
+            return Task.CompletedTask;
+        }
+
+        public Func<Guid, bool, Task>? PinSetter { get; set; }
+
+        public Task SetPinnedAsync(Guid chatId, bool isPinned, CancellationToken cancellationToken = default)
+        {
+            return PinSetter?.Invoke(chatId, isPinned) ?? Task.CompletedTask;
+        }
+
+        public async Task<ChatHistoryPage> ReadHistoryPageAsync(
+            int take,
+            ChatHistoryCursor? cursor = null,
+            CancellationToken cancellationToken = default,
+            ChatHistoryView view = ChatHistoryView.Recent)
+        {
+            await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
+            var rows = metadata.Where(item => (view == ChatHistoryView.Archived ? item.IsArchived : !item.IsArchived && (view != ChatHistoryView.Temporary || item.IsTemporary)))
+                .Where(item => cursor is null || cursor.IsPinned && !item.IsPinned ||
+                    item.IsPinned == cursor.IsPinned && (item.DateModified < cursor.UpdatedAt ||
+                        item.DateModified == cursor.UpdatedAt && item.Id.CompareTo(cursor.Id) < 0))
+                .OrderByDescending(item => item.IsPinned).ThenByDescending(item => item.DateModified)
+                .ThenByDescending(item => item.Id).Take(take + 1).ToArray();
+            var next = rows.Length > take
+                ? new ChatHistoryCursor(rows[take - 1].IsPinned, rows[take - 1].DateModified, rows[take - 1].Id)
+                : null;
+            return new ChatHistoryPage(rows.Take(take).ToArray(), next);
+        }
+
+        public Task<ChatMetadata?> GetMostRecentChatMetadataAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(metadata.Where(item => !item.IsArchived)
+                .OrderByDescending(item => item.DateModified).ThenByDescending(item => item.Id).FirstOrDefault());
         }
 
         public Task<ChatData> GetChatContextAsync(
@@ -485,8 +508,8 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         }
 
         public Task SaveChatContextAsync(
-            ChatWriteBatch data,
-            CancellationToken cancellationToken = default) => ContextSaver?.Invoke(data) ?? Task.CompletedTask;
+            ChatWriteBatch batch,
+            CancellationToken cancellationToken = default) => ContextSaver?.Invoke(batch) ?? Task.CompletedTask;
 
         public Task SaveChatContextMetadataAsync(
             ChatMetadataWrite metadata,

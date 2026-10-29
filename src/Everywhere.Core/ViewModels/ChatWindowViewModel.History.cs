@@ -39,7 +39,20 @@ partial class ChatWindowViewModel
         await ExecuteHistoryOperationAsync(() => ChatContextManager.RenameAsync(metadata, textBox.Text));
     }
 
-    [RelayCommand]
+    private bool CanOrganizeChat(ChatMetadata metadata)
+    {
+        // Only the current draft can appear in history without any retained messages.
+        var current = ChatContextManager.Current.Data;
+        return !ReferenceEquals(current.Metadata, metadata) || current.HasHistory;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanOrganizeChat))]
+    private Task ToggleChatPinAsync(ChatMetadata metadata)
+    {
+        return ExecuteHistoryOperationAsync(() => ChatContextManager.SetPinnedAsync(metadata, !metadata.IsPinned));
+    }
+
+    [RelayCommand(CanExecute = nameof(CanOrganizeChat))]
     private Task ArchiveChatAsync(ChatMetadata metadata)
     {
         return ExecuteHistoryOperationAsync(() => ChatContextManager.ArchiveAsync(metadata));
@@ -52,9 +65,23 @@ partial class ChatWindowViewModel
     }
 
     [RelayCommand]
-    private Task DismissTemporaryChatAsync(ChatMetadata metadata)
+    private async Task SetTemporaryChatAsync(bool isTemporary)
     {
-        return ExecuteHistoryOperationAsync(() => ChatContextManager.DismissTemporaryAsync(metadata));
+        var context = ChatContextManager.Current;
+        if (isTemporary)
+        {
+            await ExecuteHistoryOperationAsync(() => context.ApplyAsync(() => context.Data.Metadata.IsTemporary = true));
+        }
+        else
+        {
+            await PersistChatCommand.ExecuteAsync(context.Data.Metadata);
+        }
+    }
+
+    [RelayCommand]
+    private Task PersistChatAsync(ChatMetadata metadata)
+    {
+        return ExecuteHistoryOperationAsync(() => ChatContextManager.PersistChatAsync(metadata));
     }
 
     [RelayCommand]
