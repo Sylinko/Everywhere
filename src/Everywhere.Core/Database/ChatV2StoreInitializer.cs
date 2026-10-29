@@ -29,6 +29,9 @@ public sealed class ChatV2StoreInitializer(
         await destination.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;", cancellationToken);
         await destination.Database.MigrateAsync(cancellationToken);
 
+        // A new application session never exposes temporary chats left by a crashed or killed process.
+        await destination.Chats.Where(row => row.IsTemporary).ExecuteDeleteAsync(cancellationToken);
+
         await using var transaction = await destination.Database.BeginTransactionAsync(cancellationToken);
         if (await destination.StoreInfo.AnyAsync(cancellationToken))
         {
@@ -167,10 +170,8 @@ public sealed class ChatV2StoreInitializer(
             }
 
             var siblings = children[parent.Id].OrderBy(node => GetLegacyOrderKey(node.Id)).ThenBy(node => node.Id).ToArray();
-            for (var index = 0; index < siblings.Length; index++)
+            foreach (var child in siblings)
             {
-                var child = siblings[index];
-                child.SiblingOrder = index;
                 child.TurnId = child.MessageKind.IsTurnStart() ? child.Id : parent.TurnId;
                 pending.Push(child);
             }
@@ -263,9 +264,9 @@ public sealed class ChatV2StoreInitializer(
         {
             await destination.Database.ExecuteSqlInterpolatedAsync(
                 $"""
-                INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, SiblingOrder, ChoiceChildId,
+                INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId,
                     MessageKind, SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
-                VALUES ({row.ChatContextId}, {row.Id}, {row.ParentId}, {row.TurnId}, {row.SiblingOrder}, {row.ChoiceChildId},
+                VALUES ({row.ChatContextId}, {row.Id}, {row.ParentId}, {row.TurnId}, {row.ChoiceChildId},
                     {(int)row.MessageKind}, {row.SummaryThroughNodeId}, {row.Payload}, {row.CreatedAt.UtcTicks}, {row.UpdatedAt.UtcTicks})
                 """,
                 cancellationToken);

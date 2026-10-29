@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Traditional Chinese - Hong Kong (繁體中文 - 香港) -->
 <root>
     <resheader name="resmimetype">
@@ -182,7 +182,7 @@
         <value>模型返回了空的上下文摘要。</value>
     </data>
     <data name="ContextCompression_Error_NoHistory" xml:space="preserve">
-        <value>沒有可壓縮的對話歷史。</value>
+        <value>沒有可壓縮的聊天歷史。</value>
     </data>
     <data name="ContextCompression_Error_ToolCallNotAllowed" xml:space="preserve">
         <value>模型在壓縮上下文時嘗試調用工具。</value>
@@ -212,7 +212,7 @@
         <value>包括內容</value>
     </data>
     <data name="ChatWindow_TextSearch_PlaceholderText" xml:space="preserve">
-        <value>在當前對話中查找</value>
+        <value>在當前聊天中查找</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
         <value>上一个結果</value>
@@ -585,10 +585,10 @@
         <value>支援使用工具</value>
     </data>
     <data name="Assistant_SupportsToolCall_Description" xml:space="preserve">
-        <value>模型支持使用已配置的工具。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。</value>
+        <value>模型支持使用已配置的工具。如果模型不支持，開啟此選項可能會導致聊天時出現錯誤。</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
-        <value>模型支持先思考再回答。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。注意此選項只會影響 Everywhere 如何處理模型響應，不能控制模型是否真的啟用思考。對於可以動態開關思考的模型，請開啟此選項之後，在下方的“啟用思考”選項作進一步調整。</value>
+        <value>模型支持先思考再回答。如果模型不支持，開啟此選項可能會導致聊天時出現錯誤。注意此選項只會影響 Everywhere 如何處理模型響應，不能控制模型是否真的啟用思考。對於可以動態開關思考的模型，請開啟此選項之後，在下方的“啟用思考”選項作進一步調整。</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
         <value>無配額限制</value>
@@ -597,7 +597,7 @@
         <value>支援圖像輸入</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>對話的最大上下文長度 (context_limit)。此項會影響諸多策略，請盡可能設為真實值。</value>
+        <value>聊天的最大上下文長度 (context_limit)。此項會影響諸多策略，請盡可能設為真實值。</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>最大上下文長度 (context_limit)</value>
@@ -925,7 +925,7 @@
         <value>顯示聊天統計</value>
     </data>
     <data name="ChatWindowSettings_ShowChatStatistics_Description" xml:space="preserve">
-        <value>啟用後，使用數據將在每輪對話結束時顯示於聊天窗口中。</value>
+        <value>啟用後，使用數據將在每輪聊天結束時顯示於聊天窗口中。</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_InputTokenCountRun" xml:space="preserve">
         <value>輸入</value>
@@ -1078,7 +1078,7 @@
         <value>執行 Shell 指令</value>
     </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
-        <value>對話內容超出了目前助手的上下文容量。</value>
+        <value>聊天內容超出了目前助手的上下文容量。</value>
     </data>
     <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
         <value>存取程序</value>
@@ -1513,17 +1513,17 @@
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>日期</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>重新命名對話</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>重新命名</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
-        <value>刪除對話</value>
+        <value>刪除聊天</value>
     </data>
     <data name="LocaleName_Tr" xml:space="preserve">
         <value>Türkçe</value>
     </data>
     <data name="ChatContextManager_LoadChatContextFailedToast_Content" xml:space="preserve">
-        <value>載入對話失敗: {0}</value>
+        <value>載入聊天失敗: {0}</value>
     </data>
     <data name="ChatWindow_ViewAllHistoryButton_Content" xml:space="preserve">
         <value>查看全部</value>
@@ -1695,7 +1695,7 @@
         <value>請求超時持續時間</value>
     </data>
     <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
-        <value>當已報告的上下文用量達到模型聲明上下文長度的此百分比時，自動壓縮對話上下文。</value>
+        <value>當已報告的上下文用量達到模型聲明上下文長度的此百分比時，自動壓縮聊天上下文。</value>
     </data>
     <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>上下文壓縮閾值</value>
@@ -2121,10 +2121,10 @@
         <value>(空)</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Header" xml:space="preserve">
-        <value>始終開始新對話</value>
+        <value>始終開始新聊天</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>使用快捷鍵召喚聊天視窗時，將自動忽略上次對話並開啟全新會話。</value>
+        <value>使用快捷鍵召喚聊天視窗時，將自動忽略上次聊天並開啟新聊天。</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>從 JSON 匯入</value>
@@ -2363,7 +2363,7 @@
         <value>最大輸出長度</value>
     </data>
     <data name="Assistant_OutputLimit_Description" xml:space="preserve">
-        <value>對話的最大輸出長度 (output_limit)。此項會影響模型請求的參數（尤其是 Anthropic），請盡可能設為真實值。</value>
+        <value>聊天的最大輸出長度 (output_limit)。此項會影響模型請求的參數（尤其是 Anthropic），請盡可能設為真實值。</value>
     </data>
     <data name="UserProfilePresenter_CancelLoginButton_Content" xml:space="preserve">
         <value>請在瀏覽器繼續</value>
@@ -2701,9 +2701,6 @@
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>工具的返回結果有誤：{0}</value>
     </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>臨時聊天：開啟後當前聊天不會被保存，切換或新建對話時即刪除。</value>
-    </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(可選) {0}</value>
     </data>
@@ -2723,7 +2720,7 @@
         <value>當前</value>
     </data>
     <data name="SystemAssistantSettings_TitleGeneration_Desription" xml:space="preserve">
-        <value>配置用於對話標題自動命名的助手。</value>
+        <value>配置用於聊天標題自動命名的助手。</value>
     </data>
     <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
         <value>標題生成</value>
@@ -2741,7 +2738,7 @@
         <value>自動總結標題</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyGenerateTitle_Description" xml:space="preserve">
-        <value>啟用後，自動根據第一條消息總結對話標題。</value>
+        <value>啟用後，自動根據第一條消息總結聊天標題。</value>
     </data>
     <data name="Strategy_BuiltIn_Browser_TranslateCommand_ArgumentHint" xml:space="preserve">
         <value>翻譯的目標語言，默認為當前語言</value>
@@ -3002,7 +2999,7 @@
         <value>設置思考輸出的預算，單位為 token。</value>
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
-        <value>簽名是某些思考模型的私有數據，Everywhere 無法解碼。在帶有思考內容的上下文中切換不同提供商的模型可能導致此問題，開啟一個新的對話可以解決此問題。</value>
+        <value>簽名是某些思考模型的私有數據，Everywhere 無法解碼。在帶有思考內容的上下文中切換不同提供商的模型可能導致此問題，開啟一個新的聊天可以解決此問題。</value>
     </data>
     <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>新版本已準備好，點擊立即更新。
@@ -4038,10 +4035,10 @@
         <value>工具使用中</value>
     </data>
     <data name="ChatWindowSettings_TurnNavigationMode_Header" xml:space="preserve">
-        <value>對話輪次導覽</value>
+        <value>聊天輪次導覽</value>
     </data>
     <data name="ChatWindowSettings_TurnNavigationMode_Description" xml:space="preserve">
-        <value>在對話左側顯示輪次導覽列。可選擇只作上下移動的簡潔動畫、帶縮放的靈動動畫，或將其關閉。</value>
+        <value>在聊天左側顯示輪次導覽列。可選擇只作上下移動的簡潔動畫、帶縮放的靈動動畫，或將其關閉。</value>
     </data>
     <data name="ChatTurnNavigationMode_None" xml:space="preserve">
         <value>關閉</value>
@@ -4173,7 +4170,7 @@
         <value>已啟用的工具可無需批准執行操作。</value>
     </data>
     <data name="ToolApproval_PendingChange" xml:space="preserve">
-        <value>本輪仍使用「{0}」，將在下個對話輪次切換到「{1}」。</value>
+        <value>本輪仍使用「{0}」，將在下個聊天輪次切換到「{1}」。</value>
     </data>
     <data name="ToolApproval_SwitchNow" xml:space="preserve">
         <value>立即切換</value>
@@ -4200,7 +4197,7 @@
         <value>結合任務內容判斷</value>
     </data>
     <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
-        <value>審批會使用對話上下文和操作內容。如果在設定中允許讀取檔案，還可能讀取檔案內容。這些內容會傳送給所選審批助手，可能包含任務中的敏感資訊。</value>
+        <value>審批會使用聊天上下文和操作內容。如果在設定中允許讀取檔案，還可能讀取檔案內容。這些內容會傳送給所選審批助手，可能包含任務中的敏感資訊。</value>
     </data>
     <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
         <value>拒絕高風險操作</value>
@@ -4401,7 +4398,7 @@
         <value>允許審批助手讀取檔案</value>
     </data>
     <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
-        <value>審批助手可讀取本機檔案內容以輔助判斷，例如查看待執行的指令碼。讀取內容會傳送給所選審批助手，可能包含敏感資訊。關閉時，僅依據對話和操作資訊審批。</value>
+        <value>審批助手可讀取本機檔案內容以輔助判斷，例如查看待執行的指令碼。讀取內容會傳送給所選審批助手，可能包含敏感資訊。關閉時，僅依據聊天和操作資訊審批。</value>
     </data>
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>請求過於頻繁，服務建議等待 {0} 秒後重試。</value>
@@ -4607,19 +4604,28 @@
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>聊天儲存在本機，此版本暫不支援聊天雲端同步。</value>
     </data>
-    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
-        <value>重新命名聊天</value>
-    </data>
-    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
-        <value>建議保持簡短易讀</value>
-    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>永久刪除</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>這會從此裝置永久刪除該聊天及其所有分支，且無法復原，確定嗎？</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>歸檔</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>取消歸檔</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>重新命名聊天</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>建議保持簡短易讀</value>
+    </data>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>刪除聊天</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>設為置頂</value>
     </data>
 </root>

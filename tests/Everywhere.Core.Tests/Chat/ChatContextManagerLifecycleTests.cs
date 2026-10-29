@@ -555,15 +555,15 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
     }
 
     [AvaloniaTest]
-    public async Task Current_WhenSwitchedArchivedOrDismissedWhileRunning_RecomputesBackgroundCount()
+    public async Task Current_WhenSwitchedOrArchivedWhileRunning_RecomputesBackgroundCount()
     {
-        foreach (var action in new[] { "create", "archive", "dismiss" })
+        foreach (var action in new[] { "create", "archive", "temporary" })
         {
             var storage = new TestChatContextStorage([]);
             using var manager = CreateManager(storage);
             var current = manager.Current;
             var runtime = current;
-            await runtime.SetTemporaryAsync(action == "dismiss");
+            await runtime.DispatchAsync(() => current.Data.Metadata.IsTemporary = action == "temporary");
             await runtime.DispatchAsync(() => current.Data.Add(new UserChatMessage("running", [])));
             var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -582,10 +582,6 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
                 if (action == "archive")
                 {
                     await manager.ArchiveAsync(current.Data.Metadata);
-                }
-                else if (action == "dismiss")
-                {
-                    await manager.DismissTemporaryAsync(current.Data.Metadata);
                 }
                 else
                 {

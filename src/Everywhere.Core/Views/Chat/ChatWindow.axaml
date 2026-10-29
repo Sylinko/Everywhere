@@ -166,16 +166,48 @@
             SoftwareUpdater="{Binding SoftwareUpdater}"
             WindowDecorationProperties.ElementRole="User"/>
 
-          <ToggleButton
-            Classes="TitleBar" Margin="2,0,1,0"
-            Click="HandleTemporaryChatClicked"
-            IsChecked="{Binding ChatContextManager.Current.Data.Metadata.IsTemporary, Mode=OneWay}"
-            IsVisible="{Binding !ChatContextManager.Current.Presentation.HasMultipleMessages}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatContext_TemporaryToggleButton_ToolTip}}"
+          <shadui:AsyncToggleButton
+            x:Name="TemporaryChatButton" Classes="TitleBar"
+            Margin="2,0,1,0"
+            shadui:ButtonAssist.Icon="{LucideIconContent Ghost, Size=16}"
+            shadui:ButtonAssist.IconSize="16"
+            shadui:ButtonAssist.ShowProgress="{Binding #TemporaryChatButton.IsBusy}"
+            Command="{Binding SetTemporaryChatCommand}"
+            IsChecked="{Binding ChatContextManager.Current.Data.Metadata.IsTemporary}"
             WindowDecorationProperties.ElementRole="User">
-            <LucideIcon
-              Kind="Ghost" Size="16"/>
-          </ToggleButton>
+            <shadui:AsyncToggleButton.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                <Binding Path="ChatContextManager.Current.Data.Metadata.IsTemporary"/>
+                <Binding Path="!ChatContextManager.Current.Data.HasHistory"/>
+              </MultiBinding>
+            </shadui:AsyncToggleButton.IsVisible>
+            <shadui:AsyncToggleButton.IsBusy>
+              <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                <Binding Path="SetTemporaryChatCommand.IsRunning"/>
+                <Binding Path="PersistChatCommand.IsRunning"/>
+              </MultiBinding>
+            </shadui:AsyncToggleButton.IsBusy>
+            <ToolTip.Tip>
+              <Panel>
+                <StackPanel
+                  IsVisible="{Binding !ChatContextManager.Current.Data.Metadata.IsTemporary}"
+                  Spacing="4">
+                  <v:KeyboardShortcutLabel
+                    Shortcut="Ctrl+G"
+                    Text="{I18N {x:Static LocaleKey.ChatContext_Temporary}}"/>
+                  <TextBlock Text="{I18N {x:Static LocaleKey.ChatHistory_TemporaryDescription}}"/>
+                </StackPanel>
+                <StackPanel
+                  IsVisible="{Binding ChatContextManager.Current.Data.Metadata.IsTemporary}"
+                  Spacing="4">
+                  <v:KeyboardShortcutLabel
+                    Shortcut="Ctrl+G"
+                    Text="{I18N {x:Static LocaleKey.ChatHistory_Persist}}"/>
+                  <TextBlock Text="{I18N {x:Static LocaleKey.ChatHistory_PersistDescription}}"/>
+                </StackPanel>
+              </Panel>
+            </ToolTip.Tip>
+          </shadui:AsyncToggleButton>
 
           <Panel>
             <ToggleButton
@@ -300,6 +332,17 @@
     <Style Selector="shadui|ResponsiveDrawer:top">
       <Setter Property="DisplayMode" Value="Overlay"/>
     </Style>
+
+    <Style Selector="shadui|ResponsiveDrawer:narrow shadui|SmoothBorder#HistoryRootBorder">
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Background" Value="{DynamicResource DialogBackgroundColor}"/>
+    </Style>
+
+    <Style Selector="shadui|ResponsiveDrawer:wide shadui|SmoothBorder#HistoryRootBorder">
+      <Setter Property="CornerRadius" Value="12,0,0,0"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}"/>
+    </Style>
   </v:ReactiveShadWindow.Styles>
 
   <Panel Margin="0,48,0,0">
@@ -310,16 +353,24 @@
       DrawerWidth="{Binding PersistentState.ChatWindowHistoryDrawerWidth, Mode=TwoWay}"
       IsOpened="{Binding PersistentState.IsChatWindowHistoryOpened, Mode=TwoWay}"
       OverlayBrush="#88000000" ResponsiveWidth="800"
-      SplitterSize="5" VerticalPlacement="Top">
+      SplitterSize="1" VerticalPlacement="Top">
       <shadui:ResponsiveDrawer.SplitterTheme>
         <ControlTheme TargetType="GridSplitter">
+          <Setter Property="ClipToBounds" Value="False"/>
           <Setter Property="Template">
             <ControlTemplate TargetType="GridSplitter">
-              <Panel Background="Transparent">
+              <Panel
+                Margin="-2,9,-3,0" Background="Transparent">
                 <Border
-                  x:Name="PART_Border"
-                  Background="{DynamicResource PrimaryColor50}"
-                  Opacity="0"/>
+                  x:Name="PART_Border" Width="1"
+                  HorizontalAlignment="Center" Opacity="0">
+                  <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,18">
+                      <GradientStop Offset="0" Color="{DynamicResource TransparentColor}"/>
+                      <GradientStop Offset="1" Color="{DynamicResource PrimaryColor50}"/>
+                    </LinearGradientBrush>
+                  </Border.Background>
+                </Border>
               </Panel>
             </ControlTemplate>
           </Setter>
@@ -340,288 +391,400 @@
       </shadui:ResponsiveDrawer.SplitterTheme>
 
       <shadui:ResponsiveDrawer.DrawerContent>
-        <DockPanel
-          x:Name="HistoryDockPanel"
-          Background="{DynamicResource DialogBackgroundColor}">
-          <ToggleButton
-            Classes="Ghost Compact" DockPanel.Dock="Top"
-            Margin="8,8,8,0" HorizontalAlignment="Left"
-            Content="{I18N {x:Static LocaleKey.ChatHistory_Archive}}"
-            IsChecked="{Binding ChatContextManager.IsArchiveView, Mode=TwoWay}"/>
-          <Panel
-            DockPanel.Dock="Top" Margin="8,8,8,4">
-            <TextBox
-              Padding="6,4,4,4" HorizontalAlignment="Stretch"
-              shadui:ControlAssist.MinHeight="0"
-              PlaceholderText="{I18N {x:Static LocaleKey.ChatWindow_History_SearchBox_PlaceholderText}}"
-              Text="{Binding ChatContextManager.HistorySearchQuery, Delay=500, Mode=TwoWay}">
-              <TextBox.InnerLeftContent>
+        <shadui:SmoothBorder
+          x:Name="HistoryRootBorder"
+          BorderBrush="{DynamicResource BorderColor60}">
+          <DockPanel>
+            <DockPanel
+              DockPanel.Dock="Top" Margin="8,8,8,0">
+              <ToggleButton
+                x:Name="HistorySearchToggle" Classes="Ghost Compact Uniform"
+                DockPanel.Dock="Right" Click="HandleHistorySearchClicked">
+                <ToolTip.Tip>
+                  <v:KeyboardShortcutLabel
+                    Shortcut="Ctrl+Shift+F"
+                    Text="{I18N {x:Static LocaleKey.ChatWindow_History_SearchBox_PlaceholderText}}"/>
+                </ToolTip.Tip>
                 <LucideIcon
                   Kind="Search"
                   Size="{DynamicResource FontSizeM}"/>
-              </TextBox.InnerLeftContent>
-              <TextBox.InnerRightContent>
-                <DockPanel HorizontalSpacing="4">
-                  <!--  ReSharper disable once Xaml.StaticResourceNotResolved  -->
-                  <Button
-                    DockPanel.Dock="Left"
-                    Command="{Binding $parent[TextBox].Clear}"
-                    Focusable="False"
-                    IsVisible="{Binding $parent[TextBox].Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    Theme="{StaticResource ClearButtonTheme}"/>
-                  <ToggleButton
-                    Classes="Ghost Compact Uniform" VerticalAlignment="Center"
-                    Focusable="False"
-                    IsChecked="{Binding ChatContextManager.HistorySearchIncludesContent, Mode=TwoWay}"
-                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_History_IncludeContentToggleButton_ToolTip}}">
-                    <LucideIcon
-                      Kind="TextSearch"
-                      Size="{DynamicResource FontSizeM}"/>
-                  </ToggleButton>
-                </DockPanel>
-              </TextBox.InnerRightContent>
-            </TextBox>
+              </ToggleButton>
+              <ComboBox
+                Padding="4" HorizontalAlignment="Left"
+                shadui:ControlAssist.MinHeight="0"
+                Background="{DynamicResource TransparentColor}"
+                BorderThickness="0"
+                SelectedIndex="{Binding ChatContextManager.HistoryView, Converter={x:Static vc:Int32Converters.FromEnum}, Mode=TwoWay}">
+                <ComboBoxItem Content="{I18N {x:Static LocaleKey.ChatHistory_Recent}}"/>
+                <ComboBoxItem Content="{I18N {x:Static LocaleKey.ChatHistory_Temporary}}"/>
+                <ComboBoxItem Content="{I18N {x:Static LocaleKey.ChatHistory_Archived}}"/>
+              </ComboBox>
+            </DockPanel>
+            <Panel
+              DockPanel.Dock="Top" Margin="8,8,8,4"
+              IsVisible="{Binding #HistorySearchToggle.IsChecked}">
+              <TextBox
+                x:Name="HistorySearchBox" Padding="6,4,4,4"
+                HorizontalAlignment="Stretch" shadui:ControlAssist.MinHeight="0"
+                PlaceholderText="{I18N {x:Static LocaleKey.ChatWindow_History_SearchBox_PlaceholderText}}"
+                Text="{Binding ChatContextManager.HistorySearchQuery, Delay=500, Mode=TwoWay}">
+                <TextBox.InnerLeftContent>
+                  <LucideIcon
+                    Kind="Search"
+                    Size="{DynamicResource FontSizeM}"/>
+                </TextBox.InnerLeftContent>
+                <TextBox.InnerRightContent>
+                  <DockPanel HorizontalSpacing="4">
+                    <!--  ReSharper disable once Xaml.StaticResourceNotResolved  -->
+                    <Button
+                      DockPanel.Dock="Left"
+                      Command="{Binding $parent[TextBox].Clear}"
+                      Focusable="False"
+                      IsVisible="{Binding $parent[TextBox].Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                      Theme="{StaticResource ClearButtonTheme}"/>
+                    <ToggleButton
+                      Classes="Ghost Compact Uniform" VerticalAlignment="Center"
+                      Focusable="False"
+                      IsChecked="{Binding ChatContextManager.HistorySearchIncludesContent, Mode=TwoWay}"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_History_IncludeContentToggleButton_ToolTip}}">
+                      <LucideIcon
+                        Kind="TextSearch"
+                        Size="{DynamicResource FontSizeM}"/>
+                    </ToggleButton>
+                  </DockPanel>
+                </TextBox.InnerRightContent>
+              </TextBox>
 
-            <ProgressBar
-              Height="1" Margin="6,0"
-              VerticalAlignment="Bottom" IsIndeterminate="True"
-              IsVisible="{Binding ChatContextManager.IsBusy, Delay=500}"/>
-          </Panel>
+              <ProgressBar
+                Height="1" Margin="6,0"
+                VerticalAlignment="Bottom" IsIndeterminate="True"
+                IsVisible="{Binding ChatContextManager.IsBusy, Delay=500}"/>
+            </Panel>
 
-          <ScrollViewer
-            HorizontalContentAlignment="Stretch" BringIntoViewOnFocusChange="False"
-            HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-            <Interaction.Behaviors>
-              <in:IncrementalLoadBehavior
-                EstimatedItemHeight="40"
-                IsEnabled="{Binding #Self.ViewModel.PersistentState.IsChatWindowHistoryOpened}"
-                Loader="{Binding #Self.ViewModel.ChatContextManager}"
-                MaximumLoadCount="100" OverscanItemCount="2"
-                PageSize="20"/>
-            </Interaction.Behaviors>
+            <Panel>
+              <ScrollViewer
+                HorizontalContentAlignment="Stretch" BringIntoViewOnFocusChange="False"
+                HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <Interaction.Behaviors>
+                  <in:IncrementalLoadBehavior
+                    EstimatedItemHeight="40"
+                    IsEnabled="{Binding #Self.ViewModel.PersistentState.IsChatWindowHistoryOpened}"
+                    Loader="{Binding #Self.ViewModel.ChatContextManager}"
+                    MaximumLoadCount="100" OverscanItemCount="2"
+                    PageSize="20"/>
+                </Interaction.Behaviors>
 
-            <ItemsControl
-              Margin="8" Padding="0"
-              ItemsSource="{Binding ChatContextManager.AllHistory}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <StackPanel
-                    Orientation="Vertical" Spacing="2"/>
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
+                <ItemsControl
+                  Margin="8" Padding="0"
+                  ItemsSource="{Binding ChatContextManager.AllHistory}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel
+                        Orientation="Vertical" Spacing="2"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
 
-              <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="chat:ChatDataHistoryGroup">
-                  <StackPanel Orientation="Vertical">
-                    <StackPanel.Styles>
-                      <Style Selector="ListBox#ChatHistoryListBox.narrow TextBlock#DateColumn">
-                        <Setter Property="IsVisible" Value="False"/>
-                      </Style>
-                      <Style Selector="ListBox#ChatHistoryListBox.normal TextBlock#DateColumn">
-                        <Setter Property="Text" Value="{Binding $self.((chat:ChatMetadata)DataContext)?.LocalDateModified, StringFormat='{}{0:d}'}"/>
-                      </Style>
-                    </StackPanel.Styles>
-
-                    <DockPanel HorizontalSpacing="4">
-                      <TextBlock
-                        Classes="Muted Small" DockPanel.Dock="Left"
-                        HorizontalAlignment="Left"
-                        FontSize="{DynamicResource FontSizeS}">
-                        <TextBlock.Text>
-                          <I18N Key="{Binding Date, Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
-                        </TextBlock.Text>
-                      </TextBlock>
-
-                      <Border
-                        Height="0.5"
-                        Background="{DynamicResource BorderColor}"/>
-                    </DockPanel>
-
-                    <ListBox
-                      x:Name="ChatHistoryListBox" Padding="0"
-                      Background="Transparent" BorderThickness="0"
-                      CornerRadius="0"
-                      ItemsSource="{Binding MetadataList}"
-                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                      <Interaction.Behaviors>
-                        <shadui:FixSelectedItemBehavior SelectedItem="{Binding #Self.ViewModel.ChatContextManager.CurrentMetadata}"/>
-                        <AdaptiveBehavior SourceControl="{Binding $parent[ListBox]}">
-                          <AdaptiveClassSetter
-                            MinWidth="0" MaxWidth="260"
-                            ClassName="narrow" MaxWidthOperator="LessThan"
-                            MinWidthOperator="GreaterThanOrEqual"/>
-                          <AdaptiveClassSetter
-                            MinWidth="260" MaxWidth="320"
-                            ClassName="normal" MaxWidthOperator="LessThan"
-                            MinWidthOperator="GreaterThanOrEqual"/>
-                          <AdaptiveClassSetter
-                            MinWidth="320" MaxWidth="Infinity"
-                            ClassName="wide" MaxWidthOperator="LessThan"
-                            MinWidthOperator="GreaterThanOrEqual"/>
-                        </AdaptiveBehavior>
-                      </Interaction.Behaviors>
-
-                      <ListBox.Styles>
-                        <Style Selector="ListBoxItem">
-                          <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                          <Setter Property="Padding" Value="10,2"/>
-
-                          <Style Selector="^:pointerover TextBlock#DateColumn">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="chat:ChatHistorySection">
+                      <StackPanel Orientation="Vertical">
+                        <StackPanel.Styles>
+                          <Style Selector="ListBox#ChatHistoryListBox.narrow TextBlock#DateColumn">
                             <Setter Property="IsVisible" Value="False"/>
                           </Style>
-
-                          <Style Selector="^:not(:pointerover) StackPanel#ActionsPanel">
-                            <Setter Property="IsVisible" Value="False"/>
+                          <Style Selector="ListBox#ChatHistoryListBox.normal TextBlock#DateColumn">
+                            <Setter Property="Text" Value="{Binding $self.((chat:ChatMetadata)DataContext)?.LocalDateModified, StringFormat='{}{0:d}'}"/>
                           </Style>
-                        </Style>
+                        </StackPanel.Styles>
 
-                        <Style Selector="LucideIcon">
-                          <Setter Property="Size" Value="{DynamicResource FontSizeM}"/>
-                        </Style>
-                      </ListBox.Styles>
+                        <DockPanel
+                          Margin="4,0,0,0" HorizontalSpacing="4">
+                          <TextBlock
+                            Classes="Muted Small" DockPanel.Dock="Left"
+                            HorizontalAlignment="Left"
+                            FontSize="{DynamicResource FontSizeS}">
+                            <TextBlock.Text>
+                              <I18N Key="{Binding HeaderKey}"/>
+                            </TextBlock.Text>
+                          </TextBlock>
 
-                      <ListBox.ItemTemplate>
-                        <DataTemplate DataType="chat:ChatMetadata">
-                          <Grid
-                            MinHeight="24" ColumnDefinitions="Auto,*,Auto">
-                            <v:LazyIndexedContentControl
-                              Grid.Column="0" HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              ItemIndex="{Binding States, Converter={x:Static vc:Int32Converters.FromEnum}}">
-                              <!--  None  -->
-                              <shadui:EmptyDataTemplate/>
+                          <Border
+                            Height="0.5"
+                            Background="{DynamicResource BorderColor}"/>
+                        </DockPanel>
 
-                              <!--  Busy  -->
-                              <DataTemplate x:DataType="chat:ChatMetadata">
-                                <LucideIcon
-                                  Margin="0,0,8,0" HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Foreground="{DynamicResource WarningColor60}"
-                                  Kind="CircleDashed"
-                                  Size="{DynamicResource FontSizeS}"/>
-                              </DataTemplate>
+                        <v:ChatHistoryListBox
+                          x:Name="ChatHistoryListBox" Padding="0"
+                          Background="Transparent" BorderThickness="0"
+                          CornerRadius="0"
+                          ItemsSource="{Binding Items}"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                          <Interaction.Behaviors>
+                            <shadui:FixSelectedItemBehavior SelectedItem="{Binding #Self.ViewModel.ChatContextManager.CurrentMetadata}"/>
+                            <AdaptiveBehavior SourceControl="{Binding $parent[ListBox]}">
+                              <AdaptiveClassSetter
+                                MinWidth="0" MaxWidth="260"
+                                ClassName="narrow" MaxWidthOperator="LessThan"
+                                MinWidthOperator="GreaterThanOrEqual"/>
+                              <AdaptiveClassSetter
+                                MinWidth="260" MaxWidth="320"
+                                ClassName="normal" MaxWidthOperator="LessThan"
+                                MinWidthOperator="GreaterThanOrEqual"/>
+                              <AdaptiveClassSetter
+                                MinWidth="320" MaxWidth="Infinity"
+                                ClassName="wide" MaxWidthOperator="LessThan"
+                                MinWidthOperator="GreaterThanOrEqual"/>
+                            </AdaptiveBehavior>
+                          </Interaction.Behaviors>
 
-                              <!--  HasNotification & Busy  -->
-                              <DataTemplate x:DataType="chat:ChatMetadata">
-                                <Border
-                                  Width="{DynamicResource FontSizeM}"
-                                  Height="{DynamicResource FontSizeM}"
-                                  Margin="0,0,8,0" HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Background="{DynamicResource ErrorColor60}"
-                                  CornerRadius="{DynamicResource FullCornerRadius}">
-                                  <TextBlock
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    FontSize="{DynamicResource FontSizeXs}"
-                                    Text="1"/>
-                                </Border>
-                              </DataTemplate>
+                          <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                              <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                              <Setter Property="Padding" Value="10,2"/>
 
-                              <!--  HasNotification  -->
-                              <DataTemplate x:DataType="chat:ChatMetadata">
-                                <Border
-                                  Width="{DynamicResource FontSizeM}"
-                                  Height="{DynamicResource FontSizeM}"
-                                  Margin="0,0,8,0" HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Background="{DynamicResource ErrorColor60}"
-                                  CornerRadius="{DynamicResource FullCornerRadius}">
-                                  <TextBlock
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    FontSize="{DynamicResource FontSizeXs}"
-                                    Text="1"/>
-                                </Border>
-                              </DataTemplate>
-                            </v:LazyIndexedContentControl>
+                              <Style Selector="^:pointerover TextBlock#DateColumn">
+                                <Setter Property="IsVisible" Value="False"/>
+                              </Style>
 
-                            <TextBlock
-                              Grid.Column="1" VerticalAlignment="Center"
-                              IsVisible="{Binding IsTemporary}"
-                              Opacity="0.6"
-                              Text="{I18N {x:Static LocaleKey.ChatContext_Temporary}}"/>
-                            <TextBlock
-                              Grid.Column="1" VerticalAlignment="Center"
-                              FontSize="{DynamicResource FontSizeM}"
-                              IsVisible="{Binding !IsTemporary}"
-                              Text="{Binding ActualTopic}"
-                              TextTrimming="CharacterEllipsis"/>
+                              <Style Selector="^:not(:pointerover) StackPanel#ActionsPanel">
+                                <Setter Property="IsVisible" Value="False"/>
+                              </Style>
+                            </Style>
 
-                            <TextBlock
-                              x:Name="DateColumn" Classes="Muted"
-                              Grid.Column="2" DockPanel.Dock="Right"
-                              Margin="8,0,0,0" VerticalAlignment="Center"
-                              Text="{Binding LocalDateModified, StringFormat='{}{0:G}'}"
-                              TextTrimming="CharacterEllipsis"/>
+                            <Style Selector="LucideIcon">
+                              <Setter Property="Size" Value="{DynamicResource FontSizeM}"/>
+                            </Style>
+                          </ListBox.Styles>
 
-                            <StackPanel
-                              x:Name="ActionsPanel" Grid.Column="2"
-                              DockPanel.Dock="Right" Margin="8,0,-8,0"
-                              Orientation="Horizontal" Spacing="2">
-                              <Button
-                                Classes="Compact Uniform" VerticalAlignment="Center"
+                          <ListBox.Resources>
+                            <MenuFlyout
+                              x:Key="ChatItemMenuFlyout" x:DataType="chat:ChatMetadata">
+                              <MenuItem
+                                Command="{Binding #Self.ViewModel.RenameChatCommand}"
+                                CommandParameter="{Binding}"
+                                Header="{I18N {x:Static LocaleKey.ChatHistory_Rename_Header}}"
+                                Icon="{LucideIconContent Pencil}"
+                                IsVisible="{Binding !IsTemporary}"/>
+                              <MenuItem
+                                Command="{Binding #Self.ViewModel.ToggleChatPinCommand}"
+                                CommandParameter="{Binding}"
+                                Header="{I18N {x:Static LocaleKey.ChatHistory_Pin}}"
+                                Icon="{LucideIconContent Pin}">
+                                <MenuItem.IsVisible>
+                                  <Binding Path="!IsPinned"/>
+                                </MenuItem.IsVisible>
+                              </MenuItem>
+                              <MenuItem
+                                Command="{Binding #Self.ViewModel.ToggleChatPinCommand}"
+                                CommandParameter="{Binding}"
+                                Header="{I18N {x:Static LocaleKey.ChatHistory_Unpin}}"
+                                Icon="{LucideIconContent PinOff}">
+                                <MenuItem.IsVisible>
+                                  <Binding Path="IsPinned"/>
+                                </MenuItem.IsVisible>
+                              </MenuItem>
+                              <Separator/>
+
+                              <MenuItem
+                                Command="{Binding #Self.ViewModel.ExportMarkdownCommand}"
+                                CommandParameter="{Binding}"
+                                Header="{I18N {x:Static LocaleKey.ChatWindow_ChatHistory_ExportMarkdownMenuItem_Header}}"
+                                Icon="{LucideIconContent Upload}"/>
+                              <MenuItem
                                 Command="{Binding #Self.ViewModel.ArchiveChatCommand}"
                                 CommandParameter="{Binding}"
-                                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Archive_Action}}">
-                                <Button.IsVisible>
+                                Foreground="{DynamicResource WarningColor}"
+                                Header="{I18N {x:Static LocaleKey.ChatHistory_Archive_Header}}"
+                                Icon="{LucideIconContent Archive}">
+                                <MenuItem.IsVisible>
                                   <MultiBinding Converter="{x:Static BoolConverters.And}">
                                     <Binding Path="!IsArchived"/>
                                     <Binding Path="!IsTemporary"/>
                                   </MultiBinding>
-                                </Button.IsVisible>
-                                <LucideIcon Kind="Archive"/>
-                              </Button>
-                              <Button
-                                Classes="Compact Uniform" VerticalAlignment="Center"
+                                </MenuItem.IsVisible>
+                              </MenuItem>
+                              <MenuItem
                                 Command="{Binding #Self.ViewModel.RestoreChatCommand}"
                                 CommandParameter="{Binding}"
-                                IsVisible="{Binding IsArchived}"
-                                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Restore}}">
-                                <LucideIcon Kind="ArchiveRestore"/>
-                              </Button>
-                              <Button
-                                Classes="Compact Uniform" VerticalAlignment="Center"
-                                Command="{Binding #Self.ViewModel.DismissTemporaryChatCommand}"
+                                Foreground="{DynamicResource WarningColor}"
+                                Header="{I18N {x:Static LocaleKey.ChatHistory_Unarchive_Header}}"
+                                Icon="{LucideIconContent ArchiveRestore}"
+                                IsVisible="{Binding IsArchived}"/>
+                              <MenuItem
+                                Command="{Binding #Self.ViewModel.PersistChatCommand}"
                                 CommandParameter="{Binding}"
-                                IsVisible="{Binding IsTemporary}"
-                                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_CloseTemporary}}">
-                                <LucideIcon Kind="X"/>
-                              </Button>
+                                Header="{I18N {x:Static LocaleKey.ChatHistory_Persist}}"
+                                Icon="{LucideIconContent Save}"
+                                IsVisible="{Binding IsTemporary}"/>
+                              <MenuItem
+                                Command="{Binding #Self.ViewModel.DeleteChatPermanentlyCommand}"
+                                CommandParameter="{Binding}"
+                                Foreground="{DynamicResource ErrorColor}"
+                                Header="{I18N {x:Static LocaleKey.ChatHistory_Delete_Header}}"
+                                Icon="{LucideIconContent Trash2}"/>
+                            </MenuFlyout>
+                          </ListBox.Resources>
 
-                              <Button
-                                Classes="Compact" VerticalAlignment="Center"
-                                Content="{LucideIconContent Ellipsis}">
-                                <Button.Flyout>
-                                  <MenuFlyout>
-                                    <MenuItem
-                                      Command="{Binding #Self.ViewModel.RenameChatCommand}"
-                                      CommandParameter="{Binding}"
-                                      Header="{I18N {x:Static LocaleKey.ChatWindow_ChatHistory_RenameMenuItem_Header}}"
-                                      Icon="{LucideIconContent Pencil}"
-                                      IsVisible="{Binding !IsTemporary}"/>
-                                    <MenuItem
-                                      Command="{Binding #Self.ViewModel.ExportMarkdownCommand}"
-                                      CommandParameter="{Binding}"
-                                      Header="{I18N {x:Static LocaleKey.ChatWindow_ChatHistory_ExportMarkdownMenuItem_Header}}"
-                                      Icon="{LucideIconContent Upload}"/>
-                                    <MenuItem
-                                      Command="{Binding #Self.ViewModel.DeleteChatPermanentlyCommand}"
-                                      CommandParameter="{Binding}"
-                                      Header="{I18N {x:Static LocaleKey.ChatHistory_Delete_Header}}"
-                                      Icon="{LucideIconContent Trash2}"/>
-                                  </MenuFlyout>
-                                </Button.Flyout>
-                              </Button>
-                            </StackPanel>
-                          </Grid>
-                        </DataTemplate>
-                      </ListBox.ItemTemplate>
-                    </ListBox>
-                  </StackPanel>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
-        </DockPanel>
+                          <ListBox.ItemTemplate>
+                            <DataTemplate DataType="chat:ChatMetadata">
+                              <Grid
+                                MinHeight="24" Background="Transparent"
+                                ColumnDefinitions="Auto,*,Auto"
+                                ContextFlyout="{StaticResource ChatItemMenuFlyout}">
+                                <v:LazyIndexedContentControl
+                                  Grid.Column="0" HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  ItemIndex="{Binding States, Converter={x:Static vc:Int32Converters.FromEnum}}">
+                                  <!--  None  -->
+                                  <shadui:EmptyDataTemplate/>
+
+                                  <!--  Busy  -->
+                                  <DataTemplate x:DataType="chat:ChatMetadata">
+                                    <LucideIcon
+                                      Margin="0,0,8,0" HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Foreground="{DynamicResource WarningColor60}"
+                                      Kind="CircleDashed"
+                                      Size="{DynamicResource FontSizeS}"/>
+                                  </DataTemplate>
+
+                                  <!--  HasNotification & Busy  -->
+                                  <DataTemplate x:DataType="chat:ChatMetadata">
+                                    <Border
+                                      Width="{DynamicResource FontSizeM}"
+                                      Height="{DynamicResource FontSizeM}"
+                                      Margin="0,0,8,0" HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Background="{DynamicResource ErrorColor60}"
+                                      CornerRadius="{DynamicResource FullCornerRadius}">
+                                      <TextBlock
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        FontSize="{DynamicResource FontSizeXs}"
+                                        Text="1"/>
+                                    </Border>
+                                  </DataTemplate>
+
+                                  <!--  HasNotification  -->
+                                  <DataTemplate x:DataType="chat:ChatMetadata">
+                                    <Border
+                                      Width="{DynamicResource FontSizeM}"
+                                      Height="{DynamicResource FontSizeM}"
+                                      Margin="0,0,8,0" HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Background="{DynamicResource ErrorColor60}"
+                                      CornerRadius="{DynamicResource FullCornerRadius}">
+                                      <TextBlock
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        FontSize="{DynamicResource FontSizeXs}"
+                                        Text="1"/>
+                                    </Border>
+                                  </DataTemplate>
+                                </v:LazyIndexedContentControl>
+
+                                <DockPanel
+                                  Grid.Column="1" VerticalAlignment="Center"
+                                  HorizontalSpacing="4">
+                                  <LucideIcon
+                                    DockPanel.Dock="Left"
+                                    IsVisible="{Binding IsTemporary}"
+                                    Kind="Ghost"
+                                    Size="{DynamicResource FontSizeS}"
+                                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_TemporaryNotice}}"/>
+                                  <TextBlock
+                                    FontSize="{DynamicResource FontSizeM}"
+                                    Text="{Binding ActualTopic}"
+                                    TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+
+                                <TextBlock
+                                  x:Name="DateColumn" Classes="Muted"
+                                  Grid.Column="2" DockPanel.Dock="Right"
+                                  Margin="8,0,0,0" VerticalAlignment="Center"
+                                  Text="{Binding LocalDateModified, StringFormat='{}{0:G}'}"
+                                  TextTrimming="CharacterEllipsis"/>
+
+                                <StackPanel
+                                  x:Name="ActionsPanel" Grid.Column="2"
+                                  DockPanel.Dock="Right" Margin="8,0,-8,0"
+                                  Orientation="Horizontal" Spacing="2">
+                                  <Button
+                                    Classes="Compact Uniform"
+                                    Command="{Binding #Self.ViewModel.ToggleChatPinCommand}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Pin}}">
+                                    <Button.IsVisible>
+                                      <Binding Path="!IsPinned"/>
+                                    </Button.IsVisible>
+                                    <LucideIcon Kind="Pin"/>
+                                  </Button>
+                                  <Button
+                                    Classes="Compact Uniform" VerticalAlignment="Center"
+                                    Command="{Binding #Self.ViewModel.ToggleChatPinCommand}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Unpin}}">
+                                    <Button.IsVisible>
+                                      <Binding Path="IsPinned"/>
+                                    </Button.IsVisible>
+                                    <LucideIcon Kind="PinOff"/>
+                                  </Button>
+                                  <Button
+                                    Classes="Compact Uniform" VerticalAlignment="Center"
+                                    Command="{Binding #Self.ViewModel.ArchiveChatCommand}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Archive_Header}}">
+                                    <Button.IsVisible>
+                                      <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="!IsArchived"/>
+                                        <Binding Path="!IsTemporary"/>
+                                      </MultiBinding>
+                                    </Button.IsVisible>
+                                    <LucideIcon Kind="Archive"/>
+                                  </Button>
+                                  <Button
+                                    Classes="Compact Uniform" VerticalAlignment="Center"
+                                    Command="{Binding #Self.ViewModel.RestoreChatCommand}"
+                                    CommandParameter="{Binding}"
+                                    IsVisible="{Binding IsArchived}"
+                                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Unarchive_Header}}">
+                                    <LucideIcon Kind="ArchiveRestore"/>
+                                  </Button>
+                                  <Button
+                                    Classes="Compact Uniform" VerticalAlignment="Center"
+                                    Command="{Binding #Self.ViewModel.PersistChatCommand}"
+                                    CommandParameter="{Binding}"
+                                    IsVisible="{Binding IsTemporary}"
+                                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Persist}}">
+                                    <LucideIcon Kind="Save"/>
+                                  </Button>
+                                </StackPanel>
+                              </Grid>
+                            </DataTemplate>
+                          </ListBox.ItemTemplate>
+                        </v:ChatHistoryListBox>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+              <StackPanel
+                Margin="16" HorizontalAlignment="Center"
+                VerticalAlignment="Center" IsHitTestVisible="False"
+                Spacing="16">
+                <StackPanel.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="!ChatContextManager.AllHistory.Count"/>
+                    <Binding Path="!ChatContextManager.HasMoreItems"/>
+                  </MultiBinding>
+                </StackPanel.IsVisible>
+                <Image
+                  Height="128" HorizontalAlignment="Center"
+                  Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+                <TextBlock
+                  Text="{I18N {x:Static LocaleKey.ChatHistory_Empty}}"
+                  TextAlignment="Center" TextWrapping="Wrap"/>
+              </StackPanel>
+            </Panel>
+          </DockPanel>
+        </shadui:SmoothBorder>
       </shadui:ResponsiveDrawer.DrawerContent>
 
       <Panel>
@@ -928,8 +1091,8 @@
             </DockPanel>
 
             <ItemsControl
-              IsVisible="{Binding ModelAvailabilityNotifications.Count, ElementName=Self, Converter={x:Static vc:Int32Converters.IsNotZero}}"
-              ItemsSource="{Binding ModelAvailabilityNotifications, ElementName=Self}">
+              IsVisible="{Binding ChatInputNotifications.Count, ElementName=Self, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+              ItemsSource="{Binding ChatInputNotifications, ElementName=Self}">
               <ItemsControl.Styles>
                 <Style Selector="shadui|SmoothBorder#Notification">
                   <Style Selector="^.Success">
@@ -989,14 +1152,14 @@
                       <TextBlock
                         Classes="Caption" Grid.Column="1"
                         VerticalAlignment="Center"
-                        Text="{Binding ContentKey^, FallbackValue={x:Null}, Mode=OneTime}"
+                        Text="{Binding ContentKey^, FallbackValue={x:Null}}"
                         TextWrapping="Wrap"/>
 
                       <Button
                         Classes="Ghost Compact" Grid.Column="2"
                         Padding="4,1" VerticalAlignment="Center"
                         Command="{Binding ActionCommand, Mode=OneTime}"
-                        Content="{Binding ActionButtonContentKey^, FallbackValue={x:Null}, Mode=OneTime}"
+                        Content="{Binding ActionButtonContentKey^, FallbackValue={x:Null}}"
                         CornerRadius="4"
                         IsVisible="{Binding ActionCommand, Converter={x:Static ObjectConverters.IsNotNull}, Mode=OneTime}"/>
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Japanese (日本語) -->
 <root>
     <resheader name="resmimetype">
@@ -1513,8 +1513,8 @@
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>日付</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>チャットの名前を変更</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>名前を変更</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>チャットを削除</value>
@@ -2700,9 +2700,6 @@
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>ツールの返結果に誤りがあります：{0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>一時チャット：オンにすると、現在のチャットは保存されず、切り替えや新しい対話時に削除されます。</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(オプション) {0}</value>
@@ -4607,19 +4604,28 @@
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>チャットはこのデバイスに保存されます。このバージョンではチャットのクラウド同期は利用できません。</value>
     </data>
-    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
-        <value>チャット名を変更</value>
-    </data>
-    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
-        <value>短く読みやすくすることをおすすめします</value>
-    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>完全に削除</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>このチャットとそのすべてのブランチがこのデバイスから完全に削除され、元に戻すことはできません。よろしいですか？</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>アーカイブ</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>アーカイブを解除</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>チャット名を変更</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>短く読みやすくすることをおすすめします</value>
+    </data>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>チャットを削除</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>ピン留めする</value>
     </data>
 </root>

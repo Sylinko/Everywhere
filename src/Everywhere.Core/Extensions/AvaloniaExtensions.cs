@@ -16,31 +16,40 @@ public static class AvaloniaExtensions
             .DismissOnClick()
             .ShowError());
 
-    /// <summary>
-    /// Whether these modifier keys should trigger a standard application shortcut such as copy, paste,
-    /// or find: <see cref="KeyModifiers.Control"/> on every platform, plus <see cref="KeyModifiers.Meta"/>
-    /// on macOS where it is the Command key.
-    /// </summary>
-    /// <remarks>
-    /// Avalonia reports the macOS Command key as <see cref="KeyModifiers.Meta"/>, so shortcuts written
-    /// against <see cref="KeyModifiers.Control"/> alone never match the native Command shortcut on macOS.
-    /// <see cref="KeyModifiers.Meta"/> is deliberately not accepted on other platforms: it is the Windows
-    /// key there, and Win+V is reserved by the system clipboard history.
-    /// </remarks>
-    public static bool HasApplicationShortcutModifier(this KeyModifiers modifiers) =>
-        modifiers.HasFlag(KeyModifiers.Control) ||
-        OperatingSystem.IsMacOS() && modifiers.HasFlag(KeyModifiers.Meta);
-
-    /// <summary>
-    /// Whether <paramref name="modifiers"/> consists of the application shortcut modifier alone, without
-    /// any additional modifier key. See <see cref="HasApplicationShortcutModifier"/>.
-    /// </summary>
-    public static bool IsApplicationShortcutModifierOnly(this KeyModifiers modifiers) => modifiers switch
+    extension(KeyModifiers modifiers)
     {
-        KeyModifiers.Control => true,
-        KeyModifiers.Meta when OperatingSystem.IsMacOS() => true,
-        _ => false
-    };
+        /// <summary>
+        /// Whether these modifier keys should trigger a standard application shortcut such as copy, paste,
+        /// or find: <see cref="KeyModifiers.Control"/> on every platform, plus <see cref="KeyModifiers.Meta"/>
+        /// on macOS where it is the Command key.
+        /// </summary>
+        /// <remarks>
+        /// Avalonia reports the macOS Command key as <see cref="KeyModifiers.Meta"/>, so shortcuts written
+        /// against <see cref="KeyModifiers.Control"/> alone never match the native Command shortcut on macOS.
+        /// <see cref="KeyModifiers.Meta"/> is deliberately not accepted on other platforms: it is the Windows
+        /// key there, and Win+V is reserved by the system clipboard history.
+        /// </remarks>
+        public bool HasApplicationShortcutModifier()
+        {
+            return modifiers.HasFlag(KeyModifiers.Control) ||
+                OperatingSystem.IsMacOS() && modifiers.HasFlag(KeyModifiers.Meta);
+        }
+
+        /// <summary>
+        /// Whether the modifiers are exactly the application shortcut modifier plus all requested additional keys.
+        /// Additional keys are modifiers such as Shift or Alt, not the application shortcut modifier itself.
+        /// See <see cref="HasApplicationShortcutModifier"/>.
+        /// </summary>
+        public bool IsApplicationShortcutModifierOnly(KeyModifiers additional = KeyModifiers.None)
+        {
+            return modifiers.HasFlag(additional) && (modifiers & ~additional) switch
+            {
+                KeyModifiers.Control => true,
+                KeyModifiers.Meta when OperatingSystem.IsMacOS() => true,
+                _ => false
+            };
+        }
+    }
 
     public static TextBlock ToTextBlock(this IDynamicLocaleKey dynamicResourceKey)
     {

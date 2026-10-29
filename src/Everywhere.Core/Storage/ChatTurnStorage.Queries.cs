@@ -1,48 +1,50 @@
-﻿using System.Runtime.CompilerServices;
-using Everywhere.Chat;
+﻿using Everywhere.Chat;
 using Everywhere.Database;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 
 namespace Everywhere.Storage;
 
 partial class ChatTurnStorage
 {
-    /// <summary>
-    /// Reads a metadata page without loading topology or payloads. Active and archived listings
-    /// share deterministic key/ID cursors. The manager maintains canonical metadata identity.
-    /// </summary>
-    public async IAsyncEnumerable<ChatMetadata> QueryChatContextsAsync(
+    /// <inheritdoc />
+    public async Task<ChatHistoryPage> ReadHistoryPageAsync(
         int take,
-        Guid? startAfterId = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default,
-        bool isArchived = false)
+        ChatHistoryCursor? cursor = null,
+        CancellationToken cancellationToken = default,
+        ChatHistoryView view = ChatHistoryView.Recent)
     {
-        ChatMetadata[] page;
-        await using (var db = await dbFactory.CreateDbContextAsync(cancellationToken))
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var query = view switch
         {
-            await db.Database.OpenConnectionAsync(cancellationToken);
-            await using var transaction = ((SqliteConnection)db.Database.GetDbConnection()).BeginTransaction(deferred: true);
-            await using var readScope = await db.Database.UseTransactionAsync(transaction, cancellationToken);
-            var anchor = startAfterId is { } id ? await db.Chats.AsNoTracking().SingleOrDefaultAsync(row => row.Id == id, cancellationToken) : null;
-            var query = db.Chats.AsNoTracking().Where(row => (row.ArchivedAt != null) == isArchived);
-            if (anchor is not null)
-            {
-                query = query.Where(row => row.UpdatedAt < anchor.UpdatedAt ||
-                    row.UpdatedAt == anchor.UpdatedAt && row.Id.CompareTo(anchor.Id) < 0);
-            }
-
-            var ordered = query.OrderByDescending(row => row.UpdatedAt).ThenByDescending(row => row.Id);
-            var rows = await ordered.Take(take).ToArrayAsync(cancellationToken);
-            page = rows.Select(GetMetadata).ToArray();
-            await transaction.CommitAsync(cancellationToken);
+            ChatHistoryView.Archived => db.Chats.AsNoTracking().Where(row => row.ArchivedAt != null),
+            ChatHistoryView.Temporary => db.Chats.AsNoTracking().Where(row => row.ArchivedAt == null && row.IsTemporary),
+            _ => db.Chats.AsNoTracking().Where(row => row.ArchivedAt == null)
+        };
+        if (cursor is not null)
+        {
+            query = query.Where(row => cursor.IsPinned && !row.IsPinned ||
+                row.IsPinned == cursor.IsPinned && (row.UpdatedAt < cursor.UpdatedAt ||
+                    row.UpdatedAt == cursor.UpdatedAt && row.Id.CompareTo(cursor.Id) < 0));
         }
 
-        // Never keep a SQLite reader open across the consumer's work.
-        foreach (var metadata in page)
-        {
-            yield return metadata;
-        }
+        var rows = await query.OrderByDescending(row => row.IsPinned)
+            .ThenByDescending(row => row.UpdatedAt).ThenByDescending(row => row.Id)
+            .Take(take + 1).ToArrayAsync(cancellationToken);
+        var items = rows.Take(take).Select(GetMetadata).ToArray();
+        var nextCursor = rows.Length > take
+            ? new ChatHistoryCursor(rows[take - 1].IsPinned, rows[take - 1].UpdatedAt, rows[take - 1].Id)
+            : null;
+        return new ChatHistoryPage(items, nextCursor);
+    }
+
+    /// <inheritdoc />
+    public async Task<ChatMetadata?> GetMostRecentChatMetadataAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var row = await db.Chats.AsNoTracking().Where(row => row.ArchivedAt == null)
+            .OrderByDescending(row => row.UpdatedAt).ThenByDescending(row => row.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        return row is null ? null : GetMetadata(row);
     }
 
     /// <summary>
@@ -60,6 +62,11 @@ partial class ChatTurnStorage
 
     private static ChatMetadata GetMetadata(ChatV2Entity row)
     {
-        return new ChatMetadata(row.Id, row.CreatedAt, row.UpdatedAt, row.Topic) { ArchivedAt = row.ArchivedAt };
+        return new ChatMetadata(row.Id, row.CreatedAt, row.UpdatedAt, row.Topic)
+        {
+            ArchivedAt = row.ArchivedAt,
+            IsPinned = row.IsPinned,
+            IsTemporary = row.IsTemporary
+        };
     }
 }

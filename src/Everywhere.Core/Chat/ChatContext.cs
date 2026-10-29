@@ -179,14 +179,6 @@ public abstract partial class ChatContext(
         return Root.ApplyAsync(() => Data.SelectChild(parent, child));
     }
 
-    /// <summary>
-    /// Applies the temporary-chat choice in the same domain as generation and persistence capture.
-    /// </summary>
-    public Task SetTemporaryAsync(bool isTemporary)
-    {
-        return Root.ApplyAsync(() => Data.Metadata.IsTemporary = isTemporary);
-    }
-
     internal void NotifyOperationChanged()
     {
         OnPropertyChanged(nameof(IsBusy));

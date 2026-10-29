@@ -3,6 +3,7 @@ using Everywhere.Database;
 using MessagePack;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
 using Everywhere.Interop;
@@ -24,6 +25,41 @@ namespace Everywhere.Core.Tests.Chat;
 
 public sealed class ChatV2MigrationTests
 {
+    [Test]
+    public async Task Upgrade_WhenSiblingOrderIsRemoved_PreservesChoiceAndDeferredKeys()
+    {
+        using var files = new DatabaseFiles();
+        await using var db = files.Factory.CreateDbContext();
+        var migrator = db.GetService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>();
+        await migrator.MigrateAsync("20261027164124_AddChatPinning");
+        var chatId = Guid.NewGuid();
+        var rootId = Guid.NewGuid();
+        var firstId = Guid.NewGuid();
+        var selectedId = Guid.NewGuid();
+        var payload = MessagePackSerializer.Serialize<ChatMessage>(new RootChatMessage());
+        await using (var transaction = await db.Database.BeginTransactionAsync())
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Chats (Id, CreatedAt, UpdatedAt) VALUES ({chatId}, 1, 1)");
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Nodes VALUES ({chatId}, {rootId}, NULL, NULL, 0, {selectedId}, 0, NULL, {payload}, 0, 0)");
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Nodes VALUES ({chatId}, {selectedId}, {rootId}, {selectedId}, 0, NULL, 2, NULL, {payload}, 20, 20)");
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Nodes VALUES ({chatId}, {firstId}, {rootId}, {firstId}, 1, NULL, 2, NULL, {payload}, 10, 10)");
+            await transaction.CommitAsync();
+        }
+
+        await migrator.MigrateAsync();
+        var metadata = new ChatMetadata(chatId, DateTimeOffset.MinValue, DateTimeOffset.MinValue, null);
+        using var data = await new ChatTurnStorage(files.Factory).GetChatContextAsync(metadata);
+        Assert.Multiple(() =>
+        {
+            Assert.That(data.RootNode.Children, Is.EqualTo(new[] { firstId, selectedId }));
+            Assert.That(data.RootNode.ChoiceChildId, Is.EqualTo(selectedId));
+            Assert.That(data.Items[^1].Id, Is.EqualTo(selectedId));
+        });
+        var sql = await db.Database.SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE name = 'Nodes'").SingleAsync();
+        Assert.That(sql, Does.Not.Contain("SiblingOrder"));
+        Assert.That(sql.Split("DEFERRABLE INITIALLY DEFERRED").Length - 1, Is.EqualTo(3));
+    }
+
     [AvaloniaTest]
     public async Task ReadUserText_WhenCoveredAttachmentsAreUnknown_DoesNotDeserializeThem()
     {
@@ -190,10 +226,10 @@ public sealed class ChatV2MigrationTests
         await manager.ArchiveAsync(data.Metadata);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         Assert.That(runtime.IsBusy, Is.True);
-        Assert.That(manager.AllHistory.SelectMany(group => group.MetadataList), Is.Empty);
-        manager.IsArchiveView = true;
+        Assert.That(manager.AllHistory.SelectMany(group => group.Items), Is.Empty);
+        manager.HistoryView = ChatHistoryView.Archived;
         await session.LoadMoreAsync(20);
-        Assert.That(manager.AllHistory.SelectMany(group => group.MetadataList).Single(), Is.SameAs(data.Metadata));
+        Assert.That(manager.AllHistory.SelectMany(group => group.Items).Single(), Is.SameAs(data.Metadata));
         release.SetResult();
         await operation;
         await manager.FlushPendingSavesAsync();
@@ -201,10 +237,10 @@ public sealed class ChatV2MigrationTests
 
         await manager.RestoreAsync(data.Metadata);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        Assert.That(manager.AllHistory.SelectMany(group => group.MetadataList), Is.Empty);
-        manager.IsArchiveView = false;
+        Assert.That(manager.AllHistory.SelectMany(group => group.Items), Is.Empty);
+        manager.HistoryView = ChatHistoryView.Recent;
         await session.LoadMoreAsync(20);
-        Assert.That(manager.AllHistory.SelectMany(group => group.MetadataList).Single(), Is.SameAs(data.Metadata));
+        Assert.That(manager.AllHistory.SelectMany(group => group.Items).Single(), Is.SameAs(data.Metadata));
 
         await manager.ArchiveAsync(data.Metadata);
         await manager.DeletePermanentlyAsync(data.Metadata);
@@ -292,7 +328,7 @@ public sealed class ChatV2MigrationTests
         var coldStorage = new ChatTurnStorage(files.Factory);
         var expected = new[] { first.Metadata.Id, second.Metadata.Id, third.Metadata.Id }.OrderDescending().ToArray();
         var actual = new List<ChatMetadata>();
-        var cursor = default(Guid?);
+        var cursor = default(ChatHistoryCursor);
         while (true)
         {
             var page = await ReadPageAsync(1, cursor);
@@ -302,7 +338,7 @@ public sealed class ChatV2MigrationTests
             }
 
             actual.Add(page[0]);
-            cursor = page[0].Id;
+            cursor = new ChatHistoryCursor(page[0].IsPinned, page[0].DateModified, page[0].Id);
             Assert.That(actual.Count, Is.LessThanOrEqualTo(3), "The cursor repeated a page.");
         }
         Assert.That(actual.Select(item => item.Id), Is.EqualTo(expected));
@@ -318,11 +354,7 @@ public sealed class ChatV2MigrationTests
         await manager.ArchiveAsync(metadata);
         Assert.That(metadata.IsArchived, Is.True);
         Assert.That(await ReadPageAsync(10), Has.Count.EqualTo(2));
-        var archived = new List<ChatMetadata>();
-        await foreach (var item in coldStorage.QueryChatContextsAsync(10, isArchived: true))
-        {
-            archived.Add(item);
-        }
+        var archived = (await coldStorage.ReadHistoryPageAsync(10, view: ChatHistoryView.Archived)).Items;
 
         Assert.That(archived.Single().Id, Is.EqualTo(metadata.Id));
         Assert.That(archived.Single().IsArchived, Is.True);
@@ -335,15 +367,9 @@ public sealed class ChatV2MigrationTests
         Assert.That(metadata.IsArchived, Is.False);
         Assert.That(await ReadPageAsync(10), Has.Count.EqualTo(3));
 
-        async Task<List<ChatMetadata>> ReadPageAsync(int take, Guid? cursor = null)
+        async Task<IReadOnlyList<ChatMetadata>> ReadPageAsync(int take, ChatHistoryCursor? cursor = null)
         {
-            var page = new List<ChatMetadata>();
-            await foreach (var item in coldStorage.QueryChatContextsAsync(take, cursor))
-            {
-                page.Add(item);
-            }
-
-            return page;
+            return (await coldStorage.ReadHistoryPageAsync(take, cursor)).Items;
         }
     }
 
@@ -724,7 +750,7 @@ public sealed class ChatV2MigrationTests
     }
 
     [Test]
-    public async Task Initialize_WhenChoiceIsInvalid_EndsBranchAndPreservesSiblingOrder()
+    public async Task Initialize_WhenChoiceIsInvalid_EndsBranchAndRetainsSiblings()
     {
         using var files = new DatabaseFiles();
         await using var source = await files.OpenLegacyAsync();
@@ -739,12 +765,11 @@ public sealed class ChatV2MigrationTests
         await files.InitializeAsync();
         await using var db = files.Factory.CreateDbContext();
         var root = await db.Nodes.SingleAsync(row => row.ParentId == null);
-        var children = await db.Nodes.Where(row => row.ParentId != null).OrderBy(row => row.SiblingOrder).ToArrayAsync();
+        var children = await db.Nodes.Where(row => row.ParentId != null).OrderBy(row => row.Id).ToArrayAsync();
         Assert.Multiple(() =>
         {
             Assert.That(root.ChoiceChildId, Is.Null);
             Assert.That(children.Select(row => row.Id), Is.EqualTo(new[] { firstId, secondId }));
-            Assert.That(children.Select(row => row.SiblingOrder), Is.EqualTo(new long[] { 0, 1 }));
         });
     }
 

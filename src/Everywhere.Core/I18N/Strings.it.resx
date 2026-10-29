@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Italian (Italiano) -->
 <root>
     <resheader name="resmimetype">
@@ -1513,8 +1513,8 @@ La mia intelligenza è fornita da un grande modello linguistico e ho bisogno del
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Data</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>Rinomina Chat</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>Rinomina</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>Elimina Chat</value>
@@ -2700,9 +2700,6 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>Il risultato restituito dallo strumento è errato: {0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>Chat Temporanea: una volta attivata, la chat corrente non verrà salvata e verrà eliminata al cambio o alla creazione di una nuova conversazione.</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(Opzionale) {0}</value>
@@ -4607,19 +4604,28 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>Le chat sono salvate su questo dispositivo. La sincronizzazione cloud non è disponibile in questa versione.</value>
     </data>
-    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
-        <value>Rinomina chat</value>
-    </data>
-    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
-        <value>Si consiglia di mantenerlo breve e facile da leggere</value>
-    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Elimina definitivamente</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>Questa operazione elimina definitivamente questa chat e tutti i suoi rami da questo dispositivo e non può essere annullata. Sei sicuro?</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Archivia</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Annulla archiviazione</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Rinomina chat</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Si consiglia di mantenerlo breve e facile da leggere</value>
+    </data>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Elimina chat</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Fissa in alto</value>
     </data>
 </root>

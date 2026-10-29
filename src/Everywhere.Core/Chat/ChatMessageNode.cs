@@ -83,12 +83,6 @@ public sealed partial class ChatMessageNode : IDisposable
     [IgnoreMember]
     public ChatTurn? Turn { get; internal set; }
 
-    /// <summary>
-    /// Gets the stable append order among children of the same parent.
-    /// </summary>
-    [IgnoreMember]
-    public long SiblingOrder { get; internal set; }
-
     [IgnoreMember]
     public int ChoiceCount => Children.Count;
 
@@ -188,7 +182,40 @@ public sealed partial class ChatMessageNode : IDisposable
 
     internal void AddChild(Guid childId)
     {
-        Volatile.Write(ref _children, [.. _children, childId]);
+        PublishChildren([.. _children, childId]);
+    }
+
+    internal void SortChildren()
+    {
+        PublishChildren([.. _children]);
+    }
+
+    private void PublishChildren(Guid[] children)
+    {
+        // Detached storage nodes are linked before their ChatData exists. The data constructor
+        // sorts them after attachment, preserving choices already resolved from legacy indices.
+        if (_data is { } data)
+        {
+            Array.Sort(children, (left, right) =>
+            {
+                var leftNode = data.FindNode(left) ?? throw new InvalidDataException("A child node is missing.");
+                var rightNode = data.FindNode(right) ?? throw new InvalidDataException("A child node is missing.");
+                var comparison = leftNode.CreatedAt.CompareTo(rightNode.CreatedAt);
+                if (comparison != 0)
+                {
+                    return comparison;
+                }
+
+                // Use unsigned, big-endian UUID bytes rather than database-specific GUID ordering.
+                var leftBytes = (Span<byte>)stackalloc byte[16];
+                var rightBytes = (Span<byte>)stackalloc byte[16];
+                left.TryWriteBytes(leftBytes, bigEndian: true, out _);
+                right.TryWriteBytes(rightBytes, bigEndian: true, out _);
+                return leftBytes.SequenceCompareTo(rightBytes);
+            });
+        }
+
+        Volatile.Write(ref _children, children);
     }
 
     internal void SetChoiceChild(Guid? childId)

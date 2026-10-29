@@ -52,9 +52,12 @@ public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeO
     {
         get
         {
-            if (IsTemporary) return LocaleKey.ChatContext_Temporary.I18N();
-            if (string.IsNullOrWhiteSpace(Topic)) return LocaleKey.ChatContext_Metadata_Topic_Default.I18N();
-            return Topic?.Trim();
+            if (!string.IsNullOrWhiteSpace(Topic))
+            {
+                return Topic;
+            }
+
+            return IsTemporary ? LocaleKey.ChatContext_Temporary.I18N() : LocaleKey.ChatContext_Metadata_Topic_Default.I18N();
         }
     }
 
@@ -80,6 +83,13 @@ public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeO
     /// </summary>
     [IgnoreMember]
     public bool IsArchived => ArchivedAt.HasValue;
+
+    /// <summary>
+    /// Gets whether this conversation leads its history listing. Stored independently of activity and archive state.
+    /// </summary>
+    [IgnoreMember]
+    [ObservableProperty]
+    public partial bool IsPinned { get; internal set; }
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {

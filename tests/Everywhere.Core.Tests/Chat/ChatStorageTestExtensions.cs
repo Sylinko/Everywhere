@@ -23,13 +23,18 @@ internal static class ChatStorageTestExtensions
 
     public static async Task<RootChatContext> LoadContextAsync(this IChatContextStorage storage, Guid id)
     {
-        await foreach (var metadata in storage.QueryChatContextsAsync(int.MaxValue))
+        ChatHistoryCursor? cursor = null;
+        do
         {
-            if (metadata.Id != id) continue;
-            var data = await storage.GetChatContextAsync(metadata);
-            var runtime = new RootChatContext(data, storage);
-            return runtime;
-        }
+            var page = await storage.ReadHistoryPageAsync(20, cursor);
+            foreach (var metadata in page.Items)
+            {
+                if (metadata.Id != id) continue;
+                var data = await storage.GetChatContextAsync(metadata);
+                return new RootChatContext(data, storage);
+            }
+            cursor = page.NextCursor;
+        } while (cursor is not null);
 
         throw new AssertionException($"Missing test conversation {id}.");
     }

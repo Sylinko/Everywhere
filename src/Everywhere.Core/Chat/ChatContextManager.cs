@@ -71,7 +71,7 @@ public sealed partial class ChatContextManager :
     IRelayCommand IChatContextManager.UpdateRecentHistoryCommand => UpdateRecentHistoryCommand;
 
     /// <inheritdoc />
-    public IReadOnlyBindableList<ChatDataHistoryGroup> AllHistory { get; }
+    public IReadOnlyBindableList<ChatHistorySection> AllHistory { get; }
 
     /// <inheritdoc />
     public string? HistorySearchQuery
@@ -117,7 +117,7 @@ public sealed partial class ChatContextManager :
     public IRelayCommand CreateNewCommand => field ??= new RelayCommand(CreateNew, () => !IsEmptyContext(_current));
 
     /// <inheritdoc />
-    public bool IsArchiveView
+    public ChatHistoryView HistoryView
     {
         get;
         set
@@ -160,7 +160,7 @@ public sealed partial class ChatContextManager :
 
     private CancellationTokenSource _historyGenerationCancellation = new();
     private string? _normalizedHistorySearchQuery;
-    private Guid? _storageCursor;
+    private ChatHistoryCursor? _storageCursor;
     private int _historyScanIndex;
     private int _historyGeneration;
     private int _activeHistorySessions;
@@ -185,10 +185,10 @@ public sealed partial class ChatContextManager :
             .Connect()
             .AutoRefresh(static metadata => metadata.DateModified)
             .ObserveOnAvaloniaDispatcher()
-            .GroupOn(GetHumanizedDate, _historyRegrouper)
-            .Transform(static group => new ChatDataHistoryGroup(group))
+            .GroupOn(GetHistorySection, _historyRegrouper)
+            .Transform(static group => new ChatHistorySection(group))
             .DisposeMany()
-            .Sort(SortExpressionComparer<ChatDataHistoryGroup>.Ascending(static history => history.Date))
+            .Sort(SortExpressionComparer<ChatHistorySection>.Ascending(static history => history.Kind))
             .BindEx(out _historyConnection);
 
         _saveDebounceExecutor = new DebounceExecutor<ChatContextManager, ThreadingTimerImpl>(
@@ -219,7 +219,7 @@ public sealed partial class ChatContextManager :
 
         if (message.PropertyName == nameof(ChatMetadata.States))
         {
-            // Running roots remain observable after a temporary history entry is dismissed.
+            // Running roots remain observable even when their history view is not selected.
             // Nested runtime states are presented inside their root, not counted as separate chats.
             if (FindRoot(message.Metadata) is null)
             {
@@ -261,6 +261,7 @@ public sealed partial class ChatContextManager :
                 });
                 break;
             }
+            case nameof(ChatMetadata.IsTemporary):
             case nameof(ChatMetadata.ArchivedAt):
             {
                 Dispatcher.UIThread.PostOnDemand(() =>
@@ -271,8 +272,40 @@ public sealed partial class ChatContextManager :
                         return;
                     }
 
-                    RemoveHistoryMetadata(message.Metadata);
+                    if (message.PropertyName == nameof(ChatMetadata.IsTemporary) && HistoryView != ChatHistoryView.Temporary)
+                    {
+                        // Retention does not change membership or ordering in Recent/Archived.
+                        // Only an untitled chat's localized fallback can change a search match.
+                        if (_normalizedHistorySearchQuery is not null && string.IsNullOrWhiteSpace(message.Metadata.Topic))
+                        {
+                            RestartHistoryMaterializationCore();
+                        }
+                        return;
+                    }
+
+                    if (_normalizedHistorySearchQuery is not null)
+                    {
+                        // Re-evaluate membership and search together, without a second restart in AddRecentHistoryMetadata.
+                        RestartHistoryMaterializationCore(resetRawHistory: true);
+                        return;
+                    }
+
+                    if (!MatchesHistoryView(message.Metadata))
+                    {
+                        RemoveHistoryMetadata(message.Metadata);
+                    }
+                    RestartHistoryMaterializationCore(resetRawHistory: true, preserveVisibleItems: true);
                     AddRecentHistoryMetadata(message.Metadata);
+                });
+                break;
+            }
+            case nameof(ChatMetadata.IsPinned):
+            {
+                Dispatcher.UIThread.PostOnDemand(() =>
+                {
+                    if (_isClosing) return;
+                    _historyRegrouper.OnNext(Unit.Default);
+                    RestartHistoryMaterializationCore(resetRawHistory: true, preserveVisibleItems: true);
                 });
                 break;
             }
@@ -289,9 +322,7 @@ public sealed partial class ChatContextManager :
                 {
                     if (_isClosing) return;
                     CreateNewCommand.NotifyCanExecuteChanged();
-                    HandleHistoryMetadataChanged(
-                        message.Metadata,
-                        message.PropertyName == nameof(ChatMetadata.DateModified));
+                    HandleHistoryMetadataChanged(message.Metadata);
                 });
                 break;
             }
@@ -351,7 +382,7 @@ public sealed partial class ChatContextManager :
 
     private async Task SavePendingMessageAsync(PendingSave message)
     {
-        if (IsEmptyContext(message.Root) || message.Metadata.IsTemporary)
+        if (IsEmptyContext(message.Root))
         {
             return;
         }
@@ -469,33 +500,36 @@ public sealed partial class ChatContextManager :
         CancelCurrentSwitch();
 
         var isCurrentTemporary = _current?.Data.Metadata.IsTemporary is true;
-        if (isCurrentTemporary)
+        var isTemporary = _settings.ChatWindow.TemporaryChatMode switch
         {
-            // Remove the temporary chat data before creating a new one
-            // Temporary chat contexts are not saved to storage, so no need to delete from storage.
-            if (_metadataMap.Remove(_current!.Data.Metadata.Id, out var removed))
-            {
-                RemoveHistoryMetadata(removed);
-            }
+            TemporaryChatMode.RememberLast => isCurrentTemporary,
+            TemporaryChatMode.Always => true,
+            _ => false
+        };
+        ActivateNewChat(isTemporary);
+    }
+
+    /// <inheritdoc />
+    public RootChatContext CreateChat(bool isTemporary)
+    {
+        CancelCurrentSwitch();
+        ActivateNewChat(isTemporary);
+        return _current;
+    }
+
+    [MemberNotNull(nameof(_current))]
+    private void ActivateNewChat(bool isTemporary)
+    {
+        if (IsEmptyContext(_current))
+        {
+            _metadataMap.TryRemove(_current.Data.Metadata.Id, out _);
+            RemoveHistoryMetadata(_current.Data.Metadata);
         }
 
-        var data = new ChatData
-        {
-            Metadata =
-            {
-                IsTemporary = _settings.ChatWindow.TemporaryChatMode switch
-                {
-                    TemporaryChatMode.RememberLast => isCurrentTemporary,
-                    TemporaryChatMode.Always => true,
-                    _ => false
-                },
-            },
-        };
+        var data = new ChatData();
+        data.Metadata.IsTemporary = isTemporary;
         _current = CreateRoot(data);
-        // After created, the chat data is not added to the storage yet.
-        // It will be added when it's property has changed.
-
-        AddRecentHistoryMetadata(_current.Data.Metadata);
+        AddRecentHistoryMetadata(data.Metadata);
         NotifyCurrentChanged();
     }
 
@@ -533,8 +567,53 @@ public sealed partial class ChatContextManager :
     }
 
     /// <inheritdoc />
+    public Task SetPinnedAsync(ChatMetadata metadata, bool isPinned)
+    {
+        if (IsEmptyContext(FindRoot(metadata)))
+        {
+            return Task.CompletedTask;
+        }
+
+        return Task.Run(async () =>
+        {
+            await _saveGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                ObjectDisposedException.ThrowIf(_isClosing, this);
+                if (!_metadataMap.TryGetValue(metadata.Id, out var canonical) || !ReferenceEquals(canonical, metadata) ||
+                    metadata.IsPinned == isPinned)
+                {
+                    return;
+                }
+
+                await SavePendingChatAsync(metadata.Id).ConfigureAwait(false);
+                await _chatContextStorage.SetPinnedAsync(metadata.Id, isPinned).ConfigureAwait(false);
+                // Publication is part of the committed operation, not a cancellable UI wait.
+                var root = FindRoot(metadata);
+                if (root is null)
+                {
+                    metadata.IsPinned = isPinned;
+                }
+                else
+                {
+                    await root.DispatchAsync(() => metadata.IsPinned = isPinned).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                _saveGate.Release();
+            }
+        });
+    }
+
+    /// <inheritdoc />
     public async Task ArchiveAsync(ChatMetadata metadata)
     {
+        if (IsEmptyContext(FindRoot(metadata)))
+        {
+            return;
+        }
+
         if (metadata.IsTemporary)
         {
             throw new InvalidOperationException("Temporary conversations cannot be archived.");
@@ -547,11 +626,6 @@ public sealed partial class ChatContextManager :
             {
                 ObjectDisposedException.ThrowIf(_isClosing, this);
                 await SavePendingChatAsync(metadata.Id).ConfigureAwait(false);
-                if (_current is { Data.HasHistory: false } empty && empty.Data.Metadata.Id == metadata.Id)
-                {
-                    await SaveDataAsync(empty).ConfigureAwait(false);
-                }
-
                 // Commit model state before releasing the persistence gate. History projection
                 // observes the notification independently; it is not part of this transaction.
                 var archivedAt = await _chatContextStorage.ArchiveAsync(metadata.Id).ConfigureAwait(false);
@@ -680,18 +754,38 @@ public sealed partial class ChatContextManager :
     }
 
     /// <inheritdoc />
-    public async Task DismissTemporaryAsync(ChatMetadata metadata)
+    public async Task PersistChatAsync(ChatMetadata metadata)
     {
-        if (!metadata.IsTemporary)
+        var root = await GetOrLoadContextAsync(metadata, CancellationToken.None).ConfigureAwait(false);
+        if (!root.Data.HasHistory)
         {
-            throw new InvalidOperationException("Only temporary conversations can be dismissed without archiving.");
+            // Empty chats only select the retention of their future messages; they have no database row.
+            await root.ApplyAsync(() => metadata.IsTemporary = false).ConfigureAwait(false);
+            return;
         }
 
-        _metadataMap.TryRemove(metadata.Id, out _);
-        RemoveHistoryMetadata(metadata);
-        if (_current?.Data.Metadata.Id == metadata.Id)
+        await _saveGate.WaitAsync().ConfigureAwait(false);
+        try
         {
-            await LoadRecentAsCurrentAsync();
+            ObjectDisposedException.ThrowIf(_isClosing, this);
+            if (!metadata.IsTemporary)
+            {
+                return;
+            }
+
+            // Capture through the existing writer. Only the detached batch changes retention before commit.
+            var (batch, changes) = await root.DispatchAsync(() => ChatWriteBatch.Capture(root.Data)).ConfigureAwait(false);
+            batch = batch with { Metadata = batch.Metadata with { IsTemporary = false } };
+            await _chatContextStorage.SaveChatContextAsync(batch).ConfigureAwait(false);
+            await root.DispatchAsync(() =>
+            {
+                root.Data.PersistenceDirtyState.Acknowledge(changes);
+                metadata.IsTemporary = false;
+            }).ConfigureAwait(false);
+        }
+        finally
+        {
+            _saveGate.Release();
         }
     }
 
@@ -708,7 +802,8 @@ public sealed partial class ChatContextManager :
             var historyItem = LoadedMetadata.Where(metadata => !metadata.IsArchived)
                 .OrderByDescending(metadata => metadata.DateModified).ThenByDescending(metadata => metadata.Id)
                 .FirstOrDefault();
-            await foreach (var candidate in _chatContextStorage.QueryChatContextsAsync(1, cancellationToken: cancellation.Token))
+            var candidate = await _chatContextStorage.GetMostRecentChatMetadataAsync(cancellation.Token);
+            if (candidate is not null)
             {
                 var canonical = _metadataMap.GetOrAdd(candidate.Id, candidate);
                 if (historyItem is null || canonical.DateModified > historyItem.DateModified ||
@@ -827,7 +922,7 @@ public sealed partial class ChatContextManager :
                     () =>
                     {
                         if (!_isClosing && previous is not null && previous.Data.Metadata.Id != _current?.Data.Metadata.Id &&
-                            (IsEmptyContext(previous) || previous.Data.Metadata.IsTemporary) &&
+                            IsEmptyContext(previous) &&
                             _metadataMap.Remove(previous.Data.Metadata.Id, out _))
                         {
                             RemoveHistoryMetadata(previous.Data.Metadata);
@@ -1065,6 +1160,10 @@ public sealed partial class ChatContextManager :
                 if (scanIndex < _historyScanIds.Count)
                 {
                     candidateId = _historyScanIds[scanIndex++];
+                    if (_materializedHistoryIds.Contains(candidateId.Value))
+                    {
+                        continue;
+                    }
                 }
                 else if (!_rawHistoryExhausted)
                 {
@@ -1079,7 +1178,7 @@ public sealed partial class ChatContextManager :
             }
 
             if (candidateId is not { } id) break;
-            if (!_metadataMap.TryGetValue(id, out var metadata) || metadata.IsArchived != IsArchiveView) continue;
+            if (!_metadataMap.TryGetValue(id, out var metadata) || !MatchesHistoryView(metadata)) continue;
             if (await MatchesHistorySearchAsync(metadata, pattern, searchIncludesContent, cancellationToken).ConfigureAwait(false))
             {
                 matches.Add(metadata);
@@ -1102,7 +1201,7 @@ public sealed partial class ChatContextManager :
                     cancellationToken.ThrowIfCancellationRequested();
 
                     matches.RemoveAll(metadata =>
-                        metadata.IsArchived != IsArchiveView ||
+                        !MatchesHistoryView(metadata) ||
                         !_metadataMap.ContainsKey(metadata.Id) ||
                         !_materializedHistoryIds.Add(metadata.Id));
                     if (matches.Count > 0)
@@ -1126,40 +1225,42 @@ public sealed partial class ChatContextManager :
         int generation,
         CancellationToken cancellationToken)
     {
-        Guid? cursor;
+        ChatHistoryCursor? cursor;
         lock (_historyStateLock)
         {
             cursor = _storageCursor;
         }
 
-        var fetched = new List<ChatMetadata>(count);
-        await foreach (var metadata in _chatContextStorage.QueryChatContextsAsync(
-                           count,
-                           cursor,
-                           cancellationToken,
-                           IsArchiveView).ConfigureAwait(false))
-        {
-            fetched.Add(metadata);
-        }
+        var page = await _chatContextStorage.ReadHistoryPageAsync(
+            count, cursor, cancellationToken, HistoryView).ConfigureAwait(false);
 
         lock (_historyStateLock)
         {
             ThrowIfHistoryGenerationChanged(generation, cancellationToken);
-            foreach (var metadata in fetched)
+            foreach (var metadata in page.Items)
             {
                 var canonical = _metadataMap.GetOrAdd(metadata.Id, metadata);
 
-                _storageCursor = metadata.Id;
-                if (_rawHistoryIds.Add(canonical.Id) && canonical.IsArchived == IsArchiveView)
+                if (_rawHistoryIds.Add(canonical.Id) && MatchesHistoryView(canonical))
                 {
                     _historyScanIds.Add(canonical.Id);
                 }
             }
 
-            if (fetched.Count < count)
-            {
-                _rawHistoryExhausted = true;
-            }
+            _storageCursor = page.NextCursor;
+            _rawHistoryExhausted = page.NextCursor is null;
+            IncludeCurrentHistoryCandidate();
+        }
+    }
+
+    private void IncludeCurrentHistoryCandidate()
+    {
+        // Called under the history lock after the database prefix is complete. Local empty or
+        // not-yet-saved chats remain searchable, without letting cached rows precede unread pins.
+        if (_rawHistoryExhausted && _current is { } current &&
+            MatchesHistoryView(current.Data.Metadata) && _rawHistoryIds.Add(current.Data.Metadata.Id))
+        {
+            _historyScanIds.Add(current.Data.Metadata.Id);
         }
     }
 
@@ -1200,7 +1301,7 @@ public sealed partial class ChatContextManager :
     private void RestartHistoryMaterialization() =>
         Dispatcher.UIThread.PostOnDemand(() => RestartHistoryMaterializationCore());
 
-    private void RestartHistoryMaterializationCore(bool resetRawHistory = false)
+    private void RestartHistoryMaterializationCore(bool resetRawHistory = false, bool preserveVisibleItems = false)
     {
         Dispatcher.UIThread.VerifyAccess();
         if (_isClosing) return;
@@ -1216,34 +1317,34 @@ public sealed partial class ChatContextManager :
             if (resetRawHistory)
             {
                 _rawHistoryIds.Clear();
-                if (_current is not null)
-                {
-                    _rawHistoryIds.Add(_current.Data.Metadata.Id);
-                }
-
+                _historyScanIds.Clear();
                 _storageCursor = null;
                 _rawHistoryExhausted = false;
             }
 
-            _historyScanIds.Clear();
-            _historyScanIds.AddRange(
-                _metadataMap.Values
-                    .Where(metadata => metadata.IsArchived == IsArchiveView)
-                    .OrderByDescending(static metadata => metadata.DateModified)
-                    .ThenByDescending(static metadata => metadata.Id)
-                    .Select(static metadata => metadata.Id));
+            IncludeCurrentHistoryCandidate();
             _historyScanIndex = 0;
-            _materializedHistoryIds.Clear();
+            if (!preserveVisibleItems)
+            {
+                _materializedHistoryIds.Clear();
+            }
             hasMoreItems = _historyScanIds.Count > 0 || !_rawHistoryExhausted;
         }
 
         previousCancellation.Cancel();
         previousCancellation.Dispose();
-        _materializedHistorySource.Clear();
+        if (!preserveVisibleItems)
+        {
+            _materializedHistorySource.Clear();
+            if (_normalizedHistorySearchQuery is null && _current is { } current)
+            {
+                AddRecentHistoryMetadata(current.Data.Metadata);
+            }
+        }
         HasMoreItems = hasMoreItems;
 
-        // A reset must wake the behavior even when the boolean value stayed true. The ScrollViewer
-        // also returns to the top because the materialized result was cleared.
+        // Wake the loader even when HasMoreItems stayed true. Query changes clear results;
+        // pinning changes retain the visible objects while restarting the raw ordering.
         OnPropertyChanged(nameof(HasMoreItems));
     }
 
@@ -1251,25 +1352,20 @@ public sealed partial class ChatContextManager :
         Dispatcher.UIThread.PostOnDemand(() =>
         {
             if (_isClosing) return;
-            if (metadata.IsArchived != IsArchiveView)
+            if (!MatchesHistoryView(metadata))
             {
                 return;
-            }
-
-            lock (_historyStateLock)
-            {
-                _rawHistoryIds.Add(metadata.Id);
             }
 
             if (_normalizedHistorySearchQuery is not null)
             {
-                RestartHistoryMaterializationCore();
+                RestartHistoryMaterializationCore(resetRawHistory: true);
                 return;
             }
 
             lock (_historyStateLock)
             {
-                if (metadata.IsArchived != IsArchiveView || !_materializedHistoryIds.Add(metadata.Id)) return;
+                if (!MatchesHistoryView(metadata) || !_materializedHistoryIds.Add(metadata.Id)) return;
                 _materializedHistorySource.Add(metadata);
             }
         });
@@ -1285,21 +1381,9 @@ public sealed partial class ChatContextManager :
             }
         });
 
-    private void HandleHistoryMetadataChanged(ChatMetadata metadata, bool invalidatesStorageCursor)
+    private void HandleHistoryMetadataChanged(ChatMetadata metadata)
     {
         Dispatcher.UIThread.VerifyAccess();
-
-        if (invalidatesStorageCursor)
-        {
-            lock (_historyStateLock)
-            {
-                // A modified cursor is no longer a valid boundary in UpdatedAt order. Restarting the
-                // raw cursor is cheap because already-known IDs are deduplicated before entering the
-                // scan, and it prevents a selected old conversation from making intermediate rows skip.
-                _storageCursor = null;
-                _rawHistoryExhausted = false;
-            }
-        }
 
         if (_normalizedHistorySearchQuery is not null)
         {
@@ -1334,16 +1418,33 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    private static HumanizedDate GetHumanizedDate(ChatMetadata metadata) =>
-        (DateTimeOffset.UtcNow - metadata.DateModified).TotalDays switch
+    private bool MatchesHistoryView(ChatMetadata metadata)
+    {
+        return HistoryView switch
         {
-            < 1 => HumanizedDate.Today,
-            < 2 => HumanizedDate.Yesterday,
-            < 7 => HumanizedDate.LastWeek,
-            < 30 => HumanizedDate.LastMonth,
-            < 365 => HumanizedDate.LastYear,
-            _ => HumanizedDate.Earlier
+            ChatHistoryView.Archived => metadata.IsArchived,
+            ChatHistoryView.Temporary => !metadata.IsArchived && metadata.IsTemporary,
+            _ => !metadata.IsArchived
         };
+    }
+
+    private static ChatHistorySectionKind GetHistorySection(ChatMetadata metadata)
+    {
+        if (metadata.IsPinned)
+        {
+            return ChatHistorySectionKind.Pinned;
+        }
+
+        return (DateTimeOffset.UtcNow - metadata.DateModified).TotalDays switch
+        {
+            < 1 => ChatHistorySectionKind.Today,
+            < 2 => ChatHistorySectionKind.Yesterday,
+            < 7 => ChatHistorySectionKind.LastWeek,
+            < 30 => ChatHistorySectionKind.LastMonth,
+            < 365 => ChatHistorySectionKind.LastYear,
+            _ => ChatHistorySectionKind.Earlier
+        };
+    }
 
     private static string? NormalizeHistorySearchQuery(string? query) =>
         string.IsNullOrWhiteSpace(query) ? null : query.Trim();
@@ -1441,6 +1542,16 @@ public sealed partial class ChatContextManager :
         }
         finally
         {
+            // Cleanup must still run when saving an unrelated permanent chat failed.
+            try
+            {
+                await _chatContextStorage.DeleteTemporaryChatsAsync().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Failed to clear temporary chats; startup will retry cleanup.");
+            }
+
             _isDisposed = true;
             _saveGate.Release();
             WeakReferenceMessenger.Default.UnregisterAll(this);

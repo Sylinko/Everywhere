@@ -27,7 +27,6 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
                 row.Id,
                 row.ParentId,
                 row.TurnId,
-                row.SiblingOrder,
                 row.ChoiceChildId,
                 row.MessageKind,
                 row.SummaryThroughNodeId,
@@ -40,14 +39,13 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
             row => row.Id,
             row => new ChatMessageNode(row.Id, row.MessageKind, row.CreatedAt, row.UpdatedAt)
             {
-                SiblingOrder = row.SiblingOrder,
                 SummaryThroughNodeId = row.SummaryThroughNodeId,
             });
         var rootRow = topology.AsValueEnumerable().Single(row => row.ParentId is null);
         var root = nodes[rootRow.Id];
         root.TryLoadMessage(new RootChatMessage());
 
-        foreach (var row in topology.AsValueEnumerable().OrderBy(row => row.SiblingOrder))
+        foreach (var row in topology)
         {
             var node = nodes[row.Id];
             node.SetChoiceChild(row.ChoiceChildId);
@@ -69,8 +67,6 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
                 data.Dispose();
                 throw new InvalidDataException("Persisted turn membership does not match the parent path.");
             }
-
-            node.SiblingOrder = row.SiblingOrder;
         }
 
         return data;
@@ -156,7 +152,6 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
         Guid Id,
         Guid? ParentId,
         Guid? TurnId,
-        long SiblingOrder,
         Guid? ChoiceChildId,
         ChatMessageKind MessageKind,
         Guid? SummaryThroughNodeId,
