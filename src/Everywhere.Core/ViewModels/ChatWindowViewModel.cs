@@ -212,6 +212,18 @@ public sealed partial class ChatWindowViewModel :
                 .Subscribe(_ => UpdateCurrentContextUsageModel())
         );
 
+        LifetimeDisposables.Add(
+            ChatContextManager.WhenValueChanged(manager => manager.Current)
+                .Select(context => context is { } runtime ? runtime.Data.WhenValueChanged(data => data.HasHistory) : Observable.Return(false))
+                .Switch()
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(_ =>
+                {
+                    ToggleChatPinCommand.NotifyCanExecuteChanged();
+                    ArchiveChatCommand.NotifyCanExecuteChanged();
+                })
+        );
+
         InitializeToolApproval();
         WeakReferenceMessenger.Default.RegisterAll(this);
     }

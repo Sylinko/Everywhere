@@ -26,7 +26,7 @@ public interface IChatContextManager : IIncrementalLoader
     /// <summary>
     /// Gets the stable, dynamically grouped portion of history materialized so far.
     /// </summary>
-    IReadOnlyBindableList<ChatDataHistoryGroup> AllHistory { get; }
+    IReadOnlyBindableList<ChatHistorySection> AllHistory { get; }
 
     /// <summary>
     /// Gets or sets the text used to filter incrementally materialized history.
@@ -55,14 +55,19 @@ public interface IChatContextManager : IIncrementalLoader
     IRelayCommand CreateNewCommand { get; }
 
     /// <summary>
-    /// Gets or sets whether history displays archived conversations instead of active ones.
+    /// Gets or sets the recent, temporary, or archived history filter.
     /// </summary>
-    bool IsArchiveView { get; set; }
+    ChatHistoryView HistoryView { get; set; }
 
     /// <summary>
     /// Archives a saved conversation, leaving running work on its current branch.
     /// </summary>
     Task ArchiveAsync(ChatMetadata metadata);
+
+    /// <summary>
+    /// Saves pinning before publishing it on canonical metadata. Pinning does not change retention.
+    /// </summary>
+    Task SetPinnedAsync(ChatMetadata metadata, bool isPinned);
 
     /// <summary>
     /// Renames canonical metadata without loading history. An open root applies the change in its execution domain.
@@ -80,9 +85,15 @@ public interface IChatContextManager : IIncrementalLoader
     Task DeletePermanentlyAsync(ChatMetadata metadata);
 
     /// <summary>
-    /// Removes a temporary conversation from the history listing without writing it to disk.
+    /// Creates and activates a separate conversation with explicit retention, independently of the new-chat preference.
     /// </summary>
-    Task DismissTemporaryAsync(ChatMetadata metadata);
+    RootChatContext CreateChat(bool isTemporary);
+
+    /// <summary>
+    /// Commits pending history and permanent retention together, then publishes the existing metadata.
+    /// Empty chats only change in-memory retention and remain unsaved until their first message.
+    /// </summary>
+    Task PersistChatAsync(ChatMetadata metadata);
 
     /// <summary>
     /// Loads the canonical root for the given metadata; consumers explicitly load the bodies they need.

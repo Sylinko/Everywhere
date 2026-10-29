@@ -2,7 +2,6 @@
 using System.Numerics;
 using Avalonia.Data.Converters;
 using Everywhere.Utilities;
-using ZLinq;
 
 namespace Everywhere.ValueConverters;
 
@@ -101,7 +100,7 @@ public abstract class NumberConverters<T> where T : struct, INumber<T>
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            return value is null ? 0 : Enum.ToObject(targetType, System.Convert.ChangeType(value, TypeCode.Int64));
+            return value is null ? 0 : Enum.ToObject(targetType, ChangeType(value));
         }
     }
 }

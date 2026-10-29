@@ -83,6 +83,16 @@ namespace Everywhere.Database.Migrations.V2
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsPinned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsTemporary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Topic")
                         .HasColumnType("TEXT");
 
@@ -91,11 +101,20 @@ namespace Everywhere.Database.Migrations.V2
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ArchivedAt", "Id")
-                        .HasFilter("\"ArchivedAt\" IS NOT NULL");
-
                     b.HasIndex("UpdatedAt", "Id")
                         .HasFilter("\"ArchivedAt\" IS NULL");
+
+                    b.HasIndex(new[] { "IsPinned", "UpdatedAt", "Id" }, "IX_Chats_ActiveHistory")
+                        .IsDescending()
+                        .HasFilter("\"ArchivedAt\" IS NULL");
+
+                    b.HasIndex(new[] { "IsPinned", "UpdatedAt", "Id" }, "IX_Chats_ArchivedHistory")
+                        .IsDescending()
+                        .HasFilter("\"ArchivedAt\" IS NOT NULL");
+
+                    b.HasIndex(new[] { "IsPinned", "UpdatedAt", "Id" }, "IX_Chats_TemporaryHistory")
+                        .IsDescending()
+                        .HasFilter("\"IsTemporary\" = 1 AND \"ArchivedAt\" IS NULL");
 
                     b.ToTable("Chats", (string)null);
                 });
@@ -142,9 +161,6 @@ namespace Everywhere.Database.Migrations.V2
                         .IsRequired()
                         .HasColumnType("BLOB");
 
-                    b.Property<long>("SiblingOrder")
-                        .HasColumnType("INTEGER");
-
                     b.Property<Guid?>("SummaryThroughNodeId")
                         .HasColumnType("TEXT");
 
@@ -162,11 +178,9 @@ namespace Everywhere.Database.Migrations.V2
 
                     b.HasIndex("ChatContextId", "ChoiceChildId");
 
-                    b.HasIndex("ChatContextId", "TurnId");
+                    b.HasIndex("ChatContextId", "ParentId");
 
-                    b.HasIndex("ChatContextId", "ParentId", "SiblingOrder")
-                        .IsUnique()
-                        .HasFilter("\"ParentId\" IS NOT NULL");
+                    b.HasIndex("ChatContextId", "TurnId");
 
                     b.ToTable("Nodes", (string)null);
                 });

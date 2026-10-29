@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Turkish (Turkey) -->
 <root>
     <resheader name="resmimetype">
@@ -1513,8 +1513,8 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Tarih</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>Yeniden adlandırma diyaloğu</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>Yeniden adlandır</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>Sohbeti sil</value>
@@ -2700,9 +2700,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>Araçtan dönen sonuç hatalı: {0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>Geçici Sohbet: Açıldığında mevcut sohbet kaydedilmeyecek, geçiş yapıldığında veya yeni bir diyalog açıldığında silinecek.</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(isteğe bağlı) {0}</value>
@@ -4607,19 +4604,28 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>Sohbetler bu cihazda saklanır. Bu sürümde sohbet bulut senkronizasyonu kullanılamaz.</value>
     </data>
-    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
-        <value>Sohbeti yeniden adlandır</value>
-    </data>
-    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
-        <value>Kısa ve okunması kolay tutulması önerilir</value>
-    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Kalıcı olarak sil</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>Bu işlem, bu sohbeti ve tüm dallarını bu cihazdan kalıcı olarak siler ve geri alınamaz. Emin misiniz?</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Arşivle</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Arşivden çıkar</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Sohbeti yeniden adlandır</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Kısa ve okunması kolay tutulması önerilir</value>
+    </data>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Sohbeti sil</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Yukarı sabitle</value>
     </data>
 </root>

@@ -27,21 +27,28 @@ public interface IChatContextStorage : IChatTurnLoader
     Task DeletePermanentlyAsync(Guid chatId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Queries metadata in descending UpdatedAt/Id order with cursor-based pagination.
+    /// Reads history in descending IsPinned/UpdatedAt/Id order, after the captured database values.
     /// </summary>
-    /// <param name="take">Maximum number of items to return (page size).</param>
-    /// <param name="startAfterId">
-    /// Optional "start after" cursor. When provided, the page starts after this ID using the same sort order.
-    /// Implementations should use a deterministic tie-breaker (ID) when multiple rows share the same sort key.
-    /// </param>
-    /// <param name="cancellationToken">Cancellation.</param>
-    /// <param name="isArchived">Selects the archive instead of active history.</param>
-    /// <returns>Async sequence of contexts, ordered.</returns>
-    IAsyncEnumerable<ChatMetadata> QueryChatContextsAsync(
+    Task<ChatHistoryPage> ReadHistoryPageAsync(
         int take,
-        Guid? startAfterId = null,
+        ChatHistoryCursor? cursor = null,
         CancellationToken cancellationToken = default,
-        bool isArchived = false);
+        ChatHistoryView view = ChatHistoryView.Recent);
+
+    /// <summary>
+    /// Reads the most recently modified active conversation, regardless of pinning.
+    /// </summary>
+    Task<ChatMetadata?> GetMostRecentChatMetadataAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Commits pinning without changing the conversation's modification date or message history.
+    /// </summary>
+    Task SetPinnedAsync(Guid chatId, bool isPinned, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes session-only conversations after all writers have stopped. Shared attachments are retained.
+    /// </summary>
+    Task DeleteTemporaryChatsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Loads detached lightweight topology for an active or archived conversation.

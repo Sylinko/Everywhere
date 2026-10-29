@@ -1,4 +1,4 @@
-using Avalonia.Input;
+﻿using Avalonia.Input;
 using Everywhere.Extensions;
 
 namespace Everywhere.Core.Tests.Extensions;
@@ -56,6 +56,15 @@ public sealed class AvaloniaExtensionsTests
                 Assert.That(value.IsApplicationShortcutModifierOnly(), Is.False, $"Only matched for {value}");
             });
         }
+
+        Assert.Multiple(() =>
+        {
+            Assert.That((KeyModifiers.Control | KeyModifiers.Shift).IsApplicationShortcutModifierOnly(KeyModifiers.Shift), Is.True);
+            Assert.That(KeyModifiers.Control.IsApplicationShortcutModifierOnly(KeyModifiers.Shift), Is.False);
+            Assert.That((KeyModifiers.Control | KeyModifiers.Shift | KeyModifiers.Alt).IsApplicationShortcutModifierOnly(KeyModifiers.Shift), Is.False);
+            Assert.That((KeyModifiers.Control | KeyModifiers.Shift | KeyModifiers.Alt).IsApplicationShortcutModifierOnly(KeyModifiers.Shift | KeyModifiers.Alt), Is.True);
+            Assert.That((KeyModifiers.Meta | KeyModifiers.Shift).IsApplicationShortcutModifierOnly(KeyModifiers.Shift), Is.EqualTo(IsMacOS));
+        });
     }
 
     [Test]

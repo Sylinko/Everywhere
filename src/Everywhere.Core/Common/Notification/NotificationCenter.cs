@@ -3,8 +3,6 @@ using System.Collections.Specialized;
 using System.Windows.Input;
 using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.Input;
-using DynamicData;
-using DynamicData.Binding;
 using Everywhere.Collections;
 using Everywhere.Configuration;
 

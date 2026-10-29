@@ -22,7 +22,14 @@ public sealed class ChatV2DbContext(DbContextOptions<ChatV2DbContext> options) :
             entity.ToTable("Chats");
             entity.HasKey(row => row.Id);
             entity.HasIndex(row => new { row.UpdatedAt, row.Id }).HasFilter("\"ArchivedAt\" IS NULL");
-            entity.HasIndex(row => new { row.ArchivedAt, row.Id }).HasFilter("\"ArchivedAt\" IS NOT NULL");
+            entity.Property(row => row.IsPinned).HasDefaultValue(false);
+            entity.Property(row => row.IsTemporary).HasDefaultValue(false);
+            entity.HasIndex(row => new { row.IsPinned, row.UpdatedAt, row.Id }, "IX_Chats_TemporaryHistory")
+                .IsDescending().HasFilter("\"IsTemporary\" = 1 AND \"ArchivedAt\" IS NULL");
+            entity.HasIndex(row => new { row.IsPinned, row.UpdatedAt, row.Id }, "IX_Chats_ActiveHistory")
+                .IsDescending().HasFilter("\"ArchivedAt\" IS NULL");
+            entity.HasIndex(row => new { row.IsPinned, row.UpdatedAt, row.Id }, "IX_Chats_ArchivedHistory")
+                .IsDescending().HasFilter("\"ArchivedAt\" IS NOT NULL");
         });
 
         builder.Entity<ChatV2NodeEntity>(entity =>
@@ -30,8 +37,7 @@ public sealed class ChatV2DbContext(DbContextOptions<ChatV2DbContext> options) :
             entity.ToTable("Nodes");
             entity.HasKey(row => new { row.ChatContextId, row.Id });
             entity.HasIndex(row => new { row.ChatContextId, row.TurnId });
-            entity.HasIndex(row => new { row.ChatContextId, row.ParentId, row.SiblingOrder })
-                .IsUnique().HasFilter("\"ParentId\" IS NOT NULL");
+            entity.HasIndex(row => new { row.ChatContextId, row.ParentId });
             entity.HasIndex(row => row.ChatContextId).IsUnique().HasFilter("\"ParentId\" IS NULL");
             entity.HasOne<ChatV2Entity>().WithMany().HasForeignKey(row => row.ChatContextId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne<ChatV2NodeEntity>().WithMany().HasForeignKey(row => new { row.ChatContextId, row.ParentId })
@@ -89,6 +95,8 @@ public sealed class ChatV2Entity
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? ArchivedAt { get; set; }
+    public bool IsPinned { get; set; }
+    public bool IsTemporary { get; set; }
 }
 
 /// <summary>
@@ -101,7 +109,6 @@ public sealed class ChatV2NodeEntity
     public Guid Id { get; set; }
     public Guid? ParentId { get; set; }
     public Guid? TurnId { get; set; }
-    public long SiblingOrder { get; set; }
     public Guid? ChoiceChildId { get; set; }
     public ChatMessageKind MessageKind { get; set; }
     public Guid? SummaryThroughNodeId { get; set; }
