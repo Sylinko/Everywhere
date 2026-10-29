@@ -1,9 +1,14 @@
 # Linux releases and AUR
 
 `linux-release.yml` builds x64 and ARM64 from version tags (`vX.Y.Z` or
-`vX.Y.Z-canary.<numeric qualifiers>`). It uploads DEB, AppImage and self-contained
+`vX.Y.Z-canary.<numeric qualifiers>`). It uploads DEB, RPM and self-contained
 tar.zst assets to a draft release. Wait for both matrix builds, then publish the
 release as stable or prerelease. The manual build input retries an existing tag.
+
+RPM packages use `~canary` versions so stable versions sort after previews.
+The RPM runtime dependencies have been validated on Fedora 44; other RPM
+distributions require their own dependency and runtime acceptance. Packaging
+preserves the published self-contained binaries without stripping them.
 
 The build, checkout and release upload operate on the repository running the
 workflow. In the upstream repository this is `Sylinko/Everywhere`; no fork or
