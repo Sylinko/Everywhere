@@ -20,6 +20,42 @@ namespace Everywhere.Core.Tests.Common.SoftwareUpdate;
 public sealed class SoftwareUpdaterLifecycleTests
 {
     [AvaloniaTest]
+    public async Task TerminalPlatform_WhenAutomaticCheckFindsRelease_DiscoversWithoutDownloading()
+    {
+        using var folder = new IsolatedUpdateFolder();
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var platform = Substitute.For<IPlatformUpdateHandler, ITerminalUpdateHandler>();
+        var target = CreateTarget();
+        ((ITerminalUpdateHandler)platform).GetReleasesAsync(UpdateChannel.Stable, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<TerminalUpdateRelease>>([
+                new(target, new Uri("https://example.invalid/release"), "Release notes") ]));
+        var downloader = Substitute.For<IFileDownloadService>();
+        using var updater = CreateUpdater(services, platform, downloader);
+        using var stop = new CancellationTokenSource();
+        updater.RunAutomaticCheckInBackground(TimeSpan.FromMilliseconds(50), stop.Token);
+        for (var index = 0; index < 100 && updater.LatestUpdate is null; index++) await Task.Delay(20);
+        stop.Cancel();
+        Assert.That(updater.LatestUpdate, Is.EqualTo(target));
+        Assert.That(updater.ReadyUpdate, Is.Null);
+        Assert.That(downloader.ReceivedCalls(), Is.Empty);
+    }
+
+    [AvaloniaTest]
+    public async Task TerminalPlatform_WhenRecoveringOrInstalling_DoesNotOwnPackages()
+    {
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var platform = Substitute.For<IPlatformUpdateHandler, ITerminalUpdateHandler>();
+        var downloader = Substitute.For<IFileDownloadService>();
+        using var updater = CreateUpdater(services, platform, downloader);
+        await updater.RecoverCachedPackageAsync();
+        Assert.That(updater.ReadyUpdate, Is.Null);
+        Assert.That(updater.TerminalUpdateHandler, Is.SameAs(platform));
+        Assert.Throws<InvalidOperationException>(() => updater.PerformUpdateAsync(CreateTarget()));
+        Assert.That(downloader.ReceivedCalls(), Is.Empty);
+        await platform.DidNotReceive().ExecuteUpdateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [AvaloniaTest]
     public async Task ManualFailure_WhenDownloadFails_ReturnsTheLocalizedErrorToTheCaller()
     {
         using var folder = new IsolatedUpdateFolder();

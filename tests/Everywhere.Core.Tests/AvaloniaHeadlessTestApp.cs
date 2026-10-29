@@ -8,7 +8,8 @@ public static class AvaloniaHeadlessTestApp
 {
     public static AppBuilder BuildAvaloniaApp()
     {
-        var shouldRender = Environment.GetEnvironmentVariable("EVERYWHERE_RENDER_OUTPUT") is not null;
+        var shouldRender = Environment.GetEnvironmentVariable("EVERYWHERE_RENDER_OUTPUT") is not null ||
+            Environment.GetEnvironmentVariable("EVERYWHERE_UPDATE_PREVIEW_DIR") is not null;
         var builder = AppBuilder.Configure<Application>()
             .AfterSetup(builder =>
             {

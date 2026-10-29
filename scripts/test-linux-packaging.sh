@@ -38,6 +38,8 @@ test "$(dpkg-deb -f "$deb" Version)" = 1.2.3~canary.20261026.1
 dpkg-deb -x "$deb" unpacked-deb
 dpkg-deb -e "$deb" unpacked-control
 test -L unpacked-deb/usr/bin/Everywhere
+test "$(readlink unpacked-deb/usr/bin/ew)" = /opt/Everywhere/Everywhere
+dpkg-deb -f "$deb" Depends | grep -q "python3 (>= 3.9)"
 test -x unpacked-deb/opt/Everywhere/Everywhere.Watchdog
 desktop-file-validate unpacked-deb/usr/share/applications/com.Sylinko.Everywhere.desktop
 grep -q "StartupWMClass=Everywhere" unpacked-deb/usr/share/applications/com.Sylinko.Everywhere.desktop
@@ -52,6 +54,8 @@ rpm -qp --requires "$rpm" | grep -qx libicu
 mkdir unpacked-rpm
 (cd unpacked-rpm && rpm2cpio "../$rpm" | cpio -idm --quiet)
 test -L unpacked-rpm/usr/bin/Everywhere
+test "$(readlink unpacked-rpm/usr/bin/ew)" = /opt/Everywhere/Everywhere
+rpm -qp --requires "$rpm" | grep -qx "python3 >= 3.9"
 test -x unpacked-rpm/opt/Everywhere/Everywhere.Watchdog
 desktop-file-validate unpacked-rpm/usr/share/applications/com.Sylinko.Everywhere.desktop
 cmp publish/Everywhere unpacked-rpm/opt/Everywhere/Everywhere
