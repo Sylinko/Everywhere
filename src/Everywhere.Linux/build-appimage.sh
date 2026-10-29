@@ -71,6 +71,7 @@ Name=$APP_NAME
 Exec=$APP_NAME
 Icon=$APP_ID
 Type=Application
+StartupWMClass=Everywhere
 Categories=Utility;
 EOF
 ln -s "$APP_ID.desktop" "$APPDIR/Everywhere.desktop"
