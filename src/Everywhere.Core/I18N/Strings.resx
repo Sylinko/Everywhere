@@ -4628,4 +4628,10 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copy link text</value>
     </data>
+    <data name="TerminalUpdate_CopyCommand" xml:space="preserve">
+        <value>Copy command</value>
+    </data>
+    <data name="TerminalUpdate_PasteHint" xml:space="preserve">
+        <value>Paste into your terminal to update.</value>
+    </data>
 </root>

@@ -25,6 +25,9 @@ public sealed class SoftwareUpdater(
     ILogger<SoftwareUpdater> logger
 ) : ObservableObject, ISoftwareUpdater, IDisposable
 {
+    /// <inheritdoc />
+    public ITerminalUpdateHandler? TerminalUpdateHandler => platformHandler as ITerminalUpdateHandler;
+
     private const string UpdateServiceBaseUrl = "https://download.sylinko.com";
     private const string GitHubDirectUrlBase = "https://github.com/Sylinko/Everywhere/releases/download";
     private const string PackageManifestFileName = "update-package.json";
@@ -33,14 +36,19 @@ public sealed class SoftwareUpdater(
 
     private static readonly TimeSpan MinReleaseAgeForAutoDownload = TimeSpan.FromHours(1);
 
-    public UpdateChannel UpdateChannel => settings.Common.UpdateChannel switch
+    public UpdateChannel UpdateChannel => ResolveUpdateChannel(settings.Common.UpdateChannel);
+
+    /// <summary>
+    /// Resolves the configured channel using the running application's channel as the default.
+    /// </summary>
+    public static UpdateChannel ResolveUpdateChannel(UpdateChannel configuredChannel) => configuredChannel switch
     {
         UpdateChannel.Unknown => RuntimeConstants.Version.Channel switch
         {
             UpdateChannel.Unknown => UpdateChannel.Stable,
             _ => RuntimeConstants.Version.Channel
         },
-        _ => settings.Common.UpdateChannel
+        _ => configuredChannel
     };
 
     public DateTimeOffset? LastCheckTime
@@ -212,6 +220,10 @@ public sealed class SoftwareUpdater(
 
     private Task StartManualOperation(SoftwareUpdateMetadata? target)
     {
+        if (TerminalUpdateHandler is not null)
+        {
+            throw new InvalidOperationException("Use the terminal update command to update this installation.");
+        }
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_isDisposed, this);
@@ -490,7 +502,10 @@ public sealed class SoftwareUpdater(
         {
             await EnsureRecoveryAsync();
             token.ThrowIfCancellationRequested();
-            CleanupOldUpdates();
+            if (TerminalUpdateHandler is null)
+            {
+                CleanupOldUpdates();
+            }
             var nextCheck = DateTimeOffset.MinValue;
             while (true)
             {
@@ -508,7 +523,7 @@ public sealed class SoftwareUpdater(
                 {
                     token.ThrowIfCancellationRequested();
                     var target = _latestUpdate;
-                    if (_operation is null && target is not null && target.Channel == UpdateChannel &&
+                    if (TerminalUpdateHandler is null && _operation is null && target is not null && target.Channel == UpdateChannel &&
                         _readyPackage?.Metadata.HasSamePackageIdentity(target) != true &&
                         !_suppressedAutomaticTags.Contains(target.Tag) && !nativeHelper.IsLowDataModeActive)
                     {
@@ -563,6 +578,10 @@ public sealed class SoftwareUpdater(
 
     private Task EnsureRecoveryAsync()
     {
+        if (TerminalUpdateHandler is not null)
+        {
+            return Task.CompletedTask;
+        }
         lock (_gate)
         {
             var token = _lifetime.Token;
@@ -573,6 +592,15 @@ public sealed class SoftwareUpdater(
 
     private async Task<SoftwareUpdateMetadata> FetchReleaseAsync(UpdateChannel channel, string? fullTag, CancellationToken cancellationToken)
     {
+        if (TerminalUpdateHandler is { } terminalHandler)
+        {
+            var releases = await terminalHandler.GetReleasesAsync(channel, cancellationToken);
+            var release = fullTag is null ?
+                releases.MaxBy(item => item.Metadata.Version) :
+                releases.FirstOrDefault(item => item.Metadata.Tag == fullTag);
+            return release?.Metadata ?? throw new SoftwareUpdateConsistencyException("No compatible published Linux release was found.");
+        }
+
         using var httpClient = httpClientFactory.CreateClient(Options.DefaultName);
         var requestUrl = $"{UpdateServiceBaseUrl}/api?product=everywhere&channel={Uri.EscapeDataString(channel.ToString())}";
         if (fullTag is not null)

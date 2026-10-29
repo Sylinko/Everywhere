@@ -12,5 +12,10 @@ public static class AvaloniaHeadlessTestApp
             {
                 builder.Instance?.Styles.Add(new SimpleTheme());
             })
-            .UseHeadless(new AvaloniaHeadlessPlatformOptions());
+            .WithInterFont()
+            .UseSkia()
+            .UseHeadless(new AvaloniaHeadlessPlatformOptions
+            {
+                UseHeadlessDrawing = Environment.GetEnvironmentVariable("EVERYWHERE_UPDATE_PREVIEW_DIR") is null
+            });
 }

@@ -24,6 +24,7 @@ trap 'rm -rf "$package_dir"' EXIT
 install -d "$package_dir/DEBIAN" "$package_dir/opt/Everywhere" "$package_dir/usr/bin"
 cp -a "$publish_dir/." "$package_dir/opt/Everywhere/"
 ln -s /opt/Everywhere/Everywhere "$package_dir/usr/bin/Everywhere"
+ln -s /opt/Everywhere/Everywhere "$package_dir/usr/bin/ew"
 install -Dm644 "$script_dir/../../img/Everywhere-icon.png" "$package_dir/usr/share/icons/hicolor/256x256/apps/Everywhere.png"
 install -Dm644 "$script_dir/../../LICENSE" "$package_dir/usr/share/doc/everywhere/copyright"
 install -d "$package_dir/usr/share/applications"
@@ -46,7 +47,7 @@ Version: $deb_version
 Architecture: $deb_arch
 Maintainer: Sylinko
 Description: Context-aware AI assistant for your desktop
-Depends: libc6, libgcc-s1, libstdc++6, zlib1g, libssl3, libicu78 | libicu76 | libicu74 | libicu72, libfontconfig1, libx11-6, libice6, libsm6, libxext6, libxcb1, libxrandr2, libxrender1, libxi6, libxcursor1, libwayland-client0, libxkbcommon0, libglib2.0-0, libglib2.0-bin, libatspi2.0-0, xdg-utils, desktop-file-utils
+Depends: python3 (>= 3.9), libc6, libgcc-s1, libstdc++6, zlib1g, libssl3, libicu78 | libicu76 | libicu74 | libicu72, libfontconfig1, libx11-6, libice6, libsm6, libxext6, libxcb1, libxrandr2, libxrender1, libxi6, libxcursor1, libwayland-client0, libxkbcommon0, libglib2.0-0, libglib2.0-bin, libatspi2.0-0, xdg-utils, desktop-file-utils
 Recommends: libnotify-bin
 Suggests: grim, wl-clipboard
 Section: utils

@@ -13,6 +13,11 @@ public interface ISoftwareUpdater : INotifyPropertyChanged
     UpdateChannel UpdateChannel { get; }
 
     /// <summary>
+    /// Gets the external package-manager workflow, when installation belongs to a terminal.
+    /// </summary>
+    ITerminalUpdateHandler? TerminalUpdateHandler => null;
+
+    /// <summary>
     /// Gets the completion time of the last successful latest-release check.
     /// </summary>
     DateTimeOffset? LastCheckTime { get; }

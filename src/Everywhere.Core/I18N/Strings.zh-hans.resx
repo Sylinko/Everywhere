@@ -4620,4 +4620,10 @@
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>复制链接文本</value>
     </data>
+    <data name="TerminalUpdate_CopyCommand" xml:space="preserve">
+        <value>复制命令</value>
+    </data>
+    <data name="TerminalUpdate_PasteHint" xml:space="preserve">
+        <value>请在终端执行复制的命令以完成更新。</value>
+    </data>
 </root>

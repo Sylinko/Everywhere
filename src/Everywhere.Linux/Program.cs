@@ -39,6 +39,18 @@ public static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (args is ["--linux-update-download", var address, var destination, var maximumBytes])
+        {
+            Environment.ExitCode = LinuxUpdateDownload.RunAsync(address, destination, maximumBytes).GetAwaiter().GetResult();
+            return;
+        }
+
+        if (args is ["update", .. var updateArguments])
+        {
+            Environment.ExitCode = LinuxUpdateCommand.RunAsync(updateArguments).GetAwaiter().GetResult();
+            return;
+        }
+
         NativeMessageBox.Register(LinuxNativeMessageBox.Show);
         Environment.ExitCode = RunAsync(args).GetAwaiter().GetResult();
     }
