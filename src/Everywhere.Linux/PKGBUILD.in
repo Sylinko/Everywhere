@@ -33,13 +33,14 @@ package() {
     install -Dm644 "$srcdir/Everywhere-icon.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/Everywhere.png"
     install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
     install -d "$pkgdir/usr/share/applications"
-    cat > "$pkgdir/usr/share/applications/Everywhere.desktop" <<'EOF'
+    cat > "$pkgdir/usr/share/applications/com.Sylinko.Everywhere.desktop" <<'EOF'
 [Desktop Entry]
 Name=Everywhere
 Comment=A context-aware AI assistant for your desktop.
 Exec=/usr/bin/Everywhere %U
 Icon=Everywhere
 Type=Application
+StartupWMClass=Everywhere
 Terminal=false
 Categories=Utility;
 Keywords=AI;tool;

@@ -6,9 +6,9 @@ using Tmds.DBus.Protocol;
 namespace Everywhere.Linux.Desktop;
 
 /// <summary>
-/// Owns one portal session on a dedicated bus connection. Disconnecting releases all its grabs.
+/// Owns one desktop shortcut session, including the native Plasma 5 fallback, on a dedicated bus connection.
 /// </summary>
-internal sealed class PortalShortcutSession : IAsyncDisposable
+internal sealed partial class PortalShortcutSession : IAsyncDisposable
 {
     private const string PortalServiceName = "org.freedesktop.portal.Desktop";
     private const string PortalObjectPath = "/org/freedesktop/portal/desktop";
@@ -58,6 +58,7 @@ internal sealed class PortalShortcutSession : IAsyncDisposable
         _activationWatch?.Dispose();
         try
         {
+            await ReleaseLegacyKdeAsync().ConfigureAwait(false);
             if (_sessionPath is not null)
             {
                 await _connection.CallMethodAsync(CreateCloseRequest(_sessionPath))
@@ -110,6 +111,12 @@ internal sealed class PortalShortcutSession : IAsyncDisposable
     private async Task InitializeAsync(KeyboardShortcut[] shortcuts, Action<string> onActivated, CancellationToken cancellationToken)
     {
         await _connection.ConnectAsync().AsTask().WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (IsLegacyKde)
+        {
+            await InitializeLegacyKdeAsync(shortcuts, onActivated, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         await RegisterApplicationAsync(cancellationToken).ConfigureAwait(false);
 
         var sessionResult = await RequestAsync("CreateSession", sessionPath: null, shortcuts: [], cancellationToken).ConfigureAwait(false);
