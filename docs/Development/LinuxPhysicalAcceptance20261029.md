@@ -1,17 +1,18 @@
 ﻿# Physical Linux desktop acceptance, 2026-10-29
 
-## Scope and current state
+## Scope of the original run
 
 This run uses the physical ASUS test machine and the persistent Ventoy images,
 not the earlier NixOS VM fixtures. Tests run in this order: Ubuntu 24.04,
-Ubuntu 25.10, Debian 14/testing, then Fedora 44. The feature branch remains
-`feat/linux-desktop-backends`; RPC and Windows/macOS production code are unchanged.
+Ubuntu 25.10, Debian 14/testing, then Fedora 44. The changes were developed on
+`feat/linux-desktop-backends`; this follow-up did not change the RPC transport or
+Windows/macOS production code. The implementation is now integrated into
+`linux-hyprland` and the fork main branch.
 
-Fedora acceptance is pending. Its SSH server accepts the pinned test public key
-and then closes the connection. The offline password change may have replaced
-`/etc/shadow` without retaining its SELinux label; this must be checked from Arch.
-Do not describe Fedora tools or application behavior as accepted until access is
-restored and the remaining tests have run.
+Fedora acceptance remains pending. Its SSH server accepted the pinned test public
+key and then closed the connection. The user subsequently reported that the
+installation could not enter a usable desktop. No root cause has been confirmed;
+Fedora tools and application behavior must not be described as accepted.
 
 ## Confirmed defects and minimal corrections
 
@@ -105,8 +106,8 @@ works on this GNOME version.
 
 One-shot EFI BootNext selections are used rather than changing BootOrder. The
 original Ventoy configuration is backed up as
-`ventoy/ventoy.json.before-physical-tests-20261029`. The selection and timeout must
-be restored when the physical run finishes.
+`ventoy/ventoy.json.before-physical-tests-20261029`. The selection and timeout were
+restored after the subsequent Debian Hyprland setup; BootOrder was preserved.
 
 ## Regression evidence and artifacts
 
@@ -126,4 +127,14 @@ enable sign-in; this was outside the desktop compatibility test.
 Local logs, TRX files and screenshots are under the sibling
 `ventoy-desktop-lab/physical-evidence` directory. USB artifacts and physical system
 logs are retained under `CompatibilityLab/PhysicalTest` and each system's
-`~/physical-tests`. No release, PR update or push was performed.
+`~/physical-tests`. This original physical run did not publish a release.
+
+## Subsequent Debian Hyprland readiness
+
+Debian now also has Hyprland 0.56.2 and Noctalia 5.4.0, with Ghostty, fastfetch,
+small GTK/Qt editors, a file manager, an image viewer and audio controls. The
+original release DEB for `v0.9.0-canary.20261029.30` was verified against its
+published SHA256 and started successfully on the physical Hyprland session.
+Main was visible and the Input/Automation Hosts authenticated. The desktop has a
+mouse launcher and logout entry. Final shortcut, text-selection and capture
+acceptance on this session is reserved for the user's manual testing.
