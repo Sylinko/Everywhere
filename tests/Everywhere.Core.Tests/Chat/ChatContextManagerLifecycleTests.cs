@@ -474,11 +474,10 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         using var other = Data(new UserChatMessage("other", []));
         var otherRuntime = ChatStorageTestExtensions.AttachRoot(manager, other);
 
-        target.Metadata.ArchivedAt = DateTimeOffset.UtcNow;
         var saved = new List<Guid>();
-        storage.ContextSaver = context =>
+        storage.ContextSaver = batch =>
         {
-            saved.Add(context.Metadata.Id);
+            saved.Add(batch.Metadata.Id);
             return Task.FromException(new IOException("cannot serialize"));
         };
 

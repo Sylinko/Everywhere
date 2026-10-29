@@ -21,7 +21,7 @@ public interface IChatContextStorage : IChatTurnLoader
     Task RestoreAsync(Guid chatId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Permanently deletes an archived conversation after the manager drains its work and pending writes.
+    /// Permanently deletes a conversation after the manager stops its work. Pending writes are discarded after deletion succeeds.
     /// Shared attachment files are retained.
     /// </summary>
     Task DeletePermanentlyAsync(Guid chatId, CancellationToken cancellationToken = default);

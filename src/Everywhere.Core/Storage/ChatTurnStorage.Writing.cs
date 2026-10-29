@@ -55,21 +55,13 @@ partial class ChatTurnStorage
     }
 
     /// <summary>
-    /// Removes an archived conversation after the manager has stopped its work and discarded pending saves.
+    /// Removes a conversation after the manager has stopped its work. Pending saves are discarded after deletion succeeds.
     /// Attachment files and shared blob metadata are retained for legacy and other chat references.
     /// </summary>
     public async Task DeletePermanentlyAsync(Guid chatId, CancellationToken cancellationToken = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        var chat = await db.Chats.AsNoTracking().SingleAsync(row => row.Id == chatId, cancellationToken);
-        if (chat.ArchivedAt is null)
-        {
-            throw new InvalidOperationException("Archive the conversation before permanently deleting it.");
-        }
-
         await db.Chats.Where(row => row.Id == chatId).ExecuteDeleteAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
     }
 
     private async Task SetArchiveStateAsync(Guid chatId, DateTimeOffset? archivedAt, CancellationToken cancellationToken)
