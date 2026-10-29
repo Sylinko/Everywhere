@@ -10,8 +10,9 @@ internal sealed partial class PortalShortcutSession
     {
         get
         {
-            return Environment.GetEnvironmentVariable("KDE_SESSION_VERSION") == "5"
-                && Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP")?.Split(':').Contains("KDE", StringComparer.OrdinalIgnoreCase) == true;
+            var desktops = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP")?.Split(':');
+            return Environment.GetEnvironmentVariable("KDE_SESSION_VERSION") == "5" &&
+                desktops?.Contains("KDE", StringComparer.OrdinalIgnoreCase) == true;
         }
     }
 
