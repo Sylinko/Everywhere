@@ -112,23 +112,8 @@ public sealed class TextSelectionToolbarService : IDisposable
             return;
         }
 
-        // Ownership moves to the draft before any synchronous collection notifications can run.
-        _selection = null;
-        _ownsSelection = false;
-        try
-        {
-            var chatWindow = _serviceProvider.GetRequiredService<ChatWindow>();
-            chatWindow.ViewModel.RunStrategyOnTextSelection(selection, strategy);
-            _windowHelper.BringToForeground(chatWindow);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Failed to run text selection strategy {StrategyId}.", strategy.Id);
-        }
-        finally
-        {
-            Hide();
-        }
+        var message = new UserStrategyChatMessage(string.Empty, [selection], strategy);
+        SubmitChatMessage(message, _settings.Model.SelectedCustomAssistant);
     }
 
     private bool SubmitFreeformChat(string text, CustomAssistant assistant)
@@ -139,11 +124,15 @@ public sealed class TextSelectionToolbarService : IDisposable
             return false;
         }
 
+        return SubmitChatMessage(new UserChatMessage(text, [selection]), assistant);
+    }
+
+    private bool SubmitChatMessage(UserChatMessage message, CustomAssistant? assistant)
+    {
         var isAccepted = false;
         try
         {
             var chatWindow = _serviceProvider.GetRequiredService<ChatWindow>();
-            var message = new UserChatMessage(text, [selection]);
             isAccepted = chatWindow.ViewModel.SendTextSelectionMessage(message, assistant);
             if (!isAccepted)
             {

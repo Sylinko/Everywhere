@@ -172,6 +172,17 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_Advanced)]
     public partial bool IsFullscreenExcluded { get; set; } = true;
 
+    /// <summary>
+    /// Gets or sets whether all chats started by the selection toolbar are temporary.
+    /// Automatic attachment to an existing chat does not change that chat's retention.
+    /// </summary>
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header,
+        LocaleKey.TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description)]
+    [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_Advanced)]
+    public partial bool ShouldStartToolbarChatsAsTemporary { get; set; } = true;
+
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.Empty)]
     [SettingsItem(Classes = ["FullWidth", "NoHeading"], Group = LocaleKey.TextSelectionSettings_Group_Advanced)]

@@ -874,7 +874,7 @@ public sealed partial class ChatWindowViewModel :
     {
         Dispatcher.UIThread.PostOnDemand(() =>
         {
-            var version = Interlocked.Increment(ref _textSelectionVersion);
+            var version = ++_textSelectionVersion;
             _toolbarService.Hide();
             HandleTextSelectionAsync(data, version).Detach(_logger.ToExceptionHandler());
         });
@@ -909,7 +909,7 @@ public sealed partial class ChatWindowViewModel :
                 }
             }
 
-            if (version != Volatile.Read(ref _textSelectionVersion) || !data.IsCurrent) return;
+            if (version != _textSelectionVersion || !data.IsCurrent) return;
 
             var shouldAttach = Settings.TextSelection.IsAutomaticAttachmentEnabled &&
                 (_chatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount ||
@@ -951,11 +951,10 @@ public sealed partial class ChatWindowViewModel :
     /// On rejection, the caller retains ownership.
     /// This method must be called on the UI thread.
     /// </summary>
-    public bool SendTextSelectionMessage(UserChatMessage message, CustomAssistant assistant)
+    public bool SendTextSelectionMessage(UserChatMessage message, CustomAssistant? assistant)
     {
-        PrepareChatWindowActivation();
-
-        if (!_chatService.SendMessage(ChatContextManager.Current, message, assistant))
+        var destination = ChatContextManager.CreateChat(Settings.TextSelection.ShouldStartToolbarChatsAsTemporary);
+        if (!_chatService.SendMessage(destination, message, assistant))
         {
             return false;
         }
@@ -971,62 +970,6 @@ public sealed partial class ChatWindowViewModel :
         });
 
         return true;
-    }
-
-    /// <summary>
-    /// Takes ownership of a text selection, opens the chat window and runs <paramref name="strategy"/> against it.
-    /// </summary>
-    /// <remarks>
-    /// This is the entry point for the text selection toolbar, which resolves the strategy itself and
-    /// then hands both over. It intentionally does not go through <see cref="ActivateChatSessionMessage"/>:
-    /// that path removes a primary <see cref="VisualElementAttachment"/> at index 0 when no target
-    /// element is supplied, which would discard the very <see cref="TextSelectionAttachment"/> being added.
-    /// </remarks>
-    public void RunStrategyOnTextSelection(TextSelectionAttachment selection, Strategy strategy)
-    {
-        var isAdopted = false;
-        try
-        {
-            // Detach a borrowed selection before cancelling edits or switching drafts can dispose it.
-            _chatAttachmentsSource.Remove(selection);
-            CancelEditing();
-
-            if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null))
-            {
-                ChatContextManager.CreateNewCommand.Execute(null);
-            }
-
-            _chatAttachmentsSource.Edit(list =>
-            {
-                // ReSharper disable once AccessToDisposedClosure
-                // ReSharper disable once AccessToModifiedClosure
-                foreach (var previous in list.OfType<TextSelectionAttachment>().ToArray())
-                {
-                    list.Remove(previous);
-                    if (!ReferenceEquals(previous, selection)) previous.Dispose();
-                }
-
-                while (list.Count >= PersistentState.MaxChatAttachmentCount && list.Count > 0)
-                {
-                    var removed = list[^1];
-                    list.RemoveAt(list.Count - 1);
-                    (removed as IDisposable)?.Dispose();
-                }
-
-                // ReSharper disable once AccessToDisposedClosure
-                // ReSharper disable once AccessToModifiedClosure
-                list.Insert(0, selection);
-                isAdopted = true;
-            });
-
-            SelectedStrategy = strategy;
-            WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
-            if (SendMessageCommand.CanExecute(string.Empty)) SendMessageCommand.Execute(string.Empty);
-        }
-        finally
-        {
-            if (!isAdopted) selection.Dispose();
-        }
     }
 
     private void HandleChatAttachmentsChanged(IReadOnlyCollection<ChatAttachment> attachments)

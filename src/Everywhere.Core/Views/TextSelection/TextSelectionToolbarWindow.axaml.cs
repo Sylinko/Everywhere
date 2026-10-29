@@ -148,7 +148,7 @@ public partial class TextSelectionToolbarWindow : Window
         }
         else if (IsVisible && ToolbarRoot.IsFreeformChat && editor is not null)
         {
-            // A busy destination has not consumed anything. Restore this appearance's existing
+            // A rejected submission has not consumed the selection. Restore this appearance's existing
             // prepared route or ordinary activated input, without creating a new native host.
             HandleFreeformChatInputRequested(editor);
         }

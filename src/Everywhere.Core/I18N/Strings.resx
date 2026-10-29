@@ -4682,4 +4682,10 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="ChatHistory_Empty" xml:space="preserve">
         <value>No chats to display</value>
     </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>Use temporary chats from the toolbar</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>Use temporary chats for every chat started from the text selection toolbar. These chats are automatically deleted when Everywhere exits. Turn off to use regular chats.</value>
+    </data>
 </root>
