@@ -291,7 +291,12 @@ public sealed partial class HyprlandWindowState : IDisposable, IWindowPresentati
         {
             try
             {
-                _connection.ExecuteLua($"if _G.{_ruleName} then _G.{_ruleName}:set_enabled(false); _G.{_ruleName}=nil end");
+                _connection.ExecuteLua($$"""
+                    if _G.{{_ruleName}} then
+                        _G.{{_ruleName}}:set_enabled(false)
+                        _G.{{_ruleName}} = nil
+                    end
+                    """);
             }
             catch (Exception exception) when (exception is System.Net.Sockets.SocketException or TimeoutException)
             {

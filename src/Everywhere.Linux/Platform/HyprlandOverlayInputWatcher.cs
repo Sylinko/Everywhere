@@ -49,21 +49,35 @@ public sealed class HyprlandOverlayInputWatcher : OverlayInputWatcherBase
             end
             state.prefix = '{{prefix}}'
             local function emit(kind)
-                if state.prefix then hl.dispatch(hl.dsp.event(state.prefix .. ',' .. kind)) end
+                if state.prefix then
+                    hl.dispatch(hl.dsp.event(state.prefix .. ',' .. kind))
+                end
             end
             for _, button in ipairs({ 'mouse:272', 'mouse:273', 'mouse:274', 'mouse:275', 'mouse:276', 'mouse_up', 'mouse_down', 'mouse_left', 'mouse_right' }) do
                 if not state.mouse[button] then
                     local kind = string.sub(button, 1, 6) == 'mouse:' and 'button' or 'scroll'
-                    state.mouse[button] = hl.bind(button, function() emit(kind) end,
-                        { non_consuming=true, ignore_mods=true, transparent=true, submap_universal=true })
+                    state.mouse[button] = hl.bind(button, function()
+                        emit(kind)
+                    end, {
+                        non_consuming = true,
+                        ignore_mods = true,
+                        transparent = true,
+                        submap_universal = true,
+                    })
                 end
                 state.mouse[button]:set_enabled(true)
             end
-            if state.key then state.key:remove() end
+            if state.key then
+                state.key:remove()
+            end
             state.key = hl.on('input.keyboard.key', function(key, _, pressed)
-                if pressed ~= 1 then return end
+                if pressed ~= 1 then
+                    return
+                end
                 local modifiers = { [37]=true,[50]=true,[62]=true,[64]=true,[92]=true,[105]=true,[108]=true,[133]=true,[134]=true }
-                if modifiers[key] then return end
+                if modifiers[key] then
+                    return
+                end
                 local navigation = { [9]=true,[23]=true,[36]=true,[65]=true,[110]=true,[111]=true,[112]=true,[113]=true,[114]=true,[115]=true,[116]=true,[117]=true }
                 emit(navigation[key] and 'navigation' or 'key')
             end)
@@ -80,8 +94,13 @@ public sealed class HyprlandOverlayInputWatcher : OverlayInputWatcherBase
                 local state = _G.{{_stateName}}
                 if state then
                     state.prefix = nil
-                    if state.key then state.key:remove(); state.key = nil end
-                    for _, binding in pairs(state.mouse) do binding:set_enabled(false) end
+                    if state.key then
+                        state.key:remove()
+                        state.key = nil
+                    end
+                    for _, binding in pairs(state.mouse) do
+                        binding:set_enabled(false)
+                    end
                 end
                 """);
         }

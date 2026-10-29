@@ -104,14 +104,18 @@ public sealed class HyprlandInputHostSession : IProcessRoleSession, IInputHostRp
                             local chord = key
                             local binding = hl.bind(chord, function()
                                 local command = state.commands[chord]
-                                if command then hl.dispatch(hl.dsp.exec_cmd(command)) end
+                                if command then
+                                    hl.dispatch(hl.dsp.exec_cmd(command))
+                                end
                             end)
                             state.bindings[chord] = binding
                             binding:set_enabled(false)
                         end
                     end
                 end)
-                if not ok then error(err) end
+                if not ok then
+                    error(err)
+                end
                 state.commands = desired
                 for key, binding in pairs(state.bindings) do
                     binding:set_enabled(desired[key] ~= nil)
@@ -139,8 +143,15 @@ public sealed class HyprlandInputHostSession : IProcessRoleSession, IInputHostRp
             _isDraining = true;
             _lifetime.Cancel();
             _registrations.Clear();
-            _compositor.ExecuteLua(
-                $"local state=_G.{_bindingsName}; if state then state.commands={{}}; for _,binding in pairs(state.bindings) do binding:set_enabled(false) end end");
+            _compositor.ExecuteLua($$"""
+                local state = _G.{{_bindingsName}}
+                if state then
+                    state.commands = {}
+                    for _, binding in pairs(state.bindings) do
+                        binding:set_enabled(false)
+                    end
+                end
+                """);
         }
 
         return ValueTask.CompletedTask;
