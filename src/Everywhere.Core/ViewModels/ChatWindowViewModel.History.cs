@@ -58,29 +58,25 @@ partial class ChatWindowViewModel
     }
 
     [RelayCommand]
-    private async Task DeleteArchivedChatAsync(ChatMetadata metadata)
+    private async Task DeleteChatPermanentlyAsync(ChatMetadata metadata)
     {
-        if (!metadata.IsArchived)
-        {
-            return;
-        }
-
         if (metadata.States.HasFlag(ChatContextMetadataStates.Busy))
         {
             ToastHost.CreateToast(LocaleKey.ChatHistory_Delete_Running.I18N()).ShowInfo();
             return;
         }
 
-        var result = await DialogHost.CreateDialog(
-                LocaleKey.ChatHistory_Delete_Confirmation.I18N(),
-                LocaleKey.ChatHistory_Delete_Title.I18N())
+        var result = await DialogHost
+            .CreateDialog(LocaleKey.ChatHistory_DeleteDialog_Content.I18N(), LocaleKey.ChatHistory_DeleteDialog_Title.I18N())
             .WithPrimaryButton(LocaleKey.Common_Delete.I18N(), buttonStyle: ButtonStyle.Destructive)
             .WithCancelButton(LocaleKey.Common_Cancel.I18N())
             .ShowAsync();
-        if (result == DialogResult.Primary)
+        if (result != DialogResult.Primary)
         {
-            await ExecuteHistoryOperationAsync(() => ChatContextManager.DeletePermanentlyAsync(metadata));
+            return;
         }
+
+        await ExecuteHistoryOperationAsync(() => ChatContextManager.DeletePermanentlyAsync(metadata));
     }
 
     private async Task ExecuteHistoryOperationAsync(Func<Task> operation)

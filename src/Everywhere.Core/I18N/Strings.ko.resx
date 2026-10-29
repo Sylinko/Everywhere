@@ -4613,4 +4613,13 @@
     <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
         <value>짧고 읽기 쉽게 유지하는 것을 권장합니다</value>
     </data>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>영구 삭제</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>이 채팅과 모든 분기가 이 기기에서 영구적으로 삭제되며 되돌릴 수 없습니다. 계속하시겠습니까?</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>채팅 삭제</value>
+    </data>
 </root>

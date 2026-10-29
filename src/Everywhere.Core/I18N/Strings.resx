@@ -4616,11 +4616,11 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="ChatHistory_Restore" xml:space="preserve">
         <value>Restore chat</value>
     </data>
-    <data name="ChatHistory_Delete_Title" xml:space="preserve">
-        <value>Permanently delete chat</value>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>Permanently delete</value>
     </data>
-    <data name="ChatHistory_Delete_Confirmation" xml:space="preserve">
-        <value>This permanently deletes this archived chat and all its branches from this device. This cannot be undone. Attachment files and the previous-version database are not deleted.</value>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>This permanently deletes this chat and all its branches from this device, and it cannot be undone. Are you sure?</value>
     </data>
     <data name="ChatHistory_Delete_Running" xml:space="preserve">
         <value>Stop this chat before permanently deleting it.</value>
@@ -4654,5 +4654,8 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
         <value>Keep it short and easy to read</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>Delete chat</value>
     </data>
 </root>
