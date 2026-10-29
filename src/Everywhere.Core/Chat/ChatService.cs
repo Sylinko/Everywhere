@@ -120,7 +120,29 @@ public sealed partial class ChatService : IChatService
                 {
                     // Once accepted, retain the user's content even if preparation of the visual
                     // context fails. External composers do not keep a second copy in the main draft.
-                    var userNode = await chatContext.DispatchAsync(() => chatData.Append(parentNode, message));
+                    var (userNode, titleInput, summary) = await chatContext.DispatchAsync(() =>
+                    {
+                        // Title work belongs to the first accepted send, not to the response loop.
+                        var shouldCreateTitle = !chatData.HasHistory && string.IsNullOrWhiteSpace(chatData.Metadata.Topic);
+                        var input = shouldCreateTitle ? GetTitleInput(message) : null;
+                        var node = chatData.Append(parentNode, message);
+                        if (input is not null)
+                        {
+                            chatData.Metadata.Topic = string.Join(" ", input.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+                                .SafeSubstring(0, 80);
+                        }
+
+                        return (node, input, chatData.Metadata.Topic);
+                    });
+                    if (titleInput is { Length: > 0 } && customAssistant is not null && _settings.ChatWindow.AutomaticallyGenerateTitle)
+                    {
+                        chatContext
+                            .RunBackgroundAsync(
+                                token => GenerateTopicAsync(customAssistant, titleInput, chatContext, summary, token),
+                                CancellationToken.None)
+                            .Detach(_logger.ToExceptionHandler());
+                    }
+
                     await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
                     var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                         chatData,
@@ -686,19 +708,6 @@ public sealed partial class ChatService : IChatService
                     generationContext.InputModalities,
                     cancellationToken,
                     context: chatContext);
-
-                if (_settings.ChatWindow.AutomaticallyGenerateTitle &&
-                    !chatData.Metadata.IsTemporary && // Do not generate titles for temporary contexts.
-                    chatData.Metadata.Topic.IsNullOrEmpty() &&
-                    chatHistory.Count(c => c.Role == AuthorRole.User) == 1 && // Only try when there's one user message.
-                    chatHistory.FirstOrDefault(c => c.Role == AuthorRole.User)?.Content is { Length: > 0 } userMessage)
-                {
-                    // If the chat history only contains one user message and one assistant message,
-                    // we can generate a title for the chat context.
-                    chatContext.RunBackgroundAsync(
-                        token => GenerateTopicAsync(assistant, userMessage, chatContext, token),
-                        cancellationToken).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
-                }
 
                 // Process streaming chat message contents (thinking, text, function calls, etc.)
                 // It will return the function call contents for further processing.
@@ -1466,24 +1475,41 @@ public sealed partial class ChatService : IChatService
         }
     }
 
-    private async Task GenerateTopicAsync(Assistant assistant, string userMessage, ChatContext chatContext, CancellationToken cancellationToken)
+    /// <summary>
+    /// Captures title material before attachments and strategy templates become model-facing markup.
+    /// Only user-visible text is included; actual XML supplied by the user remains unchanged.
+    /// </summary>
+    private static string GetTitleInput(UserChatMessage message)
     {
-        var metadata = chatContext.Data.Metadata;
-        var hasStarted = await chatContext.DispatchAsync(() =>
+        var parts = new List<string>();
+        if (message is UserStrategyChatMessage strategyMessage)
         {
-            if (chatContext.IsGeneratingTopic)
-            {
-                return false;
-            }
-
-            chatContext.IsGeneratingTopic = true;
-            return true;
-        });
-        if (!hasStarted)
-        {
-            return;
+            parts.Add(strategyMessage.Strategy.NameKey.ToString() ?? string.Empty);
         }
 
+        parts.Add(message.Content.SafeSubstring(0, 1024));
+        foreach (var attachment in message.Attachments)
+        {
+            var text = attachment switch
+            {
+                TextSelectionAttachment selection => selection.Text,
+                TextAttachment textAttachment => textAttachment.Text,
+                _ => attachment.HeaderKey.ToString() ?? string.Empty
+            };
+            parts.Add(text.SafeSubstring(0, 1024));
+        }
+
+        return string.Join("\n", parts.Where(part => !string.IsNullOrWhiteSpace(part))).SafeSubstring(0, 2048);
+    }
+
+    private async Task GenerateTopicAsync(
+        Assistant assistant,
+        string userMessage,
+        ChatContext chatContext,
+        string? expectedTopic,
+        CancellationToken cancellationToken)
+    {
+        var metadata = chatContext.Data.Metadata;
         KernelMixin? kernelMixin = null;
         Activity? activity = null;
         try
@@ -1541,7 +1567,17 @@ public sealed partial class ChatService : IChatService
                 break;
             }
 
-            await chatContext.DispatchAsync(() => metadata.Topic = titleBuilder.Length > 0 ? titleBuilder.ToString() : null);
+            await chatContext.DispatchAsync(() =>
+            {
+                // A manual rename while the request was in flight takes precedence.
+                if (metadata.Topic == expectedTopic)
+                {
+                    if (titleBuilder.Length > 0)
+                    {
+                        metadata.Topic = titleBuilder.ToString();
+                    }
+                }
+            });
             activity?.SetTag("topic.length", metadata.Topic?.Length ?? 0);
         }
         catch (OperationCanceledException ex) when (IsCallerCancellation(ex, cancellationToken))
@@ -1558,7 +1594,6 @@ public sealed partial class ChatService : IChatService
         {
             activity?.Dispose();
             kernelMixin?.Dispose();
-            await chatContext.DispatchAsync(() => chatContext.IsGeneratingTopic = false);
         }
     }
 
