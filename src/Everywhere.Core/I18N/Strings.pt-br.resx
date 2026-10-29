@@ -4607,4 +4607,10 @@ Se continuar, a outra cópia encerrará o modo de serviço.</value>
     <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
         <value>As conversas são armazenadas neste dispositivo. A sincronização na nuvem não está disponível nesta versão.</value>
     </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Renomear conversa</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Recomendamos manter curto e fácil de ler</value>
+    </data>
 </root>

@@ -539,15 +539,11 @@
                               IsVisible="{Binding IsTemporary}"
                               Opacity="0.6"
                               Text="{I18N {x:Static LocaleKey.ChatContext_Temporary}}"/>
-                            <shadui:EditableTextBlock
-                              x:Name="TopicEditableTextBlock" Grid.Column="1"
-                              VerticalAlignment="Center" Cursor="Arrow"
+                            <TextBlock
+                              Grid.Column="1" VerticalAlignment="Center"
                               FontSize="{DynamicResource FontSizeM}"
-                              IsEditing="{Binding IsRenaming, Mode=TwoWay}"
                               IsVisible="{Binding !IsTemporary}"
-                              PlaceholderText="{I18N {x:Static LocaleKey.ChatContext_Metadata_Topic_Default}}"
-                              PropertyChanged="HandleTopicEditorPropertyChanged"
-                              Text="{Binding Topic, Mode=OneWay}"
+                              Text="{Binding ActualTopic}"
                               TextTrimming="CharacterEllipsis"/>
 
                             <TextBlock
@@ -597,7 +593,8 @@
                                 <Button.Flyout>
                                   <MenuFlyout>
                                     <MenuItem
-                                      Command="{Binding #TopicEditableTextBlock.EnterEditMode}"
+                                      Command="{Binding #Self.ViewModel.RenameChatCommand}"
+                                      CommandParameter="{Binding}"
                                       Header="{I18N {x:Static LocaleKey.ChatWindow_ChatHistory_RenameMenuItem_Header}}"
                                       Icon="{LucideIconContent Pencil}"
                                       IsVisible="{Binding !IsTemporary}"/>
