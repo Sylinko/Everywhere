@@ -69,7 +69,7 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
                     cancellationToken);
 
                 logger.LogDebug("[None] Sending Ctrl+C to cancel residual input");
-                await session.WriteInputAsync("\x03", cancellationToken);
+                await session.WriteInputAsync("\x03"u8, cancellationToken);
 
                 // Brief wait for Ctrl+C echo to settle (quiet 200ms = idle, max wait 500ms)
                 await session.WaitForIdleAsync(

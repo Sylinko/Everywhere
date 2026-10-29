@@ -448,6 +448,14 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
         return _session?.WriteInputAsync(input, cancellationToken) ?? default;
     }
 
+    /// <summary>
+    /// Forwards encoded terminal input without re-encoding it.
+    /// </summary>
+    public Task WriteInputAsync(ReadOnlySpan<byte> input, CancellationToken cancellationToken = default)
+    {
+        return _session?.WriteInputAsync(input, cancellationToken) ?? Task.CompletedTask;
+    }
+
     public ValueTask WritePasteAsync(string text, CancellationToken cancellationToken = default)
     {
         return _session?.WritePasteAsync(text, cancellationToken) ?? default;

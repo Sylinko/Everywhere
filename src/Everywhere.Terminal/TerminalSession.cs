@@ -108,15 +108,29 @@ public sealed class TerminalSession
         await Pty.WriterStream.FlushAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Writes encoded input synchronously, then flushes asynchronously. The input span is not
+    /// retained after this call returns. Cancellation is checked before writing any bytes.
+    /// </summary>
+    public Task WriteInputAsync(ReadOnlySpan<byte> input, CancellationToken cancellationToken = default)
+    {
+        if (input.Length == 0) return Task.CompletedTask;
+
+        cancellationToken.ThrowIfCancellationRequested();
+        Pty.WriterStream.Write(input);
+        return Pty.WriterStream.FlushAsync(cancellationToken);
+    }
+
     public async ValueTask WritePasteAsync(string text, CancellationToken cancellationToken = default)
     {
         if (text.Length == 0) return;
 
+        cancellationToken.ThrowIfCancellationRequested();
         if (Parser.IsBracketedPasteModeEnabled)
         {
-            await WriteInputAsync("\e[200~", cancellationToken);
-            await WriteInputAsync(text.Replace("\r\n", "\n").Replace('\r', '\n'), cancellationToken);
-            await WriteInputAsync("\e[201~", cancellationToken);
+            Pty.WriterStream.Write("\e[200~"u8);
+            Pty.WriterStream.Write(Encoding.UTF8.GetBytes(text.Replace("\r\n", "\n").Replace('\r', '\n')));
+            await WriteInputAsync("\e[201~"u8, cancellationToken);
             return;
         }
 
@@ -209,9 +223,10 @@ public sealed class TerminalSession
         Parser.ShellIntegrationMarkerReceived += HandleMarker;
         try
         {
-            await WriteInputAsync("\e[200~", cancellationToken);
-            await WriteInputAsync(probe, cancellationToken);
-            await WriteInputAsync("\e[201~\r", cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            Pty.WriterStream.Write("\e[200~"u8);
+            Pty.WriterStream.Write(Encoding.UTF8.GetBytes(probe));
+            await WriteInputAsync("\e[201~\r"u8, cancellationToken);
 
             using var timeoutCts = new CancellationTokenSource(BracketedPasteProbeTimeout);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
