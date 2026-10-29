@@ -4680,4 +4680,10 @@
     <data name="ChatHistory_Empty" xml:space="preserve">
         <value>暂无聊天记录</value>
     </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>工具栏使用临时聊天</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>划词工具栏发起的所有聊天使用临时聊天，Everywhere 退出时会自动删除。关闭后使用普通聊天。</value>
+    </data>
 </root>
