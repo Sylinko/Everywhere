@@ -4626,4 +4626,14 @@
     <data name="TerminalUpdate_PasteHint" xml:space="preserve">
         <value>请在终端执行复制的命令以完成更新。</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>更新 Everywhere</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>官网下载</value>
+    </data>
+
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>复制下方命令，在终端中运行即可更新。</value>
+    </data>
 </root>

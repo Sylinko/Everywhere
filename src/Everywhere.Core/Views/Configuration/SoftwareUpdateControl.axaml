@@ -10,11 +10,9 @@
     <Setter Property="Template">
       <ControlTemplate>
         <shadui:CheckUpdate
-          Classes.TerminalUpdate="{Binding IsTerminalUpdate, RelativeSource={RelativeSource TemplatedParent}}"
           CheckingUpdateDescription="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateDescription_Text}}"
           CheckingUpdateTitle="{Binding UpdateOrCheckTitle^, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text}}}"
           Command="{Binding UpdateOrCheckCommand, RelativeSource={RelativeSource TemplatedParent}}"
-          IsCheckingUpdate="{Binding UpdateOrCheckCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"
           IsUpdateAvailable="{Binding SoftwareUpdater.DisplayUpdate, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"
           LastUpdateCheckDate="{Binding PersistentState.LastUpdateCheckTime, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={x:Static vc:DateTimeOffsetConverters.Localize}}"
           LastUpdateCheckTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_LastUpdateCheckTitle_Text}}"
@@ -23,14 +21,17 @@
           UpdateAvailableTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_UpdateAvailableTitle_Text}}"
           UpdateAvailableVersionTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_UpdateAvailableVersionTitle_Text}}"
           UpdateNotAvailableTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_UpdateNotAvailableTitle_Text}}">
-          <shadui:CheckUpdate.Styles>
-            <Style Selector="shadui|CheckUpdate.TerminalUpdate /template/ Border#UpdateAvailableBorder Run.Title">
-              <Setter Property="Text" Value="{I18N {x:Static LocaleKey.TerminalUpdate_CopyCommand}}"/>
-            </Style>
-            <Style Selector="shadui|CheckUpdate.TerminalUpdate /template/ Border#UpdateAvailableBorder LucideIcon">
-              <Setter Property="Kind" Value="Terminal"/>
-            </Style>
-          </shadui:CheckUpdate.Styles>
+          <shadui:CheckUpdate.IsCheckingUpdate>
+            <MultiBinding Converter="{x:Static BoolConverters.And}">
+              <Binding
+                Path="UpdateOrCheckCommand.IsRunning"
+                RelativeSource="{RelativeSource TemplatedParent}"/>
+              <Binding
+                Converter="{x:Static ObjectConverters.IsNull}"
+                Path="SoftwareUpdater.DisplayUpdate"
+                RelativeSource="{RelativeSource TemplatedParent}"/>
+            </MultiBinding>
+          </shadui:CheckUpdate.IsCheckingUpdate>
         </shadui:CheckUpdate>
       </ControlTemplate>
     </Setter>
