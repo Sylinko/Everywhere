@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Native;
 #endif
 using Avalonia.Interactivity;
+using Avalonia.Platform;
 using Avalonia.Rendering.Composition;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
@@ -122,6 +123,18 @@ public partial class TextSelectionToolbarWindow : Window
         SizeChanged += (_, _) => UpdateBounds();
         ScalingChanged += (_, _) => UpdateBounds();
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel);
+#if LINUX
+        Deactivated += (_, _) => Dispatcher.UIThread.Post(() =>
+        {
+            // Native Wayland editing uses ordinary activation. Candidate and
+            // assistant popups stay part of this interaction; leaving the editor
+            // for another application ends the palette appearance.
+            if (_isUsingActivatedInput && IsVisible && !IsActive && _menuBounds is null)
+            {
+                Hide();
+            }
+        }, DispatcherPriority.Input);
+#endif
     }
 
     private bool CanSendFreeformChat(string? text)
@@ -219,15 +232,24 @@ public partial class TextSelectionToolbarWindow : Window
             // Initialize the bound opacity before rendering, without fading from a previous selection.
             OpacityFactor = 1d;
             _isPreparingPresentation = true;
+#if LINUX
+            PresentationRoot.Opacity = 0;
+            // Wayland compositors can constrain off-screen toplevels back to the
+            // output center. Prepare at the real anchor, with transparent content
+            // until both its first frame and its native placement are ready.
+            ToolbarRoot.Measure(Size.Infinity);
+            Reposition(_anchor, PixelSize.FromSize(ToolbarRoot.DesiredSize, DesktopScaling));
+#else
             Position = OffScreenPosition;
+#endif
             if (!IsVisible)
             {
                 Show();
             }
 
-            // Layout updates controls, not the native window's retained surface. Keep the HWND
-            // off-screen until the compositor has rendered Actions instead of the previous editor.
-            // Size/scale callbacks must not reposition it early while this frame is pending.
+            // Layout alone does not replace the retained native surface. Keep the
+            // content transparent until the new actions have rendered; placement
+            // callbacks must not reveal the previous editor during preparation.
             _toolbarBounds = new PixelRect(Position, MeasuredPixelSize());
             StartWatchingInput();
             if (ElementComposition.GetElementVisual(this) is not { } visual)
@@ -251,47 +273,52 @@ public partial class TextSelectionToolbarWindow : Window
         try
         {
             await rendered.ConfigureAwait(false);
-            await Dispatcher.UIThread.InvokeAsync(
-                () =>
-                {
-                    // A selection can be dismissed or replaced while rendering. Reuse the input
-                    // watch's appearance generation so an old frame can never reveal a new session.
-                    if (generation != _generation || !IsVisible)
-                    {
-                        return;
-                    }
-
-                    var transitions = ToolbarRoot.Transitions;
-                    ToolbarRoot.SetCurrentValue(TransitionsProperty, null);
-                    try
-                    {
-                        Reposition(_anchor, MeasuredPixelSize());
-
-                        // Moving to the target monitor can change DesktopScaling and SizeToContent.
-                        // Re-measure there before publishing the rectangle used for outside clicks.
-                        _toolbarBounds = Reposition(_anchor, MeasuredPixelSize());
-                        _isPreparingPresentation = false;
-                        _windowHelper.RaiseWindow(this);
-                        UpdateInputWatch();
-                        UpdateOpacityTracking();
-                    }
-                    finally
-                    {
-                        ToolbarRoot.SetCurrentValue(TransitionsProperty, transitions);
-                    }
-                },
-                DispatcherPriority.Render);
+            await Dispatcher.UIThread.InvokeAsync(() => RevealAsync(generation), DispatcherPriority.Render);
         }
         catch (Exception exception)
         {
-            Log.Warning(exception, "Failed to render the text selection toolbar before revealing it");
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                if (generation == _generation)
+                if (generation != _generation || !IsVisible)
                 {
-                    Hide();
+                    return;
                 }
+                Log.Warning(exception, "Failed to prepare the text selection toolbar before revealing it");
+                Hide();
             });
+        }
+    }
+
+    private async Task RevealAsync(int generation)
+    {
+        if (generation != _generation || !IsVisible)
+        {
+            return;
+        }
+        var transitions = ToolbarRoot.Transitions;
+        ToolbarRoot.SetCurrentValue(TransitionsProperty, null);
+        try
+        {
+            Reposition(_anchor, MeasuredPixelSize());
+            // Moving to the destination output can change scale and measurement.
+            _toolbarBounds = Reposition(_anchor, MeasuredPixelSize());
+            if (PlatformImpl?.TryGetFeature<IWindowPresentation>() is { } presentation)
+            {
+                await presentation.WaitForPlacementAsync(_toolbarBounds);
+            }
+            if (generation != _generation || !IsVisible)
+            {
+                return;
+            }
+            _isPreparingPresentation = false;
+            PresentationRoot.Opacity = 1;
+            _windowHelper.RaiseWindow(this);
+            UpdateInputWatch();
+            UpdateOpacityTracking();
+        }
+        finally
+        {
+            ToolbarRoot.SetCurrentValue(TransitionsProperty, transitions);
         }
     }
 

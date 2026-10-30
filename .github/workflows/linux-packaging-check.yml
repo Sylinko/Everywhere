@@ -1,0 +1,41 @@
+name: Linux packaging checks
+on:
+  push:
+    paths:
+      - '.github/workflows/linux-*.yml'
+      - '.github/workflows/aur-publish.yml'
+      - 'scripts/notify-aur.py'
+      - 'scripts/github_release.py'
+      - 'tests/automation/**'
+      - 'scripts/test-linux-packaging.sh'
+      - 'src/Everywhere.Linux/*.sh'
+      - 'src/Everywhere.Linux/PKGBUILD.in'
+  pull_request:
+    paths:
+      - '.github/workflows/linux-*.yml'
+      - '.github/workflows/aur-publish.yml'
+      - 'scripts/notify-aur.py'
+      - 'scripts/github_release.py'
+      - 'tests/automation/**'
+      - 'scripts/test-linux-packaging.sh'
+      - 'src/Everywhere.Linux/*.sh'
+      - 'src/Everywhere.Linux/PKGBUILD.in'
+permissions:
+  contents: read
+jobs:
+  packages:
+    strategy:
+      matrix:
+        include:
+          - runtime: linux-x64
+            runner: ubuntu-24.04
+          - runtime: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+      - run: sudo apt-get update && sudo apt-get install -y rpm cpio zstd desktop-file-utils
+      - run: bash scripts/test-linux-packaging.sh ${{ matrix.runtime }}
+      - run: python3 -m unittest discover -s tests/automation -v

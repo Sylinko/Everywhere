@@ -1,13 +1,16 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using Avalonia.Platform.Storage;
 
 namespace Everywhere.Interop;
 
-public sealed partial class BetterBclLauncher : ILauncher
+public sealed class BetterBclLauncher : ILauncher
 {
-    public static ILauncher Shared { get; } = new BetterBclLauncher();
+    /// <summary>
+    /// Gets or sets the application launcher. Platforms configure this once
+    /// during startup, before creating windows or interactive flows.
+    /// </summary>
+    public static ILauncher Shared { get; set; } = new BetterBclLauncher();
 
     private BetterBclLauncher() { }
 
@@ -15,7 +18,7 @@ public sealed partial class BetterBclLauncher : ILauncher
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        return Task.FromResult(uri.IsAbsoluteUri && Exec(uri.AbsoluteUri));
+        return uri.IsAbsoluteUri ? ExecAsync(uri.AbsoluteUri) : Task.FromResult(false);
     }
 
     /// <summary>
@@ -26,17 +29,14 @@ public sealed partial class BetterBclLauncher : ILauncher
     {
         ArgumentNullException.ThrowIfNull(storageItem);
 
-        return storageItem.TryGetLocalPath() is { } localPath ? Task.FromResult(Exec(localPath)) : Task.FromResult(false);
+        return storageItem.TryGetLocalPath() is { } localPath ? ExecAsync(localPath) : Task.FromResult(false);
     }
 
-    private static bool Exec(string urlOrFile)
+    private static async Task<bool> ExecAsync(string urlOrFile)
     {
         if (OperatingSystem.IsLinux())
         {
-            // If no associated application/json MimeType is found xdg-open opens return error
-            // but it tries to open it anyway using the console editor (nano, vim, other..)
-            ShellExec($"xdg-open {urlOrFile}");
-            return true;
+            return await LaunchLinuxAsync(urlOrFile).ConfigureAwait(false);
         }
 
         if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())
@@ -76,22 +76,39 @@ public sealed partial class BetterBclLauncher : ILauncher
         return false;
     }
 
-    private static void ShellExec(string cmd)
+    private static async Task<bool> LaunchLinuxAsync(string urlOrFile)
     {
-        var escapedArgs = ShellEscapeRegex().Replace(cmd, "\\").Replace("\"", "\\\\\\\"");
-        using var process = Process.Start(
-            new ProcessStartInfo
+        // GIO reports whether the desktop accepted the launch without waiting for
+        // the target application to exit. Pass the target as one argument because
+        // OAuth query strings and file names may contain shell metacharacters.
+        var start = new ProcessStartInfo("gio")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            ArgumentList = { "open", urlOrFile }
+        };
+        try
+        {
+            using var process = Process.Start(start);
+            if (process is null)
             {
-                FileName = "/bin/sh",
-                Arguments = $"-c \"{escapedArgs}\"",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden
+                return false;
             }
-        );
+            using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(1));
+            try
+            {
+                await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
+                return process.ExitCode == 0;
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill();
+                return false;
+            }
+        }
+        catch (Win32Exception)
+        {
+            return false;
+        }
     }
-
-    [GeneratedRegex("(?=[`~!#&*()|;'<>])")]
-    private static partial Regex ShellEscapeRegex();
 }

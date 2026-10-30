@@ -4,14 +4,28 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build or retry, including v
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   build-linux:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - runtime: linux-x64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             asset_name: Linux-x64
           - runtime: linux-arm64
             runner: ubuntu-24.04-arm
@@ -23,6 +37,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
       with:
+        ref: ${{ inputs.tag || github.ref }}
         fetch-depth: 0
         submodules: true
         lfs: true
@@ -33,7 +48,9 @@ jobs:
         node-version: '24'
 
     - name: Resolve version
-      run: node scripts/resolve-release-tag.mjs "$GITHUB_REF_NAME"
+      env:
+        RELEASE_TAG_INPUT: ${{ inputs.tag || github.ref_name }}
+      run: node scripts/resolve-release-tag.mjs "$RELEASE_TAG_INPUT"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v5.2.0
@@ -45,10 +62,13 @@ jobs:
         dotnet restore Everywhere.Linux.slnx \
           -r ${{ matrix.runtime }}
 
+    - name: Install packaging and NativeAOT dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang zlib1g-dev dpkg-dev rpm zstd desktop-file-utils
+
     - name: Publish
       env:
-        CODE_SIGN_KEY: ${{ secrets.CODE_SIGN_KEY }}
-        PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
         SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         CLIENT_ID: ${{ secrets.CLIENT_ID }}
         AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
@@ -74,30 +94,73 @@ jobs:
         chmod +x ./src/Everywhere.Linux/packaging_deb.sh
         ./src/Everywhere.Linux/packaging_deb.sh ${{ matrix.runtime }} ${{ env.VERSION }} ./publish
 
-    - name: Install AppImage Build Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y squashfs-tools libfuse2
-
     - name: Create Archive
       run: |
-        sudo apt-get update && sudo apt-get install -y zstd
         tar -I 'zstd -19 -T0' -cf Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.tar.zst -C ./publish .
 
-    - name: Build AppImage
+    - name: Build RPM Package
       run: |
-        chmod +x build-appimage.sh
-        ./build-appimage.sh ${{ matrix.runtime }} ${{ matrix.asset_name }} ./publish false ${{ env.VERSION }}
+        bash src/Everywhere.Linux/packaging_rpm.sh ${{ matrix.runtime }} "$VERSION" ./publish
 
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v3
+    - name: Validate package metadata
+      run: |
+        dpkg-deb --info "Everywhere-${{ matrix.asset_name }}-v${VERSION}.deb"
+        rpm -qpi "Everywhere-${{ matrix.asset_name }}-v${VERSION}.rpm"
+        test -s "Everywhere-${{ matrix.asset_name }}-v${VERSION}.tar.zst"
+
+    - name: Collect Linux assets
+      uses: actions/upload-artifact@v4
       with:
-        draft: true
-        make_latest: false
-        prerelease: ${{ env.PRERELEASE }}
-        generate_release_notes: ${{ env.PRERELEASE }}
-        tag_name: ${{ env.RELEASE_TAG }}
-        files: |
+        name: linux-${{ matrix.runtime }}
+        if-no-files-found: error
+        path: |
           Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.deb
-          Releases/Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.AppImage
+          Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.rpm
           Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.tar.zst
+
+  release-linux:
+    needs: build-linux
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Resolve version
+        env:
+          RELEASE_TAG_INPUT: ${{ inputs.tag || github.ref_name }}
+        run: node scripts/resolve-release-tag.mjs "$RELEASE_TAG_INPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: linux-*
+          merge-multiple: true
+          path: release-assets
+      - name: Preserve existing release publication state
+        id: state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/github_release.py
+      - name: Upload complete Linux release
+        uses: softprops/action-gh-release@v3
+        with:
+          draft: ${{ steps.state.outputs.draft }}
+          prerelease: ${{ steps.state.outputs.prerelease }}
+          make_latest: false
+          tag_name: ${{ env.RELEASE_TAG }}
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.deb
+            release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.rpm
+            release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.tar.zst
+
+  notify-aur:
+    needs: release-linux
+    uses: ./.github/workflows/aur-publish.yml
+    with:
+      tag: ${{ inputs.tag || github.ref_name }}
+    secrets:
+      EVERYWHERE_AUR_DISPATCH_TOKEN: ${{ secrets.EVERYWHERE_AUR_DISPATCH_TOKEN }}

@@ -213,6 +213,9 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     [SettingsItemIgnore]
     public MacTextSelectionSettings Mac { get; } = new();
 
+    [SettingsItemIgnore]
+    public LinuxTextSelectionSettings Linux { get; } = new();
+
     [JsonIgnore]
     [SettingsItemIgnore]
     public TextSelectionApplicationSettings Platform
@@ -223,6 +226,8 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
             return Mac;
 #elif WINDOWS
             return Windows;
+#elif LINUX
+            return Linux;
 #else
 #error Implement text-selection application settings for this platform.
 #endif
@@ -278,7 +283,7 @@ public abstract partial class TextSelectionApplicationSettings : ObservableObjec
         return ToolbarExcludedApplications.Any(application =>
             string.Equals(application, identity, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(application, processName, StringComparison.OrdinalIgnoreCase));
-#elif MACOS
+#elif MACOS || LINUX
         return ToolbarExcludedApplications.Contains(identity, StringComparer.Ordinal);
 #else
 #error Implement toolbar application identity matching for this platform.
@@ -295,3 +300,8 @@ public sealed class WindowsTextSelectionSettings : TextSelectionApplicationSetti
 /// macOS rules match exact, case-sensitive application bundle identifiers.
 /// </summary>
 public sealed class MacTextSelectionSettings : TextSelectionApplicationSettings;
+
+/// <summary>
+/// Linux rules match exact, case-sensitive executable paths.
+/// </summary>
+public sealed class LinuxTextSelectionSettings : TextSelectionApplicationSettings;

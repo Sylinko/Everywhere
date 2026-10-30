@@ -4484,6 +4484,9 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
         <value>Enter a valid exact application identity. Paths and wildcards are not supported here.</value>
     </data>
+    <data name="TextSelectionApplications_InvalidExecutablePath" xml:space="preserve">
+        <value>Enter an absolute path to the application's executable, for example /usr/bin/ghostty.</value>
+    </data>
     <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
         <value>This application rule is already in the list.</value>
     </data>
@@ -4492,6 +4495,9 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
         <value>Include the .exe extension. Matches all processes with this name, regardless of installation location; ignores case. Wildcards are not supported.</value>
+    </data>
+    <data name="TextSelectionApplications_ExecutablePathHint" xml:space="preserve">
+        <value>Enter the absolute path to the application's executable, for example /usr/bin/ghostty. Matching is case-sensitive; wildcards are not supported.</value>
     </data>
     <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
         <value>Add by bundle ID…</value>

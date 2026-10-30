@@ -158,16 +158,37 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
 
     private async Task ResolveChatWindowTargetAsync(ChatWindow chatWindow, nint chatWindowHandle)
     {
+#if LINUX
+        // Avalonia exposes an X11 XID while Automation uses an opaque Hyprland
+        // address. Use the owned UI's focus state instead of comparing those IDs.
+        var isChatWindowFocused = await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (!chatWindow.IsVisible || !chatWindow.IsActive)
+            {
+                return false;
+            }
+            WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
+            return true;
+        });
+        if (isChatWindowFocused)
+        {
+            return;
+        }
+#endif
         VisualElementLocator? targetLocator;
         nint? nativeWindowHandle;
         try
         {
-            var query = new VisualElementQueryRequest(VisualElementFields.NativeWindowHandle, 0);
+            var query = new VisualElementQueryRequest(VisualElementFields.NativeWindowHandle | VisualElementFields.ProcessId, 0);
             var snapshot = await _chatVisualService.ObserveElementAsync(VisualElementLocator.Focused, query: query);
             if (snapshot is { } focusedSnapshot)
             {
                 targetLocator = VisualElementLocator.Focused;
                 nativeWindowHandle = focusedSnapshot.NativeWindowHandle;
+                if (focusedSnapshot.ProcessId == Environment.ProcessId)
+                {
+                    targetLocator = null;
+                }
             }
             else
             {
@@ -177,6 +198,10 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
                     query);
                 nativeWindowHandle = pointerSnapshot?.NativeWindowHandle;
                 targetLocator = nativeWindowHandle is > 0 and var handle ? VisualElementLocator.FromNativeWindow(handle) : null;
+                if (pointerSnapshot?.ProcessId == Environment.ProcessId)
+                {
+                    targetLocator = null;
+                }
             }
 
             if (chatWindowHandle == nativeWindowHandle) targetLocator = null;
