@@ -56,12 +56,18 @@ public sealed class TerminalUpdatePresentationTests
             Theme = resources[typeof(SoftwareUpdateControl)] as ControlTheme
         };
         var toastHost = new ToastHost();
+        var dialogHost = new DialogHost();
         var window = new Window
         {
-            Width = 560, Height = 260,
+            Width = 560, Height = 420,
             Content = new Panel
             {
-                Children = { new Border { Padding = new Thickness(24), Child = control }, toastHost }
+                Children =
+                {
+                    new Border { Padding = new Thickness(24), Child = control },
+                    toastHost,
+                    dialogHost
+                }
             }
         };
         try
@@ -79,16 +85,41 @@ public sealed class TerminalUpdatePresentationTests
             Assert.That(check.IsUpdateAvailable, Is.True);
             var available = check.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "UpdateAvailableBorder");
             var title = available.GetVisualDescendants().OfType<TextBlock>().SelectMany(block => block.Inlines ?? []).OfType<Run>().First();
-            Assert.That(title.Text, Is.EqualTo(LocaleKey.TerminalUpdate_CopyCommand.I18N()));
-            Assert.That(available.GetVisualDescendants().OfType<Lucide.Avalonia.LucideIcon>().Single().Kind.ToString(), Is.EqualTo("Terminal"));
-            await control.UpdateOrCheckCommand.ExecuteAsync(null);
+            Assert.That(title.Text, Is.EqualTo(LocaleKey.CommonSettings_SoftwareUpdate_UpdateAvailableTitle_Text.I18N()));
+            Assert.That(available.GetVisualDescendants().OfType<Lucide.Avalonia.LucideIcon>().Single().Kind.ToString(), Is.EqualTo("RefreshCw"));
+            var updateTask = control.UpdateOrCheckCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            var guidance = dialogHost.GetVisualDescendants().OfType<TerminalUpdateGuidance>().Single();
+            Assert.That(check.IsCheckingUpdate, Is.False);
+            Assert.That(guidance.GetVisualDescendants().OfType<TabControl>(), Is.Empty);
+            Assert.That(guidance.GetVisualDescendants().OfType<HyperlinkButton>().Single().NavigateUri,
+                Is.EqualTo(LinkConstants.OfficialWebsiteUri));
+            Assert.That(guidance.GetVisualDescendants().OfType<SelectableTextBlock>().Any(block => block.Text == TerminalUpdateGuidance.UpdateCommand), Is.True);
+            var clipboard = window.Clipboard ?? throw new InvalidOperationException("No clipboard.");
+            Assert.That(await clipboard.TryGetTextAsync(), Is.Not.EqualTo(TerminalUpdateGuidance.UpdateCommand));
+            var primaryButton = dialogHost.GetVisualDescendants().OfType<Button>()
+                .Single(button => button.Name == "PART_PrimaryButton");
+            Assert.That(primaryButton.Content, Is.EqualTo(LocaleKey.TerminalUpdate_CopyCommand.I18N()));
+            primaryButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+            await updateTask;
             Dispatcher.UIThread.RunJobs();
             Assert.That(toastHost.GetVisualDescendants().OfType<Toast>().Any(toast =>
                 Equals(toast.Content, LocaleKey.TerminalUpdate_PasteHint.I18N())), Is.True);
-            Assert.That(await (window.Clipboard ?? throw new InvalidOperationException("No clipboard.")).TryGetTextAsync(), Is.EqualTo("ew update"));
+            Assert.That(await clipboard.TryGetTextAsync(), Is.EqualTo(TerminalUpdateGuidance.UpdateCommand));
             await updater.DidNotReceive().PerformUpdateAsync(Arg.Any<CancellationToken>());
+            await clipboard.SetTextAsync("unchanged-on-cancel");
+            var cancelTask = control.UpdateOrCheckCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            var cancelButton = dialogHost.GetVisualDescendants().OfType<Button>()
+                .Single(button => button.Name == "PART_CancelButton");
+            cancelButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+            await cancelTask;
+            Assert.That(await clipboard.TryGetTextAsync(), Is.EqualTo("unchanged-on-cancel"));
+
             LocaleManager.CurrentLocale = LocaleName.En;
-            Assert.That(title.Text, Is.EqualTo(LocaleKey.TerminalUpdate_CopyCommand.I18N()));
+            Assert.That(title.Text, Is.EqualTo(LocaleKey.CommonSettings_SoftwareUpdate_UpdateAvailableTitle_Text.I18N()));
             LocaleManager.CurrentLocale = LocaleName.ZhHans;
             if (Environment.GetEnvironmentVariable("EVERYWHERE_UPDATE_PREVIEW_DIR") is { } output)
             {
