@@ -2,10 +2,10 @@
 
 ## User flow
 
-The existing Common settings update control retains its layout and check behavior.
-When a Linux update is available, its icon becomes a terminal and its title becomes
-“Copy command”. Clicking copies exactly `ew update` and shows the existing success
-toast with instructions to paste it into a terminal. There is no new card or page.
+The existing Common settings update control retains its original icon, title and
+check behavior. Clicking an available Linux update opens a compact dialog with
+one instruction, the exact `ew update` command, and an official download link.
+Only confirming Copy command changes the clipboard; canceling leaves it intact.
 Windows and macOS keep their existing navigation and installer behavior.
 
 `ew update` reads the same saved `settings.json` as the application. Explicit CLI
