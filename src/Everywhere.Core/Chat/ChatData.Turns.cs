@@ -96,27 +96,6 @@ partial class ChatData
     }
 
     /// <summary>
-    /// Captures pending revisions and topology in the root execution domain. The persistence
-    /// caller serializes payloads in this same command before allowing another mutation.
-    /// </summary>
-    public IReadOnlyList<(DirtyChatNode Change, ChatNodeTopologySnapshot Topology)> CapturePendingWrites()
-    {
-        return PersistenceDirtyState.Capture().AsValueEnumerable().Select(change =>
-        {
-            var node = change.Node;
-            var topology = new ChatNodeTopologySnapshot(
-                node.Id,
-                node.Parent?.Id,
-                node.Turn?.Id,
-                node.ChoiceChildId,
-                node.MessageKind,
-                node.CreatedAt,
-                node.DateModified);
-            return (change, topology);
-        }).ToArray();
-    }
-
-    /// <summary>
     /// Captures an execution path by following parents, never the UI's current choices.
     /// The root is included. Message values must be captured separately by the consumer.
     /// </summary>
@@ -279,14 +258,15 @@ partial class ChatData
 }
 
 /// <summary>
-/// Immutable durable topology values for a node-scoped database write.
+/// Durable graph values shared by local writes, cold loading, and committed updates.
 /// </summary>
-public readonly record struct ChatNodeTopologySnapshot(
+public readonly record struct ChatNodeTopology(
     Guid Id,
     Guid? ParentId,
     Guid? TurnId,
     Guid? ChoiceChildId,
     ChatMessageKind MessageKind,
+    Guid? SummaryThroughNodeId,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt
 );

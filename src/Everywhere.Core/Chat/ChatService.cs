@@ -128,8 +128,7 @@ public sealed partial class ChatService : IChatService
                         var node = chatData.Append(parentNode, message);
                         if (input is not null)
                         {
-                            chatData.Metadata.Topic = string.Join(" ", input.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
-                                .SafeSubstring(0, 80);
+                            chatData.Metadata.Rename(string.Join(" ", input.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)));
                         }
 
                         return (node, input, chatData.Metadata.Topic);
@@ -1574,7 +1573,7 @@ public sealed partial class ChatService : IChatService
                 {
                     if (titleBuilder.Length > 0)
                     {
-                        metadata.Topic = titleBuilder.ToString();
+                        metadata.Rename(titleBuilder.ToString());
                     }
                 }
             });

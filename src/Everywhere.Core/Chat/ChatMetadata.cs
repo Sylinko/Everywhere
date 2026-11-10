@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Messages;
-using Everywhere.Utilities;
 using MessagePack;
 
 namespace Everywhere.Chat;
@@ -15,7 +14,10 @@ public enum ChatContextMetadataStates
     HasNotification = 0x2
 }
 
-/// <summary>Chat data metadata persisted along with the object graph.</summary>
+/// <summary>
+/// Strongly typed runtime metadata. Explicit local edits carry field revisions; installing
+/// committed values only publishes property changes and preserves this object's identity.
+/// </summary>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeOffset dateModified, string? topic) : ObservableObject
 {
@@ -31,12 +33,16 @@ public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeO
     public Guid Id { get; } = id;
 
     [Key(1)]
-    public DateTimeOffset DateCreated { get; } = dateCreated;
+    [ObservableProperty]
+    public partial DateTimeOffset DateCreated { get; internal set; } = dateCreated;
 
+    /// <summary>
+    /// Last durable content activity, used to order history and quota-recovery candidates.
+    /// </summary>
     [Key(2)]
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(LocalDateModified))]
-    public partial DateTimeOffset DateModified { get; set; } = dateModified;
+    public partial DateTimeOffset DateModified { get; internal set; } = dateModified;
 
     [IgnoreMember]
     public DateTime LocalDateModified => DateModified.ToLocalTime().DateTime;
@@ -46,9 +52,12 @@ public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeO
     public string? Topic
     {
         get;
-        set
+        internal set
         {
-            if (SetProperty(ref field, value?.Trim().SafeSubstring(0, 100).Trim())) OnPropertyChanged(nameof(ActualTopic));
+            if (SetProperty(ref field, value))
+            {
+                OnPropertyChanged(nameof(ActualTopic));
+            }
         }
     } = topic;
 
@@ -66,10 +75,21 @@ public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeO
         }
     }
 
+    /// <summary>
+    /// Whether this conversation has had a successfully committed database record. Loaded
+    /// histories retain this fact even when empty; it does not describe pending edits.
+    /// This runtime-only fact never resets when a conversation is deleted.
+    /// </summary>
+    [IgnoreMember]
+    public bool IsPersisted { get; internal set; }
+
+    /// <summary>
+    /// Session-only retention; rows may be saved during this run but are removed before the next startup exposes history.
+    /// </summary>
     [IgnoreMember]
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActualTopic))]
-    public partial bool IsTemporary { get; set; }
+    public partial bool IsTemporary { get; internal set; }
 
     [IgnoreMember]
     [ObservableProperty]
@@ -96,13 +116,87 @@ public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeO
     [ObservableProperty]
     public partial bool IsPinned { get; internal set; }
 
+    /// <summary>
+    /// Signals an explicit local metadata edit, independently of property publication.
+    /// Embedded owners use this to persist serialized child metadata.
+    /// </summary>
+    public event EventHandler<ChatMetadataField?>? DurableChanged;
+
+    [IgnoreMember] private readonly Dictionary<ChatMetadataField, long> _fieldRevisions = new();
+    [IgnoreMember] private long _retentionRevision;
+    [IgnoreMember] private long _revision;
+
+    /// <summary>
+    /// Renames this conversation without changing its activity timestamp.
+    /// Invoke in the root execution domain, or under manager coordination for unloaded history.
+    /// </summary>
+    public void Rename(string? topic)
+    {
+        var previous = Topic;
+        Topic = topic?.Trim().SafeSubstring(0, MaximumTopicLength).Trim();
+        if (Topic != previous)
+        {
+            MarkChanged(ChatMetadataFields.Topic);
+        }
+    }
+
+    /// <summary>
+    /// Changes local retention. Retaining an already stored temporary chat uses the manager's
+    /// commit-before-publication operation instead.
+    /// </summary>
+    public void SetTemporary(bool isTemporary)
+    {
+        if (IsTemporary == isTemporary) return;
+        IsTemporary = isTemporary;
+        _retentionRevision = ++_revision;
+        NotifyDurableChanged(null);
+    }
+
+    internal void Touch()
+    {
+        DateModified = DateTimeOffset.UtcNow;
+        MarkChanged(ChatMetadataFields.UpdatedAt);
+    }
+
+    internal ChatMetadataChange CaptureChanges()
+    {
+        return new ChatMetadataChange(new Dictionary<ChatMetadataField, long>(_fieldRevisions), _retentionRevision);
+    }
+
+    internal void Acknowledge(ChatMetadataChange change)
+    {
+        foreach (var (field, revision) in change.FieldRevisions)
+        {
+            if (_fieldRevisions.GetValueOrDefault(field) == revision)
+            {
+                _fieldRevisions.Remove(field);
+            }
+        }
+
+        if (_retentionRevision == change.RetentionRevision)
+        {
+            _retentionRevision = 0;
+        }
+    }
+
+    private void MarkChanged(ChatMetadataField field)
+    {
+        _fieldRevisions[field] = ++_revision;
+        NotifyDurableChanged(field);
+    }
+
+    private void NotifyDurableChanged(ChatMetadataField? field)
+    {
+        DurableChanged?.Invoke(this, field);
+        WeakReferenceMessenger.Default.Send(new ChatPersistenceChangedMessage(this));
+    }
+
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
 
-        // Data changes publish after dirty tracking, and runtime states publish from their owner.
-        // Keep one notification per change rather than repeating it here.
-        if (e.PropertyName is not (nameof(DateModified) or nameof(States)))
+        // Property publication updates views only. Runtime states publish from their owner.
+        if (e.PropertyName != nameof(States))
         {
             WeakReferenceMessenger.Default.Send(new ChatContextMetadataChangedMessage(this, e.PropertyName));
         }
@@ -111,4 +205,20 @@ public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeO
     public override bool Equals(object? obj) => obj is ChatMetadata other && Id == other.Id;
 
     public override int GetHashCode() => Id.GetHashCode();
+}
+
+/// <summary>
+/// Exact field and local-retention revisions acknowledged only after their captured save commits.
+/// </summary>
+public sealed record ChatMetadataChange(IReadOnlyDictionary<ChatMetadataField, long> FieldRevisions, long RetentionRevision)
+{
+    /// <summary>
+    /// Whether any local metadata edit still needs persistence.
+    /// </summary>
+    public bool HasChanges => FieldRevisions.Count != 0 || RetentionRevision != 0;
+
+    /// <summary>
+    /// Whether a pending field can request synchronization while content is running.
+    /// </summary>
+    public bool HasIndependentFields => FieldRevisions.Keys.Any(metadataField => metadataField.IsIndependent);
 }

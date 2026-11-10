@@ -1,4 +1,5 @@
-﻿using Everywhere.Chat;
+﻿using Everywhere.Cloud;
+using Everywhere.Chat;
 using Everywhere.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,33 +8,43 @@ namespace Everywhere.Storage;
 partial class ChatTurnStorage
 {
     /// <summary>
-    /// Saves only pending node revisions. Relationship-only writes never read or serialize payloads.
+    /// Saves only pending node revisions. Choice-only writes never read or serialize payloads.
     /// The manager acknowledges captured revisions after this transaction commits.
     /// </summary>
     public async Task SaveChatContextAsync(ChatWriteBatch batch, CancellationToken cancellationToken = default)
     {
-        var chatId = batch.Metadata.Id;
-        var topic = batch.Metadata.Topic;
-        var createdAt = batch.Metadata.DateCreated.UtcTicks;
-        var updatedAt = batch.Metadata.DateModified.UtcTicks;
+        var chatId = batch.Metadata.Snapshot.Id;
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
         await db.Database.OpenConnectionAsync(cancellationToken);
         await db.Database.ExecuteSqlRawAsync("PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;", cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        await db.Database.ExecuteSqlInterpolatedAsync(
-            $"""
-            INSERT INTO Chats (Id, Topic, CreatedAt, UpdatedAt, IsTemporary)
-            VALUES ({chatId}, {topic}, {createdAt}, {updatedAt}, {batch.Metadata.IsTemporary})
-            ON CONFLICT (Id) DO UPDATE SET Topic = excluded.Topic, UpdatedAt = excluded.UpdatedAt,
-                IsTemporary = excluded.IsTemporary
-            """,
-            cancellationToken);
+        var localAccountId = batch.Metadata.Snapshot.IsTemporary ? null : batch.LocalAccountId ?? SyncAccountId;
+        var previous = await db.Chats.AsNoTracking().SingleOrDefaultAsync(row => row.Id == chatId, cancellationToken);
+        if (previous is null)
+        {
+            var chat = batch.Metadata.Snapshot;
+            chat.LocalAccountId = localAccountId;
+            db.Chats.Add(chat);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            await UpdateMetadataAsync(db, batch.Metadata, cancellationToken);
+        }
+
+        if (previous is { IsTemporary: true } && !batch.Metadata.Snapshot.IsTemporary)
+        {
+            await db.Chats
+                .Where(chat => chat.Id == chatId)
+                .ExecuteUpdateAsync(update => update.SetProperty(chat => chat.LocalAccountId, localAccountId), cancellationToken);
+        }
 
         foreach (var write in batch.Nodes)
         {
             await WriteNodeAsync(db, chatId, write, cancellationToken);
         }
 
+        await RecordSyncChangesAsync(db, batch, previous, localAccountId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -63,37 +74,26 @@ partial class ChatTurnStorage
     public async Task DeletePermanentlyAsync(Guid chatId, CancellationToken cancellationToken = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await RecordSyncLifecycleAsync(db, chatId, ChatSyncAction.Delete, cancellationToken);
         await db.Chats.Where(row => row.Id == chatId).ExecuteDeleteAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task SetPinnedAsync(Guid chatId, bool isPinned, CancellationToken cancellationToken = default)
-    {
-        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var affected = await db.Chats.Where(row => row.Id == chatId)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.IsPinned, isPinned), cancellationToken);
-        if (affected == 0)
-        {
-            throw new KeyNotFoundException($"Conversation {chatId} does not exist.");
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task DeleteTemporaryChatsAsync(CancellationToken cancellationToken = default)
-    {
-        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        await db.Chats.Where(row => row.IsTemporary).ExecuteDeleteAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private async Task SetArchiveStateAsync(Guid chatId, DateTimeOffset? archivedAt, CancellationToken cancellationToken)
     {
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var affected = await db.Chats.Where(row => row.Id == chatId)
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var affected = await db.Chats
+            .Where(row => row.Id == chatId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.ArchivedAt, archivedAt), cancellationToken);
         if (affected == 0)
         {
             throw new KeyNotFoundException($"Conversation {chatId} does not exist.");
         }
+
+        await RecordSyncLifecycleAsync(db, chatId, archivedAt is null ? ChatSyncAction.Restore : ChatSyncAction.Archive, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private static async Task WriteNodeAsync(ChatV2DbContext db, Guid chatId, ChatNodeWrite write, CancellationToken cancellationToken)
@@ -101,41 +101,36 @@ partial class ChatTurnStorage
         var node = write.Topology;
         if (write.Payload is null)
         {
-            await db.Database.ExecuteSqlInterpolatedAsync(
-                $"""
-                UPDATE Nodes SET ParentId = {node.ParentId}, TurnId = {node.TurnId},
-                    ChoiceChildId = {node.ChoiceChildId}, UpdatedAt = {node.UpdatedAt.UtcTicks}
-                WHERE ChatContextId = {chatId} AND Id = {node.Id}
-                """,
-                cancellationToken);
+            await WriteChoiceAsync(db, chatId, write, cancellationToken);
             return;
         }
 
         await db.Database.ExecuteSqlInterpolatedAsync(
             $"""
-            INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId,
-                MessageKind, SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
-            VALUES ({chatId}, {node.Id}, {node.ParentId}, {node.TurnId}, {node.ChoiceChildId},
-                {(int)node.MessageKind}, {write.SummaryThroughNodeId}, {write.Payload}, {node.CreatedAt.UtcTicks}, {node.UpdatedAt.UtcTicks})
-            ON CONFLICT (ChatContextId, Id) DO UPDATE SET
-                ParentId = excluded.ParentId, TurnId = excluded.TurnId,
-                ChoiceChildId = excluded.ChoiceChildId, MessageKind = excluded.MessageKind,
-                SummaryThroughNodeId = excluded.SummaryThroughNodeId, Payload = excluded.Payload, UpdatedAt = excluded.UpdatedAt
-            """,
+             INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId,
+                 MessageKind, SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
+             VALUES ({chatId}, {node.Id}, {node.ParentId}, {node.TurnId}, NULL,
+                 {(int)node.MessageKind}, {node.SummaryThroughNodeId}, {write.Payload}, {node.CreatedAt.UtcTicks}, {node.UpdatedAt.UtcTicks})
+             ON CONFLICT (ChatContextId, Id) DO UPDATE SET
+                 SummaryThroughNodeId = excluded.SummaryThroughNodeId, Payload = excluded.Payload, UpdatedAt = excluded.UpdatedAt
+             """,
             cancellationToken);
 
+        await WriteChoiceAsync(db, chatId, write, cancellationToken);
+
         await db.Database.ExecuteSqlInterpolatedAsync(
-            $"DELETE FROM NodeBlobs WHERE ChatContextId = {chatId} AND ChatNodeId = {node.Id}", cancellationToken);
+            $"DELETE FROM NodeBlobs WHERE ChatContextId = {chatId} AND ChatNodeId = {node.Id}",
+            cancellationToken);
         foreach (var file in write.Files)
         {
             if (ReadFileSize(file.LocalPath) is { } size)
             {
                 await db.Database.ExecuteSqlInterpolatedAsync(
                     $"""
-                    INSERT INTO Blobs (Sha256, LocalPath, MimeType, Size, CreatedAt, LastAccessAt)
-                    VALUES ({file.Sha256}, {file.LocalPath}, {file.MimeType}, {size}, {node.UpdatedAt.UtcTicks}, {node.UpdatedAt.UtcTicks})
-                    ON CONFLICT (Sha256) DO UPDATE SET LastAccessAt = excluded.LastAccessAt
-                    """,
+                     INSERT INTO Blobs (Sha256, LocalPath, MimeType, Size, CreatedAt, LastAccessAt)
+                     VALUES ({file.Sha256}, {file.LocalPath}, {file.MimeType}, {size}, {node.UpdatedAt.UtcTicks}, {node.UpdatedAt.UtcTicks})
+                     ON CONFLICT (Sha256) DO UPDATE SET LastAccessAt = excluded.LastAccessAt
+                     """,
                     cancellationToken);
             }
 
@@ -143,6 +138,22 @@ partial class ChatTurnStorage
                 $"INSERT INTO NodeBlobs (ChatContextId, ChatNodeId, BlobSha256) VALUES ({chatId}, {node.Id}, {file.Sha256})",
                 cancellationToken);
         }
+    }
+
+    private static async Task WriteChoiceAsync(ChatV2DbContext db, Guid chatId, ChatNodeWrite write, CancellationToken cancellationToken)
+    {
+        if ((write.Kind & ChatNodeChangeKind.Choice) == 0)
+        {
+            return;
+        }
+
+        var node = write.Topology;
+        await db.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+             UPDATE Nodes SET ChoiceChildId = {node.ChoiceChildId}, UpdatedAt = {node.UpdatedAt.UtcTicks}
+             WHERE ChatContextId = {chatId} AND Id = {node.Id}
+             """,
+            cancellationToken);
     }
 
     private static long? ReadFileSize(string path)

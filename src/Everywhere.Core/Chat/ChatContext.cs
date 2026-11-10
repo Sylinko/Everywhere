@@ -148,7 +148,7 @@ public abstract partial class ChatContext(
     public NestedChatContext CreateNested(string topic)
     {
         var data = new ChatData();
-        data.Metadata.Topic = topic;
+        data.Metadata.Rename(topic);
         data.Metadata.IsTemporary = true;
         return CreateNested(data);
     }

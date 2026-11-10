@@ -28,7 +28,9 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         data.SelectChild(data.RootNode, null);
 
         Assert.ThrowsAsync<AggregateException>(() => manager.FlushPendingSavesAsync());
+        Assert.That(data.Metadata.IsPersisted, Is.False);
         await manager.FlushPendingSavesAsync();
+        Assert.That(data.Metadata.IsPersisted, Is.True);
         Assert.That(attempts, Is.EqualTo(2));
         Assert.That(data.HasHistory, Is.True);
         Assert.That(data.Count, Is.EqualTo(1));
@@ -41,8 +43,10 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var attempts = 0;
-        storage.ContextSaver = async _ =>
+        var batches = new List<ChatWriteBatch>();
+        storage.ContextSaver = async batch =>
         {
+            batches.Add(batch);
             if (Interlocked.Increment(ref attempts) == 1)
             {
                 started.SetResult();
@@ -56,12 +60,19 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
 
         var earlier = manager.FlushPendingSavesAsync();
         await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
-        await context.DispatchAsync(() => user.Content = "after");
+        await context.DispatchAsync(() =>
+        {
+            user.Content = "after";
+            data.Metadata.Rename("later title");
+        });
         var final = manager.FlushPendingSavesAsync();
         Assert.That(final.IsCompleted, Is.False);
         release.SetResult();
         await Task.WhenAll(earlier, final);
         Assert.That(attempts, Is.EqualTo(2));
+        Assert.That(batches[1].Metadata.Snapshot.Topic, Is.EqualTo("later title"));
+        Assert.That(batches[1].Metadata.ChangedFields, Does.Contain(ChatMetadataFields.Topic));
+        Assert.That(data.Metadata.CaptureChanges().HasChanges, Is.False);
     }
 
     [AvaloniaTest]
@@ -387,7 +398,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
     private static ChatMetadata Metadata(string topic, int minutesAgo)
     {
         var modified = DateTimeOffset.UtcNow.AddMinutes(-minutesAgo);
-        return new ChatMetadata(Guid.CreateVersion7(), modified, modified, topic);
+        return new ChatMetadata(Guid.CreateVersion7(), modified, modified, topic) { IsPersisted = true };
     }
 
     private static ChatData Data(params ChatMessage[] messages)
@@ -457,11 +468,6 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             return Deleter?.Invoke(chatId) ?? Task.CompletedTask;
         }
 
-        public Task DeleteTemporaryChatsAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
         public Func<Guid, bool, Task>? PinSetter { get; set; }
 
         public Task SetPinnedAsync(Guid chatId, bool isPinned, CancellationToken cancellationToken = default)
@@ -472,8 +478,8 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         public async Task<ChatHistoryPage> ReadHistoryPageAsync(
             int take,
             ChatHistoryCursor? cursor = null,
-            CancellationToken cancellationToken = default,
-            ChatHistoryView view = ChatHistoryView.Recent)
+            ChatHistoryView view = ChatHistoryView.Recent,
+            CancellationToken cancellationToken = default)
         {
             await Task.Yield();
             cancellationToken.ThrowIfCancellationRequested();

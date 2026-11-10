@@ -22,17 +22,7 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
         await db.Database.OpenConnectionAsync(cancellationToken);
         await using var transaction = ((SqliteConnection)db.Database.GetDbConnection()).BeginTransaction(deferred: true);
         await using var readScope = await db.Database.UseTransactionAsync(transaction, cancellationToken);
-        var topology = await db.Nodes.AsNoTracking().Where(row => row.ChatContextId == chatId)
-            .Select(row => new NodeTopology(
-                row.Id,
-                row.ParentId,
-                row.TurnId,
-                row.ChoiceChildId,
-                row.MessageKind,
-                row.SummaryThroughNodeId,
-                row.CreatedAt,
-                row.UpdatedAt))
-            .ToArrayAsync(cancellationToken);
+        var topology = await ReadTopologyAsync(db, chatId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         var nodes = topology.AsValueEnumerable().ToDictionary(
@@ -69,6 +59,7 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
             }
         }
 
+        metadata.IsPersisted = true;
         return data;
     }
 
@@ -79,11 +70,12 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
         await db.Database.OpenConnectionAsync(cancellationToken);
         await using var transaction = ((SqliteConnection)db.Database.GetDbConnection()).BeginTransaction(deferred: true);
         await using var readScope = await db.Database.UseTransactionAsync(transaction, cancellationToken);
-        var rows = await db.Nodes.AsNoTracking()
+        var rows = await db.Nodes
+            .AsNoTracking()
             .Where(row => row.ChatContextId == chatId && row.TurnId == turnId)
             .Select(row => new { row.Id, row.Payload })
             .ToArrayAsync(cancellationToken);
-        var nodeIds = rows.Select(row => row.Id).ToArray();
+        var nodeIds = rows.AsValueEnumerable().Select(row => row.Id).ToArray();
         var blobs = await (
             from reference in db.NodeBlobs
             join blob in db.Blobs on reference.BlobSha256 equals blob.Sha256
@@ -132,7 +124,8 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
         }
 
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var payload = await db.Nodes.AsNoTracking()
+        var payload = await db.Nodes
+            .AsNoTracking()
             .Where(row => row.ChatContextId == chatId && row.Id == nodeId)
             .Select(row => row.Payload)
             .SingleAsync(cancellationToken);
@@ -148,14 +141,20 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
         return reader.ReadString() ?? string.Empty;
     }
 
-    private sealed record NodeTopology(
-        Guid Id,
-        Guid? ParentId,
-        Guid? TurnId,
-        Guid? ChoiceChildId,
-        ChatMessageKind MessageKind,
-        Guid? SummaryThroughNodeId,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset UpdatedAt
-    );
+    private static Task<ChatNodeTopology[]> ReadTopologyAsync(ChatV2DbContext db, Guid chatId, CancellationToken cancellationToken)
+    {
+        return db.Nodes
+            .AsNoTracking()
+            .Where(row => row.ChatContextId == chatId)
+            .Select(row => new ChatNodeTopology(
+                row.Id,
+                row.ParentId,
+                row.TurnId,
+                row.ChoiceChildId,
+                row.MessageKind,
+                row.SummaryThroughNodeId,
+                row.CreatedAt,
+                row.UpdatedAt))
+            .ToArrayAsync(cancellationToken);
+    }
 }
