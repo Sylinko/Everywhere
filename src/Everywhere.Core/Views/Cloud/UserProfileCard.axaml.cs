@@ -8,6 +8,9 @@ namespace Everywhere.Views;
 
 public sealed partial class UserProfileCard : TemplatedControl
 {
+    /// <summary>
+    /// Account state shared by all profile cards.
+    /// </summary>
     public static ICloudClient CloudClient { get; } = ServiceLocator.Resolve<ICloudClient>();
 
     public static readonly StyledProperty<bool> ShowActionsButtonProperty =
@@ -33,6 +36,9 @@ public sealed partial class UserProfileCard : TemplatedControl
     private static Task LogoutAsync(CancellationToken cancellationToken) =>
         CloudClient.LogoutAsync(cancellationToken);
 
+    /// <summary>
+    /// Refreshes on an actual account flyout opening, not when its logged-in template is mounted.
+    /// </summary>
     public static AsyncRelayCommand RefreshUserProfileCommand { get; } = new(RefreshUserProfileAsync);
 
     private static async Task RefreshUserProfileAsync(CancellationToken cancellationToken)
@@ -41,9 +47,9 @@ public sealed partial class UserProfileCard : TemplatedControl
         {
             await CloudClient.ReloadUserDataAsync(cancellationToken);
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // Ignore
+            // Closing the flyout can cancel admission before the account client starts its read.
         }
     }
 

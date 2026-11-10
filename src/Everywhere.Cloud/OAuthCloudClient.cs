@@ -1,13 +1,13 @@
 ﻿using System.Buffers.Text;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Web;
 using Avalonia.Controls.Notifications;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Collections;
@@ -18,6 +18,7 @@ using Everywhere.Extensions;
 using Everywhere.Messages;
 using GnomeStack.Os.Secrets;
 using Microsoft.Extensions.Logging;
+using ShadUI.Extensions;
 
 namespace Everywhere.Cloud;
 
@@ -41,8 +42,18 @@ public sealed partial class OAuthCloudClient :
     [ObservableProperty]
     public partial UserProfile? UserProfile { get; private set; }
 
+    /// <inheritdoc />
+    public string? RestoredAccountId { get; private set; }
+
     [ObservableProperty]
     public partial SubscriptionInformation? Subscription { get; private set; }
+
+    /// <inheritdoc />
+    public bool IsSubscriptionLoading => _subscriptionCancellation is not null;
+
+    /// <inheritdoc />
+    [ObservableProperty]
+    public partial IDynamicLocaleKey? SubscriptionErrorKey { get; private set; }
 
     [ObservableProperty]
     public partial CloudClientLoginStatus LoginStatus { get; private set; }
@@ -86,9 +97,7 @@ public sealed partial class OAuthCloudClient :
             if (await TryGetExistingSessionTokenForLoginAsync(cancellationToken) != null)
             {
                 LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
-                await ReloadUserDataAsync(true, cancellationToken);
-                LoginStatus = CloudClientLoginStatus.LoggedIn;
-                LastLoginErrorKey = null;
+                await CompleteLoginAsync(false, cancellationToken);
                 return;
             }
 
@@ -106,10 +115,7 @@ public sealed partial class OAuthCloudClient :
             LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
             var tokenData = await flow.ExchangeCodeAsync(code);
             _session.SetToken(tokenData);
-            await ReloadUserDataAsync(true, cancellationToken);
-
-            LoginStatus = CloudClientLoginStatus.LoggedIn;
-            LastLoginErrorKey = null;
+            await CompleteLoginAsync(false, cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -164,11 +170,13 @@ public sealed partial class OAuthCloudClient :
 
         try
         {
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                ResetUserData();
+                LastLoginErrorKey = null;
+                LoginStatus = CloudClientLoginStatus.NotLoggedIn;
+            });
             await _session.RevokeAndClearAsync(cancellationToken);
-            UserProfile = null;
-            Subscription = null;
-            UpdateNotifications();
-            LastLoginErrorKey = null;
         }
         finally
         {
@@ -179,78 +187,16 @@ public sealed partial class OAuthCloudClient :
 
     private void HandleSessionInvalidated(IDynamicLocaleKey errorKey)
     {
-        UserProfile = null;
-        Subscription = null;
-        UpdateNotifications();
-        LoginStatus = CloudClientLoginStatus.LoginFailed;
-        LastLoginErrorKey = errorKey;
-    }
-
-    Task ICloudClient.ReloadUserDataAsync(CancellationToken cancellationToken) => ReloadUserDataAsync(false, cancellationToken);
-
-    private async Task ReloadUserDataAsync(bool throwOnError, CancellationToken cancellationToken)
-    {
-        if (!await _userDataLock.WaitAsync(0, cancellationToken)) return; // Prevent concurrent refreshes
-
-        try
+        Dispatcher.UIThread.PostOnDemand(() =>
         {
-            // Ensure we have valid tokens, triggering a refresh if necessary.
-            // According to BetterAuth docs, /userinfo needs to be authenticated with the Access Token (Opaque), not the ID token (JWT).
-            var tokenData = await _session.GetValidTokenDataAsync(throwOnError, cancellationToken);
-            var accessToken = tokenData?.AccessToken;
-
-            if (string.IsNullOrEmpty(accessToken))
+            if (_session.HasRefreshToken || LoginStatus == CloudClientLoginStatus.NotLoggedIn)
             {
-                throw new UserNotLoginException("Cannot refresh user profile without an access token.");
+                return; // A newer login or explicit logout superseded this queued invalidation.
             }
-
-            using var httpClient = _httpClientFactory.CreateClient();
-
-            var request = new HttpRequestMessage(HttpMethod.Get, UserInfoEndpoint);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            var response = await httpClient.SendAsync(request, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            UserProfile = await response.Content.ReadFromJsonAsync<UserProfile>(
-                UserProfileJsonSerializerContext.Default.Options,
-                cancellationToken: cancellationToken);
-
-            // The subscription info is not included in the user profile response, so we need a separate call.
-            await RefreshSubscriptionAsync(cancellationToken);
-
-            // Add a 3 second debounce
-            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
-        }
-        catch (OperationCanceledException) when (!throwOnError)
-        {
-            // ignore
-        }
-        catch (Exception ex) when (!throwOnError)
-        {
-            ex = HandledSystemException.Handle(ex);
-            _logger.LogError(ex, "Failed to refresh user profile.");
-        }
-        finally
-        {
-            _userDataLock.Release();
-        }
-    }
-
-    private async Task RefreshSubscriptionAsync(CancellationToken cancellationToken)
-    {
-        using var httpClient = _httpClientFactory.CreateClient(nameof(ICloudClient));
-
-        var request = new HttpRequestMessage(HttpMethod.Get, SubscriptionEndpoint);
-        var response = await httpClient.SendAsync(request, cancellationToken);
-
-        var payload = await ApiPayload<SubscriptionInformation>.EnsureSuccessFromHttpResponseJsonAsync(
-            response,
-            SubscriptionInformationJsonSerializerContext.Default.ApiPayloadSubscriptionInformation.Options,
-            cancellationToken);
-
-        Subscription = payload.EnsureData();
-        UpdateNotifications();
+            ResetUserData();
+            LoginStatus = CloudClientLoginStatus.LoginFailed;
+            LastLoginErrorKey = errorKey;
+        });
     }
 
     private void UpdateNotifications()
@@ -380,9 +326,7 @@ public sealed partial class OAuthCloudClient :
 
                 if (tokenData is not null)
                 {
-                    await ReloadUserDataAsync(true, CancellationToken.None);
-                    LoginStatus = CloudClientLoginStatus.LoggedIn;
-                    LastLoginErrorKey = null;
+                    await CompleteLoginAsync(true, CancellationToken.None);
                     return;
                 }
             }
@@ -1009,71 +953,44 @@ public sealed partial class OAuthCloudClient :
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", idToken);
             request.Headers.Add("ew-device-id", RuntimeConstants.DeviceId);
 
-            // Ensure content is buffered for potential retry
-            if (request.Content != null)
-            {
-                await request.Content.LoadIntoBufferAsync(cancellationToken);
-            }
-
-            var retryRequest = await CloneRequestAsync(request, cancellationToken);
+            // Callers provide replayable content. Do not read or clone it here: SDK bodies
+            // serialize again, and chat-sync uploads independently reread frozen SQLite parts.
             var response = await base.SendAsync(request, cancellationToken);
 
             // If the response is not 401, return it as is
             if (response.StatusCode != HttpStatusCode.Unauthorized)
             {
-                retryRequest.Dispose();
                 return response;
             }
 
             logger.LogDebug("Received 401 Unauthorized, attempting to force refresh token...");
 
-            // 2. If we get a 401, the server might have invalidated the token early. Force a refresh.
-            var refreshed = await session.TryRefreshAsync(false, cancellationToken);
-            if (!refreshed)
+            string? newIdToken;
+            try
             {
-                retryRequest.Dispose();
-                return response;
+                // The token may have been invalidated early. Refresh once, then use the latest JWT.
+                if (!await session.TryRefreshAsync(false, cancellationToken))
+                {
+                    return response;
+                }
+                newIdToken = session.CurrentIdToken;
+                if (string.IsNullOrEmpty(newIdToken))
+                {
+                    return response;
+                }
             }
-
-            // 3. Extract the new IdToken after successful refresh
-            var newIdToken = session.CurrentIdToken;
-            if (string.IsNullOrEmpty(newIdToken))
+            catch
             {
-                retryRequest.Dispose();
-                return response;
+                // Cancellation during refresh must also release the response the caller never received.
+                response.Dispose();
+                throw;
             }
 
             // Dispose the original response before retrying
             response.Dispose();
-            retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", newIdToken);
-            return await base.SendAsync(retryRequest, cancellationToken);
-        }
-
-        private static async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            var clone = new HttpRequestMessage(request.Method, request.RequestUri)
-            {
-                Version = request.Version,
-                VersionPolicy = request.VersionPolicy
-            };
-
-            foreach (var header in request.Headers)
-            {
-                clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
-
-            if (request.Content is not null)
-            {
-                var content = new ByteArrayContent(await request.Content.ReadAsByteArrayAsync(cancellationToken));
-                foreach (var header in request.Content.Headers)
-                {
-                    content.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
-
-                clone.Content = content;
-            }
-
-            return clone;
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", newIdToken);
+            // Retry below HttpClient's send-once boundary, preserving all request options and content ownership.
+            return await base.SendAsync(request, cancellationToken);
         }
     }
 }
