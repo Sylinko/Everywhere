@@ -3,7 +3,9 @@ using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Common;
+using Everywhere.Messages;
 using ShadUI;
 
 namespace Everywhere.Views;
@@ -160,6 +162,13 @@ public sealed class SoftwareUpdateButton : Button
         }
 
         if (updater.CurrentOperation is { IsActive: true }) return;
+
+        if (updater.TerminalUpdateHandler is not null)
+        {
+            WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
+            WeakReferenceMessenger.Default.Send<ApplicationMessage>(new ShowTerminalUpdateGuidanceMessage());
+            return;
+        }
 
         InstallAsync(updater).Detach();
     }

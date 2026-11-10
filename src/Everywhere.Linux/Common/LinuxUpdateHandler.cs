@@ -103,15 +103,19 @@ public sealed class LinuxUpdateHandler(IHttpClientFactory httpClientFactory) : I
     }
 
     /// <inheritdoc />
-    public UpdateAssetMetadata? SelectAsset(IEnumerable<UpdateAssetMetadata> assets, string versionString) =>
-        assets.FirstOrDefault(asset => asset.Name == $"Everywhere-{OsIdentifier}-v{versionString}.tar.zst");
+    public UpdateAssetMetadata? SelectAsset(IEnumerable<UpdateAssetMetadata> assets, string versionString)
+    {
+        return assets.FirstOrDefault(asset => asset.Name == $"Everywhere-{OsIdentifier}-v{versionString}.tar.zst");
+    }
 
     /// <inheritdoc />
     public string GetDownloadType() => "tar.zst";
 
     /// <inheritdoc />
-    public Task ExecuteUpdateAsync(string assetPath, CancellationToken cancellationToken) =>
+    public Task ExecuteUpdateAsync(string assetPath, CancellationToken cancellationToken)
+    {
         throw new InvalidOperationException("Run ew update from a terminal; graphical installation is disabled on Linux.");
+    }
 
     /// <inheritdoc />
     public bool TryParseUpdatePackageVersion(string fileName, out SemanticVersion? version)

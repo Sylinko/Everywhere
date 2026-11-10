@@ -41,15 +41,18 @@ public sealed class SoftwareUpdater(
     /// <summary>
     /// Resolves the configured channel using the running application's channel as the default.
     /// </summary>
-    public static UpdateChannel ResolveUpdateChannel(UpdateChannel configuredChannel) => configuredChannel switch
+    public static UpdateChannel ResolveUpdateChannel(UpdateChannel configuredChannel)
     {
-        UpdateChannel.Unknown => RuntimeConstants.Version.Channel switch
+        return configuredChannel switch
         {
-            UpdateChannel.Unknown => UpdateChannel.Stable,
-            _ => RuntimeConstants.Version.Channel
-        },
-        _ => configuredChannel
-    };
+            UpdateChannel.Unknown => RuntimeConstants.Version.Channel switch
+            {
+                UpdateChannel.Unknown => UpdateChannel.Stable,
+                _ => RuntimeConstants.Version.Channel
+            },
+            _ => configuredChannel
+        };
+    }
 
     public DateTimeOffset? LastCheckTime
     {

@@ -26,8 +26,7 @@ public static class LinuxUpdateCommand
         {
             var startInfo = new ProcessStartInfo("python3") { UseShellExecute = false };
             startInfo.ArgumentList.Add(script);
-            startInfo.ArgumentList.Add("--repo");
-            startInfo.ArgumentList.Add(LinuxUpdateHandler.ReleaseRepository);
+            startInfo.ArgumentList.Add("update");
             startInfo.Environment.Remove("EVERYWHERE_UPDATE_PROXY");
             startInfo.Environment.Remove("EVERYWHERE_UPDATE_CHANNEL");
             if (!arguments.Contains("--help") && !arguments.Contains("-h"))
@@ -47,10 +46,6 @@ public static class LinuxUpdateCommand
             }
             transport.Add("--linux-update-download");
             startInfo.Environment["EVERYWHERE_UPDATE_TRANSPORT"] = JsonSerializer.Serialize(transport);
-            if (!arguments.Contains("--dry-run"))
-            {
-                startInfo.ArgumentList.Add("--apply");
-            }
             foreach (var argument in arguments)
             {
                 startInfo.ArgumentList.Add(argument);

@@ -1,6 +1,5 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -44,7 +43,7 @@ public partial class SoftwareUpdateControl(
         {
             if (IsTerminalUpdate)
             {
-                await ShowTerminalUpdateGuidanceAsync(cancellationToken);
+                await TerminalUpdateGuidance.ShowAsync(TopLevel.GetTopLevel(this), cancellationToken);
                 return;
             }
             serviceProvider.GetRequiredService<MainViewModel>().NavigateTo(serviceProvider.GetRequiredService<ChangeLogView>());
@@ -59,33 +58,6 @@ public partial class SoftwareUpdateControl(
         catch (Exception ex)
         {
             ex = new HandledException(ex, new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_CheckForUpdatesFailed_Content));
-            ToastManager.Error(LocaleKey.Common_Error.I18N(), ex.GetFriendlyMessage());
-        }
-    }
-
-    private async Task ShowTerminalUpdateGuidanceAsync(CancellationToken cancellationToken)
-    {
-        var result = await DialogManager
-            .CreateDialog(
-                new TerminalUpdateGuidance(),
-                LocaleKey.TerminalUpdate_DialogTitle.I18N(),
-                TopLevel.GetTopLevel(this))
-            .WithPrimaryButton(LocaleKey.TerminalUpdate_CopyCommand.I18N())
-            .WithCancelButton(LocaleKey.Common_Cancel.I18N())
-            .ShowAsync(cancellationToken);
-        if (result != DialogResult.Primary)
-        {
-            return;
-        }
-
-        try
-        {
-            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard ?? throw new InvalidOperationException("Clipboard is unavailable.");
-            await clipboard.SetTextAsync(TerminalUpdateGuidance.UpdateCommand);
-            ToastManager.Success(LocaleKey.Common_Copied.I18N(), LocaleKey.TerminalUpdate_PasteHint.I18N());
-        }
-        catch (Exception ex)
-        {
             ToastManager.Error(LocaleKey.Common_Error.I18N(), ex.GetFriendlyMessage());
         }
     }

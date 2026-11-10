@@ -3,10 +3,28 @@
 ## User flow
 
 The existing Common settings update control retains its original icon, title and
-check behavior. Clicking an available Linux update opens a compact dialog with
-one instruction, the exact `ew update` command, and an official download link.
-Only confirming Copy command changes the clipboard; canceling leaves it intact.
-Windows and macOS keep their existing navigation and installer behavior.
+check behavior. Clicking an available Linux update opens a chat-style dialog with
+the same 44-pixel title bar, 36-pixel Evy avatar and Markdown presentation used by the
+chat window. The body has no bubbles. Its localized description and command are appended
+to a stable ObservableStringBuilder in up to eight Unicode-safe chunks at 70 ms
+intervals. The first chunk appears immediately; nominal completion is about 490 ms.
+This preserves real incremental rendering while making the reveal extremely fast.
+Copying is disabled until the final chunk, and Cancel immediately stops the timer.
+
+The download sentence is rendered separately using localized text and a hyperlink
+control. Only "official website" is linked in English and "官网下载" in Simplified
+Chinese. The URL is never included in the streamed Markdown source, so partial link
+syntax cannot appear while opening. The complete blue link appears after streaming
+finishes. The code block keeps its chat copy action and
+success feedback, with the text-wrap toggle hidden in this dialog only. A bottom-right
+Cancel button replaces the header X; Escape also cancels. Opening, rendering or
+canceling does not modify the clipboard. Detachment stops the timer, releases
+localization subscriptions and restores the host's temporary appearance class.
+
+The chat toolbar first cloaks the chat window using its normal close-message path,
+then activates the main window and opens this dialog. This preserves pin settings
+and prevents a pinned chat window from covering the guidance. The graphical Linux
+installer is never invoked. Windows and macOS keep their existing update behavior.
 
 `ew update` reads the same saved `settings.json` as the application. Explicit CLI
 options override saved values for that invocation; they never rewrite preferences.
@@ -28,8 +46,10 @@ automatically download, or graphically install packages for this capability.
 The existing changelog history uses the same source; its graphical installer action
 is disabled on Linux, without changing its view layout.
 
-The temporary release authority is explicitly `pasical/Everywhere`, shared by discovery
-and the CLI launcher. A future official rollout must switch this authority deliberately.
+The temporary application release authority is `pasical/Everywhere`. The installer
+selects published payloads from this fork, independently of package repositories.
+The launcher no longer injects the application discovery repository into script arguments. A future official rollout must switch this authority
+deliberately.
 There is no silent official/fork fallback. An incomplete newest Linux release does not
 silently select an older version. Native package validation remains in the script.
 
@@ -44,22 +64,30 @@ internal bounded HTTPS download mode so proxy semantics are not reimplemented in
 Proxy credentials stay out of command arguments and download diagnostics. The helper
 checks every redirect for HTTPS, caps response size, and has a bounded timeout.
 
-## Optional overrides
+## Independent installer
 
-Ordinary use requires only `ew update`. Advanced options include:
+The canonical source is maintained in the sibling `everywhere-linux-installer`
+directory. Its exporter copies a bundled snapshot and tests into this checkout.
+The launcher passes the `update` action; the same engine also supports clean
+installation with an English arrow-key channel menu. Both menu and native package
+confirmation use the controlling terminal when launched through `curl | sh`.
 
-- `ew update --dry-run`: preview without downloading or installing packages.
-- `ew update --channel stable`: override the saved channel for this invocation.
-- `ew update --version 0.9.0-canary.20261012.26 --channel canary`: require an exact
-  published target; downgrade prevention still applies.
-- `ew update --proxy system`, `--proxy none`, or `--proxy http://host:port`: override
-  saved network policy. An endpoint override replaces saved authentication/bypass rules.
+The engine checks a separately versioned installer manifest before system routing.
+Verified new code runs from a private user cache, without changing package-owned
+files. The reserved fork installer manifest has not been published; its network
+failure falls back visibly to the bundled engine. The application download source
+is already the live fork. Website deployment can instead supply a schema-1 catalog.
 
-Arch/AUR follows its selected recipe. The script checks the offered package against the
-requested channel and refuses a mismatch rather than ignoring settings. A normal
-interactive invocation asks permission for the required full system upgrade; no extra
-argument is needed. `--allow-system-upgrade` is an explicit consent override for that
-step, while package/build review prompts remain interactive.
+- `ew update --dry-run`: preview without downloading application packages.
+- `ew update --channel stable`: override the channel for this invocation.
+- `ew update --catalog https://HOST/releases.json`: use an explicit website catalog.
+- `ew update --no-installer-update`: use the bundled script directly.
+- `ew update --proxy none`: override saved network behavior for this invocation.
+
+Arch downloads the selected fork archive and makes a local native package. It uses
+`pacman -U`, never an AUR helper or a full system upgrade. Unsupported systems and
+missing assets fail explicitly. The independent installer's README documents the
+release protocol, initial backend scope and offline staging inputs.
 
 ## Packaging and limits
 
@@ -72,17 +100,18 @@ The script validates installed ownership, architecture, release URL, SHA256, siz
 package metadata and the installed version after the transaction. It does not bypass
 signature checks, force dependency removal, or silently downgrade. Missing assets or
 unsupported sources fail explicitly. NixOS, immutable systems, Alpine/musl and portable
-installs require their own installation workflow. openSUSE RPM dependency compatibility
-still requires distribution validation.
+installs require their own installation workflow. openSUSE is not yet an enabled
+installer backend; its package dependencies and runtime need separate validation.
 
 ## Validation
 
 `tests/linux-update` exercises package commands using fake executables in an isolated
 PATH/HOME. Core tests cover discovery-only policy, the real settings control, localization,
-clipboard contents and the paste instruction toast. Linux tests cover release selection,
+inline clipboard copying, close behavior and the chat-to-main-window update
+request. Linux tests cover release selection,
 settings precedence, read-only settings loading and the existing proxy behavior.
 
 Set `EVERYWHERE_UPDATE_PREVIEW_DIR` while running `TerminalUpdatePresentationTests` to
-render the real settings button in light/dark themes with Avalonia/Skia. Version
-99.0.0-canary.1 is fixture data. These are macOS-hosted Avalonia renders; they do not
-represent Linux package installation acceptance.
+render the real dialog in light/dark themes and Chinese/English with Avalonia/Skia.
+Version 99.0.0-canary.1 is fixture data. Headless renders and message-routing tests do
+not represent physical-desktop activation or Linux package installation acceptance.

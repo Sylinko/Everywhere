@@ -4628,19 +4628,17 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copy link text</value>
     </data>
-    <data name="TerminalUpdate_CopyCommand" xml:space="preserve">
-        <value>Copy command</value>
-    </data>
-    <data name="TerminalUpdate_PasteHint" xml:space="preserve">
-        <value>Paste into your terminal to update.</value>
-    </data>
     <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
         <value>Update Everywhere</value>
     </data>
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
-        <value>Open the official website</value>
+        <value>official website</value>
     </data>
     <data name="TerminalUpdate_Introduction" xml:space="preserve">
-        <value>Copy this command and run it in your terminal to update.</value>
+        <value>In-app updates are not supported on this system.
+Copy the command below and run it in your terminal to update.</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>Or, download from the </value>
     </data>
 </root>
