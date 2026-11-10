@@ -975,6 +975,9 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>La conexión con el servicio se interrumpió o no pudo establecerse.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>La conexión con el servicio se interrumpió o no pudo establecerse.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>El servicio no está disponible en este momento. Por favor, inténtalo más tarde.</value>
     </data>
@@ -4278,6 +4281,9 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
         <value>Copiar detalles</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>El servidor proxy rechazó establecer la conexión. Revisa la configuración del proxy y los datos de autenticación.</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>El servidor proxy rechazó establecer la conexión. Revisa la configuración del proxy y los datos de autenticación.</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">

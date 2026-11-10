@@ -975,6 +975,9 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>Hizmet bağlantısı kesildi veya kurulamadı.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>Hizmet bağlantısı kesildi veya kurulamadı.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Hizmet şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.</value>
     </data>
@@ -4278,6 +4281,9 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
         <value>Ayrıntıları kopyala</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>Proxy sunucusu bağlantı kurmayı reddetti. Proxy ayarlarını ve kimlik doğrulama bilgilerini kontrol edin.</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>Proxy sunucusu bağlantı kurmayı reddetti. Proxy ayarlarını ve kimlik doğrulama bilgilerini kontrol edin.</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">

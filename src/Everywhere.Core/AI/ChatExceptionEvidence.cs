@@ -1,4 +1,5 @@
-using System.Net;
+﻿using System.Net;
+using Everywhere.Common;
 
 namespace Everywhere.AI;
 
@@ -66,14 +67,19 @@ public sealed class ChatExceptionEvidence(Exception originalException)
     public TimeSpan? RetryAfter { get; set; }
 
     /// <summary>
-    /// Gets or sets the concrete transport cause rather than its SDK wrapper.
+    /// Gets or sets common transport facts. StatusCode remains separately enrichable by SDK and gateway adapters.
     /// </summary>
-    public Exception? TransportException { get; set; }
+    public NetworkExceptionEvidence Network { get; set; }
 
     /// <summary>
-    /// Gets or sets the actual socket error code when available.
+    /// Gets the concrete transport cause rather than its SDK wrapper.
     /// </summary>
-    public System.Net.Sockets.SocketError? SocketError { get; set; }
+    public Exception? TransportException => Network.TransportException;
+
+    /// <summary>
+    /// Gets the actual socket error code when available.
+    /// </summary>
+    public System.Net.Sockets.SocketError? SocketError => Network.SocketError;
 
     /// <summary>
     /// Gets or sets whether caller cancellation is established by request-context evidence.

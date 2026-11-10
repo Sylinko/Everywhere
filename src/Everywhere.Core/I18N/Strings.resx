@@ -975,6 +975,9 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>The connection to the service was interrupted or could not be established.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>The connection to the service was interrupted or could not be established.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Service is currently unavailable. Please try again later.</value>
     </data>
@@ -4278,6 +4281,9 @@ Delete &quot;{1}&quot; permanently?</value>
         <value>Copy details</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>The proxy server refused to establish a connection. Check the proxy settings and authentication details.</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>The proxy server refused to establish a connection. Check the proxy settings and authentication details.</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">

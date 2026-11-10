@@ -1,10 +1,10 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Net.Sockets;
 using System.Security;
-using System.Security.Authentication;
 using System.Text.Json;
 using Everywhere.Cloud;
 using MessagePack;
+using Microsoft.SemanticKernel;
 
 namespace Everywhere.Common;
 
@@ -68,50 +68,26 @@ public class HandledException : Exception
 
     protected HandledException(Exception originalException) : base(originalException.Message, originalException)
     {
-        FriendlyMessageKey = new DirectLocaleKey(originalException.Message.Trim());
+        FriendlyMessageKey = CreateDefaultFriendlyMessage(originalException);
     }
 
-    protected readonly struct NetworkExceptionAnalysis
+    /// <summary>
+    /// Creates fallback text for an unclassified exception, combining any type-specific
+    /// localized description with the original message details.
+    /// </summary>
+    public static IDynamicLocaleKey CreateDefaultFriendlyMessage(Exception exception)
     {
-        public bool IsSslError { get; init; }
-        public SocketError? SocketError { get; init; }
-        public bool IsTimeout { get; init; }
-    }
-
-    protected static NetworkExceptionAnalysis AnalyzeNetworkException(Exception exception)
-    {
-        // 1. Check for SSL (AuthenticationException) in chain
-        var current = exception;
-        while (current is not null)
+        var exceptionName = exception.GetType().Name;
+        if (exceptionName.EndsWith("Exception"))
         {
-            if (current is AuthenticationException)
-            {
-                return new NetworkExceptionAnalysis { IsSslError = true };
-            }
-            current = current.InnerException;
+            exceptionName = exceptionName[..^"Exception".Length];
         }
 
-        // 2. Check for SocketException (Deep search)
-        current = exception;
-        while (current is not null)
-        {
-            if (current is SocketException socketEx)
-            {
-                return new NetworkExceptionAnalysis { SocketError = socketEx.SocketErrorCode };
-            }
-            current = current.InnerException;
-        }
-
-        // 3. Check for Timeout
-        if (exception is TimeoutException ||
-            exception.InnerException is TimeoutException ||
-            (exception is TaskCanceledException && exception.InnerException is TimeoutException) ||
-            (exception is OperationCanceledException && exception.InnerException is TimeoutException))
-        {
-            return new NetworkExceptionAnalysis { IsTimeout = true };
-        }
-
-        return new NetworkExceptionAnalysis();
+        var details = new DirectLocaleKey(exception.Message.Trim());
+        var messageKey = $"FriendlyExceptionMessage_{exceptionName}";
+        return DynamicLocaleKey.Exists(messageKey) ?
+            new AggregateDynamicLocaleKey([new DynamicLocaleKey(messageKey), details], "\n") :
+            details;
     }
 }
 
@@ -259,7 +235,17 @@ public enum HandledSystemExceptionType
     /// <summary>
     /// An error occurred while invoking a function or method.
     /// </summary>
-    FunctionInvoking
+    FunctionInvoking,
+
+    /// <summary>
+    /// A transport failure without a more specific socket, TLS, or timeout cause.
+    /// </summary>
+    Network,
+
+    /// <summary>
+    /// The configured proxy refused to establish a tunnel to the destination service.
+    /// </summary>
+    ProxyTunnelRejected
 }
 
 /// <summary>
@@ -318,6 +304,8 @@ public class HandledSystemException : HandledException
                 HandledSystemExceptionType.ConnectionRefused => LocaleKey.HandledSystemException_ConnectionRefused,
                 HandledSystemExceptionType.HostNotFound => LocaleKey.HandledSystemException_HostNotFound,
                 HandledSystemExceptionType.FunctionInvoking => LocaleKey.HandledSystemException_FunctionInvoking,
+                HandledSystemExceptionType.Network => LocaleKey.Common_NetworkError,
+                HandledSystemExceptionType.ProxyTunnelRejected => LocaleKey.Common_ProxyTunnelRejected,
                 _ => LocaleKey.HandledSystemException_Unknown,
             }),
         isExpected)
@@ -326,7 +314,8 @@ public class HandledSystemException : HandledException
     }
 
     /// <summary>
-    /// Parses a generic Exception into a <see cref="HandledSystemException"/> or <see cref="AggregateException"/>.
+    /// Normalizes common system and HTTP failures while preserving already-handled exception identity.
+    /// HTTP responses retain their status in HandledHttpException; transport failures retain their concrete cause.
     /// </summary>
     public static Exception Handle(Exception exception, bool? isExpectedOverride = null)
     {
@@ -339,11 +328,24 @@ public class HandledSystemException : HandledException
         }
 
         var context = new ExceptionParsingContext(exception);
-        new ParserChain<GeneralExceptionParser,
-            ParserChain<SocketExceptionParser,
-                ParserChain<HttpRequestExceptionParser,
-                    ParserChain<ComExceptionParser,
-                        Win32ExceptionParser>>>>().TryParse(ref context);
+        if (!TryParseGeneralException(ref context))
+        {
+            if (HandleNetworkException(exception, isExpectedOverride) is { } networkError)
+            {
+                return networkError;
+            }
+            switch (exception)
+            {
+                case COMException com:
+                    context.ExceptionType = HandledSystemExceptionType.COMException;
+                    context.ErrorCode = com.ErrorCode;
+                    break;
+                case Win32Exception win32:
+                    context.ExceptionType = HandledSystemExceptionType.Win32Exception;
+                    context.ErrorCode = win32.NativeErrorCode;
+                    break;
+            }
+        }
 
         return new HandledSystemException(
             originalException: exception,
@@ -361,210 +363,121 @@ public class HandledSystemException : HandledException
         public int? ErrorCode { get; set; }
     }
 
-    private readonly struct ParserChain<T1, T2> : IExceptionParser
-        where T1 : struct, IExceptionParser
-        where T2 : struct, IExceptionParser
-    {
-        public bool TryParse(ref ExceptionParsingContext context)
-        {
-            return default(T1).TryParse(ref context) || default(T2).TryParse(ref context);
-        }
-    }
-
-    private interface IExceptionParser
-    {
-        bool TryParse(ref ExceptionParsingContext context);
-    }
-
     /// <summary>
     /// Parses common system exceptions and IO-related subclasses.
     /// </summary>
-    private readonly struct GeneralExceptionParser : IExceptionParser
+    private static bool TryParseGeneralException(ref ExceptionParsingContext context)
     {
-        public bool TryParse(ref ExceptionParsingContext context)
+        switch (context.Exception)
         {
-            switch (context.Exception)
-            {
-                case FileNotFoundException:
-                    context.ExceptionType = HandledSystemExceptionType.FileNotFound;
-                    break;
-                case DirectoryNotFoundException:
-                    context.ExceptionType = HandledSystemExceptionType.DirectoryNotFound;
-                    break;
-                case DriveNotFoundException:
-                    context.ExceptionType = HandledSystemExceptionType.DriveNotFound;
-                    break;
-                case PathTooLongException:
-                    context.ExceptionType = HandledSystemExceptionType.PathTooLong;
-                    break;
-                case EndOfStreamException:
-                    context.ExceptionType = HandledSystemExceptionType.EndOfStream;
-                    break;
-                case IOException io:
-                    context.ExceptionType = HandledSystemExceptionType.IOException;
-                    context.ErrorCode ??= io.HResult;
-                    break;
-                case UnauthorizedAccessException:
-                    context.ExceptionType = HandledSystemExceptionType.UnauthorizedAccess;
-                    break;
-                case UserNotLoginException:
-                    context.ExceptionType = HandledSystemExceptionType.UserNotLogin;
-                    break;
-                case OperationCanceledException:
-                    context.ExceptionType = context.Exception.InnerException is TimeoutException ?
-                        HandledSystemExceptionType.Timeout :
-                        HandledSystemExceptionType.OperationCanceled;
-                    break;
-                case TimeoutException:
-                    context.ExceptionType = HandledSystemExceptionType.Timeout;
-                    break;
-                case NotSupportedException:
-                    context.ExceptionType = HandledSystemExceptionType.NotSupported;
-                    break;
-                case SecurityException:
-                    context.ExceptionType = HandledSystemExceptionType.Security;
-                    break;
-                case OutOfMemoryException:
-                    context.ExceptionType = HandledSystemExceptionType.OutOfMemory;
-                    break;
-                case InvalidDataException:
-                    context.ExceptionType = HandledSystemExceptionType.InvalidData;
-                    break;
-                case InvalidOperationException:
-                    context.ExceptionType = HandledSystemExceptionType.InvalidOperation;
-                    break;
-                case ArgumentNullException:
-                    context.ExceptionType = HandledSystemExceptionType.ArgumentNull;
-                    break;
-                case ArgumentOutOfRangeException:
-                    context.ExceptionType = HandledSystemExceptionType.ArgumentOutOfRange;
-                    break;
-                case ArgumentException:
-                    context.ExceptionType = HandledSystemExceptionType.InvalidArgument;
-                    break;
-                case FormatException:
-                    context.ExceptionType = HandledSystemExceptionType.InvalidFormat;
-                    break;
-                case JsonException:
-                case MessagePackSerializationException:
-                    context.ExceptionType = HandledSystemExceptionType.Serialization;
-                    break;
-                default:
-                    return false;
-            }
-
-            // Populate HResult for exceptions that expose it.
-            context.ErrorCode ??= context.Exception.HResult;
-            return true;
-        }
-    }
-
-    /// <summary>
-    /// Parses HttpRequestException instances.
-    /// </summary>
-    private readonly struct HttpRequestExceptionParser : IExceptionParser
-    {
-        public bool TryParse(ref ExceptionParsingContext context)
-        {
-            if (context.Exception is not HttpRequestException)
-            {
-                return false;
-            }
-
-            var analysis = AnalyzeNetworkException(context.Exception);
-
-            if (analysis.IsSslError)
-            {
-                context.ExceptionType = HandledSystemExceptionType.SSLConnectionError;
-                return true;
-            }
-
-            if (analysis.SocketError.HasValue)
-            {
-                context.ErrorCode = (int)analysis.SocketError.Value;
-                context.ExceptionType = analysis.SocketError.Value switch
-                {
-                    SocketError.ConnectionRefused => HandledSystemExceptionType.ConnectionRefused,
-                    SocketError.HostNotFound or SocketError.TryAgain => HandledSystemExceptionType.HostNotFound,
-                    _ => HandledSystemExceptionType.Socket
-                };
-                return true;
-            }
-
-            if (analysis.IsTimeout)
-            {
+            case FileNotFoundException:
+                context.ExceptionType = HandledSystemExceptionType.FileNotFound;
+                break;
+            case DirectoryNotFoundException:
+                context.ExceptionType = HandledSystemExceptionType.DirectoryNotFound;
+                break;
+            case DriveNotFoundException:
+                context.ExceptionType = HandledSystemExceptionType.DriveNotFound;
+                break;
+            case PathTooLongException:
+                context.ExceptionType = HandledSystemExceptionType.PathTooLong;
+                break;
+            case EndOfStreamException:
+                context.ExceptionType = HandledSystemExceptionType.EndOfStream;
+                break;
+            case IOException io when io is not HttpIOException:
+                context.ExceptionType = HandledSystemExceptionType.IOException;
+                context.ErrorCode ??= io.HResult;
+                break;
+            case UnauthorizedAccessException:
+                context.ExceptionType = HandledSystemExceptionType.UnauthorizedAccess;
+                break;
+            case UserNotLoginException:
+                context.ExceptionType = HandledSystemExceptionType.UserNotLogin;
+                break;
+            case OperationCanceledException:
+                context.ExceptionType = NetworkExceptionEvidence.Extract(context.Exception).HasTimeoutCause ?
+                    HandledSystemExceptionType.Timeout :
+                    HandledSystemExceptionType.OperationCanceled;
+                break;
+            case TimeoutException:
                 context.ExceptionType = HandledSystemExceptionType.Timeout;
-                return true;
-            }
-
-            context.ExceptionType = HandledSystemExceptionType.Socket; // Fallback to general socket/network error
-            return true;
-        }
-    }
-
-    /// <summary>
-    /// Parses SocketException instances.
-    /// </summary>
-    private readonly struct SocketExceptionParser : IExceptionParser
-    {
-        public bool TryParse(ref ExceptionParsingContext context)
-        {
-            if (context.Exception is not SocketException)
-            {
+                break;
+            case NotSupportedException:
+                context.ExceptionType = HandledSystemExceptionType.NotSupported;
+                break;
+            case SecurityException:
+                context.ExceptionType = HandledSystemExceptionType.Security;
+                break;
+            case OutOfMemoryException:
+                context.ExceptionType = HandledSystemExceptionType.OutOfMemory;
+                break;
+            case InvalidDataException:
+                context.ExceptionType = HandledSystemExceptionType.InvalidData;
+                break;
+            case InvalidOperationException:
+                context.ExceptionType = HandledSystemExceptionType.InvalidOperation;
+                break;
+            case ArgumentNullException:
+                context.ExceptionType = HandledSystemExceptionType.ArgumentNull;
+                break;
+            case ArgumentOutOfRangeException:
+                context.ExceptionType = HandledSystemExceptionType.ArgumentOutOfRange;
+                break;
+            case ArgumentException:
+                context.ExceptionType = HandledSystemExceptionType.InvalidArgument;
+                break;
+            case FormatException:
+                context.ExceptionType = HandledSystemExceptionType.InvalidFormat;
+                break;
+            case JsonException:
+            case MessagePackSerializationException:
+                context.ExceptionType = HandledSystemExceptionType.Serialization;
+                break;
+            default:
                 return false;
-            }
-
-            var analysis = AnalyzeNetworkException(context.Exception);
-
-            if (analysis.SocketError.HasValue)
-            {
-                context.ErrorCode = (int)analysis.SocketError.Value;
-                context.ExceptionType = analysis.SocketError.Value switch
-                {
-                    SocketError.ConnectionRefused => HandledSystemExceptionType.ConnectionRefused,
-                    SocketError.HostNotFound or SocketError.TryAgain => HandledSystemExceptionType.HostNotFound,
-                    _ => HandledSystemExceptionType.Socket
-                };
-                return true;
-            }
-
-            return false;
         }
+
+        // Populate HResult for exceptions that expose it.
+        context.ErrorCode ??= context.Exception.HResult;
+        return true;
     }
 
-    /// <summary>
-    /// Parses COMException instances (HRESULT-based).
-    /// </summary>
-    private readonly struct ComExceptionParser : IExceptionParser
+    private static HandledException? HandleNetworkException(Exception exception, bool? isExpectedOverride)
     {
-        public bool TryParse(ref ExceptionParsingContext context)
+        var evidence = NetworkExceptionEvidence.Extract(exception);
+        var type = evidence switch
         {
-            if (context.Exception is not COMException com)
-            {
-                return false;
-            }
+            { HasTlsError: true } => HandledSystemExceptionType.SSLConnectionError,
+            { HasProxyTunnelError: true } => HandledSystemExceptionType.ProxyTunnelRejected,
+            { SocketError: SocketError.ConnectionRefused } => HandledSystemExceptionType.ConnectionRefused,
+            { SocketError: SocketError.HostNotFound or SocketError.TryAgain } => HandledSystemExceptionType.HostNotFound,
+            { SocketError: not null } => HandledSystemExceptionType.Socket,
+            { HasTimeoutCause: true } => HandledSystemExceptionType.Timeout,
+            { TransportException: not null } => HandledSystemExceptionType.Network,
+            _ => (HandledSystemExceptionType?)null
+        };
 
-            context.ExceptionType = HandledSystemExceptionType.COMException;
-            context.ErrorCode = com.ErrorCode; // HRESULT
-            return true;
+        if (type is { } networkType)
+        {
+            return new HandledSystemException(exception, networkType, isExpected: isExpectedOverride ?? false)
+            {
+                ErrorCode = networkType is HandledSystemExceptionType.Socket or HandledSystemExceptionType.ConnectionRefused or
+                    HandledSystemExceptionType.HostNotFound ? (int?)evidence.SocketError : null
+            };
         }
+
+        // A response rejection is not a socket failure. SDK response formatting follows
+        // the same HTTP path, but service-specific error envelopes remain with their owner.
+        if (evidence.StatusCode is { } status)
+        {
+            return new HandledHttpException(exception, status, isExpectedOverride ?? false);
+        }
+        if (exception is HttpOperationException operation)
+        {
+            return new HandledHttpException(exception, operation.StatusCode, isExpectedOverride ?? false);
+        }
+        return null;
     }
 
-    /// <summary>
-    /// Parses Win32Exception instances (NativeErrorCode-based).
-    /// </summary>
-    private readonly struct Win32ExceptionParser : IExceptionParser
-    {
-        public bool TryParse(ref ExceptionParsingContext context)
-        {
-            if (context.Exception is not Win32Exception win32)
-            {
-                return false;
-            }
-
-            context.ExceptionType = HandledSystemExceptionType.Win32Exception;
-            context.ErrorCode = win32.NativeErrorCode;
-            return true;
-        }
-    }
 }

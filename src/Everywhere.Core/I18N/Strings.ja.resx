@@ -975,6 +975,9 @@
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>サービスへの接続が中断されたか、接続を確立できませんでした。</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>サービスへの接続が中断されたか、接続を確立できませんでした。</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>サービスは現在利用できません。後でもう一度お試しください。</value>
     </data>
@@ -4278,6 +4281,9 @@
         <value>詳細をコピー</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>プロキシサーバーが接続の確立を拒否しました。プロキシ設定と認証情報を確認してください。</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>プロキシサーバーが接続の確立を拒否しました。プロキシ設定と認証情報を確認してください。</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
