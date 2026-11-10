@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Standalone Everywhere Linux package updater (Python 3.9+, standard library)."""
+"""Independent Everywhere Linux installer (Python 3.9+, standard library)."""
 import argparse
 import contextlib
 import fcntl
@@ -9,7 +9,6 @@ import os
 from pathlib import Path
 import platform
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -18,9 +17,19 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import select
+import termios
+import tty
+import tarfile
 
 
 class UpdateError(Exception):
+    pass
+
+
+class DownloadError(UpdateError):
+    """A transport failure, distinct from rejected or corrupted metadata."""
+
     pass
 
 
@@ -48,57 +57,6 @@ def architecture(machine):
         raise UpdateError('Only Linux x86_64 and aarch64 assets are published.')
 
 
-def detect(info):
-    ids = set((info.get('ID', '') + ' ' + info.get('ID_LIKE', '')).split())
-    if 'nixos' in ids:
-        raise UpdateError('NixOS: update the owning flake/profile and rebuild; do not overwrite the Nix store.')
-    if Path('/run/ostree-booted').exists() or ids & {'bazzite', 'silverblue', 'kinoite', 'aeon', 'microos'}:
-        raise UpdateError('Immutable system: use its image/transactional update workflow.')
-    if 'alpine' in ids:
-        raise UpdateError('Alpine/musl has no compatible published Everywhere package.')
-    found = []
-    deb = probe('dpkg-query', '-W', '-f=${Status}\t${Version}\t${Architecture}', 'everywhere')
-    if deb.startswith('install ok installed\t'):
-        _, version, arch = deb.split('\t')
-        found.append(('apt-get', version, arch, 'everywhere'))
-    rpm = probe('rpm', '-q', '--qf', '%{VERSION}\t%{ARCH}', 'everywhere')
-    if rpm:
-        version, arch = rpm.split('\t')
-        choices = ('zypper',) if ids & {'suse', 'opensuse', 'opensuse-leap', 'opensuse-tumbleweed', 'sles'} else ('dnf', 'yum')
-        manager = next((p for p in choices if shutil.which(p)), None)
-        if not manager:
-            raise UpdateError('RPM installation found, but no supported dependency-resolving package manager.')
-        found.append((manager, version, arch, 'everywhere'))
-    for name in ('everywhere-bin', 'everywhere'):
-        arch_pkg = probe('pacman', '-Q', name)
-        if arch_pkg:
-            manager = 'pacman' if probe('pacman', '-Sl').find(' ' + name + ' ') >= 0 else next((p for p in ('paru', 'yay') if shutil.which(p)), '')
-            if not manager:
-                raise UpdateError('External pacman package found. Use its original package source or update its reviewed PKGBUILD manually.')
-            found.append((manager, arch_pkg.split()[1], '', name))
-    if len(found) != 1:
-        raise UpdateError('Expected exactly one native Everywhere installation; found %d. Portable/Flatpak/Snap installs must use their own update source.' % len(found))
-    if not shutil.which(found[0][0]):
-        raise UpdateError('Required package manager is missing: ' + found[0][0])
-    return found[0]
-
-
-def version_key(value):
-    match = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)(?:-canary\.([0-9]+(?:\.[0-9]+)*))?', value)
-    if not match:
-        raise UpdateError('Unsupported release version: ' + value)
-    major, minor, patch, canary = match.groups()
-    return (int(major), int(minor), int(patch), canary is None,
-            tuple(map(int, canary.split('.'))) if canary else ())
-
-
-def installed_version(value):
-    # DEB/RPM packages produced by this fork use ~canary. to sort below stable.
-    value = value.replace('~canary.', '-canary.')
-    version_key(value)
-    return value
-
-
 class HTTPSRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if urllib.parse.urlsplit(newurl).scheme != 'https':
@@ -124,11 +82,12 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
                     return b'' if destination else output.read_bytes()
                 if attempt < 2:
                     time.sleep(attempt + 1)
-            raise UpdateError('Download failed using the application network settings.')
+            raise DownloadError('Download failed using the application network settings.')
     opener = urllib.request.build_opener(HTTPSRedirect())
     for attempt in range(3):
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Everywhere-Linux-Updater', 'Accept': 'application/vnd.github+json'})
+            req = urllib.request.Request(url, headers={
+                'User-Agent': 'Everywhere-Linux-Installer', 'Accept': 'application/vnd.github+json'})
             with opener.open(req, timeout=30) as response:
                 with (open(destination, 'wb') if destination else contextlib.nullcontext()) as output:
                     chunks, count = [], 0
@@ -146,97 +105,388 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
                     return b''.join(chunks)
         except urllib.error.HTTPError as exc:
             if exc.code not in (429, 500, 502, 503, 504) or attempt == 2:
-                raise UpdateError('Download HTTP %s: %s' % (exc.code, url)) from exc
+                raise DownloadError('Download HTTP %s: %s' % (exc.code, url)) from exc
         except (urllib.error.URLError, TimeoutError) as exc:
             if attempt == 2:
-                raise UpdateError('Download failed: ' + str(exc)) from exc
+                raise DownloadError('Download failed: ' + str(exc)) from exc
         time.sleep(attempt + 1)
 
 
-def releases(repo):
-    items = []
+INSTALLER_VERSION = '0.1.0'
+INSTALLER_URL = 'https://github.com/pasical/Everywhere/releases/download/linux-installer-latest/installer.json'
+CATALOG_URL = 'github:pasical/Everywhere'
+
+
+def version_key(value):
+    if not isinstance(value, str):
+        raise UpdateError('Expected a version string.')
+    match = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)(?:-canary\.([0-9]+(?:\.[0-9]+)*))?', value)
+    if not match:
+        raise UpdateError('Unsupported version: ' + str(value))
+    major, minor, patch, canary = match.groups()
+    return (int(major), int(minor), int(patch), canary is None,
+            tuple(map(int, canary.split('.'))) if canary else ())
+
+
+def read_json(source):
+    # An explicit local manifest is useful for staging; production uses HTTPS only.
+    if source.startswith('https://'):
+        return json.loads(fetch(source))
+    path = Path(source)
+    if not path.is_absolute():
+        raise UpdateError('Manifest must be an HTTPS URL or an explicit absolute file path.')
+    return json.loads(path.read_text())
+
+
+def validate_asset(asset):
+    if (not isinstance(asset, dict) or
+            type(asset.get('size')) is not int or not 0 < asset['size'] <= 2 * 1024**3 or
+            not isinstance(asset.get('sha256'), str) or
+            not re.fullmatch(r'[0-9a-f]{64}', asset['sha256']) or
+            not isinstance(asset.get('url'), str) or
+            urllib.parse.urlsplit(asset.get('url', '')).scheme != 'https'):
+        raise UpdateError('Invalid download metadata.')
+
+
+def verify_file(path, asset):
+    validate_asset(asset)
+    with path.open('rb') as stream:
+        digest = hashlib.sha256()
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(chunk)
+    if path.stat().st_size != asset['size'] or digest.hexdigest() != asset['sha256']:
+        raise UpdateError('Download size or SHA256 mismatch.')
+
+
+def refresh_installer(source, arguments):
+    """Execute a verified newer script without changing package-owned files."""
+    try:
+        manifest = read_json(source)
+    except (DownloadError, urllib.error.URLError, OSError):
+        print('Could not check installer updates; using bundled installer %s.' % INSTALLER_VERSION)
+        return None
+    if not isinstance(manifest, dict) or manifest.get('schema') != 1 or manifest.get('protocol') != 1:
+        raise UpdateError('Unsupported installer protocol.')
+    version = manifest['version']
+    if version_key(version) <= version_key(INSTALLER_VERSION):
+        return None
+    asset = manifest['asset']
+    validate_asset(asset)
+    if asset['size'] > 4 * 1024 * 1024:
+        raise UpdateError('Installer is too large.')
+    cache = Path.home() / '.cache' / 'everywhere-installer'
+    cache.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if cache.is_symlink() or cache.stat().st_uid != os.getuid() or cache.stat().st_mode & 0o077:
+        raise UpdateError('Installer cache must be private and owned by the current user.')
+    script = cache / (asset['sha256'] + '.py')
+    if script.is_symlink():
+        raise UpdateError('Unsafe installer cache entry.')
+    if script.exists():
+        verify_file(script, asset)
+    else:
+        with tempfile.TemporaryDirectory(prefix='download-', dir=cache) as directory:
+            download = Path(directory) / 'installer.py'
+            fetch(asset['url'], download, asset['size'])
+            verify_file(download, asset)
+            os.replace(download, script)
+    print('Using installer %s.' % version, flush=True)
+    return subprocess.run([sys.executable, str(script), '--no-installer-update', *arguments], check=False).returncode
+
+
+def choose_channel():
+    """Read the controlling terminal, including when stdin contains a curl script."""
+    try:
+        terminal = open('/dev/tty', 'r+b', buffering=0)
+    except OSError as exc:
+        raise UpdateError('An interactive terminal is required. Specify --channel stable or --channel canary.') from exc
+    with terminal:
+        fd = terminal.fileno()
+        previous = termios.tcgetattr(fd)
+        selected = 0
+        terminal.write(b'Everywhere\r\n\r\nSelect a release channel\r\n\r\n')
+        try:
+            tty.setraw(fd)
+            terminal.write(b'\x1b[?25l')
+            while True:
+                labels = ['Stable', 'Canary']
+                text = ('\r\x1b[2K%s Stable\r\n\x1b[2K%s Canary\r\n\r\n'
+                        '\x1b[2KUp/Down Navigate | Enter Select | Esc Cancel') % (
+                    '>' if selected == 0 else ' ', '>' if selected == 1 else ' ')
+                terminal.write(text.encode())
+                key = terminal.read(1)
+                if key in (b'\r', b'\n'):
+                    terminal.write(('\r\n\r\nSelected: %s\r\n' % labels[selected]).encode())
+                    return labels[selected].lower()
+                if key in (b'\x03', b'\x04', b''):
+                    raise KeyboardInterrupt
+                if key == b'\x1b':
+                    sequence = b''
+                    while len(sequence) < 2 and select.select([fd], [], [], 0.1)[0]:
+                        sequence += terminal.read(1)
+                    if sequence in (b'[A', b'OA'):
+                        selected = (selected - 1) % 2
+                    elif sequence in (b'[B', b'OB'):
+                        selected = (selected + 1) % 2
+                    elif not sequence:
+                        raise KeyboardInterrupt
+                terminal.write(b'\x1b[3A')
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, previous)
+            terminal.write(b'\x1b[?25h\r\n')
+
+
+def backend(info):
+    """Keep system support in the independently released installer."""
+    distro = info.get('ID', '')
+    version = info.get('VERSION_ID', '')
+    if Path('/run/ostree-booted').exists():
+        raise UpdateError('This immutable system is not supported.')
+    if distro in ('arch', 'endeavouros', 'manjaro'):
+        manager = 'pacman'
+    elif distro == 'ubuntu' and version in ('24.04', '25.10'):
+        manager = 'apt-get'
+    elif distro == 'debian' and version in ('13', '14'):
+        manager = 'apt-get'
+    elif distro == 'fedora' and version in ('44',):
+        manager = 'dnf'
+    else:
+        raise UpdateError('Unsupported system: %s %s.' % (distro, version))
+    if not shutil.which(manager):
+        raise UpdateError('Required system tool is missing: ' + manager)
+    return manager
+
+
+def installed(manager):
+    if manager == 'apt-get':
+        value = probe('dpkg-query', '-W', '-f=${Status}\t${Version}', 'everywhere')
+        return ('everywhere', value.split('\t')[1]) if value.startswith('install ok installed\t') else None
+    if manager == 'dnf':
+        value = probe('rpm', '-q', '--qf', '%{VERSION}', 'everywhere')
+        return ('everywhere', value) if value else None
+    matches = []
+    for name in ('everywhere-bin', 'everywhere'):
+        value = probe('pacman', '-Q', name)
+        if value:
+            actual_name, version = value.split()
+            if actual_name not in ('everywhere-bin', 'everywhere'):
+                raise UpdateError('Unexpected installed package identity.')
+            entry = (actual_name, version)
+            if entry not in matches:
+                matches.append(entry)
+    if len(matches) > 1:
+        raise UpdateError('Multiple Everywhere packages are installed.')
+    return matches[0] if matches else None
+
+
+def normalize_version(value, manager):
+    if manager == 'pacman':
+        # Epoch controls package ordering after AUR withdrawal; it is not an app version.
+        value = value.split(':', 1)[-1]
+        value = value.rsplit('-', 1)[0]
+        value = re.sub(r'^(\d+\.\d+\.\d+)canary\.', r'\1-canary.', value)
+    return value.replace('~canary.', '-canary.')
+
+
+def read_catalog(source):
+    if not source.startswith('github:'):
+        return read_json(source)
+    repo = source.removeprefix('github:')
+    if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo):
+        raise UpdateError('Invalid release repository.')
+    releases = []
     for page in range(1, 11):
         batch = json.loads(fetch('https://api.github.com/repos/%s/releases?per_page=100&page=%d' % (repo, page)))
         if not isinstance(batch, list):
-            raise UpdateError('Invalid release list.')
-        items.extend(batch)
+            raise UpdateError('Invalid release response.')
+        releases.extend(batch)
         if len(batch) < 100:
-            return items
-    raise UpdateError('Release history exceeds scan limit; refusing an incomplete selection.')
-
-
-def select_release(items, channel, arch, extension, repo):
-    candidates = []
-    for release in items:
+            break
+    else:
+        raise UpdateError('Release history exceeds the complete scan limit.')
+    channels = {}
+    for release in releases:
+        if not isinstance(release, dict):
+            raise UpdateError('Expected a release object.')
         if release.get('draft'):
             continue
         try:
-            key = version_key(release.get('tag_name', ''))
+            version = release.get('tag_name', '').removeprefix('v')
+            key = version_key(version)
         except UpdateError:
             continue
         if release.get('prerelease') != (not key[3]):
             continue
-        if (channel == 'stable') != key[3]:
+        channel = 'stable' if key[3] else 'canary'
+        if channel in channels and version_key(channels[channel]['version']) >= key:
             continue
-        candidates.append((key, release))
-    if not candidates:
-        raise UpdateError('No published release in channel ' + channel)
-    _, release = max(candidates, key=lambda item: item[0])
-    tag = release['tag_name']
-    name = 'Everywhere-Linux-%s-v%s.%s' % (arch, tag.removeprefix('v'), extension)
-    assets = [a for a in release.get('assets', []) if a.get('name') == name and a.get('state') == 'uploaded']
-    if len(assets) != 1:
-        raise UpdateError('Latest release lacks the completed asset ' + name + '; retry after publishing finishes.')
-    asset = assets[0]
-    if not re.fullmatch(r'sha256:[0-9a-fA-F]{64}', asset.get('digest') or ''):
-        raise UpdateError('Asset lacks a SHA256 digest; publisher must provide one. Verification cannot be skipped.')
-    if type(asset.get('size')) is not int or not 0 < asset['size'] <= 2 * 1024**3:
-        raise UpdateError('Invalid package size.')
-    expected = 'https://github.com/%s/releases/download/%s/%s' % (repo, tag, name)
-    if asset.get('browser_download_url') != expected:
-        raise UpdateError('Asset URL does not match the selected repository, tag and filename.')
-    return tag.removeprefix('v'), asset
+        assets = {}
+        for arch in ('x64', 'arm64'):
+            assets[arch] = {}
+            for extension in ('deb', 'rpm', 'tar.zst'):
+                name = 'Everywhere-Linux-%s-v%s.%s' % (arch, version, extension)
+                matches = [item for item in release.get('assets', [])
+                           if item.get('name') == name and item.get('state') == 'uploaded']
+                if len(matches) != 1:
+                    continue
+                item = matches[0]
+                expected = 'https://github.com/%s/releases/download/%s/%s' % (repo, release['tag_name'], name)
+                digest = item.get('digest') or ''
+                if item.get('browser_download_url') != expected or not digest.startswith('sha256:'):
+                    continue
+                assets[arch][extension] = {'url': expected, 'size': item['size'], 'sha256': digest[7:]}
+        resources = {}
+        for label, filename in (('icon', 'Everywhere-icon.png'), ('license', 'LICENSE')):
+            for item in release.get('assets', []):
+                if item.get('name') == filename and item.get('state') == 'uploaded':
+                    expected = 'https://github.com/%s/releases/download/%s/%s' % (repo, release['tag_name'], filename)
+                    digest = item.get('digest') or ''
+                    if item.get('browser_download_url') == expected and digest.startswith('sha256:'):
+                        resources[label] = {'url': expected, 'size': item['size'], 'sha256': digest[7:]}
+        for entries in assets.values():
+            if 'tar.zst' in entries:
+                entries['tar.zst']['resources'] = resources
+        channels[channel] = {'version': version, 'assets': assets}
+    return {'schema': 1, 'channels': channels}
 
 
-def verify_file(path, asset):
-    if path.stat().st_size != asset['size']:
-        raise UpdateError('Downloaded package size mismatch.')
-    digest = hashlib.sha256()
-    with path.open('rb') as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
-            digest.update(chunk)
-    if digest.hexdigest() != asset['digest'].split(':')[1].lower():
-        raise UpdateError('Downloaded package SHA256 mismatch.')
+def select_package(catalog, channel, arch, manager):
+    if not isinstance(catalog, dict) or catalog.get('schema') != 1:
+        raise UpdateError('Unsupported download catalog.')
+    channels = catalog.get('channels')
+    if not isinstance(channels, dict):
+        raise UpdateError('Expected release channels.')
+    release = channels.get(channel)
+    if not release:
+        raise UpdateError('No Linux release is available for ' + channel + '.')
+    if not isinstance(release, dict):
+        raise UpdateError('Expected a channel release object.')
+    target = release['version']
+    if ('canary' if not version_key(target)[3] else 'stable') != channel:
+        raise UpdateError('Release channel and version disagree.')
+    extension = {'apt-get': 'deb', 'dnf': 'rpm', 'pacman': 'tar.zst'}[manager]
+    assets = release.get('assets')
+    if not isinstance(assets, dict) or not isinstance(assets.get(arch, {}), dict):
+        raise UpdateError('Expected release assets by architecture.')
+    asset = assets.get(arch, {}).get(extension)
+    if not asset:
+        raise UpdateError('No supported Linux download is available for this system.')
+    validate_asset(asset)
+    return target, asset
+
+
+def prepare_arch(archive, directory, target, name, bundled_script, epoch):
+    """Repackage the official payload without running code from its archive."""
+    if os.geteuid() == 0:
+        raise UpdateError('Run the installer as a normal user, without sudo.')
+    if not shutil.which('makepkg') or not shutil.which('zstd'):
+        raise UpdateError('Arch packaging requires makepkg and zstd.')
+    payload = directory / 'payload'
+    payload.mkdir()
+    # Stream through the system decompressor for Python 3.9 compatibility.
+    with subprocess.Popen(['zstd', '-dc', str(archive)], stdout=subprocess.PIPE) as process:
+        with tarfile.open(fileobj=process.stdout, mode='r|') as tar:
+            expanded_size = 0
+            for member in tar:
+                relative = Path(member.name)
+                if relative.is_absolute() or '..' in relative.parts:
+                    raise UpdateError('Unsafe archive path.')
+                destination = payload / relative
+                if member.isdir():
+                    destination.mkdir(parents=True, exist_ok=True)
+                    continue
+                if not member.isfile():
+                    raise UpdateError('Unsupported archive entry; only regular files and directories are allowed.')
+                expanded_size += member.size
+                if expanded_size > 4 * 1024**3:
+                    raise UpdateError('Expanded archive is too large.')
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                with tar.extractfile(member) as source, destination.open('wb') as output:
+                    shutil.copyfileobj(source, output)
+                destination.chmod(0o755 if member.mode & 0o111 else 0o644)
+        if process.wait() != 0:
+            raise UpdateError('Archive decompression failed.')
+    if not (payload / 'Everywhere').is_file() or not (payload / 'Everywhere.Watchdog').is_file():
+        raise UpdateError('The download is not an Everywhere application archive.')
+    # The new local package must retain a working, bundled installer.
+    shutil.copyfile(bundled_script, payload / 'linux-update.py')
+    pkgver = target.replace('-canary.', 'canary.')
+    architecture_name = {'x64': 'x86_64', 'arm64': 'aarch64'}[architecture(platform.machine())]
+    recipe = """pkgname=%s
+pkgver=%s
+pkgrel=1
+epoch=%s
+pkgdesc='Everywhere desktop assistant'
+arch=('%s')
+license=('BUSL-1.1')
+provides=('everywhere')
+conflicts=('everywhere')
+depends=('python' 'glibc' 'gcc-libs' 'zlib' 'openssl' 'icu' 'fontconfig'
+         'libx11' 'libice' 'libsm' 'libxext' 'libxcb' 'libxrandr' 'libxrender'
+         'libxi' 'libxcursor' 'wayland' 'libxkbcommon' 'glib2' 'at-spi2-core' 'xdg-utils')
+options=('!strip' '!debug')
+package() {
+    install -d "$pkgdir/opt/Everywhere" "$pkgdir/usr/bin"
+    cp -a "$startdir/payload/." "$pkgdir/opt/Everywhere/"
+    chmod 755 "$pkgdir/opt/Everywhere/Everywhere" "$pkgdir/opt/Everywhere/Everywhere.Watchdog"
+    ln -s /opt/Everywhere/Everywhere "$pkgdir/usr/bin/Everywhere"
+    ln -s /opt/Everywhere/Everywhere "$pkgdir/usr/bin/ew"
+    install -Dm644 "$startdir/icon" "$pkgdir/usr/share/icons/hicolor/256x256/apps/Everywhere.png"
+    install -Dm644 "$startdir/license" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 "$startdir/com.Sylinko.Everywhere.desktop" "$pkgdir/usr/share/applications/com.Sylinko.Everywhere.desktop"
+}
+""" % (name, pkgver, epoch, architecture_name)
+    (directory / 'PKGBUILD').write_text(recipe)
+    (directory / 'com.Sylinko.Everywhere.desktop').write_text(
+        '[Desktop Entry]\nName=Everywhere\nExec=/usr/bin/Everywhere %U\nType=Application\n'
+        'Icon=Everywhere\nTerminal=false\nCategories=Utility;\nStartupWMClass=Everywhere\n')
+    execute(['makepkg', '--syncdeps', '--cleanbuild', '--force'], False, cwd=directory)
+    packages = [path for path in directory.glob('*.pkg.tar*') if not path.name.endswith('.sig')]
+    if len(packages) != 1:
+        raise UpdateError('Arch packaging did not produce exactly one package.')
+    return packages[0]
+
+
+def package_command(manager, path):
+    if manager == 'apt-get':
+        return [manager, '--no-remove', 'install', str(path)]
+    if manager == 'dnf':
+        return [manager, 'install', str(path)]
+    return [manager, '-U', str(path)]
 
 
 def validate_package(path, manager, target, arch):
-    expected_arch = {'x64': 'amd64', 'arm64': 'arm64'}[arch] if manager == 'apt-get' else {'x64': 'x86_64', 'arm64': 'aarch64'}[arch]
+    if manager == 'pacman':
+        return  # The local recipe and verified archive determine identity.
+    architectures = {'x64': 'amd64', 'arm64': 'arm64'} if manager == 'apt-get' else {
+        'x64': 'x86_64', 'arm64': 'aarch64'}
+    expected_arch = architectures[arch]
     if manager == 'apt-get':
         values = [probe('dpkg-deb', '-f', str(path), key) for key in ('Package', 'Version', 'Architecture')]
     else:
         values = probe('rpm', '-qp', '--qf', '%{NAME}\t%{VERSION}\t%{ARCH}', str(path)).split('\t')
     if values != ['everywhere', target.replace('-canary.', '~canary.'), expected_arch]:
-        raise UpdateError('Package identity/version/architecture differs from release metadata.')
+        raise UpdateError('Package identity/version/architecture differs from download metadata.')
 
 
-def command(manager, package, yes=False):
-    if manager == 'apt-get':
-        return [manager, '--no-remove'] + (['-y'] if yes else []) + ['install', str(package)]
-    if manager in ('dnf', 'yum'):
-        return [manager] + (['-y'] if yes else []) + ['upgrade', str(package)]
-    if manager == 'zypper':
-        return [manager] + (['--non-interactive'] if yes else []) + ['install', str(package)]
-    # Arch requires a full system upgrade, never pacman -Sy <package>.
-    return [manager, '-Syu', str(package)]
-
-
-def execute(args, privileged):
+def execute(args, privileged, cwd=None):
     if privileged and os.geteuid() != 0:
         if not shutil.which('sudo'):
             raise UpdateError('sudo is required for the package transaction.')
         args = ['sudo', '--'] + args
-    print('+ ' + shlex.join(args), flush=True)
-    subprocess.run(args, check=True)
+    # curl | sh leaves stdin at EOF. Package-manager confirmation must use the
+    # controlling terminal too, independently of the installer's menu input.
+    terminal = None
+    if not sys.stdin.isatty():
+        try:
+            terminal = open('/dev/tty', 'rb')
+        except OSError:
+            pass
+    standard_input = terminal
+    if terminal is None and not sys.stdin.isatty():
+        standard_input = subprocess.DEVNULL
+    with terminal if terminal is not None else contextlib.nullcontext():
+        subprocess.run(args, check=True, stdin=standard_input, cwd=cwd,
+                       env=dict(os.environ, LC_ALL='C'))
 
 
 @contextlib.contextmanager
@@ -257,103 +507,99 @@ def lock():
         os.close(fd)
 
 
-def main(argv=None):
-    parser = argparse.ArgumentParser(prog='ew update', description='Update Everywhere using its installed package manager.')
-    mode = parser.add_mutually_exclusive_group()
-    mode.add_argument('--apply', action='store_true', help='download, verify and install the upgrade')
-    mode.add_argument('--dry-run', action='store_true', help='preview without downloading or installing')
-    parser.add_argument('--version', help='require this exact release; never downgrade')
-    parser.add_argument('--yes', action='store_true', help='accept native DEB/RPM transaction prompts')
-    parser.add_argument('--repo', default='pasical/Everywhere', help='explicit trusted GitHub owner/repo')
-    parser.add_argument('--channel', choices=('auto', 'stable', 'canary'), default=os.environ.get('EVERYWHERE_UPDATE_CHANNEL', 'auto'), help='override the saved application channel')
-    parser.add_argument('--proxy', help='override the application proxy: system, none, or an HTTP/HTTPS/SOCKS5 URL')
-    parser.add_argument('--allow-system-upgrade', action='store_true', help='allow Arch full-system upgrade')
-    parser.add_argument('--release-json', type=Path, help='use a trusted local GitHub release-list fixture instead of the API')
-    args = parser.parse_args(argv)
-    if args.proxy is not None:
-        if not os.environ.get('EVERYWHERE_UPDATE_TRANSPORT'):
-            raise UpdateError('Proxy overrides require the ew update application entry point.')
-        os.environ['EVERYWHERE_UPDATE_PROXY'] = args.proxy
-    if args.channel not in ('auto', 'stable', 'canary'):
-        raise UpdateError('Invalid application update channel.')
-    if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', args.repo):
-        raise UpdateError('Invalid GitHub repository.')
+def main(arguments=None):
+    parser = argparse.ArgumentParser(prog='Everywhere installer')
+    parser.add_argument('action', nargs='?', choices=('install', 'update'), default='install')
+    parser.add_argument('--channel', choices=('stable', 'canary', 'auto'),
+                        default=os.environ.get('EVERYWHERE_UPDATE_CHANNEL', 'auto'))
+    parser.add_argument('--dry-run', action='store_true')
+    # Already distributed launchers pass --apply; installation is now the default.
+    parser.add_argument('--apply', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--no-installer-update', action='store_true', help='use the current verified installer')
+    parser.add_argument('--installer-manifest', default=INSTALLER_URL)
+    parser.add_argument('--catalog', default=CATALOG_URL)
+    parser.add_argument('--proxy', help='override application proxy for this invocation')
+    parser.add_argument('--installer-version', action='version', version=INSTALLER_VERSION)
+    raw = list(sys.argv[1:] if arguments is None else arguments)
+    args = parser.parse_args(raw)
     if platform.system() != 'Linux':
-        raise UpdateError('This updater runs on Linux only; run the isolated tests on other hosts.')
+        raise UpdateError('This installer supports Linux only.')
+    if args.proxy:
+        if not os.environ.get('EVERYWHERE_UPDATE_TRANSPORT'):
+            raise UpdateError('Use HTTPS_PROXY for standalone installation; --proxy requires ew update.')
+        os.environ['EVERYWHERE_UPDATE_PROXY'] = args.proxy
+    if not args.no_installer_update:
+        result = refresh_installer(args.installer_manifest, raw)
+        if result is not None:
+            return result
+    manager = backend(distro_info())
     arch = architecture(platform.machine())
-    manager, current, package_arch, name = detect(distro_info())
-    print('Installed: %s %s; manager: %s' % (name, current, manager), flush=True)
-    if manager in ('pacman', 'paru', 'yay'):
-        if args.release_json or args.version:
-            raise UpdateError('Arch fixed versions are controlled by the owning repository/AUR recipe.')
-        if args.channel != 'auto':
-            info = probe(manager, '-Si', name)
-            match = re.search(r'^Version\s*:\s*(\S+)', info, re.MULTILINE)
-            if not match:
-                raise UpdateError('Cannot verify the repository/AUR candidate against your selected channel.')
-            offered_channel = 'canary' if 'canary' in match.group(1).lower() else 'stable'
-            if offered_channel != args.channel:
-                raise UpdateError('Your selected channel is %s, but %s currently offers %s. Choose a matching package source; settings will not be overridden.' % (args.channel, name, offered_channel))
-        cmd = command(manager, name)
-        print('Arch/AUR follows its recipe policy (everywhere-bin currently includes Canary).')
-        print('Plan (full system upgrade): ' + shlex.join(cmd))
-        if not args.apply:
-            return 0
-        if not args.allow_system_upgrade:
-            if not sys.stdin.isatty():
-                raise UpdateError('Arch requires an interactive terminal for full-system upgrade consent, or --allow-system-upgrade.')
-            if input('This also upgrades other system packages. Continue? [y/N] ').strip().lower() not in ('y', 'yes'):
-                raise UpdateError('System upgrade canceled; no changes made.')
-        if args.yes:
-            raise UpdateError('Unattended AUR/Arch upgrades are not enabled; review package/build prompts.')
-        if manager != 'pacman' and os.geteuid() == 0:
-            raise UpdateError('Run AUR helpers as a normal user, without sudo.')
-        with lock():
-            execute(cmd, manager == 'pacman')
-        print('Package manager completed. Restart Everywhere.')
+    current = installed(manager)
+    if args.action == 'update' and not current:
+        raise UpdateError('Everywhere is not installed. Run the installer without update first.')
+    channel = args.channel
+    if channel == 'auto':
+        if args.action == 'install' and not current:
+            channel = choose_channel()
+        elif current:
+            channel = 'canary' if 'canary' in current[1] else 'stable'
+        else:
+            channel = 'stable'
+    target, asset = select_package(read_catalog(args.catalog), channel, arch, manager)
+    if current and version_key(target) <= version_key(normalize_version(current[1], manager)):
+        print('Everywhere is up to date. No downgrade or reinstall performed.')
         return 0
-    expected_arch = {'apt-get': {'x64': 'amd64', 'arm64': 'arm64'}}.get(manager, {'x64': 'x86_64', 'arm64': 'aarch64'})[arch]
-    if package_arch != expected_arch:
-        raise UpdateError('Installed package architecture does not match this machine.')
-    current = installed_version(current)
-    channel = args.channel if args.channel != 'auto' else ('canary' if '-canary.' in current else 'stable')
-    items = json.loads(args.release_json.read_text()) if args.release_json else releases(args.repo)
-    if not isinstance(items, list):
-        raise UpdateError('Release metadata must be a JSON array.')
-    if args.version:
-        version_key(args.version)
-        items = [item for item in items if item.get('tag_name') == 'v' + args.version.removeprefix('v')]
-    target, asset = select_release(items, channel, arch, 'deb' if manager == 'apt-get' else 'rpm', args.repo)
-    if version_key(target) <= version_key(current):
-        print('No newer compatible release; no downgrade or reinstall performed.')
+    print('Everywhere %s (%s)' % (target, channel.capitalize()), flush=True)
+    if args.dry_run:
+        print('Preview complete. No packages downloaded or installed.')
         return 0
-    print('Source: %s; channel: %s; target: %s' % (args.repo, channel, target))
-    print('Plan: ' + shlex.join(command(manager, '/temporary-download/' + asset['name'], args.yes)))
-    if not args.apply:
-        print('Preview only. Use --apply to download, verify and upgrade.')
-        return 0
-    with lock(), tempfile.TemporaryDirectory(prefix='everywhere-update-') as temp:
-        path = Path(temp) / asset['name']
-        fetch(asset['browser_download_url'], path, asset['size'])
+    with lock(), tempfile.TemporaryDirectory(prefix='everywhere-install-') as temporary:
+        directory = Path(temporary)
+        path = directory / ('download.' + {'pacman': 'tar.zst', 'apt-get': 'deb', 'dnf': 'rpm'}[manager])
+        print('Downloading...', flush=True)
+        fetch(asset['url'], path, asset['size'])
         verify_file(path, asset)
+        if manager == 'pacman':
+            for label in ('icon', 'license'):
+                resource = asset.get('resources', {}).get(label)
+                if not resource and args.catalog.startswith('github:'):
+                    # Older fork releases keep artwork/license in the tagged source tree.
+                    filename = 'img/Everywhere-icon.png' if label == 'icon' else 'LICENSE'
+                    repo = args.catalog.removeprefix('github:')
+                    url = 'https://raw.githubusercontent.com/%s/v%s/%s' % (repo, target, filename)
+                    data = fetch(url, limit=4 * 1024 * 1024)
+                    if not data:
+                        raise UpdateError('Missing packaging resource: ' + label)
+                    (directory / label).write_bytes(data)
+                    continue
+                if not resource:
+                    raise UpdateError('The release is missing required packaging resources.')
+                validate_asset(resource)
+                if resource['size'] > 4 * 1024 * 1024:
+                    raise UpdateError('Packaging resource is too large.')
+                fetch(resource['url'], directory / label, resource['size'])
+                verify_file(directory / label, resource)
+            epoch = int(current[1].split(':', 1)[0]) if current and ':' in current[1] else 0
+            path = prepare_arch(path, directory, target, current[0] if current else 'everywhere-bin',
+                                Path(__file__), epoch)
         validate_package(path, manager, target, arch)
-        # Recheck after the download in case another package transaction changed the installation.
-        if detect(distro_info()) != (manager, current.replace('-canary.', '~canary.'), package_arch, name):
-            raise UpdateError('Installation changed during download; rerun the updater.')
-        execute(command(manager, path, args.yes), True)
-        after = detect(distro_info())
-        if after[0] != manager or installed_version(after[1]) != target:
-            raise UpdateError('Package manager returned success but target version is not installed.')
-    print('Upgrade verified. Restart Everywhere to use the new version.')
+        if installed(manager) != current:
+            raise UpdateError('Installation changed while downloading; please retry.')
+        print('Installing...', flush=True)
+        execute(package_command(manager, path), True)
+        after = installed(manager)
+        if not after or normalize_version(after[1], manager) != target:
+            raise UpdateError('Installation completed without the expected version. Check the package manager output.')
+    print('Everywhere installed successfully. Restart Everywhere to use the new version.')
     return 0
 
 
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except (UpdateError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as exc:
-        print('Update failed: ' + str(exc), file=sys.stderr)
+    except (UpdateError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError, tarfile.TarError) as exc:
+        print('Installation failed: ' + str(exc), file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:
-        print('Update interrupted. Check the package manager state before retrying.', file=sys.stderr)
+        print('Canceled.', file=sys.stderr)
         sys.exit(130)

@@ -486,6 +486,17 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
     void IRecipient<ApplicationMessage>.Receive(ApplicationMessage message)
     {
+        if (message is ShowTerminalUpdateGuidanceMessage)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                ShowMainWindow();
+                var mainView = serviceProvider.GetRequiredService<MainView>();
+                TerminalUpdateGuidance.ShowAsync(TopLevel.GetTopLevel(mainView)).Detach();
+            });
+            return;
+        }
+
         if (message is ShowWindowMessage { Name: ShowWindowMessage.MainWindow } showWindowMessage)
         {
             Dispatcher.UIThread.Invoke(() =>

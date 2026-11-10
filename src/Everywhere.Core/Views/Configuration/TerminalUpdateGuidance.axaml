@@ -1,34 +1,67 @@
-<UserControl
+﻿<UserControl
   x:Class="Everywhere.Views.TerminalUpdateGuidance" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:common="clr-namespace:Everywhere.Common"
-  xmlns:v="using:Everywhere.Views">
-  <StackPanel
-    MinWidth="360" MaxWidth="440" Spacing="16">
-    <TextBlock
-      Classes="Muted"
-      Text="{I18N {x:Static LocaleKey.TerminalUpdate_Introduction}}"
-      TextWrapping="Wrap"/>
-    <Border
-      Padding="16"
-      Background="{DynamicResource LightCardBackgroundColor}"
-      BorderBrush="{DynamicResource BorderColor}"
-      BorderThickness="1"
-      CornerRadius="{DynamicResource LgCornerRadius}">
-      <DockPanel HorizontalSpacing="12">
-        <LucideIcon
-          DockPanel.Dock="Left" VerticalAlignment="Center"
-          Kind="Terminal"
-          Opacity="0.6"
-          Size="{DynamicResource FontSizeXl}"/>
-        <SelectableTextBlock
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:v="using:Everywhere.Views" x:Name="Self"
+  FontWeight="Normal"
+  Foreground="{DynamicResource ForegroundColor}"
+  x:DataType="v:TerminalUpdateGuidance">
+  <UserControl.Styles>
+    <Style Selector="md|MarkdownTextBlock">
+      <Setter Property="LineHeight" Value="NaN"/>
+    </Style>
+    <Style Selector="md|CodeBlock /template/ Button#PART_CopyButton">
+      <Setter Property="IsEnabled" Value="{Binding !$parent[v:TerminalUpdateGuidance].IsStreaming}"/>
+    </Style>
+    <Style Selector="md|CodeBlock /template/ ToggleButton#PART_ToggleTextWrapButton">
+      <Setter Property="IsVisible" Value="False"/>
+    </Style>
+  </UserControl.Styles>
+  <DockPanel
+    Width="400" MinHeight="300">
+    <DockPanel
+      DockPanel.Dock="Top" Height="44"
+      Margin="8,0" LastChildFill="True">
+      <v:Evy
+        DockPanel.Dock="Left" Width="36"
+        Height="36" Margin="0,0,0,-4"
+        IsIdleAnimationEnabled="True">
+        <v:Evy.Effect>
+          <DropShadowEffect
+            OffsetX="1.5" OffsetY="1.5"
+            Opacity="0.3"/>
+        </v:Evy.Effect>
+      </v:Evy>
+      <TextBlock
+        Classes="Large" Margin="8,0,0,0"
+        VerticalAlignment="Center"
+        Text="{I18N {x:Static LocaleKey.TerminalUpdate_DialogTitle}}"
+        TextTrimming="CharacterEllipsis"/>
+    </DockPanel>
+    <Button
+      x:Name="CancelButton" Classes="Outline"
+      DockPanel.Dock="Bottom" MinWidth="80"
+      Margin="16,0,16,12" HorizontalAlignment="Right"
+      Click="HandleCancelClick"
+      Content="{I18N {x:Static LocaleKey.Common_Cancel}}"
+      HotKey="Escape"/>
+    <StackPanel
+      Margin="16,16,16,12" VerticalAlignment="Top"
+      Spacing="6">
+      <md:MarkdownRenderer
+        x:Name="Message"
+        MarkdownBuilder="{Binding MarkdownBuilder, ElementName=Self}"/>
+      <WrapPanel IsVisible="{Binding !IsStreaming, ElementName=Self}">
+        <TextBlock
           VerticalAlignment="Center"
-          FontFamily="{StaticResource MonospaceFontFamily}"
-          Text="{x:Static v:TerminalUpdateGuidance.UpdateCommand}"/>
-      </DockPanel>
-    </Border>
-    <HyperlinkButton
-      Padding="0" HorizontalAlignment="Left"
-      Content="{I18N {x:Static LocaleKey.TerminalUpdate_Website_OpenDownload}}"
-      NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteUri}"/>
-  </StackPanel>
+          Text="{I18N {x:Static LocaleKey.TerminalUpdate_Website_Alternative}}"/>
+        <HyperlinkButton
+          MinHeight="0" Padding="0"
+          VerticalAlignment="Center"
+          Content="{I18N {x:Static LocaleKey.TerminalUpdate_Website_OpenDownload}}"
+          NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteUri}"
+          TextElement.Foreground="{DynamicResource InfoColor}"/>
+      </WrapPanel>
+    </StackPanel>
+  </DockPanel>
 </UserControl>

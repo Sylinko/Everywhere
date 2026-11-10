@@ -30,16 +30,22 @@ public sealed record LinuxUpdateSettings(UpdateChannel Channel, ProxySettings Pr
             var binder = new SettingsPatchBinder();
             if (shouldReadChannel && root["Common"] is not null and not JsonObject ||
                 shouldReadProxy && root["Proxy"] is not null and not JsonObject)
+            {
                 throw new InvalidDataException("Invalid update or proxy settings section.");
+            }
             if (shouldReadChannel && root["Common"] is JsonObject commonObject && commonObject.TryGetPropertyValue("UpdateChannel", out var channel))
+            {
                 binder.Patch(new JsonObject { ["UpdateChannel"] = channel?.DeepClone() }, common);
+            }
             if (shouldReadProxy && root["Proxy"] is JsonObject proxyObject)
             {
                 binder.Patch(proxyObject, proxy);
             }
             if (binder.Diagnostics.Any(diagnostic => diagnostic.Kind != SettingsEngineDiagnosticKind.UnknownMember && diagnostic.Severity >= SettingsEngineDiagnosticSeverity.Warning) ||
                 !Enum.IsDefined(common.UpdateChannel))
+            {
                 throw new InvalidDataException("Invalid saved update or proxy settings. Correct them in Everywhere before retrying.");
+            }
         }
         return new LinuxUpdateSettings(SoftwareUpdater.ResolveUpdateChannel(common.UpdateChannel), proxy);
     }
