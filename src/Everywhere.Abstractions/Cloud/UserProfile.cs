@@ -8,6 +8,12 @@ namespace Everywhere.Cloud;
 /// </summary>
 public sealed partial class UserProfile : ObservableObject
 {
+    /// <summary>
+    /// Stable authenticated account identity from OIDC userinfo, independent of email or name.
+    /// </summary>
+    [JsonPropertyName("sub")]
+    public string? Subject { get; init; }
+
     [ObservableProperty]
     [JsonPropertyName("name")]
     public required partial string Name { get; set; }

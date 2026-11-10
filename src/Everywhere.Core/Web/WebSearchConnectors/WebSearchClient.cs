@@ -27,8 +27,7 @@ public abstract class WebSearchClient<TResponse>(HttpClient httpClient, Range va
         {
             count = Math.Clamp(count, validCountRange.Start.Value, validCountRange.End.Value);
 
-            var requestMessage = CreateSearchRequest(query, count);
-            if (requestMessage.Content is not null) await requestMessage.Content.LoadIntoBufferAsync(cancellationToken).ConfigureAwait(false);
+            using var requestMessage = CreateSearchRequest(query, count);
 
             using var responseMessage = await httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
             if (!responseMessage.IsSuccessStatusCode)

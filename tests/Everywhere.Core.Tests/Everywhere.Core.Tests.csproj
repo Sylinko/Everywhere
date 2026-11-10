@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\..\src\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
   </ItemGroup>
 
   <Import Project="..\..\src\Build.Patches.targets"/>

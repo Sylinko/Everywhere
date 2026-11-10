@@ -43,6 +43,14 @@
             <Button.Flyout>
               <Flyout
                 Placement="Top" VerticalOffset="-8">
+                <Interaction.Behaviors>
+                  <EventTriggerBehavior EventName="Opened">
+                    <InvokeCommandAction Command="{x:Static v:UserProfileCard.RefreshUserProfileCommand}"/>
+                  </EventTriggerBehavior>
+                  <EventTriggerBehavior EventName="Closed">
+                    <InvokeCommandAction Command="{Binding Cancel, Source={x:Static v:UserProfileCard.RefreshUserProfileCommand}}"/>
+                  </EventTriggerBehavior>
+                </Interaction.Behaviors>
                 <v:UserProfileCard
                   Width="240" Margin="8"
                   ShowActionsButton="{TemplateBinding ShowActionsButton}"/>
