@@ -117,6 +117,7 @@ public sealed class UpdatePresentationTests
                 new Uri("avares://ShadUI/Controls/Resources.axaml")));
         }
         var updater = Substitute.For<ISoftwareUpdater>();
+        updater.TerminalUpdateHandler.Returns((ITerminalUpdateHandler?)null);
         updater.IsUpdateActionVisible.Returns(true);
         updater.PerformUpdateAsync(Arg.Any<CancellationToken>()).Returns(Task.FromException(new IOException("Download failed")));
         var button = new SoftwareUpdateButton { SoftwareUpdater = updater };

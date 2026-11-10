@@ -1,232 +1,261 @@
-import contextlib
 import hashlib
 import importlib.util
 import io
 import json
 import os
 from pathlib import Path
+import pty
+import select
 import subprocess
+import sys
+import tarfile
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
-spec = importlib.util.spec_from_file_location('updater', Path(__file__).resolve().parents[2] / 'src/Everywhere.Linux/Update/linux-update.py')
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / 'installer.py'
+if not SOURCE.exists():
+    SOURCE = ROOT.parent / 'src/Everywhere.Linux/Update/linux-update.py'
+spec = importlib.util.spec_from_file_location('installer', SOURCE)
 u = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(u)
-PAYLOAD = b'isolated package fixture; never a real installation'
 
 
-def release(version='1.2.0', ext='deb', arch='x64', **changes):
-    name = 'Everywhere-Linux-%s-v%s.%s' % (arch, version, ext)
-    result = {'tag_name': 'v' + version, 'draft': False, 'prerelease': '-canary.' in version,
-              'assets': [{'name': name, 'state': 'uploaded', 'size': len(PAYLOAD),
-                          'digest': 'sha256:' + hashlib.sha256(PAYLOAD).hexdigest(),
-                          'browser_download_url': 'https://github.com/pasical/Everywhere/releases/download/v%s/%s' % (version, name)}]}
-    result.update(changes)
-    return result
+def asset(data=b'fixture'):
+    return {'url': 'https://downloads.example.test/payload', 'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
 
 
-class SelectionTests(unittest.TestCase):
-    def select(self, items, channel='stable', arch='x64', ext='deb'):
-        return u.select_release(items, channel, arch, ext, 'pasical/Everywhere')
+def catalog(channel='stable', version='1.2.0', data=b'fixture'):
+    downloads = {'deb': asset(data), 'rpm': asset(data), 'tar.zst': asset(data)}
+    release = {'version': version, 'assets': {'x64': downloads}}
+    return {'schema': 1, 'channels': {channel: release}}
 
-    def test_numeric_version_order(self):
-        self.assertEqual(self.select([release('1.9.0'), release('1.10.0')])[0], '1.10.0')
 
-    def test_stable_excludes_canary_and_draft(self):
-        self.assertEqual(self.select([release(), release('2.0.0-canary.1'), release('3.0.0', draft=True)])[0], '1.2.0')
+class InstallerTests(unittest.TestCase):
+    def test_only_local_package_commands(self):
+        for manager, prefix in [('apt-get', ['apt-get', '--no-remove', 'install']), ('dnf', ['dnf', 'install']), ('pacman', ['pacman', '-U'])]:
+            self.assertEqual(u.package_command(manager, '/tmp/file'), prefix + ['/tmp/file'])
 
-    def test_canary_numeric_order(self):
-        self.assertEqual(self.select([release('2.0.0-canary.9'), release('2.0.0-canary.10')], 'canary')[0], '2.0.0-canary.10')
+    def test_supported_systems_and_unknown_rejected(self):
+        with patch.object(u.shutil, 'which', return_value='/bin/tool'), patch.object(u.Path, 'exists', return_value=False):
+            for distro, version, manager in [('arch', '', 'pacman'), ('ubuntu', '24.04', 'apt-get'), ('debian', '14', 'apt-get'), ('fedora', '44', 'dnf')]:
+                self.assertEqual(u.backend({'ID': distro, 'VERSION_ID': version}), manager)
+            for distro in ['nixos', 'alpine', 'unknown']:
+                with self.assertRaises(u.UpdateError):
+                    u.backend({'ID': distro})
 
-    def test_stable_after_canary(self):
-        self.assertGreater(u.version_key('1.0.0'), u.version_key('1.0.0-canary.99'))
-
-    def test_no_silent_fallback_to_older_complete_release(self):
+    def test_channel_missing_asset_and_wrong_channel_rejected(self):
+        self.assertEqual(u.select_package(catalog(), 'stable', 'x64', 'pacman')[0], '1.2.0')
+        for args in [('canary', 'x64', 'pacman'), ('stable', 'arm64', 'dnf')]:
+            with self.assertRaises(u.UpdateError):
+                u.select_package(catalog(), *args)
         with self.assertRaises(u.UpdateError):
-            self.select([release(), release('2.0.0', assets=[])])
+            u.select_package(catalog('canary'), 'canary', 'x64', 'apt-get')
 
-    def test_missing_or_duplicate_asset(self):
-        for assets in ([], release()['assets'] * 2):
-            with self.subTest(assets=assets), self.assertRaises(u.UpdateError):
-                self.select([release(assets=assets)])
+    def test_corrupted_and_insecure_downloads_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'payload'
+            path.write_bytes(b'fixture')
+            u.verify_file(path, asset())
+            path.write_bytes(b'corrupt')
+            with self.assertRaises(u.UpdateError):
+                u.verify_file(path, asset())
+            bad = dict(asset(), url='http://unsafe.test/file')
+            with self.assertRaises(u.UpdateError):
+                u.validate_asset(bad)
 
-    def test_bad_digest_size_url_and_state(self):
-        for key, value in [('digest', None), ('digest', 'sha256:123'), ('size', 0), ('size', True),
-                           ('browser_download_url', 'https://attacker.invalid/evil.deb'), ('state', 'new')]:
-            item = release()
-            item['assets'][0][key] = value
-            with self.subTest(key=key), self.assertRaises(u.UpdateError):
-                self.select([item])
-
-    def test_arm_rpm_selection(self):
-        self.assertEqual(self.select([release(ext='rpm', arch='arm64')], arch='arm64', ext='rpm')[0], '1.2.0')
-
-    def test_channel_flag_mismatch(self):
-        with self.assertRaises(u.UpdateError):
-            self.select([release(prerelease=True)])
-
-    def test_unsupported_versions_and_architectures(self):
-        for value in ['../bad', '1.0.0;touch /tmp/bad', '1.0.0-beta.1']:
+    def test_malformed_download_metadata_fails_with_a_clean_error(self):
+        for value in (None, 123, []):
             with self.assertRaises(u.UpdateError):
                 u.version_key(value)
-        with self.assertRaises(u.UpdateError):
-            u.architecture('i686')
-
-    def test_digest_and_size_checks(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / 'package'
-            asset = release()['assets'][0]
-            path.write_bytes(PAYLOAD)
-            u.verify_file(path, asset)
-            for body in [b'bad', b'x' * len(PAYLOAD)]:
-                path.write_bytes(body)
-                with self.assertRaises(u.UpdateError):
-                    u.verify_file(path, asset)
-
-    def test_http_and_redirect_downgrade_rejected(self):
-        with self.assertRaises(u.UpdateError):
-            u.fetch('http://example.com/pkg')
-        with self.assertRaises(u.UpdateError):
-            u.HTTPSRedirect().redirect_request(None, None, 302, '', {}, 'http://example.com/pkg')
-
-
-class RoutingTests(unittest.TestCase):
-    def detect(self, distro, responses, tools):
-        with patch.object(u, 'probe', side_effect=lambda *args: responses.get(args, '')), \
-             patch.object(u.shutil, 'which', side_effect=lambda name: '/bin/' + name if name in tools else None), \
-             patch.object(u.Path, 'exists', return_value=False):
-            return u.detect(distro)
-
-    def test_debian_derivatives_use_installed_owner(self):
-        for distro in ['debian', 'ubuntu', 'linuxmint', 'pop', 'kali', 'unknown']:
-            with self.subTest(distro=distro):
-                result = self.detect({'ID': distro}, {('dpkg-query', '-W', '-f=${Status}\t${Version}\t${Architecture}', 'everywhere'): 'install ok installed\t1.0.0\tamd64'}, {'apt-get'})
-                self.assertEqual(result[0], 'apt-get')
-
-    def test_rpm_managers(self):
-        for distro, tools, expected in [('fedora', {'dnf', 'yum'}, 'dnf'), ('rocky', {'dnf'}, 'dnf'), ('centos', {'yum'}, 'yum'), ('opensuse-tumbleweed', {'zypper', 'dnf'}, 'zypper'), ('derivative', {'zypper'}, 'zypper')]:
-            with self.subTest(distro=distro):
-                result = self.detect({'ID': distro, 'ID_LIKE': 'suse' if distro == 'derivative' else ''}, {('rpm', '-q', '--qf', '%{VERSION}\t%{ARCH}', 'everywhere'): '1.0.0\tx86_64'}, tools)
-                self.assertEqual(result[0], expected)
-
-    def test_aur_helpers(self):
-        for helper in ['yay', 'paru']:
-            self.assertEqual(self.detect({'ID': 'arch'}, {('pacman', '-Q', 'everywhere-bin'): 'everywhere-bin 1.0.0-1'}, {helper})[0], helper)
-
-    def test_repo_owned_arch_package(self):
-        result = self.detect({'ID': 'arch'}, {('pacman', '-Q', 'everywhere'): 'everywhere 1.0.0-1', ('pacman', '-Sl'): 'extra everywhere 1.0.0-1 [installed]'}, {'pacman'})
-        self.assertEqual(result[0], 'pacman')
-
-    def test_unsupported_systems_and_missing_installation(self):
-        for distro in ['nixos', 'alpine', 'bazzite', 'microos', 'debian']:
-            with self.subTest(distro=distro), self.assertRaises(u.UpdateError):
-                self.detect({'ID': distro}, {}, set())
-
-    def test_ambiguous_installation_rejected(self):
-        responses = {('rpm', '-q', '--qf', '%{VERSION}\t%{ARCH}', 'everywhere'): '1.0.0\tx86_64', ('pacman', '-Q', 'everywhere-bin'): 'everywhere-bin 1.0.0-1'}
-        with self.assertRaises(u.UpdateError):
-            self.detect({'ID': 'fedora'}, responses, {'dnf', 'yay'})
-
-    def test_commands_preserve_argument_boundaries(self):
-        path = '/tmp/path with spaces/package.rpm'
-        for manager in ['apt-get', 'dnf', 'yum', 'zypper']:
-            cmd = u.command(manager, path)
-            self.assertEqual(cmd[-1], path)
-            self.assertNotIn('--nogpgcheck', cmd)
-        self.assertEqual(u.command('yay', 'everywhere-bin'), ['yay', '-Syu', 'everywhere-bin'])
-
-    def test_package_metadata_mismatch(self):
-        with patch.object(u, 'probe', return_value='wrong'), self.assertRaises(u.UpdateError):
-            u.validate_package(Path('/tmp/mock.deb'), 'apt-get', '1.2.0', 'x64')
-
-
-class FlowTests(unittest.TestCase):
-    def run_flow(self, args, current='1.0.0', manager='apt-get', after='1.2.0', bad_download=False, transaction_error=False):
-        with tempfile.TemporaryDirectory() as directory, contextlib.ExitStack() as stack:
-            fixture = Path(directory) / 'release.json'
-            fixture.write_text(json.dumps([release(ext='deb' if manager == 'apt-get' else 'rpm')]))
-            stack.enter_context(patch.object(u.platform, 'system', return_value='Linux'))
-            stack.enter_context(patch.object(u.platform, 'machine', return_value='x86_64'))
-            stack.enter_context(patch.object(u, 'distro_info', return_value={'ID': 'ubuntu'}))
-            arch = 'amd64' if manager == 'apt-get' else 'x86_64'
-            installed = (manager, current, arch, 'everywhere')
-            detect = stack.enter_context(patch.object(u, 'detect', side_effect=[installed, installed, (manager, after, arch, 'everywhere')]))
-            stack.enter_context(patch.object(u, 'lock', side_effect=contextlib.nullcontext))
-            validate = stack.enter_context(patch.object(u, 'validate_package'))
-            execute = stack.enter_context(patch.object(u, 'execute', side_effect=subprocess.CalledProcessError(7, 'package-manager') if transaction_error else None))
-            def download(url, path, size):
-                path.write_bytes(b'bad' if bad_download else PAYLOAD)
-            fetch = stack.enter_context(patch.object(u, 'fetch', side_effect=download))
-            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
-            result = u.main(['--release-json', str(fixture)] + args)
-            return result, fetch.call_count, validate.call_count, execute.call_count, detect.call_count
-
-    def test_preview_has_no_download_or_transaction(self):
-        self.assertEqual(self.run_flow([]), (0, 0, 0, 0, 1))
-
-    def test_saved_channel_is_used_by_default(self):
-        with patch.dict(os.environ, {'EVERYWHERE_UPDATE_CHANNEL': 'canary'}):
+        for value in (dict(asset(), url=None), dict(asset(), sha256=None)):
             with self.assertRaises(u.UpdateError):
-                self.run_flow([])
+                u.validate_asset(value)
+        for value in ({'schema': 1, 'channels': []},
+                      {'schema': 1, 'channels': {'stable': ['not a release']}},
+                      {'schema': 1, 'channels': {'stable': {'version': '1.2.0', 'assets': []}}}):
+            with self.assertRaises(u.UpdateError):
+                u.select_package(value, 'stable', 'x64', 'apt-get')
 
-    def test_explicit_channel_overrides_saved_channel(self):
-        with patch.dict(os.environ, {'EVERYWHERE_UPDATE_CHANNEL': 'canary'}):
-            self.assertEqual(self.run_flow(['--channel', 'stable'])[1:4], (0, 0, 0))
+    def test_arch_version_normalization(self):
+        self.assertEqual(u.normalize_version('0.9.0canary.20261029.29-8', 'pacman'), '0.9.0-canary.20261029.29')
+        self.assertEqual(u.normalize_version('1.2.0~canary.3', 'apt-get'), '1.2.0-canary.3')
+        self.assertEqual(u.normalize_version('2:0.9.0canary.20261029.29-8', 'pacman'),
+                         '0.9.0-canary.20261029.29')
 
-    def test_fixed_target_matches_requested_release(self):
-        self.assertEqual(self.run_flow(['--version', '1.2.0'])[1:4], (0, 0, 0))
+    def test_installer_refresh_verified_cached_and_exit_code_propagated(self):
+        data = b'print("new installer")'
+        manifest = {'schema': 1, 'protocol': 1, 'version': '0.2.0', 'asset': asset(data)}
+        with tempfile.TemporaryDirectory() as temporary, patch.object(u.Path, 'home', return_value=Path(temporary)), \
+                patch.object(u, 'read_json', return_value=manifest), patch.object(u, 'fetch') as fetch, patch.object(u.subprocess, 'run') as run:
+            fetch.side_effect = lambda url, path, limit: path.write_bytes(data)
+            run.return_value.returncode = 17
+            self.assertEqual(u.refresh_installer('https://site.test/installer.json', ['update']), 17)
+            argv = run.call_args.args[0]
+            self.assertIn('--no-installer-update', argv)
+            self.assertEqual(Path(argv[1]).read_bytes(), data)
+            self.assertEqual(u.refresh_installer('https://site.test/installer.json', ['update']), 17)
+            self.assertEqual(fetch.call_count, 1)
+            Path(argv[1]).write_bytes(b'corrupt cache')
+            with self.assertRaises(u.UpdateError):
+                u.refresh_installer('https://site.test/installer.json', ['update'])
 
-    def test_unavailable_fixed_target_does_not_fall_back(self):
+    def test_provided_package_names_are_deduplicated(self):
+        with patch.object(u, 'probe', return_value='everywhere-bin 1.2.0-1'):
+            self.assertEqual(u.installed('pacman'), ('everywhere-bin', '1.2.0-1'))
+
+    def test_fork_catalog_uses_release_assets_and_ignores_installer_tags(self):
+        data = b'archive'
+        url = 'https://github.com/pasical/Everywhere/releases/download/v1.2.0/Everywhere-Linux-x64-v1.2.0.tar.zst'
+        releases = [{'tag_name': 'linux-installer-latest', 'prerelease': False},
+                    {'tag_name': 'v1.2.0', 'prerelease': False, 'assets': [{
+                        'name': 'Everywhere-Linux-x64-v1.2.0.tar.zst', 'state': 'uploaded',
+                        'size': len(data), 'digest': 'sha256:' + hashlib.sha256(data).hexdigest(),
+                        'browser_download_url': url}]}]
+        with patch.object(u, 'fetch', return_value=json.dumps(releases).encode()) as fetch:
+            target, item = u.select_package(u.read_catalog('github:pasical/Everywhere'), 'stable', 'x64', 'pacman')
+            self.assertEqual(target, '1.2.0')
+            self.assertEqual(item['url'], url)
+            self.assertIn('api.github.com/repos/pasical/Everywhere/releases', fetch.call_args.args[0])
+
+    def test_arch_archive_traversal_rejected_before_build(self):
+        data = io.BytesIO()
+        with tarfile.open(fileobj=data, mode='w') as archive:
+            info = tarfile.TarInfo('../escape')
+            info.size = 3
+            archive.addfile(info, io.BytesIO(b'bad'))
+        data.seek(0)
+        with tempfile.TemporaryDirectory() as temporary, patch.object(u.os, 'geteuid', return_value=1000), \
+                patch.object(u.shutil, 'which', return_value='/bin/tool'), patch.object(u.subprocess, 'Popen') as popen, \
+                patch.object(u.subprocess, 'run') as run:
+            popen.return_value.__enter__.return_value.stdout = data
+            with self.assertRaises(u.UpdateError):
+                u.prepare_arch(Path('/tmp/archive'), Path(temporary), '1.2.0', 'everywhere-bin', SOURCE, 0)
+            run.assert_not_called()
+
+    def test_arch_repackage_preserves_epoch_and_accepts_detached_signature(self):
+        data = io.BytesIO()
+        with tarfile.open(fileobj=data, mode='w') as archive:
+            for name in ('Everywhere', 'Everywhere.Watchdog'):
+                info = tarfile.TarInfo(name)
+                info.size = 3
+                archive.addfile(info, io.BytesIO(b'app'))
+        data.seek(0)
+        with tempfile.TemporaryDirectory() as temporary, patch.object(u.os, 'geteuid', return_value=1000), \
+                patch.object(u.shutil, 'which', return_value='/bin/tool'), patch.object(u.subprocess, 'Popen') as popen, \
+                patch.object(u, 'execute') as execute:
+            directory = Path(temporary)
+            package = directory / 'everywhere-bin-1.2.0-1-x86_64.pkg.tar.zst'
+            def build(args, privileged, cwd):
+                self.assertIn('--syncdeps', args)
+                self.assertIn('epoch=2', (cwd / 'PKGBUILD').read_text())
+                package.write_bytes(b'package')
+                Path(str(package) + '.sig').write_bytes(b'signature')
+            execute.side_effect = build
+            popen.return_value.__enter__.return_value.stdout = data
+            popen.return_value.__enter__.return_value.wait.return_value = 0
+            self.assertEqual(u.prepare_arch(directory / 'archive', directory, '1.2.0',
+                                            'everywhere-bin', SOURCE, 2), package)
+
+    def test_bad_installer_never_executed(self):
+        manifest = {'schema': 1, 'protocol': 1, 'version': '0.2.0', 'asset': asset()}
+        with tempfile.TemporaryDirectory() as temporary, patch.object(u.Path, 'home', return_value=Path(temporary)), \
+                patch.object(u, 'read_json', return_value=manifest), patch.object(u, 'fetch') as fetch, patch.object(u.subprocess, 'run') as run:
+            fetch.side_effect = lambda url, path, limit: path.write_bytes(b'bad')
+            with self.assertRaises(u.UpdateError):
+                u.refresh_installer('https://site.test/installer.json', ['install'])
+            run.assert_not_called()
+
+    def test_network_failure_uses_bundled_installer(self):
+        for error in (OSError('offline'), u.DownloadError('application transport failed')):
+            with patch.object(u, 'read_json', side_effect=error):
+                self.assertIsNone(u.refresh_installer('https://site.test/installer.json', []))
+
+    def run_flow(self, current=None, fail=False, corrupt=False, dry=False):
+        data = b'package bytes'
+        state = [current]
+        calls = []
+        def transaction(argv, privileged):
+            calls.append(argv)
+            if fail:
+                raise subprocess.CalledProcessError(7, argv)
+            state[0] = ('everywhere', '1.2.0')
+        with patch.object(u.platform, 'system', return_value='Linux'), patch.object(u.platform, 'machine', return_value='x86_64'), \
+                patch.object(u, 'distro_info', return_value={'ID': 'ubuntu'}), patch.object(u, 'backend', return_value='apt-get'), patch.object(u, 'installed', side_effect=lambda manager: state[0]), \
+                patch.object(u, 'read_catalog', return_value=catalog(data=data)), patch.object(u, 'validate_package'), \
+                patch.object(u, 'fetch', side_effect=lambda url, path, limit: path.write_bytes(b'bad' if corrupt else data)), \
+                patch.object(u, 'execute', side_effect=transaction), tempfile.TemporaryDirectory() as temporary, \
+                patch.object(u.Path, 'home', return_value=Path(temporary)):
+            args = ['--no-installer-update', '--channel', 'stable'] + (['--dry-run'] if dry else [])
+            result = u.main(args)
+        return result, calls
+
+    def test_first_install_and_upgrade(self):
+        for current in [None, ('everywhere', '1.0.0')]:
+            result, calls = self.run_flow(current=current)
+            self.assertEqual(result, 0)
+            self.assertEqual(calls[0][:3], ['apt-get', '--no-remove', 'install'])
+
+    def test_preview_and_no_downgrade(self):
+        for kwargs in [{'dry': True}, {'current': ('everywhere', '2.0.0')}]:
+            result, calls = self.run_flow(**kwargs)
+            self.assertEqual(result, 0)
+            self.assertEqual(calls, [])
+
+    def test_corruption_and_failed_transaction(self):
         with self.assertRaises(u.UpdateError):
-            self.run_flow(['--apply', '--version', '1.1.0'])
-
-    def test_dry_run_has_no_transaction(self):
-        self.assertEqual(self.run_flow(['--dry-run'])[1:4], (0, 0, 0))
-
-    def test_equal_or_newer_installation_is_noop(self):
-        for current in ['1.2.0', '2.0.0']:
-            self.assertEqual(self.run_flow(['--apply'], current=current)[1:4], (0, 0, 0))
-
-    def test_all_native_apply_paths(self):
-        for manager in ['apt-get', 'dnf', 'yum', 'zypper']:
-            with self.subTest(manager=manager):
-                self.assertEqual(self.run_flow(['--apply'], manager=manager), (0, 1, 1, 1, 3))
-
-    def test_download_failure(self):
-        with self.assertRaises(u.UpdateError):
-            self.run_flow(['--apply'], bad_download=True)
-
-    def test_package_manager_failure_propagates(self):
+            self.run_flow(corrupt=True)
         with self.assertRaises(subprocess.CalledProcessError):
-            self.run_flow(['--apply'], transaction_error=True)
+            self.run_flow(fail=True)
 
-    def test_false_success_rejected(self):
-        with self.assertRaises(u.UpdateError):
-            self.run_flow(['--apply'], after='1.0.0')
-
-    def test_arch_requires_explicit_system_upgrade(self):
-        with patch.object(u.platform, 'system', return_value='Linux'), patch.object(u.platform, 'machine', return_value='x86_64'), patch.object(u, 'distro_info', return_value={}), patch.object(u, 'detect', return_value=('yay', '1.0-1', '', 'everywhere-bin')), patch.object(u, 'execute') as execute, contextlib.redirect_stdout(io.StringIO()):
+    def test_native_package_metadata_checked(self):
+        with patch.object(u, 'probe', side_effect=['everywhere', '1.2.0', 'amd64']):
+            u.validate_package(Path('/tmp/example.deb'), 'apt-get', '1.2.0', 'x64')
+        with patch.object(u, 'probe', side_effect=['other-app', '1.2.0', 'amd64']):
             with self.assertRaises(u.UpdateError):
-                u.main(['--apply'])
-            execute.assert_not_called()
+                u.validate_package(Path('/tmp/example.deb'), 'apt-get', '1.2.0', 'x64')
 
-    def test_os_release_not_executed(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / 'os-release'
-            marker = Path(directory) / 'executed'
-            path.write_text('ID="ubuntu"\nNAME="$(touch %s)"\n' % marker)
-            self.assertEqual(u.distro_info(path)['ID'], 'ubuntu')
-            self.assertFalse(marker.exists())
-
-    def test_lock_excludes_concurrent_updater_and_releases(self):
-        with tempfile.TemporaryDirectory() as directory, patch.object(u.Path, 'home', return_value=Path(directory)):
-            with u.lock():
-                with self.assertRaises(u.UpdateError):
-                    with u.lock():
-                        self.fail('second updater acquired lock')
-            with u.lock():
-                pass
+    @unittest.skipUnless(sys.platform.startswith('linux'), 'controlling-terminal acceptance runs on Linux')
+    def test_menu_arrows_and_cancel_with_controlling_terminal(self):
+        # forkpty supplies /dev/tty; the input stream is deliberately not a TTY.
+        for keys, expected, code in [(b'\x1b[B\r', b'RESULT:canary', 0), (b'\r', b'RESULT:stable', 0), (b'\x1b', b'CANCELED', 0)]:
+            pid, fd = pty.fork()
+            if pid == 0:
+                try:
+                    sys.stdin = io.StringIO('script bytes, not keyboard input')
+                    try:
+                        print('RESULT:' + u.choose_channel(), flush=True)
+                    except KeyboardInterrupt:
+                        print('CANCELED', flush=True)
+                    os._exit(0)
+                except BaseException:
+                    os._exit(1)
+            output = b''
+            deadline = time.monotonic() + 8
+            sent = False
+            try:
+                while time.monotonic() < deadline:
+                    if select.select([fd], [], [], 0.1)[0]:
+                        try:
+                            chunk = os.read(fd, 65536)
+                        except OSError:
+                            break
+                        if not chunk:
+                            break
+                        output += chunk
+                        if not sent and b'Navigate' in output:
+                            os.write(fd, keys)
+                            sent = True
+                self.assertIn(expected, output)
+                self.assertIn(b'\x1b[?25h', output)
+            finally:
+                os.close(fd)
+                if not sent:
+                    os.kill(pid, 9)
+                _, status = os.waitpid(pid, 0)
+                self.assertEqual(os.waitstatus_to_exitcode(status), code)
 
 
 if __name__ == '__main__':
