@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.Input;
 using Everywhere.Common;
 using Everywhere.Interop;
 using Everywhere.Terminal;
@@ -451,16 +450,18 @@ public sealed partial class ChatPluginSubagentDisplayBlock : ChatPluginDisplayBl
     {
         ChatData = chatData;
         ChatData.DurableChanged += HandleChildChanged;
-        ChatData.Metadata.PropertyChanged += HandleMetadataChanged;
+        ChatData.Metadata.DurableChanged += HandleMetadataChanged;
     }
 
     private void HandleChildChanged(object? sender, EventArgs e) => NotifyChanged();
 
-    private void HandleMetadataChanged(object? sender, PropertyChangedEventArgs e)
+    private void HandleMetadataChanged(object? sender, ChatMetadataField? field)
     {
-        if (e.PropertyName == nameof(ChatMetadata.Topic))
+        // The title is the independently edited metadata stored in the embedded payload.
+        // Content activity already arrives through ChatData.DurableChanged.
+        if (field == ChatMetadataFields.Topic)
         {
-            HandleChildChanged(sender, e);
+            HandleChildChanged(sender, EventArgs.Empty);
         }
     }
 
@@ -468,7 +469,7 @@ public sealed partial class ChatPluginSubagentDisplayBlock : ChatPluginDisplayBl
     {
         Owner = null;
         ChatData.DurableChanged -= HandleChildChanged;
-        ChatData.Metadata.PropertyChanged -= HandleMetadataChanged;
+        ChatData.Metadata.DurableChanged -= HandleMetadataChanged;
         ChatData.Dispose();
     }
 }

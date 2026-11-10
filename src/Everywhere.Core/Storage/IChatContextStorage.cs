@@ -32,8 +32,8 @@ public interface IChatContextStorage : IChatTurnLoader
     Task<ChatHistoryPage> ReadHistoryPageAsync(
         int take,
         ChatHistoryCursor? cursor = null,
-        CancellationToken cancellationToken = default,
-        ChatHistoryView view = ChatHistoryView.Recent);
+        ChatHistoryView view = ChatHistoryView.Recent,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Reads the most recently modified active conversation, regardless of pinning.
@@ -41,14 +41,10 @@ public interface IChatContextStorage : IChatTurnLoader
     Task<ChatMetadata?> GetMostRecentChatMetadataAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Commits pinning without changing the conversation's modification date or message history.
+    /// Commits a history pin without loading message history or changing activity time.
+    /// The caller publishes the new value only after this operation commits.
     /// </summary>
     Task SetPinnedAsync(Guid chatId, bool isPinned, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Removes session-only conversations after all writers have stopped. Shared attachments are retained.
-    /// </summary>
-    Task DeleteTemporaryChatsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Loads detached lightweight topology for an active or archived conversation.
@@ -57,16 +53,13 @@ public interface IChatContextStorage : IChatTurnLoader
     Task<ChatData> GetChatContextAsync(ChatMetadata metadata, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Persists pending node revisions and conversation metadata in one transaction.
-    /// Relationship-only changes do not load or rewrite payloads; absent bodies are not deletions.
+    /// Persists explicit node, choice, and metadata changes in one transaction.
+    /// Choice-only writes do not load payloads; unchanged fields retain their stored values.
     /// </summary>
     Task SaveChatContextAsync(ChatWriteBatch batch, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Saves chat data metadata only (e.g., topic changes).
+    /// Saves explicitly changed metadata fields without loading the conversation.
     /// </summary>
-    /// <param name="metadata"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     Task SaveChatContextMetadataAsync(ChatMetadataWrite metadata, CancellationToken cancellationToken = default);
 }

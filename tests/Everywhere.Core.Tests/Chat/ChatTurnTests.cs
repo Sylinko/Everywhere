@@ -60,9 +60,9 @@ public sealed class ChatTurnTests
             data.DurableChanged += (_, _) =>
             {
                 // Save and acknowledge at the notification boundary, before the caller resumes.
-                var pending = data.CapturePendingWrites();
+                var pending = data.PersistenceDirtyState.Capture();
                 captures.Add(ChatPayloadCapture.Capture(node.Message));
-                data.PersistenceDirtyState.Acknowledge(pending.Select(item => item.Change));
+                data.PersistenceDirtyState.Acknowledge(pending);
             };
             var finishedAt = DateTimeOffset.UtcNow;
             switch (outcome)
@@ -202,6 +202,11 @@ public sealed class ChatTurnTests
         child.Add(new AssistantChatMessage());
         Assert.That(data.PersistenceDirtyState.Capture().Select(change => change.Node), Is.EqualTo(new[] { node }));
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
+        child.Metadata.Rename("local child title");
+        Assert.That(data.PersistenceDirtyState.Capture().Select(change => change.Node), Is.EqualTo(new[] { node }));
+        data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
+        child.Metadata.Topic = "committed child title";
+        Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
         using var activity = child.StartActivity(LucideIconKind.Server, new DirectLocaleKey("Working"), true);
         Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
     }

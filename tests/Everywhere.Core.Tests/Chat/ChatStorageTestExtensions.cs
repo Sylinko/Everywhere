@@ -16,9 +16,10 @@ internal static class ChatStorageTestExtensions
 
     public static async Task SaveDataAsync(this IChatContextStorage storage, ChatData data)
     {
-        var (batch, changes) = ChatWriteBatch.Capture(data);
+        var (batch, changes, metadataChanges) = ChatWriteBatch.Capture(data);
         await storage.SaveChatContextAsync(batch);
         data.PersistenceDirtyState.Acknowledge(changes);
+        data.Metadata.Acknowledge(metadataChanges);
     }
 
     public static async Task<RootChatContext> LoadContextAsync(this IChatContextStorage storage, Guid id)
