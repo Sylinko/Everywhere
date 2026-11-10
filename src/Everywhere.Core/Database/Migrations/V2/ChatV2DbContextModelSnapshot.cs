@@ -71,10 +71,153 @@ namespace Everywhere.Database.Migrations.V2
                         });
                 });
 
+            modelBuilder.Entity("Everywhere.Database.ChatSyncAccountEntity", b =>
+                {
+                    b.Property<string>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Generation")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("LocalRevision")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ScanCursor")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("AccountId");
+
+                    b.ToTable("SyncAccounts", (string)null);
+                });
+
+            modelBuilder.Entity("Everywhere.Database.ChatSyncChatEntity", b =>
+                {
+                    b.Property<string>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AppliedRevision")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("DiscoveredRevision")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte[]>("Head")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<bool>("IsContentUnavailable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.HasKey("AccountId", "ChatId");
+
+                    b.ToTable("SyncChats", (string)null);
+                });
+
+            modelBuilder.Entity("Everywhere.Database.ChatSyncPartEntity", b =>
+                {
+                    b.Property<string>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte[]>("Body")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.HasKey("AccountId", "ChatId", "Position");
+
+                    b.ToTable("SyncParts", (string)null);
+                });
+
+            modelBuilder.Entity("Everywhere.Database.ChatSyncPendingEntity", b =>
+                {
+                    b.Property<string>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("BaseRevision")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("LocalRevision")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("AccountId", "ChatId", "Kind", "Key");
+
+                    b.ToTable("SyncPending", (string)null);
+                });
+
+            modelBuilder.Entity("Everywhere.Database.ChatSyncRemoteEntity", b =>
+                {
+                    b.Property<string>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Revision")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("AccountId", "ChatId", "Kind", "Key");
+
+                    b.ToTable("SyncRemote", (string)null);
+                });
+
+            modelBuilder.Entity("Everywhere.Database.ChatSyncSubmissionEntity", b =>
+                {
+                    b.Property<string>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("CapturedChanges")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<Guid>("CommitId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Header")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<byte[]>("QuotaRejection")
+                        .HasColumnType("BLOB");
+
+                    b.HasKey("AccountId", "ChatId");
+
+                    b.HasIndex("AccountId", "CommitId")
+                        .IsUnique();
+
+                    b.ToTable("SyncSubmissions", (string)null);
+                });
+
             modelBuilder.Entity("Everywhere.Database.ChatV2Entity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long?>("ArchivedAt")
@@ -83,7 +226,15 @@ namespace Everywhere.Database.Migrations.V2
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<byte[]>("ExtensionData")
+                        .HasColumnType("BLOB");
+
                     b.Property<bool>("IsPinned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsSyncExcluded")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
@@ -93,7 +244,11 @@ namespace Everywhere.Database.Migrations.V2
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("LocalAccountId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Topic")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<long>("UpdatedAt")
@@ -128,6 +283,7 @@ namespace Everywhere.Database.Migrations.V2
                         .HasColumnType("TEXT");
 
                     b.Property<string>("BlobSha256")
+                        .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
                     b.HasKey("ChatContextId", "ChatNodeId", "BlobSha256");
@@ -183,6 +339,15 @@ namespace Everywhere.Database.Migrations.V2
                     b.HasIndex("ChatContextId", "TurnId");
 
                     b.ToTable("Nodes", (string)null);
+                });
+
+            modelBuilder.Entity("Everywhere.Database.ChatSyncPartEntity", b =>
+                {
+                    b.HasOne("Everywhere.Database.ChatSyncSubmissionEntity", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Everywhere.Database.ChatV2NodeBlobEntity", b =>

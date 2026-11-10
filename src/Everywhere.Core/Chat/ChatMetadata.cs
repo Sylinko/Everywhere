@@ -20,6 +20,11 @@ public enum ChatContextMetadataStates
 public partial class ChatMetadata(Guid id, DateTimeOffset dateCreated, DateTimeOffset dateModified, string? topic) : ObservableObject
 {
     /// <summary>
+    /// Maximum title length for new local edits, shared with the storage model.
+    /// </summary>
+    public const int MaximumTopicLength = 100;
+
+    /// <summary>
     /// Stable ID (Guid v7) to align with database primary key.
     /// </summary>
     [Key(0)]

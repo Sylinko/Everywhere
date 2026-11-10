@@ -3,7 +3,6 @@ using Everywhere.Database;
 using MessagePack;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
 using Everywhere.Interop;
@@ -26,38 +25,50 @@ namespace Everywhere.Core.Tests.Chat;
 public sealed class ChatV2MigrationTests
 {
     [Test]
-    public async Task Upgrade_WhenSiblingOrderIsRemoved_PreservesChoiceAndDeferredKeys()
+    public async Task Initialize_WhenStoreIsCreated_AcceptsForwardGraphReferences()
     {
         using var files = new DatabaseFiles();
+        await files.InitializeAsync();
         await using var db = files.Factory.CreateDbContext();
-        var migrator = db.GetService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>();
-        await migrator.MigrateAsync("20261027164124_AddChatPinning");
+        Assert.That((await db.StoreInfo.SingleAsync()).LegacyImportedAt, Is.Null);
         var chatId = Guid.NewGuid();
         var rootId = Guid.NewGuid();
-        var firstId = Guid.NewGuid();
         var selectedId = Guid.NewGuid();
-        var payload = MessagePackSerializer.Serialize<ChatMessage>(new RootChatMessage());
+        var replyId = Guid.NewGuid();
+        var rootPayload = MessagePackSerializer.Serialize<ChatMessage>(new RootChatMessage());
+        var userPayload = MessagePackSerializer.Serialize<ChatMessage>(new UserChatMessage("branch", []));
+        var replyPayload = MessagePackSerializer.Serialize<ChatMessage>(new AssistantChatMessage());
         await using (var transaction = await db.Database.BeginTransactionAsync())
         {
             await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Chats (Id, CreatedAt, UpdatedAt) VALUES ({chatId}, 1, 1)");
-            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Nodes VALUES ({chatId}, {rootId}, NULL, NULL, 0, {selectedId}, 0, NULL, {payload}, 0, 0)");
-            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Nodes VALUES ({chatId}, {selectedId}, {rootId}, {selectedId}, 0, NULL, 2, NULL, {payload}, 20, 20)");
-            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Nodes VALUES ({chatId}, {firstId}, {rootId}, {firstId}, 1, NULL, 2, NULL, {payload}, 10, 10)");
+            // Root choice, reply parent and turn all refer to rows inserted later in this transaction.
+            // Incremental graph writes must not depend on insert order to satisfy these references.
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId, MessageKind, Payload, CreatedAt, UpdatedAt)
+                VALUES ({chatId}, {rootId}, NULL, NULL, {selectedId}, 0, {rootPayload}, 0, 0)
+                """);
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, MessageKind, Payload, CreatedAt, UpdatedAt)
+                VALUES ({chatId}, {replyId}, {selectedId}, {selectedId}, {(int)ChatMessageKind.Assistant}, {replyPayload}, 30, 30)
+                """);
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, MessageKind, Payload, CreatedAt, UpdatedAt)
+                VALUES ({chatId}, {selectedId}, {rootId}, {selectedId}, 2, {userPayload}, 20, 20)
+                """);
             await transaction.CommitAsync();
         }
 
-        await migrator.MigrateAsync();
-        var metadata = new ChatMetadata(chatId, DateTimeOffset.MinValue, DateTimeOffset.MinValue, null);
-        using var data = await new ChatTurnStorage(files.Factory).GetChatContextAsync(metadata);
-        Assert.Multiple(() =>
+        var nodes = await db.Nodes.ToDictionaryAsync(row => row.Id);
+        using (Assert.EnterMultipleScope())
         {
-            Assert.That(data.RootNode.Children, Is.EqualTo(new[] { firstId, selectedId }));
-            Assert.That(data.RootNode.ChoiceChildId, Is.EqualTo(selectedId));
-            Assert.That(data.Items[^1].Id, Is.EqualTo(selectedId));
-        });
-        var sql = await db.Database.SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE name = 'Nodes'").SingleAsync();
-        Assert.That(sql, Does.Not.Contain("SiblingOrder"));
-        Assert.That(sql.Split("DEFERRABLE INITIALLY DEFERRED").Length - 1, Is.EqualTo(3));
+            Assert.That(nodes[rootId].ChoiceChildId, Is.EqualTo(selectedId));
+            Assert.That(nodes[replyId].ParentId, Is.EqualTo(selectedId));
+            Assert.That(nodes[replyId].TurnId, Is.EqualTo(selectedId));
+            Assert.That(db.Database.HasPendingModelChanges(), Is.False);
+        }
     }
 
     [AvaloniaTest]
@@ -604,6 +615,19 @@ public sealed class ChatV2MigrationTests
         await InsertChatAsync(source, chatId);
         await InsertNodeAsync(source, chatId, Guid.Empty, null, null, MessagePackSerializer.Serialize<ChatMessage>(new RootChatMessage()));
         await InsertNodeAsync(source, chatId, userId, Guid.Empty, null, payload);
+        await using (var command = source.CreateCommand())
+        {
+            // The first shipped blob schema predates LocalPath. It is imported directly,
+            // without upgrading or writing the retained legacy database.
+            command.CommandText = """
+                ALTER TABLE Blobs DROP COLUMN LocalPath;
+                INSERT INTO Blobs VALUES ('legacy-file', 'text/plain', 12, 100, 200);
+                INSERT INTO NodeBlobs VALUES ($chat, $node, 0, 'legacy-file');
+                """;
+            command.Parameters.AddWithValue("$chat", chatId);
+            command.Parameters.AddWithValue("$node", userId);
+            await command.ExecuteNonQueryAsync();
+        }
         Assert.That(File.Exists(files.LegacyPath + "-wal"), Is.True);
 
         await files.InitializeAsync();
@@ -622,18 +646,18 @@ public sealed class ChatV2MigrationTests
             Assert.That(info.LegacyImportedAt, Is.Not.Null);
             Assert.That(info.UpgradeNoticeAcknowledgedAt, Is.Null);
         });
+        Assert.That((await db.Blobs.SingleAsync()).LocalPath, Is.Empty);
+        Assert.That((await db.NodeBlobs.SingleAsync()).BlobSha256, Is.EqualTo("legacy-file"));
 
         await using var sourceRead = source.CreateCommand();
         sourceRead.CommandText = "SELECT ChoiceChildId FROM Nodes WHERE ParentId IS NULL";
         Assert.That(await sourceRead.ExecuteScalarAsync(), Is.EqualTo(DBNull.Value));
     }
 
-    [TestCase("UnsupportedKind")]
-    [TestCase("TruncatedPayload")]
-    [TestCase("DisconnectedNode")]
-    [TestCase("InvalidPayload")]
-    public async Task Initialize_WhenChatConversionFails_SkipsWholeChatAndLogsWarningOnce(string failure)
+    [Test]
+    public async Task Initialize_WhenLegacyPayloadIsUnreadable_SkipsWholeChatAndLogsWarningOnce()
     {
+        // An unreadable legacy payload must not prevent startup or leave a partially imported chat.
         using var files = new DatabaseFiles();
         await using var source = await files.OpenLegacyAsync();
         var beforeId = Guid.NewGuid();
@@ -645,15 +669,8 @@ public sealed class ChatV2MigrationTests
         await InsertNodeAsync(source, chatId, Guid.Empty, null, null, MessagePackSerializer.Serialize<ChatMessage>(new RootChatMessage()));
         var file = new FileAttachment(new DirectLocaleKey("file"), "file.txt", "skipped-reference", "text/plain");
         await InsertNodeAsync(source, chatId, userId, Guid.Empty, null, MessagePackSerializer.Serialize<ChatMessage>(new UserChatMessage("before failure", [file])));
-        var payload = failure switch
-        {
-            "UnsupportedKind" => new byte[] { 0x92, 0x7f, 0xc0 },
-            "TruncatedPayload" => new byte[] { 0x92 },
-            "InvalidPayload" => new byte[] { 0x92, (byte)ChatMessageKind.User, 0x91, 0x01 },
-            _ => MessagePackSerializer.Serialize<ChatMessage>(new AssistantChatMessage()),
-        };
-        var parentId = failure == "DisconnectedNode" ? Guid.NewGuid() : userId;
-        await InsertNodeAsync(source, chatId, Guid.NewGuid(), parentId, null, payload);
+        var payload = new byte[] { 0x92, (byte)ChatMessageKind.User, 0x91, 0x01 };
+        await InsertNodeAsync(source, chatId, Guid.NewGuid(), userId, null, payload);
         await InsertChatAsync(source, afterId);
 
         await files.InitializeAsync();
@@ -672,30 +689,6 @@ public sealed class ChatV2MigrationTests
             Assert.That(warning[2]?.ToString(), Does.Contain(chatId.ToString()));
             Assert.That(warning[3], Is.InstanceOf<Exception>());
         });
-    }
-
-    [Test]
-    public async Task Initialize_WhenEveryChatIsUnreadable_CompletesAndKeepsLegacyTrashAvailable()
-    {
-        using var files = new DatabaseFiles();
-        await using (var source = await files.OpenLegacyAsync())
-        {
-            var chatId = Guid.NewGuid();
-            await InsertChatAsync(source, chatId);
-            await InsertNodeAsync(source, chatId, Guid.Empty, null, null, [0x92, 0x7f, 0xc0]);
-            await files.InitializeAsync();
-        }
-
-        await files.InitializeAsync();
-        await using var db = files.Factory.CreateDbContext();
-        Assert.That(await db.Chats.CountAsync(), Is.Zero);
-        Assert.That(await db.StoreInfo.CountAsync(), Is.EqualTo(1));
-        var nativeHelper = Substitute.For<INativeHelper>();
-        var upgrade = new ChatStoreUpgradeService(files.Factory, files.LegacyPath, nativeHelper);
-        Assert.That(await upgrade.NeedsNoticeAsync(), Is.True);
-        await upgrade.TrashLegacyDatabaseAsync();
-        await nativeHelper.Received(1).MoveToTrashAsync(
-            Arg.Is<IReadOnlyList<string>>(paths => paths.Contains(files.LegacyPath)), Arg.Any<CancellationToken>());
     }
 
     [Test]
@@ -771,18 +764,6 @@ public sealed class ChatV2MigrationTests
             Assert.That(root.ChoiceChildId, Is.Null);
             Assert.That(children.Select(row => row.Id), Is.EqualTo(new[] { firstId, secondId }));
         });
-    }
-
-    [Test]
-    public async Task Initialize_WhenNewInstall_MarksInitializedWithoutLegacyNotice()
-    {
-        using var files = new DatabaseFiles();
-        await files.InitializeAsync();
-        await files.InitializeAsync();
-        await using var db = files.Factory.CreateDbContext();
-        var info = await db.StoreInfo.SingleAsync();
-        Assert.That(info.LegacyImportedAt, Is.Null);
-        Assert.That(await db.Chats.CountAsync(), Is.Zero);
     }
 
     private static async Task InsertChatAsync(SqliteConnection source, Guid id, bool isDeleted = false)

@@ -29,7 +29,8 @@ public sealed class ChatV2StoreInitializer(
         await destination.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;", cancellationToken);
         await destination.Database.MigrateAsync(cancellationToken);
 
-        // A new application session never exposes temporary chats left by a crashed or killed process.
+        // Temporary chats are persisted during a session but never restored in the next one.
+        // Clean them here for every exit path, including normal shutdown, crashes and forced exits.
         await destination.Chats.Where(row => row.IsTemporary).ExecuteDeleteAsync(cancellationToken);
 
         await using var transaction = await destination.Database.BeginTransactionAsync(cancellationToken);
@@ -80,7 +81,8 @@ public sealed class ChatV2StoreInitializer(
             var updatedAt = reader.GetInt64(3);
             var isArchived = reader.GetBoolean(4);
             var archivedAt = isArchived ? updatedAt : (long?)null;
-            var prepared = default(PreparedNodes);
+
+            PreparedNodes prepared;
             try
             {
                 // Finish conversion before writing any rows for this chat. A bad payload must
@@ -112,7 +114,8 @@ public sealed class ChatV2StoreInitializer(
         await using (var command = source.CreateCommand())
         {
             command.Transaction = sourceTransaction;
-            command.CommandText = """
+            command.CommandText =
+                """
                 SELECT Id, ParentId, ChoiceChildId, Payload, CreatedAt, UpdatedAt
                 FROM Nodes WHERE ChatContextId = $chatId AND (IsDeleted = 0 OR $isArchived = 1)
                 """;
@@ -142,13 +145,15 @@ public sealed class ChatV2StoreInitializer(
         {
             // Legacy empty conversations can have metadata without a persisted root.
             var rootId = Guid.Empty;
-            nodes.Add(rootId, new ChatV2NodeEntity
-            {
-                ChatContextId = chatId,
-                Id = rootId,
-                MessageKind = ChatMessageKind.Root,
-                Payload = MessagePackSerializer.Serialize<ChatMessage>(new RootChatMessage()),
-            });
+            nodes.Add(
+                rootId,
+                new ChatV2NodeEntity
+                {
+                    ChatContextId = chatId,
+                    Id = rootId,
+                    MessageKind = ChatMessageKind.Root,
+                    Payload = MessagePackSerializer.Serialize<ChatMessage>(new RootChatMessage()),
+                });
         }
 
         var roots = nodes.Values.Where(node => node.ParentId is null).ToArray();
@@ -264,11 +269,11 @@ public sealed class ChatV2StoreInitializer(
         {
             await destination.Database.ExecuteSqlInterpolatedAsync(
                 $"""
-                INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId,
-                    MessageKind, SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
-                VALUES ({row.ChatContextId}, {row.Id}, {row.ParentId}, {row.TurnId}, {row.ChoiceChildId},
-                    {(int)row.MessageKind}, {row.SummaryThroughNodeId}, {row.Payload}, {row.CreatedAt.UtcTicks}, {row.UpdatedAt.UtcTicks})
-                """,
+                 INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId,
+                     MessageKind, SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
+                 VALUES ({row.ChatContextId}, {row.Id}, {row.ParentId}, {row.TurnId}, {row.ChoiceChildId},
+                     {(int)row.MessageKind}, {row.SummaryThroughNodeId}, {row.Payload}, {row.CreatedAt.UtcTicks}, {row.UpdatedAt.UtcTicks})
+                 """,
                 cancellationToken);
         }
 
@@ -344,5 +349,6 @@ public sealed class ChatV2StoreInitializer(
 
     private sealed record PreparedNodes(
         IReadOnlyCollection<ChatV2NodeEntity> Nodes,
-        IReadOnlyCollection<(Guid NodeId, string Sha256)> References);
+        IReadOnlyCollection<(Guid NodeId, string Sha256)> References
+    );
 }
