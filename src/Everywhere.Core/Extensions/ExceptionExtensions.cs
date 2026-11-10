@@ -1,8 +1,7 @@
-﻿using System.Net;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
+using System.Security.Authentication;
 using Everywhere.Common;
 using Microsoft.SemanticKernel;
-using ZLinq;
 
 namespace Everywhere.Extensions;
 
@@ -18,20 +17,16 @@ public static class ExceptionExtensions
     {
         switch (e)
         {
-            case HttpRequestException hre:
+            case HttpRequestException:
+            case HttpOperationException:
+            case HttpIOException:
+            case SocketException:
+            case AuthenticationException:
+            case TimeoutException:
+            case OperationCanceledException:
             {
-                return FormatHttpExceptionMessage(LocaleKey.FriendlyExceptionMessage_HttpRequest, hre.StatusCode);
-            }
-            case HttpOperationException hoe:
-            {
-                return FormatHttpExceptionMessage(LocaleKey.FriendlyExceptionMessage_HttpRequest, hoe.StatusCode);
-            }
-            case SocketException se:
-            {
-                return new FormattedDynamicLocaleKey(
-                    LocaleKey.FriendlyExceptionMessage_Socket,
-                    new DirectLocaleKey((int)se.SocketErrorCode),
-                    new DynamicLocaleKey($"{LocaleKey.FriendlyExceptionMessage_Socket}_{se.SocketErrorCode.ToString()}"));
+                // Keep raw-exception presentation on the same HTTP/transport path as explicit normalization.
+                return HandledSystemException.Handle(e).GetFriendlyMessage();
             }
             case AggregateException ae:
             {
@@ -54,18 +49,7 @@ public static class ExceptionExtensions
             }
             default:
             {
-                var exceptionName = e.GetType().Name;
-                if (exceptionName.EndsWith("Exception")) exceptionName = exceptionName[..^"Exception".Length];
-
-                var messageKey = $"FriendlyExceptionMessage_{exceptionName}";
-                return DynamicLocaleKey.Exists(messageKey) ?
-                    new AggregateDynamicLocaleKey(
-                        [
-                            new DynamicLocaleKey(messageKey),
-                            new DirectLocaleKey(e.Message.Trim())
-                        ],
-                        "\n") :
-                    new DirectLocaleKey(e.Message.Trim());
+                return HandledException.CreateDefaultFriendlyMessage(e);
             }
         }
     }
@@ -97,15 +81,5 @@ public static class ExceptionExtensions
                 break;
             }
         }
-    }
-
-    private static FormattedDynamicLocaleKey FormatHttpExceptionMessage(string baseKey, HttpStatusCode? statusCode)
-    {
-        var key = $"{baseKey}_{statusCode.ToString()}";
-        if (!DynamicLocaleKey.Exists(key)) key = $"{baseKey}_0";
-        return new FormattedDynamicLocaleKey(
-            baseKey,
-            new DirectLocaleKey(statusCode ?? 0),
-            new DynamicLocaleKey(key));
     }
 }

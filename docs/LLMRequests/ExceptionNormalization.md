@@ -1,6 +1,4 @@
-# Exception Normalization and Recovery
-
-Status: rewritten on 2026-10-05. This working-tree architecture replaces the flat category enum and classification record. Earlier verification counts describe the preceding implementation and do not validate this rewrite.
+﻿# Exception Normalization and Recovery
 
 ## Ownership and dependencies
 
@@ -15,6 +13,35 @@ Status: rewritten on 2026-10-05. This working-tree architecture replaces the fla
 5. The concrete exception supplies recovery advice through its virtual `Recovery` property. The request executor owns retry scheduling.
 
 `HandledChatExceptionType`, `ChatExceptionClassification` and `LocalCause` are removed. External service codes and rule identifiers remain strings because they are diagnostic/protocol values, not the application's category system.
+
+## Shared HTTP and transport evidence
+
+`NetworkExceptionEvidence` in Common owns bounded cause traversal and .NET transport
+facts: response status, concrete transport cause, socket code, TLS failure, proxy tunnel
+rejection and explicit timeout causes. Both ordinary exception handling and chat evidence
+extraction use it. It does not parse service envelopes or decide caller cancellation,
+retry policy, or authentication recovery.
+
+`ChatExceptionEvidence.Network` retains those facts without duplicating its transport
+cause or socket code. The chat evidence's effective `StatusCode` remains separately
+writable by SDK and gateway adapters; an upstream status may differ from the original
+HTTP wrapper. Request-owned cancellation and timeout phases remain in the chat layer.
+
+`HandledSystemException.Handle` preserves failed HTTP responses as `HandledHttpException`
+with their status and original exception. Proxy, TLS and concrete transport failures are
+classified before interpreting a response status. Direct `GetFriendlyMessage` calls for
+HTTP/network/cancellation exceptions use the same normalization and message formatting;
+other literal-detail fallback rules remain unchanged. Already-handled exceptions retain
+identity and custom localized messages, including OAuth-specific errors.
+
+`HandledException.CreateDefaultFriendlyMessage` owns the unclassified-message fallback
+used by both `GetFriendlyMessage` and the base default constructor. A type-specific locale
+description is combined with the original trimmed details when available; otherwise the
+details remain literal. Explicit friendly keys and subclass-specific messages take precedence.
+
+New ordinary and chat network messages share `Common_NetworkError` and
+`Common_ProxyTunnelRejected`. Their earlier chat-prefixed resource names remain available
+because historical chat messages persist dynamic locale keys.
 
 ## Exception hierarchy
 
@@ -86,5 +113,3 @@ Unsuccessful termination follows AttemptFailed and ChatRequestException, preserv
 ## Verification boundary
 
 Existing real-HTTP SDK, local normalization and sanitized Sentry cases are migrated to concrete type assertions. Fixture expectedType values name nested exception types; these test-data identifiers are not production classification codes. Parent assertions accept valid refinements.
-
-The termination refactor passed 58 existing real-HTTP request/SDK boundary tests and 30 focused Core request-recovery, approval, and tool-assembly tests, with zero failures or skips. Existing mock payloads were reused; no new fixture data was introduced. Live-provider E2E and native error-dialog interactions were not run. No timeout mechanism, storage migration or UI layout change is part of this refactor.

@@ -975,6 +975,9 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>Die Verbindung zum Dienst wurde unterbrochen oder konnte nicht hergestellt werden.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>Die Verbindung zum Dienst wurde unterbrochen oder konnte nicht hergestellt werden.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Dienst ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.</value>
     </data>
@@ -4278,6 +4281,9 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
         <value>Details kopieren</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>Der Proxyserver hat den Verbindungsaufbau abgelehnt. Prüfen Sie die Proxyeinstellungen und die Anmeldedaten.</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>Der Proxyserver hat den Verbindungsaufbau abgelehnt. Prüfen Sie die Proxyeinstellungen und die Anmeldedaten.</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">

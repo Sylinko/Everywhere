@@ -975,6 +975,9 @@
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>Соединение с сервисом было прервано или не удалось его установить.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>Соединение с сервисом было прервано или не удалось его установить.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Сервис временно недоступен. Пожалуйста, попробуйте позже.</value>
     </data>
@@ -4278,6 +4281,9 @@
         <value>Копировать подробности</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>Прокси-сервер отказался устанавливать соединение. Проверьте настройки прокси и данные аутентификации.</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>Прокси-сервер отказался устанавливать соединение. Проверьте настройки прокси и данные аутентификации.</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">

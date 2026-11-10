@@ -1,11 +1,9 @@
-using System.ClientModel;
+﻿using System.ClientModel;
 using System.Globalization;
 using System.Net;
-using System.Net.Sockets;
-using System.Security.Authentication;
 using System.Text.Json;
 using Anthropic.Exceptions;
-using Everywhere.Cloud;
+using Everywhere.Common;
 using Microsoft.SemanticKernel;
 using OllamaSharp.Models.Exceptions;
 
@@ -21,7 +19,8 @@ public static class ChatExceptionEvidenceExtractor
     public static void ExtractCommon(ChatExceptionEvidence evidence, ChatRequestFailureContext context)
     {
         evidence.ErrorMessage = Bound(evidence.OriginalException.Message);
-        foreach (var exception in EnumerateCauses(evidence.OriginalException))
+        var network = new NetworkExceptionEvidence();
+        foreach (var exception in NetworkExceptionEvidence.EnumerateCauses(evidence.OriginalException))
         {
             ExtractHeaders(evidence, name => exception.Data["Everywhere.Http." + name]?.ToString());
             if (exception.Data["Everywhere.Http.StatusCode"] is int status and >= 100 and <= 599)
@@ -30,32 +29,14 @@ public static class ChatExceptionEvidenceExtractor
             if (exception.Data["Everywhere.Http.ResponseBody"] is string body)
                 ExtractResponseBody(evidence, body);
 
+            network.Include(exception);
+            evidence.StatusCode ??= network.StatusCode;
+
             switch (exception)
             {
                 case HttpOperationException operation:
                     evidence.StatusCode ??= operation.StatusCode;
                     ExtractResponseBody(evidence, operation.ResponseContent);
-                    break;
-                case HttpRequestException http:
-                    evidence.StatusCode ??= http.StatusCode;
-                    if (!http.StatusCode.HasValue) evidence.TransportException ??= http;
-                    break;
-                case SocketException socket:
-                    evidence.SocketError = socket.SocketErrorCode;
-                    evidence.TransportException = socket;
-                    break;
-                case AuthenticationException authentication:
-                    evidence.TransportException = authentication;
-                    break;
-                case HttpIOException httpIO:
-                    evidence.TransportException ??= httpIO;
-                    break;
-                case TimeoutException:
-                    evidence.TimeoutPhase = context.TimeoutPhase == ChatRequestTimeoutPhase.None ?
-                        ChatRequestTimeoutPhase.Unknown :
-                        context.TimeoutPhase;
-                    break;
-                case UserNotLoginException:
                     break;
                 case OperationCanceledException:
                     if (context.TimeoutPhase != ChatRequestTimeoutPhase.None)
@@ -68,6 +49,13 @@ public static class ChatExceptionEvidenceExtractor
                     }
                     break;
             }
+        }
+
+        evidence.Network = network;
+        if (network.HasTimeoutCause)
+        {
+            evidence.TimeoutPhase = context.TimeoutPhase == ChatRequestTimeoutPhase.None ?
+                ChatRequestTimeoutPhase.Unknown : context.TimeoutPhase;
         }
 
         // An SDK deadline with an inner TimeoutException is not ordinary caller cancellation.
@@ -85,7 +73,7 @@ public static class ChatExceptionEvidenceExtractor
     /// <summary>Reads OpenAI/System.ClientModel status and already-buffered raw response evidence.</summary>
     public static void ExtractOpenAI(ChatExceptionEvidence evidence)
     {
-        foreach (var exception in EnumerateCauses(evidence.OriginalException).OfType<ClientResultException>())
+        foreach (var exception in NetworkExceptionEvidence.EnumerateCauses(evidence.OriginalException).OfType<ClientResultException>())
         {
             if (exception.Status is >= 100 and <= 599) evidence.StatusCode ??= (HttpStatusCode)exception.Status;
             if (exception.GetRawResponse() is not { } response) continue;
@@ -97,7 +85,7 @@ public static class ChatExceptionEvidenceExtractor
     /// <summary>Reads Anthropic's typed response fields without treating status-derived subtypes as specific diagnoses.</summary>
     public static void ExtractAnthropic(ChatExceptionEvidence evidence)
     {
-        foreach (var exception in EnumerateCauses(evidence.OriginalException).OfType<AnthropicApiException>())
+        foreach (var exception in NetworkExceptionEvidence.EnumerateCauses(evidence.OriginalException).OfType<AnthropicApiException>())
         {
             evidence.StatusCode ??= exception.StatusCode;
             ExtractResponseBody(evidence, exception.ResponseBody);
@@ -107,7 +95,7 @@ public static class ChatExceptionEvidenceExtractor
     /// <summary>Reads Ollama protocol error messages; concrete capability failures are normalized separately.</summary>
     public static void ExtractOllama(ChatExceptionEvidence evidence)
     {
-        foreach (var exception in EnumerateCauses(evidence.OriginalException).OfType<OllamaException>())
+        foreach (var exception in NetworkExceptionEvidence.EnumerateCauses(evidence.OriginalException).OfType<OllamaException>())
         {
             if (evidence.ResponseBody is null) evidence.ErrorMessage = Bound(exception.Message);
         }
@@ -169,17 +157,6 @@ public static class ChatExceptionEvidenceExtractor
         catch (JsonException)
         {
             // Malformed gateway error bodies still retain their HTTP status and raw diagnostics.
-        }
-    }
-
-    /// <summary>Enumerates a bounded single-cause chain; aggregates are handled independently at the entry point.</summary>
-    public static IEnumerable<Exception> EnumerateCauses(Exception exception)
-    {
-        for (var depth = 0; depth < 16; depth++)
-        {
-            yield return exception;
-            if (exception.InnerException is not { } inner || ReferenceEquals(inner, exception)) yield break;
-            exception = inner;
         }
     }
 

@@ -975,6 +975,9 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>A conexão com o serviço foi interrompida ou não pôde ser estabelecida.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>A conexão com o serviço foi interrompida ou não pôde ser estabelecida.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>O serviço está indisponível no momento. Por favor, tente novamente mais tarde.</value>
     </data>
@@ -4278,6 +4281,9 @@ Deseja realmente excluir “{1}” permanentemente?</value>
         <value>Copiar detalhes</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>O servidor proxy recusou estabelecer a conexão. Verifique as configurações do proxy e os dados de autenticação.</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>O servidor proxy recusou estabelecer a conexão. Verifique as configurações do proxy e os dados de autenticação.</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">

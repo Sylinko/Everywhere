@@ -975,6 +975,9 @@ La mia intelligenza è fornita da un grande modello linguistico e ho bisogno del
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>La connessione al servizio è stata interrotta o non è stato possibile stabilirla.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>La connessione al servizio è stata interrotta o non è stato possibile stabilirla.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Il servizio non è attualmente disponibile. Riprova più tardi.</value>
     </data>
@@ -4278,6 +4281,9 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
         <value>Copia dettagli</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>Il server proxy ha rifiutato di stabilire la connessione. Controlla le impostazioni del proxy e i dati di autenticazione.</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>Il server proxy ha rifiutato di stabilire la connessione. Controlla le impostazioni del proxy e i dati di autenticazione.</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">

@@ -975,6 +975,9 @@
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>連接服務時發生中斷或未能建立連線。</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>連接服務時發生中斷或未能建立連線。</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>服務目前不可用。請稍後再試。</value>
     </data>
@@ -4278,6 +4281,9 @@
         <value>複製詳情</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>代理伺服器拒絕建立連線，請檢查代理設定和認證資料。</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>代理伺服器拒絕建立連線，請檢查代理設定和認證資料。</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
