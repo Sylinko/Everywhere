@@ -211,38 +211,44 @@ public sealed class ChatV2MigrationTests
     }
 
     [AvaloniaTest]
-    public async Task Archive_WhenConversationIsRunning_PreservesWorkAndSupportsRestoreAndPermanentDeletion()
+    public async Task Archive_WhenConversationIsRunning_SavesCanceledWorkAndSupportsRestoreAndPermanentDeletion()
     {
         using var files = new DatabaseFiles();
         await files.InitializeAsync();
         var storage = new ChatTurnStorage(files.Factory);
         using var data = new ChatData();
         var user = new UserChatMessage("question", []);
-        data.Add(user);
+        var userNode = data.Add(user);
         await storage.SaveDataAsync(data);
         using var manager = new ChatContextManager(new Settings(new ServiceCollection().BuildServiceProvider()), storage, NullLogger<ChatContextManager>.Instance);
         var runtime = ChatStorageTestExtensions.AttachRoot(manager, data);
         using var session = manager.BeginLoadSession();
         await session.LoadMoreAsync(20);
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var operation = runtime.ExecuteAsync(async cancellationToken =>
         {
             started.SetResult();
-            await release.Task.WaitAsync(cancellationToken);
-            await runtime.DispatchAsync(() => data.Add(new UserChatMessage("completed after archive", [])));
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+            finally
+            {
+                await runtime.DispatchAsync(() => user.Content = "final cancellation output");
+            }
         });
         await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
         await manager.ArchiveAsync(data.Metadata);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        Assert.That(runtime.IsBusy, Is.True);
+        Assert.That(runtime.IsBusy, Is.False);
+        await Assert.ThatAsync(() => operation, Throws.InstanceOf<OperationCanceledException>());
+        Assert.That(await storage.ReadUserTextAsync(data.Metadata.Id, userNode.Id, userNode.MessageKind, CancellationToken.None),
+            Is.EqualTo("final cancellation output"));
         Assert.That(manager.AllHistory.SelectMany(group => group.Items), Is.Empty);
         manager.HistoryView = ChatHistoryView.Archived;
         await session.LoadMoreAsync(20);
         Assert.That(manager.AllHistory.SelectMany(group => group.Items).Single(), Is.SameAs(data.Metadata));
-        release.SetResult();
-        await operation;
         await manager.FlushPendingSavesAsync();
         Assert.That(data.Metadata.IsArchived, Is.True);
 

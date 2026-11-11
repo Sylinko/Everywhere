@@ -16,24 +16,46 @@ namespace Everywhere.Core.Tests.Chat;
 public sealed partial class ChatContextManagerIncrementalLoadingTests
 {
     [AvaloniaTest]
-    public async Task FlushPendingSaves_WhenWriteFails_RetainsContextForExplicitRetry()
+    public async Task FlushPendingSaves_WhenWriteFailsAcrossAccountSwitch_RetainsOriginalOwnerAndLaterChanges()
     {
         var storage = new TestChatContextStorage([]);
         var attempts = 0;
-        storage.ContextSaver = _ => ++attempts == 1 ? Task.FromException(new IOException("disk unavailable")) : Task.CompletedTask;
+        var owners = new List<string?>();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        storage.ContextSaver = async batch =>
+        {
+            owners.Add(batch.LocalAccountId);
+            if (++attempts == 1)
+            {
+                started.SetResult();
+                await release.Task;
+                throw new IOException("disk unavailable");
+            }
+        };
         using var manager = CreateManager(storage);
-        using var data = Data(new UserChatMessage("retained", []));
+        manager.SignedInAccountId = "account-a";
+        var user = new UserChatMessage("retained", []);
+        using var data = Data(user);
         var context = ChatStorageTestExtensions.AttachRoot(manager, data);
 
         data.SelectChild(data.RootNode, null);
 
-        Assert.ThrowsAsync<AggregateException>(() => manager.FlushPendingSavesAsync());
+        var saving = manager.FlushPendingSavesAsync();
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        manager.SignedInAccountId = "account-b";
+        await context.DispatchAsync(() => user.Content = "edited during the failed save");
+        release.SetResult();
+        Assert.ThrowsAsync<AggregateException>(async () => await saving);
         Assert.That(data.Metadata.IsPersisted, Is.False);
         await manager.FlushPendingSavesAsync();
         Assert.That(data.Metadata.IsPersisted, Is.True);
         Assert.That(attempts, Is.EqualTo(2));
+        // An unsuccessful first write must not let the later account claim this retained graph.
+        Assert.That(owners, Is.EqualTo(new[] { "account-a", "account-a" }));
+        Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
         Assert.That(data.HasHistory, Is.True);
-        Assert.That(data.Count, Is.EqualTo(1));
+        Assert.That(data.SelectedNodes.Count, Is.EqualTo(1));
     }
 
     [AvaloniaTest]
