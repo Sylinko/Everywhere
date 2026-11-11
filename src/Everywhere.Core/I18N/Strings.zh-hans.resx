@@ -4692,4 +4692,16 @@
     <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
         <value>划词工具栏发起的所有聊天使用临时聊天，Everywhere 退出时会自动删除。关闭后使用普通聊天。</value>
     </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>查看同步分支</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>归档会停止此聊天中所有正在进行的工作。你可以稍后从归档聊天中恢复。</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>归档此聊天？</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>永久删除此聊天？如果此聊天已同步，其他设备同步时也会删除它。此操作无法撤销。</value>
+    </data>
 </root>

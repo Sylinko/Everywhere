@@ -880,6 +880,8 @@
                 Margin="12,8,12,0"
                 md:MarkdownTextBlock.HighlightStyles="{x:Static in:ChatTextSearchHighlightStyles.Instance}"
                 ChatContext="{Binding ChatContextManager.Current}"
+                ChatContextManager="{Binding ChatContextManager}"
+                IsReadonly="{Binding ChatContextManager.Current.Data.Metadata.IsArchived}"
                 ContinueMessageNodeCommand="{Binding ContinueMessageNodeCommand}"
                 CopyMessageCommand="{Binding CopyMessageCommand}"
                 EditMessageNodeCommand="{Binding EditMessageNodeCommand}"
@@ -1023,9 +1025,17 @@
               Size="{DynamicResource FontSizeXl}"/>
           </Button>
 
+          <Button
+            Classes="Secondary Rounded" Grid.Row="0"
+            Margin="8" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+            Command="{Binding #ChatMessages.ShowSyncedBranchCommand}"
+            IsVisible="{Binding ChatContextManager.Current.Data.HasSyncedBranchUpdate}"
+            Content="{I18N {x:Static LocaleKey.ChatWindow_ViewSyncedBranchButton_Content}}"/>
+
           <StackPanel
             x:Name="InputPanel" Grid.Row="1"
             MaxWidth="800" Margin="10"
+            IsEnabled="{Binding !ChatContextManager.Current.Data.Metadata.IsArchived}"
             Orientation="Vertical" Spacing="8">
             <DockPanel>
               <DockPanel.IsVisible>

@@ -4694,4 +4694,16 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
         <value>Use temporary chats for every chat started from the text selection toolbar. These chats are automatically deleted when Everywhere exits. Turn off to use regular chats.</value>
     </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>View synced branch</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>Archiving will stop all work in this chat. You can restore it later from archived chats.</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>Archive this chat?</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>Permanently delete this chat? For a synced chat, this also deletes it from other devices when they sync. This cannot be undone.</value>
+    </data>
 </root>

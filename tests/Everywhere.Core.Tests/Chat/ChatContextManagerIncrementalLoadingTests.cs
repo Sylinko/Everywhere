@@ -1,6 +1,7 @@
 ﻿using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Everywhere.Chat;
+using Everywhere.Cloud;
 using Everywhere.Configuration;
 using Everywhere.I18N;
 using Everywhere.Storage;
@@ -478,6 +479,23 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         public Task<DateTimeOffset> ArchiveAsync(Guid chatId, CancellationToken cancellationToken = default)
         {
             return Archiver?.Invoke(chatId) ?? Task.FromResult(DateTimeOffset.UtcNow);
+        }
+
+        public Task FreezeUploadAsync(string accountId, Guid chatId, bool isStable, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task ApplyClearedHeadAsync(string accountId, ChatSyncHead head, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<ReceivedChatCommit?> MergeSnapshotAsync(
+            string accountId, ChatSyncDownloadedSnapshot download, IReadOnlySet<Guid> loadedNodes,
+            bool shouldDiscardSubmission, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
         }
 
         public Task RestoreAsync(Guid chatId, CancellationToken cancellationToken = default)

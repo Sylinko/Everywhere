@@ -236,7 +236,7 @@ partial class ChatService
         CancellationToken cancellationToken)
     {
         var chatData = chatContext.Data;
-        var nodes = chatContext.GenerationContext?.GetPath() ?? chatData.Items;
+        var nodes = chatContext.GenerationContext?.GetPath() ?? chatData.SelectedNodes;
         for (var i = nodes.Count - 1; i >= 0; i--)
         {
             var node = nodes[i];

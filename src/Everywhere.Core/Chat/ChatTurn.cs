@@ -17,7 +17,7 @@ public sealed class ChatTurn(ChatMessageNode userNode)
     public ChatMessageNode UserNode { get; } = userNode;
 
     /// <summary>
-    /// Gets the remembered local path, stopping before the next user turn.
+    /// Gets the effective path, stopping before the next user turn.
     /// The collection is a reference snapshot; message bodies remain mutable.
     /// </summary>
     public IReadOnlyList<ChatMessageNode> SelectedNodes => Volatile.Read(ref _selectedNodes);
@@ -51,7 +51,9 @@ public sealed class ChatTurn(ChatMessageNode userNode)
 
     internal void SetSelectedNodes(IReadOnlyList<ChatMessageNode> nodes)
     {
+        if (SelectedNodes.SequenceEqual(nodes)) return;
         Volatile.Write(ref _selectedNodes, nodes);
+        Invalidate();
     }
 
     public void Invalidate()

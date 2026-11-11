@@ -302,7 +302,7 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
         }
 
         var nextStates = new List<SearchSourceState>();
-        foreach (var node in context.Data.Items)
+        foreach (var node in context.Data.SelectedNodes)
         {
             if (!node.IsMessageLoaded || node.Message.IsHidden) continue;
 
@@ -457,7 +457,7 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
     {
         if (!IsOpen || ActivePattern is not { } pattern) return;
 
-        if (_context is { } context && context.Data.Items.Any(node => !node.IsMessageLoaded))
+        if (_context is { } context && context.Data.SelectedNodes.AsValueEnumerable().Any(node => !node.IsMessageLoaded))
         {
             if (_bodyLoadCancellation is null || _loadingBranchRevision != context.Data.BranchRevision)
             {
@@ -470,7 +470,7 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
             return;
         }
 
-        if (_sourceStates.Any(state => IsIncluded(state) && !state.IsProjectionCurrent))
+        if (_sourceStates.AsValueEnumerable().Any(state => IsIncluded(state) && !state.IsProjectionCurrent))
         {
             EnsureProjections();
             return;

@@ -185,6 +185,9 @@ public sealed partial class ChatMessageItemsControl
     [RelayCommand]
     private Task ShowLatestAsync() => NavigateAsync(new NavigationTarget(NavigationKind.Latest));
 
+    [RelayCommand]
+    private Task ShowSyncedBranchAsync() => NavigateAsync(new NavigationTarget(NavigationKind.SyncedBranch));
+
     private async Task NavigateAsync(NavigationTarget target)
     {
         SuspendNavigation();
@@ -218,6 +221,20 @@ public sealed partial class ChatMessageItemsControl
         _windowCancellation = cancellation;
         try
         {
+            if (target.Kind == NavigationKind.SyncedBranch)
+            {
+                if (ChatContextManager is not { } manager || context is not RootChatContext root)
+                {
+                    return;
+                }
+                await manager.ViewSyncedBranchAsync(root, cancellation.Token);
+                if (revision != _navigationRevision || !ReferenceEquals(ChatContext, context))
+                {
+                    return;
+                }
+                target = new NavigationTarget(NavigationKind.Latest);
+                _navigationTarget = target;
+            }
             var presentation = context.Presentation;
             var row = default(ChatPresentationRow);
             if (target.Kind == NavigationKind.Latest)
@@ -346,7 +363,7 @@ public sealed partial class ChatMessageItemsControl
         }
 
         var target = _navigationTarget;
-        if (target?.Node is { } node && !context.Data.Items.Contains(node))
+        if (target?.Node is { } node && !context.Data.SelectedNodes.Contains(node))
         {
             EndNavigation();
             if (target.Kind == NavigationKind.Restore)
@@ -746,6 +763,7 @@ public sealed partial class ChatMessageItemsControl
     private enum NavigationKind
     {
         Latest,
+        SyncedBranch,
         Turn,
         Search,
         Restore

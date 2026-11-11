@@ -4634,4 +4634,16 @@
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>設為置頂</value>
     </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>檢視同步分支</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>封存會停止此聊天中所有正在進行的工作。你可以稍後從封存聊天中還原。</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>封存此聊天？</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>永久刪除此聊天？如果此聊天已同步，其他裝置同步時也會刪除它。此操作無法復原。</value>
+    </data>
 </root>

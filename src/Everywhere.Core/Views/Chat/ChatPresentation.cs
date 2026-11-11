@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
@@ -65,7 +65,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
 
     // Branch descriptors are the next preparation target. The published window keeps its own
     // list reference until preparation succeeds; its bounds must never index the next branch.
-    private List<TurnDescriptor> _branchDescriptors = [];
+    private List<TurnDescriptor> _branchDescriptors;
     private List<TurnDescriptor> _windowDescriptors = [];
     private CancellationTokenSource? _windowOperationCancellation;
     private int _visibleMessageThreshold;
@@ -444,7 +444,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         // Only the zero/one/many distinction is used by the surrounding window controls.
         // Stop after two visible nodes rather than scanning a long history on every token.
         var count = 0;
-        foreach (var node in Data.Items)
+        foreach (var node in Data.SelectedNodes)
         {
             if (node.MessageKind is ChatMessageKind.Root or ChatMessageKind.VisualContextReset ||
                 node is { IsMessageLoaded: true, Message.IsHidden: true })
@@ -569,7 +569,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
     private List<TurnDescriptor> BuildTurnDescriptors()
     {
         var result = new List<TurnDescriptor>();
-        var auxiliary = Data.Items
+        var auxiliary = Data.SelectedNodes
             .AsValueEnumerable()
             .TakeWhile(node => node.Turn is null)
             .Where(node => !ReferenceEquals(node, Data.RootNode)).ToArray();

@@ -37,7 +37,7 @@ public sealed class ChatTurnTests
             Assert.That(root.Children, Is.EqualTo(new[] { firstId, secondId }));
             Assert.That(root.ChoiceChildId, Is.EqualTo(secondId));
             Assert.That(root.ChoiceIndex, Is.EqualTo(1));
-            Assert.That(data.Items[^1], Is.SameAs(second));
+            Assert.That(data.SelectedNodes[^1], Is.SameAs(second));
         });
 
         // A delayed message is inserted by its creation time, without stealing the selection.
@@ -93,24 +93,6 @@ public sealed class ChatTurnTests
                 Assert.That(data.PersistenceDirtyState.HasChanges, Is.False, outcome);
             });
         }
-    }
-
-    [AvaloniaTest]
-    public void CapturePendingWrites_WhenAppendFollowsCapture_KeepsTopologyAndAcknowledgmentInTheirBatch()
-    {
-        using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("question", []));
-        var captured = data.CapturePendingWrites();
-        var assistant = data.Append(user, new AssistantChatMessage());
-
-        Assert.That(captured.Single(item => item.Topology.Id == user.Id).Topology.ChoiceChildId, Is.Null);
-        Assert.That(captured.Select(item => item.Topology.Id), Does.Not.Contain(assistant.Id));
-        data.PersistenceDirtyState.Acknowledge(captured.Select(item => item.Change));
-
-        var next = data.CapturePendingWrites();
-        Assert.That(next.Single(item => item.Topology.Id == user.Id).Topology.ChoiceChildId, Is.EqualTo(assistant.Id));
-        Assert.That(next.Single(item => item.Topology.Id == assistant.Id).Change.Kind, Is.EqualTo(ChatNodeChangeKind.All));
-        Assert.That(next.Select(item => item.Topology.Id), Does.Not.Contain(data.RootNode.Id));
     }
 
     [AvaloniaTest]
@@ -202,6 +184,9 @@ public sealed class ChatTurnTests
         child.Add(new AssistantChatMessage());
         Assert.That(data.PersistenceDirtyState.Capture().Select(change => change.Node), Is.EqualTo(new[] { node }));
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
+        child.Append(child.RootNode, new UserChatMessage("unselected child", []), shouldSelectChild: false);
+        Assert.That(data.PersistenceDirtyState.Capture().Select(change => change.Node), Is.EqualTo(new[] { node }));
+        data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
         child.Metadata.Rename("local child title");
         Assert.That(data.PersistenceDirtyState.Capture().Select(change => change.Node), Is.EqualTo(new[] { node }));
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
@@ -237,6 +222,23 @@ public sealed class ChatTurnTests
         var nextUser = data.Add(new UserChatMessage("next", []));
         var nextAssistant = data.Add(new AssistantChatMessage());
 
+        var remote = data.Append(user, new AssistantChatMessage(), shouldSelectChild: false);
+        data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
+        var path = data.SelectedNodes;
+        var turnPath = user.Turn?.SelectedNodes;
+        var installed = data.GetAllNodes().Select(node => new ChatNodeTopology(node.Id, node.Parent?.Id, node.Turn?.Id,
+                node == user ? remote.Id : node.ChoiceChildId, node.MessageKind, node.SummaryThroughNodeId, node.CreatedAt, node.DateModified)).ToArray();
+        data.ApplyCommittedTopology(installed, shouldRetainCurrentPath: true);
+        Assert.Multiple(() =>
+        {
+            Assert.That(data.SelectedNodes, Is.SameAs(path));
+            Assert.That(user.Turn?.SelectedNodes, Is.SameAs(turnPath));
+            Assert.That(user.ChosenChild, Is.SameAs(remote));
+            Assert.That(data.ContinuationTarget, Is.SameAs(nextAssistant));
+            Assert.That(data.HasSyncedBranchUpdate, Is.True);
+            Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
+        });
+
         var retry = data.CreateBranchOn(assistant, new AssistantChatMessage());
         Assert.Multiple(() =>
         {
@@ -250,11 +252,11 @@ public sealed class ChatTurnTests
         Assert.That(edited.Turn?.Id, Is.EqualTo(edited.Id));
 
         data.SelectChild(data.RootNode, user);
-        Assert.That(data.Items[^1], Is.SameAs(retry));
+        Assert.That(data.SelectedNodes[^1], Is.SameAs(retry));
         data.SelectChild(user, assistant);
         Assert.Multiple(() =>
         {
-            Assert.That(data.Items[^1], Is.SameAs(nextAssistant));
+            Assert.That(data.SelectedNodes[^1], Is.SameAs(nextAssistant));
             Assert.That(data.SelectedTurns, Is.EqualTo(new[] { user.Turn, nextUser.Turn }));
             Assert.That(data.FindTurn(edited.Id), Is.SameAs(edited.Turn));
             Assert.That(data.FindNode(retry.Id), Is.SameAs(retry));
@@ -288,16 +290,22 @@ public sealed class ChatTurnTests
         var alternative = data.CreateBranchOn(running, new AssistantChatMessage());
         var revision = data.BranchRevision;
 
+        data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
         var hiddenContinuation = data.Append(running, new AssistantChatMessage());
         Assert.Multiple(() =>
         {
-            Assert.That(data.Items[^1], Is.SameAs(alternative));
+            Assert.That(data.SelectedNodes[^1], Is.SameAs(alternative));
             Assert.That(data.BranchRevision, Is.EqualTo(revision));
+            Assert.That(user.Turn?.SelectedNodes, Is.EqualTo(new[] { user, alternative }));
+            Assert.That(data.PersistenceDirtyState.Capture().Any(change => change.Node == user || change.Node == data.RootNode), Is.False);
             Assert.That(data.GetPathTo(hiddenContinuation), Is.EqualTo(new[] { data.RootNode, user, running, hiddenContinuation }));
         });
 
+        data.SelectChild(running, hiddenContinuation);
+        Assert.That(user.ChosenChild, Is.SameAs(alternative));
+        Assert.That(data.SelectedNodes[^1], Is.SameAs(alternative));
         data.SelectChild(user, running);
-        Assert.That(data.Items[^1], Is.SameAs(hiddenContinuation));
+        Assert.That(data.SelectedNodes[^1], Is.SameAs(hiddenContinuation));
     }
 
     [AvaloniaTest]
@@ -308,11 +316,13 @@ public sealed class ChatTurnTests
         var selected = data.CreateBranchOn(original, new UserChatMessage("selected", []));
         var revision = data.BranchRevision;
 
+        data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
         var delayedEdit = data.CreateBranchOn(original, new UserChatMessage("delayed edit", []));
         Assert.Multiple(() =>
         {
-            Assert.That(data.Items[^1], Is.SameAs(selected));
+            Assert.That(data.SelectedNodes[^1], Is.SameAs(selected));
             Assert.That(data.BranchRevision, Is.EqualTo(revision));
+            Assert.That(data.PersistenceDirtyState.Capture().Any(change => change.Node == data.RootNode), Is.False);
             Assert.That(delayedEdit.Parent, Is.SameAs(data.RootNode));
             Assert.That(data.FindTurn(delayedEdit.Id), Is.SameAs(delayedEdit.Turn));
         });

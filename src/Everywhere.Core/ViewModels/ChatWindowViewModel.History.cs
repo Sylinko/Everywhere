@@ -53,9 +53,21 @@ partial class ChatWindowViewModel
     }
 
     [RelayCommand(CanExecute = nameof(CanOrganizeChat))]
-    private Task ArchiveChatAsync(ChatMetadata metadata)
+    private async Task ArchiveChatAsync(ChatMetadata metadata)
     {
-        return ExecuteHistoryOperationAsync(() => ChatContextManager.ArchiveAsync(metadata));
+        if (ChatContextManager.HasRunningWork(metadata))
+        {
+            var result = await DialogHost
+                .CreateDialog(LocaleKey.ChatWindowViewModel_ArchiveRunningChatDialog_Content.I18N(), LocaleKey.ChatWindowViewModel_ArchiveRunningChatDialog_Title.I18N())
+                .WithPrimaryButton(LocaleKey.Common_OK.I18N())
+                .WithCancelButton(LocaleKey.Common_Cancel.I18N())
+                .ShowAsync();
+            if (result != DialogResult.Primary)
+            {
+                return;
+            }
+        }
+        await ExecuteHistoryOperationAsync(() => ChatContextManager.ArchiveAsync(metadata));
     }
 
     [RelayCommand]
@@ -70,7 +82,7 @@ partial class ChatWindowViewModel
         var context = ChatContextManager.Current;
         if (isTemporary)
         {
-            await ExecuteHistoryOperationAsync(() => context.ApplyAsync(() => context.Data.Metadata.IsTemporary = true));
+            await ExecuteHistoryOperationAsync(() => context.ApplyAsync(() => context.Data.Metadata.SetTemporary(true)));
         }
         else
         {
@@ -94,7 +106,7 @@ partial class ChatWindowViewModel
         }
 
         var result = await DialogHost
-            .CreateDialog(LocaleKey.ChatHistory_DeleteDialog_Content.I18N(), LocaleKey.ChatHistory_DeleteDialog_Title.I18N())
+            .CreateDialog(LocaleKey.ChatWindowViewModel_DeleteChatDialog_Content.I18N(), LocaleKey.ChatHistory_DeleteDialog_Title.I18N())
             .WithPrimaryButton(LocaleKey.Common_Delete.I18N(), buttonStyle: ButtonStyle.Destructive)
             .WithCancelButton(LocaleKey.Common_Cancel.I18N())
             .ShowAsync();

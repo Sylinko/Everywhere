@@ -108,7 +108,6 @@ public sealed partial class ChatService : IChatService
     public bool SendMessage(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant)
     {
         var chatData = chatContext.Data;
-        var parentNode = chatData.Items[^1];
 
         return chatContext.TryExecute(
             async cancellationToken =>
@@ -125,7 +124,7 @@ public sealed partial class ChatService : IChatService
                         // Title work belongs to the first accepted send, not to the response loop.
                         var shouldCreateTitle = !chatData.HasHistory && string.IsNullOrWhiteSpace(chatData.Metadata.Topic);
                         var input = shouldCreateTitle ? GetTitleInput(message) : null;
-                        var node = chatData.Append(parentNode, message);
+                        var node = chatData.Add(message);
                         if (input is not null)
                         {
                             chatData.Metadata.Rename(string.Join(" ", input.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)));
@@ -286,7 +285,6 @@ public sealed partial class ChatService : IChatService
         }
 
         var chatData = node.Data;
-        var appendTailNode = chatData.GetContinuationTail(node);
         var customAssistant = _settings.Model.SelectedCustomAssistant;
 
         chatContext.TryExecute(
@@ -294,6 +292,13 @@ public sealed partial class ChatService : IChatService
             {
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatData.Metadata.Id);
+
+                var appendTailNode = await chatContext.DispatchAsync(() =>
+                {
+                    var tail = chatData.GetContinuationTail(node);
+                    chatData.RecordPathChoices(tail);
+                    return tail;
+                });
 
                 if (customAssistant is null)
                 {
@@ -322,13 +327,19 @@ public sealed partial class ChatService : IChatService
         var chatContext = _chatContextManager.Current;
         var chatData = chatContext.Data;
         var assistant = _settings.Model.SelectedCustomAssistant;
-        var appendTailNode = chatData.Items[^1];
 
         chatContext.TryExecute(
             async cancellationToken =>
             {
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatData.Metadata.Id);
+
+                var appendTailNode = await chatContext.DispatchAsync(() =>
+                {
+                    var tail = chatData.SelectedNodes[^1];
+                    chatData.RecordPathChoices(tail);
+                    return tail;
+                });
 
                 if (assistant is null)
                 {

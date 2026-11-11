@@ -7,7 +7,6 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Everywhere.Chat;
-using Everywhere.Chat.Plugins;
 using Everywhere.Core.Tests.Statistics;
 using Everywhere.Core.I18N;
 using Everywhere.I18N;
@@ -32,12 +31,12 @@ public sealed partial class ChatTurnRenderTests
         var reader = new ChatTurnStorage(database.Factory);
         await using var first = await reader.LoadContextAsync(savedFirst.Data.Metadata.Id);
         await using var second = await reader.LoadContextAsync(savedSecond.Data.Metadata.Id);
-        Assert.That(first.Data.Items[1].IsMessageLoaded, Is.False);
+        Assert.That(first.Data.SelectedNodes[1].IsMessageLoaded, Is.False);
         await first.Presentation.PrepareInitialWindowAsync();
         await second.Presentation.PrepareInitialWindowAsync();
         Assert.That(first.Presentation.Rows, Is.Not.Empty);
         Assert.That(second.Presentation.IsAtLatest, Is.True);
-        Assert.That(second.Data.Items[1].IsMessageLoaded, Is.False);
+        Assert.That(second.Data.SelectedNodes[1].IsMessageLoaded, Is.False);
         Assert.That(second.Presentation.Rows.OfType<ChatMessagePresentationRow>().Count(), Is.EqualTo(ChatPresentation.TurnBatchSize));
         var items = new ChatMessageItemsControl { ChatContext = empty, Margin = new Thickness(12, 8, 12, 0) };
         var scroll = new ScrollViewer { Content = new StackPanel { Children = { items } } };
@@ -172,7 +171,7 @@ public sealed partial class ChatTurnRenderTests
             Dispatcher.UIThread.RunJobs();
             await presentation.PrepareInitialWindowAsync();
             window.UpdateLayout();
-            Assert.That(context.Data.Items[^1], Is.SameAs(alternate));
+            Assert.That(context.Data.SelectedNodes[^1], Is.SameAs(alternate));
             var alternateRow = presentation.Rows.OfType<AssistantTextOutputPresentationRow>().Single();
             await WaitForMarkdownAsync(alternateRow, 0);
             SaveRender(window, "chatturn-branch.png");
@@ -181,7 +180,7 @@ public sealed partial class ChatTurnRenderTests
             await context.DispatchAsync(() => { });
             Dispatcher.UIThread.RunJobs();
             await presentation.PrepareInitialWindowAsync();
-            Assert.That(context.Data.Items[^1].Message, Is.SameAs(assistant));
+            Assert.That(context.Data.SelectedNodes[^1].Message, Is.SameAs(assistant));
 
             for (var index = 0; index < ChatPresentation.TurnBatchSize + 8; index++)
             {

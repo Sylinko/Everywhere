@@ -15,7 +15,7 @@ partial class ChatData
         IDynamicLocaleKey? secondaryHeaderKey = null,
         ChatMessage? owner = null)
     {
-        var ownerNode = owner is null ? Items.AsValueEnumerable().LastOrDefault() : owner.Owner;
+        var ownerNode = owner is null ? SelectedNodes.AsValueEnumerable().LastOrDefault() : owner.Owner;
         if (ownerNode?.Turn is null || !ReferenceEquals(ownerNode.Data, this) || IsDisposed)
         {
             ownerNode = null;

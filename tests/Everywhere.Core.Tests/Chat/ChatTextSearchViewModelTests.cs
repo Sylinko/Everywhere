@@ -1,4 +1,4 @@
-using Avalonia.Headless.NUnit;
+﻿using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Everywhere.Chat;
 using Everywhere.ViewModels;
@@ -97,7 +97,7 @@ public sealed class ChatTextSearchViewModelTests
         for (var index = 0; index < ChatPresentation.TurnBatchSize + 3; index++)
         {
             context.Data.Add(new UserChatMessage(index == 0 ? "needle in old history" : $"Question {index}", []));
-            earliestNode ??= context.Data.Items[^1];
+            earliestNode ??= context.Data.SelectedNodes[^1];
             var assistant = new AssistantChatMessage { IsBusy = false, FinishedAt = DateTimeOffset.UtcNow };
             assistant.AddSpan(new AssistantChatMessageTextSpan($"Answer {index}") { FinishedAt = DateTimeOffset.UtcNow });
             context.Data.Add(assistant);

@@ -114,7 +114,7 @@
               SupportedModalities="{Binding SupportedModalities, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}}"/>
 
             <v:ConditionalContentControl
-              Condition="{Binding IsReadonly, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}, Mode=OneTime}"
+              Condition="{Binding IsReadonly, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}}"
               ContentDataBinding="{Binding Row.Branch, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageControl}}}">
               <v:ConditionalContentControl.FalseContent>
                 <DataTemplate x:DataType="v:ChatBranchSelection">
@@ -188,7 +188,7 @@
               SupportedModalities="{Binding $parent[v:ChatMessageItemsControl].SupportedModalities}"/>
 
             <v:ConditionalContentControl
-              Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly, Mode=OneTime}"
+              Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly}"
               ContentDataBinding="{Binding $parent[v:ChatMessageControl].Row.Branch}">
               <v:ConditionalContentControl.FalseContent>
                 <DataTemplate x:DataType="v:ChatBranchSelection">

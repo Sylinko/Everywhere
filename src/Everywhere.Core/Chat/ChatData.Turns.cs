@@ -25,6 +25,28 @@ partial class ChatData
     public IReadOnlyList<ChatTurn> SelectedTurns => Volatile.Read(ref _selectedTurns);
 
     /// <summary>
+    /// Gets whether merged durable choices would change the current reading path.
+    /// This is derived from the existing projection, not a second ledger of choices.
+    /// </summary>
+    [IgnoreMember]
+    public bool HasSyncedBranchUpdate
+    {
+        get
+        {
+            var nodes = SelectedNodes;
+            for (var index = 0; index < nodes.Count; index++)
+            {
+                var childId = index + 1 < nodes.Count ? nodes[index + 1].Id : (Guid?)null;
+                if (nodes[index].ChoiceChildId != childId)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Gets the assistant that can be continued on the selected branch. Internal notices do not
     /// end eligibility, but a later assistant or user turn replaces the continuation target.
     /// </summary>
@@ -33,7 +55,7 @@ partial class ChatData
     {
         get
         {
-            var nodes = Items;
+            var nodes = SelectedNodes;
             for (var index = nodes.Count - 1; index >= 0; index--)
             {
                 var node = nodes[index];
@@ -136,17 +158,22 @@ partial class ChatData
         if (shouldSelectChild)
         {
             parent.SetChoiceChild(node.Id);
+            RebuildTurnPathAfter(parent);
+            UpdateBranchAfterNode(parent);
         }
-
-        RebuildTurnPath(parent.Turn);
         if (!ReferenceEquals(parent.Turn, node.Turn))
         {
             RebuildTurnPath(node.Turn);
         }
 
-        UpdateBranchAfterNode(parent);
         parent.NotifyTopologyChanged();
-        NotifyNodeChanged(parent, ChatNodeChangeKind.Relations);
+        InvalidateChildTurn(parent);
+        NotifyNodeChanged(parent, shouldSelectChild ? ChatNodeChangeKind.Choice : ChatNodeChangeKind.None);
+        if (!shouldSelectChild)
+        {
+            // The new sibling is durable even when its parent's choice did not change.
+            NotifyDurableChanged();
+        }
         return node;
     }
 
@@ -162,16 +189,16 @@ partial class ChatData
             throw new ArgumentException("The selected node must be a direct child of the parent.", nameof(child));
         }
 
-        if (parent.ChoiceChildId == child?.Id)
+        if (SelectedNodes.Contains(parent))
         {
-            return;
+            RecordPathChoices(parent);
         }
-
         parent.SetChoiceChild(child?.Id);
-        RebuildTurnPath(parent.Turn);
+        RebuildTurnPathAfter(parent);
         UpdateBranchAfterNode(parent);
         parent.NotifyTopologyChanged();
-        NotifyNodeChanged(parent, ChatNodeChangeKind.Relations);
+        InvalidateChildTurn(parent);
+        NotifyNodeChanged(parent, ChatNodeChangeKind.Choice);
     }
 
     /// <summary>
@@ -185,7 +212,82 @@ partial class ChatData
             throw new InvalidOperationException("Only the latest assistant on the selected branch can be continued.");
         }
 
-        return Items[^1];
+        return SelectedNodes[^1];
+    }
+
+    /// <summary>
+    /// Records the ancestry used by accepted user work. Automatic generation appends only
+    /// choose their explicit parent's new child and do not repeatedly select this ancestry.
+    /// Recording an unchanged edge is intentional: it supersedes a received choice.
+    /// </summary>
+    public void RecordPathChoices(ChatMessageNode endpoint)
+    {
+        VerifyOwnedNode(endpoint);
+        for (var child = endpoint; child.Parent is { } parent; child = parent)
+        {
+            parent.SetChoiceChild(child.Id);
+            parent.NotifyTopologyChanged();
+            PersistenceDirtyState.Mark(parent, ChatNodeChangeKind.Choice);
+        }
+        if (endpoint.Parent is not null)
+        {
+            NotifyDurableChanged();
+        }
+        OnPropertyChanged(nameof(HasSyncedBranchUpdate));
+    }
+
+    /// <summary>
+    /// Resolves the effective child for navigation. Hidden turns use their own projection;
+    /// cross-turn edges outside the displayed path follow durable choices.
+    /// </summary>
+    public ChatMessageNode? GetCurrentChild(ChatMessageNode parent)
+    {
+        var nodes = SelectedNodes;
+        for (var index = 0; index < nodes.Count; index++)
+        {
+            if (ReferenceEquals(nodes[index], parent))
+            {
+                return index + 1 < nodes.Count ? nodes[index + 1] : null;
+            }
+        }
+
+        if (parent.Turn is { } turn)
+        {
+            nodes = turn.SelectedNodes;
+            for (var index = 0; index < nodes.Count; index++)
+            {
+                if (ReferenceEquals(nodes[index], parent) && index + 1 < nodes.Count)
+                {
+                    return nodes[index + 1];
+                }
+            }
+        }
+        return parent.ChosenChild;
+    }
+
+    /// <summary>
+    /// Releases the retained reading path and follows durable choices without creating edits.
+    /// The caller owns window prewarming and scroll positioning.
+    /// </summary>
+    public void FollowDurableChoices()
+    {
+        // Updating the full path publishes its visible turn paths and resets departing turns.
+        // Hidden turns already follow durable choices when a remote topology is installed.
+        UpdateBranchAfter(0, RootNode);
+    }
+
+    private void RebuildTurnPathAfter(ChatMessageNode parent)
+    {
+        if (parent.Turn is not { } turn || !turn.SelectedNodes.Contains(parent))
+        {
+            return;
+        }
+        var nodes = GetPathTo(parent).Where(node => ReferenceEquals(node.Turn, turn)).ToList();
+        for (var node = parent.ChosenChild; node is not null && ReferenceEquals(node.Turn, turn); node = node.ChosenChild)
+        {
+            nodes.Add(node);
+        }
+        turn.SetSelectedNodes(nodes);
     }
 
     private void VerifyOwnedNode(ChatMessageNode node)
@@ -239,7 +341,7 @@ partial class ChatData
         }
 
         var nodes = new List<ChatMessageNode>();
-        for (var node = turn.UserNode; node is not null && ReferenceEquals(node.Turn, turn); node = node.SelectedChild)
+        for (var node = turn.UserNode; node is not null && ReferenceEquals(node.Turn, turn); node = node.ChosenChild)
         {
             nodes.Add(node);
         }
@@ -247,9 +349,14 @@ partial class ChatData
         turn.SetSelectedNodes(nodes);
     }
 
-    private void PublishSelectedTurns(IReadOnlyList<ChatMessageNode> nodes)
+    private void PublishCurrentTurns(IReadOnlyList<ChatMessageNode> nodes)
     {
         var turns = nodes.AsValueEnumerable().Where(node => node.Turn?.UserNode == node).Select(node => node.Turn).OfType<ChatTurn>().ToArray();
+        foreach (var previous in SelectedTurns.Except(turns))
+        {
+            RebuildTurnPath(previous);
+        }
+
         Volatile.Write(ref _selectedTurns, turns);
         Interlocked.Increment(ref _branchRevision);
         OnPropertyChanged(nameof(HasHistory));
