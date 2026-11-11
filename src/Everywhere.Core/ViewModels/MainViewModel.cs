@@ -188,6 +188,11 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
         {
             NavigateToItem(item, []);
         }
+        else if (typeof(Control).IsAssignableFrom(routeType) && _serviceProvider.GetService(routeType) is Control page)
+        {
+            // Account-owned utility pages are registered views, not sidebar categories.
+            NavigateTo(page);
+        }
     }
 
     [RelayCommand]

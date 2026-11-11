@@ -71,7 +71,7 @@ public abstract class NumberConverters<T> where T : struct, INumber<T>
 
     /// <summary>
     /// Converts a byte size into a human-readable string with appropriate units.
-    /// e.g., 1024 -> "1 KB", 1048576 -> "1 MB"
+    /// e.g., 1024 -> "1 KiB", 1048576 -> "1 MiB"
     /// </summary>
     public static IValueConverter HumanizeBytes { get; } = new FuncValueConverter<T, string>(n => Humanizer.HumanizeBytes(long.CreateChecked(n)));
 

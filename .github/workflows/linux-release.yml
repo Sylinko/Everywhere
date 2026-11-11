@@ -52,6 +52,7 @@ jobs:
         SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         CLIENT_ID: ${{ secrets.CLIENT_ID }}
         AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
+        CLOUD_BASE_URL: ${{ vars.CLOUD_BASE_URL }}
         ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
       run: |
         dotnet publish src/Everywhere.Linux/Everywhere.Linux.csproj \
@@ -63,6 +64,7 @@ jobs:
           /p:SentryDsn="$SENTRY_DSN" \
           /p:ClientId="$CLIENT_ID" \
           /p:AIGatewayBaseUrl="$AI_GATEWAY_BASE_URL" \
+          /p:CloudBaseUrl="$CLOUD_BASE_URL" \
           /p:AccountBaseUrl="$ACCOUNT_BASE_URL" \
           --self-contained true \
           --no-restore

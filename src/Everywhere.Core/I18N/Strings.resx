@@ -1568,7 +1568,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Add, modify, delete, or move text files.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>File size exceeds {0} MB; read operation is not supported.</value>
+        <value>File size exceeds {0} MiB; read operation is not supported.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Failed to create the directory.</value>
@@ -2327,6 +2327,9 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>Plan Credits</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Manage cloud sync</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Manage Subscription</value>
@@ -4607,8 +4610,11 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copy link text</value>
     </data>
-    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
-        <value>Chats are stored on this device. Chat cloud sync is unavailable in this version.</value>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>Chat Cloud Sync</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>Sync chat history across multiple devices with the same account. You can choose which chats are synced.</value>
     </data>
     <data name="ChatHistory_Archived" xml:space="preserve">
         <value>Archived</value>
@@ -4697,13 +4703,220 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
         <value>View synced branch</value>
     </data>
-    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
-        <value>Archiving will stop all work in this chat. You can restore it later from archived chats.</value>
-    </data>
     <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
         <value>Archive this chat?</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>Archiving will stop all work in this chat. You can restore it later from archived chats.</value>
     </data>
     <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
         <value>Permanently delete this chat? For a synced chat, this also deletes it from other devices when they sync. This cannot be undone.</value>
     </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Chat cloud sync</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>{0} of {1} used</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>Stop syncing</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>Start syncing</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>Manage sync…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>Local only</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>Synced</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>Waiting to sync</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>Syncing…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>Sync incomplete</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>Waiting to restart sync</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>Free {0} of cloud space to sync.</value>
+    </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>Please sign in first to manage chat cloud sync.</value>
+    </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>Chat sync is off.</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>Couldn't load chat cloud sync. Check your network or try again later.</value>
+    </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>This copy changed. Refresh and review it before trying again.</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>Stopped {0} of {1}. Refresh and review the remaining chats.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>Your selection includes a chat not stored on this device. If there are no other copies, it cannot be recovered.</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>Sync “{0}” across your devices? All branches stored on this device will be uploaded.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>{0} selected</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>This chat cannot be managed under the current account.</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>The account changed. Review the chats for the current account.</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>The operation could not be confirmed. Refresh to see the current state.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>Not on this device</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>Message versions differ; local content kept</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>Cloud storage</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>Syncing ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>Local only ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>Select multiple</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>Stop sync ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>No chats are set to sync.</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>No local-only chats.</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>Cloud storage is {0} over its limit. Chats already synced are still available on other devices.</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>Some chats need more cloud space to sync.</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Manage</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>Resolve</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>Free up space</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>Stop syncing these {0} older chats to free up {1}? Chats already on your devices stay there. Later changes won’t sync.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>There aren’t enough older, fully synced chats on this device to free up {0}. Review individual chats instead.</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>This account has no cloud storage available. Removing older chats won’t make room for a new one.</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>{0} chats switched to local only.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>Stop syncing {0}? The upload will be cancelled. The chat will stay on this device.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>Stop syncing {0}? This frees {1} of cloud space. Chats already on your devices stay there. Later changes won’t sync.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>“{0}” alone exceeds your {1} cloud storage limit. Removing other chats won’t make it fit. You can keep it local instead.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>Cloud copy size: {0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>Changes on this device won’t sync to your other devices.</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>Sync status not yet confirmed</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>You can still use this chat here. Refresh its status before starting sync.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>Checking this chat and syncing its changes.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>A cloud copy is available. It hasn’t been saved on this device yet.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>The local and cloud copies matched at the last check.</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>Sync is on again. The cloud copy is waiting to be rebuilt.</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>This chat hasn’t been saved to the cloud yet.</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>Some changes haven’t synced between this device and the cloud yet.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>Cloud copy changed</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>The same message was edited on two devices. Sync kept your local version instead of overwriting it.</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>This chat could not be synced under the current account. Check which account is signed in.</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>The last sync did not finish. Use Refresh at the top of this page to try again.</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>No cloud storage available</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>There’s enough space now. This chat is waiting for the next sync.</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>This chat exceeds your cloud limit</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>Removing other chats won’t make this one fit. You can stop syncing it and keep it on this device.</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>Free {0} to sync this chat. Select Resolve in Cloud storage to review your options.</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>Enable chat cloud sync</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>Loading chat cloud sync...</value>
+    </data>
+  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+    <value>Recently modified</value>
+  </data>
+  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+    <value>Cloud size</value>
+  </data>
+  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+    <value>Starting sync</value>
+  </data>
+  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+    <value>Stopping sync</value>
+  </data>
 </root>

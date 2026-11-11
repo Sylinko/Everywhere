@@ -1568,7 +1568,7 @@
         <value>テキストファイルを追加、変更、削除、または移動します。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>ファイルサイズが{0} MBを超えているため、読み取り操作はサポートされていません。</value>
+        <value>ファイルサイズが{0} MiBを超えているため、読み取り操作はサポートされていません。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>ディレクトリの作成に失敗しました。</value>
@@ -2327,6 +2327,12 @@
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>サブスクリプションポイント</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>クラウド同期を管理</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>管理</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>サブスクリプションを管理</value>
@@ -4607,8 +4613,11 @@
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>リンクテキストをコピー</value>
     </data>
-    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
-        <value>チャットはこのデバイスに保存されます。このバージョンではチャットのクラウド同期は利用できません。</value>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>チャットのクラウド同期</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>同じアカウントの複数のデバイス間でチャット履歴を同期します。同期するチャットを選択できます。</value>
     </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>完全に削除</value>
@@ -4634,4 +4643,31 @@
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>ピン留めする</value>
     </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>チャットのクラウド同期を管理するには、先にサインインしてください。</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>チャットのクラウド同期を読み込めませんでした。ネットワークを確認するか、しばらくしてからもう一度お試しください。</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>チャットのクラウド同期</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>チャットのクラウド同期を有効にする</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>チャットのクラウド同期を読み込み中...</value>
+    </data>
+  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+    <value>更新日時</value>
+  </data>
+  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+    <value>クラウドのサイズ</value>
+  </data>
+  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+    <value>同期を開始しています</value>
+  </data>
+  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+    <value>同期を停止しています</value>
+  </data>
 </root>

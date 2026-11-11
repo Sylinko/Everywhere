@@ -1568,7 +1568,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Metin dosyalarını ekleyin, değiştirin, silin veya taşıyın.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Dosya boyutu {0} MB'ı aşıyor; okuma işlemi desteklenmiyor.</value>
+        <value>Dosya boyutu {0} MiB'ı aşıyor; okuma işlemi desteklenmiyor.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Dizini oluşturma başarısız oldu.</value>
@@ -2327,6 +2327,12 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>Abonelik Puanları</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Bulut eşitlemesini yönet</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Yönet</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Aboneliği Yönet</value>
@@ -4607,8 +4613,11 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Bağlantı metnini kopyala</value>
     </data>
-    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
-        <value>Sohbetler bu cihazda saklanır. Bu sürümde sohbet bulut senkronizasyonu kullanılamaz.</value>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>Sohbet Bulut Senkronizasyonu</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>Aynı hesaptaki birden fazla cihaz arasında sohbet geçmişini eşitleyin. Hangi sohbetlerin eşitleneceğini seçebilirsiniz.</value>
     </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Kalıcı olarak sil</value>
@@ -4634,4 +4643,31 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>Yukarı sabitle</value>
     </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesini yönetmek için lütfen önce oturum açın.</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesi yüklenemedi. Ağ bağlantınızı kontrol edin veya daha sonra tekrar deneyin.</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesi</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesini etkinleştir</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesi yükleniyor...</value>
+    </data>
+  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+    <value>Son değiştirilen</value>
+  </data>
+  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+    <value>Bulut boyutu</value>
+  </data>
+  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+    <value>Eşitleme başlatılıyor</value>
+  </data>
+  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+    <value>Eşitleme durduruluyor</value>
+  </data>
 </root>

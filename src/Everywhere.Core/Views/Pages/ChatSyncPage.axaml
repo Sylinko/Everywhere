@@ -1,0 +1,436 @@
+﻿<UserControl
+  x:Class="Everywhere.Views.Pages.ChatSyncPage" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:Name="Self" Margin="0,16,12,0"
+  x:DataType="vm:ChatSyncPageViewModel">
+  <UserControl.Styles>
+    <Style Selector="ProgressBar.Constrained">
+      <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+    </Style>
+    <Style Selector="LucideIcon.SyncState">
+      <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
+    </Style>
+    <Style Selector="LucideIcon.Success">
+      <Setter Property="Foreground" Value="{DynamicResource SuccessColor}"/>
+    </Style>
+    <Style Selector="LucideIcon.Active">
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
+    </Style>
+    <Style Selector="LucideIcon.Error">
+      <Setter Property="Foreground" Value="{DynamicResource ErrorColor}"/>
+    </Style>
+    <Style Selector="LucideIcon.Warning">
+      <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+    </Style>
+    <Style Selector="TextBlock.CloudBytes">
+      <Setter Property="DockPanel.Dock" Value="Right"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector=".Narrow TextBlock.CloudBytes">
+      <Setter Property="DockPanel.Dock" Value="Bottom"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="StackPanel.ScopeActions">
+      <Setter Property="Grid.Column" Value="1"/>
+      <Setter Property="HorizontalAlignment" Value="Right"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector=".Narrow StackPanel.ScopeActions">
+      <Setter Property="Grid.Column" Value="0"/>
+      <Setter Property="Grid.Row" Value="1"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style Selector=".Narrow Grid.ScopeToolbar">
+      <Setter Property="RowSpacing" Value="8"/>
+    </Style>
+    <Style Selector="Button.IconButton">
+      <Setter Property="Width" Value="32"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Padding" Value="0"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid
+    MaxWidth="1000" RowDefinitions="Auto,Auto,Auto,Auto,*">
+    <Grid
+      ColumnDefinitions="*,Auto" ColumnSpacing="8">
+      <TextBlock
+        Classes="h1" VerticalAlignment="Center"
+        Text="{I18N {x:Static LocaleKey.ChatSyncPage_TitleTextBlock_Text}}"/>
+      <Button
+        x:Name="Refresh" Classes="Ghost IconButton"
+        Grid.Column="1"
+        shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+        shadui:ButtonAssist.ShowProgress="{Binding IsSynchronizing}"
+        AutomationProperties.Name="{I18N {x:Static LocaleKey.Common_Refresh}}"
+        Command="{Binding RefreshCommand}"
+        IsEnabled="{Binding CanRefresh}"
+        ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}"/>
+    </Grid>
+
+    <Border
+      Grid.Row="1" Margin="0,12,0,0"
+      Padding="16,8"
+      Background="{DynamicResource SettingsItemBackgroundColor}"
+      BorderBrush="{DynamicResource BorderColor30}"
+      BorderThickness="1"
+      CornerRadius="{DynamicResource XlCornerRadius}">
+      <DockPanel HorizontalSpacing="12">
+        <ToggleSwitch
+          DockPanel.Dock="Right" VerticalAlignment="Center"
+          AutomationProperties.HelpText="{I18N {x:Static LocaleKey.ChatSync_Description}}"
+          AutomationProperties.Name="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"
+          IsChecked="{Binding ChatSync.IsEnabled, Mode=TwoWay}"
+          IsEnabled="{Binding ChatSync.AccountId, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <StackPanel
+          VerticalAlignment="Center" Spacing="2">
+          <TextBlock
+            Text="{I18N {x:Static LocaleKey.ChatSync_Enable}}"
+            TextWrapping="Wrap"/>
+          <TextBlock
+            Classes="Muted Caption"
+            Text="{I18N {x:Static LocaleKey.ChatSync_Description}}"
+            TextWrapping="Wrap"/>
+          <TextBlock
+            Classes="Muted Caption"
+            IsVisible="{Binding ChatSync.AccountLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+            Text="{Binding ChatSync.AccountLabel}"
+            TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <Border
+      Grid.Row="2" Margin="0,12,0,0"
+      Background="{DynamicResource LightCardBackgroundColor}"
+      BorderBrush="{DynamicResource BorderColor}"
+      BorderThickness="1" ClipToBounds="True"
+      CornerRadius="{DynamicResource XlCornerRadius}"
+      IsVisible="{Binding HasInventory}">
+      <StackPanel>
+        <Grid
+          Margin="16,14" ColumnDefinitions="Auto,*,Auto"
+          ColumnSpacing="8" RowDefinitions="Auto,Auto"
+          RowSpacing="10">
+          <LucideIcon
+            VerticalAlignment="Center" Kind="Cloud"
+            Size="18"/>
+          <TextBlock
+            Grid.Row="0" Grid.Column="1"
+            VerticalAlignment="Center" FontWeight="DemiBold"
+            Text="{I18N {x:Static LocaleKey.ChatSyncPage_CloudStorageTextBlock_Text}}"/>
+          <TextBlock
+            Grid.Row="0" Grid.Column="2"
+            VerticalAlignment="Center"
+            Text="{Binding StorageUsageLabelKey^}"/>
+          <ProgressBar
+            Grid.Row="1" Grid.Column="0"
+            Grid.ColumnSpan="3" Height="5"
+            Classes.Constrained="{Binding #WarningToast.Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+            Maximum="1"
+            Value="{Binding StorageUsageFraction}"/>
+        </Grid>
+
+        <shadui:Toast
+          x:Name="WarningToast"
+          Title="{Binding QuotaWarningKey^}"
+          Padding="16,8"
+          ActionButtonContent="{I18N {x:Static LocaleKey.ChatSyncPage_ResolveQuotaButton_Content}}"
+          ActionCommand="{Binding ResolveCommand}"
+          Background="Transparent" BorderThickness="0"
+          CanDismiss="False" CanDismissByClicking="False"
+          CornerRadius="0"
+          IsVisible="{Binding $self.Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+          Notification="Warning"/>
+      </StackPanel>
+    </Border>
+
+    <v:ConditionalContentControl
+      Grid.Row="4"
+      Condition="{Binding CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNull}}"
+      ContentDataBinding="{Binding}"
+      IsVisible="{Binding !HasInventory}">
+      <v:ConditionalContentControl.TrueContent>
+        <DataTemplate x:DataType="vm:ChatSyncPageViewModel">
+          <v:UserProfileCard
+            Width="260" Margin="24"
+            HorizontalAlignment="Center" VerticalAlignment="Center"
+            ShowActionsButton="False"/>
+        </DataTemplate>
+      </v:ConditionalContentControl.TrueContent>
+      <v:ConditionalContentControl.FalseContent>
+        <DataTemplate x:DataType="vm:ChatSyncPageViewModel">
+          <v:ConditionalContentControl
+            Condition="{Binding IsInventoryLoading}"
+            ContentDataBinding="{Binding}"
+            PageTransition="{x:Null}">
+            <v:ConditionalContentControl.TrueContent>
+              <DataTemplate x:DataType="vm:ChatSyncPageViewModel">
+                <StackPanel
+                  Margin="0,12,0,0" IsHitTestVisible="False"
+                  Spacing="14">
+                  <Border
+                    Padding="16,14"
+                    Background="{DynamicResource LightCardBackgroundColor}"
+                    CornerRadius="{DynamicResource XlCornerRadius}">
+                    <StackPanel Spacing="14">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <shadui:Skeleton
+                          Width="80" Height="16"
+                          HorizontalAlignment="Left"/>
+                        <shadui:Skeleton
+                          Grid.Column="1" Width="140"
+                          Height="16"/>
+                      </Grid>
+                      <shadui:Skeleton Height="5"/>
+                    </StackPanel>
+                  </Border>
+                  <StackPanel
+                    Margin="0,2,0,0" Orientation="Horizontal"
+                    Spacing="8">
+                    <shadui:Skeleton
+                      Width="106" Height="30"/>
+                    <shadui:Skeleton
+                      Width="92" Height="30"/>
+                  </StackPanel>
+                  <StackPanel>
+                    <DockPanel
+                      Margin="4,10" HorizontalSpacing="24">
+                      <shadui:Skeleton
+                        DockPanel.Dock="Right" Width="66"
+                        Height="26" VerticalAlignment="Center"/>
+                      <StackPanel Spacing="8">
+                        <shadui:Skeleton
+                          Height="16" Margin="0,0,80,0"/>
+                        <shadui:Skeleton
+                          Width="110" Height="12"
+                          HorizontalAlignment="Left"/>
+                      </StackPanel>
+                    </DockPanel>
+                    <DockPanel
+                      Margin="4,10" HorizontalSpacing="24">
+                      <shadui:Skeleton
+                        DockPanel.Dock="Right" Width="66"
+                        Height="26" VerticalAlignment="Center"/>
+                      <StackPanel Spacing="8">
+                        <shadui:Skeleton
+                          Height="16" Margin="0,0,30,0"/>
+                        <shadui:Skeleton
+                          Width="110" Height="12"
+                          HorizontalAlignment="Left"/>
+                      </StackPanel>
+                    </DockPanel>
+                    <DockPanel
+                      Margin="4,10" HorizontalSpacing="24">
+                      <shadui:Skeleton
+                        DockPanel.Dock="Right" Width="66"
+                        Height="26" VerticalAlignment="Center"/>
+                      <StackPanel Spacing="8">
+                        <shadui:Skeleton
+                          Height="16" Margin="0,0,120,0"/>
+                        <shadui:Skeleton
+                          Width="110" Height="12"
+                          HorizontalAlignment="Left"/>
+                      </StackPanel>
+                    </DockPanel>
+                    <DockPanel
+                      Margin="4,10" HorizontalSpacing="24">
+                      <shadui:Skeleton
+                        DockPanel.Dock="Right" Width="66"
+                        Height="26" VerticalAlignment="Center"/>
+                      <StackPanel Spacing="8">
+                        <shadui:Skeleton
+                          Height="16" Margin="0,0,60,0"/>
+                        <shadui:Skeleton
+                          Width="110" Height="12"
+                          HorizontalAlignment="Left"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </StackPanel>
+                </StackPanel>
+              </DataTemplate>
+            </v:ConditionalContentControl.TrueContent>
+            <v:ConditionalContentControl.FalseContent>
+              <DataTemplate x:DataType="vm:ChatSyncPageViewModel">
+                <StackPanel
+                  Margin="24" HorizontalAlignment="Center"
+                  VerticalAlignment="Center" Spacing="16">
+                  <Image
+                    Height="128" HorizontalAlignment="Center"
+                    Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+                  <TextBlock
+                    Text="{Binding InventoryMessageKey^}"
+                    TextAlignment="Center" TextWrapping="Wrap"/>
+                </StackPanel>
+              </DataTemplate>
+            </v:ConditionalContentControl.FalseContent>
+          </v:ConditionalContentControl>
+        </DataTemplate>
+      </v:ConditionalContentControl.FalseContent>
+    </v:ConditionalContentControl>
+
+    <Grid
+      Classes="ScopeToolbar" Grid.Row="3"
+      Margin="0,14,0,4" ColumnDefinitions="*,Auto"
+      IsVisible="{Binding HasInventory}"
+      RowDefinitions="Auto,Auto">
+      <TabControl
+        HorizontalAlignment="Left"
+        SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
+        <TabItem Header="{Binding ParticipatingTabLabelKey^}"/>
+        <TabItem Header="{Binding LocalOnlyTabLabelKey^}"/>
+      </TabControl>
+
+      <!--  Grid positions are styled so the actions move below the tabs on narrow pages  -->
+      <!--  ReSharper disable Xaml.MissingGridIndex  -->
+      <StackPanel
+        Classes="ScopeActions" Orientation="Horizontal"
+        Spacing="8">
+        <ComboBox
+          VerticalAlignment="Center" shadui:ControlAssist.MinHeight="30"
+          IsVisible="{Binding IsParticipatingTab}"
+          ItemsSource="{x:Static vm:ChatSyncPageViewModel.SortOptions}"
+          SelectedIndex="{Binding SelectedSortIndex, Mode=TwoWay}">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:ChatSyncPageViewModel+SortOption">
+              <StackPanel
+                Orientation="Horizontal" Spacing="6">
+                <LucideIcon
+                  VerticalAlignment="Center"
+                  Kind="{Binding Icon}"
+                  Size="14"/>
+                <TextBlock Text="{Binding LabelKey^}"/>
+              </StackPanel>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+        <Button
+          Classes="Ghost Compact"
+          Command="{Binding SelectChatsCommand}"
+          Content="{I18N {x:Static LocaleKey.ChatSyncPage_SelectMultipleButton_Content}}"
+          IsVisible="{Binding CanStartMultiSelect}"/>
+        <StackPanel
+          IsVisible="{Binding IsMultiSelectEnabled}"
+          Orientation="Horizontal" Spacing="4">
+          <Button
+            Classes="Ghost Compact"
+            Command="{Binding CancelSelectionCommand}"
+            Content="{I18N {x:Static LocaleKey.Common_Cancel}}"/>
+          <Button
+            x:Name="Stop" Classes="Compact"
+            Command="{Binding StopSelectedCommand}"
+            Content="{Binding StopSelectedLabelKey^}"
+            IsEnabled="{Binding HasSelectedChats}"/>
+        </StackPanel>
+      </StackPanel>
+    </Grid>
+
+    <Panel
+      Grid.Row="4"
+      IsVisible="{Binding HasInventory}">
+      <TextBlock
+        Classes="Muted" Margin="8,24"
+        HorizontalAlignment="Center"
+        IsVisible="{Binding !Rows.Count}"
+        Text="{Binding EmptyListMessageKey^}"/>
+      <ScrollViewer
+        Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
+        VerticalScrollBarVisibility="Auto">
+        <ItemsControl
+          x:Name="Chats" Margin="0,0,12,0"
+          ItemsSource="{Binding Rows}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ChatSyncListRow">
+              <Border
+                Padding="4,10"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="0,0,0,1">
+                <DockPanel HorizontalSpacing="10">
+                  <CheckBox
+                    VerticalAlignment="Center"
+                    AutomationProperties.HelpText="{Binding Status.ToolTipKey^}"
+                    AutomationProperties.Name="{Binding TitleKey^}"
+                    IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                    IsEnabled="{Binding !Item.IsBusy}"
+                    IsVisible="{Binding #Self.ViewModel.IsMultiSelectEnabled}"/>
+                  <Panel
+                    DockPanel.Dock="Right" VerticalAlignment="Center"
+                    IsEnabled="{Binding !Item.IsBusy}"
+                    IsVisible="{Binding !#Self.ViewModel.IsMultiSelectEnabled}">
+                    <Button
+                      Classes="Secondary Compact"
+                      shadui:ButtonAssist.ShowProgress="{Binding Item.IsBusy}"
+                      AutomationProperties.HelpText="{Binding Status.ToolTipKey^}"
+                      Command="{Binding #Self.ViewModel.StartCommand}"
+                      CommandParameter="{Binding}"
+                      Content="{I18N {x:Static LocaleKey.Common_StartChatSync}}"
+                      IsVisible="{Binding Item.CanStart}"/>
+                    <Button
+                      Classes="Secondary Compact"
+                      shadui:ButtonAssist.ShowProgress="{Binding Item.IsBusy}"
+                      AutomationProperties.HelpText="{Binding Status.ToolTipKey^}"
+                      Command="{Binding #Self.ViewModel.StopCommand}"
+                      CommandParameter="{Binding}"
+                      Content="{I18N {x:Static LocaleKey.Common_StopChatSync}}"
+                      IsVisible="{Binding IsParticipating}"/>
+                  </Panel>
+
+                  <DockPanel
+                    VerticalAlignment="Center" HorizontalSpacing="10"
+                    VerticalSpacing="2">
+                    <TextBlock
+                      Classes="Muted Caption CloudBytes"
+                      IsVisible="{Binding CloudSizeText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                      Text="{Binding CloudSizeText}"
+                      ToolTip.Tip="{Binding CloudSizeToolTipKey^}"/>
+                    <StackPanel
+                      VerticalAlignment="Center" Spacing="2">
+                      <TextBlock
+                        AutomationProperties.HelpText="{Binding Status.ToolTipKey^}"
+                        Text="{Binding TitleKey^}"
+                        TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                        <Interaction.Behaviors>
+                          <shadui:TextTrimmedToolTipBehavior/>
+                        </Interaction.Behaviors>
+                      </TextBlock>
+
+                      <DockPanel
+                        HorizontalAlignment="Left" HorizontalSpacing="4"
+                        IsVisible="{Binding Status.HasSubtitle}"
+                        ToolTip.Tip="{Binding Status.ToolTipKey^}">
+                        <LucideIcon
+                          Classes="SyncState" Margin="0,2,0,0"
+                          VerticalAlignment="Top"
+                          Classes.Active="{Binding Status.IsActive}"
+                          Classes.Error="{Binding Status.IsError}"
+                          Classes.Success="{Binding Status.IsSuccess}"
+                          Classes.Warning="{Binding Status.IsWarning}"
+                          Kind="{Binding Status.Icon}"
+                          Size="{Binding #StatusLabel.FontSize}"/>
+                        <TextBlock
+                          x:Name="StatusLabel" Classes="Muted Caption"
+                          Text="{Binding Status.LabelKey^}"
+                          TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                          <Interaction.Behaviors>
+                            <shadui:TextTrimmedToolTipBehavior/>
+                          </Interaction.Behaviors>
+                        </TextBlock>
+                      </DockPanel>
+                    </StackPanel>
+                  </DockPanel>
+                </DockPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Panel>
+  </Grid>
+</UserControl>

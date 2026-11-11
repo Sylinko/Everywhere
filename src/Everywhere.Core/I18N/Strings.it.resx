@@ -1568,7 +1568,7 @@ La mia intelligenza è fornita da un grande modello linguistico e ho bisogno del
         <value>Aggiungere, modificare, eliminare o spostare file di testo.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>La dimensione del file supera i {0} MB; l'operazione di lettura non è supportata.</value>
+        <value>La dimensione del file supera i {0} MiB; l'operazione di lettura non è supportata.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Impossibile creare la directory.</value>
@@ -2327,6 +2327,12 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>Crediti Abbonamento</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Gestisci la sincronizzazione cloud</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Gestisci</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Gestisci Abbonamento</value>
@@ -4607,8 +4613,11 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copia testo del collegamento</value>
     </data>
-    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
-        <value>Le chat sono salvate su questo dispositivo. La sincronizzazione cloud non è disponibile in questa versione.</value>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>Sincronizzazione cloud delle chat</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>Sincronizza la cronologia delle chat tra più dispositivi con lo stesso account. Puoi scegliere quali chat sincronizzare.</value>
     </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Elimina definitivamente</value>
@@ -4634,4 +4643,31 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>Fissa in alto</value>
     </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>Accedi prima per gestire la sincronizzazione cloud della chat.</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>Impossibile caricare la sincronizzazione cloud della chat. Controlla la connessione di rete o riprova più tardi.</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Sincronizzazione cloud della chat</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>Attiva la sincronizzazione cloud della chat</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>Caricamento della sincronizzazione cloud della chat...</value>
+    </data>
+  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+    <value>Modificati di recente</value>
+  </data>
+  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+    <value>Dimensione nel cloud</value>
+  </data>
+  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+    <value>Avvio sincronizzazione</value>
+  </data>
+  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+    <value>Arresto sincronizzazione</value>
+  </data>
 </root>

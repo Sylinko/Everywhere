@@ -1,8 +1,11 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Cloud;
 using Everywhere.Common;
+using Everywhere.Messages;
+using Everywhere.Views.Pages;
 
 namespace Everywhere.Views;
 
@@ -12,6 +15,11 @@ public sealed partial class UserProfileCard : TemplatedControl
     /// Account state shared by all profile cards.
     /// </summary>
     public static ICloudClient CloudClient { get; } = ServiceLocator.Resolve<ICloudClient>();
+
+    /// <summary>
+    /// The account menu uses the same account-bound sync preference as the management page.
+    /// </summary>
+    public static IChatSyncService ChatSync { get; } = ServiceLocator.Resolve<IChatSyncService>();
 
     public static readonly StyledProperty<bool> ShowActionsButtonProperty =
         AvaloniaProperty.Register<UserProfileCard, bool>(nameof(ShowActionsButton), true);
@@ -52,6 +60,10 @@ public sealed partial class UserProfileCard : TemplatedControl
             // Closing the flyout can cancel admission before the account client starts its read.
         }
     }
+
+    [RelayCommand]
+    private static void ManageChatSync() =>
+        WeakReferenceMessenger.Default.Send<ApplicationMessage>(new ShowWindowMessage(ShowWindowMessage.MainWindow, typeof(ChatSyncPage)));
 
     [RelayCommand]
     private Task<bool> OpenDashboardAsync() => OpenUrlAsync(CloudConstants.DashboardUrl);

@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Everywhere.Common;
 using Everywhere.Utilities;
 using MessagePack;
@@ -81,7 +81,7 @@ public sealed class PersistentKeyValueStorage : IKeyValueStorage, IAsyncInitiali
 
             if (bytes.Length > 256 * 1024)
             {
-                throw new InvalidOperationException($"Serialized data for key {key} exceeds the size limit of 256KB.");
+                throw new InvalidOperationException($"Serialized data for key {key} exceeds the size limit of 256 KiB.");
             }
 
             if (_store.TryGetValue(key, out var existingBytes) && existingBytes.AsSpan().SequenceEqual(bytes))

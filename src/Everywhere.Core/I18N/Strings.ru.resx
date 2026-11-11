@@ -1568,7 +1568,7 @@
         <value>Добавлять, изменять, удалять или перемещать текстовые файлы.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Размер файла превышает {0} МБ; операция чтения не поддерживается.</value>
+        <value>Размер файла превышает {0} МиБ; операция чтения не поддерживается.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Не удалось создать директорию.</value>
@@ -2327,6 +2327,12 @@
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>Подписочные Кредиты</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Управление облачной синхронизацией</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Управление</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Управлять Подпиской</value>
@@ -4607,8 +4613,11 @@
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Копировать текст ссылки</value>
     </data>
-    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
-        <value>Чаты хранятся на этом устройстве. Облачная синхронизация чатов недоступна в этой версии.</value>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>Облачная синхронизация чатов</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>Синхронизируйте историю чатов между несколькими устройствами с одним аккаунтом. Вы можете выбрать, какие чаты будут синхронизироваться.</value>
     </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Удалить навсегда</value>
@@ -4634,4 +4643,31 @@
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>Закрепить сверху</value>
     </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>Сначала войдите в систему, чтобы управлять облачной синхронизацией чатов.</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>Не удалось загрузить облачную синхронизацию чата. Проверьте подключение к сети или повторите попытку позже.</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Облачная синхронизация чата</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>Включить облачную синхронизацию чата</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>Загрузка облачной синхронизации чата...</value>
+    </data>
+  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+    <value>Недавно изменённые</value>
+  </data>
+  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+    <value>Размер в облаке</value>
+  </data>
+  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+    <value>Запуск синхронизации</value>
+  </data>
+  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+    <value>Остановка синхронизации</value>
+  </data>
 </root>

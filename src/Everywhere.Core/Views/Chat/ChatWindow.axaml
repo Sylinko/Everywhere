@@ -590,6 +590,17 @@
                                 Header="{I18N {x:Static LocaleKey.ChatWindow_ChatHistory_ExportMarkdownMenuItem_Header}}"
                                 Icon="{LucideIconContent Upload}"/>
                               <MenuItem
+                                Header="{I18N {x:Static LocaleKey.ChatWindow_ManageChatSyncMenuItem_Header}}"
+                                Command="{Binding #Self.ViewModel.ManageChatSyncCommand}" CommandParameter="{Binding}"
+                                Icon="{LucideIconContent Cloud}">
+                                <MenuItem.IsVisible>
+                                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="!IsTemporary"/>
+                                    <Binding ElementName="Self" Path="ViewModel.HasSyncService"/>
+                                  </MultiBinding>
+                                </MenuItem.IsVisible>
+                              </MenuItem>
+                              <MenuItem
                                 Command="{Binding #Self.ViewModel.ArchiveChatCommand}"
                                 CommandParameter="{Binding}"
                                 Foreground="{DynamicResource WarningColor}"

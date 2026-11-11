@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Everywhere.Common;
 using Everywhere.Skills;
 using Everywhere.Utilities;
@@ -84,7 +84,7 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         {
             throw new HandledException(
                 new NotSupportedException(
-                    $"The skill resource '{resource.Uri}' is larger than 100 MB, so the read operation is not supported."),
+                    $"The skill resource '{resource.Uri}' is larger than 100 MiB, so the read operation is not supported."),
                 new FormattedDynamicLocaleKey(
                     LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
                     100));
