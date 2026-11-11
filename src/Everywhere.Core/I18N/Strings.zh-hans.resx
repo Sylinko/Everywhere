@@ -1568,7 +1568,7 @@
         <value>新增、改写、删除或移动文本文件。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>文件大小超过 {0} MB，无法读取。</value>
+        <value>文件大小超过 {0} MiB，无法读取。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>无法创建文件夹。</value>
@@ -2327,6 +2327,9 @@
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>订阅积分</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>管理云同步</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>管理订阅</value>
@@ -4605,8 +4608,11 @@
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>复制链接文本</value>
     </data>
-    <data name="UserProfilePresenter_LocalChatStorage_Text" xml:space="preserve">
-        <value>聊天保存在本机，此版本暂不支持聊天云同步。</value>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>聊天云同步</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>在使用同一账号的多台设备间同步​聊天记录，你可以选择哪些聊天将被同步。</value>
     </data>
     <data name="ChatHistory_Archived" xml:space="preserve">
         <value>已归档</value>
@@ -4695,13 +4701,220 @@
     <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
         <value>查看同步分支</value>
     </data>
-    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
-        <value>归档会停止此聊天中所有正在进行的工作。你可以稍后从归档聊天中恢复。</value>
-    </data>
     <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
         <value>归档此聊天？</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>归档会停止此聊天中所有正在进行的工作。你可以稍后从归档聊天中恢复。</value>
     </data>
     <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
         <value>永久删除此聊天？如果此聊天已同步，其他设备同步时也会删除它。此操作无法撤销。</value>
     </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>聊天云同步</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>已用 {0}，共 {1}</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>停止同步</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>开始同步</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>管理同步…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>仅本地</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>已同步</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>等待同步</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>正在同步…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>同步未完成</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>等待重新同步</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>还需释放 {0} 云空间才能同步。</value>
+    </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>请先登录，再管理聊天云同步。</value>
+    </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>聊天同步已关闭。</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>无法加载聊天云同步，请检查网络或者稍后再试。</value>
+    </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>云副本已发生变化，请刷新并重新确认。</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>已停止 {0}/{1} 个聊天的同步。请刷新后检查其余聊天。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>所选聊天中有未保存在本机的聊天。如果其他设备也没有副本，将无法恢复。</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>在设备间同步“{0}”？将上传本机保存的所有分支。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>已选择 {0} 个</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>无法在当前账号下管理此聊天。</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>账号已切换，请重新查看当前账号的聊天。</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>操作结果未确认。请刷新查看当前状态。</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>尚未保存到本机</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>消息版本不一致，本机内容已保留</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>云空间</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>参与同步 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>仅本地 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>多选</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>停止同步 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>还没有参与同步的聊天。</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>没有仅保存在本机的聊天。</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>云空间已超出 {0}。已同步的聊天仍可在其他设备查看。</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>云空间不足，部分聊天尚未同步。</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>管理</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>解决</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>释放空间</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>停止同步以下 {0} 个较早修改的聊天，可释放 {1}。各设备已有的聊天会保留，后续修改不再同步。</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>需要释放 {0}，但本机可安全停止同步的旧聊天不够。你可以自行选择要停止同步的聊天。</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>此账号当前没有云空间配额。即使移除旧聊天，也无法同步新聊天。</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>已将 {0} 个聊天改为仅本地。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>停止同步 {0}？将取消上传，本机聊天会保留。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>停止同步 {0}？将释放 {1} 云空间。各设备已有的聊天会保留，后续修改不再同步。</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>“{0}”本身就超过了 {1} 的云空间配额。清理其他聊天也放不下它，你可以将它设为仅本地。</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>云端副本大小：{0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>这台设备上的修改不会同步到其他设备。</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>同步状态待确认</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>本机聊天仍可使用。刷新同步状态后，再开始同步。</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>正在检查并同步这条聊天的更改。</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>云端已有这条聊天，本机还没有副本。</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>上次检查时，本机与云端副本一致。</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>已重新开启同步，正在等待重建云端副本。</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>这条本机聊天尚未同步到云端。</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>本机与云端之间还有更改尚未同步。</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>云端状态已变化</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>两台设备修改了同一条消息。同步没有覆盖本机内容。</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>这条聊天无法在当前账号下同步。请检查登录的账号。</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>上次同步未完成。可点击页面顶部的刷新按钮再试。</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>暂无可用云空间</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>空间已足够，正在等待再次同步。</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>此聊天超过云空间上限</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>清理其他聊天也放不下它。你可以停止同步，将它保留在本机。</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>还需释放 {0}。点击上方云空间提醒中的“解决”，查看可选方案。</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>启用聊天云同步</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>正在加载聊天云同步...</value>
+    </data>
+  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+    <value>最近修改</value>
+  </data>
+  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+    <value>云端大小</value>
+  </data>
+  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+    <value>正在开始同步</value>
+  </data>
+  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+    <value>正在停止同步</value>
+  </data>
 </root>

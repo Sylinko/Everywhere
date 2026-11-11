@@ -2,13 +2,82 @@
 using Avalonia.Xaml.Interactions.Custom;
 using Avalonia.Xaml.Interactivity;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Chat;
+using Everywhere.Cloud;
+using Everywhere.Messages;
+using Everywhere.Views;
+using Everywhere.Views.Pages;
 using ShadUI;
 
 namespace Everywhere.ViewModels;
 
 partial class ChatWindowViewModel
 {
+    internal IChatSyncService? SyncService { get; }
+
+    /// <summary>
+    /// Whether cloud features are registered for this application build.
+    /// </summary>
+    public bool HasSyncService => SyncService is not null;
+
+    [RelayCommand]
+    private void OpenChatSyncManagement()
+    {
+        WeakReferenceMessenger.Default.Send<ApplicationMessage>(
+            new ShowWindowMessage(ShowWindowMessage.MainWindow, typeof(ChatSyncPage)));
+    }
+
+    [RelayCommand]
+    private async Task ManageChatSyncAsync(ChatMetadata metadata, CancellationToken cancellationToken)
+    {
+        if (SyncService is not { } sync)
+        {
+            return;
+        }
+        if (sync.Session is not { } session)
+        {
+            ToastHost.CreateToast((sync.AccountId is null ? LocaleKey.ChatSync_SignInRequired : LocaleKey.ChatSync_Disabled).I18N()).ShowInfo();
+            return;
+        }
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(session.Token, cancellationToken);
+        var token = cancellation.Token;
+        try
+        {
+            var decision = await session.ReadDecisionAsync(metadata.Id, token);
+            token.ThrowIfCancellationRequested();
+            if (decision?.Item is not { } item || item.IsBusy)
+            {
+                ToastHost.CreateToast(LocaleKey.ChatWindowViewModel_ChatSyncUnavailableToast_Content.I18N()).ShowInfo();
+                return;
+            }
+            if (item.Participation == ChatSyncParticipation.Cloud)
+            {
+                if (await ChatSyncDialogs.ConfirmStopAsync(DialogHost, [item], token))
+                {
+                    await session.StopAsync(decision, Guid.NewGuid(), token);
+                }
+            }
+            else if (item.CanStart && await ChatSyncDialogs.ConfirmStartAsync(DialogHost, item, token))
+            {
+                await session.StartAsync(decision, token);
+            }
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception error)
+        {
+            if (!cancellation.IsCancellationRequested)
+            {
+                var message = ChatSyncPresentation.DescribeError(error, LocaleKey.ChatSync_ActionUnconfirmed);
+                ToastHost.CreateToast(message.ToString() ?? LocaleKey.ChatSync_ActionUnconfirmed.I18N()).ShowError();
+            }
+        }
+    }
+
+    internal void CancelSyncDialogs() => ManageChatSyncCommand.Cancel();
+
     [RelayCommand]
     private async Task RenameChatAsync(ChatMetadata metadata)
     {

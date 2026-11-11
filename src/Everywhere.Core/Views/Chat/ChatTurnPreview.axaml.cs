@@ -144,15 +144,14 @@ public sealed partial class ChatTurnPreview : UserControl
     {
         if (_entry is not { } entry) return;
         var nodes = entry.Turn.SelectedNodes;
-        if (nodes.Any(node => !node.IsMessageLoaded)) return;
+        if (nodes.AsValueEnumerable().Any(node => !node.IsMessageLoaded)) return;
 
-        var messages = nodes.Select(node => node.Message).ToList();
-        var assistants = messages.OfType<AssistantChatMessage>().ToList();
+        var messages = nodes.AsValueEnumerable().Select(node => node.Message).ToList();
+        var assistants = messages.AsValueEnumerable().OfType<AssistantChatMessage>().ToList();
         var question = entry.Node.Message switch
         {
             UserChatMessage user when !string.IsNullOrWhiteSpace(user.Content) => user.Content,
-            UserChatMessage user => new StringBuilder().AppendJoin(" · ", user.Attachments.Select(attachment => attachment.HeaderKey.ToString()))
-                .ToString(),
+            UserChatMessage user => string.Join(" · ", user.Attachments.Select(attachment => attachment.HeaderKey.ToString())),
             UserActionChatMessage action => action.HeaderKey?.ToString() ?? action.Content ?? string.Empty,
             _ => string.Empty
         };
@@ -161,7 +160,7 @@ public sealed partial class ChatTurnPreview : UserControl
         foreach (var message in assistants)
         {
             // Limit preview allocation independently of the size of the retained turn.
-            foreach (var span in message.Items.OfType<AssistantChatMessageTextSpan>())
+            foreach (var span in message.Items.AsValueEnumerable().OfType<AssistantChatMessageTextSpan>())
             {
                 var remaining = 768 - answer.Length - (answer.Length > 0 ? 1 : 0);
                 if (remaining <= 0) break;

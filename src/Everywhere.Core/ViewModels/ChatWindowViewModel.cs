@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.Automation;
 using Everywhere.Chat;
+using Everywhere.Cloud;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -145,11 +146,13 @@ public sealed partial class ChatWindowViewModel :
         IGreetings greetings,
         ChatVisualService visualService,
         TextSelectionToolbarService toolbarService,
-        ILogger<ChatWindowViewModel> logger)
+        ILogger<ChatWindowViewModel> logger,
+        IChatSyncService? syncService = null)
     {
         Settings = settings;
         PersistentState = persistentState;
         ChatContextManager = chatContextManager;
+        SyncService = syncService;
         TextSearch = new ChatTextSearchViewModel(chatContextManager);
         LifetimeDisposables.Add(TextSearch);
         SoftwareUpdater = softwareUpdater;

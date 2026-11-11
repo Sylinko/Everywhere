@@ -103,7 +103,9 @@ public sealed partial class ChatWindow :
         _inputNotificationPresenter = new ChatInputNotificationPresenter(
             ViewModel.ChatContextManager,
             _modelAvailabilityPresenter.Notifications,
-            ViewModel.PersistChatCommand);
+            ViewModel.PersistChatCommand,
+            ViewModel.SyncService,
+            ViewModel.OpenChatSyncManagementCommand);
         InitializeComponent();
         ChatMessages.SetViewportActive(IsVisible && WindowState != WindowState.Minimized);
 
@@ -244,6 +246,7 @@ public sealed partial class ChatWindow :
             DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
             if (!isActive)
             {
+                ViewModel.CancelSyncDialogs();
                 _pendingHiddenCompaction = DispatcherTimer.RunOnce(
                     () =>
                     {
@@ -517,6 +520,7 @@ public sealed partial class ChatWindow :
 
         DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
         _settings.Model.PropertyChanged -= HandleModelSettingsChanged;
+        ViewModel.CancelSyncDialogs();
         _inputNotificationPresenter.Dispose();
         _modelAvailabilityPresenter.Dispose();
 

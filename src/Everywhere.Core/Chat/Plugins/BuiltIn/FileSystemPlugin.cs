@@ -293,7 +293,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 0 => $"(The file `{context.Path}` exists, but is empty)",
                 > 10L * 1024 * 1024 => throw new HandledException(
                     new NotSupportedException(
-                        "The requested attachment is larger than 10 MB, so it cannot be attached."),
+                        "The requested attachment is larger than 10 MiB, so it cannot be attached."),
                     new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
                         10),

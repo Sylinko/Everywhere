@@ -6,13 +6,14 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Collections;
+using Everywhere.Cloud;
 using Everywhere.Common.Notification;
 using Everywhere.Common;
 
 namespace Everywhere.Chat;
 
 /// <summary>
-/// Combines model notices with a dismissible notice for the currently viewed temporary chat.
+/// Combines model, temporary-chat and account quota notices above the chat input.
 /// Dismissal lasts for this visit, not for the database row or future application sessions.
 /// </summary>
 public sealed class ChatInputNotificationPresenter : IDisposable
@@ -25,6 +26,10 @@ public sealed class ChatInputNotificationPresenter : IDisposable
     private readonly IReadOnlyBindableList<DynamicNotification> _modelNotifications;
     private readonly ICommand _persistCommand;
     private readonly IDisposable _currentSubscription;
+    private readonly IChatSyncService? _sync;
+    private readonly ICommand _openSyncManagementCommand;
+    private DynamicNotification? _quotaNotification;
+    private (long Excess, bool IsBlocked) _quotaState;
     private ChatMetadata? _metadata;
     private DynamicNotification? _temporaryNotification;
     private bool _isDisposed;
@@ -35,14 +40,57 @@ public sealed class ChatInputNotificationPresenter : IDisposable
     public ChatInputNotificationPresenter(
         IChatContextManager manager,
         IReadOnlyBindableList<DynamicNotification> modelNotifications,
-        ICommand persistCommand)
+        ICommand persistCommand,
+        IChatSyncService? sync,
+        ICommand openSyncManagementCommand)
     {
         _modelNotifications = modelNotifications;
         _persistCommand = persistCommand;
+        _sync = sync;
+        _openSyncManagementCommand = openSyncManagementCommand;
+        if (sync is not null)
+        {
+            sync.Changed += HandleQuotaChanged;
+            UpdateQuotaNotification();
+        }
         _modelNotifications.CollectionChanged += HandleModelNotificationsChanged;
+        Refresh();
         _currentSubscription = manager.WhenValueChanged(value => value.Current)
             .ObserveOnAvaloniaDispatcher()
             .Subscribe(context => SetCurrent(context?.Data.Metadata));
+    }
+
+    private void HandleQuotaChanged(object? sender, EventArgs args)
+    {
+        Dispatcher.UIThread.PostOnDemand(UpdateQuotaNotification);
+    }
+
+    private void UpdateQuotaNotification()
+    {
+        if (_isDisposed || _sync is null)
+        {
+            return;
+        }
+
+        var state = _sync.Session?.State;
+        var usage = state?.Inventory?.Usage;
+        var excess = usage is null ? 0 : Math.Max(0, usage.UsedBytes - usage.LimitBytes);
+        var isBlocked = state?.HasQuotaBlockedChats == true;
+        if (_quotaState == (excess, isBlocked))
+        {
+            return;
+        }
+
+        _quotaState = (excess, isBlocked);
+        var warning = ChatSyncPresentation.QuotaWarning(usage, isBlocked);
+        _quotaNotification = warning is null ? null : new DynamicNotification(
+            "chat-sync-quota",
+            warning,
+            NotificationType.Warning,
+            null,
+            new DynamicLocaleKey(LocaleKey.ChatInputNotificationPresenter_ManageChatSyncButton_Content),
+            _openSyncManagementCommand);
+        Refresh();
     }
 
     private void SetCurrent(ChatMetadata? metadata)
@@ -116,6 +164,11 @@ public sealed class ChatInputNotificationPresenter : IDisposable
             desired.Add(_temporaryNotification);
         }
 
+        if (_quotaNotification is not null)
+        {
+            desired.Add(_quotaNotification);
+        }
+
         // Keep existing notice objects and controls when only the other source changes.
         for (var index = Notifications.Count - 1; index >= 0; index--)
         {
@@ -143,6 +196,10 @@ public sealed class ChatInputNotificationPresenter : IDisposable
     public void Dispose()
     {
         _isDisposed = true;
+        if (_sync is not null)
+        {
+            _sync.Changed -= HandleQuotaChanged;
+        }
         _currentSubscription.Dispose();
         _modelNotifications.CollectionChanged -= HandleModelNotificationsChanged;
         if (_metadata is not null)

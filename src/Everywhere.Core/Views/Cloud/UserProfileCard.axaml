@@ -428,9 +428,31 @@
                 Spacing="4">
                 <Separator/>
 
-                <TextBlock
-                  Margin="12,4" TextWrapping="Wrap"
-                  Text="{I18N {x:Static LocaleKey.UserProfilePresenter_LocalChatStorage_Text}}"/>
+                <DockPanel
+                  Margin="12,4" HorizontalSpacing="8"
+                  ToolTip.Placement="Top"
+                  ToolTip.Tip="{I18N {x:Static LocaleKey.ChatSync_Description}}">
+                  <ToggleSwitch
+                    DockPanel.Dock="Right" VerticalAlignment="Center"
+                    AutomationProperties.HelpText="{I18N {x:Static LocaleKey.ChatSync_Description}}"
+                    AutomationProperties.Name="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"
+                    IsChecked="{Binding ChatSync.IsEnabled, Mode=TwoWay}"/>
+                  <TextBlock
+                    VerticalAlignment="Center"
+                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"
+                    TextWrapping="Wrap"/>
+                </DockPanel>
+
+                <Button
+                  Classes="Ghost" Margin="0,-4,0,0"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                  shadui:ButtonAssist.Icon="{LucideIconContent Cloud}"
+                  Command="{Binding ManageChatSyncCommand}"
+                  Content="{I18N {x:Static LocaleKey.UserProfilePresenter_ManageChatSyncButton_Content}}">
+                  <Interaction.Behaviors>
+                    <ButtonHideFlyoutOnClickBehavior/>
+                  </Interaction.Behaviors>
+                </Button>
 
                 <Separator/>
 
