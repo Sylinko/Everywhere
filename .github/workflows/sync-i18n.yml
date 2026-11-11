@@ -40,7 +40,7 @@ jobs:
 
       - name: Run i18n Sync Script
         run: |
-          python ./tools/sync_i18n.py --base-url "https://api.openai.com/v1" --model-id "gpt-4o-mini"
+          python ./tools/sync_i18n.py --base-url "https://api.openai.com/v1" --model-id "gpt-6-luna"
         env:
           # Pass API key as an environment variable for security
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
