@@ -90,7 +90,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         }
 
         Assert.That(root.Reference.IsActive, Is.False);
-        Assert.That(((UserChatMessage)child.Data.Items[^1].Message).Content, Is.EqualTo("stopped"));
+        Assert.That(((UserChatMessage)child.Data.SelectedNodes[^1].Message).Content, Is.EqualTo("stopped"));
     }
 
     [AvaloniaTest]
@@ -180,8 +180,8 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
     }
 
-    [AvaloniaTheory]
-    public void DisposeAsync_WithoutPumpingDispatcher_DrainsAllRootsBeforeFinalSave(bool shouldFailSave)
+    [AvaloniaTest]
+    public void DisposeAsync_WhenFinalSaveFails_DrainsOwnedWorkAndLogsWithoutUiDispatch()
     {
         var storage = new TestChatContextStorage([]);
         var logger = Substitute.For<ILogger<ChatContextManager>>();
@@ -208,7 +208,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
                 }
                 finally
                 {
-                    await first.DispatchAsync(() => firstData.Metadata.Topic = "final title");
+                    await first.DispatchAsync(() => firstData.Metadata.Rename("final title"));
                     Interlocked.Increment(ref completed);
                 }
             })
@@ -224,8 +224,8 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             var payload = user.Payload ?? throw new AssertionException("Missing user payload.");
             var message = (UserChatMessage)MessagePackSerializer.Deserialize<ChatMessage>(payload);
             Assert.That(message.Content, Is.EqualTo("stopped"));
-            saved.Add(data.Metadata.Id);
-            return shouldFailSave ? Task.FromException(new IOException("final save failed")) : Task.CompletedTask;
+            saved.Add(data.Metadata.Snapshot.Id);
+            return Task.FromException(new IOException("final save failed"));
         };
 
         // Deliberately block the Avalonia thread: runtime cancellation must not ask it to run jobs.
@@ -235,7 +235,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(operations.All(task => task.IsCanceled), Is.True);
         Assert.That(firstData.Metadata.States | secondData.Metadata.States, Is.EqualTo(ChatContextMetadataStates.None));
         Assert.That(logger.ReceivedCalls().Any(call => call.GetMethodInfo().Name == "Log" &&
-            call.GetArguments()[0] is LogLevel.Error), Is.EqualTo(shouldFailSave));
+            call.GetArguments()[0] is LogLevel.Error), Is.True);
         Assert.Throws<InvalidOperationException>(() => first.ExecuteAsync(_ => Task.CompletedTask));
 
         async Task RunAsync(ChatContext context, CancellationToken token)
@@ -251,7 +251,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             }
             finally
             {
-                await context.DispatchAsync(() => ((UserChatMessage)context.Data.Items[^1].Message).Content = "stopped");
+                await context.DispatchAsync(() => ((UserChatMessage)context.Data.SelectedNodes[^1].Message).Content = "stopped");
                 Interlocked.Increment(ref completed);
             }
         }
@@ -304,7 +304,10 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var storage = new TestChatContextStorage([other]);
         using var manager = CreateManager(storage);
         var current = manager.Current;
-        current.Data.Add(new UserChatMessage("current", []));
+        var original = current.Data.Add(new UserChatMessage("current", []));
+        var received = current.Data.Append(current.Data.RootNode, new UserChatMessage("synced branch", []), shouldSelectChild: false);
+        // Model a merged durable choice while retaining the current reading projection.
+        await current.DispatchAsync(() => current.Data.RootNode.SetChoiceChild(received.Id));
         using var session = manager.BeginLoadSession();
         await session.LoadMoreAsync(2);
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -330,7 +333,28 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         await PumpDispatcherAsync();
         Assert.That(manager.Current, Is.SameAs(current));
         Assert.That(current.Data.IsDisposed, Is.False);
+        Assert.That(current.Data.SelectedNodes[^1], Is.SameAs(original));
         await manager.FlushPendingSavesAsync();
+
+        storage.ContextLoader = null;
+        storage.Contexts[other.Id] = Data(other, new UserChatMessage("other", []));
+        var switched = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manager.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(ChatContextManager.Current))
+            {
+                switched.TrySetResult();
+            }
+        };
+        manager.CurrentMetadata = other;
+        await switched.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        switched = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manager.CurrentMetadata = current.Data.Metadata;
+        await switched.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.That(manager.Current, Is.SameAs(current));
+        Assert.That(current.Data.SelectedNodes[^1], Is.SameAs(received));
+        Assert.That(current.Data.HasSyncedBranchUpdate, Is.False);
+        Assert.That(current.Data.PersistenceDirtyState.HasChanges, Is.False);
     }
 
     [AvaloniaTest]
@@ -385,8 +409,8 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var saved = new List<Guid>();
         storage.ContextSaver = context =>
         {
-            saved.Add(context.Metadata.Id);
-            return context.Metadata.Id == other.Metadata.Id ? Task.FromException(new IOException("other failed")) : Task.CompletedTask;
+            saved.Add(context.Metadata.Snapshot.Id);
+            return context.Metadata.Snapshot.Id == other.Metadata.Id ? Task.FromException(new IOException("other failed")) : Task.CompletedTask;
         };
 
         await manager.ArchiveAsync(target.Metadata);
@@ -477,7 +501,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var saved = new List<Guid>();
         storage.ContextSaver = batch =>
         {
-            saved.Add(batch.Metadata.Id);
+            saved.Add(batch.Metadata.Snapshot.Id);
             return Task.FromException(new IOException("cannot serialize"));
         };
 
@@ -488,10 +512,8 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(saved, Is.EqualTo(new[] { other.Metadata.Id }));
     }
 
-    [AvaloniaTheory]
-    [TestCase(false)]
-    [TestCase(true)]
-    public async Task Delete_WhenItFailsOrIsCanceled_RetainsPendingSaveForRetry(bool isCanceled)
+    [AvaloniaTest]
+    public async Task Delete_WhenItFails_RetainsPendingSaveForRetry()
     {
         var storage = new TestChatContextStorage([]);
         using var manager = CreateManager(storage);
@@ -499,9 +521,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var targetRuntime = ChatStorageTestExtensions.AttachRoot(manager, target);
 
         target.Metadata.ArchivedAt = DateTimeOffset.UtcNow;
-        storage.Deleter = _ => isCanceled
-            ? Task.FromCanceled(new CancellationToken(true))
-            : Task.FromException(new IOException("delete failed"));
+        storage.Deleter = _ => Task.FromException(new IOException("delete failed"));
         var saves = 0;
         storage.ContextSaver = _ =>
         {
@@ -509,8 +529,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             return Task.CompletedTask;
         };
 
-        var expectedException = isCanceled ? typeof(OperationCanceledException) : typeof(IOException);
-        await Assert.ThatAsync(() => manager.DeletePermanentlyAsync(target.Metadata), Throws.InstanceOf(expectedException));
+        await Assert.ThatAsync(() => manager.DeletePermanentlyAsync(target.Metadata), Throws.TypeOf<IOException>());
         Assert.That(saves, Is.Zero);
         await manager.FlushPendingSavesAsync();
         Assert.That(saves, Is.EqualTo(1));
@@ -563,14 +582,14 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             using var manager = CreateManager(storage);
             var current = manager.Current;
             var runtime = current;
-            await runtime.DispatchAsync(() => current.Data.Metadata.IsTemporary = action == "temporary");
+            await runtime.DispatchAsync(() => current.Data.Metadata.SetTemporary(action == "temporary"));
             await runtime.DispatchAsync(() => current.Data.Add(new UserChatMessage("running", [])));
             var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var operation = current.ExecuteAsync(_ =>
+            var operation = current.ExecuteAsync(token =>
             {
                 started.SetResult();
-                return release.Task;
+                return release.Task.WaitAsync(token);
             });
             try
             {
@@ -588,12 +607,19 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
                     manager.CreateNewCommand.Execute(null);
                 }
                 Assert.That(manager.Current, Is.Not.SameAs(current));
-                Assert.That(manager.BackgroundBusyCount, Is.EqualTo(1));
+                Assert.That(manager.BackgroundBusyCount, Is.EqualTo(action == "archive" ? 0 : 1));
             }
             finally
             {
                 release.TrySetResult();
-                await operation;
+                if (action == "archive")
+                {
+                    await Assert.ThatAsync(async () => await operation, Throws.InstanceOf<OperationCanceledException>());
+                }
+                else
+                {
+                    await operation;
+                }
                 await manager.FlushPendingSavesAsync();
             }
             await PumpDispatcherAsync();

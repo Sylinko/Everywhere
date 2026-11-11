@@ -28,6 +28,21 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     // pending saves retain the context through their own ordinary strong references.
     internal ResilientReference<RootChatContext> Reference { get; }
 
+    internal bool HasWork
+    {
+        get
+        {
+            using var scope = _lifetimeLock.EnterScope();
+            return _operations.Count != 0;
+        }
+    }
+
+    /// <summary>
+    /// Raised after all foreground, nested, background, and cancellation cleanup work ends.
+    /// The manager uses this boundary for final persistence and stable sync publication.
+    /// </summary>
+    public event EventHandler? Idle;
+
     private readonly Lock _lifetimeLock = new();
     private readonly Dictionary<ChatContext, Operation> _foregroundOperations = new();
     private readonly HashSet<Operation> _operations = [];
@@ -65,7 +80,8 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         out Task task)
     {
         using var scope = _lifetimeLock.EnterScope();
-        if (_isStopping || _disposeTask is not null || Data.IsDisposed || context.Data.IsDisposed || _foregroundOperations.ContainsKey(context))
+        if (_isStopping || Data.Metadata.IsArchived || _disposeTask is not null || Data.IsDisposed || context.Data.IsDisposed ||
+            _foregroundOperations.ContainsKey(context))
         {
             task = Task.CompletedTask;
             return false;
@@ -147,21 +163,29 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
             }
             finally
             {
-                using var scope = _lifetimeLock.EnterScope();
-                operation.Cancellation.Dispose();
-                _operations.Remove(operation);
-                Reference.IsActive = _operations.Count > 0;
-                if (failure is OperationCanceledException canceled)
+                bool isIdle;
+                using (_lifetimeLock.EnterScope())
                 {
-                    operation.Completion.TrySetCanceled(canceled.CancellationToken);
+                    operation.Cancellation.Dispose();
+                    _operations.Remove(operation);
+                    isIdle = _operations.Count == 0;
+                    Reference.IsActive = !isIdle;
+                    if (failure is OperationCanceledException canceled)
+                    {
+                        operation.Completion.TrySetCanceled(canceled.CancellationToken);
+                    }
+                    else if (failure is not null)
+                    {
+                        operation.Completion.TrySetException(failure);
+                    }
+                    else
+                    {
+                        operation.Completion.TrySetResult();
+                    }
                 }
-                else if (failure is not null)
+                if (isIdle)
                 {
-                    operation.Completion.TrySetException(failure);
-                }
-                else
-                {
-                    operation.Completion.TrySetResult();
+                    Idle?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -306,7 +330,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         _isStopping = true;
     }
 
-    internal void ResumeAfterFailedDeletion()
+    internal void ResumeAfterStop()
     {
         using var scope = _lifetimeLock.EnterScope();
         ObjectDisposedException.ThrowIf(_disposeTask is not null, this);

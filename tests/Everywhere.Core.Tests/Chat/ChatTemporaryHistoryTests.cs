@@ -27,13 +27,22 @@ partial class ChatContextManagerIncrementalLoadingTests
         await manager.FlushPendingSavesAsync();
         Assert.That(metadata.ActualTopic, Is.EqualTo(Everywhere.Core.I18N.LocaleKey.ChatContext_Temporary.I18N()));
 
+        await manager.RenameAsync(metadata, "unsaved title");
         await manager.PersistChatAsync(metadata);
         await manager.FlushPendingSavesAsync();
         Assert.That(metadata.IsTemporary, Is.False);
+        Assert.That(metadata.IsPersisted, Is.False);
         Assert.That(manager.Current, Is.SameAs(root));
         await using var db = files.Factory.CreateDbContext();
         Assert.That(await db.Chats.CountAsync(), Is.Zero);
         Assert.That(await db.Nodes.CountAsync(), Is.Zero);
+
+        await root.ApplyAsync(() => root.Data.Add(new UserChatMessage("first message", [])));
+        await manager.FlushPendingSavesAsync();
+        Assert.That(metadata.IsPersisted, Is.True);
+        var saved = await db.Chats.SingleAsync();
+        Assert.That(saved.Topic, Is.EqualTo("unsaved title"));
+        Assert.That(saved.IsTemporary, Is.False);
 
         var regular = manager.CreateChat(isTemporary: false);
         Assert.That(regular.Data.Metadata.IsTemporary, Is.False, "Explicit retention overrides the main window's Always preference.");
@@ -80,6 +89,11 @@ partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(Flatten(manager), Is.EqualTo(new[] { second.Data.Metadata }));
 
         await manager.DisposeAsync();
+        await using (var previousSession = files.Factory.CreateDbContext())
+        {
+            Assert.That(await previousSession.Chats.CountAsync(), Is.EqualTo(2), "Shutdown leaves temporary cleanup to startup.");
+        }
+        await new ChatV2StoreInitializer(files.Factory, null, NullLogger<ChatV2StoreInitializer>.Instance).InitializeAsync(CancellationToken.None);
         await using var db = files.Factory.CreateDbContext();
         Assert.That((await db.Chats.SingleAsync()).Id, Is.EqualTo(first.Data.Metadata.Id));
         Assert.That(await db.Nodes.CountAsync(), Is.EqualTo(3));
@@ -97,7 +111,7 @@ partial class ChatContextManagerIncrementalLoadingTests
             await root.DispatchAsync(() =>
             {
                 root.Data.Add(new UserChatMessage("message", []));
-                root.Data.Metadata.Topic = "needle chat";
+                root.Data.Metadata.Rename("needle chat");
             });
             await manager.FlushPendingSavesAsync();
             await PumpDispatcherAsync();
@@ -153,7 +167,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         await saving;
         await manager.FlushPendingSavesAsync();
         Assert.That(root.Data.Metadata.IsTemporary, Is.False);
-        Assert.That(batches.All(batch => !batch.Metadata.IsTemporary), Is.True);
+        Assert.That(batches.All(batch => !batch.Metadata.Snapshot.IsTemporary), Is.True);
         Assert.That(batches.Last().Nodes, Has.Count.EqualTo(1));
         Assert.That(root.Data.PersistenceDirtyState.HasChanges, Is.False);
     }

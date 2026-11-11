@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -9,7 +9,7 @@ namespace Everywhere.Statistics.Database;
 /// EF Core context for the independent local statistics database.
 /// </summary>
 /// <remarks>
-/// The database stores aggregatable event rows only. Chat message content remains owned by <c>ChatDbContext</c>.
+/// The database stores aggregatable event rows only. Chat message content remains owned by <c>ChatV2DbContext</c>.
 /// </remarks>
 public sealed class StatisticsDbContext(DbContextOptions<StatisticsDbContext> options) : DbContext(options)
 {
@@ -107,7 +107,7 @@ public sealed class DeviceEntity
     public int Id { get; init; }
 
     /// <summary>
-    /// Stable installation identifier from <see cref="Configuration.RuntimeConstants.DeviceId"/>.
+    /// Stable installation identifier from <see cref="Common.RuntimeConstants.DeviceId"/>.
     /// </summary>
     [MaxLength(36)]
     public required string DeviceGuid { get; init; }

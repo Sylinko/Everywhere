@@ -60,9 +60,14 @@ public interface IChatContextManager : IIncrementalLoader
     ChatHistoryView HistoryView { get; set; }
 
     /// <summary>
-    /// Archives a saved conversation, leaving running work on its current branch.
+    /// Stops owned work, saves its final changes, and archives a saved conversation as read-only.
     /// </summary>
     Task ArchiveAsync(ChatMetadata metadata);
+
+    /// <summary>
+    /// Gets whether the canonical root owns foreground, nested, or background work without loading it.
+    /// </summary>
+    bool HasRunningWork(ChatMetadata metadata);
 
     /// <summary>
     /// Saves pinning before publishing it on canonical metadata. Pinning does not change retention.
@@ -80,7 +85,14 @@ public interface IChatContextManager : IIncrementalLoader
     Task RestoreAsync(ChatMetadata metadata);
 
     /// <summary>
+    /// Follows already-merged durable choices without storage writes or local edit intents.
+    /// The caller owns navigation prewarming, positioning, and cancellation.
+    /// </summary>
+    Task ViewSyncedBranchAsync(RootChatContext root, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes an inactive conversation after the presentation obtains confirmation.
+    /// Completion confirms removal from storage; navigation to another chat may still be preparing.
     /// </summary>
     Task DeletePermanentlyAsync(ChatMetadata metadata);
 
