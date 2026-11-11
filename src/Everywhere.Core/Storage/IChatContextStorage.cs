@@ -1,4 +1,5 @@
 ﻿using Everywhere.Chat;
+using Everywhere.Cloud;
 
 namespace Everywhere.Storage;
 
@@ -9,6 +10,30 @@ namespace Everywhere.Storage;
 /// </summary>
 public interface IChatContextStorage : IChatTurnLoader
 {
+    /// <summary>
+    /// Freezes committed changes without replacing an uncertain submission. An unstable chat
+    /// can publish independent metadata, but not the active generation.
+    /// </summary>
+    Task FreezeUploadAsync(string accountId, Guid chatId, bool isStable, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Merges a fully downloaded delta and its sync progress in one local transaction.
+    /// The returned replacements for loaded bodies are published only after commit.
+    /// A null result means only the sync head advanced; there is no local chat change to publish.
+    /// </summary>
+    Task<ReceivedChatCommit?> MergeSnapshotAsync(
+        string accountId,
+        ChatSyncDownloadedSnapshot download,
+        IReadOnlySet<Guid> loadedNodes,
+        bool shouldDiscardSubmission,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Installs a cleared cloud head without materializing content or changing the local graph.
+    /// Older heads cannot reverse a newer installed decision.
+    /// </summary>
+    Task ApplyClearedHeadAsync(string accountId, ChatSyncHead head, CancellationToken cancellationToken);
+
     /// <summary>
     /// Moves a conversation into the archive without modifying its nodes or stopping active work.
     /// </summary>

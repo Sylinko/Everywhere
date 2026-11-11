@@ -1,5 +1,4 @@
 ﻿using System.Collections.Specialized;
-using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.NUnit;
@@ -1248,9 +1247,6 @@ public class ChatPresentationTests
     private static void AssertRowTypes<T1, T2, T3>(IEnumerable<ChatPresentationRow> rows) =>
         Assert.That(rows.Select(row => row.GetType()), Is.EqualTo(new[] { typeof(T1), typeof(T2), typeof(T3) }));
 
-    private static void AssertRowTypes<T1, T2, T3, T4, T5>(IEnumerable<ChatPresentationRow> rows) =>
-        Assert.That(rows.Select(row => row.GetType()), Is.EqualTo(new[] { typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5) }));
-
     private static void AssertRowTypes<T1, T2, T3, T4, T5, T6>(IEnumerable<ChatPresentationRow> rows) =>
         Assert.That(rows.Select(row => row.GetType()), Is.EqualTo(new[] { typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6) }));
 
@@ -1273,7 +1269,7 @@ public class ChatPresentationTests
             var span = FinishedText($"Answer {index}");
             assistant.AddSpan(span);
             context.Data.Add(assistant);
-            targets.Add((context.Data.Items[^1], span));
+            targets.Add((context.Data.SelectedNodes[^1], span));
         }
 
         return (context, targets);

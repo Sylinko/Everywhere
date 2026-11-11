@@ -20,7 +20,7 @@ partial class ChatContext
             }
 
             var key = turn?.Id ?? Guid.Empty;
-            if (!_turnLoads.TryGetValue(key, out var task) || task.IsFaulted || task.IsCanceled)
+            if (!_turnLoads.TryGetValue(key, out var task) || task.IsCompleted)
             {
                 task = RunBackgroundAsync(token => LoadTurnAsync(turn?.Id, token), CancellationToken.None);
                 _turnLoads[key] = task;

@@ -34,7 +34,7 @@ public sealed class ChatBranchSelection : ObservableObject
             var children = parent.Children;
             var index = Math.Clamp(value, -1, children.Count - 1);
             var child = index >= 0 ? Node.Data.FindNode(children[index]) : null;
-            SetProperty(ref _choiceIndex, index, nameof(ChoiceIndex));
+            SetProperty(ref _choiceIndex, index);
             _context.SelectChildAsync(parent, child).Detach();
         }
     }
@@ -59,6 +59,6 @@ public sealed class ChatBranchSelection : ObservableObject
     public void Refresh()
     {
         SetProperty(ref _choiceCount, Node.Parent?.ChoiceCount ?? 1, nameof(ChoiceCount));
-        SetProperty(ref _choiceIndex, Node.Parent?.ChoiceIndex ?? 0, nameof(ChoiceIndex));
+        SetProperty(ref _choiceIndex, Node.Parent is { } parent ? parent.Children.IndexOf(Node.Id) : 0, nameof(ChoiceIndex));
     }
 }

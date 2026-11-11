@@ -142,7 +142,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         {
             throw new OperationCanceledException(
                 "The subagent was stopped. Partial output: " +
-                forkedChatContext.Items.AsValueEnumerable().Select(node => node.Message).OfType<AssistantChatMessage>().LastOrDefault());
+                forkedChatContext.SelectedNodes.AsValueEnumerable().Select(node => node.Message).OfType<AssistantChatMessage>().LastOrDefault());
         }
 
         if (generationResult?.Error is { } error)

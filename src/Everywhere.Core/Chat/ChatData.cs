@@ -1,14 +1,12 @@
 ﻿using System.Collections.Concurrent;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.Messages;
 using MessagePack;
 
 namespace Everywhere.Chat;
 
 /// <summary>
 /// Maintains the data of the chat, including a tree of <see cref="ChatMessageNode"/> and other metadata.
-/// The current branch is derived by following each node's <see cref="ChatMessageNode.ChoiceChildId"/>.
+/// Durable choices and the effective reading path share nodes, but may differ after synchronization.
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
 public sealed partial class ChatData : ObservableObject, IDisposable
@@ -17,18 +15,12 @@ public sealed partial class ChatData : ObservableObject, IDisposable
     public ChatMetadata Metadata { get; }
 
     /// <summary>
-    /// Nodes in the current branch, including the hidden root node.
-    /// </summary>
-    [IgnoreMember]
-    public int Count => Items.Count;
-
-    /// <summary>
     /// Gets a snapshot of the current branch, including the hidden root node.
     /// Topology mutations publish a new reference snapshot. Reading never copies or loads bodies.
     /// Nodes and messages retain their canonical identities and remain mutable.
     /// </summary>
     [IgnoreMember]
-    public IReadOnlyList<ChatMessageNode> Items => Volatile.Read(ref _items);
+    public IReadOnlyList<ChatMessageNode> SelectedNodes => Volatile.Read(ref _selectedNodes);
 
     /// <summary>
     /// Backing store for MessagePack (de)serialization: nodes are persisted as a collection, and linked by Ids.
@@ -52,7 +44,7 @@ public sealed partial class ChatData : ObservableObject, IDisposable
     /// <summary>
     /// Nodes on the currently selected branch. [0] is always the root node.
     /// </summary>
-    [IgnoreMember] private IReadOnlyList<ChatMessageNode> _items;
+    [IgnoreMember] private IReadOnlyList<ChatMessageNode> _selectedNodes;
 
     /// <summary>
     /// Gets whether this data has released its message resources.
@@ -74,7 +66,7 @@ public sealed partial class ChatData : ObservableObject, IDisposable
         Metadata = metadata;
         _messageNodeMap.AddRange(messageNodes.Select(v => new KeyValuePair<Guid, ChatMessageNode>(v.Id, v)));
         RootNode = rootNode;
-        _items = [rootNode];
+        _selectedNodes = [rootNode];
 
         foreach (var node in messageNodes.Append(rootNode))
         {
@@ -100,7 +92,7 @@ public sealed partial class ChatData : ObservableObject, IDisposable
         {
             Data = this
         };
-        _items = [RootNode];
+        _selectedNodes = [RootNode];
         PersistenceDirtyState.Mark(RootNode, ChatNodeChangeKind.All);
         UpdateBranchAfter(0, RootNode);
     }
@@ -112,7 +104,12 @@ public sealed partial class ChatData : ObservableObject, IDisposable
     {
         VerifyOwnedNode(siblingNode);
         var parent = siblingNode.Parent ?? throw new InvalidOperationException("The root has no siblings.");
-        return Append(parent, chatMessage, shouldSelectChild: parent.ChoiceChildId == siblingNode.Id);
+        var shouldSelectChild = ReferenceEquals(GetCurrentChild(parent), siblingNode);
+        if (shouldSelectChild && SelectedNodes.Contains(siblingNode))
+        {
+            RecordPathChoices(parent);
+        }
+        return Append(parent, chatMessage, shouldSelectChild);
     }
 
     /// <summary>
@@ -120,7 +117,9 @@ public sealed partial class ChatData : ObservableObject, IDisposable
     /// </summary>
     public ChatMessageNode Add(ChatMessage message)
     {
-        return Append(Items[^1], message);
+        var parent = SelectedNodes[^1];
+        RecordPathChoices(parent);
+        return Append(parent, message);
     }
 
     /// <summary>
@@ -141,17 +140,7 @@ public sealed partial class ChatData : ObservableObject, IDisposable
         if (kind != ChatNodeChangeKind.None)
         {
             PersistenceDirtyState.Mark(node, kind);
-            Metadata.DateModified = DateTimeOffset.UtcNow;
-            WeakReferenceMessenger.Default.Send(new ChatContextMetadataChangedMessage(Metadata, nameof(Metadata.DateModified)));
-            DurableChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        // A user row's selector describes its parent's children, which may belong to the
-        // preceding turn (or the root). Refresh that row even when the selected path is unchanged.
-        if ((kind & ChatNodeChangeKind.Relations) != 0 && node.SelectedChild?.Turn is { } childTurn &&
-            !ReferenceEquals(childTurn, node.Turn))
-        {
-            childTurn.Invalidate();
+            NotifyDurableChanged();
         }
 
         if (node.Turn is { } turn)
@@ -164,12 +153,29 @@ public sealed partial class ChatData : ObservableObject, IDisposable
         }
     }
 
+    private void InvalidateChildTurn(ChatMessageNode node)
+    {
+        // A user row's selector describes its parent's children, which may belong to the
+        // preceding turn (or the root). Refresh that row even when the selected path is unchanged.
+        if (GetCurrentChild(node)?.Turn is { } childTurn &&
+            !ReferenceEquals(childTurn, node.Turn))
+        {
+            childTurn.Invalidate();
+        }
+    }
+
+    private void NotifyDurableChanged()
+    {
+        Metadata.Touch();
+        DurableChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>
     /// Rebuilds the current branch from the specified node forward.
     /// </summary>
     private void UpdateBranchAfterNode(ChatMessageNode node)
     {
-        var nodes = Items;
+        var nodes = SelectedNodes;
         for (var index = 0; index < nodes.Count; index++)
         {
             if (ReferenceEquals(nodes[index], node))
@@ -182,22 +188,30 @@ public sealed partial class ChatData : ObservableObject, IDisposable
 
     private void UpdateBranchAfter(int index, ChatMessageNode node)
     {
-        var previous = Items;
+        var previous = SelectedNodes;
         var selected = previous.Take(index + 1).ToList();
-        while (node.SelectedChild is { } child)
+        while (node.ChosenChild is { } child)
         {
             selected.Add(child);
             node = child;
         }
 
+        // A newly selected suffix follows durable choices. Derive every visible turn from
+        // this same path, including retained prefixes within a turn.
+        foreach (var group in selected.Where(candidate => candidate.Turn is not null).GroupBy(candidate => candidate.Turn))
+        {
+            group.Key?.SetSelectedNodes(group.ToArray());
+        }
         if (previous.SequenceEqual(selected))
         {
+            OnPropertyChanged(nameof(HasSyncedBranchUpdate));
             return;
         }
 
         var snapshot = selected.ToArray();
-        Volatile.Write(ref _items, snapshot);
-        PublishSelectedTurns(snapshot);
+        Volatile.Write(ref _selectedNodes, snapshot);
+        OnPropertyChanged(nameof(HasSyncedBranchUpdate));
+        PublishCurrentTurns(snapshot);
     }
 
     public void Dispose()

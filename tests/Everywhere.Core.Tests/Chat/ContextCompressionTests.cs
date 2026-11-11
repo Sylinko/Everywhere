@@ -1,7 +1,6 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia.Headless.NUnit;
-using Avalonia.Threading;
 using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Views;
@@ -253,7 +252,7 @@ public sealed class ContextCompressionTests
         data.Add(pendingAssistant);
 
         var boundary = ResolveCompressionBoundary(data, CompressionBoundary.Before(userNode));
-        var oldAssistantNode = data.Items.Single(node => ReferenceEquals(node.Message, oldAssistant));
+        var oldAssistantNode = data.SelectedNodes.Single(node => ReferenceEquals(node.Message, oldAssistant));
 
         Assert.That(boundary, Is.EqualTo(oldAssistantNode.Id));
     }
@@ -372,7 +371,7 @@ public sealed class ContextCompressionTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(data.Items.Select(node => node.Message).ToArray(), Has.Length.EqualTo(3));
+            Assert.That(data.SelectedNodes.Select(node => node.Message).ToArray(), Has.Length.EqualTo(3));
             Assert.That(runtime.Presentation.Rows.OfType<ChatMessagePresentationRow>().Select(row => row.Node.Message), Is.EqualTo(new[] { running }));
             Assert.That(restartOrphan.IsHidden, Is.True);
         });
@@ -438,7 +437,7 @@ public sealed class ContextCompressionTests
 
     private static Guid ResolveCompressionBoundary(ChatData data, CompressionBoundary boundary)
     {
-        var nodes = data.Items;
+        var nodes = data.SelectedNodes;
         var boundaryIndex = InvokeResolveCompressionBoundary(null, nodes, boundary);
         return boundaryIndex >= 0 ? nodes[boundaryIndex].Id : Guid.Empty;
     }

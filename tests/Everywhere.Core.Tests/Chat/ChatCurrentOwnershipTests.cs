@@ -14,32 +14,40 @@ namespace Everywhere.Core.Tests.Chat;
 public sealed partial class ChatContextManagerIncrementalLoadingTests
 {
     [AvaloniaTest]
-    public async Task Current_WhenAcceptedWorkHasNotAddedItsFirstNode_LeavingRetainsTheConversation()
+    public async Task Current_WhenAcceptedWorkIsCanceledBeforeAdmission_LeavingRetainsTheUserMessage()
     {
         var storage = new TestChatContextStorage([]);
         await using var manager = CreateManager(storage);
         var root = manager.Current;
+        // A received commit can temporarily defer accepted work. Cancellation must still
+        // enter the send path, which retains the user's message before observing its token.
+        var admission = root.TryDeferWorkWhenIdle() ?? throw new AssertionException("Expected an idle root.");
+        using var cancellation = new CancellationTokenSource();
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var work = root.ExecuteAsync(async _ =>
+        var work = root.ExecuteAsync(async token =>
         {
             started.SetResult();
             await release.Task;
             await root.DispatchAsync(() => root.Data.Add(new UserChatMessage("accepted message", [])));
-        });
+            token.ThrowIfCancellationRequested();
+        }, cancellation.Token);
         try
         {
-            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
             manager.CreateChat(isTemporary: false);
             Assert.That(Flatten(manager), Contains.Item(root.Data.Metadata));
             Assert.That(root.Data.IsDisposed, Is.False);
+            cancellation.Cancel();
+            admission.SetResult();
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
             release.SetResult();
-            await work;
+            await Assert.ThatAsync(() => work, Throws.InstanceOf<OperationCanceledException>());
             await manager.FlushPendingSavesAsync();
             Assert.That(root.Data.Metadata.IsPersisted, Is.True);
         }
         finally
         {
+            admission.TrySetResult();
             release.TrySetResult();
         }
     }

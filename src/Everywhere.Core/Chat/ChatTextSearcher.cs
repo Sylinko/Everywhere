@@ -21,7 +21,7 @@ internal static class ChatTextSearcher
     {
         // Search only the captured selected branch. A match can stop loading early; neither
         // off-branch turns nor their payloads are required for history-list filtering.
-        var nodes = context.Data.Items;
+        var nodes = context.Data.SelectedNodes;
         foreach (var node in nodes)
         {
             cancellationToken.ThrowIfCancellationRequested();

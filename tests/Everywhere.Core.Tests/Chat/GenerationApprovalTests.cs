@@ -36,7 +36,7 @@ public sealed class GenerationApprovalTests
             Assert.That(nextAssistant.Parent, Is.SameAs(compression));
             Assert.That(generation.CurrentAssistantNode, Is.SameAs(nextAssistant));
             Assert.That(generation.GetPath(), Does.Not.Contain(alternative));
-            Assert.That(data.Items[^1], Is.SameAs(alternative));
+            Assert.That(data.SelectedNodes[^1], Is.SameAs(alternative));
         });
     }
 
@@ -165,7 +165,7 @@ public sealed class GenerationApprovalTests
         new ModelConnection(ModelProviderSchema.OpenAI, "https://example.invalid", null, new HttpClient(), null));
 
     private static GenerationContext CreateGeneration(KernelMixin mixin, ChatData data) => new(new Kernel(), mixin, Substitute.For<IPromptRenderer>(),
-        "constraints", Modalities.Text, 80, -1, new GenerationApprovalState(ToolApprovalMode.Auto), true, data.Items[^1]);
+        "constraints", Modalities.Text, 80, -1, new GenerationApprovalState(ToolApprovalMode.Auto), true, data.SelectedNodes[^1]);
 
     private static FunctionCallContext CreateInvocation(ChatContext context, GenerationContext generation,
         Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> review)

@@ -162,6 +162,9 @@ public sealed partial class ChatContextManager :
     /// until successful commit; a later notification replaces the entry identity, not its owner.
     /// </summary>
     private readonly Dictionary<Guid, PendingSave> _pendingSaves = [];
+
+    // Accepted local edits finish independently of sync or navigation cancellation.
+    // Shutdown waits for these commits and their publication before releasing the roots.
     private readonly SemaphoreSlim _commitGate = new(1, 1);
 
     private readonly Settings _settings;
@@ -435,7 +438,8 @@ public sealed partial class ChatContextManager :
     {
         if (pendingSave.Root is { } root)
         {
-            await _chatContextStorage.SaveChatContextAsync(capture.Batch with { LocalAccountId = pendingSave.LocalAccountId })
+            await _chatContextStorage.SaveChatContextAsync(
+                    capture.Batch with { LocalAccountId = pendingSave.LocalAccountId }, CancellationToken.None)
                 .ConfigureAwait(false);
             await root.DispatchAsync(() =>
             {
@@ -446,7 +450,7 @@ public sealed partial class ChatContextManager :
         }
         else
         {
-            await _chatContextStorage.SaveChatContextMetadataAsync(capture.Batch.Metadata).ConfigureAwait(false);
+            await _chatContextStorage.SaveChatContextMetadataAsync(capture.Batch.Metadata, CancellationToken.None).ConfigureAwait(false);
             pendingSave.Metadata.Acknowledge(capture.MetadataChanges);
         }
 
@@ -665,7 +669,7 @@ public sealed partial class ChatContextManager :
                 }
 
                 await SavePendingChatAsync(metadata.Id).ConfigureAwait(false);
-                await _chatContextStorage.SetPinnedAsync(metadata.Id, isPinned).ConfigureAwait(false);
+                await _chatContextStorage.SetPinnedAsync(metadata.Id, isPinned, CancellationToken.None).ConfigureAwait(false);
                 // Publication is part of the committed operation, not a cancellable UI wait.
                 var root = FindRoot(metadata);
                 if (root is null)
@@ -712,7 +716,7 @@ public sealed partial class ChatContextManager :
                 await SavePendingChatAsync(metadata.Id).ConfigureAwait(false);
                 // Commit model state before releasing the persistence gate. History projection
                 // observes the notification independently; it is not part of this transaction.
-                var archivedAt = await _chatContextStorage.ArchiveAsync(metadata.Id).ConfigureAwait(false);
+                var archivedAt = await _chatContextStorage.ArchiveAsync(metadata.Id, CancellationToken.None).ConfigureAwait(false);
                 await PublishArchiveStateAsync(metadata, archivedAt).ConfigureAwait(false);
                 SyncRequested?.Invoke(this, EventArgs.Empty);
             }
@@ -754,7 +758,7 @@ public sealed partial class ChatContextManager :
         try
         {
             ObjectDisposedException.ThrowIf(_isClosing, this);
-            await _chatContextStorage.RestoreAsync(metadata.Id).ConfigureAwait(false);
+            await _chatContextStorage.RestoreAsync(metadata.Id, CancellationToken.None).ConfigureAwait(false);
             await PublishArchiveStateAsync(metadata, null).ConfigureAwait(false);
             SyncRequested?.Invoke(this, EventArgs.Empty);
         }
@@ -806,7 +810,7 @@ public sealed partial class ChatContextManager :
 
                 try
                 {
-                    await _chatContextStorage.DeletePermanentlyAsync(metadata.Id).ConfigureAwait(false);
+                    await _chatContextStorage.DeletePermanentlyAsync(metadata.Id, CancellationToken.None).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -893,7 +897,7 @@ public sealed partial class ChatContextManager :
                     ShouldWriteRetention = true
                 }
             };
-            await _chatContextStorage.SaveChatContextAsync(batch).ConfigureAwait(false);
+            await _chatContextStorage.SaveChatContextAsync(batch, CancellationToken.None).ConfigureAwait(false);
             await root.DispatchAsync(() =>
             {
                 metadata.IsPersisted = true;

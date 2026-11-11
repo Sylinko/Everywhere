@@ -12,13 +12,13 @@ public static class ChatDataExporter
         // Export the branch chosen when the operation began, even if the view switches while
         // historical bodies are loading. Other turns and their branches remain cold.
         var chatData = context.Data;
-        var path = chatData.Items;
-        foreach (var turn in path.Select(node => node.Turn).OfType<ChatTurn>().Distinct())
+        var nodes = chatData.SelectedNodes;
+        foreach (var turn in nodes.Select(node => node.Turn).OfType<ChatTurn>().Distinct())
         {
             await context.EnsureTurnLoadedAsync(turn, cancellationToken);
         }
 
-        if (path.Any(node => node.Turn is null && !node.IsMessageLoaded))
+        if (nodes.AsValueEnumerable().Any(node => node.Turn is null && !node.IsMessageLoaded))
         {
             await context.EnsureTurnLoadedAsync(null, cancellationToken);
         }
@@ -47,7 +47,7 @@ public static class ChatDataExporter
 
         markdownBuilder.AppendLine("---").AppendLine();
 
-        foreach (var chatMessage in path.Select(node => node.Message))
+        foreach (var chatMessage in nodes.Select(node => node.Message))
         {
             switch (chatMessage)
             {

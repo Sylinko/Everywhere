@@ -24,11 +24,11 @@ public sealed class ChatPayloadCaptureTests
         file.FilePath = "after.txt";
         using var restored = (FunctionCallChatMessage)MessagePackSerializer.Deserialize<ChatMessage>(capture.Payload);
         var restoredChild = ((ChatPluginSubagentDisplayBlock)restored.DisplayBlocks.Single()).ChatData;
-        var restoredFile = ((UserChatMessage)restoredChild.Items[1].Message).Attachments.OfType<FileAttachment>().Single();
+        var restoredFile = ((UserChatMessage)restoredChild.SelectedNodes[1].Message).Attachments.OfType<FileAttachment>().Single();
 
         Assert.Multiple(() =>
         {
-            Assert.That(restoredChild.Items[1].Id, Is.EqualTo(user.Id));
+            Assert.That(restoredChild.SelectedNodes[1].Id, Is.EqualTo(user.Id));
             Assert.That(restoredChild.FindNode(alternative.Id), Is.Not.Null);
             Assert.That(restoredFile.FilePath, Is.EqualTo("before.txt"));
             Assert.That(capture.Files.Single().FilePath, Is.EqualTo(restoredFile.FilePath));

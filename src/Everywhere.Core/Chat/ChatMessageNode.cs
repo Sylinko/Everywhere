@@ -4,7 +4,7 @@ namespace Everywhere.Chat;
 
 /// <summary>
 /// A stable history node with turn membership and a remembered chosen-child identity.
-/// ChoiceIndex is a derived presentation/legacy-serialization view of that identity.
+/// ChoiceIndex is a legacy-serialization projection of the durable identity, not the reading path.
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
 public sealed partial class ChatMessageNode : IDisposable
@@ -75,7 +75,7 @@ public sealed partial class ChatMessageNode : IDisposable
     /// Gets the remembered child, or null when this path ends.
     /// </summary>
     [IgnoreMember]
-    public ChatMessageNode? SelectedChild => ChoiceChildId is { } id ? Data.FindNode(id) : null;
+    public ChatMessageNode? ChosenChild => ChoiceChildId is { } id ? Data.FindNode(id) : null;
 
     /// <summary>
     /// Gets the user turn containing this node. Pre-user auxiliary nodes have no turn.
@@ -156,6 +156,19 @@ public sealed partial class ChatMessageNode : IDisposable
         message.Owner = this;
         Volatile.Write(ref _message, message);
         return true;
+    }
+
+    internal void InstallRemoteMessage(ChatMessage message)
+    {
+        var previous = _message;
+        message.Owner = this;
+        Volatile.Write(ref _message, message);
+        if (previous is not null)
+        {
+            previous.Owner = null;
+            (previous as IDisposable)?.Dispose();
+        }
+        _data?.NotifyNodeChanged(this, ChatNodeChangeKind.None);
     }
 
     [SerializationConstructor]

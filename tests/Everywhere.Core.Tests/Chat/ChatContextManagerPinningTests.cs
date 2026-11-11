@@ -48,7 +48,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         ChatStorageTestExtensions.AttachRoot(manager, unrelated);
         var unrelatedId = unrelated.Metadata.Id;
         storage.ContextSaver = batch =>
-            batch.Metadata.Id == unrelatedId ? Task.FromException(new IOException("Unrelated write failed")) : Task.CompletedTask;
+            batch.Metadata.Snapshot.Id == unrelatedId ? Task.FromException(new IOException("Unrelated write failed")) : Task.CompletedTask;
         storage.PinSetter = (_, _) => Task.FromException(new IOException("Pin write failed"));
         var originalDate = metadata.DateModified;
 

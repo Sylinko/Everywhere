@@ -706,7 +706,7 @@
             </v:ConditionalContentControl>
 
             <v:ConditionalContentControl
-              Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly, Mode=OneTime}"
+              Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly}"
               ContentDataBinding="{Binding Branch, Mode=OneTime}">
               <v:ConditionalContentControl.FalseContent>
                 <DataTemplate x:DataType="v:ChatBranchSelection">

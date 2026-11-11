@@ -411,7 +411,7 @@ public sealed class ChatV2MigrationTests
         using var index = new ChatTurnNavigationIndex(cold);
         var firstEntry = index.Turns[0];
         Assert.That(index.Turns, Has.Count.EqualTo(2));
-        Assert.That(cold.Data.Items.Where(node => node.MessageKind != ChatMessageKind.Root).All(node => !node.IsMessageLoaded), Is.True);
+        Assert.That(cold.Data.SelectedNodes.Where(node => node.MessageKind != ChatMessageKind.Root).All(node => !node.IsMessageLoaded), Is.True);
 
         var manager = Substitute.For<IChatContextManager>();
         manager.Current.Returns(cold);

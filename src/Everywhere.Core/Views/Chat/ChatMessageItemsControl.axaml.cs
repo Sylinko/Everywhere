@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
@@ -11,6 +11,22 @@ namespace Everywhere.Views;
 
 public sealed partial class ChatMessageItemsControl : ItemsControl
 {
+    /// <summary>
+    /// Defines the manager used for explicit navigation to synchronized branch choices.
+    /// </summary>
+    public static readonly StyledProperty<IChatContextManager?> ChatContextManagerProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, IChatContextManager?>(nameof(ChatContextManager));
+
+    /// <summary>
+    /// Gets or sets the manager used to navigate to already-committed branch choices.
+    /// Nested read-only viewers do not need this service.
+    /// </summary>
+    public IChatContextManager? ChatContextManager
+    {
+        get => GetValue(ChatContextManagerProperty);
+        set => SetValue(ChatContextManagerProperty, value);
+    }
+
     /// <summary>
     /// Defines the <see cref="TextSearch"/> property.
     /// </summary>

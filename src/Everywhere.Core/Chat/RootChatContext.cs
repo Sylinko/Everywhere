@@ -51,6 +51,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     private CancellationTokenSource _lifetimeCancellation = new();
     private bool _isStopping;
     private Task? _disposeTask;
+    private Task _workAdmission = Task.CompletedTask;
 
     /// <summary>
     /// Attaches a new runtime to canonical data without starting work or creating a presentation.
@@ -91,7 +92,8 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         _operations.Add(operation);
         Reference.IsActive = true;
         _foregroundOperations.Add(context, operation);
-        RunOperationAsync(context, operation, token => Task.Run(() => action(token), CancellationToken.None)).Detach();
+        var admission = _workAdmission;
+        RunOperationAsync(context, operation, token => RunAfterAdmissionAsync(admission, action, token)).Detach();
         task = operation.Completion.Task;
         return true;
     }
@@ -107,7 +109,8 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         var operation = new Operation(_lifetimeCancellation.Token, cancellationToken);
         _operations.Add(operation);
         Reference.IsActive = true;
-        RunOperationAsync(null, operation, token => Task.Run(() => action(token), CancellationToken.None)).Detach();
+        var admission = _workAdmission;
+        RunOperationAsync(null, operation, token => RunAfterAdmissionAsync(admission, action, token)).Detach();
         return operation.Completion.Task;
     }
 
@@ -126,7 +129,15 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         var operation = new Operation(_lifetimeCancellation.Token, CancellationToken.None);
         _operations.Add(operation);
         Reference.IsActive = true;
-        var pending = EnqueueAsync(mutation);
+        var shouldWait = !_workAdmission.IsCompleted;
+        var pending = shouldWait ? ApplyAfterAdmissionAsync(_workAdmission, mutation) : EnqueueAsync(mutation);
+        if (shouldWait)
+        {
+            // Preserve external mutation order across the work admission boundary,
+            // including calls arriving after commit but before earlier queued mutations resume.
+            _workAdmission = pending;
+        }
+
         RunOperationAsync(null, operation, _ => pending).Detach();
         return operation.Completion.Task;
     }
@@ -191,6 +202,51 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Under the manager's commit gate, reserve an idle model for a detached capture or
+    /// received commit. Complete the returned signal to let queued work enter in order.
+    /// </summary>
+    internal TaskCompletionSource? TryDeferWorkWhenIdle()
+    {
+        using var scope = _lifetimeLock.EnterScope();
+        if (_operations.Count != 0 || _isStopping || _disposeTask is not null)
+        {
+            return null;
+        }
+        var admission = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _workAdmission = admission.Task;
+        return admission;
+    }
+
+    private static async Task RunAfterAdmissionAsync(Task admission, Func<CancellationToken, Task> action, CancellationToken token)
+    {
+        try
+        {
+            // Admission protects a committed publication, not whether already accepted work
+            // exists. Enter the action even when canceled so the send path retains user input
+            // and runs its ordinary cleanup before observing the canceled token.
+            await admission.ConfigureAwait(false);
+        }
+        catch
+        {
+            // A preceding short mutation owns its failure; this independently accepted work still runs.
+        }
+        await Task.Run(() => action(token), CancellationToken.None).ConfigureAwait(false);
+    }
+
+    private async Task ApplyAfterAdmissionAsync(Task admission, Action mutation)
+    {
+        try
+        {
+            await admission.ConfigureAwait(false);
+        }
+        catch
+        {
+            // The preceding operation reports its own error; it must not cancel this independent mutation.
+        }
+        await EnqueueAsync(mutation).ConfigureAwait(false);
+    }
+
     private async Task FinishForegroundAsync(ChatContext context, Operation operation)
     {
         Task? cancellation;
@@ -252,6 +308,23 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     {
         using var scope = _lifetimeLock.EnterScope();
         return _children.ContainsKey(data);
+    }
+
+    internal void DetachNestedContexts(ChatMessage message)
+    {
+        foreach (var data in ChatMessageResources.GetChildData(message))
+        {
+            using var scope = _lifetimeLock.EnterScope();
+            if (!_children.Remove(data, out var child))
+            {
+                continue;
+            }
+            foreach (var node in data.GetAllNodes().Where(node => node.IsMessageLoaded))
+            {
+                DetachNestedContexts(node.Message);
+            }
+            child.ReleaseResources();
+        }
     }
 
     internal NestedChatContext CreateNested(
