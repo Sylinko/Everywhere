@@ -21,13 +21,13 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         storage.ContextSaver = _ => Task.FromException(new IOException("disk unavailable"));
         await Assert.ThatAsync(() => manager.FlushPendingSavesAsync(), Throws.TypeOf<AggregateException>());
         Collect();
-        Assert.That(reference.TryGetTarget(out _), Is.True, "Pending changes must retain their runtime.");
+        Assert.That(IsRootAlive(reference), Is.True, "Pending changes must retain their runtime.");
 
         storage.ContextSaver = _ => Task.CompletedTask;
         await manager.FlushPendingSavesAsync();
         await PumpDispatcherAsync();
         Collect();
-        Assert.That(reference.TryGetTarget(out _), Is.False, "An idle, saved root must not be retained by the registry.");
+        Assert.That(IsRootAlive(reference), Is.False, "An idle, saved root must not be retained by the registry.");
 
         static void Collect()
         {
@@ -36,6 +36,12 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             GC.Collect();
         }
     }
+
+    // Keep TryGetTarget's temporary strong reference inside a non-inlined synchronous frame.
+    // Debug Runtime Async can otherwise retain it across awaits in the test, making the test
+    // itself keep the root alive after the manager has released its pending save.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static bool IsRootAlive(WeakReference<RootChatContext> reference) => reference.TryGetTarget(out _);
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static WeakReference<RootChatContext> OpenUnselectedRoot(ChatContextManager manager)

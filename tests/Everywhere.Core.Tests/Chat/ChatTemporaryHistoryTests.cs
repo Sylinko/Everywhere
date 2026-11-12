@@ -143,7 +143,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         await root.DispatchAsync(() => root.Data.Add(message));
         await manager.FlushPendingSavesAsync();
         storage.ContextSaver = _ => Task.FromException(new IOException("disk unavailable"));
-        Assert.ThrowsAsync<IOException>(() => manager.PersistChatAsync(root.Data.Metadata));
+        await Assert.ThrowsAsync<IOException>(() => manager.PersistChatAsync(root.Data.Metadata));
         Assert.That(root.Data.Metadata.IsTemporary, Is.True);
 
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

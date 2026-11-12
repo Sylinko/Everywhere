@@ -52,7 +52,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         storage.PinSetter = (_, _) => Task.FromException(new IOException("Pin write failed"));
         var originalDate = metadata.DateModified;
 
-        Assert.ThrowsAsync<IOException>(() => manager.SetPinnedAsync(metadata, true));
+        await Assert.ThrowsAsync<IOException>(() => manager.SetPinnedAsync(metadata, true));
         Assert.That(metadata.IsPinned, Is.False);
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

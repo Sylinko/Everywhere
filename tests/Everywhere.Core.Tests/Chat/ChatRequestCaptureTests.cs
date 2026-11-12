@@ -73,12 +73,12 @@ public sealed class ChatRequestCaptureTests
     }
 
     [Test]
-    public void BuildSelectedHistory_WhenCanceled_DoesNotTurnCancellationIntoAnAttachmentOmission()
+    public async Task BuildSelectedHistory_WhenCanceled_DoesNotTurnCancellationIntoAnAttachmentOmission()
     {
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
         var user = new UserChatMessage("message", [new FileAttachment(new DirectLocaleKey("file"), "missing.png", "missing", "image/png")]);
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
             Substitute.For<IPromptRenderer>(), "system", [user], Modalities.Image, cancellation.Token));
     }
 }
