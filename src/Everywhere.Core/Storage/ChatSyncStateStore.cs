@@ -33,7 +33,7 @@ public sealed class ChatSyncStateStore(ChatV2DbContext db)
     /// </summary>
     public async Task EnrollAsync(string accountId, long generation, CancellationToken cancellationToken = default)
     {
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"INSERT INTO SyncAccounts (AccountId, Generation, ScanCursor, LocalRevision) VALUES ({accountId}, {generation}, 0, 0) ON CONFLICT DO NOTHING",
             cancellationToken);
         var existing = await db.SyncAccounts.AsNoTracking().SingleAsync(row => row.AccountId == accountId, cancellationToken);
@@ -63,7 +63,7 @@ public sealed class ChatSyncStateStore(ChatV2DbContext db)
             throw new InvalidOperationException("The sync account is not enrolled.");
         }
 
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"""
              INSERT INTO SyncPending (AccountId, ChatId, Kind, Key, LocalRevision, BaseRevision)
              SELECT {accountId}, {chatId}, {kind.ToStorageKey()}, {key}, LocalRevision, {baseRevision}
@@ -102,7 +102,7 @@ public sealed class ChatSyncStateStore(ChatV2DbContext db)
         {
             var chatId = Guid.ParseExact(head.ChatId, "D");
             var bytes = MessagePackSerializer.Serialize(ChatSyncHead.Initial(chatId), cancellationToken: cancellationToken);
-            await db.Database.ExecuteSqlInterpolatedAsync(
+            await db.Database.ExecuteSqlAsync(
                 $"""
                  INSERT INTO SyncChats (AccountId, ChatId, DiscoveredRevision, AppliedRevision, IsContentUnavailable, Head)
                  VALUES ({accountId}, {chatId}, {head.Revision}, 0, 0, {bytes})
@@ -128,7 +128,7 @@ public sealed class ChatSyncStateStore(ChatV2DbContext db)
     /// </summary>
     public async Task RecordRemoteAsync(ChatSyncRemoteEntity record, CancellationToken cancellationToken = default)
     {
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"""
              INSERT INTO SyncRemote (AccountId, ChatId, Kind, Key, Revision)
              VALUES ({record.AccountId}, {record.ChatId}, {record.Kind.ToStorageKey()}, {record.Key}, {record.Revision})
@@ -153,7 +153,7 @@ public sealed class ChatSyncStateStore(ChatV2DbContext db)
         var headerBytes = MessagePackSerializer.Serialize(header, cancellationToken: cancellationToken);
         var capturedBytes = MessagePackSerializer.Serialize(changes.ToArray(), cancellationToken: cancellationToken);
 
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"""
              INSERT INTO SyncSubmissions (AccountId, ChatId, CommitId, Header, CapturedChanges)
              VALUES ({accountId}, {chatId}, {commitId}, {headerBytes}, {capturedBytes})
@@ -166,7 +166,7 @@ public sealed class ChatSyncStateStore(ChatV2DbContext db)
     /// </summary>
     public Task WritePartAsync(string accountId, Guid chatId, int position, byte[] bytes, CancellationToken cancellationToken = default)
     {
-        return db.Database.ExecuteSqlInterpolatedAsync(
+        return db.Database.ExecuteSqlAsync(
             $"INSERT INTO SyncParts (AccountId, ChatId, Position, Body) VALUES ({accountId}, {chatId}, {position}, {bytes})",
             cancellationToken);
     }

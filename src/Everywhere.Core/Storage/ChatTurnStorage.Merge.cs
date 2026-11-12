@@ -204,7 +204,7 @@ partial class ChatTurnStorage
 
                         if (!isSame && pending is null)
                         {
-                            await db.Database.ExecuteSqlInterpolatedAsync(
+                            await db.Database.ExecuteSqlAsync(
                                 $"""
                                  INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId, MessageKind,
                                      SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
@@ -353,7 +353,7 @@ partial class ChatTurnStorage
     {
         var isUnavailable = head.Availability != ChatSyncAvailability.Available;
         var bytes = MessagePackSerializer.Serialize(head, cancellationToken: cancellationToken);
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"""
              INSERT INTO SyncChats (AccountId, ChatId, DiscoveredRevision, AppliedRevision, IsContentUnavailable, Head)
              VALUES ({accountId}, {chatId}, {head.Revision}, {head.Revision}, {isUnavailable}, {bytes})

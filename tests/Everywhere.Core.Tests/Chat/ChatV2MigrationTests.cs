@@ -40,20 +40,20 @@ public sealed class ChatV2MigrationTests
         var replyPayload = MessagePackSerializer.Serialize<ChatMessage>(new AssistantChatMessage());
         await using (var transaction = await db.Database.BeginTransactionAsync())
         {
-            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Chats (Id, CreatedAt, UpdatedAt) VALUES ({chatId}, 1, 1)");
+            await db.Database.ExecuteSqlAsync($"INSERT INTO Chats (Id, CreatedAt, UpdatedAt) VALUES ({chatId}, 1, 1)");
             // Root choice, reply parent and turn all refer to rows inserted later in this transaction.
             // Incremental graph writes must not depend on insert order to satisfy these references.
-            await db.Database.ExecuteSqlInterpolatedAsync(
+            await db.Database.ExecuteSqlAsync(
                 $"""
                 INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId, MessageKind, Payload, CreatedAt, UpdatedAt)
                 VALUES ({chatId}, {rootId}, NULL, NULL, {selectedId}, 0, {rootPayload}, 0, 0)
                 """);
-            await db.Database.ExecuteSqlInterpolatedAsync(
+            await db.Database.ExecuteSqlAsync(
                 $"""
                 INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, MessageKind, Payload, CreatedAt, UpdatedAt)
                 VALUES ({chatId}, {replyId}, {selectedId}, {selectedId}, {(int)ChatMessageKind.Assistant}, {replyPayload}, 30, 30)
                 """);
-            await db.Database.ExecuteSqlInterpolatedAsync(
+            await db.Database.ExecuteSqlAsync(
                 $"""
                 INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, MessageKind, Payload, CreatedAt, UpdatedAt)
                 VALUES ({chatId}, {selectedId}, {rootId}, {selectedId}, 2, {userPayload}, 20, 20)
