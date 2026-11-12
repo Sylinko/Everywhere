@@ -176,7 +176,7 @@ partial class ChatTurnStorage
 
         // Select node IDs in SQLite; enrolling a large history never reads message bodies.
         // Metadata uses the same field-intent recorder as later edits.
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"""
              UPDATE SyncAccounts SET LocalRevision = LocalRevision + 1 WHERE AccountId = {accountId};
              INSERT INTO SyncPending (AccountId, ChatId, Kind, Key, LocalRevision, BaseRevision)

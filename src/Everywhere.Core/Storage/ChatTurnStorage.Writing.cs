@@ -105,7 +105,7 @@ partial class ChatTurnStorage
             return;
         }
 
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"""
              INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId,
                  MessageKind, SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
@@ -118,14 +118,14 @@ partial class ChatTurnStorage
 
         await WriteChoiceAsync(db, chatId, write, cancellationToken);
 
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"DELETE FROM NodeBlobs WHERE ChatContextId = {chatId} AND ChatNodeId = {node.Id}",
             cancellationToken);
         foreach (var file in write.Files)
         {
             if (ReadFileSize(file.LocalPath) is { } size)
             {
-                await db.Database.ExecuteSqlInterpolatedAsync(
+                await db.Database.ExecuteSqlAsync(
                     $"""
                      INSERT INTO Blobs (Sha256, LocalPath, MimeType, Size, CreatedAt, LastAccessAt)
                      VALUES ({file.Sha256}, {file.LocalPath}, {file.MimeType}, {size}, {node.UpdatedAt.UtcTicks}, {node.UpdatedAt.UtcTicks})
@@ -134,7 +134,7 @@ partial class ChatTurnStorage
                     cancellationToken);
             }
 
-            await db.Database.ExecuteSqlInterpolatedAsync(
+            await db.Database.ExecuteSqlAsync(
                 $"INSERT INTO NodeBlobs (ChatContextId, ChatNodeId, BlobSha256) VALUES ({chatId}, {node.Id}, {file.Sha256})",
                 cancellationToken);
         }
@@ -148,7 +148,7 @@ partial class ChatTurnStorage
         }
 
         var node = write.Topology;
-        await db.Database.ExecuteSqlInterpolatedAsync(
+        await db.Database.ExecuteSqlAsync(
             $"""
              UPDATE Nodes SET ChoiceChildId = {node.ChoiceChildId}, UpdatedAt = {node.UpdatedAt.UtcTicks}
              WHERE ChatContextId = {chatId} AND Id = {node.Id}

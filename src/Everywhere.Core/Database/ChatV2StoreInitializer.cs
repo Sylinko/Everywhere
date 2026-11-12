@@ -57,7 +57,7 @@ public sealed class ChatV2StoreInitializer(
 
         var initializedAt = DateTimeOffset.UtcNow;
         var importedAtTicks = hasLegacyDatabase ? initializedAt.UtcTicks : (long?)null;
-        await destination.Database.ExecuteSqlInterpolatedAsync(
+        await destination.Database.ExecuteSqlAsync(
             $"INSERT INTO StoreInfo (Id, InitializedAt, LegacyImportedAt) VALUES (1, {initializedAt.UtcTicks}, {importedAtTicks})",
             cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -96,7 +96,7 @@ public sealed class ChatV2StoreInitializer(
                 continue;
             }
 
-            await destination.Database.ExecuteSqlInterpolatedAsync(
+            await destination.Database.ExecuteSqlAsync(
                 $"INSERT INTO Chats (Id, Topic, CreatedAt, UpdatedAt, ArchivedAt) VALUES ({chatId}, {topic}, {createdAt}, {updatedAt}, {archivedAt})",
                 cancellationToken);
             await WriteNodesAsync(destination, chatId, prepared, cancellationToken);
@@ -267,7 +267,7 @@ public sealed class ChatV2StoreInitializer(
     {
         foreach (var row in prepared.Nodes)
         {
-            await destination.Database.ExecuteSqlInterpolatedAsync(
+            await destination.Database.ExecuteSqlAsync(
                 $"""
                  INSERT INTO Nodes (ChatContextId, Id, ParentId, TurnId, ChoiceChildId,
                      MessageKind, SummaryThroughNodeId, Payload, CreatedAt, UpdatedAt)
@@ -279,7 +279,7 @@ public sealed class ChatV2StoreInitializer(
 
         foreach (var (nodeId, sha256) in prepared.References)
         {
-            await destination.Database.ExecuteSqlInterpolatedAsync(
+            await destination.Database.ExecuteSqlAsync(
                 $"INSERT INTO NodeBlobs (ChatContextId, ChatNodeId, BlobSha256) VALUES ({chatId}, {nodeId}, {sha256})",
                 cancellationToken);
         }
@@ -317,7 +317,7 @@ public sealed class ChatV2StoreInitializer(
             var size = reader.GetInt64(3);
             var createdAt = reader.GetInt64(4);
             var lastAccessAt = reader.GetInt64(5);
-            await destination.Database.ExecuteSqlInterpolatedAsync(
+            await destination.Database.ExecuteSqlAsync(
                 $"INSERT INTO Blobs (Sha256, LocalPath, MimeType, Size, CreatedAt, LastAccessAt) VALUES ({sha256}, {localPath}, {mimeType}, {size}, {createdAt}, {lastAccessAt})",
                 cancellationToken);
         }
