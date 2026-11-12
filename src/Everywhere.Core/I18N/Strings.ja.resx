@@ -4670,4 +4670,10 @@
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>同期を停止しています</value>
   </data>
+  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+    <value>以前のチャットデータをバックアップしました。将来 Everywhere をダウングレードしない限り、このデータは使用されません。削除することもできます。</value>
+  </data>
+  <data name="ChatUpgrade_Body" xml:space="preserve">
+    <value>チャットはターン単位で整理されたデータ構造になり、履歴の読み込みもより効率的になりました。チャットをアーカイブできるようになり、クラウド同期のパフォーマンスも向上しています。</value>
+  </data>
 </root>

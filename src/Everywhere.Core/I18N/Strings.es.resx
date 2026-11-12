@@ -4670,4 +4670,10 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>Deteniendo sincronización</value>
   </data>
+  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+    <value>Hemos hecho una copia de seguridad de los datos de chat antiguos. Ya no se utilizan, a menos que en el futuro vuelvas a una versión anterior de Everywhere. Puedes elegir eliminarlos.</value>
+  </data>
+  <data name="ChatUpgrade_Body" xml:space="preserve">
+    <value>Los chats ahora usan una estructura de datos basada en turnos y la carga del historial es más eficiente. Ahora puedes archivar chats y la sincronización en la nube también ha mejorado su rendimiento.</value>
+  </data>
 </root>

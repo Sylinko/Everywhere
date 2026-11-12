@@ -4670,4 +4670,10 @@
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>동기화 중지 중</value>
   </data>
+  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+    <value>이전 채팅 데이터를 백업했습니다. 향후 Everywhere를 다운그레이드하지 않는 한 더 이상 사용되지 않습니다. 원하시면 삭제할 수 있습니다.</value>
+  </data>
+  <data name="ChatUpgrade_Body" xml:space="preserve">
+    <value>채팅은 이제 턴 기반 데이터 구조를 사용하며 기록 불러오기도 더 효율적입니다. 이제 채팅을 보관할 수 있고 클라우드 동기화 성능도 향상되었습니다.</value>
+  </data>
 </root>

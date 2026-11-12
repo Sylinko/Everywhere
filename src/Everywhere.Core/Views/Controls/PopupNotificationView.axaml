@@ -1,0 +1,31 @@
+﻿<UserControl
+  x:Class="Everywhere.Views.PopupNotificationView" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:n="using:Everywhere.Common.Notification"
+  xmlns:v="using:Everywhere.Views" MaxWidth="560"
+  Padding="24" x:DataType="n:PopupNotification">
+  <UserControl.DataTemplates>
+    <DataTemplate DataType="n:NotificationContent">
+      <v:NotificationContentView DataContext="{Binding}"/>
+    </DataTemplate>
+  </UserControl.DataTemplates>
+  <DockPanel VerticalSpacing="16">
+    <TextBlock
+      DockPanel.Dock="Top"
+      FontSize="{DynamicResource FontSizeXl}"
+      FontWeight="Bold"
+      Text="{Binding TitleKey^}"
+      TextWrapping="Wrap"/>
+    <Button
+      x:Name="AcknowledgeButton" Classes="Primary"
+      DockPanel.Dock="Bottom" MinWidth="80"
+      HorizontalAlignment="Right" Click="HandleAcknowledgeClicked"
+      Content="{Binding AcknowledgeKey^}"/>
+    <ScrollViewer
+      MaxHeight="480" Margin="0,0,-12,0"
+      HorizontalScrollBarVisibility="Disabled">
+      <ContentControl
+        Margin="0,0,12,0"
+        Content="{Binding Content}"/>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

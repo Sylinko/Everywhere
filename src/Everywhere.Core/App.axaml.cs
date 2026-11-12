@@ -16,7 +16,6 @@ using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Activation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
-using Everywhere.Storage;
 using Everywhere.Views;
 using LiveMarkdown.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
@@ -346,7 +345,6 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
                 RecordAppLaunchMetric();
                 TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
                 ShowMainWindowOnNeeded();
-                await ShowChatUpgradeNoticeAsync(cancellationToken);
 
                 if (_activationServer is not null)
                 {
@@ -483,47 +481,6 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     }
 
     public void ShowMainWindow() => ShowWindow<MainView>();
-
-    private async Task ShowChatUpgradeNoticeAsync(CancellationToken cancellationToken)
-    {
-        var upgrade = serviceProvider.GetRequiredService<ChatStoreUpgradeService>();
-        if (!await upgrade.NeedsNoticeAsync(cancellationToken))
-        {
-            return;
-        }
-
-        ShowMainWindow();
-        var notice = new ChatUpgradeNoticeView();
-        var result = await DialogManager.CreateDialog(
-                notice,
-                LocaleKey.ChatUpgrade_Title.I18N(),
-                _transientWindows[typeof(MainView)])
-            .WithPrimaryButton(LocaleKey.ChatUpgrade_Continue.I18N())
-            .ShowAsync(cancellationToken);
-        if (result != DialogResult.Primary)
-        {
-            return;
-        }
-
-        if (notice.ShouldTrashLegacyDatabase)
-        {
-            try
-            {
-                await upgrade.TrashLegacyDatabaseAsync(cancellationToken);
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-            {
-                // Canceling the native trash dialog does not cancel acknowledgment of the completed upgrade.
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-                Log.Warning(exception, "Could not move all previous-version chat database files to the trash.");
-                ToastManager.Error(LocaleKey.Common_Error.I18N(), LocaleKey.ChatUpgrade_TrashFailed.I18N());
-            }
-        }
-
-        await upgrade.AcknowledgeAsync(cancellationToken);
-    }
 
     public void ShowDebugWindow() => ShowWindow<VisualTreeDebugger>();
 

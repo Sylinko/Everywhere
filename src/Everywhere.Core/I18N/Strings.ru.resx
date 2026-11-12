@@ -4670,4 +4670,10 @@
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>Остановка синхронизации</value>
   </data>
+  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+    <value>Мы создали резервную копию старых данных чата. Они больше не используются, если только вы не вернётесь к более ранней версии Everywhere в будущем. Вы можете их удалить.</value>
+  </data>
+  <data name="ChatUpgrade_Body" xml:space="preserve">
+    <value>Чаты теперь используют структуру данных на основе ходов, а загрузка истории стала эффективнее. Теперь вы можете архивировать чаты, а облачная синхронизация также получила повышение производительности.</value>
+  </data>
 </root>

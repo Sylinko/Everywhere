@@ -4859,4 +4859,10 @@
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>正在停止同步</value>
   </data>
+  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+    <value>我們已備份舊版聊天資料，除非你日後降級 Everywhere，否則這些資料已不再有用。你可以選擇將其刪除。</value>
+  </data>
+  <data name="ChatUpgrade_Body" xml:space="preserve">
+    <value>聊天現在採用按輪次組織的資料結構，歷史讀取也更有效率。你現在可以封存聊天，雲端同步也獲得了效能提升。</value>
+  </data>
 </root>

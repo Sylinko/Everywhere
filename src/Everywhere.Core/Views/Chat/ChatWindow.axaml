@@ -105,9 +105,6 @@
             </Style>
 
             <Style Selector="ToggleButton.TitleBar">
-              <Setter Property="shadui:ButtonAssist.CheckedForeground" Value="{DynamicResource PrimaryForegroundColor}"/>
-              <Setter Property="shadui:ButtonAssist.CheckedBackground" Value="{DynamicResource PrimaryColor50}"/>
-
               <Style Selector="^:checked">
                 <Style Selector="^ LucideIcon">
                   <Setter Property="Kind" Value="Pin"/>

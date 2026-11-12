@@ -4636,22 +4636,16 @@
         <value>你的聊天数据已升级</value>
     </data>
     <data name="ChatUpgrade_Body" xml:space="preserve">
-        <value>聊天现在采用按轮次组织的数据结构，历史读取也更高效。你可以归档聊天，并在历史列表中恢复。</value>
+        <value>聊天现在采用按轮次组织的数据结构，历史读取也更高效。你现在可以归档聊天，云同步也获得了性能提升。</value>
     </data>
     <data name="ChatUpgrade_Compatibility" xml:space="preserve">
-        <value>我们保留了原来的 chat.db，旧版 Everywhere 仍可读取。此后，新旧版本的聊天变化分别保存，不会互通。</value>
-    </data>
-    <data name="ChatUpgrade_LocalOnly" xml:space="preserve">
-        <value>此版本的聊天保存在本机，聊天云同步暂不可用。</value>
+        <value>我们备份了旧版聊天数据，它们不再有作用，除非你在未来降级 Everywhere。你可以选择将其删除。</value>
     </data>
     <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
-        <value>将旧版本聊天数据库移到回收站（保留附件文件）</value>
+        <value>删除旧版聊天数据库以释放空间</value>
     </data>
     <data name="ChatUpgrade_Continue" xml:space="preserve">
         <value>继续使用</value>
-    </data>
-    <data name="ChatUpgrade_TrashFailed" xml:space="preserve">
-        <value>部分旧版本数据库文件未能移到回收站。升级后的聊天仍可正常使用。</value>
     </data>
     <data name="ChatHistory_Pinned" xml:space="preserve">
         <value>已置顶</value>

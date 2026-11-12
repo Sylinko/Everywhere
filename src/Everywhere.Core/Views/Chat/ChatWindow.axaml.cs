@@ -61,8 +61,11 @@ public sealed partial class ChatWindow :
     private readonly PersistentState _persistentState;
     private readonly ChatModelAvailabilityPresenter _modelAvailabilityPresenter;
     private readonly ChatInputNotificationPresenter _inputNotificationPresenter;
+    private readonly NotificationCenter _notificationCenter;
     private readonly ILogger<ChatWindow> _logger;
+
     private IDisposable? _pendingHiddenCompaction;
+    private IDisposable? _notificationWindow;
 
     /// <summary>
     /// Indicates whether the window has been resized by the user.
@@ -81,6 +84,7 @@ public sealed partial class ChatWindow :
         INativeHelper nativeHelper,
         Settings settings,
         PersistentState persistentState,
+        NotificationCenter notificationCenter,
         AssistantCatalog assistantCatalog,
         IKeyValueStorage keyValueStorage,
         IScreenSelectionService screenSelectionService,
@@ -93,6 +97,7 @@ public sealed partial class ChatWindow :
         _nativeHelper = nativeHelper;
         _settings = settings;
         _persistentState = persistentState;
+        _notificationCenter = notificationCenter;
         _modelAvailabilityPresenter = new ChatModelAvailabilityPresenter(assistantCatalog, keyValueStorage);
 
         _screenSelectionService = screenSelectionService;
@@ -126,6 +131,18 @@ public sealed partial class ChatWindow :
 
         settings.Model.PropertyChanged += HandleModelSettingsChanged;
         _modelAvailabilityPresenter.SetAssistant(settings.Model.SelectedCustomAssistant);
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e)
+    {
+        base.OnLoaded(e);
+        _notificationWindow = _notificationCenter.RegisterPopupWindow(this, NotificationWindows.Chat);
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        DisposeHelper.DisposeToDefault(ref _notificationWindow);
+        base.OnUnloaded(e);
     }
 
     private void SetupDragDropHandlers()
