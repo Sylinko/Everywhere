@@ -47,7 +47,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         manager.SignedInAccountId = "account-b";
         await context.DispatchAsync(() => user.Content = "edited during the failed save");
         release.SetResult();
-        Assert.ThrowsAsync<AggregateException>(async () => await saving);
+        await Assert.ThrowsAsync<AggregateException>(async () => await saving);
         Assert.That(data.Metadata.IsPersisted, Is.False);
         await manager.FlushPendingSavesAsync();
         Assert.That(data.Metadata.IsPersisted, Is.True);

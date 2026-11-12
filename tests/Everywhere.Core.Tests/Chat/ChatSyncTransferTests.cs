@@ -55,7 +55,7 @@ public sealed class ChatSyncTransferTests
             }
             return Task.FromResult(Reply(page));
         }));
-        Assert.CatchAsync<OperationCanceledException>(async () => await Transfer(http).DiscoverAsync(cancellation.Token));
+        await Assert.CatchAsync<OperationCanceledException>(async () => await Transfer(http).DiscoverAsync(cancellation.Token));
         shouldCancel = false;
         Assert.That((await Transfer(http).DiscoverAsync()).HasMore, Is.False);
         await using var reopened = Open();
