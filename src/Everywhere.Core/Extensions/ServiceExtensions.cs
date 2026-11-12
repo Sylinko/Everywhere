@@ -186,6 +186,7 @@ public static class ServiceExtensions
                     provider.GetRequiredService<IDbContextFactory<ChatV2DbContext>>(),
                     RuntimeConstants.GetDatabasePath("chat.db"),
                     provider.GetRequiredService<ILogger<ChatV2StoreInitializer>>()))
+                .AddTransient<IAsyncInitializer, ChatStoreUpgradeNoticeInitializer>()
                 .AddTransient<IAsyncInitializer, PromptDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsBackfiller>();

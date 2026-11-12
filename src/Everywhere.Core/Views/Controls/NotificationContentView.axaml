@@ -1,0 +1,22 @@
+﻿<UserControl
+  x:Class="Everywhere.Views.NotificationContentView" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:n="using:Everywhere.Common.Notification"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="using:Everywhere.ValueConverters">
+  <UserControl.DataTemplates>
+    <DataTemplate DataType="n:MarkdownNotificationContent">
+      <v:NotificationMarkdownRenderer
+        LinkClick="HandleMarkdownLinkClick"
+        LinkContextMenu="{x:Null}"
+        Text="{Binding TextKey^}"/>
+    </DataTemplate>
+    <DataTemplate DataType="n:HtmlNotificationContent">
+      <HtmlLabel
+        AutoSizeHeightOnly="True"
+        BaseStylesheet="{DynamicResource BaseStylesheet}"
+        ImageLoad="HandleHtmlImageLoad" IsContextMenuEnabled="False"
+        LinkClicked="HandleHtmlLinkClicked" StylesheetLoad="HandleHtmlStylesheetLoad"
+        Text="{Binding TextKey^, Converter={x:Static vc:HtmlTextNormalizerConverter.Shared}}"/>
+    </DataTemplate>
+  </UserControl.DataTemplates>
+  <ContentControl Content="{ReflectionBinding}"/>
+</UserControl>

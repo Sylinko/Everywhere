@@ -9,10 +9,6 @@
     <TextBlock
       Text="{I18N {x:Static LocaleKey.ChatUpgrade_Compatibility}}"
       TextWrapping="Wrap"/>
-    <TextBlock
-      Classes="Muted"
-      Text="{I18N {x:Static LocaleKey.ChatUpgrade_LocalOnly}}"
-      TextWrapping="Wrap"/>
     <CheckBox IsChecked="{Binding #Self.ShouldTrashLegacyDatabase, Mode=TwoWay}">
       <TextBlock
         Text="{I18N {x:Static LocaleKey.ChatUpgrade_TrashPrevious}}"

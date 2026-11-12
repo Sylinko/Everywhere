@@ -13,6 +13,21 @@ public static class ServiceExtension
     {
         public IServiceCollection AddCloudClient()
         {
+            services.AddSingleton<CloudNotificationSource>();
+            services.AddSingleton<IAsyncInitializer>(provider => provider.GetRequiredService<CloudNotificationSource>());
+            // Guests use a public transport; authenticated requests reuse the normal token pipeline below.
+            services.AddHttpClient(CloudNotificationSource.AnonymousHttpClientName, client =>
+                {
+                    client.BaseAddress = new Uri(CloudConstants.CloudBaseUrl.TrimEnd('/') + "/");
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                })
+                .ConfigurePrimaryHttpMessageHandler(provider => new HttpClientHandler
+                {
+                    Proxy = provider.GetRequiredService<IWebProxy>(),
+                    UseProxy = true
+                })
+                .AddHttpMessageHandler(_ => new UserAgentHandler());
+
             services.AddSingleton<OAuthCloudClient>();
             services.AddSingleton<ICloudClient>(x => x.GetRequiredService<OAuthCloudClient>());
             services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<OAuthCloudClient>());
@@ -27,6 +42,7 @@ public static class ServiceExtension
             services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<OfficialModelProvider>());
 
             AddAuthenticatedHttpClient(services, nameof(ICloudClient), CloudConstants.AIGatewayBaseUrl, TimeSpan.FromSeconds(30));
+            AddAuthenticatedHttpClient(services, nameof(CloudNotificationSource), CloudConstants.CloudBaseUrl, TimeSpan.FromSeconds(15));
             // A sync request can stream an entire chat rather than one small part.
             AddAuthenticatedHttpClient(services, nameof(IChatSyncService), CloudConstants.CloudBaseUrl, TimeSpan.FromMinutes(5));
             return services;

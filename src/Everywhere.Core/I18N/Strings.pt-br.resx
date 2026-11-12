@@ -4670,4 +4670,10 @@ Se continuar, a outra cópia encerrará o modo de serviço.</value>
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>Parando sincronização</value>
   </data>
+  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+    <value>Fizemos backup dos dados de chat antigos. Eles não são mais utilizados, a menos que você faça downgrade do Everywhere no futuro. Você pode optar por excluí-los.</value>
+  </data>
+  <data name="ChatUpgrade_Body" xml:space="preserve">
+    <value>As conversas agora usam uma estrutura de dados organizada por turnos e o carregamento do histórico é mais eficiente. Agora você pode arquivar conversas, e a sincronização na nuvem também ganhou melhorias de desempenho.</value>
+  </data>
 </root>

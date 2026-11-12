@@ -4670,4 +4670,10 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>Eşitleme durduruluyor</value>
   </data>
+  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+    <value>Eski sohbet verilerini yedekledik. Gelecekte Everywhere'i eski bir sürüme döndürmediğiniz sürece artık kullanılmıyorlar. İsterseniz bunları silebilirsiniz.</value>
+  </data>
+  <data name="ChatUpgrade_Body" xml:space="preserve">
+    <value>Sohbetler artık tura dayalı bir veri yapısı kullanıyor ve geçmiş yükleme daha verimli. Artık sohbetleri arşivleyebilirsiniz ve bulut eşitleme de performans iyileştirmeleri aldı.</value>
+  </data>
 </root>

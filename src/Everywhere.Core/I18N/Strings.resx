@@ -4638,22 +4638,16 @@ If you continue, the other copy will shut down service mode.</value>
         <value>Your chat data has been upgraded</value>
     </data>
     <data name="ChatUpgrade_Body" xml:space="preserve">
-        <value>Chats now use a turn-based structure with more efficient history loading. You can archive chats and restore them from the history list.</value>
+        <value>Chats now use a turn-based data structure, and history loading is more efficient. You can now archive chats, and cloud sync has also received performance improvements.</value>
     </data>
     <data name="ChatUpgrade_Compatibility" xml:space="preserve">
-        <value>Your previous chat.db has been kept for older versions of Everywhere. From now on, changes in the new and old versions are saved separately and do not appear in each other.</value>
-    </data>
-    <data name="ChatUpgrade_LocalOnly" xml:space="preserve">
-        <value>Chats in this version are stored on this device. Chat cloud sync is currently unavailable.</value>
+        <value>We have backed up your old chat data. It is no longer used unless you downgrade Everywhere in the future. You can choose to delete it.</value>
     </data>
     <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
         <value>Move the previous-version chat database to the trash (keep attachment files)</value>
     </data>
     <data name="ChatUpgrade_Continue" xml:space="preserve">
         <value>Continue</value>
-    </data>
-    <data name="ChatUpgrade_TrashFailed" xml:space="preserve">
-        <value>Some previous-version database files could not be moved to the trash. Your upgraded chats are ready to use.</value>
     </data>
     <data name="ChatHistory_Pinned" xml:space="preserve">
         <value>Pinned</value>

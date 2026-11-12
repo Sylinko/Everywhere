@@ -4670,4 +4670,10 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>Synchronisierung wird beendet</value>
   </data>
+  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+    <value>Wir haben die alten Chatdaten gesichert. Sie werden nicht mehr benötigt, es sei denn, du greifst in Zukunft auf eine ältere Version von Everywhere zurück. Du kannst sie löschen.</value>
+  </data>
+  <data name="ChatUpgrade_Body" xml:space="preserve">
+    <value>Chats verwenden jetzt eine turnbasierte Datenstruktur, und das Laden des Verlaufs ist effizienter. Du kannst Chats jetzt archivieren, und auch die Cloud-Synchronisierung wurde performanter.</value>
+  </data>
 </root>
