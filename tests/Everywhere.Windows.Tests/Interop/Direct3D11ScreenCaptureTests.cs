@@ -148,8 +148,8 @@ public sealed class Direct3D11ScreenCaptureTests
         var repeatedDisposal = Task.Run(capture.Dispose);
         try
         {
-            Assert.ThrowsAsync<TimeoutException>(async () => await disposal.WaitAsync(TimeSpan.FromMilliseconds(100)));
-            Assert.ThrowsAsync<TimeoutException>(async () => await repeatedDisposal.WaitAsync(TimeSpan.FromMilliseconds(100)));
+            await Assert.ThrowsAsync<TimeoutException>(async () => await disposal.WaitAsync(TimeSpan.FromMilliseconds(100)));
+            await Assert.ThrowsAsync<TimeoutException>(async () => await repeatedDisposal.WaitAsync(TimeSpan.FromMilliseconds(100)));
         }
         finally
         {
@@ -193,7 +193,7 @@ public sealed class Direct3D11ScreenCaptureTests
         if (constructor is null) throw new InvalidOperationException("The capture constructor was not found.");
         var capture = (Direct3D11ScreenCapture)constructor.Invoke([nint.Zero, default(PixelPoint), new PixelRect(0, 0, 64, 48)]);
         var completion = GetField<TaskCompletionSource>(capture, "_captureReady").Task;
-        var failure = Assert.CatchAsync<Exception>(async () => await completion.WaitAsync(TimeSpan.FromSeconds(5)));
+        var failure = await Assert.CatchAsync<Exception>(async () => await completion.WaitAsync(TimeSpan.FromSeconds(5)));
         var disposals = Enumerable.Range(0, 2).Select(_ => Task.Run<Exception?>(() =>
         {
             try

@@ -25,7 +25,7 @@ public sealed class VisualQueryTests
     }
 
     [Test]
-    public void Execute_WhenTargetIsComposite_ReportsUnsupportedStructuralQuery()
+    public async Task Execute_WhenTargetIsComposite_ReportsUnsupportedStructuralQuery()
     {
         using var backend = CreateBackend(new Window(new Panel(new Text("first fragment"), new Text("second fragment"))));
         var first = backend.GetElement(0, 0);
@@ -41,7 +41,7 @@ public sealed class VisualQueryTests
         using var turn = backend.Context.BeginTurn();
         var request = new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin };
 
-        var exception = Assert.ThrowsAsync<NotSupportedException>(async () =>
+        var exception = await Assert.ThrowsAsync<NotSupportedException>(async () =>
             await new VisualQuery(backend.Context).ExecuteAsync(target, request, VisualContextPromptOptions.Default));
 
         Assert.Multiple(() =>

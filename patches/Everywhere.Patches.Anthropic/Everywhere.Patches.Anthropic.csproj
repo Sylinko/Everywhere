@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <NoWarn>$(NoWarn),CS0436,CS0626,CS0649</NoWarn>
+    <NoWarn>$(NoWarn),CS0436,CS0626</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MonoMod.Patcher" />

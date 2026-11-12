@@ -2,10 +2,10 @@
 
   <PropertyGroup>
     <PatchesBasePath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\patches\'))</PatchesBasePath>
-    <PatcherExe>$(PatchesBasePath)Everywhere.BuildTask.Patcher\bin\$(Configuration)\net10.0\Everywhere.BuildTask.Patcher.dll</PatcherExe>
+    <PatcherExe>$(PatchesBasePath)Everywhere.BuildTask.Patcher\bin\$(Configuration)\$(TargetFrameworkPrefix)\Everywhere.BuildTask.Patcher.dll</PatcherExe>
   </PropertyGroup>
 
-  <!-- The patcher targets net10.0; select the .NET task host explicitly. -->
+  <!-- The patcher targets the application's .NET version; select the .NET task host explicitly. -->
   <UsingTask TaskName="Everywhere.BuildTask.Patcher.WeaveAssembliesTask" AssemblyFile="$(PatcherExe)" TaskFactory="TaskHostFactory" Runtime="NET" />
   <UsingTask TaskName="Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask" AssemblyFile="$(PatcherExe)" TaskFactory="TaskHostFactory" Runtime="NET" />
 

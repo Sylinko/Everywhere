@@ -206,10 +206,10 @@ internal static class WebExtractionUtilities
     {
         var config = new Config
         {
-            UnknownTags = Config.UnknownTagsOption.Drop,
             GithubFlavored = true,
-            RemoveComments = true,
-            SmartHrefHandling = true
+            Tags = { Unknown = Config.UnknownTagsOption.Drop },
+            Formatting = { RemoveComments = true },
+            Links = { SmartHref = true }
         };
         var converter = new Converter(config);
         return NormalizeMarkdown(converter.Convert(html));

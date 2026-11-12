@@ -1,5 +1,7 @@
 using MonoMod.InlineRT;
 
+// MonoMod discovers this rules type by its exact namespace and name.
+// ReSharper disable once CheckNamespace
 namespace MonoMod;
 
 /// <summary>Requires review when an SDK update changes the patched parser contract.</summary>
@@ -8,7 +10,7 @@ internal static class MonoModRules
     static MonoModRules()
     {
         var module = MonoModRulesManager.Modder.Module;
-        if (module.Assembly.Name.Version != new Version(10, 9, 0, 0))
+        if (module.Assembly.Name.Version != new Version(11, 0, 0, 0))
             throw new InvalidOperationException("Review the complete MEAI Responses streaming conversion before updating this patch.");
 
         var extensions = module.GetType("Microsoft.Extensions.AI.OpenAIClientExtensions") ??

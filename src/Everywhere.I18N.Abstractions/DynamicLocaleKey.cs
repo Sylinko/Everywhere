@@ -14,10 +14,10 @@ namespace Everywhere.I18N;
 /// <summary>
 /// MessagePack serializable base class for dynamic resource keys. Make them happy.
 /// </summary>
-[Union(0, typeof(DynamicLocaleKey))]
-[Union(1, typeof(DirectLocaleKey))]
-[Union(2, typeof(FormattedDynamicLocaleKey))]
-[Union(3, typeof(AggregateDynamicLocaleKey))]
+[MessagePackUnion(0, typeof(DynamicLocaleKey))]
+[MessagePackUnion(1, typeof(DirectLocaleKey))]
+[MessagePackUnion(2, typeof(FormattedDynamicLocaleKey))]
+[MessagePackUnion(3, typeof(AggregateDynamicLocaleKey))]
 public partial interface IDynamicLocaleKey : IObservable<object?>;
 
 /// <summary>

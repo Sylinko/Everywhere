@@ -1,4 +1,4 @@
-# How to build
+﻿# How to build
 
 For contribution guidelines and links to architecture, development, and testing documentation, start with the
 [contributor guide](../.github/CONTRIBUTING.md#documentation). Browse the [docs directory](.) for the current topic documents;
@@ -13,7 +13,7 @@ operating system.
 | Platform | Minimum Version                                                            | Notes                                                   |
 |----------|----------------------------------------------------------------------------|---------------------------------------------------------|
 | Windows  | Windows 10 version 19041 or later                                          | Matches the Windows runtime requirement for Everywhere. |
-| macOS    | macOS Monterey 12.0 or later                                              | Depends on the build toolchain; see below.              |
+| macOS    | macOS Sonoma 14.0 or later                                               | Intel and Apple Silicon; see the toolchain requirements below. |
 | Linux    | Not specifically defined, but a X11-based desktop environment is required. | Linux support is in early stages of development.        |
 
 ## Core Components
@@ -25,7 +25,11 @@ operating system.
 | JetBrains Rider          | >= 2026.1 Nightly   | Recommended cross-platform IDE for opening and building solution filters. | [Rider Official Site](https://www.jetbrains.com/rider/)                       |
 | Xcode                    | Match the macOS workload | **Required** on macOS; install the full Xcode application.           | [Apple Developer Documentation](https://developer.apple.com/xcode/resources/) |
 
-> Ensure that your IDE supports .NET 10 before opening the solution.
+> Ensure that your IDE supports .NET 11 and C# 15 before opening the solution.
+
+The application targets .NET 11 and enables Runtime Async in `Directory.Build.targets`.
+The switch is applied after each project selects its target framework, so .NET Standard
+source generators and older library targets retain their normal compilation model.
 
 ## Configuration
 
@@ -63,34 +67,42 @@ sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 contributors. Choose a macOS workload that supports your installed Xcode. A newer Xcode is not automatically compatible
 with an older workload, and changing the application's minimum macOS version does not resolve a toolchain mismatch.
 
-For .NET SDK 10.0.401, the following workload sets provide these combinations:
+The SDK baseline is 11.0.100 with `rollForward: latestPatch` and previews disabled. The CLI selects the highest
+installed compatible 11.0.1xx patch, without crossing a feature band. This SDK selection policy does not select or
+update the macOS workload or Xcode. All four application release/integration workflows read `global.json` directly
+through `actions/setup-dotnet`; the macOS workflow specifies its workload set separately.
+
+The current release toolchain uses:
 
 | Xcode | Workload set | .NET macOS workload | Minimum macOS for the built app |
 |-------|--------------|---------------------|---------------------------------|
-| 26.6  | 10.0.401     | 26.5.10318           | 12.0                            |
-| 27.0  | 10.0.401.1   | 27.0.10722           | 14.0                            |
+| 27.2  | 11.0.100     | 27.2.11039          | 14.0                            |
 
-These are versioned examples, not a requirement to keep every developer on the same Xcode. For other SDK or Xcode
+Xcode 27.2 requires macOS 26.6 or later on the development machine. The built app targets
+macOS 14.0; the build-host requirement does not raise the app's deployment target.
+For other SDK or Xcode
 versions, use the installation instructions in the [.NET Apple SDK releases](https://github.com/dotnet/macios/releases)
 and check [Apple's host system requirements](https://developer.apple.com/xcode/system-requirements).
 
-From the repository root, confirm the selected SDK and install the matching workload set. For Xcode 27.0 with
-.NET SDK 10.0.401:
+From the repository root, confirm that the selected SDK is a compatible 11.0.1xx patch and install the matching
+workload set for Xcode 27.2:
 
 ```bash
 dotnet --version
-sudo dotnet workload install macos --version 10.0.401.1
+sudo dotnet workload install macos --version 11.0.100
 dotnet workload --version
 dotnet workload list
 ```
 
-For Xcode 26.6, use `--version 10.0.401` instead. `--version` selects a workload set, not the .NET SDK version or the
+`--version` selects a workload set, not the .NET SDK version or the
 individual macOS workload version. It records the selection locally for subsequent workload installs/restores in that
 SDK feature band. This can affect other projects using the same .NET installation and feature band, but does not change
 other contributors' environments. See [.NET workload sets](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-workload-sets).
 
 Avoid running an unversioned `dotnet workload update` when you need to retain that pairing: it can select a newer set.
-The [macOS release workflow](../.github/workflows/macos-release.yml) pairs Xcode 26.6 with workload set 10.0.401.
+The [macOS release workflow](../.github/workflows/macos-release.yml) selects Xcode 27.2
+on GitHub's `xcode-27` runner image and installs workload set 11.0.100. That runner image
+is currently a public preview; its default Xcode is not necessarily 27.2.
 Update these together when changing the release toolchain, rather than adding a shared workload pin to `global.json`.
 
 ### Minimum macOS version of a build
@@ -106,10 +118,12 @@ manifest from `SupportedOSPlatformVersion`, so developers do not need to edit th
 between supported workloads. An explicitly supplied `SupportedOSPlatformVersion` is still respected and must satisfy
 the selected SDK's requirements.
 
-CI does not separately pin the minimum macOS version. Its current toolchain produces apps targeting macOS 12.0;
-the Xcode 27.0 workload produces apps targeting macOS 14.0. Upgrading the CI toolchain can therefore raise the minimum
-version of published apps. Review the resulting deployment target and update the public system requirements when
-making that change. Builds made with a newer workload do not establish compatibility with older macOS releases.
+CI does not separately pin the minimum macOS version. Its current toolchain produces apps
+targeting macOS 14.0. Review the evaluated deployment target before changing the toolchain
+again. Microsoft currently lists macOS 15, 26 and 27 in its [.NET 11 support matrix](https://github.com/dotnet/core/blob/main/release-notes/11.0/supported-os.json);
+14.0 remains the Apple workload's permitted deployment floor and Everywhere's compatibility target.
+GitHub's hosted macOS 14 runners have retired, so compatibility testing on 14 requires a
+Mac running that version. Building on a newer runner is not a runtime compatibility test.
 
 To inspect the evaluated versions without building:
 
@@ -169,7 +183,7 @@ dotnet restore Everywhere.Linux.slnx
 
 ### 3. Build and Run
 
-You can build the project using the command line or an IDE that supports .NET 10.
+You can build the project using the command line or an IDE that supports .NET 11.
 
 The platform-specific solutions `Everywhere.Windows.slnx`, `Everywhere.Mac.slnx`, and `Everywhere.Linux.slnx` are in the
 repository root. Open the solution for your platform in the IDE to avoid restoring or building unrelated platform
@@ -190,7 +204,7 @@ After the build completes, the output is located under the platform-specific pro
 For Windows:
 
 ```text
-src/Everywhere.Windows/bin/Debug/net10.0-windows10.0.19041.0/win-x64/
+src/Everywhere.Windows/bin/Debug/net11.0-windows10.0.19041.0/win-x64/
 ```
 
 Run `Everywhere.exe` from that directory to start the application.

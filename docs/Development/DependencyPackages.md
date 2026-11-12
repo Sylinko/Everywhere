@@ -1,4 +1,4 @@
-# Independently published dependency packages
+﻿# Independently published dependency packages
 
 Everywhere consumes the Porta.Pty, EverythingNetCore and MessagePack forks from
 `https://nuget.sylinko.com/v3/index.json`. Their source repositories are maintained
@@ -6,6 +6,23 @@ separately and are absent from the application build graph and solution project
 lists. Application release workflows fetch only the remaining source submodules.
 OfficeCLI is packaged independently from an unmodified upstream
 submodule in `Sylinko/OfficeCLI`; the application consumes its package as well.
+
+For the current .NET 11 source upgrades, validation results and publication order, see
+[the dependency upgrade handoff](DotNet11Upgrade.md). The dated sections below retain
+the evidence from the original package extraction.
+
+## Published adoption on 2026-11-12
+
+The application now consumes Avalonia.Native 12.1.6 and Porta.Pty/Porta.Pty.Native
+999.20261111.4 from the online Sylinko feed. Actual cache source metadata and archive
+hashes were verified against their release manifests. The Native cache entry from
+local validation was backed up before restoring the published bytes. See the
+[upgrade record](DotNet11Upgrade.md#published-package-adoption-on-2026-11-12) for
+all adopted producer versions and validation results. CSharpMath is an unused
+application dependency and has been removed; LiveMarkdown.Math uses RaTeX. The
+LiveMarkdown upgrade is prepared on main in `/Volumes/T7/Source/LiveMarkdown.Avalonia`
+for the user to commit. The draft table and dated
+extraction checks below retain the original investigation context.
 
 ## Package identity and versions
 
@@ -37,17 +54,17 @@ workflow for each package ID, and record the upstream version and commit in
 source history and release metadata rather than encoding them in the package
 version. These three-component numeric release versions follow standard SemVer.
 
-`999.0.0` is a deterministic local draft version, not a release version. The
-six Everywhere central entries use exact `[999.0.0]` pins for local validation.
-After each real CI release and feed deployment, replace the corresponding pins
-with `[<actual CI version>]`. Producer counters and dates are not known before
+`999.0.0` is a deterministic local draft version, not a release version. Everywhere's
+central entries use published producer versions; temporary validation can override them
+with newly packed drafts. After each real CI release and feed deployment, update the
+corresponding central versions. Producer counters and dates are not known before
 their first runs, so no online version manifests or guessed CI pins are created.
 
 A high version satisfies ordinary upstream minimum-version requirements; it
 does not satisfy an exact upstream range or an upper bound below the fork
 version, and does not prove API compatibility. Central package management
-organizes version declarations; brackets make these six direct version
-constraints exact. Existing package source mappings continue to select the
+organizes version declarations; a bracketed range can require one exact version.
+Existing package source mappings continue to select the
 Sylinko feed. Pure transitive dependencies are not automatically pinned merely
 by adding a central version entry.
 
@@ -58,7 +75,7 @@ This prevents the large date component from entering assembly/file identity.
 
 ## OfficeCLI executable package
 
-The wrapper repository is maintained at `E:\Source\Sylinko\OfficeCLI` locally.
+The wrapper repository is maintained at `D:\Source\CSharp\OfficeCLI` locally.
 It builds the upstream managed executable once and packages platform apphosts
 for win-x64, linux-x64, linux-arm64, osx-x64 and osx-arm64. Dependencies are taken
 from the upstream project's PackageReferences and flow through NuGet; no second
@@ -81,11 +98,10 @@ Windows and Linux use the package's normal build/publish copying.
 on the child process to disable automatic installation and background updates.
 Explicit maintenance commands are not disabled by those environment variables.
 
-The OfficeCLI central version `[999.0.0]` is a **local draft placeholder**. Before
-normal online restore or application CI, register the package in the feed, push
-the wrapper, configure `SYLINKO_NUGET_FEED_TOKEN`, run its manual Publish NuGet
-workflow on main, merge the resulting feed PR and replace the placeholder with
-the exact generated version. Do not publish the draft or guess a CI run number.
+The OfficeCLI central version refers to a published release. To consume a new source
+revision, push the reviewed wrapper, run its manual Publish NuGet workflow on main,
+merge the resulting feed PR and update the consumer to the generated version. The
+workflow uses `SYLINKO_NUGET_FEED_TOKEN`. Do not publish a draft or guess a CI run number.
 The upstream commit remains pinned in the wrapper's submodule; updates require
 reviewing and committing that pointer before publishing another package version.
 
@@ -105,10 +121,10 @@ AnyCPU and differ by OS, while its native libraries differ by OS and architectur
 
 ```text
 Porta.Pty
-  ref/net10.0/Porta.Pty.dll
-  runtimes/win/lib/net10.0/Porta.Pty.dll
-  runtimes/linux/lib/net10.0/Porta.Pty.dll
-  runtimes/osx/lib/net10.0/Porta.Pty.dll
+  ref/net11.0/Porta.Pty.dll
+  runtimes/win/lib/net11.0/Porta.Pty.dll
+  runtimes/linux/lib/net11.0/Porta.Pty.dll
+  runtimes/osx/lib/net11.0/Porta.Pty.dll
   buildTransitive/Porta.Pty.targets
   buildTransitive/hosts/{x64,arm64}/OpenConsole.exe
 
@@ -158,7 +174,10 @@ projects restore exact versions from the newly packed local artifacts using
 private package caches; they do not use producer project references or run the
 upstream library test suites.
 
-## First release and update sequence
+## Original first-release sequence (2026-10-01)
+
+This records the original extraction. For subsequent updates, use the current independent
+producer checkouts and the publication order in [the upgrade handoff](DotNet11Upgrade.md#publication-and-consumption-order).
 
 1. Commit and push the six `bucket/<lower-id>/package.yml` registrations in
    `Sylinko/nuget-feed`. They explicitly permit the original package IDs, matching

@@ -15,18 +15,18 @@ namespace Everywhere.Chat.Plugins;
 /// Used to represent a block of content displayed by a chat plugin.
 /// </summary>
 [MessagePackObject]
-[Union(0, typeof(ChatPluginContainerDisplayBlock))]
-[Union(1, typeof(ChatPluginTextDisplayBlock))]
-[Union(2, typeof(ChatPluginDynamicLocaleKeyDisplayBlock))]
-[Union(3, typeof(ChatPluginMarkdownDisplayBlock))]
-[Union(4, typeof(ChatPluginProgressDisplayBlock))]
-[Union(5, typeof(ChatPluginFileReferencesDisplayBlock))]
-[Union(6, typeof(ChatPluginFileDifferenceDisplayBlock))]
-[Union(7, typeof(ChatPluginUrlsDisplayBlock))]
-[Union(8, typeof(ChatPluginSeparatorDisplayBlock))]
-[Union(9, typeof(ChatPluginCodeBlockDisplayBlock))]
-[Union(10, typeof(ChatPluginSubagentDisplayBlock))]
-[Union(11, typeof(ChatPluginTerminalDisplayBlock))]
+[MessagePackUnion(0, typeof(ChatPluginContainerDisplayBlock))]
+[MessagePackUnion(1, typeof(ChatPluginTextDisplayBlock))]
+[MessagePackUnion(2, typeof(ChatPluginDynamicLocaleKeyDisplayBlock))]
+[MessagePackUnion(3, typeof(ChatPluginMarkdownDisplayBlock))]
+[MessagePackUnion(4, typeof(ChatPluginProgressDisplayBlock))]
+[MessagePackUnion(5, typeof(ChatPluginFileReferencesDisplayBlock))]
+[MessagePackUnion(6, typeof(ChatPluginFileDifferenceDisplayBlock))]
+[MessagePackUnion(7, typeof(ChatPluginUrlsDisplayBlock))]
+[MessagePackUnion(8, typeof(ChatPluginSeparatorDisplayBlock))]
+[MessagePackUnion(9, typeof(ChatPluginCodeBlockDisplayBlock))]
+[MessagePackUnion(10, typeof(ChatPluginSubagentDisplayBlock))]
+[MessagePackUnion(11, typeof(ChatPluginTerminalDisplayBlock))]
 public abstract partial class ChatPluginDisplayBlock : ObservableObject;
 
 /// <summary>

@@ -576,7 +576,7 @@ public class FileSystemPluginTests
 
         try
         {
-            var exception = Assert.ThrowsAsync<HandledException>(async () =>
+            var exception = await Assert.ThrowsAsync<HandledException>(async () =>
                 await InvokeApplyPatchAsync(
                     CreatePlugin(),
                     CreateUserInterface(consent: true),
@@ -604,7 +604,7 @@ public class FileSystemPluginTests
         try
         {
             var plugin = CreatePlugin();
-            var exception = Assert.ThrowsAsync<HandledException>(async () =>
+            var exception = await Assert.ThrowsAsync<HandledException>(async () =>
                 await InvokeDeletePathsAsync(plugin, CreateUserInterface(consent: true), [root], recursive: false));
 
             Assert.That(exception!.Message, Does.Contain("not empty"));

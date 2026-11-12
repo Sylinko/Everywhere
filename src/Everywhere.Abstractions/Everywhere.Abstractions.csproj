@@ -11,7 +11,6 @@
     <PackageReference Include="DynamicData"/>
     <PackageReference Include="MessagePack"/>
     <PackageReference Include="MessagePackAnalyzer" PrivateAssets="all"/>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
     <PackageReference Include="ObservableCollections"/>
     <PackageReference Include="ZLinq"/>
   </ItemGroup>

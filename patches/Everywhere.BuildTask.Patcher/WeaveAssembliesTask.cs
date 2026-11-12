@@ -213,7 +213,7 @@ public class WeaveAssembliesTask : Task
         }
         catch (Exception ex)
         {
-            Log.LogErrorFromException(ex, showStackTrace: true);
+            Log.LogErrorFromException(ex, showStackTrace: true, showDetail: true, file: null);
             return false;
         }
     }

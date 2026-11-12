@@ -1,6 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Mac.Interop;
 using Everywhere.Messages;
@@ -89,11 +92,41 @@ public partial class AppDelegate : NSApplicationDelegate
         PermissionHelper.RequestForScreenRecordingPermission();
     }
 
+    /// <inheritdoc />
+    public override NSApplicationTerminateReply ApplicationShouldTerminate(NSApplication sender)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime)
+        {
+            return NSApplicationTerminateReply.Now;
+        }
+
+        // Capture the reason before window closing handlers can process nested native events.
+        var isOsShutdown = IsOSShutdown();
+        if (!lifetime.TryShutdown()) return NSApplicationTerminateReply.Cancel;
+
+        // Normal Quit completes through the managed loop and its asynchronous cleanup.
+        // System shutdown must be allowed to continue through native termination.
+        return isOsShutdown ? NSApplicationTerminateReply.Now : NSApplicationTerminateReply.Cancel;
+    }
+
+    /// <inheritdoc />
     public override void WillTerminate(NSNotification notification)
     {
-        if (_spaceChangeObserver is null) return;
-        NSWorkspace.SharedWorkspace.NotificationCenter.RemoveObserver(_spaceChangeObserver);
-        _spaceChangeObserver = null;
+        if (_spaceChangeObserver is not null)
+        {
+            NSWorkspace.SharedWorkspace.NotificationCenter.RemoveObserver(_spaceChangeObserver);
+            _spaceChangeObserver = null;
+        }
+
+        // Native termination can call exit() without returning through managed Main.
+        // Release Avalonia's managed callbacks before that final native teardown.
+        // https://github.com/AvaloniaUI/Avalonia/pull/22200
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        if (AvaloniaLocator.Current.GetService<IWindowingPlatform>() is IDisposable platform)
+        {
+            // Dispose is idempotent, so the managed Main cleanup may also release this platform.
+            platform.Dispose();
+        }
     }
 
     public override void WillFinishLaunching(NSNotification notification)
@@ -130,14 +163,43 @@ public partial class AppDelegate : NSApplicationDelegate
     [Export("handleGetURLEvent:withReplyEvent:")]
     private void HandleGetURLEvent(NSAppleEventDescriptor evt, NSAppleEventDescriptor replyEvt)
     {
-        var url = evt.ParamDescriptorForKeyword(GetDescriptor("----"))?.StringValue;
-        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme.Equals(
-                UrlProtocolCallbackMessage.Scheme,
-                StringComparison.OrdinalIgnoreCase))
+        var url = evt.ParamDescriptorForKeyword(GetAppleEventCode("----"))?.StringValue;
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+            uri.Scheme.Equals(UrlProtocolCallbackMessage.Scheme, StringComparison.OrdinalIgnoreCase))
         {
             WeakReferenceMessenger.Default.Send<ApplicationMessage>(new UrlProtocolCallbackMessage(url));
         }
+    }
 
-        static uint GetDescriptor(string s) => (uint)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
+    private static bool IsOSShutdown()
+    {
+        var evt = NSAppleEventManager.SharedAppleEventManager.CurrentAppleEvent;
+        if (evt is null || (uint)evt.EventClass != GetAppleEventCode("aevt") || evt.EventID != AEEventID.QuitApplication)
+        {
+            return false;
+        }
+
+        using var reason =
+            evt.ParamDescriptorForKeyword(GetAppleEventCode("why?")) ??
+            evt.AttributeDescriptorForKeyword(GetAppleEventCode("why?"));
+        if (reason is null) return false;
+
+        var reasonCode = reason.EnumCodeValue();
+        if (reasonCode == 0) reasonCode = reason.TypeCodeValue;
+
+        // Match Avalonia's native logout, restart and shutdown reasons, including their dialogs.
+        return
+            reasonCode == GetAppleEventCode("logo") ||
+            reasonCode == GetAppleEventCode("rlgo") ||
+            reasonCode == GetAppleEventCode("rrst") ||
+            reasonCode == GetAppleEventCode("rest") ||
+            reasonCode == GetAppleEventCode("rsdn") ||
+            reasonCode == GetAppleEventCode("shut");
+    }
+
+    // Apple event identifiers use four-byte codes in big-endian order.
+    private static uint GetAppleEventCode(string value)
+    {
+        return (uint)(value[0] << 24 | value[1] << 16 | value[2] << 8 | value[3]);
     }
 }

@@ -11,14 +11,14 @@ namespace Everywhere.Prompting.Documents;
 /// priority are treated as required content and therefore default to the highest priority.
 /// </remarks>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-[Union(0, typeof(PromptText))]
-[Union(1, typeof(PromptTextChunk))]
-[Union(2, typeof(PromptDocument))]
-[Union(3, typeof(PromptGroup))]
-[Union(4, typeof(PromptElement))]
-[Union(5, typeof(PromptChunk))]
-[Union(6, typeof(PromptTokenLimit))]
-[Union(7, typeof(PromptCompactElement))]
+[MessagePackUnion(0, typeof(PromptText))]
+[MessagePackUnion(1, typeof(PromptTextChunk))]
+[MessagePackUnion(2, typeof(PromptDocument))]
+[MessagePackUnion(3, typeof(PromptGroup))]
+[MessagePackUnion(4, typeof(PromptElement))]
+[MessagePackUnion(5, typeof(PromptChunk))]
+[MessagePackUnion(6, typeof(PromptTokenLimit))]
+[MessagePackUnion(7, typeof(PromptCompactElement))]
 public abstract partial class PromptNode
 {
     /// <summary>
@@ -186,12 +186,12 @@ public sealed partial class PromptTextChunk : PromptNode
 /// Represents a prompt node that owns an ordered collection of child nodes.
 /// </summary>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-[Union(0, typeof(PromptDocument))]
-[Union(1, typeof(PromptGroup))]
-[Union(2, typeof(PromptElement))]
-[Union(3, typeof(PromptChunk))]
-[Union(4, typeof(PromptTokenLimit))]
-[Union(5, typeof(PromptCompactElement))]
+[MessagePackUnion(0, typeof(PromptDocument))]
+[MessagePackUnion(1, typeof(PromptGroup))]
+[MessagePackUnion(2, typeof(PromptElement))]
+[MessagePackUnion(3, typeof(PromptChunk))]
+[MessagePackUnion(4, typeof(PromptTokenLimit))]
+[MessagePackUnion(5, typeof(PromptCompactElement))]
 public abstract partial class PromptContainer(List<PromptNode> children) : PromptNode, IReadOnlyList<PromptNode>
 {
     /// <summary>

@@ -7,8 +7,8 @@ namespace Everywhere.Chat;
 /// Represents structured function-result data that owns its persisted representation and related attachments.
 /// </summary>
 [MessagePackObject(OnlyIncludeKeyedMembers = true)]
-[Union(0, typeof(VisualTextFunctionResult))]
-[Union(1, typeof(VisualAttachmentFunctionResult))]
+[MessagePackUnion(0, typeof(VisualTextFunctionResult))]
+[MessagePackUnion(1, typeof(VisualAttachmentFunctionResult))]
 public abstract partial class ChatFunctionResult : IHaveChatAttachments
 {
     /// <summary>Gets the value presented to the model as the function result.</summary>

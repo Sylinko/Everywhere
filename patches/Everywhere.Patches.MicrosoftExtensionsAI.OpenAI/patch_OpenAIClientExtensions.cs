@@ -12,7 +12,7 @@ namespace Everywhere.Patches.MicrosoftExtensionsAI.OpenAI;
 /// preserving valid IDs and captured argument errors. Everywhere replays full stateless
 /// history, so the identifier can link the call and its result in the next request; it
 /// is not a recovered identifier for a server-stored conversation.
-/// See <see href="https://github.com/dotnet/extensions/blob/b10f9c0a081b5dbb7755b8f5592e1d3c3f550a3a/src/Libraries/Microsoft.Extensions.AI.OpenAI/OpenAIClientExtensions.cs">the pinned upstream parser</see>.
+/// See <see href="https://github.com/dotnet/extensions/blob/c60d72e7973a90cd4e4300d9153e97b93315e4b7/src/Libraries/Microsoft.Extensions.AI.OpenAI/OpenAIClientExtensions.cs">the pinned upstream parser</see>.
 /// </remarks>
 [MonoModPatch("Microsoft.Extensions.AI.OpenAIClientExtensions")]
 internal static class patch_OpenAIClientExtensions

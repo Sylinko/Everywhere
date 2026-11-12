@@ -3,8 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework Condition="'$(IsWindows)' == 'true'">$(TargetFrameworkPrefix)-windows10.0.19041.0</TargetFramework>
     <TargetFramework Condition="'$(IsMacOS)' == 'true'">$(TargetFrameworkPrefix)-macos</TargetFramework>
-    <TargetPlatformVersion Condition="'$(IsMacOS)' == 'true'">26.2</TargetPlatformVersion>
-    <SupportedOSPlatformVersion Condition="'$(IsMacOS)' == 'true'">12.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="'$(IsMacOS)' == 'true'">14.0</SupportedOSPlatformVersion>
     <ApplicationId Condition="'$(IsMacOS)' == 'true'">com.sylinko.everywhere.webview-probe</ApplicationId>
     <ServerGarbageCollection Condition="'$(IsMacOS)' == 'true'">false</ServerGarbageCollection>
     <SelfContained>true</SelfContained>

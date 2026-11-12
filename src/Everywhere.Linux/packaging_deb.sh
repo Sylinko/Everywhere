@@ -13,7 +13,7 @@ cd $WORKSPACE
 
 BINARCH="$1"
 VERSION="$2"
-BINDIR="$SHELLFOLDER/bin/Release/net10.0/$BINARCH"
+BINDIR="$SHELLFOLDER/bin/Release/net11.0/$BINARCH"
 if [ -z "$3" ]; then
     echo "Using default bin path: $BINDIR"
 else

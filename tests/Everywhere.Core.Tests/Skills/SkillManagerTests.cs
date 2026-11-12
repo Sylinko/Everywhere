@@ -60,7 +60,7 @@ public class SkillManagerTests
         using var cancellation = new CancellationTokenSource();
         var cancelledWait = manager.RefreshAsync(cancellation.Token);
         cancellation.Cancel();
-        Assert.CatchAsync<OperationCanceledException>(async () => await cancelledWait);
+        await Assert.CatchAsync<OperationCanceledException>(async () => await cancelledWait);
 
         firstDiscovery.Continue.TrySetResult(true);
         await sharedRefresh.WaitAsync(Timeout);
@@ -81,7 +81,7 @@ public class SkillManagerTests
         var manager = CreateManager(source, provider);
 
         var failedRefresh = manager.RefreshAsync();
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await failedRefresh);
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await failedRefresh);
         Assert.That(manager.IsRefreshing, Is.False);
 
         await manager.RefreshAsync().WaitAsync(Timeout);

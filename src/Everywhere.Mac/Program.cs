@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Platform;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -47,7 +48,7 @@ public static class Program
         {
             case ProcessRole.Main:
             {
-                return await RunApplicationAsync(args, peerVerifier).ConfigureAwait(false);
+                return RunApplication(args, peerVerifier);
             }
             case ProcessRole.Input:
             {
@@ -66,7 +67,7 @@ public static class Program
         }
     }
 
-    private static async Task<int> RunApplicationAsync(string[] args, INamedPipePeerVerifier peerVerifier)
+    private static int RunApplication(string[] args, INamedPipePeerVerifier peerVerifier)
     {
         // Retain the previous named-object claim for direct executable and LaunchAgent starts.
         // Do not acquire the mutex: the claim must outlive UI and asynchronous DI cleanup
@@ -80,7 +81,23 @@ public static class Program
         }
 
         Entrance.Initialize();
-        return await RunMainAsync(args, peerVerifier).ConfigureAwait(false);
+        try
+        {
+            return RunMainAsync(args, peerVerifier).GetAwaiter().GetResult();
+        }
+        finally
+        {
+            // Managed lifetime shutdown does not necessarily raise AppDelegate.WillTerminate.
+            // Keep native callback release on the process main thread, after asynchronous DI cleanup.
+            // The Apple host can detach CoreCLR's main thread before native static destructors run;
+            // relying only on ProcessExit lets those destructors call back into a detached runtime.
+            // https://github.com/AvaloniaUI/Avalonia/issues/22062
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (AvaloniaLocator.Current.GetService<IWindowingPlatform>() is IDisposable platform)
+            {
+                platform.Dispose();
+            }
+        }
     }
 
     private static Task<int> RunAutomationHostAsync(string[] args, INamedPipePeerVerifier peerVerifier)

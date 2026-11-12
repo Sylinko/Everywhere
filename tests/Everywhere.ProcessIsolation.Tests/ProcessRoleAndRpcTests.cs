@@ -257,7 +257,7 @@ public class ProcessRoleAndRpcTests
         await clientStream.WriteAsync(header);
         await clientStream.FlushAsync();
 
-        Assert.ThrowsAsync<RpcProtocolException>(async () => await server.Completion.WaitAsync(TimeSpan.FromSeconds(5)));
+        await Assert.ThrowsAsync<RpcProtocolException>(async () => await server.Completion.WaitAsync(TimeSpan.FromSeconds(5)));
     }
 
     [Test]
@@ -283,7 +283,7 @@ public class ProcessRoleAndRpcTests
         await using var server = new RpcConnection(serverStream, isServer: true, options);
         server.Start();
 
-        Assert.ThrowsAsync<TimeoutException>(async () => await server.Completion.WaitAsync(TimeSpan.FromSeconds(5)));
+        await Assert.ThrowsAsync<TimeoutException>(async () => await server.Completion.WaitAsync(TimeSpan.FromSeconds(5)));
     }
 
     [Test]
@@ -383,7 +383,7 @@ public class ProcessRoleAndRpcTests
         server.Start();
         client.Start();
 
-        var exception = Assert.ThrowsAsync<RpcRemoteException>(async () =>
+        var exception = await Assert.ThrowsAsync<RpcRemoteException>(async () =>
             await client.InvokeAsync<int, int>(0x30010, 0).AsTask().WaitAsync(TimeSpan.FromSeconds(5)));
         var result = await client.InvokeAsync<int, int>(0x30011, 41).AsTask().WaitAsync(TimeSpan.FromSeconds(5));
 
@@ -417,11 +417,11 @@ public class ProcessRoleAndRpcTests
         client.Start();
 
         var invocation = client.InvokeAsync<int, int>(0x30012, 0).AsTask();
-        var exception = Assert.ThrowsAsync<RpcProtocolException>(async () =>
+        var exception = await Assert.ThrowsAsync<RpcProtocolException>(async () =>
             await server.Completion.WaitAsync(TimeSpan.FromSeconds(5)));
 
         Assert.That(exception?.Message, Does.Contain("not registered"));
-        Assert.CatchAsync<Exception>(async () => await invocation.WaitAsync(TimeSpan.FromSeconds(5)));
+        await Assert.CatchAsync<Exception>(async () => await invocation.WaitAsync(TimeSpan.FromSeconds(5)));
     }
 
     [Test]
@@ -743,7 +743,7 @@ public class ProcessRoleAndRpcTests
         await using var client = new RpcConnection(clientStream, isServer: false);
         client.Start();
 
-        var exception = Assert.ThrowsAsync<RpcRemoteException>(async () =>
+        var exception = await Assert.ThrowsAsync<RpcRemoteException>(async () =>
             await client.PerformHandshakeAsync(
                     new RpcHandshake
                     {
@@ -979,7 +979,7 @@ public class ProcessRoleAndRpcTests
         var invocation = client.InvokeAsync<int, int>(0x30001, 0, cancellation.Token).AsTask();
         await handlerStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
         cancellation.Cancel();
-        Assert.CatchAsync<OperationCanceledException>(async () => await invocation);
+        await Assert.CatchAsync<OperationCanceledException>(async () => await invocation);
 
         await cancellationObserved.Task.WaitAsync(TimeSpan.FromSeconds(5));
     }

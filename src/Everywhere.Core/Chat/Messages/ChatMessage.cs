@@ -6,15 +6,15 @@ using Microsoft.SemanticKernel.ChatCompletion;
 namespace Everywhere.Chat;
 
 [MessagePackObject(OnlyIncludeKeyedMembers = true)]
-[Union(0, typeof(RootChatMessage))]
-[Union(1, typeof(AssistantChatMessage))]
-[Union(2, typeof(UserChatMessage))]
-[Union(3, typeof(ActionChatMessage))]
-[Union(4, typeof(FunctionCallChatMessage))]
-[Union(5, typeof(UserStrategyChatMessage))]
-[Union(6, typeof(UserActionChatMessage))]
-[Union(7, typeof(ContextCompressionChatMessage))]
-[Union(8, typeof(VisualContextResetChatMessage))]
+[MessagePackUnion(0, typeof(RootChatMessage))]
+[MessagePackUnion(1, typeof(AssistantChatMessage))]
+[MessagePackUnion(2, typeof(UserChatMessage))]
+[MessagePackUnion(3, typeof(ActionChatMessage))]
+[MessagePackUnion(4, typeof(FunctionCallChatMessage))]
+[MessagePackUnion(5, typeof(UserStrategyChatMessage))]
+[MessagePackUnion(6, typeof(UserActionChatMessage))]
+[MessagePackUnion(7, typeof(ContextCompressionChatMessage))]
+[MessagePackUnion(8, typeof(VisualContextResetChatMessage))]
 public abstract partial class ChatMessage : ObservableObject
 {
     public abstract AuthorRole Role { get; }

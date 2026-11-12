@@ -53,11 +53,10 @@ and useful comments; mark Everywhere modifications inline. Each `patch_` class
 documents why the patch exists and its overall approach, with a pinned source link
 where available, rather than repeating method-level details.
 
-The [Anthropic donor](../patches/Everywhere.Patches.Anthropic/patch_AnthropicClientWithRawResponse.cs)
-retains the original request loop and attaches selected headers when its terminal
-API exception is created. Its rules also restore original method flags after
-replacement: MonoModReplace otherwise copies the donor's flags and loses the
-implicit interface implementation. The [Responses conversion donor](../patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/patch_OpenAIResponsesChatClient.cs)
+The [Anthropic donor](../patches/Everywhere.Patches.Anthropic/patch_AnthropicExceptionFactory.cs)
+wraps the SDK's response-aware exception factory and attaches selected headers to
+the original exception subtype. The SDK retains complete ownership of its request
+loop, authentication, tracing, and response disposal. The [Responses conversion donor](../patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/patch_OpenAIResponsesChatClient.cs)
 retains all original stream cases while correcting incomplete/failed evidence.
 These changes preserve SDK policy; application retries belong to the request layer.
 

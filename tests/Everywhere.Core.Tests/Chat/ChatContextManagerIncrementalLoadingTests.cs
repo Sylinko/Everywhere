@@ -219,7 +219,7 @@ public sealed class ChatContextManagerIncrementalLoadingTests
             Assert.That(((UserChatMessage)users[0].Node.Message).Content, Is.EqualTo("Question 3"));
             Assert.That(presentation.HasEarlierTurns, Is.True);
             Assert.That(outputs, Has.All.Matches<AssistantTextOutputPresentationRow>(row =>
-                row.CachedDocumentUpdate?.Version == row.TextSpan.ContentMarkdownBuilder.Version));
+                row is not null && row.CachedDocumentUpdate?.Version == row.TextSpan.ContentMarkdownBuilder.Version));
         });
     }
 

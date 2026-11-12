@@ -186,9 +186,11 @@ public sealed class WeaveAssembliesTaskTests
             Assert.That(File.GetLastWriteTimeUtc(output), Is.EqualTo(timestamp));
             Assert.That(lines[0], Is.EqualTo(Path.Combine(_directory, "ref", "Example.dll")));
             Assert.That(lines[1], Is.EqualTo(typeof(object).Assembly.Location));
-            Assert.That(lines[2], Is.EqualTo(output));
-            Assert.That(lines[3], Is.EqualTo($"{output}|Example.Runtime|Example.dll"));
-            Assert.That(lines[4], Is.EqualTo(output));
+            Assert.That(Path.GetFullPath(lines[2]), Is.EqualTo(output));
+            var published = lines[3].Split('|');
+            Assert.That(Path.GetFullPath(published[0]), Is.EqualTo(output));
+            Assert.That(published[1..], Is.EqualTo(new[] { "Example.Runtime", "Example.dll" }));
+            Assert.That(Path.GetFullPath(lines[4]), Is.EqualTo(output));
         });
     }
 
@@ -202,9 +204,11 @@ public sealed class WeaveAssembliesTaskTests
             repository = repository.Parent ?? throw new InvalidOperationException("Repository root was not found.");
         var configuration = new DirectoryInfo(TestContext.CurrentContext.TestDirectory).Parent?.Name ?? "Debug";
         var targets = SecurityElement.Escape(Path.Combine(repository.FullName, "src", "Build.Patches.targets"));
+        var properties = SecurityElement.Escape(Path.Combine(repository.FullName, "Directory.Build.props"));
         var project = Path.Combine(_directory, "pipeline.proj");
         File.WriteAllText(project, $$"""
             <Project>
+              <Import Project="{{properties}}" />
               <PropertyGroup>
                 <Configuration>{{configuration}}</Configuration>
                 <IntermediateOutputPath>{{_directory}}/obj/</IntermediateOutputPath>

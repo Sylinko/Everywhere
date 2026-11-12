@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-mac:
-    runs-on: macos-26
+    runs-on: xcode-27
     strategy:
       matrix:
         include:
@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: '26.6'
+        xcode-version: '27.2'
 
     - name: Checkout code
       uses: actions/checkout@v6
@@ -69,7 +69,7 @@ jobs:
         security list-keychain -d user -s $KEYCHAIN_PATH
 
     - name: Install macOS workload
-      run: dotnet workload install macos --version 10.0.401
+      run: dotnet workload install macos --version 11.0.100
 
     - name: Restore
       run: |

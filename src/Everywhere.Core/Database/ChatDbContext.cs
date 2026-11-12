@@ -198,8 +198,8 @@ public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory
 /// Base class for all cloud-syncable entities for MessagePack polymorphic serialization.
 /// </summary>
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-[Union(0, typeof(ChatContextEntity))]
-[Union(1, typeof(ChatNodeEntity))]
+[MessagePackUnion(0, typeof(ChatContextEntity))]
+[MessagePackUnion(1, typeof(ChatNodeEntity))]
 public abstract partial class CloudSyncableEntity : ICloudSyncable
 {
     /// <summary>

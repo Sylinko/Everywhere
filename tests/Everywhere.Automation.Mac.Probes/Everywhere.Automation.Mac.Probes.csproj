@@ -2,12 +2,13 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>$(TargetFrameworkPrefix)-macos</TargetFramework>
-    <TargetPlatformVersion>26.5</TargetPlatformVersion>
-    <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion>14.0</SupportedOSPlatformVersion>
     <ApplicationId>com.sylinko.everywhere.automation-probes</ApplicationId>
     <ApplicationManifest>Info.plist</ApplicationManifest>
     <SelfContained>true</SelfContained>
     <LinkMode>None</LinkMode>
+    <!-- OfficeCLI shares the executable consumer's SDK-generated dependency graph. -->
+    <GenerateDependencyFile>true</GenerateDependencyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsARM64)' == 'true'">

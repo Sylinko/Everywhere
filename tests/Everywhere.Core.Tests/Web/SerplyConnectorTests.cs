@@ -64,17 +64,17 @@ public sealed class SerplyConnectorTests
     }
 
     [Test]
-    public void SearchAsync_WhenUnauthorized_ThrowsWithoutLeakingTheKey()
+    public async Task SearchAsync_WhenUnauthorized_ThrowsWithoutLeakingTheKey()
     {
         using var connector = CreateConnector(_ => JsonResponse(HttpStatusCode.Unauthorized, """{ "detail": "Invalid API key" }"""));
 
-        var exception = Assert.ThrowsAsync<HttpRequestException>(() => connector.SearchAsync("query", 3));
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() => connector.SearchAsync("query", 3));
 
         Assert.Multiple(() =>
         {
-            Assert.That(exception.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
-            Assert.That(exception.Message, Does.Contain("Invalid API key"));
-            Assert.That(exception.Message, Does.Not.Contain("test-key"));
+            Assert.That(exception?.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+            Assert.That(exception?.Message, Does.Contain("Invalid API key"));
+            Assert.That(exception?.Message, Does.Not.Contain("test-key"));
         });
     }
 
