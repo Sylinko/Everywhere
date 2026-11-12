@@ -79,14 +79,14 @@ except Exception as exc:
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(version, '1.2.0')
         self.assertIn('--no-remove\ninstall\n', log)
-        self.assertIn('Everywhere installed successfully', result.stdout)
+        self.assertIn('Updated to 1.2.0', result.stdout)
 
     def test_failed_transaction_preserves_error(self):
         result, version, log = self.run_cli(apply=True, fail=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(version, '1.0.0')
         self.assertTrue(log)
-        self.assertNotIn('Everywhere installed successfully', result.stdout)
+        self.assertNotIn('Updated to 1.2.0', result.stdout)
 
     def test_corrupt_download_never_invokes_transaction(self):
         result, version, log = self.run_cli(apply=True, corrupt=True)
