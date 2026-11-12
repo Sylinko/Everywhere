@@ -64,6 +64,171 @@ class HTTPSRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
+COPY = {
+    'title': 'Everywhere',
+    'channel': 'Release channel',
+    'channel_compact': 'Channel',
+    'stable': 'Stable',
+    'canary': 'Canary',
+    'keys': '↑/↓ Navigate · Enter Select · Esc Cancel',
+    'keys_compact': '↑↓  Enter  Esc',
+    'checking_installer': 'Checking installer',
+    'bundled_installer': 'Using bundled installer (check unavailable).',
+    'using_installer': 'Installer {version}',
+    'checking_release': 'Checking releases',
+    'target': '{version} · {channel}',
+    'download': 'Download',
+    'retry': 'Retrying download ({attempt}/3)',
+    'verify': 'Verifying',
+    'prepare': 'Preparing package',
+    'install': 'Installing',
+    'installed': 'Installed {version}',
+    'updated': 'Updated to {version}',
+    'open': 'Open Everywhere.',
+    'restart': 'Restart Everywhere.',
+    'current': 'Already up to date.',
+    'older': 'No newer version in this channel.',
+    'preview': 'Preview complete.',
+    'failed': 'Installation failed: {error}',
+    'canceled': 'Canceled.',
+}
+
+
+class TerminalUI:
+    """Use the terminal palette and keep output readable when redirected."""
+
+    def __init__(self, stream=None):
+        self.stream = stream if stream is not None else sys.stdout
+        self.is_interactive = self.stream.isatty() and os.environ.get('TERM') != 'dumb'
+        self.has_color = self.is_interactive and 'NO_COLOR' not in os.environ
+
+    def style(self, text, role='accent'):
+        if not self.has_color:
+            return text
+        codes = {'accent': '1;36', 'selected': '1;94', 'muted': '90', 'success': '1;32', 'error': '1;31'}
+        return '\x1b[%sm%s\x1b[0m' % (codes[role], text)
+
+    def write(self, text):
+        self.stream.write(text + '\n')
+        self.stream.flush()
+
+    def header(self):
+        self.write('\n ' + self.style(COPY['title']) + '\n')
+
+    def status(self, key, role='muted', **values):
+        self.write(self.style(COPY[key].format(**values), role))
+
+    def choice(self, selected, width):
+        """Render a bounded card; only the two options are interactive."""
+        inner = max(12, min(38, width - 4))
+        title = COPY['channel'] if inner >= 20 else COPY['channel_compact']
+        top = '╭─ ' + title + ' ' + '─' * max(0, inner - len(title) - 3) + '╮'
+        lines = [self.style(top)]
+        for index, key in enumerate(('stable', 'canary')):
+            label = ('❯ ' if index == selected else '  ') + COPY[key]
+            content = label.ljust(inner)
+            if index == selected:
+                content = self.style(content, 'selected')
+            lines.append(self.style('│') + content + self.style('│'))
+        lines.append(self.style('╰' + '─' * inner + '╯'))
+        hint = COPY['keys'] if width >= 48 else COPY['keys_compact']
+        lines.append(self.style(hint, 'muted'))
+        return '\r\n'.join(lines)
+
+
+def byte_size(value):
+    for suffix in ('B', 'KiB', 'MiB', 'GiB'):
+        if value < 1024 or suffix == 'GiB':
+            return ('%.1f %s' % (value, suffix)) if suffix != 'B' else '%d B' % value
+        value /= 1024
+
+
+class DownloadProgress:
+    """Render actual received bytes, including files written by the .NET helper."""
+
+    def __init__(self, total, stream=None):
+        self.total = total
+        self.ui = TerminalUI(sys.stderr if stream is None else stream)
+        self.started = time.monotonic()
+        self.last_draw = 0.0
+        self.received = 0
+
+    def __enter__(self):
+        self.update(0, force=True)
+        return self
+
+    def update(self, received, force=False):
+        self.received = received
+        now = time.monotonic()
+        if not self.ui.is_interactive or not force and now - self.last_draw < 0.1:
+            return
+        self.last_draw = now
+        width = shutil.get_terminal_size((80, 24)).columns
+        ratio = min(1.0, received / self.total) if self.total else 0
+        rate = received / max(0.01, now - self.started)
+        size = '%s / %s' % (byte_size(received), byte_size(self.total))
+        percent = '%3d%%' % (100 * ratio)
+        if width < 56:
+            size = byte_size(received)
+        if width >= 72:
+            remaining = int(max(0, self.total - received) / rate) if rate else 0
+            estimate = '%02d:%02d' % (remaining // 60, remaining % 60) if rate else '--:--'
+            size += '  %s/s  %s' % (byte_size(rate), estimate)
+        bar_width = max(4, min(20, width - len(size) - 22))
+        filled = int(bar_width * ratio)
+        bar = '━' * filled + '─' * (bar_width - filled)
+        line = '%s  %s  %s  %s' % (COPY['download'], self.ui.style(bar), percent, size)
+        if width < 32:
+            line = '%s  %s' % (percent.strip(), size)
+        self.ui.stream.write('\r\x1b[2K' + line)
+        self.ui.stream.flush()
+
+    def __exit__(self, exception_type, exception, traceback):
+        if self.ui.is_interactive:
+            self.update(self.received, force=True)
+            self.ui.stream.write('\n')
+            self.ui.stream.flush()
+        elif exception_type is None:
+            self.ui.write('%s  %s / %s' % (COPY['download'], byte_size(self.received), byte_size(self.total)))
+
+
+UI = TerminalUI()
+
+
+def receive_with_transport(command, output, limit, show_progress):
+    if not show_progress:
+        return subprocess.run(command, timeout=200, stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL).returncode
+    with DownloadProgress(limit) as progress:
+        process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        deadline = time.monotonic() + 200
+        try:
+            while process.poll() is None:
+                received = output.stat().st_size if output.exists() else 0
+                if received > limit:
+                    raise UpdateError('Download exceeds its size limit.')
+                progress.update(received)
+                if time.monotonic() > deadline:
+                    raise DownloadError('Download timed out.')
+                time.sleep(0.1)
+            received = output.stat().st_size if output.exists() else 0
+            if received > limit:
+                raise UpdateError('Download exceeds its size limit.')
+            progress.update(received, force=True)
+            if process.returncode != 0:
+                raise DownloadError('Download failed using the application network settings.')
+            return process.returncode
+        except BaseException:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+            raise
+
+
 def fetch(url, destination=None, limit=8 * 1024 * 1024):
     if urllib.parse.urlsplit(url).scheme != 'https':
         raise UpdateError('Only HTTPS downloads are allowed.')
@@ -75,12 +240,20 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
         with tempfile.TemporaryDirectory(prefix='everywhere-response-') as directory:
             output = Path(destination) if destination else Path(directory) / 'response'
             for attempt in range(3):
-                result = subprocess.run(command_line + [url, str(output), str(limit)], timeout=200)
-                if result.returncode == 0:
-                    if not output.is_file() or output.stat().st_size > limit:
-                        raise UpdateError('Application transport returned an invalid response.')
-                    return b'' if destination else output.read_bytes()
+                output.unlink(missing_ok=True)
+                try:
+                    result = receive_with_transport(command_line + [url, str(output), str(limit)],
+                                                    output, limit, destination is not None)
+                    if result == 0:
+                        if not output.is_file() or output.stat().st_size > limit:
+                            raise UpdateError('Application transport returned an invalid response.')
+                        return b'' if destination else output.read_bytes()
+                except DownloadError:
+                    if attempt == 2:
+                        raise
                 if attempt < 2:
+                    if destination:
+                        UI.status('retry', attempt=attempt + 2)
                     time.sleep(attempt + 1)
             raise DownloadError('Download failed using the application network settings.')
     opener = urllib.request.build_opener(HTTPSRedirect())
@@ -89,10 +262,12 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
             req = urllib.request.Request(url, headers={
                 'User-Agent': 'Everywhere-Linux-Installer', 'Accept': 'application/vnd.github+json'})
             with opener.open(req, timeout=30) as response:
-                with (open(destination, 'wb') if destination else contextlib.nullcontext()) as output:
+                output_context = open(destination, 'wb') if destination else contextlib.nullcontext()
+                progress_context = DownloadProgress(limit) if destination else contextlib.nullcontext()
+                with output_context as output, progress_context as progress:
                     chunks, count = [], 0
                     while True:
-                        chunk = response.read(1024 * 1024)
+                        chunk = response.read(64 * 1024)
                         if not chunk:
                             break
                         count += len(chunk)
@@ -100,6 +275,7 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
                             raise UpdateError('Response exceeds expected size limit.')
                         if output:
                             output.write(chunk)
+                            progress.update(count)
                         else:
                             chunks.append(chunk)
                     return b''.join(chunks)
@@ -109,10 +285,12 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
         except (urllib.error.URLError, TimeoutError) as exc:
             if attempt == 2:
                 raise DownloadError('Download failed: ' + str(exc)) from exc
+        if destination:
+            UI.status('retry', attempt=attempt + 2)
         time.sleep(attempt + 1)
 
 
-INSTALLER_VERSION = '0.1.0'
+INSTALLER_VERSION = '0.2.0'
 INSTALLER_URL = 'https://github.com/pasical/Everywhere/releases/download/linux-installer-latest/installer.json'
 CATALOG_URL = 'github:pasical/Everywhere'
 
@@ -163,7 +341,7 @@ def refresh_installer(source, arguments):
     try:
         manifest = read_json(source)
     except (DownloadError, urllib.error.URLError, OSError):
-        print('Could not check installer updates; using bundled installer %s.' % INSTALLER_VERSION)
+        UI.status('bundled_installer')
         return None
     if not isinstance(manifest, dict) or manifest.get('schema') != 1 or manifest.get('protocol') != 1:
         raise UpdateError('Unsupported installer protocol.')
@@ -189,7 +367,7 @@ def refresh_installer(source, arguments):
             fetch(asset['url'], download, asset['size'])
             verify_file(download, asset)
             os.replace(download, script)
-    print('Using installer %s.' % version, flush=True)
+    UI.status('using_installer', version=version)
     return subprocess.run([sys.executable, str(script), '--no-installer-update', *arguments], check=False).returncode
 
 
@@ -198,25 +376,25 @@ def choose_channel():
     try:
         terminal = open('/dev/tty', 'r+b', buffering=0)
     except OSError as exc:
-        raise UpdateError('An interactive terminal is required. Specify --channel stable or --channel canary.') from exc
+        raise UpdateError('Choose --channel stable or --channel canary in a terminal.') from exc
     with terminal:
         fd = terminal.fileno()
         previous = termios.tcgetattr(fd)
         selected = 0
-        terminal.write(b'Everywhere\r\n\r\nSelect a release channel\r\n\r\n')
+        # The menu owns /dev/tty even if stdout is being logged separately.
+        ui = TerminalUI()
+        is_interactive = os.environ.get('TERM') != 'dumb'
+        ui.has_color = is_interactive and 'NO_COLOR' not in os.environ
         try:
             tty.setraw(fd)
-            terminal.write(b'\x1b[?25l')
+            if is_interactive:
+                terminal.write(b'\x1b[?25l')
             while True:
-                labels = ['Stable', 'Canary']
-                text = ('\r\x1b[2K%s Stable\r\n\x1b[2K%s Canary\r\n\r\n'
-                        '\x1b[2KUp/Down Navigate | Enter Select | Esc Cancel') % (
-                    '>' if selected == 0 else ' ', '>' if selected == 1 else ' ')
-                terminal.write(text.encode())
+                width = shutil.get_terminal_size((80, 24)).columns
+                terminal.write(ui.choice(selected, width).encode())
                 key = terminal.read(1)
                 if key in (b'\r', b'\n'):
-                    terminal.write(('\r\n\r\nSelected: %s\r\n' % labels[selected]).encode())
-                    return labels[selected].lower()
+                    return COPY['stable' if selected == 0 else 'canary'].lower()
                 if key in (b'\x03', b'\x04', b''):
                     raise KeyboardInterrupt
                 if key == b'\x1b':
@@ -229,10 +407,15 @@ def choose_channel():
                         selected = (selected + 1) % 2
                     elif not sequence:
                         raise KeyboardInterrupt
-                terminal.write(b'\x1b[3A')
+                if is_interactive:
+                    terminal.write(b'\x1b[4A\r')
+                else:
+                    terminal.write(b'\r\n')
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, previous)
-            terminal.write(b'\x1b[?25h\r\n')
+            if is_interactive:
+                terminal.write(b'\x1b[?25h')
+            terminal.write(b'\r\n')
 
 
 def backend(info):
@@ -529,9 +712,11 @@ def main(arguments=None):
             raise UpdateError('Use HTTPS_PROXY for standalone installation; --proxy requires ew update.')
         os.environ['EVERYWHERE_UPDATE_PROXY'] = args.proxy
     if not args.no_installer_update:
+        UI.status('checking_installer')
         result = refresh_installer(args.installer_manifest, raw)
         if result is not None:
             return result
+    UI.header()
     manager = backend(distro_info())
     arch = architecture(platform.machine())
     current = installed(manager)
@@ -545,19 +730,21 @@ def main(arguments=None):
             channel = 'canary' if 'canary' in current[1] else 'stable'
         else:
             channel = 'stable'
+    UI.status('checking_release')
     target, asset = select_package(read_catalog(args.catalog), channel, arch, manager)
     if current and version_key(target) <= version_key(normalize_version(current[1], manager)):
-        print('Everywhere is up to date. No downgrade or reinstall performed.')
+        current_version = normalize_version(current[1], manager)
+        UI.status('current' if version_key(target) == version_key(current_version) else 'older', role='success')
         return 0
-    print('Everywhere %s (%s)' % (target, channel.capitalize()), flush=True)
+    UI.status('target', role='accent', version=target, channel=channel.capitalize())
     if args.dry_run:
-        print('Preview complete. No packages downloaded or installed.')
+        UI.status('preview')
         return 0
     with lock(), tempfile.TemporaryDirectory(prefix='everywhere-install-') as temporary:
         directory = Path(temporary)
         path = directory / ('download.' + {'pacman': 'tar.zst', 'apt-get': 'deb', 'dnf': 'rpm'}[manager])
-        print('Downloading...', flush=True)
         fetch(asset['url'], path, asset['size'])
+        UI.status('verify')
         verify_file(path, asset)
         if manager == 'pacman':
             for label in ('icon', 'license'):
@@ -579,18 +766,20 @@ def main(arguments=None):
                     raise UpdateError('Packaging resource is too large.')
                 fetch(resource['url'], directory / label, resource['size'])
                 verify_file(directory / label, resource)
+            UI.status('prepare')
             epoch = int(current[1].split(':', 1)[0]) if current and ':' in current[1] else 0
             path = prepare_arch(path, directory, target, current[0] if current else 'everywhere-bin',
                                 Path(__file__), epoch)
         validate_package(path, manager, target, arch)
         if installed(manager) != current:
             raise UpdateError('Installation changed while downloading; please retry.')
-        print('Installing...', flush=True)
+        UI.status('install')
         execute(package_command(manager, path), True)
         after = installed(manager)
         if not after or normalize_version(after[1], manager) != target:
             raise UpdateError('Installation completed without the expected version. Check the package manager output.')
-    print('Everywhere installed successfully. Restart Everywhere to use the new version.')
+    UI.status('updated' if current else 'installed', role='success', version=target)
+    UI.status('restart' if current else 'open')
     return 0
 
 
@@ -598,8 +787,8 @@ if __name__ == '__main__':
     try:
         sys.exit(main())
     except (UpdateError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError, tarfile.TarError) as exc:
-        print('Installation failed: ' + str(exc), file=sys.stderr)
+        TerminalUI(sys.stderr).status('failed', role='error', error=str(exc))
         sys.exit(1)
     except KeyboardInterrupt:
-        print('Canceled.', file=sys.stderr)
+        TerminalUI(sys.stderr).status('canceled')
         sys.exit(130)

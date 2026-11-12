@@ -87,7 +87,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_installer_refresh_verified_cached_and_exit_code_propagated(self):
         data = b'print("new installer")'
-        manifest = {'schema': 1, 'protocol': 1, 'version': '0.2.0', 'asset': asset(data)}
+        manifest = {'schema': 1, 'protocol': 1, 'version': '0.3.0', 'asset': asset(data)}
         with tempfile.TemporaryDirectory() as temporary, patch.object(u.Path, 'home', return_value=Path(temporary)), \
                 patch.object(u, 'read_json', return_value=manifest), patch.object(u, 'fetch') as fetch, patch.object(u.subprocess, 'run') as run:
             fetch.side_effect = lambda url, path, limit: path.write_bytes(data)
@@ -160,7 +160,7 @@ class InstallerTests(unittest.TestCase):
                                             'everywhere-bin', SOURCE, 2), package)
 
     def test_bad_installer_never_executed(self):
-        manifest = {'schema': 1, 'protocol': 1, 'version': '0.2.0', 'asset': asset()}
+        manifest = {'schema': 1, 'protocol': 1, 'version': '0.3.0', 'asset': asset()}
         with tempfile.TemporaryDirectory() as temporary, patch.object(u.Path, 'home', return_value=Path(temporary)), \
                 patch.object(u, 'read_json', return_value=manifest), patch.object(u, 'fetch') as fetch, patch.object(u.subprocess, 'run') as run:
             fetch.side_effect = lambda url, path, limit: path.write_bytes(b'bad')

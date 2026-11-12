@@ -66,8 +66,7 @@ checks every redirect for HTTPS, caps response size, and has a bounded timeout.
 
 ## Independent installer
 
-The canonical source is maintained in the sibling `everywhere-linux-installer`
-directory. Its exporter copies a bundled snapshot and tests into this checkout.
+The canonical source is included under `tools/linux-installer` for independent maintenance. Its exporter copies the bundled snapshot and tests into this checkout.
 The launcher passes the `update` action; the same engine also supports clean
 installation with an English arrow-key channel menu. Both menu and native package
 confirmation use the controlling terminal when launched through `curl | sh`.
