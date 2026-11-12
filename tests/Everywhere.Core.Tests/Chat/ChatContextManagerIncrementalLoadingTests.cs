@@ -109,15 +109,44 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             return Task.CompletedTask;
         };
         using var manager = CreateManager(storage);
+        var syncRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manager.SyncRequested += (_, _) => syncRequested.TrySetResult();
         using var data = new ChatData();
         var context = ChatStorageTestExtensions.AttachRoot(manager, data);
+        var message = new UserChatMessage("completed", []);
         await context.ExecuteAsync(_ =>
         {
-            data.Add(new UserChatMessage("completed", []));
+            data.Add(message);
             return Task.CompletedTask;
-        });
+        }, CancellationToken.None);
         await saved.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await syncRequested.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.That(context.IsBusy, Is.False);
+
+        var streamingSyncRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manager.SyncRequested += (_, _) => streamingSyncRequested.TrySetResult();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var streaming = context.ExecuteAsync(async _ =>
+        {
+            await context.DispatchAsync(() => message.Content = "streamed");
+            started.SetResult();
+            await release.Task;
+        }, CancellationToken.None);
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            // A periodic save can consume every revision before streaming ends. Idle must still request sync.
+            await manager.FlushPendingSavesAsync();
+            Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
+            Assert.That(streamingSyncRequested.Task.IsCompleted, Is.False);
+        }
+        finally
+        {
+            release.TrySetResult();
+            await streaming;
+        }
+        await streamingSyncRequested.Task.WaitAsync(TimeSpan.FromSeconds(5));
     }
 
     [AvaloniaTest]

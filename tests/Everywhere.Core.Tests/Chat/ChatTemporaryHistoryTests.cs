@@ -24,10 +24,13 @@ partial class ChatContextManagerIncrementalLoadingTests
         await using var manager = new ChatContextManager(settings, storage, NullLogger<ChatContextManager>.Instance);
         var root = manager.CreateChat(isTemporary: true);
         var metadata = root.Data.Metadata;
+        var syncRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manager.SyncRequested += (_, _) => syncRequested.TrySetResult();
         await manager.FlushPendingSavesAsync();
         Assert.That(metadata.ActualTopic, Is.EqualTo(Everywhere.Core.I18N.LocaleKey.ChatContext_Temporary.I18N()));
 
-        await manager.RenameAsync(metadata, "unsaved title");
+        await manager.PersistChatAsync(metadata);
+        await root.ApplyAsync(() => metadata.SetTemporary(true));
         await manager.PersistChatAsync(metadata);
         await manager.FlushPendingSavesAsync();
         Assert.That(metadata.IsTemporary, Is.False);
@@ -36,10 +39,17 @@ partial class ChatContextManagerIncrementalLoadingTests
         await using var db = files.Factory.CreateDbContext();
         Assert.That(await db.Chats.CountAsync(), Is.Zero);
         Assert.That(await db.Nodes.CountAsync(), Is.Zero);
+        // An empty draft used to wake cloud discovery whenever a retention edit returned the root to idle.
+        Assert.That(syncRequested.Task.IsCompleted, Is.False);
+
+        await manager.RenameAsync(metadata, "unsaved title");
+        await manager.FlushPendingSavesAsync();
+        Assert.That(syncRequested.Task.IsCompleted, Is.False, "Draft titles must not request independent field synchronization.");
 
         await root.ApplyAsync(() => root.Data.Add(new UserChatMessage("first message", [])));
         await manager.FlushPendingSavesAsync();
         Assert.That(metadata.IsPersisted, Is.True);
+        await syncRequested.Task.WaitAsync(TimeSpan.FromSeconds(5));
         var saved = await db.Chats.SingleAsync();
         Assert.That(saved.Topic, Is.EqualTo("unsaved title"));
         Assert.That(saved.IsTemporary, Is.False);

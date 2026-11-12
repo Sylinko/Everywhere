@@ -347,8 +347,11 @@ public sealed partial class ChatContextManager :
         {
             return;
         }
+        if (!QueueSave(message.Metadata))
+        {
+            return;
+        }
 
-        QueueSave(message.Metadata);
         if (!_isClosing)
         {
             _saveDebounceExecutor.Trigger();
@@ -439,7 +442,8 @@ public sealed partial class ChatContextManager :
         if (pendingSave.Root is { } root)
         {
             await _chatContextStorage.SaveChatContextAsync(
-                    capture.Batch with { LocalAccountId = pendingSave.LocalAccountId }, CancellationToken.None)
+                    capture.Batch with { LocalAccountId = pendingSave.LocalAccountId },
+                    CancellationToken.None)
                 .ConfigureAwait(false);
             await root.DispatchAsync(() =>
             {
@@ -481,7 +485,9 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    private void QueueSave(ChatMetadata metadata)
+    private static bool CanSave(ChatMetadata metadata, RootChatContext? root) => metadata.IsPersisted || root is { Data.HasHistory: true };
+
+    private bool QueueSave(ChatMetadata metadata)
     {
         // Capture the owner at notification ingress, while the writer still holds it. A pending
         // or failed save must not rely on a later lookup through the manager's weak index.
@@ -491,14 +497,14 @@ public sealed partial class ChatContextManager :
         {
             if (!_metadataMap.TryGetValue(metadata.Id, out var canonical) || !ReferenceEquals(canonical, metadata))
             {
-                return;
+                return false;
             }
 
             // Draft edits remain dirty on the model. Its first real node queues the complete
             // initial write; merely changing title or retention must not create a stored chat.
-            if (!metadata.IsPersisted && root is not { Data.HasHistory: true })
+            if (!CanSave(metadata, root))
             {
-                return;
+                return false;
             }
 
             if (_pendingSaves.TryGetValue(metadata.Id, out var pending))
@@ -509,6 +515,7 @@ public sealed partial class ChatContextManager :
                 localAccountId = pending.LocalAccountId;
             }
             _pendingSaves[metadata.Id] = new PendingSave(root, metadata, localAccountId);
+            return true;
         }
     }
 
@@ -1640,7 +1647,8 @@ public sealed partial class ChatContextManager :
 
     private void OnRootIdle(object? sender, EventArgs args)
     {
-        if (!_isClosing)
+        // Short draft edits also raise Idle, but have no durable history to synchronize.
+        if (!_isClosing && sender is RootChatContext root && CanSave(root.Data.Metadata, root))
         {
             CompleteStableSaveAsync().Detach(_logger.ToExceptionHandler());
         }
@@ -1651,6 +1659,7 @@ public sealed partial class ChatContextManager :
         await FlushSyncSavesAsync().ConfigureAwait(false);
         if (!_isClosing)
         {
+            // Streaming may already have been saved while busy; idle still releases its pending sync work.
             SyncRequested?.Invoke(this, EventArgs.Empty);
         }
     }
