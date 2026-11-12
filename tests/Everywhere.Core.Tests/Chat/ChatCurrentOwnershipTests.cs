@@ -94,7 +94,10 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(root.Data.HasHistory, Is.False);
         Assert.That(metadata.IsPersisted, Is.True);
         Assert.That(manager.CreateNewCommand.CanExecute(null), Is.True);
+        var syncRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manager.SyncRequested += (_, _) => syncRequested.TrySetResult();
         await manager.RenameAsync(metadata, "retained empty history");
+        await syncRequested.Task.WaitAsync(TimeSpan.FromSeconds(5));
         await manager.SetPinnedAsync(metadata, true);
         manager.CreateNewCommand.Execute(null);
         await PumpDispatcherAsync();
