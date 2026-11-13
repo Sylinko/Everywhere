@@ -56,7 +56,7 @@ public sealed partial class OAuthCloudClient :
     public partial IDynamicLocaleKey? SubscriptionErrorKey { get; private set; }
 
     [ObservableProperty]
-    public partial CloudClientLoginStatus LoginStatus { get; private set; }
+    public partial CloudClientLoginStatus LoginStatus { get; private set; } = SignedOutStatus;
 
     [ObservableProperty]
     public partial IDynamicLocaleKey? LastLoginErrorKey { get; private set; }
@@ -75,6 +75,11 @@ public sealed partial class OAuthCloudClient :
     private readonly SemaphoreSlim _userDataLock = new(1, 1); // Prevent concurrent user data refreshes
     private readonly Lock _initializeTaskGate = new();
     private Task? _initializeTask;
+
+    private static readonly CloudClientLoginStatus SignedOutStatus =
+        string.IsNullOrEmpty(CloudConstants.AccountBaseUrl) || string.IsNullOrEmpty(CloudConstants.ClientId) ?
+            CloudClientLoginStatus.NotConfigured :
+            CloudClientLoginStatus.NotLoggedIn;
 
     public OAuthCloudClient(IHttpClientFactory httpClientFactory, ILogger<OAuthCloudClient> logger)
     {
@@ -98,6 +103,11 @@ public sealed partial class OAuthCloudClient :
             {
                 LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
                 await CompleteLoginAsync(false, cancellationToken);
+                return;
+            }
+
+            if (SignedOutStatus == CloudClientLoginStatus.NotConfigured)
+            {
                 return;
             }
 
@@ -174,13 +184,13 @@ public sealed partial class OAuthCloudClient :
             {
                 ResetUserData();
                 LastLoginErrorKey = null;
-                LoginStatus = CloudClientLoginStatus.NotLoggedIn;
+                LoginStatus = SignedOutStatus;
             });
             await _session.RevokeAndClearAsync(cancellationToken);
         }
         finally
         {
-            LoginStatus = CloudClientLoginStatus.NotLoggedIn;
+            LoginStatus = SignedOutStatus;
             if (acquireLock) _loginLock.Release();
         }
     }
@@ -287,6 +297,8 @@ public sealed partial class OAuthCloudClient :
     public Task InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        // Do not open the OS token vault or attempt silent login in a local-only build.
+        if (SignedOutStatus == CloudClientLoginStatus.NotConfigured) return Task.CompletedTask;
 
         // Fire and forget the initialization to avoid blocking app startup.
         lock (_initializeTaskGate)
@@ -619,7 +631,7 @@ public sealed partial class OAuthCloudClient :
         // PKCE Helpers
         private static string GenerateCodeVerifier() => Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(32));
 
-        private static unsafe string GenerateCodeChallenge(string codeVerifier)
+        private static string GenerateCodeChallenge(string codeVerifier)
         {
             Span<byte> verifierBytes = stackalloc byte[codeVerifier.Length];
             var bytesWritten = Encoding.ASCII.GetBytes(codeVerifier, verifierBytes);

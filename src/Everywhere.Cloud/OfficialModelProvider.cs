@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Reactive.Disposables;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI;
@@ -52,6 +52,12 @@ public sealed partial class OfficialModelProvider :
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (CloudConstants.AIGatewayBaseUrl.IsNullOrEmpty())
+        {
+            AccessStatus = OfficialModelCatalogAccessStatus.SignInRequired;
+            return;
+        }
+
         await RestoreCacheAsync(cancellationToken);
         HandleCloudClientStateChanged(nameof(ICloudClient.LoginStatus));
     }
@@ -104,7 +110,7 @@ public sealed partial class OfficialModelProvider :
 
     private void HandleCloudClientStateChanged(string? propertyName)
     {
-        if (IsDisposed) return;
+        if (IsDisposed || CloudConstants.AIGatewayBaseUrl.IsNullOrEmpty()) return;
 
         if (propertyName == nameof(ICloudClient.Subscription))
         {
@@ -123,6 +129,7 @@ public sealed partial class OfficialModelProvider :
                 break;
             case CloudClientLoginStatus.NotLoggedIn:
             case CloudClientLoginStatus.LoginFailed:
+            case CloudClientLoginStatus.NotConfigured:
                 AccessStatus = OfficialModelCatalogAccessStatus.SignInRequired;
                 InvalidateAsync().Detach(_logger.ToExceptionHandler());
                 break;

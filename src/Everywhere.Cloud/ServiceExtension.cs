@@ -18,7 +18,10 @@ public static class ServiceExtension
             // Guests use a public transport; authenticated requests reuse the normal token pipeline below.
             services.AddHttpClient(CloudNotificationSource.AnonymousHttpClientName, client =>
                 {
-                    client.BaseAddress = new Uri(CloudConstants.CloudBaseUrl.TrimEnd('/') + "/");
+                    if (Uri.TryCreate(CloudConstants.CloudBaseUrl, UriKind.Absolute, out var address))
+                    {
+                        client.BaseAddress = address;
+                    }
                     client.Timeout = TimeSpan.FromSeconds(15);
                 })
                 .ConfigurePrimaryHttpMessageHandler(provider => new HttpClientHandler

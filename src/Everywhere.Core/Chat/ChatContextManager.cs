@@ -430,12 +430,7 @@ public sealed partial class ChatContextManager :
             }
         }
 
-        // A failed message save must not consume its composer. Successful graph writes already
-        // acknowledged the input captured in their transaction; only independent edits remain.
-        if (failures.Count == 0)
-        {
-            await CommitPendingInputsAsync(failures).ConfigureAwait(false);
-        }
+        await CommitPendingInputsAsync(failures).ConfigureAwait(false);
 
         if (failures.Count > 0)
         {
@@ -450,11 +445,18 @@ public sealed partial class ChatContextManager :
         await CommitPendingSaveAsync(pendingSave, capture).ConfigureAwait(false);
     }
 
-    private static async Task<CapturedChatWrite> CapturePendingSaveAsync(PendingSave pendingSave)
+    private async Task<CapturedChatWrite> CapturePendingSaveAsync(PendingSave pendingSave)
     {
         if (pendingSave.Root is { } root)
         {
-            return await root.DispatchAsync(() => ChatWriteBatch.Capture(root.Data)).ConfigureAwait(false);
+            return await root.DispatchAsync(() =>
+            {
+                // Pair the detached input with this graph snapshot, not with whatever input
+                // happens to exist later when storage begins. Newer input stays pending.
+                var input = GetPendingInput(pendingSave.Metadata.Id);
+                var capture = ChatWriteBatch.Capture(root.Data);
+                return capture with { Batch = capture.Batch with { LocalInput = input?.Write } };
+            }).ConfigureAwait(false);
         }
 
         var metadata = ChatMetadataWrite.Capture(pendingSave.Metadata, out var changes);
@@ -465,10 +467,8 @@ public sealed partial class ChatContextManager :
     {
         if (pendingSave.Root is { } root)
         {
-            var input = GetPendingInput(pendingSave.Metadata.Id);
-            await _chatContextStorage.SaveChatContextAsync(
-                    capture.Batch with { LocalAccountId = pendingSave.LocalAccountId, LocalInput = input?.Write },
-                    CancellationToken.None)
+            await _chatContextStorage
+                .SaveChatContextAsync(capture.Batch with { LocalAccountId = pendingSave.LocalAccountId }, CancellationToken.None)
                 .ConfigureAwait(false);
             await root.DispatchAsync(() =>
             {
@@ -476,9 +476,9 @@ public sealed partial class ChatContextManager :
                 root.Data.PersistenceDirtyState.Acknowledge(capture.Changes);
                 pendingSave.Metadata.Acknowledge(capture.MetadataChanges);
             }).ConfigureAwait(false);
-            if (input is not null)
+            if (capture.Batch.LocalInput is { } input)
             {
-                AcknowledgeInput(input);
+                AcknowledgeInput(pendingSave.Metadata.Id, input);
             }
         }
         else

@@ -10,6 +10,7 @@ using LiveMarkdown.Avalonia;
 using Lucide.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using MessagePack;
 
 namespace Everywhere.Core.Tests.Chat;
 
@@ -40,15 +41,22 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         using var data = Data(user);
         var context = ChatStorageTestExtensions.AttachRoot(manager, data);
 
+        var independent = manager.Current;
+        context.Input.Draft.Text = "input retained with failed graph";
         data.SelectChild(data.RootNode, null);
 
         var saving = manager.FlushPendingSavesAsync();
         await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        independent.Input.Draft.Text = "independent draft";
         manager.SignedInAccountId = "account-b";
         await context.DispatchAsync(() => user.Content = "edited during the failed save");
         release.SetResult();
         await Assert.ThrowsAsync<AggregateException>(async () => await saving);
         Assert.That(data.Metadata.IsPersisted, Is.False);
+        // A disk failure for this graph must not prevent unrelated input-only drafts from saving.
+        Assert.That(storage.SavedInputs.ContainsKey(data.Metadata.Id), Is.False);
+        var savedInput = storage.SavedInputs[independent.Data.Metadata.Id].Payload ?? throw new AssertionException("Missing independent draft.");
+        Assert.That(MessagePackSerializer.Deserialize<ChatInputSnapshot>(savedInput).Draft.Text, Is.EqualTo("independent draft"));
         await manager.FlushPendingSavesAsync();
         Assert.That(data.Metadata.IsPersisted, Is.True);
         Assert.That(attempts, Is.EqualTo(2));
@@ -81,8 +89,10 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         using var data = Data(user);
         var context = ChatStorageTestExtensions.AttachRoot(manager, data);
 
+        context.Input.Draft.Text = "before input";
         var earlier = manager.FlushPendingSavesAsync();
         await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        context.Input.Draft.Text = "after input";
         await context.DispatchAsync(() =>
         {
             user.Content = "after";
@@ -93,9 +103,18 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         release.SetResult();
         await Task.WhenAll(earlier, final);
         Assert.That(attempts, Is.EqualTo(2));
+        // Each detached graph carries its own input; saving the first must not acknowledge a newer draft.
+        Assert.That(ReadInputText(batches[0]), Is.EqualTo("before input"));
+        Assert.That(ReadInputText(batches[1]), Is.EqualTo("after input"));
         Assert.That(batches[1].Metadata.Snapshot.Topic, Is.EqualTo("later title"));
         Assert.That(batches[1].Metadata.ChangedFields, Does.Contain(ChatMetadataFields.Topic));
         Assert.That(data.Metadata.CaptureChanges().HasChanges, Is.False);
+
+        static string? ReadInputText(ChatWriteBatch batch)
+        {
+            var payload = batch.LocalInput?.Payload ?? throw new AssertionException("Missing captured input.");
+            return MessagePackSerializer.Deserialize<ChatInputSnapshot>(payload).Draft.Text;
+        }
     }
 
     [AvaloniaTest]
@@ -516,7 +535,13 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             return Task.FromResult<ChatInputSnapshot?>(null);
         }
 
-        public Task<bool> SaveInputAsync(Guid chatId, ChatInputWrite input, CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<bool> SaveInputAsync(Guid chatId, ChatInputWrite input, CancellationToken cancellationToken)
+        {
+            SavedInputs[chatId] = input;
+            return Task.FromResult(true);
+        }
+
+        public Dictionary<Guid, ChatInputWrite> SavedInputs { get; } = [];
 
         public Task<StoredChatInput?> ReadNewChatInputAsync(CancellationToken cancellationToken)
         {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Utilities;
@@ -81,21 +82,67 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         out Task task)
     {
         using var scope = _lifetimeLock.EnterScope();
-        if (_isStopping || Data.Metadata.IsArchived || _disposeTask is not null || Data.IsDisposed || context.Data.IsDisposed ||
-            _foregroundOperations.ContainsKey(context))
+        if (AdmitForeground(context, cancellationToken) is not { } operation)
         {
             task = Task.CompletedTask;
             return false;
+        }
+
+        var admission = _workAdmission;
+        RunOperationAsync(context, operation, token => RunAfterAdmissionAsync(context, admission, action, token)).Detach();
+        task = operation.Completion.Task;
+        return true;
+    }
+
+    /// <summary>
+    /// Admits foreground work with a short initialization in the execution domain. The
+    /// initialization task is the receipt; the ordinary operation still owns the continuation,
+    /// cancellation cleanup and shutdown retention. No extra TCS is needed.
+    /// </summary>
+    internal bool TryStartOperation<T>(
+        ChatContext context,
+        Func<T> initialize,
+        Func<T, CancellationToken, Task> action,
+        [NotNullWhen(true)] out Task<T>? initialized,
+        out Task task)
+    {
+        using var scope = _lifetimeLock.EnterScope();
+        if (AdmitForeground(context, CancellationToken.None) is not { } operation)
+        {
+            initialized = null;
+            task = Task.CompletedTask;
+            return false;
+        }
+
+        var initialization = InitializeOperationAsync(context, _workAdmission, initialize);
+        RunOperationAsync(
+            context,
+            operation,
+            async token =>
+            {
+                var value = await initialization.ConfigureAwait(false);
+                // As with ordinary foreground work, cancellation must enter the action's cleanup.
+                await Task.Run(() => action(value, token), CancellationToken.None).ConfigureAwait(false);
+            }).Detach();
+        initialized = initialization;
+        task = operation.Completion.Task;
+        return true;
+    }
+
+    // The caller holds _lifetimeLock through admission and operation scheduling.
+    private Operation? AdmitForeground(ChatContext context, CancellationToken cancellationToken)
+    {
+        if (_isStopping || Data.Metadata.IsArchived || _disposeTask is not null || Data.IsDisposed || context.Data.IsDisposed ||
+            _foregroundOperations.ContainsKey(context))
+        {
+            return null;
         }
 
         var operation = new Operation(_lifetimeCancellation.Token, cancellationToken);
         _operations.Add(operation);
         Reference.IsActive = true;
         _foregroundOperations.Add(context, operation);
-        var admission = _workAdmission;
-        RunOperationAsync(context, operation, token => RunAfterAdmissionAsync(admission, action, token)).Detach();
-        task = operation.Completion.Task;
-        return true;
+        return operation;
     }
 
     internal Task StartBackgroundOperation(Func<CancellationToken, Task> action, CancellationToken cancellationToken)
@@ -110,7 +157,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         _operations.Add(operation);
         Reference.IsActive = true;
         var admission = _workAdmission;
-        RunOperationAsync(null, operation, token => RunAfterAdmissionAsync(admission, action, token)).Detach();
+        RunOperationAsync(null, operation, token => RunAfterAdmissionAsync(null, admission, action, token)).Detach();
         return operation.Completion.Task;
     }
 
@@ -147,11 +194,6 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         Exception? failure = null;
         try
         {
-            if (context is not null)
-            {
-                await DispatchAsync(context.NotifyOperationChanged).ConfigureAwait(false);
-            }
-
             // Accepted work enters its normal cleanup path even if cancellation precedes scheduling.
             await action(operation.Cancellation.Token).ConfigureAwait(false);
         }
@@ -218,32 +260,42 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         return admission;
     }
 
-    private static async Task RunAfterAdmissionAsync(Task admission, Func<CancellationToken, Task> action, CancellationToken token)
+    private async Task RunAfterAdmissionAsync(
+        ChatContext? context,
+        Task admission,
+        Func<CancellationToken, Task> action,
+        CancellationToken token)
+    {
+        if (context is not null) await DispatchAsync(context.NotifyOperationChanged).ConfigureAwait(false);
+        await AwaitAdmissionAsync(admission).ConfigureAwait(false);
+        // Accepted work still enters its cleanup when cancellation precedes scheduling.
+        await Task.Run(() => action(token), CancellationToken.None).ConfigureAwait(false);
+    }
+
+    private async Task<T> InitializeOperationAsync<T>(ChatContext context, Task admission, Func<T> initialize)
+    {
+        await DispatchAsync(context.NotifyOperationChanged).ConfigureAwait(false);
+        await AwaitAdmissionAsync(admission).ConfigureAwait(false);
+        // Initialization retains accepted input even if cancellation has already been requested.
+        return await EnqueueAsync(initialize).ConfigureAwait(false);
+    }
+
+    private static async Task AwaitAdmissionAsync(Task admission)
     {
         try
         {
-            // Admission protects a committed publication, not whether already accepted work
-            // exists. Enter the action even when canceled so the send path retains user input
-            // and runs its ordinary cleanup before observing the canceled token.
             await admission.ConfigureAwait(false);
         }
         catch
         {
-            // A preceding short mutation owns its failure; this independently accepted work still runs.
+            // The preceding publication or mutation reports its own error. Independently
+            // accepted work still enters initialization and cleanup, even when canceled.
         }
-        await Task.Run(() => action(token), CancellationToken.None).ConfigureAwait(false);
     }
 
     private async Task ApplyAfterAdmissionAsync(Task admission, Action mutation)
     {
-        try
-        {
-            await admission.ConfigureAwait(false);
-        }
-        catch
-        {
-            // The preceding operation reports its own error; it must not cancel this independent mutation.
-        }
+        await AwaitAdmissionAsync(admission).ConfigureAwait(false);
         await EnqueueAsync(mutation).ConfigureAwait(false);
     }
 

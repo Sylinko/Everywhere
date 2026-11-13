@@ -245,8 +245,8 @@
               ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_CancelButton_ToolTip}}">
               <Border
                 x:Name="PART_CancelButtonIcon"
-                Width="{DynamicResource FontSizeL}"
-                Height="{DynamicResource FontSizeL}"
+                Width="{DynamicResource FontSizeM}"
+                Height="{DynamicResource FontSizeM}"
                 Background="{DynamicResource PrimaryForegroundColor}"
                 CornerRadius="1"/>
             </Button>

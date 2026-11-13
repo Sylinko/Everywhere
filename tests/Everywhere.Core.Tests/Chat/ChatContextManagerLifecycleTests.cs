@@ -43,6 +43,12 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(sync.IsEnabled, Is.False);
         Assert.That(keyValue.Contains("IsCloudSyncEnabled"), Is.False);
         http.DidNotReceive().CreateClient(Arg.Any<string>());
+
+        // A local build may retain an enabled device preference, but no address means no session.
+        http.CreateClient(nameof(IChatSyncService)).Returns(new HttpClient());
+        sync.IsEnabled = true;
+        Assert.That(sync.IsEnabled, Is.True);
+        Assert.That(sync.Session, Is.Null);
     }
 
     [AvaloniaTest]
@@ -169,6 +175,8 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             Assert.That(root.IsBusy, Is.True);
             Assert.That(root.Reference.IsActive, Is.True);
             Assert.Throws<InvalidOperationException>(() => root.ExecuteAsync(_ => Task.CompletedTask));
+            Assert.That(await root.TryStartAsync(() => true, (_, _) => Task.CompletedTask,
+                Everywhere.Common.IExceptionHandler.DangerouslyIgnoreAllException), Is.False);
         }
         finally
         {
@@ -224,7 +232,9 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
     {
         var storage = new TestChatContextStorage([]);
         var logger = Substitute.For<ILogger<ChatContextManager>>();
-        using var manager = new ChatContextManager(
+        // Disposal is explicitly bounded below. A using scope would synchronously wait again
+        // after a timeout, hiding the shutdown deadlock this regression test must report.
+        var manager = new ChatContextManager(
             new Settings(new ServiceCollection().BuildServiceProvider()), storage, logger);
         using var firstData = new ChatData();
         using var secondData = new ChatData();
@@ -301,7 +311,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
     {
         var metadata = Metadata("history", 1);
         var storage = new TestChatContextStorage([metadata]);
-        using var manager = CreateManager(storage);
+        var manager = CreateManager(storage); // Explicit bounded disposal below owns this lifetime.
         using var target = Data(new UserChatMessage("target", []));
         var targetRuntime = ChatStorageTestExtensions.AttachRoot(manager, target);
 

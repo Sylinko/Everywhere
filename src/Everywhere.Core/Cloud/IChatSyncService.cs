@@ -24,7 +24,7 @@ public interface IChatSyncService : INotifyPropertyChanged
     bool IsEnabled { get; set; }
 
     /// <summary>
-    /// Active account session, or null when signed out or disabled.
+    /// Active account session, or null when signed out, disabled or unconfigured.
     /// </summary>
     ChatSyncSession? Session { get; }
 

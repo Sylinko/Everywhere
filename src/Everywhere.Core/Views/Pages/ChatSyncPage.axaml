@@ -81,8 +81,16 @@
           DockPanel.Dock="Right" VerticalAlignment="Center"
           AutomationProperties.HelpText="{I18N {x:Static LocaleKey.ChatSync_Description}}"
           AutomationProperties.Name="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"
-          IsChecked="{Binding ChatSync.IsEnabled, Mode=TwoWay}"
-          IsEnabled="{Binding ChatSync.AccountId, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+          IsChecked="{Binding ChatSync.IsEnabled, Mode=TwoWay}">
+          <ToggleSwitch.IsEnabled>
+            <MultiBinding Converter="{x:Static BoolConverters.And}">
+              <Binding Path="IsChatSyncConfigured"/>
+              <Binding
+                Converter="{x:Static ObjectConverters.IsNotNull}"
+                Path="ChatSync.AccountId"/>
+            </MultiBinding>
+          </ToggleSwitch.IsEnabled>
+        </ToggleSwitch>
         <StackPanel
           VerticalAlignment="Center" Spacing="2">
           <TextBlock

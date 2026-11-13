@@ -99,39 +99,31 @@ public sealed partial class ChatService : IChatService
         _toolCallsCounter = _meter.CreateCounter<long>("gen_ai.tool.calls");
     }
 
-    public bool SendMessage(ChatContext chatContext, UserChatMessage message)
-    {
-        return SendMessage(chatContext, message, _settings.Model.SelectedCustomAssistant);
-    }
-
     /// <inheritdoc />
-    public bool SendMessage(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant)
+    public Task<bool> SendMessageAsync(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant)
     {
         var chatData = chatContext.Data;
-
-        return chatContext.TryExecute(
-            async cancellationToken =>
+        return chatContext.TryStartAsync(
+            () =>
             {
+                // Publish the first node and initial title before consuming the composer's input.
+                // Visual processing, statistics and generation remain outside this short operation.
+                var shouldCreateTitle = !chatData.HasHistory && string.IsNullOrWhiteSpace(chatData.Metadata.Topic);
+                var titleInput = shouldCreateTitle ? GetTitleInput(message) : null;
+                var node = chatData.Add(message);
+                if (titleInput is not null)
+                {
+                    chatData.Metadata.Rename(string.Join(" ", titleInput.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)));
+                }
+                return (UserNode: node, TitleInput: titleInput, Summary: chatData.Metadata.Topic);
+            },
+            async (initialized, cancellationToken) =>
+            {
+                var (userNode, titleInput, summary) = initialized;
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatData.Metadata.Id);
-
                 try
                 {
-                    // Once accepted, retain the user's content even if preparation of the visual
-                    // context fails. External composers do not keep a second copy in the main draft.
-                    var (userNode, titleInput, summary) = await chatContext.DispatchAsync(() =>
-                    {
-                        // Title work belongs to the first accepted send, not to the response loop.
-                        var shouldCreateTitle = !chatData.HasHistory && string.IsNullOrWhiteSpace(chatData.Metadata.Topic);
-                        var input = shouldCreateTitle ? GetTitleInput(message) : null;
-                        var node = chatData.Add(message);
-                        if (input is not null)
-                        {
-                            chatData.Metadata.Rename(string.Join(" ", input.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)));
-                        }
-
-                        return (node, input, chatData.Metadata.Topic);
-                    });
                     if (titleInput is { Length: > 0 } && customAssistant is not null && _settings.ChatWindow.AutomaticallyGenerateTitle)
                     {
                         chatContext
@@ -177,7 +169,8 @@ public sealed partial class ChatService : IChatService
             _logger.ToExceptionHandler());
     }
 
-    public bool Edit(ChatContext chatContext, ChatMessageNode oldNode, UserChatMessage newMessage)
+    /// <inheritdoc />
+    public Task<bool> EditAsync(ChatContext chatContext, ChatMessageNode oldNode, UserChatMessage newMessage)
     {
         if (oldNode.Message.Role != AuthorRole.User)
         {
@@ -186,16 +179,15 @@ public sealed partial class ChatService : IChatService
 
         var chatData = oldNode.Data;
         var customAssistant = _settings.Model.SelectedCustomAssistant;
-
-        return chatContext.TryExecute(
-            async cancellationToken =>
+        return chatContext.TryStartAsync(
+            () => chatData.CreateBranchOn(oldNode, newMessage),
+            async (userNode, cancellationToken) =>
             {
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatData.Metadata.Id);
 
                 try
                 {
-                    var userNode = await chatContext.DispatchAsync(() => chatData.CreateBranchOn(oldNode, newMessage));
                     await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
                     var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                         chatData,

@@ -9,7 +9,11 @@ public enum CloudClientLoginStatus
     NotLoggedIn,
     LoggedIn,
     AutoLoggingIn,
-    LoginFailed
+    LoginFailed,
+    /// <summary>
+    /// Account endpoints or the OAuth client ID were not supplied when building the app.
+    /// </summary>
+    NotConfigured
 }
 
 /// <summary>

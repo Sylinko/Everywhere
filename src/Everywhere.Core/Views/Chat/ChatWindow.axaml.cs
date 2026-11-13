@@ -624,21 +624,9 @@ public sealed partial class ChatWindow :
                 var files = e.DataTransfer.TryGetFiles();
                 if (files is null) return;
 
-                foreach (var item in files)
-                {
-                    if (!TryGetLocalFilePath(item, out var localPath)) continue;
-
-                    try
-                    {
-                        await ViewModel.AddFileFromDragDropAsync(localPath, CancellationToken.None);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.ForContext<ChatWindow>().Error(ex, "Failed to add dropped file: {FilePath}", localPath);
-                    }
-
-                    if (ViewModel.ChatAttachments.Count >= _persistentState.MaxChatAttachmentCount) break;
-                }
+                var paths = files.Select(item => TryGetLocalFilePath(item, out var path) ? path : null).OfType<string>();
+                // The view's drop event has no cancellation owner; the VM captures one target for the batch.
+                await ViewModel.AddFilesFromDragDropAsync(paths, CancellationToken.None);
             }
 
 

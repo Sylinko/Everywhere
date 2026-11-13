@@ -127,7 +127,7 @@ public sealed class ChatShutdownTests
         await recorder.StartModelInvocationAsync(new StatisticsModelInvocationDraft(
             invocationId, null, chatId, node.Id, StatisticsModelInvocationPurpose.ChatResponse, "shutdown-model", DateTimeOffset.UtcNow));
         using var entered = new ManualResetEventSlim();
-        var operation = root.ExecuteAsync(async token =>
+        var operation = root.TryStartAsync(() => node, async (_, token) =>
         {
             entered.Set();
             try
@@ -143,17 +143,20 @@ public sealed class ChatShutdownTests
                     message.Content = "final cancellation output";
                     root.Data.Metadata.Rename("final title");
                 });
+                // Final accounting must persist after the operation token has been canceled.
                 await recorder.CompleteModelInvocationAsync(
                     invocationId, new ChatUsageDetails { OutputTokenCount = 13 }, DateTimeOffset.UtcNow,
-                    isSuccess: false, isCanceled: true, errorType: typeof(OperationCanceledException).FullName);
+                    isSuccess: false, isCanceled: true, errorType: typeof(OperationCanceledException).FullName,
+                    cancellationToken: CancellationToken.None);
             }
-        });
+        }, IExceptionHandler.DangerouslyIgnoreAllException);
         Assert.That(entered.Wait(TimeSpan.FromSeconds(5)), Is.True);
 
         // Match the platform entry points: dispose the provider, not the manager. Block the
         // Avalonia thread so persistence cannot accidentally depend on a live UI dispatcher.
         Task.Run(async () => await services.DisposeAsync()).WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
-        Assert.That(operation.IsCanceled, Is.True);
+        Assert.That(operation.IsCompletedSuccessfully, Is.True, "The publication receipt finishes before cancellation cleanup.");
+        Assert.That(operation.Result, Is.True);
 
         // The old factories and logger factory have now ended their lifetimes. Reopen both
         // databases independently, as a subsequent process would, to verify committed data.

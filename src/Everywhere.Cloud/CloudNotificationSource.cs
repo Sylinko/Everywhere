@@ -112,6 +112,9 @@ public sealed partial class CloudNotificationSource(
         {
             var clientName = accountId is null ? AnonymousHttpClientName : nameof(CloudNotificationSource);
             using var client = httpClientFactory.CreateClient(clientName);
+            // A source-only/local build has no cloud address. Keep local notifications usable.
+            if (client.BaseAddress is null) return;
+
             using var request = new HttpRequestMessage(HttpMethod.Get, "notifications/v1");
             request.Headers.AcceptLanguage.Add(new StringWithQualityHeaderValue(locale.ToCultureInfo().Name));
             // Language is sampled for each ordinary request, not a refresh trigger. A validator

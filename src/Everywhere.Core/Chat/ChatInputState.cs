@@ -73,7 +73,7 @@ public sealed class ChatInputState : ObservableObject, IDisposable
 
     /// <summary>
     /// Ends an edit after cancellation or accepted submission, revealing the ordinary draft.
-    /// Callers remove transferred attachments before completing an accepted submission.
+    /// <see cref="CompleteSubmission"/> removes transferred attachments before ending an accepted edit.
     /// </summary>
     public void EndEdit()
     {
@@ -85,6 +85,57 @@ public sealed class ChatInputState : ObservableObject, IDisposable
         edit.Draft.Changed -= HandleDraftChanged;
         edit.Draft.Dispose();
         NotifyActiveDraftChanged();
+    }
+
+    /// <summary>
+    /// Consumes only the captured draft's submitted content after its message joins the graph.
+    /// Later input is retained; a continuing edit follows the published version without replacing
+    /// its draft. This method must be called on the UI thread.
+    /// </summary>
+    /// <param name="draft">The draft captured before submission, even when another chat is now visible.</param>
+    /// <param name="submittedText">The original composer text, before trimming it for the message.</param>
+    /// <param name="message">The published message that now owns the submitted attachments.</param>
+    public void CompleteSubmission(ChatInputDraft draft, string? submittedText, UserChatMessage message)
+    {
+        if (!ReferenceEquals(ActiveDraft, draft))
+        {
+            return;
+        }
+
+        var submittedStrategy = message.As<UserStrategyChatMessage>()?.Strategy;
+        var hasLaterInput = draft.Text != submittedText ||
+            !ReferenceEquals(draft.SelectedStrategy, submittedStrategy) ||
+            draft.AttachmentsSource.Items.Any(attachment => !message.Attachments.Contains(attachment));
+        if (Edit is { } edit && hasLaterInput)
+        {
+            // Submitted attachments now belong to history. Canceling this continuing edit
+            // releases only later additions, and never merges it into the ordinary draft.
+            draft.SetBorrowedAttachments(message.Attachments);
+            Edit = edit with { NodeId = message.Owner.NotNull().Id };
+            OnPropertyChanged(nameof(Edit));
+            Changed?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
+        draft.AttachmentsSource.Edit(list =>
+        {
+            foreach (var attachment in message.Attachments)
+            {
+                list.Remove(attachment);
+            }
+        });
+        if (draft.Text == submittedText)
+        {
+            draft.Text = null;
+        }
+        if (submittedStrategy is not null && ReferenceEquals(draft.SelectedStrategy, submittedStrategy))
+        {
+            draft.SelectedStrategy = null;
+        }
+        if (Edit is not null)
+        {
+            EndEdit();
+        }
     }
 
     /// <summary>
@@ -199,8 +250,13 @@ public sealed partial class ChatInputDraft : ObservableObject, IDisposable
 
     internal void BorrowAttachments(IEnumerable<ChatAttachment> attachments)
     {
-        _borrowedAttachments = attachments.ToArray();
+        SetBorrowedAttachments(attachments);
         AttachmentsSource.AddRange(_borrowedAttachments);
+    }
+
+    internal void SetBorrowedAttachments(IEnumerable<ChatAttachment> attachments)
+    {
+        _borrowedAttachments = [.. attachments];
     }
 
     /// <summary>
@@ -215,13 +271,12 @@ public sealed partial class ChatInputDraft : ObservableObject, IDisposable
         }
     }
 
-    internal ChatInputDraftSnapshot Capture() => new(Text, AttachmentsSource.Items.ToArray(), SelectedStrategy);
+    internal ChatInputDraftSnapshot Capture() => new(Text, [.. AttachmentsSource.Items], SelectedStrategy);
 
     internal static ChatInputDraft Restore(ChatInputDraftSnapshot snapshot)
     {
         var draft = new ChatInputDraft { Text = snapshot.Text, SelectedStrategy = snapshot.Strategy };
-        draft.AttachmentsSource.AddRange(
-            snapshot.Attachments.Where(attachment => attachment is not VisualElementAttachment { IsElementValid: false }));
+        draft.AttachmentsSource.AddRange(snapshot.Attachments.Where(attachment => attachment is not VisualElementAttachment { IsElementValid: false }));
         return draft;
     }
 

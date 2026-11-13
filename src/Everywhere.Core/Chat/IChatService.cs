@@ -6,27 +6,24 @@ namespace Everywhere.Chat;
 public interface IChatService
 {
     /// <summary>
-    /// Send a message to the chat service. This method is NOT thread safe.
+    /// Submits a user message and completes after it enters the graph, without waiting
+    /// for generation. Returns false when admission is rejected. On rejection or initialization
+    /// failure the composer retains its input. This method is UI-thread-only.
     /// </summary>
     /// <param name="chatContext">The destination captured when the draft was submitted.</param>
     /// <param name="message"></param>
-    bool SendMessage(ChatContext chatContext, UserChatMessage message);
+    /// <param name="customAssistant">The assistant captured for this submission; null produces a missing-assistant response.</param>
+    Task<bool> SendMessageAsync(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant);
 
     /// <summary>
-    /// Sends using the supplied assistant without changing the global assistant selection.
-    /// Returns false when the destination is busy; ownership of the message's attachments then stays with the caller.
-    /// Accepted messages may carry acquisition-context anchors, which are moved during visual processing.
-    /// This method is only safe to call on the UI thread.
-    /// </summary>
-    bool SendMessage(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant);
-
-    /// <summary>
-    /// Edit a previously sent user message. This will create a branch in the chat history. This method is NOT thread safe.
+    /// Creates an edited branch and completes after its user message enters the graph, without
+    /// waiting for generation. Returns false when admission is rejected. The composer retains
+    /// its input on rejection or initialization failure. This method is UI-thread-only.
     /// </summary>
     /// <param name="chatContext">The owning context captured when editing began.</param>
     /// <param name="oldNode"></param>
     /// <param name="newMessage"></param>
-    bool Edit(ChatContext chatContext, ChatMessageNode oldNode, UserChatMessage newMessage);
+    Task<bool> EditAsync(ChatContext chatContext, ChatMessageNode oldNode, UserChatMessage newMessage);
 
     /// <summary>
     /// Retry sending a message that previously failed. This will create a branch in the chat history. This method is NOT thread safe.
