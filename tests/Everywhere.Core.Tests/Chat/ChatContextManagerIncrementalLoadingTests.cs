@@ -491,6 +491,18 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
 
     private sealed class TestChatContextStorage(IReadOnlyList<ChatMetadata> metadata) : IChatContextStorage
     {
+        public Task<ChatInputSnapshot?> ReadInputAsync(Guid chatId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<ChatInputSnapshot?>(null);
+        }
+
+        public Task<bool> SaveInputAsync(Guid chatId, ChatInputWrite input, CancellationToken cancellationToken) => Task.FromResult(true);
+
+        public Task<StoredChatInput?> ReadNewChatInputAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<StoredChatInput?>(null);
+        }
+
         public Dictionary<Guid, ChatData> Contexts { get; } = [];
 
         public List<Guid> LoadedContextIds { get; } = [];

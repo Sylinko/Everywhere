@@ -19,6 +19,11 @@ public sealed class ChatV2DbContext(DbContextOptions<ChatV2DbContext> options) :
     public DbSet<ChatV2Entity> Chats => Set<ChatV2Entity>();
 
     /// <summary>
+    /// Local composer drafts, including drafts without a persisted conversation.
+    /// </summary>
+    public DbSet<ChatInputEntity> ChatInputs => Set<ChatInputEntity>();
+
+    /// <summary>
     /// Node topology and separately materialized message payloads.
     /// </summary>
     public DbSet<ChatV2NodeEntity> Nodes => Set<ChatV2NodeEntity>();
@@ -133,6 +138,14 @@ public sealed class ChatV2DbContext(DbContextOptions<ChatV2DbContext> options) :
                 .IsDescending().HasFilter("\"ArchivedAt\" IS NULL");
             entity.HasIndex(row => new { row.IsPinned, row.UpdatedAt, row.Id }, "IX_Chats_ArchivedHistory")
                 .IsDescending().HasFilter("\"ArchivedAt\" IS NOT NULL");
+        });
+
+        builder.Entity<ChatInputEntity>(entity =>
+        {
+            // No Chats foreign key: saving unsent input must never create a history row.
+            entity.ToTable("ChatInputs");
+            entity.HasKey(row => row.SlotId);
+            entity.Property(row => row.SlotId).ValueGeneratedNever();
         });
 
         builder.Entity<ChatV2NodeEntity>(entity =>

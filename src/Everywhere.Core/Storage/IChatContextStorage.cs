@@ -11,6 +11,22 @@ namespace Everywhere.Storage;
 public interface IChatContextStorage : IChatTurnLoader
 {
     /// <summary>
+    /// Reads local-only composer values without loading the conversation history.
+    /// </summary>
+    Task<ChatInputSnapshot?> ReadInputAsync(Guid chatId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Saves captured local input independently of sync intents. A null payload removes it.
+    /// False defers input for standalone work whose first message is not persisted yet.
+    /// </summary>
+    Task<bool> SaveInputAsync(Guid chatId, ChatInputWrite input, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reads the single new-chat draft and its real identity without manufacturing a Chats row.
+    /// </summary>
+    Task<StoredChatInput?> ReadNewChatInputAsync(CancellationToken cancellationToken);
+
+    /// <summary>
     /// Freezes committed changes without replacing an uncertain submission. An unstable chat
     /// can publish independent metadata, but not the active generation.
     /// </summary>

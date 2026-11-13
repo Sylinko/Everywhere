@@ -11,7 +11,9 @@ namespace Everywhere.Configuration;
 /// </summary>
 public sealed class PersistentKeyValueStorage : IKeyValueStorage, IAsyncInitializer, IDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings + 1;
+    // Loading the raw byte dictionary does not depend on Settings. Database migrations may
+    // consume legacy values before Settings and network services initialize.
+    public AsyncInitializerIndex Index => AsyncInitializerIndex.Database - 1;
 
     private const string PrimaryExtension = ".bin";
     private const string TempExtension = ".tmp";

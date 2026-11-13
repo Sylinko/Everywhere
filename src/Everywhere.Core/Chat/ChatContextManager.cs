@@ -26,6 +26,7 @@ public sealed partial class ChatContextManager :
     IChatContextManager,
     IRecipient<ChatContextMetadataChangedMessage>,
     IRecipient<ChatPersistenceChangedMessage>,
+    IAsyncInitializer,
     IDisposable,
     IAsyncDisposable
 {
@@ -119,7 +120,8 @@ public sealed partial class ChatContextManager :
     public partial int BackgroundNotificationCount { get; private set; }
 
     [field: AllowNull, MaybeNull]
-    public IRelayCommand CreateNewCommand => field ??= new RelayCommand(CreateNew, () => !IsEmptyDraft(_current));
+    public IRelayCommand CreateNewCommand =>
+        field ??= new RelayCommand(CreateNew, () => !ReferenceEquals(_current, _newChatDraft) || !IsEmptyDraft(_current));
 
     /// <inheritdoc />
     public ChatHistoryView HistoryView
@@ -143,6 +145,7 @@ public sealed partial class ChatContextManager :
     public event EventHandler? SyncRequested;
 
     private RootChatContext? _current;
+    private RootChatContext? _newChatDraft;
     private CancellationTokenSource? _currentSwitchCancellation;
 
     private readonly ConcurrentDictionary<Guid, ChatMetadata> _metadataMap = [];
@@ -162,6 +165,10 @@ public sealed partial class ChatContextManager :
     /// until successful commit; a later notification replaces the entry identity, not its owner.
     /// </summary>
     private readonly Dictionary<Guid, PendingSave> _pendingSaves = [];
+
+    // Snapshots are captured on input change. They share the ordinary save gate/debounce and
+    // retain their root until committed, but never request synchronization or create history.
+    private readonly Dictionary<Guid, PendingInput> _pendingInputs = [];
 
     // Accepted local edits finish independently of sync or navigation cancellation.
     // Shutdown waits for these commits and their publication before releasing the roots.
@@ -281,6 +288,11 @@ public sealed partial class ChatContextManager :
                     if (!_metadataMap.ContainsKey(message.Metadata.Id))
                     {
                         return;
+                    }
+
+                    if (message.PropertyName == nameof(ChatMetadata.IsTemporary) && FindRoot(message.Metadata) is { } root)
+                    {
+                        HandleInputChanged(root.Input, EventArgs.Empty);
                     }
 
                     if (message.PropertyName == nameof(ChatMetadata.IsTemporary) && HistoryView != ChatHistoryView.Temporary)
@@ -413,6 +425,13 @@ public sealed partial class ChatContextManager :
             }
         }
 
+        // A failed message save must not consume its composer. Successful graph writes already
+        // acknowledged the input captured in their transaction; only independent edits remain.
+        if (failures.Count == 0)
+        {
+            await CommitPendingInputsAsync(failures).ConfigureAwait(false);
+        }
+
         if (failures.Count > 0)
         {
             throw new AggregateException("Some conversations could not be saved.", failures);
@@ -441,8 +460,9 @@ public sealed partial class ChatContextManager :
     {
         if (pendingSave.Root is { } root)
         {
+            var input = GetPendingInput(pendingSave.Metadata.Id);
             await _chatContextStorage.SaveChatContextAsync(
-                    capture.Batch with { LocalAccountId = pendingSave.LocalAccountId },
+                    capture.Batch with { LocalAccountId = pendingSave.LocalAccountId, LocalInput = input?.Write },
                     CancellationToken.None)
                 .ConfigureAwait(false);
             await root.DispatchAsync(() =>
@@ -451,6 +471,10 @@ public sealed partial class ChatContextManager :
                 root.Data.PersistenceDirtyState.Acknowledge(capture.Changes);
                 pendingSave.Metadata.Acknowledge(capture.MetadataChanges);
             }).ConfigureAwait(false);
+            if (input is not null)
+            {
+                AcknowledgeInput(input);
+            }
         }
         else
         {
@@ -467,6 +491,15 @@ public sealed partial class ChatContextManager :
                 _pendingSaves.Remove(pendingSave.Metadata.Id);
             }
         }
+
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            if (_isClosing) return;
+            if (_newChatDraft is not null && ReferenceEquals(_newChatDraft, pendingSave.Root))
+            {
+                _newChatDraft = null;
+            }
+        });
     }
 
     private async Task SavePendingChatAsync(Guid id)
@@ -557,7 +590,13 @@ public sealed partial class ChatContextManager :
     private void CreateNew()
     {
         CancelCurrentSwitch();
-        if (IsEmptyDraft(_current) && _metadataMap.ContainsKey(_current.Data.Metadata.Id)) return;
+        if (IsEmptyDraft(_newChatDraft) && _metadataMap.ContainsKey(_newChatDraft.Data.Metadata.Id))
+        {
+            PublishCurrent(_newChatDraft);
+            AddRecentHistoryMetadata(_newChatDraft.Data.Metadata);
+            return;
+        }
+        _newChatDraft = null;
 
         var isCurrentTemporary = _current?.Data.Metadata.IsTemporary is true;
         var isTemporary = _settings.ChatWindow.TemporaryChatMode switch
@@ -566,24 +605,27 @@ public sealed partial class ChatContextManager :
             TemporaryChatMode.Always => true,
             _ => false
         };
-        ActivateNewChat(isTemporary);
+        var root = CreateBlankRoot(isTemporary);
+        _newChatDraft = root;
+        PublishCurrent(root);
+        AddRecentHistoryMetadata(root.Data.Metadata);
     }
 
     /// <inheritdoc />
     public RootChatContext CreateChat(bool isTemporary)
     {
         CancelCurrentSwitch();
-        ActivateNewChat(isTemporary);
-        return _current;
+        var root = CreateBlankRoot(isTemporary);
+        PublishCurrent(root);
+        AddRecentHistoryMetadata(root.Data.Metadata);
+        return root;
     }
 
-    [MemberNotNull(nameof(_current))]
-    private void ActivateNewChat(bool isTemporary)
+    private RootChatContext CreateBlankRoot(bool isTemporary)
     {
         var data = new ChatData();
         data.Metadata.IsTemporary = isTemporary;
-        PublishCurrent(CreateRoot(data));
-        AddRecentHistoryMetadata(data.Metadata);
+        return CreateRoot(data);
     }
 
     [MemberNotNull(nameof(_current))]
@@ -600,8 +642,11 @@ public sealed partial class ChatContextManager :
 
         if (IsEmptyDraft(previous))
         {
-            _metadataMap.TryRemove(previous.Data.Metadata.Id, out _);
             RemoveHistoryMetadata(previous.Data.Metadata);
+            if (!ReferenceEquals(previous, _newChatDraft))
+            {
+                _metadataMap.TryRemove(previous.Data.Metadata.Id, out _);
+            }
         }
 
         // Current keeps a deleted root alive during preparation. Once bindings have moved,
@@ -619,6 +664,7 @@ public sealed partial class ChatContextManager :
             if (!_roots.Remove(root.Data.Metadata.Id)) return;
         }
         root.Idle -= OnRootIdle;
+        root.Input.Changed -= HandleInputChanged;
         root.DisposeAsync().AsTask().Detach(_logger.ToExceptionHandler());
     }
 
@@ -854,6 +900,10 @@ public sealed partial class ChatContextManager :
             {
                 _metadataMap.TryRemove(chatId, out removed);
                 _pendingSaves.Remove(chatId);
+                lock (_pendingInputs)
+                {
+                    _pendingInputs.Remove(chatId);
+                }
             }
         }
 
@@ -1034,6 +1084,10 @@ public sealed partial class ChatContextManager :
         cancellation.Token.ThrowIfCancellationRequested();
         if (next is not null)
         {
+            if (next.Input.Edit is { } edit && next.Data.FindNode(edit.NodeId) is { IsMessageLoaded: false } target)
+            {
+                await next.EnsureTurnLoadedAsync(target.Turn, cancellation.Token).ConfigureAwait(false);
+            }
             if (!ReferenceEquals(next, previous))
             {
                 await ViewSyncedBranchAsync(next, cancellation.Token).ConfigureAwait(false);
@@ -1114,9 +1168,12 @@ public sealed partial class ChatContextManager :
                 pending.ShouldReload = false;
             }
 
-            var data = await _chatContextStorage.GetChatContextAsync(metadata, cancellationToken).ConfigureAwait(false);
+            var data = metadata.IsPersisted ?
+                await _chatContextStorage.GetChatContextAsync(metadata, cancellationToken).ConfigureAwait(false) :
+                new ChatData(metadata, [], new ChatMessageNode(Guid.NewGuid().SetVersion(0), new RootChatMessage()));
             try
             {
+                var input = await _chatContextStorage.ReadInputAsync(metadata.Id, cancellationToken).ConfigureAwait(false);
                 await _commitGate.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
@@ -1142,7 +1199,12 @@ public sealed partial class ChatContextManager :
                         data.Dispose();
                         continue;
                     }
-                    return CreateRoot(data);
+                    var root = CreateRoot(data);
+                    if (input is not null)
+                    {
+                        root.Input.Restore(input);
+                    }
+                    return root;
                 }
                 finally
                 {
@@ -1626,6 +1688,7 @@ public sealed partial class ChatContextManager :
     {
         var data = root.Data;
         root.Idle += OnRootIdle;
+        root.Input.Changed += HandleInputChanged;
         _roots[data.Metadata.Id] = root.Reference;
         _metadataMap.TryAdd(data.Metadata.Id, data.Metadata);
         if (data.PersistenceDirtyState.HasChanges || data.Metadata.CaptureChanges().HasChanges)
@@ -1740,6 +1803,8 @@ public sealed partial class ChatContextManager :
 
     private sealed record PendingSave(RootChatContext? Root, ChatMetadata Metadata, string? LocalAccountId);
 
+    private sealed record PendingInput(RootChatContext Root, ChatInputWrite Write);
+
     private sealed record PendingContextLoad(Guid ChatId, CancellationTokenSource Cancellation)
     {
         // A remote commit superseded this detached read; retry before publishing a canonical root.
@@ -1781,6 +1846,7 @@ public static class ChatContextManagerExtensions
     {
         services.AddSingleton<ChatContextManager>();
         services.AddSingleton<IChatContextManager>(x => x.GetRequiredService<ChatContextManager>());
+        services.AddTransient<IAsyncInitializer>(x => x.GetRequiredService<ChatContextManager>());
         return services;
     }
 }
