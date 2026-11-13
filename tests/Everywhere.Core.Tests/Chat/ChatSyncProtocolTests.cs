@@ -5,6 +5,26 @@ namespace Everywhere.Core.Tests.Chat;
 
 public sealed class ChatSyncProtocolTests
 {
+    [TestCase(null, ChatSyncFailureCode.Unknown)]
+    [TestCase("future_code", ChatSyncFailureCode.Unknown)]
+    public void Failure_WhenDiagnosticsAreOmitted_PreservesStructuredRejection(string? code, ChatSyncFailureCode expected)
+    {
+        // Error envelopes are a wire boundary: omitted diagnostics must not hide a server rejection.
+        var fields = new Dictionary<string, object>();
+        if (code is not null)
+        {
+            fields["code"] = code;
+        }
+        var bytes = MessagePackSerializer.Serialize(fields, cancellationToken: CancellationToken.None);
+        var failure = MessagePackSerializer.Deserialize<ChatSyncFailure>(bytes, cancellationToken: CancellationToken.None);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(failure.RawCode, Is.EqualTo(code ?? string.Empty));
+            Assert.That(failure.Code, Is.EqualTo(expected));
+            Assert.That(failure.Details, Is.Empty);
+        }
+    }
+
     [Test]
     public void Protocol_WhenDecodedFromTypeScript_PreservesIdentityAndExactCounters()
     {

@@ -175,6 +175,15 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
                 Flatten(manager).Select(metadata => metadata.Topic),
                 Is.EqualTo(new[] { "match one", "match two" }));
         });
+
+        var section = manager.AllHistory.Single();
+        Flatten(manager)[1].DateModified = DateTimeOffset.UtcNow;
+        await PumpDispatcherAsync();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(manager.AllHistory.Single(), Is.SameAs(section), "Streaming timestamps must not clear a title-only result.");
+            Assert.That(Flatten(manager).Select(metadata => metadata.Topic), Is.EqualTo(new[] { "match two", "match one" }));
+        }
     }
 
     [AvaloniaTest]
@@ -206,6 +215,17 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             Assert.That(Flatten(manager), Is.EqualTo(new[] { userMatch }));
             Assert.That(storage.LoadedContextIds, Is.EqualTo(new[] { toolOnly.Id, userMatch.Id }));
         });
+
+        // Content matches change at the save boundary, not at each streamed timestamp.
+        var root = await manager.LoadChatContextAsync(userMatch, CancellationToken.None)
+            ?? throw new AssertionException("Missing search context.");
+        await root.DispatchAsync(() => ((UserChatMessage)root.Data.SelectedNodes[1].Message).Content = "changed answer");
+        await manager.FlushPendingSavesAsync();
+        await PumpDispatcherAsync();
+        Assert.That(Flatten(manager), Is.Empty);
+        await session.LoadMoreAsync(1, CancellationToken.None);
+        await PumpDispatcherAsync();
+        Assert.That(Flatten(manager), Is.EqualTo(new[] { laterMatch }));
     }
 
     [AvaloniaTest]

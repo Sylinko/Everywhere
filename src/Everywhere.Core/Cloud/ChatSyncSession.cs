@@ -85,19 +85,20 @@ public sealed partial class ChatSyncSession : IAsyncDisposable
     /// </summary>
     public void RequestSync()
     {
-        RequestPass(false, true, CancellationToken.None).Detach(_logger.ToExceptionHandler());
+        RequestPass(false, true).Detach(_logger.ToExceptionHandler());
     }
 
     /// <summary>
-    /// Runs or joins a pass and retries quota-blocked work. An existing pass is not
-    /// canceled by a joining caller; a caller starting a pass owns its cancellation.
+    /// Runs or joins a pass and retries quota-blocked work. Cancellation only stops this caller's
+    /// wait; the account session owns the pass, including saved-history signals received meanwhile.
     /// </summary>
     public Task SynchronizeAsync(bool shouldRetryQuota = true, CancellationToken cancellationToken = default)
     {
-        return RequestPass(shouldRetryQuota, false, cancellationToken).WaitAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        return RequestPass(shouldRetryQuota, false).WaitAsync(cancellationToken);
     }
 
-    private Task RequestPass(bool shouldRetryQuota, bool hasNewChanges, CancellationToken cancellationToken)
+    private Task RequestPass(bool shouldRetryQuota, bool hasNewChanges)
     {
         TaskCompletionSource completion;
         lock (_gate)
@@ -120,7 +121,7 @@ public sealed partial class ChatSyncSession : IAsyncDisposable
         }
 
         Changed?.Invoke(this, EventArgs.Empty);
-        RunPassesAsync(completion, cancellationToken).Detach(_logger.ToExceptionHandler());
+        RunPassesAsync(completion).Detach(_logger.ToExceptionHandler());
         return completion.Task;
     }
 
@@ -194,10 +195,9 @@ public sealed partial class ChatSyncSession : IAsyncDisposable
         }
     }
 
-    private async Task RunPassesAsync(TaskCompletionSource completion, CancellationToken callerToken)
+    private async Task RunPassesAsync(TaskCompletionSource completion)
     {
-        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token, callerToken);
-        var token = cancellation.Token;
+        var token = _lifetime.Token;
         Exception? failure = null;
         try
         {
@@ -301,16 +301,9 @@ public sealed partial class ChatSyncSession : IAsyncDisposable
     // ReSharper disable AccessToDisposedClosure
     private async Task SynchronizeCoreAsync(bool shouldRetryQuota, CancellationToken token)
     {
-        try
-        {
-            await _manager.FlushSyncSavesAsync().ConfigureAwait(false);
-        }
-        catch (AggregateException error)
-        {
-            // Each failed save remains queued. Retry it at that chat's capture boundary,
-            // without preventing other conversations from making progress.
-            _logger.LogWarning(error, "Some chat saves need retry before capture.");
-        }
+        // Sync only committed local history. A failed flush remains queued by the manager and
+        // fails this pass, rather than reporting success against an older database version.
+        await _manager.FlushSyncSavesAsync().ConfigureAwait(false);
 
         await DiscoverAsync(token).ConfigureAwait(false);
         await ReloadItemsAsync(null, token).ConfigureAwait(false);

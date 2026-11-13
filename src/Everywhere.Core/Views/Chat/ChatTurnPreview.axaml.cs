@@ -87,29 +87,36 @@ public sealed partial class ChatTurnPreview : UserControl
         _index = entry.Index;
         _entry = entry;
         _turn = entry.Turn;
-        if (_turn is not null)
-        {
-            _turn.Invalidated += HandleTurnInvalidated;
-        }
-
+        _turn.Invalidated += HandleTurnInvalidated;
         _index.Changed += HandleIndexChanged;
-        LoadPreviewAsync(entry).Detach();
+        Refresh();
     }
 
     private async Task LoadPreviewAsync(ChatTurnNavigationIndex.Entry entry)
     {
-        _loadCancellation = new CancellationTokenSource();
-        var cancellationToken = _loadCancellation.Token;
+        var cancellation = new CancellationTokenSource();
+        _loadCancellation = cancellation;
+        var cancellationToken = cancellation.Token;
         try
         {
             await entry.Index.Context.EnsureTurnLoadedAsync(entry.Turn, cancellationToken);
-            if (!cancellationToken.IsCancellationRequested && ReferenceEquals(_entry, entry))
-            {
-                Refresh();
-            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            return;
+        }
+        finally
+        {
+            if (ReferenceEquals(_loadCancellation, cancellation))
+            {
+                _loadCancellation = null;
+            }
+            cancellation.Dispose();
+        }
+
+        if (!cancellationToken.IsCancellationRequested && ReferenceEquals(_entry, entry))
+        {
+            Refresh();
         }
     }
 
@@ -119,7 +126,6 @@ public sealed partial class ChatTurnPreview : UserControl
     private void Release()
     {
         _loadCancellation?.Cancel();
-        _loadCancellation?.Dispose();
         _loadCancellation = null;
         _questionSource = null;
         _answerSource = null;
@@ -144,7 +150,16 @@ public sealed partial class ChatTurnPreview : UserControl
     {
         if (_entry is not { } entry) return;
         var nodes = entry.Turn.SelectedNodes;
-        if (nodes.AsValueEnumerable().Any(node => !node.IsMessageLoaded)) return;
+        if (nodes.AsValueEnumerable().Any(node => !node.IsMessageLoaded))
+        {
+            // A retained turn can acquire a cold alternative during sync. Join whole-turn
+            // loading once for this card; detaching only cancels this reader's wait.
+            if (_loadCancellation is null)
+            {
+                LoadPreviewAsync(entry).Detach();
+            }
+            return;
+        }
 
         var messages = nodes.AsValueEnumerable().Select(node => node.Message).ToList();
         var assistants = messages.AsValueEnumerable().OfType<AssistantChatMessage>().ToList();
@@ -239,10 +254,12 @@ public sealed partial class ChatTurnPreview : UserControl
             return;
         }
 
-        Dispatcher.UIThread.Post(() =>
-        {
-            Interlocked.Exchange(ref _isRefreshQueued, 0);
-            Refresh();
-        }, DispatcherPriority.Background);
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                Interlocked.Exchange(ref _isRefreshQueued, 0);
+                Refresh();
+            },
+            DispatcherPriority.Background);
     }
 }

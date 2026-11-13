@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Headless.NUnit;
 using Everywhere.Chat;
 using Everywhere.Views;
 
@@ -7,7 +8,7 @@ namespace Everywhere.Core.Tests.Chat;
 [TestFixture]
 public class ChatMessageControlTests
 {
-    [Test]
+    [AvaloniaTest]
     public async Task Snapshot_WhenRowRefreshes_PreservesControlAndOuterDataContext()
     {
         var outerDataContext = new object();

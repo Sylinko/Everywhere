@@ -137,8 +137,8 @@
                       Classes="Ghost Minimal"
                       shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
-                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand}"
-                      CommandParameter="{Binding Node.Message, Mode=OneTime}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageNodeCommand}"
+                      CommandParameter="{Binding Node, Mode=OneTime}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
                       <Interaction.Behaviors>
@@ -211,8 +211,8 @@
                       Classes="Ghost Minimal"
                       shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
-                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand, Mode=OneTime}"
-                      CommandParameter="{Binding Node.Message, Mode=OneTime}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageNodeCommand, Mode=OneTime}"
+                      CommandParameter="{Binding Node, Mode=OneTime}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
                       <Interaction.Behaviors>

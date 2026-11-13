@@ -82,11 +82,6 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
     }
 
     /// <summary>
-    /// Legacy device-wide preference. Only read when migrating to account-scoped preferences.
-    /// </summary>
-    public bool WasLegacyChatSyncEnabled => Get(false, "IsCloudSyncEnabled");
-
-    /// <summary>
     /// Accounts authorized to sync on this device. Null means the legacy switch has not been attributed yet.
     /// </summary>
     public string[]? EnabledChatSyncAccounts

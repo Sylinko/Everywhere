@@ -35,7 +35,8 @@ public interface IChatContextManager : IIncrementalLoader
 
     /// <summary>
     /// Gets or sets whether title misses may inspect user and assistant text content. Tool calls and
-    /// tool results never participate in this search.
+    /// tool results never participate in this search. Content changes re-evaluate matches after a
+    /// local history save, rather than restarting the search for every streamed token.
     /// </summary>
     bool HistorySearchIncludesContent { get; set; }
 

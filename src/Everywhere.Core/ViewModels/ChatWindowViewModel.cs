@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using Avalonia.Input;
@@ -658,9 +659,9 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
-    private Task CopyMessageAsync(ChatMessage chatMessage)
+    private Task CopyMessageNodeAsync(ChatMessageNode node)
     {
-        return Clipboard.SetTextAsync(chatMessage.ToString());
+        return Clipboard.SetTextAsync(node.Message.ToString());
     }
 
     [RelayCommand]
@@ -690,7 +691,7 @@ public sealed partial class ChatWindowViewModel :
             return;
         }
 
-        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
         var safeTopicName = string.Join("_", (metadata.Topic ?? "chat").Split(Path.GetInvalidFileNameChars()));
         var suggestedFileName = $"{safeTopicName}_{timestamp}.md";
         var exportPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), suggestedFileName);

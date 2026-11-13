@@ -100,7 +100,13 @@ public abstract class NumberConverters<T> where T : struct, INumber<T>
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            return value is null ? 0 : Enum.ToObject(targetType, ChangeType(value));
+            if (value is null)
+            {
+                return 0;
+            }
+
+            var underlyingValue = System.Convert.ChangeType(value is UnsetValueType ? 0 : value, Enum.GetUnderlyingType(targetType), culture);
+            return Enum.ToObject(targetType, underlyingValue);
         }
     }
 }

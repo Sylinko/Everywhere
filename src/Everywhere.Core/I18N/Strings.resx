@@ -4683,7 +4683,7 @@ If you continue, the other copy will shut down service mode.</value>
         <value>Start a temporary chat. It will be automatically deleted when Everywhere exits.</value>
     </data>
     <data name="ChatHistory_PersistDescription" xml:space="preserve">
-        <value>Keep this temporary chat as a regular chat. It will not be automatically deleted when Everywhere exits.</value>
+        <value>Keep this temporary chat as a regular chat so it is not automatically deleted.</value>
     </data>
     <data name="ChatHistory_Empty" xml:space="preserve">
         <value>No chats to display</value>
@@ -4692,7 +4692,7 @@ If you continue, the other copy will shut down service mode.</value>
         <value>Use temporary chats from the toolbar</value>
     </data>
     <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
-        <value>Use temporary chats for every chat started from the text selection toolbar. These chats are automatically deleted when Everywhere exits. Turn off to use regular chats.</value>
+        <value>Chats started from the text selection toolbar are temporary and are automatically deleted when Everywhere exits. Turn this off to use regular chats.</value>
     </data>
     <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
         <value>View synced branch</value>

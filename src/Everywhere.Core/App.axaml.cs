@@ -58,7 +58,6 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     private Task? _initializationTask;
     private Task? _activationTask;
     private bool _isShutdownInProgress;
-    private bool _isShutdownPrepared;
 
     // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
     // arrive while the first error dialog is still open; without this guard every nested exception
@@ -124,7 +123,6 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
                 await initializationTask;
             }
 
-            _isShutdownPrepared = true;
             lifetime.Shutdown(exitCode);
         }
         catch
@@ -300,11 +298,13 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
             {
                 desktop.ShutdownRequested += (_, args) =>
                 {
-                    if (_isShutdownPrepared)
+                    if (_initializationTask is not { IsCompleted: false })
                     {
                         return;
                     }
 
+                    // Only unfinished startup needs the dispatcher to drain before exit.
+                    // In normal operation, let the original request complete, including OS shutdown.
                     args.Cancel = true;
                     Shutdown();
                 };

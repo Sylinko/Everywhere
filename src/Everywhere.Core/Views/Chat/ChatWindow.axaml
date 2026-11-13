@@ -891,7 +891,7 @@
                 ChatContextManager="{Binding ChatContextManager}"
                 IsReadonly="{Binding ChatContextManager.Current.Data.Metadata.IsArchived}"
                 ContinueMessageNodeCommand="{Binding ContinueMessageNodeCommand}"
-                CopyMessageCommand="{Binding CopyMessageCommand}"
+                CopyMessageNodeCommand="{Binding CopyMessageNodeCommand}"
                 EditMessageNodeCommand="{Binding EditMessageNodeCommand}"
                 EditingMessageNode="{Binding EditingMessageNode, Mode=TwoWay}"
                 IsVisible="{Binding $self.ItemCount, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=0}"
@@ -1034,7 +1034,7 @@
           </Button>
 
           <Button
-            Classes="Secondary Rounded" Grid.Row="0"
+            Classes="Secondary" Grid.Row="0"
             Margin="8" HorizontalAlignment="Left" VerticalAlignment="Bottom"
             Command="{Binding #ChatMessages.ShowSyncedBranchCommand}"
             IsVisible="{Binding ChatContextManager.Current.Data.HasSyncedBranchUpdate}"

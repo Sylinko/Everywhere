@@ -308,12 +308,12 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
 
             switch (node.Message)
             {
-                case UserChatMessage userMessage:
+                case UserChatMessage:
                 {
                     retained.Add(node);
                     if (!_statesBySource.TryGetValue(node, out var userState))
                     {
-                        userState = SearchSourceState.CreateUser(node, userMessage);
+                        userState = SearchSourceState.CreateUser(node);
                         _statesBySource.Add(node, userState);
                     }
 
@@ -740,26 +740,24 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
 
     private sealed class SearchSourceState
     {
-        public ChatTextSearchScope Scope => _userMessage is null ? ChatTextSearchScope.Assistant : ChatTextSearchScope.User;
+        public ChatTextSearchScope Scope => _span is null ? ChatTextSearchScope.User : ChatTextSearchScope.Assistant;
         public bool IsProjectionCurrent => _markdownSource is null || _projection?.SourceVersion == _markdownSource.Version;
 
         private readonly ChatMessageNode _node;
         private readonly AssistantChatMessageTextSpan? _span;
-        private readonly UserChatMessage? _userMessage;
         private readonly ChatTextBuffer? _markdownSource;
         private MarkdownTextProjection? _projection;
 
-        private SearchSourceState(ChatMessageNode node, UserChatMessage? userMessage, AssistantChatMessageTextSpan? span)
+        private SearchSourceState(ChatMessageNode node, AssistantChatMessageTextSpan? span)
         {
             _node = node;
             _span = span;
-            _userMessage = userMessage;
             _markdownSource = span?.ContentMarkdownBuilder;
         }
 
-        public static SearchSourceState CreateUser(ChatMessageNode node, UserChatMessage message) => new(node, message, null);
+        public static SearchSourceState CreateUser(ChatMessageNode node) => new(node, null);
 
-        public static SearchSourceState CreateMarkdown(ChatMessageNode node, AssistantChatMessageTextSpan span) => new(node, null, span);
+        public static SearchSourceState CreateMarkdown(ChatMessageNode node, AssistantChatMessageTextSpan span) => new(node, span);
 
         public ProjectionWork? TryCreateProjectionWork()
         {
@@ -784,13 +782,15 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
 
         public SearchSnapshot? CreateSearchSnapshot()
         {
-            if (_userMessage is not null)
+            // A node keeps its identity when sync replaces its body. User text has no expensive
+            // projection to cache, so always read the current message rather than retaining it.
+            if (_span is null && _node.Message is UserChatMessage userMessage)
             {
                 return new SearchSnapshot(
                     _node,
                     null,
-                    _userMessage.Content,
-                    _userMessage is UserStrategyChatMessage ? 1 : 0,
+                    userMessage.Content,
+                    userMessage is UserStrategyChatMessage ? 1 : 0,
                     null);
             }
 

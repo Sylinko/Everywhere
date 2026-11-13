@@ -4681,7 +4681,7 @@
         <value>以临时的方式开始聊天，Everywhere 退出时会自动删除。</value>
     </data>
     <data name="ChatHistory_PersistDescription" xml:space="preserve">
-        <value>将临时聊天持久化为普通聊天，Everywhere 退出时不会自动删除</value>
+        <value>将此临时聊天保留为普通聊天，不再自动删除。</value>
     </data>
     <data name="ChatHistory_Empty" xml:space="preserve">
         <value>暂无聊天记录</value>
@@ -4690,7 +4690,7 @@
         <value>工具栏使用临时聊天</value>
     </data>
     <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
-        <value>划词工具栏发起的所有聊天使用临时聊天，Everywhere 退出时会自动删除。关闭后使用普通聊天。</value>
+        <value>划词工具栏发起的聊天使用临时聊天，Everywhere 退出时会自动删除。关闭后使用普通聊天。</value>
     </data>
     <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
         <value>查看同步分支</value>

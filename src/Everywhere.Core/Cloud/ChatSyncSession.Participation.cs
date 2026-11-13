@@ -87,7 +87,7 @@ partial class ChatSyncSession
                 {
                     receipt = await _transport.StopAsync(item.Id, confirmation, token).ConfigureAwait(false);
                 }
-                catch (Exception error) when (error is HttpRequestException or OperationCanceledException && !token.IsCancellationRequested)
+                catch (Exception error) when (!token.IsCancellationRequested && error is HttpRequestException or TimeoutException or OperationCanceledException)
                 {
                     receipt = await _transport.StopAsync(item.Id, confirmation, token).ConfigureAwait(false);
                 }
@@ -205,7 +205,7 @@ partial class ChatSyncSession
             _priorityChat = plan.Target;
         }
 
-        RequestPass(true, true, CancellationToken.None).Detach(_logger.ToExceptionHandler());
+        RequestPass(true, true).Detach(_logger.ToExceptionHandler());
         return new ChatSyncReleaseResult(stopped, needsReview);
     }
 }

@@ -1,12 +1,10 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Everywhere.AI;
 using Everywhere.Chat;
-using Everywhere.Chat.Plugins;
 using UsageDetails = Microsoft.Extensions.AI.UsageDetails;
 using Everywhere.Common;
 using Everywhere.I18N;
@@ -198,7 +196,9 @@ public sealed class RequestRecoveryTests
             Assert.That(message.Items, Does.Contain(tools));
             Assert.That(tool.Results.Length, Is.EqualTo(1));
             Assert.That(message.Metadata.GetValueOrDefault("checkpoint"), Is.EqualTo("original"));
-            Assert.That(runtime.Presentation.Rows.OfType<BusyActivityItemPresentationRow>(), Is.Empty);
+            Assert.That(runtime.Presentation.Rows.OfType<ActivityGroupPresentationRow>()
+                .SelectMany(group => group.Items).Concat(runtime.Presentation.Rows.OfType<ActivityItemPresentationRow>())
+                .OfType<BusyActivityItemPresentationRow>(), Is.Empty);
         });
         Assert.Multiple(() =>
         {

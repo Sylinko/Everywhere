@@ -56,6 +56,8 @@ public sealed class ChatSyncService : ObservableObject, IChatSyncService, IAsync
     /// <inheritdoc />
     public event EventHandler? Changed;
 
+    private const string LegacySyncEnabledKey = "IsCloudSyncEnabled";
+
     private readonly IDbContextFactory<ChatV2DbContext> _dbFactory;
     private readonly ChatTurnStorage _storage;
     private readonly ChatContextManager _manager;
@@ -97,7 +99,7 @@ public sealed class ChatSyncService : ObservableObject, IChatSyncService, IAsync
     /// <inheritdoc />
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
-        if (_state.EnabledChatSyncAccounts is null && _state.WasLegacyChatSyncEnabled)
+        if (_state.EnabledChatSyncAccounts is null && _state.Storage.Get(LegacySyncEnabledKey, false))
         {
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var accounts = await db.SyncAccounts.Select(row => row.AccountId).Take(2).ToArrayAsync(cancellationToken);
@@ -105,6 +107,10 @@ public sealed class ChatSyncService : ObservableObject, IChatSyncService, IAsync
             {
                 _state.EnabledChatSyncAccounts ??= accounts.Length == 1 ? accounts : [];
             }
+        }
+        if (_state.EnabledChatSyncAccounts is not null)
+        {
+            _state.Storage.Remove(LegacySyncEnabledKey);
         }
         _cloudClient.PropertyChanged += OnAccountChanged;
         _state.PropertyChanged += OnAccountChanged;
@@ -127,7 +133,11 @@ public sealed class ChatSyncService : ObservableObject, IChatSyncService, IAsync
         var account = AccountId;
         if (account is not null && _state.EnabledChatSyncAccounts is null)
         {
-            _state.EnabledChatSyncAccounts = _state.WasLegacyChatSyncEnabled && _cloudClient.RestoredAccountId == account ? [account] : [];
+            // Attribute the old device-wide switch only to its restored account, never to
+            // an unrelated interactive login. Both preference writes share the key/value store.
+            var shouldEnable = _state.Storage.Get(LegacySyncEnabledKey, false) && _cloudClient.RestoredAccountId == account;
+            _state.EnabledChatSyncAccounts = shouldEnable ? [account] : [];
+            _state.Storage.Remove(LegacySyncEnabledKey);
             return;
         }
 

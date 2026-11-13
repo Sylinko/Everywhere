@@ -488,6 +488,7 @@ public sealed partial class ChatWindow :
         }
         else
         {
+            HistorySearchBox.SetCurrentValue(TextBox.TextProperty, null);
             ViewModel.ChatContextManager.HistorySearchQuery = null;
         }
     }

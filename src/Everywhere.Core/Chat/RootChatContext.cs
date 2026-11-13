@@ -334,11 +334,10 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         GenerationApprovalState? approvalState)
     {
         using var scope = _lifetimeLock.EnterScope();
-        if (_isStopping || _disposeTask is not null)
-        {
-            throw new OperationCanceledException(_lifetimeCancellation.Token);
-        }
-
+        // Registering an embedded runtime does not admit agent work. Loading and received
+        // commits must finish attaching their already-owned data while StopAsync drains work.
+        // Foreground/background admission remains closed until ResumeAfterStop.
+        ObjectDisposedException.ThrowIf(Data.IsDisposed, this);
         var child = new NestedChatContext(parent, data, rules, approvalState);
         _children.Add(data, child);
         foreach (var node in data.GetAllNodes().Where(node => node.IsMessageLoaded))

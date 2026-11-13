@@ -342,14 +342,14 @@ public sealed partial class ChatSyncFailure
     /// Deserializes a wire failure while preserving an unknown raw code and its diagnostic details.
     /// </summary>
     [SerializationConstructor]
-    public ChatSyncFailure(string rawCode, Dictionary<string, object> details)
+    public ChatSyncFailure(string? rawCode, Dictionary<string, object>? details)
     {
-        RawCode = rawCode;
-        Details = details;
-        Code = Codes.GetValueOrDefault(rawCode);
+        RawCode = rawCode ?? string.Empty;
+        Details = details ?? [];
+        Code = Codes.GetValueOrDefault(RawCode);
         if (Code == ChatSyncFailureCode.QuotaExceeded)
         {
-            Quota = ChatSyncQuotaRejection.FromDetails(details);
+            Quota = ChatSyncQuotaRejection.FromDetails(Details);
         }
     }
 

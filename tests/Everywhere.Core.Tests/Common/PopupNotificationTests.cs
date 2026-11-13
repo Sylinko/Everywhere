@@ -92,7 +92,7 @@ public sealed class PopupNotificationTests
             await DrainAsync();
 
             // Hold the UI thread until cancellation is queued, then handle a click before pumping
-            // that queue. The center must not persist acknowledgment but return cancellation.
+            // that queue. The click wins on the UI thread, so acknowledgment is persisted.
             var cancellationThread = new Thread(cancellation.Cancel);
             cancellationThread.Start();
             cancellationThread.Join();
