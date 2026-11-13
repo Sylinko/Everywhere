@@ -4913,4 +4913,7 @@ If you continue, the other copy will shut down service mode.</value>
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>Stopping sync</value>
   </data>
+  <data name="Common_CloudNotConfigured" xml:space="preserve">
+    <value>Official cloud services are not configured in this build.</value>
+  </data>
 </root>

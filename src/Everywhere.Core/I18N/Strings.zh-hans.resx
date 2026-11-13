@@ -4911,4 +4911,7 @@
   <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
     <value>正在停止同步</value>
   </data>
+  <data name="Common_CloudNotConfigured" xml:space="preserve">
+    <value>此构建未配置官方云服务。</value>
+  </data>
 </root>

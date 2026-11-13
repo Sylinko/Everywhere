@@ -17,7 +17,8 @@ namespace Everywhere.ViewModels;
 public sealed partial class ChatSyncPageViewModel(
     IChatSyncService sync,
     ICloudClient cloudClient,
-    ILogger<ChatSyncPageViewModel> logger) : ReactiveViewModelBase
+    ILogger<ChatSyncPageViewModel> logger
+) : ReactiveViewModelBase
 {
     /// <summary>
     /// Fixed display-order choices, rendered separately in the selection box and popup.
@@ -70,7 +71,12 @@ public sealed partial class ChatSyncPageViewModel(
     /// <summary>
     /// Initial content is missing while an enabled account is preparing it.
     /// </summary>
-    public bool IsInventoryLoading => ChatSync.IsEnabled && (_snapshot is null || _snapshot.IsPreparing);
+    public bool IsInventoryLoading => IsChatSyncConfigured && ChatSync.IsEnabled && (_snapshot is null || _snapshot.IsPreparing);
+
+    /// <summary>
+    /// Whether this build supplies a cloud address, independently of the stored device preference.
+    /// </summary>
+    public bool IsChatSyncConfigured => !CloudConstants.CloudBaseUrl.IsNullOrEmpty();
 
     /// <summary>
     /// Background/explicit synchronization progress; does not disable row commands.
@@ -95,14 +101,25 @@ public sealed partial class ChatSyncPageViewModel(
     /// <summary>
     /// At least one participating row is checked for a batch command.
     /// </summary>
-    public bool HasSelectedChats => Rows.Any(row => row.IsChecked && !row.Item.IsBusy);
+    public bool HasSelectedChats => Rows.AsValueEnumerable().Any(row => row is { IsChecked: true, Item.IsBusy: false });
 
     /// <summary>
     /// Initial unavailability or failure, not a second loading line over loaded content.
     /// </summary>
-    public IDynamicLocaleKey InventoryMessageKey => _snapshot?.Error is { } error ?
-        ChatSyncPresentation.DescribeError(error, LocaleKey.ChatSync_LoadFailed) :
-        new DynamicLocaleKey(ChatSync.IsEnabled ? LocaleKey.ChatSync_Loading : LocaleKey.ChatSync_Disabled);
+    public IDynamicLocaleKey InventoryMessageKey
+    {
+        get
+        {
+            if (!IsChatSyncConfigured)
+            {
+                return new DynamicLocaleKey(LocaleKey.Common_CloudNotConfigured);
+            }
+
+            return _snapshot?.Error is { } error ?
+                ChatSyncPresentation.DescribeError(error, LocaleKey.ChatSync_LoadFailed) :
+                new DynamicLocaleKey(ChatSync.IsEnabled ? LocaleKey.ChatSync_Loading : LocaleKey.ChatSync_Disabled);
+        }
+    }
 
     /// <summary>
     /// Meter fill in the range zero to one; actual byte counts are not clamped.
@@ -126,25 +143,30 @@ public sealed partial class ChatSyncPageViewModel(
     /// Tab caption counting participating chats independently of their transfer progress.
     /// </summary>
     public IDynamicLocaleKey ParticipatingTabLabelKey => new FormattedDynamicLocaleKey(
-        LocaleKey.ChatSyncPage_ParticipatingTabItem_Header, _rowsById.Values.Count(row => row.IsParticipating));
+        LocaleKey.ChatSyncPage_ParticipatingTabItem_Header,
+        _rowsById.Values.Count(row => row.IsParticipating));
 
     /// <summary>
     /// Tab caption counting retained local-only rows.
     /// </summary>
     public IDynamicLocaleKey LocalOnlyTabLabelKey => new FormattedDynamicLocaleKey(
-        LocaleKey.ChatSyncPage_LocalOnlyTabItem_Header, _rowsById.Values.Count(row => !row.IsParticipating));
+        LocaleKey.ChatSyncPage_LocalOnlyTabItem_Header,
+        _rowsById.Values.Count(row => !row.IsParticipating));
 
     /// <summary>
     /// Explicit batch action caption using the current checked count.
     /// </summary>
     public IDynamicLocaleKey StopSelectedLabelKey => new FormattedDynamicLocaleKey(
-        LocaleKey.ChatSyncPage_StopSelectedButton_Content, Rows.Count(row => row.IsChecked));
+        LocaleKey.ChatSyncPage_StopSelectedButton_Content,
+        Rows.Count(row => row.IsChecked));
 
     /// <summary>
     /// Empty-state text for the selected scope.
     /// </summary>
-    public IDynamicLocaleKey EmptyListMessageKey => new DynamicLocaleKey(IsParticipatingTab ?
-        LocaleKey.ChatSyncPage_NoParticipatingChatsTextBlock_Text : LocaleKey.ChatSyncPage_NoLocalOnlyChatsTextBlock_Text);
+    public IDynamicLocaleKey EmptyListMessageKey => new DynamicLocaleKey(
+        IsParticipatingTab ?
+            LocaleKey.ChatSyncPage_NoParticipatingChatsTextBlock_Text :
+            LocaleKey.ChatSyncPage_NoLocalOnlyChatsTextBlock_Text);
 
     /// <summary>
     /// Account overage or an upload that cannot fit even when account usage is below quota.
@@ -160,14 +182,14 @@ public sealed partial class ChatSyncPageViewModel(
     protected internal override Task ViewLoaded(CancellationToken cancellationToken)
     {
         _viewToken = cancellationToken;
-        ChatSync.Changed += OnStateChanged;
+        ChatSync.Changed += HandleStateChanged;
         ReadState();
         return Task.CompletedTask;
     }
 
     protected internal override Task ViewUnloaded()
     {
-        ChatSync.Changed -= OnStateChanged;
+        ChatSync.Changed -= HandleStateChanged;
         _session = null;
         _snapshot = null;
         _rowsById.Clear();
@@ -175,7 +197,7 @@ public sealed partial class ChatSyncPageViewModel(
         return Task.CompletedTask;
     }
 
-    private void OnStateChanged(object? sender, EventArgs args)
+    private void HandleStateChanged(object? sender, EventArgs args)
     {
         Dispatcher.UIThread.PostOnDemand(() =>
         {
@@ -197,6 +219,7 @@ public sealed partial class ChatSyncPageViewModel(
             _session = session;
             SelectedTabIndex = 0;
         }
+
         _snapshot = session?.State;
         var inventory = _snapshot?.Inventory;
         var remaining = _rowsById.Keys.ToHashSet();
@@ -220,10 +243,12 @@ public sealed partial class ChatSyncPageViewModel(
                 }
             }
         }
+
         foreach (var id in remaining)
         {
             _rowsById.Remove(id);
         }
+
         UpdateScope();
         OnPropertyChanged(string.Empty);
     }
@@ -233,12 +258,23 @@ public sealed partial class ChatSyncPageViewModel(
         var isParticipating = IsParticipatingTab;
         var candidates = _rowsById.Values.Where(row => row.IsParticipating == isParticipating);
         var ordered = isParticipating && SelectedSortIndex == 1 ?
-            candidates.OrderByDescending(row => row.Item.Copy?.Bytes)
-                .ThenByDescending(row => row.Item.UpdatedAt).ThenByDescending(row => row.Item.Id) :
-            candidates.OrderByDescending(row => row.Item.UpdatedAt).ThenByDescending(row => row.Item.Id);
+            candidates
+                .OrderByDescending(row => row.Item.Copy?.Bytes)
+                .ThenByDescending(row => row.Item.UpdatedAt)
+                .ThenByDescending(row => row.Item.Id) :
+            candidates
+                .OrderByDescending(row => row.Item.UpdatedAt)
+                .ThenByDescending(row => row.Item.Id);
         var index = 0;
         foreach (var row in ordered)
         {
+            // The usual refresh changes statuses, not order; avoid scanning unchanged rows.
+            if (index < Rows.Count && ReferenceEquals(Rows[index], row))
+            {
+                index++;
+                continue;
+            }
+
             var previous = Rows.IndexOf(row);
             if (previous < 0)
             {
@@ -248,12 +284,15 @@ public sealed partial class ChatSyncPageViewModel(
             {
                 Rows.Move(previous, index);
             }
+
             index++;
         }
+
         while (Rows.Count > index)
         {
             Rows.RemoveAt(Rows.Count - 1);
         }
+
         SelectionChanged();
     }
 
@@ -287,6 +326,7 @@ public sealed partial class ChatSyncPageViewModel(
         {
             row.IsChecked = false;
         }
+
         OnPropertyChanged(nameof(CanStartMultiSelect));
     }
 
@@ -297,6 +337,7 @@ public sealed partial class ChatSyncPageViewModel(
         {
             return;
         }
+
         try
         {
             // Page navigation cancels only the wait, not the account's background pass.
@@ -321,6 +362,7 @@ public sealed partial class ChatSyncPageViewModel(
         {
             return;
         }
+
         var item = row.Item;
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_viewToken, session.Token);
         try
@@ -346,7 +388,10 @@ public sealed partial class ChatSyncPageViewModel(
     private Task StopAsync(ChatSyncListRow row) => StopRowsAsync([row]);
 
     [RelayCommand]
-    private Task StopSelectedAsync() => StopRowsAsync(Rows.Where(row => row.IsChecked && !row.Item.IsBusy).ToArray());
+    private Task StopSelectedAsync()
+    {
+        return StopRowsAsync(Rows.AsValueEnumerable().Where(row => row is { IsChecked: true, Item.IsBusy: false }).ToArray());
+    }
 
     private async Task StopRowsAsync(ChatSyncListRow[] rows)
     {
@@ -354,16 +399,24 @@ public sealed partial class ChatSyncPageViewModel(
         {
             return;
         }
-        var decisions = rows.Where(row => row.IsParticipating && !row.Item.IsBusy).Select(row => inventory.DecisionFor(row.Item)).ToArray();
+
+        var decisions = rows
+            .AsValueEnumerable()
+            .Where(row => row is { IsParticipating: true, Item.IsBusy: false })
+            .Select(row => inventory.DecisionFor(row.Item))
+            .ToArray();
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_viewToken, session.Token);
         var stopped = 0;
         try
         {
             if (decisions.Length == 0 || !await ChatSyncDialogs.ConfirmStopAsync(
-                    DialogHost, decisions.Select(decision => decision.Item).ToArray(), cancellation.Token))
+                    DialogHost,
+                    decisions.AsValueEnumerable().Select(decision => decision.Item).ToArray(),
+                    cancellation.Token))
             {
                 return;
             }
+
             Exception? lastError = null;
             foreach (var decision in decisions)
             {
@@ -377,10 +430,12 @@ public sealed partial class ChatSyncPageViewModel(
                     lastError = error;
                 }
             }
+
             if (cancellation.IsCancellationRequested)
             {
                 return;
             }
+
             if (stopped == decisions.Length)
             {
                 CancelSelection();
@@ -414,6 +469,7 @@ public sealed partial class ChatSyncPageViewModel(
         {
             return;
         }
+
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_viewToken, session.Token);
         try
         {

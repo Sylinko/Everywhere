@@ -119,6 +119,27 @@ public abstract partial class ChatContext(
     }
 
     /// <summary>
+    /// Starts foreground work and waits only for its short initialization in the root's serial
+    /// domain. Initialization must not wait for I/O or touch UI-owned state. Returns false when
+    /// admission is rejected; initialization errors propagate to the caller. Once initialized,
+    /// background execution and cleanup remain owned by this root and report to the handler.
+    /// </summary>
+    public async Task<bool> TryStartAsync<T>(
+        Func<T> initialize,
+        Func<T, CancellationToken, Task> execute,
+        IExceptionHandler exceptionHandler)
+    {
+        if (!Root.TryStartOperation(this, initialize, execute, out var initialized, out var operation))
+        {
+            return false;
+        }
+
+        operation.Detach(exceptionHandler);
+        await initialized.ConfigureAwait(false);
+        return true;
+    }
+
+    /// <summary>
     /// Runs foreground work and awaits its cleanup without involving the UI dispatcher.
     /// </summary>
     public Task ExecuteAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default)

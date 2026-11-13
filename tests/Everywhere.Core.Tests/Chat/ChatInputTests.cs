@@ -37,16 +37,24 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         await using var manager = CreateManager(storage);
         using var lifetime = new System.Reactive.Disposables.CompositeDisposable();
         var service = Substitute.For<IChatService>();
-        var submitted = Task.CompletedTask;
-        bool Accept(ChatContext context, UserChatMessage message)
-        {
-            submitted = context.ExecuteAsync(_ => context.DispatchAsync(() => context.Data.Add(message)));
-            return true;
-        }
-        service.SendMessage(Arg.Any<ChatContext>(), Arg.Any<UserChatMessage>())
-            .Returns(call => Accept(call.ArgAt<ChatContext>(0), call.ArgAt<UserChatMessage>(1)));
-        service.SendMessage(Arg.Any<ChatContext>(), Arg.Any<UserChatMessage>(), Arg.Any<CustomAssistant?>())
-            .Returns(call => Accept(call.ArgAt<ChatContext>(0), call.ArgAt<UserChatMessage>(1)));
+        service.SendMessageAsync(Arg.Any<ChatContext>(), Arg.Any<UserChatMessage>(), Arg.Any<CustomAssistant?>())
+            .Returns(call =>
+            {
+                var context = call.ArgAt<ChatContext>(0);
+                return context.TryStartAsync(
+                    () => context.Data.Add(call.ArgAt<UserChatMessage>(1)),
+                    (_, token) => Task.Delay(Timeout.InfiniteTimeSpan, token),
+                    IExceptionHandler.DangerouslyIgnoreAllException);
+            });
+        service.EditAsync(Arg.Any<ChatContext>(), Arg.Any<ChatMessageNode>(), Arg.Any<UserChatMessage>())
+            .Returns(call =>
+            {
+                var context = call.ArgAt<ChatContext>(0);
+                return context.TryStartAsync(
+                    () => context.Data.CreateBranchOn(call.ArgAt<ChatMessageNode>(1), call.ArgAt<UserChatMessage>(2)),
+                    (_, token) => Task.Delay(Timeout.InfiniteTimeSpan, token),
+                    IExceptionHandler.DangerouslyIgnoreAllException);
+            });
         var initialStrategy = new Strategy { Id = "default", NameKey = new DirectLocaleKey("Default") };
         var attachmentStrategy = new Strategy { Id = "attachment", NameKey = new DirectLocaleKey("With attachment") };
         var strategies = Substitute.For<IStrategyEngine>();
@@ -65,8 +73,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         await manager.FlushPendingSavesAsync();
         Assert.That((await storage.ReadNewChatInputAsync(CancellationToken.None))?.ChatId, Is.EqualTo(original.Data.Metadata.Id));
 
-        Assert.That(composer.SendTextSelectionMessage(new UserChatMessage("selection question", [selection]), null), Is.True);
-        await submitted;
+        Assert.That(await composer.SendTextSelectionMessageAsync(new UserChatMessage("selection question", [selection]), null), Is.True);
         await manager.FlushPendingSavesAsync();
         var independent = manager.Current;
         Assert.That(independent, Is.Not.SameAs(original));
@@ -85,12 +92,85 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         manager.CreateNewCommand.Execute(null);
         Assert.That(manager.Current, Is.SameAs(original));
 
-        await composer.SendMessageCommand.ExecuteAsync(composer.ChatInputAreaText);
-        await submitted;
+        var admission = original.TryDeferWorkWhenIdle() ?? throw new AssertionException("The draft must be idle before submission.");
+        Task sending;
+        try
+        {
+            sending = composer.SendMessageCommand.ExecuteAsync(composer.ChatInputAreaText);
+            Assert.That(sending.IsCompleted, Is.False);
+            Assert.That(draft.Text, Is.EqualTo("unfinished question"));
+            Assert.That(composer.RemoveAttachmentCommand.CanExecute(unrelated), Is.False);
+            await manager.FlushPendingSavesAsync();
+            Assert.That((await storage.ReadNewChatInputAsync(CancellationToken.None))?.Snapshot.Draft.Text, Is.EqualTo("unfinished question"));
+            await SelectAsync(manager, independent);
+            independent.Input.Draft.Text = "another chat's input";
+        }
+        finally
+        {
+            admission.SetResult();
+        }
+        await sending.WaitAsync(TimeSpan.FromSeconds(5));
         await manager.FlushPendingSavesAsync();
         Assert.That(await storage.ReadNewChatInputAsync(CancellationToken.None), Is.Null);
         Assert.That(original.Data.Metadata.IsPersisted, Is.True);
+        Assert.That(original.IsBusy, Is.True, "Publication must not wait for generation to finish.");
+        Assert.That(composer.ChatInputAreaText, Is.EqualTo("another chat's input"));
+        await SelectAsync(manager, original);
         Assert.That(composer.ChatInputAreaText, Is.Null.Or.Empty);
+
+        // A continued edit must retain later input and follow the published branch. Canceling
+        // before admission opens must still retain the accepted user message.
+        await original.StopAsync();
+        original.ResumeAfterStop();
+        original.Input.Draft.Text = "ordinary input";
+        composer.EditMessageNodeCommand.Execute(original.Data.SelectedNodes[^1]);
+        var editingDraft = original.Input.ActiveDraft;
+        editingDraft.Text = "edited question";
+        var editAdmission = original.TryDeferWorkWhenIdle() ?? throw new AssertionException("The edit must start idle.");
+        Task editing;
+        try
+        {
+            editing = composer.SendMessageCommand.ExecuteAsync(editingDraft.Text);
+            editingDraft.Text = "edited question with later input";
+            composer.CancelEditing();
+            Assert.That(original.Input.ActiveDraft, Is.SameAs(editingDraft));
+            original.Cancel();
+        }
+        finally
+        {
+            editAdmission.SetResult();
+        }
+        await editing.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.That(original.Input.ActiveDraft, Is.SameAs(editingDraft));
+        Assert.That(editingDraft.Text, Is.EqualTo("edited question with later input"));
+        Assert.That(original.Input.Edit?.NodeId, Is.EqualTo(original.Data.SelectedNodes[^1].Id));
+        Assert.That(original.Input.Draft.Text, Is.EqualTo("ordinary input"));
+        composer.CancelEditing();
+
+        // An import started on A must stay with A even when navigation occurs during hashing,
+        // including every file in the same drag/drop batch.
+        var path = Path.Combine(Path.GetTempPath(), $"chat-import-{Guid.NewGuid():N}.txt");
+        try
+        {
+            await File.WriteAllTextAsync(path, "imported text");
+            var importing = composer.AddFilesFromDragDropAsync([path, path], CancellationToken.None);
+            manager.CreateNewCommand.Execute(null);
+            await importing;
+            Assert.That(original.Input.Draft.AttachmentsSource.Items.OfType<FileAttachment>().Count(), Is.EqualTo(2));
+            Assert.That(manager.Current.Input.ActiveDraft.AttachmentsSource.Count, Is.Zero);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+
+        static async Task SelectAsync(ChatContextManager manager, RootChatContext context)
+        {
+            manager.CurrentMetadata = context.Data.Metadata;
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await manager.WhenValueChanged(owner => owner.Current)
+                .Where(current => ReferenceEquals(current, context)).Take(1).ToTask(timeout.Token);
+        }
 
         static async Task ExpectStrategyAsync(ChatWindowViewModel composer, Strategy expected)
         {

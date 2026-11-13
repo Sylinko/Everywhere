@@ -33,6 +33,17 @@ source generators and older library targets retain their normal compilation mode
 
 ## Configuration
 
+Official cloud services are optional. A normal clone builds and runs locally without cloud configuration;
+user-configured model providers remain available. The account UI shows that official services are not configured.
+
+Private builds can supply these MSBuild properties through environment variables or command-line `-p:Name=Value` options:
+
+- `AccountBaseUrl` and `ClientId` enable account sign-in and session restoration.
+- `CloudBaseUrl` enables announcements and, with an account, chat synchronization.
+- `AIGatewayBaseUrl` enables official model and web-search endpoints.
+
+Missing addresses do not fall back to production servers. Existing local chats, drafts and sync preferences are retained.
+
 Before building the project, initialize Git LFS:
 
 ```bash

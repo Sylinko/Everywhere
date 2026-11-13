@@ -1,4 +1,4 @@
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 using Everywhere.Common;
 using Everywhere.Storage;
 
@@ -60,12 +60,11 @@ partial class ChatContextManager
         }
     }
 
-    private void AcknowledgeInput(PendingInput input)
+    private void AcknowledgeInput(Guid id, ChatInputWrite input)
     {
         lock (_pendingInputs)
         {
-            var id = input.Root.Data.Metadata.Id;
-            if (_pendingInputs.TryGetValue(id, out var current) && ReferenceEquals(current, input))
+            if (_pendingInputs.TryGetValue(id, out var current) && ReferenceEquals(current.Write, input))
             {
                 _pendingInputs.Remove(id);
             }
@@ -82,13 +81,20 @@ partial class ChatContextManager
 
         foreach (var input in inputs)
         {
+            // Pending graph writes, including failed or newer revisions, commit their input
+            // in the graph transaction. An unrelated failure must not block input-only drafts.
+            if (GetPendingSave(input.Root.Data.Metadata.Id) is not null)
+            {
+                continue;
+            }
+
             try
             {
                 // Accepted local input survives navigation and shutdown. No UI access is
                 // needed here, and cancellation must not discard its last captured values.
                 if (await _chatContextStorage.SaveInputAsync(input.Root.Data.Metadata.Id, input.Write, CancellationToken.None).ConfigureAwait(false))
                 {
-                    AcknowledgeInput(input);
+                    AcknowledgeInput(input.Root.Data.Metadata.Id, input.Write);
                 }
             }
             catch (Exception exception)

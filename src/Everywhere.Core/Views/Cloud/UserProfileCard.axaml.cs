@@ -21,6 +21,11 @@ public sealed partial class UserProfileCard : TemplatedControl
     /// </summary>
     public static IChatSyncService ChatSync { get; } = ServiceLocator.Resolve<IChatSyncService>();
 
+    /// <summary>
+    /// Whether this build can offer chat synchronization. This does not change the user's preference.
+    /// </summary>
+    public static bool IsChatSyncConfigured => !CloudConstants.CloudBaseUrl.IsNullOrEmpty();
+
     public static readonly StyledProperty<bool> ShowActionsButtonProperty =
         AvaloniaProperty.Register<UserProfileCard, bool>(nameof(ShowActionsButton), true);
 
@@ -34,7 +39,7 @@ public sealed partial class UserProfileCard : TemplatedControl
     /// make this static so that busy state can be shared across all instances of UserProfileCard,
     /// and avoid multiple login/logout operations at the same time.
     /// </summary>
-    public static AsyncRelayCommand LoginCommand { get; } = new(LoginAsync);
+    public static AsyncRelayCommand LoginCommand { get; } = new(LoginAsync, () => CloudClient.LoginStatus != CloudClientLoginStatus.NotConfigured);
 
     private static Task LoginAsync(CancellationToken cancellationToken) =>
         CloudClient.LoginAsync(cancellationToken);

@@ -156,11 +156,19 @@ public sealed class ChatSyncService : ObservableObject, IChatSyncService, IAsync
                 if (target is not null)
                 {
                     var http = _httpClientFactory.CreateClient(nameof(IChatSyncService));
-                    var transport = new ChatSyncTransport(http, target, new ChatSyncCompatibility(ChatSyncProtocol.Version, 1, 2));
-                    var session = new ChatSyncSession(_dbFactory, _storage, _manager, transport, _logger);
-                    _connection = (session, http);
-                    session.Changed += OnSessionChanged;
-                    session.RequestSync();
+                    if (http.BaseAddress is null)
+                    {
+                        // Preserve the user's device preference in a build without cloud configuration.
+                        http.Dispose();
+                    }
+                    else
+                    {
+                        var transport = new ChatSyncTransport(http, target, new ChatSyncCompatibility(ChatSyncProtocol.Version, 1, 2));
+                        var session = new ChatSyncSession(_dbFactory, _storage, _manager, transport, _logger);
+                        _connection = (session, http);
+                        session.Changed += OnSessionChanged;
+                        session.RequestSync();
+                    }
                 }
             }
         }

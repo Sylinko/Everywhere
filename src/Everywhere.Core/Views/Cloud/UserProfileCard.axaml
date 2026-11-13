@@ -118,7 +118,9 @@
                 <v:ConditionalContentControl.Condition>
                   <MultiBinding Converter="{x:Static BoolConverters.And}">
                     <Binding Path="CloudClient.IsSubscriptionLoading"/>
-                    <Binding Path="CloudClient.Subscription" Converter="{x:Static ObjectConverters.IsNull}"/>
+                    <Binding
+                      Converter="{x:Static ObjectConverters.IsNull}"
+                      Path="CloudClient.Subscription"/>
                   </MultiBinding>
                 </v:ConditionalContentControl.Condition>
                 <v:ConditionalContentControl.TrueContent>
@@ -127,13 +129,23 @@
                       Margin="12,4" IsHitTestVisible="False"
                       Spacing="8">
                       <Border Height="{DynamicResource LineHeightS}">
-                        <shadui:Skeleton Height="{DynamicResource FontSizeS}" VerticalAlignment="Center"/>
+                        <shadui:Skeleton
+                          Height="{DynamicResource FontSizeS}"
+                          VerticalAlignment="Center"/>
                       </Border>
-                      <Border Height="{DynamicResource LineHeightS}" Margin="0,0,48,0">
-                        <shadui:Skeleton Height="{DynamicResource FontSizeS}" VerticalAlignment="Center"/>
+                      <Border
+                        Height="{DynamicResource LineHeightS}"
+                        Margin="0,0,48,0">
+                        <shadui:Skeleton
+                          Height="{DynamicResource FontSizeS}"
+                          VerticalAlignment="Center"/>
                       </Border>
-                      <Border Height="{DynamicResource LineHeightS}" Margin="0,0,24,0">
-                        <shadui:Skeleton Height="{DynamicResource FontSizeS}" VerticalAlignment="Center"/>
+                      <Border
+                        Height="{DynamicResource LineHeightS}"
+                        Margin="0,0,24,0">
+                        <shadui:Skeleton
+                          Height="{DynamicResource FontSizeS}"
+                          VerticalAlignment="Center"/>
                       </Border>
                     </StackPanel>
                   </DataTemplate>
@@ -150,7 +162,9 @@
                           x:Name="PlanCreditsPanel"
                           IsVisible="{Binding CloudClient.Subscription.Plan, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static cloud:SubscriptionPlan.Free}, FallbackValue={x:False}, TargetNullValue={x:False}}"
                           Spacing="4">
-                          <DockPanel HorizontalSpacing="4" MinHeight="{DynamicResource LineHeightS}">
+                          <DockPanel
+                            MinHeight="{DynamicResource LineHeightS}"
+                            HorizontalSpacing="4">
                             <TextBlock
                               Classes="Caption Muted" DockPanel.Dock="Right">
                               <TextBlock.Text>
@@ -175,8 +189,9 @@
                         </StackPanel>
 
                         <DockPanel
-                          x:Name="BonusCreditsPanel" HorizontalSpacing="4"
-                          MinHeight="{DynamicResource LineHeightS}">
+                          x:Name="BonusCreditsPanel"
+                          MinHeight="{DynamicResource LineHeightS}"
+                          HorizontalSpacing="4">
                           <TextBlock
                             Classes="Caption Muted" DockPanel.Dock="Right"
                             Text="{Binding CloudClient.Subscription?.BonusCredits, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}, TargetNullValue=N/A}">
@@ -253,7 +268,9 @@
                             </Binding>
                           </StackPanel.IsVisible>
 
-                          <DockPanel HorizontalSpacing="4" MinHeight="{DynamicResource LineHeightS}">
+                          <DockPanel
+                            MinHeight="{DynamicResource LineHeightS}"
+                            HorizontalSpacing="4">
                             <TextBlock
                               Classes="Caption Muted" DockPanel.Dock="Right">
                               <TextBlock.Text>
@@ -436,7 +453,8 @@
                     DockPanel.Dock="Right" VerticalAlignment="Center"
                     AutomationProperties.HelpText="{I18N {x:Static LocaleKey.ChatSync_Description}}"
                     AutomationProperties.Name="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"
-                    IsChecked="{Binding ChatSync.IsEnabled, Mode=TwoWay}"/>
+                    IsChecked="{Binding ChatSync.IsEnabled, Mode=TwoWay}"
+                    IsEnabled="{Binding IsChatSyncConfigured}"/>
                   <TextBlock
                     VerticalAlignment="Center"
                     Text="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"
@@ -529,6 +547,19 @@
                 Command="{Binding LoginCommand.Cancel, Mode=OneTime}"
                 Content="{I18N {x:Static LocaleKey.Common_Cancel}}"
                 IsVisible="{Binding LoginCommand.IsRunning}"/>
+            </StackPanel>
+          </DataTemplate>
+          <!--  Cloud endpoints were not supplied for this build  -->
+          <DataTemplate x:DataType="v:UserProfileCard">
+            <StackPanel
+              HorizontalAlignment="Center" Spacing="16">
+              <Image
+                Height="80" HorizontalAlignment="Center"
+                Source="avares://Everywhere.Core/Assets/Images/Cloud.png" Stretch="Uniform"/>
+              <TextBlock
+                Classes="Muted"
+                Text="{I18N {x:Static LocaleKey.Common_CloudNotConfigured}}"
+                TextAlignment="Center" TextWrapping="Wrap"/>
             </StackPanel>
           </DataTemplate>
         </v:LazyIndexedContentControl>
