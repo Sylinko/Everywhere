@@ -26,14 +26,13 @@ public sealed record ChatPayloadCapture(byte[] Payload, Guid? SummaryThroughNode
     }
 
     [ExcludeFormatterFromSourceGeneratedResolver]
-    private sealed class CaptureResolver(IFormatterResolver fallback) : IFormatterResolver,
-        IMessagePackFormatter<FileAttachment?>
+    private sealed class CaptureResolver(IFormatterResolver fallback) : IFormatterResolver, IMessagePackFormatter<FileAttachment?>
     {
         public List<FileAttachment> Files { get; } = [];
 
         public IMessagePackFormatter<T>? GetFormatter<T>()
         {
-            return this is IMessagePackFormatter<T> formatter ? formatter : fallback.GetFormatter<T>();
+            return this as IMessagePackFormatter<T> ?? fallback.GetFormatter<T>();
         }
 
         public void Serialize(ref MessagePackWriter writer, FileAttachment? value, MessagePackSerializerOptions options)
@@ -49,7 +48,7 @@ public sealed record ChatPayloadCapture(byte[] Payload, Guid? SummaryThroughNode
             Files.Add(file);
         }
 
-        FileAttachment? IMessagePackFormatter<FileAttachment?>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        FileAttachment IMessagePackFormatter<FileAttachment?>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return fallback.GetFormatterWithVerify<FileAttachment>().Deserialize(ref reader, options);
         }

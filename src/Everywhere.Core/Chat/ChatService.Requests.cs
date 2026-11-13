@@ -38,6 +38,8 @@ public sealed partial class ChatService
         var metadata = new Dictionary<string, object?>();
         var segments = new List<(bool IsReasoning, StringBuilder Text, Dictionary<string, object?> Metadata)>();
         var calls = new FunctionCallContentBuilder();
+        // Auxiliary requests retain their own invocation purpose and usage in statistics. They do
+        // not accumulate into the visible answer's usage or token rate, even when it owns the node.
         await using var statistics = new RequestStatistics(
             this,
             mixin,

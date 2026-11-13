@@ -344,6 +344,11 @@ public class HandledSystemException : HandledException
                     context.ExceptionType = HandledSystemExceptionType.Win32Exception;
                     context.ErrorCode = win32.NativeErrorCode;
                     break;
+                case IOException io:
+                    // A stream failure may wrap a more specific network cause, checked above.
+                    context.ExceptionType = HandledSystemExceptionType.IOException;
+                    context.ErrorCode = io.HResult;
+                    break;
             }
         }
 
@@ -364,7 +369,7 @@ public class HandledSystemException : HandledException
     }
 
     /// <summary>
-    /// Parses common system exceptions and IO-related subclasses.
+    /// Parses specific system exceptions. Generic I/O failures are classified after network causes.
     /// </summary>
     private static bool TryParseGeneralException(ref ExceptionParsingContext context)
     {
@@ -384,10 +389,6 @@ public class HandledSystemException : HandledException
                 break;
             case EndOfStreamException:
                 context.ExceptionType = HandledSystemExceptionType.EndOfStream;
-                break;
-            case IOException io when io is not HttpIOException:
-                context.ExceptionType = HandledSystemExceptionType.IOException;
-                context.ErrorCode ??= io.HResult;
                 break;
             case UnauthorizedAccessException:
                 context.ExceptionType = HandledSystemExceptionType.UnauthorizedAccess;

@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using Everywhere.Cloud;
+using Everywhere.Chat;
 using Everywhere.Database;
 using Everywhere.Storage;
 using MessagePack;
@@ -65,6 +66,60 @@ public sealed class ChatSyncTransferTests
             Assert.That(reopened.SyncChats.Single().DiscoveredRevision, Is.EqualTo(7));
             Assert.That(reopened.SyncChats.Single().AppliedRevision, Is.Zero);
         });
+    }
+
+    // An unresolved republish may already have succeeded remotely. A later permanent delete
+    // must survive exact-request recovery and must not materialize that rebuilt chat again.
+    [Test]
+    public async Task Delete_WhenRepublishIsUncertain_ResolvesReceiptThenDeletesItsSuccessor()
+    {
+        var factory = Substitute.For<IDbContextFactory<ChatV2DbContext>>();
+        factory.CreateDbContextAsync(Arg.Any<CancellationToken>()).Returns(_ => Task.FromResult(Open()));
+        var storage = new ChatTurnStorage(factory) { SyncAccountId = "A" };
+        await using (var db = Open())
+        {
+            await new ChatSyncStateStore(db).EnrollAsync("A", 1);
+        }
+        using var data = new ChatData();
+        data.Add(new UserChatMessage("retained copy", []));
+        await storage.SaveDataAsync(data);
+        var id = data.Metadata.Id;
+        var cleared = new ChatSyncHead(id.ToString("D"), 5, ChatSyncLifecycle.Active, 1, ChatSyncAvailability.Cleared, 0);
+        await storage.ApplyClearedHeadAsync("A", cleared, CancellationToken.None);
+        await storage.RequestRepublishAsync("A", id, 5, CancellationToken.None);
+        await storage.FreezeUploadAsync("A", id, true, CancellationToken.None);
+        Guid commitId;
+        await using (var db = Open())
+        {
+            commitId = (await db.SyncSubmissions.AsNoTracking().SingleAsync()).CommitId;
+        }
+        await storage.DeletePermanentlyAsync(id);
+        using var http = CreateClient(new Handler((_, _) =>
+            Task.FromResult(Reply(new ChatSyncCommitResult(commitId.ToString("D"), 6, 100, 1024)))));
+        await Transfer(http).UploadAsync(id);
+        await using (var db = Open())
+        {
+            var deletion = await db.SyncPending.AsNoTracking().SingleAsync(row => row.Kind == ChatSyncRecordKind.Lifecycle);
+            Assert.That(deletion.Key, Is.EqualTo("delete"));
+            Assert.That(deletion.BaseRevision, Is.EqualTo(6));
+            Assert.That(await db.Chats.CountAsync(), Is.Zero);
+            Assert.That(await db.SyncSubmissions.CountAsync(), Is.Zero);
+        }
+
+        var rebuilt = new ChatSyncHead(id.ToString("D"), 6, ChatSyncLifecycle.Active, 6, ChatSyncAvailability.Available, 100, 6);
+        // The pending-delete path needs only the staged head; it must never enumerate bodies.
+        using var snapshot = Activator.CreateInstance(typeof(ChatSyncDownloadedSnapshot),
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null, [rebuilt, 5L], null)
+            as ChatSyncDownloadedSnapshot ?? throw new AssertionException("Missing snapshot constructor.");
+        var installed = await storage.MergeSnapshotAsync("A", snapshot, new HashSet<Guid>(), false, CancellationToken.None);
+        Assert.That(installed?.Metadata, Is.Null);
+        await storage.FreezeUploadAsync("A", id, true, CancellationToken.None);
+        await using var reopened = Open();
+        var header = MessagePackSerializer.Deserialize<ChatSyncUploadHeader>((await reopened.SyncSubmissions.SingleAsync()).Header);
+        Assert.That(header.Action, Is.EqualTo(ChatSyncAction.Delete));
+        Assert.That(header.ExpectedRevision, Is.EqualTo(6));
+        Assert.That(header.ExpectedLifecycleRevision, Is.EqualTo(6));
+        Assert.That(await reopened.Chats.CountAsync(), Is.Zero);
     }
 
     private static HttpClient CreateClient(HttpMessageHandler handler) => new(handler) { BaseAddress = new Uri("https://sync.example/") };

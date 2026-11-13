@@ -91,18 +91,18 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
     }
 
     /// <summary>
-    /// Defines the <see cref="CopyMessageCommand"/> property, which is a command that can be used to copy a chat message.
+    /// Defines the <see cref="CopyMessageNodeCommand"/> property.
     /// </summary>
-    public static readonly StyledProperty<IRelayCommand<ChatMessage>?> CopyMessageCommandProperty =
-        AvaloniaProperty.Register<ChatMessageItemsControl, IRelayCommand<ChatMessage>?>(nameof(CopyMessageCommand));
+    public static readonly StyledProperty<IRelayCommand<ChatMessageNode>?> CopyMessageNodeCommandProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, IRelayCommand<ChatMessageNode>?>(nameof(CopyMessageNodeCommand));
 
     /// <summary>
-    /// Gets or sets the command that can be used to copy a chat message. This command can be bound to UI elements to provide functionality for copying messages.
+    /// Gets or sets the command that copies the node's current message, including a remotely replaced body.
     /// </summary>
-    public IRelayCommand<ChatMessage>? CopyMessageCommand
+    public IRelayCommand<ChatMessageNode>? CopyMessageNodeCommand
     {
-        get => GetValue(CopyMessageCommandProperty);
-        set => SetValue(CopyMessageCommandProperty, value);
+        get => GetValue(CopyMessageNodeCommandProperty);
+        set => SetValue(CopyMessageNodeCommandProperty, value);
     }
 
     /// <summary>

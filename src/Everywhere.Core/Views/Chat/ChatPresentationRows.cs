@@ -135,7 +135,12 @@ public sealed class ReasoningActivityItemPresentationRow(
     /// </summary>
     public override void Refresh()
     {
+        var wasRunning = IsRunning;
         SetProperty(ref _state, ChatReasoningState.Capture(Assistant, ReasoningSpan, _state), nameof(State));
+        if (wasRunning != IsRunning)
+        {
+            OnPropertyChanged(nameof(IsRunning));
+        }
     }
 }
 
@@ -170,7 +175,12 @@ public sealed class FunctionCallActivityItemPresentationRow(
     /// </summary>
     public override void Refresh()
     {
+        var wasRunning = IsRunning;
         SetProperty(ref _state, FunctionCall.Capture(), nameof(State));
+        if (wasRunning != IsRunning)
+        {
+            OnPropertyChanged(nameof(IsRunning));
+        }
     }
 }
 

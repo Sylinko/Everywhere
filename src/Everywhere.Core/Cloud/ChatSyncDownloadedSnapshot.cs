@@ -159,7 +159,7 @@ public sealed class ChatSyncDownloadedSnapshot : IDisposable
                 {
                     await transport.ReleaseSnapshotAsync(id, token).ConfigureAwait(false);
                 }
-                catch (Exception error) when (error is HttpRequestException or OperationCanceledException or ChatSyncException)
+                catch (Exception error)
                 {
                     Log.ForContext<ChatSyncDownloadedSnapshot>().Debug(error, "Snapshot cleanup was interrupted; server expiration will release it.");
                 }

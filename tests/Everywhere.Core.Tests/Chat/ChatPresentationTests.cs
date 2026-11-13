@@ -1127,8 +1127,19 @@ public class ChatPresentationTests
         var busyMarker = BuildActivityMarker(busyRow);
         var busyHeader = busyMarker.Header as TextBlock ?? throw new InvalidOperationException();
         var rowNotifications = 0;
+        var runningNotifications = new HashSet<ActivityItemPresentationRow>();
         functionRow.PropertyChanged += (_, _) => rowNotifications++;
         reasoningRow.PropertyChanged += (_, _) => rowNotifications++;
+        foreach (var row in new ActivityItemPresentationRow[] { functionRow, reasoningRow })
+        {
+            row.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(ActivityItemPresentationRow.IsRunning))
+                {
+                    runningNotifications.Add(row);
+                }
+            };
+        }
         var window = new Window { Content = new StackPanel { Children = { functionMarker, reasoningMarker, busyMarker } } };
         try
         {
@@ -1178,6 +1189,7 @@ public class ChatPresentationTests
                 Assert.That(reasoningMarker.IsSecondaryHeaderVisible, Is.False);
                 Assert.That(busyMarker.IsRunning, Is.False);
                 Assert.That(reasoning.FinishedAt, Is.Null);
+                Assert.That(runningNotifications, Is.EquivalentTo(new ActivityItemPresentationRow[] { functionRow, reasoningRow }));
                 Assert.That(rowNotifications, Is.GreaterThan(0));
             });
         }

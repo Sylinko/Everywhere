@@ -3,15 +3,48 @@ using Avalonia.Threading;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Configuration;
+using Everywhere.Cloud;
+using Everywhere.Core.Tests.Statistics;
+using Everywhere.Storage;
 using MessagePack;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 namespace Everywhere.Core.Tests.Chat;
 
 public sealed partial class ChatContextManagerIncrementalLoadingTests
 {
+    // An old device-wide switch must wait for account attribution, not silently opt an
+    // unrelated login into uploading this machine's history.
+    [AvaloniaTest]
+    public async Task LegacySyncSwitch_WhenAnotherAccountLogsIn_DoesNotEnableItsSync()
+    {
+        using var files = ChatTestDatabase.Create();
+        var storage = new ChatTurnStorage(files.Factory);
+        await using var manager = CreateManager(storage);
+        var keyValue = new InMemoryKeyValueStorage();
+        keyValue.Set("IsCloudSyncEnabled", true);
+        var state = new PersistentState(keyValue);
+        var cloud = Substitute.For<ICloudClient>();
+        cloud.LoginStatus.Returns(CloudClientLoginStatus.NotLoggedIn);
+        cloud.RestoredAccountId.Returns("original-account");
+        var http = Substitute.For<IHttpClientFactory>();
+        await using var sync = new ChatSyncService(files.Factory, storage, manager, cloud, state, http, NullLogger<ChatSyncService>.Instance);
+        await sync.InitializeAsync(CancellationToken.None);
+        Assert.That(state.EnabledChatSyncAccounts, Is.Null);
+        Assert.That(keyValue.Contains("IsCloudSyncEnabled"), Is.True);
+        cloud.UserProfile.Returns(new UserProfile { Subject = "another-account", Name = "User", Email = "user@example.invalid" });
+        cloud.LoginStatus.Returns(CloudClientLoginStatus.LoggedIn);
+        cloud.PropertyChanged += Raise.Event<System.ComponentModel.PropertyChangedEventHandler>(cloud,
+            new System.ComponentModel.PropertyChangedEventArgs(nameof(ICloudClient.LoginStatus)));
+        Assert.That(state.EnabledChatSyncAccounts, Is.Empty);
+        Assert.That(sync.IsEnabled, Is.False);
+        Assert.That(keyValue.Contains("IsCloudSyncEnabled"), Is.False);
+        http.DidNotReceive().CreateClient(Arg.Any<string>());
+    }
+
     [AvaloniaTest]
     public async Task RootRetention_WhenSaveFails_RetainsDataUntilRetryThenAllowsCollection()
     {

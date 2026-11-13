@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using MessagePack;
 
 namespace Everywhere.Chat;
@@ -99,34 +98,25 @@ public sealed partial class AssistantChatMessageTextSpan : AssistantChatMessageS
     /// <inheritdoc />
     [IgnoreMember]
     [JsonIgnore]
-    public override bool HasOutputContent => _contentMarkdownBuilder is { Length: > 0 };
+    public override bool HasOutputContent => _contentMarkdownBuilder.Length > 0;
 
     [IgnoreMember]
     [JsonIgnore]
-    public ChatTextBuffer ContentMarkdownBuilder => EnsureContentMarkdownBuilder();
+    public ChatTextBuffer ContentMarkdownBuilder => _contentMarkdownBuilder;
 
     [Key(3)]
     public string? Content
     {
-        get => _contentMarkdownBuilder?.ToString();
+        get => _contentMarkdownBuilder.ToString();
         init
         {
             if (value is not { Length: > 0 }) return;
 
-            EnsureContentMarkdownBuilder().Append(value);
+            _contentMarkdownBuilder.Append(value);
         }
     }
 
-    [IgnoreMember] private ChatTextBuffer? _contentMarkdownBuilder;
-
-    [MemberNotNull(nameof(_contentMarkdownBuilder))]
-    private ChatTextBuffer EnsureContentMarkdownBuilder()
-    {
-        if (_contentMarkdownBuilder != null) return _contentMarkdownBuilder;
-        _contentMarkdownBuilder = new ChatTextBuffer();
-        _contentMarkdownBuilder.Changed += HandleContentMarkdownBuilderChanged;
-        return _contentMarkdownBuilder;
-    }
+    [IgnoreMember] private readonly ChatTextBuffer _contentMarkdownBuilder = new();
 
     private void HandleContentMarkdownBuilderChanged(object? sender, EventArgs e)
     {
@@ -135,15 +125,19 @@ public sealed partial class AssistantChatMessageTextSpan : AssistantChatMessageS
 
     public void Dispose()
     {
-        _contentMarkdownBuilder?.Changed -= HandleContentMarkdownBuilderChanged;
+        _contentMarkdownBuilder.Changed -= HandleContentMarkdownBuilderChanged;
     }
 
     [SerializationConstructor]
-    public AssistantChatMessageTextSpan() { }
-
-    public AssistantChatMessageTextSpan(string initialContent)
+    public AssistantChatMessageTextSpan()
     {
-        EnsureContentMarkdownBuilder().Append(initialContent);
+        // A published span is read by the UI while its writer streams into this same buffer.
+        _contentMarkdownBuilder.Changed += HandleContentMarkdownBuilderChanged;
+    }
+
+    public AssistantChatMessageTextSpan(string initialContent) : this()
+    {
+        _contentMarkdownBuilder.Append(initialContent);
     }
 }
 
@@ -243,10 +237,10 @@ public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMes
     /// <inheritdoc />
     [IgnoreMember]
     [JsonIgnore]
-    public override bool HasOutputContent => _reasoningMarkdownBuilder is { Length: > 0 };
+    public override bool HasOutputContent => _reasoningMarkdownBuilder.Length > 0;
 
     [IgnoreMember]
-    public ChatTextBuffer ReasoningMarkdownBuilder => EnsureReasoningMarkdownBuilder();
+    public ChatTextBuffer ReasoningMarkdownBuilder => _reasoningMarkdownBuilder;
 
     /// <summary>
     /// The reasoning output in Markdown format for serialization.
@@ -254,32 +248,26 @@ public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMes
     [Key(3)]
     public string? ReasoningOutput
     {
-        get => _reasoningMarkdownBuilder?.ToString();
+        get => _reasoningMarkdownBuilder.ToString();
         init
         {
             if (value is not { Length: > 0 }) return;
 
-            EnsureReasoningMarkdownBuilder().Append(value);
+            _reasoningMarkdownBuilder.Append(value);
         }
     }
 
-    [IgnoreMember] private ChatTextBuffer? _reasoningMarkdownBuilder;
+    [IgnoreMember] private readonly ChatTextBuffer _reasoningMarkdownBuilder = new();
 
     [SerializationConstructor]
-    public AssistantChatMessageReasoningSpan() { }
-
-    public AssistantChatMessageReasoningSpan(string initialReasoning)
+    public AssistantChatMessageReasoningSpan()
     {
-        EnsureReasoningMarkdownBuilder().Append(initialReasoning);
+        _reasoningMarkdownBuilder.Changed += HandleReasoningMarkdownBuilderChanged;
     }
 
-    [MemberNotNull(nameof(_reasoningMarkdownBuilder))]
-    private ChatTextBuffer EnsureReasoningMarkdownBuilder()
+    public AssistantChatMessageReasoningSpan(string initialReasoning) : this()
     {
-        if (_reasoningMarkdownBuilder != null) return _reasoningMarkdownBuilder;
-        _reasoningMarkdownBuilder = new ChatTextBuffer();
-        _reasoningMarkdownBuilder.Changed += HandleReasoningMarkdownBuilderChanged;
-        return _reasoningMarkdownBuilder;
+        _reasoningMarkdownBuilder.Append(initialReasoning);
     }
 
     private void HandleReasoningMarkdownBuilderChanged(object? sender, EventArgs e)
@@ -289,7 +277,7 @@ public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMes
 
     public void Dispose()
     {
-        _reasoningMarkdownBuilder?.Changed -= HandleReasoningMarkdownBuilderChanged;
+        _reasoningMarkdownBuilder.Changed -= HandleReasoningMarkdownBuilderChanged;
     }
 }
 

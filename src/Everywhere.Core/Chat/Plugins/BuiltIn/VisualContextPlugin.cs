@@ -86,13 +86,16 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_ListWindows_WindowCount,
                 new DirectLocaleKey(response.RepresentedTargetCount)));
-        await _statisticsRecorder.RecordVisualContextAsync(
-                new StatisticsVisualContextDraft(
-                    null,
-                    chatContext.Data.Metadata.Id,
-                    StatisticsVisualContextSource.VisualContextPlugin,
-                    ElementCount: response.RepresentedTargetCount),
-                CancellationToken.None);
+        // The result is already available. Keep even the synchronous part of SQLite accounting
+        // off its return path. CancellationToken.None lets this completed observation be recorded
+        // independently of the tool request, without retaining the conversation runtime.
+        var statistics = new StatisticsVisualContextDraft(
+            null,
+            chatContext.Data.Metadata.Id,
+            StatisticsVisualContextSource.VisualContextPlugin,
+            ElementCount: response.RepresentedTargetCount);
+        Task.Run(() => _statisticsRecorder.RecordVisualContextAsync(statistics, CancellationToken.None), CancellationToken.None)
+            .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
         Guid? visualContextId = response.RepresentedTargetCount > 0 ? id : null;
         return new VisualTextFunctionResult(visualContextId, response.Content);
@@ -187,13 +190,16 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Result,
                 new DirectLocaleKey(result.RepresentedTargetCount)));
-        await _statisticsRecorder.RecordVisualContextAsync(
-                new StatisticsVisualContextDraft(
-                    null,
-                    chatContext.Data.Metadata.Id,
-                    StatisticsVisualContextSource.VisualContextPlugin,
-                    ElementCount: result.RepresentedTargetCount),
-                CancellationToken.None);
+        // The result is already available. Keep even the synchronous part of SQLite accounting
+        // off its return path. CancellationToken.None lets this completed observation be recorded
+        // independently of the tool request, without retaining the conversation runtime.
+        var statistics = new StatisticsVisualContextDraft(
+            null,
+            chatContext.Data.Metadata.Id,
+            StatisticsVisualContextSource.VisualContextPlugin,
+            ElementCount: result.RepresentedTargetCount);
+        Task.Run(() => _statisticsRecorder.RecordVisualContextAsync(statistics, CancellationToken.None), CancellationToken.None)
+            .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
         return new VisualTextFunctionResult(visualContextId, result.Content);
     }

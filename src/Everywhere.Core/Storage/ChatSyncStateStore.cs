@@ -192,15 +192,14 @@ public sealed class ChatSyncStateStore(ChatV2DbContext db)
         var laterLifecycle = db.SyncPending.Where(row => row.AccountId == accountId && row.ChatId == submission.ChatId &&
             row.Kind == ChatSyncRecordKind.Lifecycle && row.LocalRevision > (lifecycle == null ? 0 : lifecycle.LocalRevision) &&
             row.BaseRevision == header.ExpectedLifecycleRevision);
-        if (header.Action != ChatSyncAction.Republish && (lifecycle is not null || header.ExpectedRevision == 0) &&
-            await laterLifecycle.AnyAsync(cancellationToken))
+        if ((lifecycle is not null || header.ExpectedRevision == 0) && await laterLifecycle.AnyAsync(cancellationToken))
         {
             var revision = result.Revision;
-            if (header.ExpectedRevision != 0)
+            if (header.ExpectedRevision != 0 && header.Action != ChatSyncAction.Republish)
             {
-                var state = await db.SyncChats.AsNoTracking().SingleAsync(
-                    row => row.AccountId == accountId && row.ChatId == submission.ChatId,
-                    cancellationToken);
+                var state = await db.SyncChats
+                    .AsNoTracking()
+                    .SingleAsync(row => row.AccountId == accountId && row.ChatId == submission.ChatId, cancellationToken);
                 var head = state.ReadAppliedHead();
                 var target = header.Action switch
                 {

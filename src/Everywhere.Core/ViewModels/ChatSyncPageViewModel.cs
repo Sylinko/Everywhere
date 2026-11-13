@@ -300,7 +300,7 @@ public sealed partial class ChatSyncPageViewModel(
         try
         {
             // Page navigation cancels only the wait, not the account's background pass.
-            await session.SynchronizeAsync(cancellationToken: CancellationToken.None).WaitAsync(_viewToken);
+            await session.SynchronizeAsync(cancellationToken: _viewToken);
         }
         catch (OperationCanceledException) when (_viewToken.IsCancellationRequested || session.Token.IsCancellationRequested)
         {

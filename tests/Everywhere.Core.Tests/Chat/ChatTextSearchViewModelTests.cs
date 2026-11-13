@@ -229,6 +229,31 @@ public sealed class ChatTextSearchViewModelTests
         return manager;
     }
 
+    [AvaloniaTest]
+    public async Task Search_WhenSyncReplacesUserMessage_ReadsCurrentBodyFromTheSameNode()
+    {
+        await using var context = new RootChatContext(new ChatData(), null);
+        var node = context.Data.Add(new UserChatMessage("alpha", []));
+        using var viewModel = new ChatTextSearchViewModel(CreateManager(context));
+        viewModel.Query = "alpha";
+        viewModel.OpenSearchCommand.Execute(null);
+        await WaitForSearchAsync(viewModel);
+        Assert.That(viewModel.MatchCount, Is.EqualTo(1));
+
+        // Sync installs a new body while preserving the node and the search source identity.
+        await context.DispatchAsync(() => node.InstallRemoteMessage(new UserChatMessage("beta", [])));
+        await WaitForSearchAsync(viewModel);
+        Assert.That(viewModel.MatchCount, Is.Zero);
+
+        viewModel.Query = "beta";
+        await WaitForSearchAsync(viewModel);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.MatchCount, Is.EqualTo(1));
+            Assert.That(viewModel.GetCurrentMatch()?.Node, Is.SameAs(node));
+        }
+    }
+
     private static async Task WaitForSearchAsync(ChatTextSearchViewModel viewModel)
     {
         for (var attempt = 0; attempt < 100; attempt++)

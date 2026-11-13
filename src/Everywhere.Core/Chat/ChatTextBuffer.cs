@@ -6,6 +6,11 @@ namespace Everywhere.Chat;
 /// Stores streamed text once, without a dispatcher-owned mirror. Changes notify on the writer's
 /// thread; consumers capture text and version together before parsing or serializing.
 /// </summary>
+/// <remarks>
+/// The chat execution domain serializes writes. The lock only coordinates those writes with UI
+/// and background snapshot readers; callers must not rely on it to order concurrent notifications.
+/// Complete initial text stays a string until another append needs mutable storage.
+/// </remarks>
 public sealed class ChatTextBuffer
 {
     /// <summary>
@@ -16,7 +21,7 @@ public sealed class ChatTextBuffer
         get
         {
             using var scope = _lock.EnterScope();
-            return _text.Length;
+            return _builder?.Length ?? _snapshot?.Length ?? 0;
         }
     }
 
@@ -36,7 +41,9 @@ public sealed class ChatTextBuffer
     public event EventHandler? Changed;
 
     private readonly Lock _lock = new();
-    private readonly StringBuilder _text = new();
+    private StringBuilder? _builder;
+    // Null only after the builder changes and before the next full snapshot is requested.
+    private string? _snapshot = string.Empty;
     private long _version;
     private long _epoch;
 
@@ -52,7 +59,18 @@ public sealed class ChatTextBuffer
 
         using (_lock.EnterScope())
         {
-            _text.Append(value);
+            if (_builder is null && _snapshot is { Length: 0 })
+            {
+                // Construction and deserialization both supply their complete text in one append.
+                _snapshot = value;
+            }
+            else
+            {
+                _builder ??= new StringBuilder(_snapshot, (_snapshot?.Length ?? 0) + value.Length);
+                _builder.Append(value);
+                _snapshot = null;
+            }
+
             _version++;
         }
 
@@ -67,7 +85,8 @@ public sealed class ChatTextBuffer
     {
         using (_lock.EnterScope())
         {
-            _text.Clear();
+            _builder?.Clear();
+            _snapshot = string.Empty;
             _version++;
             _epoch++;
         }
@@ -77,12 +96,13 @@ public sealed class ChatTextBuffer
     }
 
     /// <summary>
-    /// Copies one consistent value for background work.
+    /// Captures one consistent value, reusing its string until the text changes.
     /// </summary>
     public ChatTextSnapshot CaptureSnapshot()
     {
         using var scope = _lock.EnterScope();
-        return new ChatTextSnapshot(_text.ToString(), _version, _epoch);
+        _snapshot ??= _builder?.ToString() ?? string.Empty;
+        return new ChatTextSnapshot(_snapshot, _version, _epoch);
     }
 
     /// <summary>
@@ -92,13 +112,29 @@ public sealed class ChatTextBuffer
     {
         ArgumentOutOfRangeException.ThrowIfNegative(maximumLength);
         using var scope = _lock.EnterScope();
-        var length = Math.Min(maximumLength, _text.Length);
-        if (length > 0 && length < _text.Length && char.IsHighSurrogate(_text[length - 1]))
+        if (_snapshot is { } snapshot)
         {
-            length--;
+            var length = Math.Min(maximumLength, snapshot.Length);
+            if (length > 0 && length < snapshot.Length && char.IsHighSurrogate(snapshot[length - 1]))
+            {
+                length--;
+            }
+
+            return snapshot[..length];
         }
 
-        return _text.ToString(0, length);
+        if (_builder is not { } builder)
+        {
+            return string.Empty;
+        }
+
+        var prefixLength = Math.Min(maximumLength, builder.Length);
+        if (prefixLength > 0 && prefixLength < builder.Length && char.IsHighSurrogate(builder[prefixLength - 1]))
+        {
+            prefixLength--;
+        }
+
+        return builder.ToString(0, prefixLength);
     }
 
     /// <inheritdoc />

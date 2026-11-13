@@ -48,10 +48,9 @@ partial class NotificationCenter
         ValidateDescriptor(dynamicNotification);
 
         var storageKey = CreateStorageKey(dynamicNotification.Id, categoryName);
-        if (dynamicNotification is { CanDismiss: true, ForceShow: false } && _keyValueStorage.Contains(storageKey)) return;
-
         lock (_gate)
         {
+            if (dynamicNotification is { CanDismiss: true, ForceShow: false } && _keyValueStorage.Contains(storageKey)) return;
             var sequence = _nextSortSequence++;
             _notificationsSource.AddOrUpdate(CreateEntry(categoryName, dynamicNotification, sequence));
         }

@@ -339,7 +339,12 @@ public sealed partial class ChatContextManager :
                 {
                     if (_isClosing) return;
                     CreateNewCommand.NotifyCanExecuteChanged();
-                    HandleHistoryMetadataChanged(message.Metadata);
+                    // AutoRefresh handles timestamp ordering. Content matches refresh after saving;
+                    // only a title change needs to re-evaluate this query immediately.
+                    if (message.PropertyName == nameof(ChatMetadata.Topic) && _normalizedHistorySearchQuery is not null)
+                    {
+                        RestartHistoryMaterializationCore();
+                    }
                 });
                 break;
             }
@@ -498,6 +503,10 @@ public sealed partial class ChatContextManager :
             if (_newChatDraft is not null && ReferenceEquals(_newChatDraft, pendingSave.Root))
             {
                 _newChatDraft = null;
+            }
+            if (HistorySearchIncludesContent && _normalizedHistorySearchQuery is not null)
+            {
+                RestartHistoryMaterializationCore();
             }
         });
     }
@@ -1594,24 +1603,6 @@ public sealed partial class ChatContextManager :
                 _materializedHistorySource.Remove(metadata);
             }
         });
-
-    private void HandleHistoryMetadataChanged(ChatMetadata metadata)
-    {
-        Dispatcher.UIThread.VerifyAccess();
-
-        if (_normalizedHistorySearchQuery is not null)
-        {
-            RestartHistoryMaterializationCore();
-            return;
-        }
-
-        lock (_historyStateLock)
-        {
-            if (!_materializedHistoryIds.Contains(metadata.Id)) return;
-        }
-
-        _historyRegrouper.OnNext(Unit.Default);
-    }
 
     private void EndLoadSession()
     {

@@ -725,8 +725,8 @@
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_RetryButton_Content}}"/>
                     <Button
                       Classes="Ghost Minimal"
-                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand}"
-                      CommandParameter="{Binding Node.Message, Mode=OneTime}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageNodeCommand}"
+                      CommandParameter="{Binding Node, Mode=OneTime}"
                       Content="{LucideIconContent Copy}"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
                       <Interaction.Behaviors>

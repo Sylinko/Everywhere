@@ -86,7 +86,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         {
             var child = chatContext.CreateNested(title);
             var user = child.Data.Add(new UserChatMessage(prompt, []));
-            var assistantMessage = new AssistantChatMessage { IsBusy = true };
+            var assistantMessage = new AssistantChatMessage();
             return (child, user, child.Data.Add(assistantMessage));
         });
         var forkedChatContext = nestedContext.Data;
@@ -126,6 +126,8 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
             await nestedContext.ExecuteAsync(
                 async childToken =>
                 {
+                    // Liveness starts only after work admission. GenerateAsync owns its completion.
+                    await nestedContext.DispatchAsync(() => ((AssistantChatMessage)assistantNode.Message).IsBusy = true);
                     generationResult = await chatService.GenerateAsync(
                         nestedContext,
                         specializedAssistant,

@@ -214,12 +214,29 @@ partial class ChatTurnStorage
         {
             if (action == ChatSyncAction.Delete)
             {
+                var frozen = await db.SyncSubmissions.AsNoTracking().SingleOrDefaultAsync(
+                    row => row.AccountId == accountId && row.ChatId == chatId && row.QuotaRejection == null,
+                    cancellationToken);
+                var isRepublishing = frozen is not null &&
+                    MessagePackSerializer.Deserialize<ChatSyncUploadHeader>(frozen.Header, cancellationToken: cancellationToken).Action == ChatSyncAction.Republish;
                 // Drop this device's retained fields and edits together with its local graph.
                 // Keep the applied head so discovery still observes a later explicit republish.
                 await db.SyncPending.Where(row => row.AccountId == accountId && row.ChatId == chatId).ExecuteDeleteAsync(cancellationToken);
                 await db.SyncRemote.Where(row => row.AccountId == accountId && row.ChatId == chatId).ExecuteDeleteAsync(cancellationToken);
-                await db.SyncSubmissions.Where(row => row.AccountId == accountId && row.ChatId == chatId && row.QuotaRejection != null)
-                    .ExecuteDeleteAsync(cancellationToken);
+                await db.SyncSubmissions.Where(row => row.AccountId == accountId && row.ChatId == chatId && row.QuotaRejection != null).ExecuteDeleteAsync(cancellationToken);
+                if (isRepublishing)
+                {
+                    // Resolve the exact frozen request first, then delete its confirmed successor.
+                    // AcknowledgeAsync rebases this later decision onto our own republish receipt.
+                    var head = state.ReadAppliedHead() ?? throw new InvalidDataException("Missing republish baseline.");
+                    await store.RecordChangeAsync(
+                        accountId,
+                        chatId,
+                        ChatSyncRecordKind.Lifecycle,
+                        "delete",
+                        head.LifecycleRevision,
+                        cancellationToken);
+                }
             }
             return;
         }
@@ -230,8 +247,7 @@ partial class ChatTurnStorage
             .SingleOrDefaultAsync(cancellationToken) ?? 0;
         // An explicit new decision replaces the preceding lifecycle intent, not an uncertain request.
         await db.SyncPending
-            .Where(row => row.AccountId == accountId && row.ChatId == chatId &&
-                (row.Kind == ChatSyncRecordKind.Lifecycle || action == ChatSyncAction.Delete))
+            .Where(row => row.AccountId == accountId && row.ChatId == chatId && (row.Kind == ChatSyncRecordKind.Lifecycle || action == ChatSyncAction.Delete))
             .ExecuteDeleteAsync(cancellationToken);
         await store.RecordChangeAsync(accountId, chatId, ChatSyncRecordKind.Lifecycle, action.ToStorageKey(), lifecycleRevision, cancellationToken);
     }
