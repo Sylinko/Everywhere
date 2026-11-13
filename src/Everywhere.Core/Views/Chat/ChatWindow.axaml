@@ -1361,6 +1361,7 @@
                   PlaceholderText="{Binding ChatInputAreaWatermarkKey^}"
                   RemoveAttachmentCommand="{Binding RemoveAttachmentCommand}"
                   SelectedCustomAssistant="{Binding Settings.Model.SelectedCustomAssistant, Mode=TwoWay}"
+                  ShouldClearTextOnSubmit="False"
                   Text="{Binding ChatInputAreaText, Mode=TwoWay}">
                   <v:ChatInputArea.Transitions>
                     <Transitions>

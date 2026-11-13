@@ -70,6 +70,7 @@ partial class ChatTurnStorage
             {
                 // Tombstones and local deletion intent must never materialize remote content again.
                 await db.Chats.Where(row => row.Id == chatId).ExecuteDeleteAsync(cancellationToken);
+                await db.ChatInputs.Where(row => row.ChatId == chatId).ExecuteDeleteAsync(cancellationToken);
                 if (head.Lifecycle == ChatSyncLifecycle.Deleted)
                 {
                     await db.SyncPending.Where(row => row.AccountId == accountId && row.ChatId == chatId).ExecuteDeleteAsync(cancellationToken);

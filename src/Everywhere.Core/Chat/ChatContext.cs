@@ -27,6 +27,11 @@ public abstract partial class ChatContext(
     public ChatData Data { get; } = data;
 
     /// <summary>
+    /// Gets this conversation's UI-owned, local-only composer state.
+    /// </summary>
+    public ChatInputState Input { get; } = new(data.Metadata.Id);
+
+    /// <summary>
     /// Gets the root owning this context's execution domain and shared resources.
     /// </summary>
     public abstract RootChatContext Root { get; }
@@ -252,6 +257,10 @@ public abstract partial class ChatContext(
         VisualState.Dispose();
         // Data is already disposed, so no new projection can be requested. Only the UI callback
         // accesses the field; shutdown never waits for UI cleanup or takes a projection lock.
-        Dispatcher.UIThread.PostOnDemand(() => DisposeHelper.DisposeToDefault(ref _presentation));
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            Input.Dispose();
+            DisposeHelper.DisposeToDefault(ref _presentation);
+        });
     }
 }

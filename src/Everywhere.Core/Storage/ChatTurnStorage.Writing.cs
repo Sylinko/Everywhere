@@ -44,6 +44,28 @@ partial class ChatTurnStorage
             await WriteNodeAsync(db, chatId, write, cancellationToken);
         }
 
+        // First-save handoff shares the graph transaction:
+        //   Chats + Nodes -> remaining input under the real ID -> remove the owned new-chat slot.
+        // Failure leaves the preceding slot intact. Delayed input writes choose their destination
+        // from the committed Chats row, so they cannot recreate that slot after handoff.
+        if (batch.LocalInput is { } input)
+        {
+            await WriteInputAsync(db, chatId, input, cancellationToken);
+        }
+        else if (previous is null)
+        {
+            if (batch.Metadata.Snapshot.IsTemporary)
+            {
+                await db.ChatInputs.Where(row => row.ChatId == chatId).ExecuteDeleteAsync(cancellationToken);
+            }
+            else
+            {
+                await db.ChatInputs
+                    .Where(row => row.SlotId == Guid.Empty && row.ChatId == chatId)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.SlotId, chatId), cancellationToken);
+            }
+        }
+
         await RecordSyncChangesAsync(db, batch, previous, localAccountId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
@@ -76,6 +98,7 @@ partial class ChatTurnStorage
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         await RecordSyncLifecycleAsync(db, chatId, ChatSyncAction.Delete, cancellationToken);
+        await db.ChatInputs.Where(row => row.ChatId == chatId).ExecuteDeleteAsync(cancellationToken);
         await db.Chats.Where(row => row.Id == chatId).ExecuteDeleteAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
@@ -123,21 +146,27 @@ partial class ChatTurnStorage
             cancellationToken);
         foreach (var file in write.Files)
         {
-            if (ReadFileSize(file.LocalPath) is { } size)
-            {
-                await db.Database.ExecuteSqlAsync(
-                    $"""
-                     INSERT INTO Blobs (Sha256, LocalPath, MimeType, Size, CreatedAt, LastAccessAt)
-                     VALUES ({file.Sha256}, {file.LocalPath}, {file.MimeType}, {size}, {node.UpdatedAt.UtcTicks}, {node.UpdatedAt.UtcTicks})
-                     ON CONFLICT (Sha256) DO UPDATE SET LastAccessAt = excluded.LastAccessAt
-                     """,
-                    cancellationToken);
-            }
+            await WriteBlobAsync(db, file, node.UpdatedAt, cancellationToken);
 
             await db.Database.ExecuteSqlAsync(
                 $"INSERT INTO NodeBlobs (ChatContextId, ChatNodeId, BlobSha256) VALUES ({chatId}, {node.Id}, {file.Sha256})",
                 cancellationToken);
         }
+    }
+
+    private static async Task WriteBlobAsync(ChatV2DbContext db, ChatBlobWrite file, DateTimeOffset updatedAt, CancellationToken cancellationToken)
+    {
+        if (ReadFileSize(file.LocalPath) is not { } size)
+        {
+            return;
+        }
+        await db.Database.ExecuteSqlAsync(
+            $"""
+             INSERT INTO Blobs (Sha256, LocalPath, MimeType, Size, CreatedAt, LastAccessAt)
+             VALUES ({file.Sha256}, {file.LocalPath}, {file.MimeType}, {size}, {updatedAt.UtcTicks}, {updatedAt.UtcTicks})
+             ON CONFLICT (Sha256) DO UPDATE SET LastAccessAt = excluded.LastAccessAt
+             """,
+            cancellationToken);
     }
 
     private static async Task WriteChoiceAsync(ChatV2DbContext db, Guid chatId, ChatNodeWrite write, CancellationToken cancellationToken)

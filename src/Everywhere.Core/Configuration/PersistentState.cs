@@ -8,6 +8,11 @@ namespace Everywhere.Configuration;
 /// </summary>
 public class PersistentState(IKeyValueStorage storage) : ObservableObject
 {
+    /// <summary>
+    /// Gets the underlying `IKeyValueStorage` for advanced usage.
+    /// </summary>
+    public IKeyValueStorage Storage => storage;
+
     /// <summary>Gets or sets whether the first-use automatic approval notice was accepted locally.</summary>
     public bool HasAcknowledgedAutoApproval
     {
@@ -74,12 +79,6 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
     {
         get => Get(300d).FiniteOrDefault(300d);
         set => Set(value.FiniteOrDefault(300d));
-    }
-
-    public string? ChatInputAreaText
-    {
-        get => Get<string?>();
-        set => Set(value);
     }
 
     /// <summary>

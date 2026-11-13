@@ -1,4 +1,9 @@
+﻿using Everywhere.Chat;
+using Everywhere.Common;
+using Everywhere.Configuration;
+using MessagePack;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Serilog;
 
 #nullable disable
 
@@ -24,6 +29,19 @@ namespace Everywhere.Database.Migrations.V2
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Blobs", x => x.Sha256);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatInputs",
+                columns: table => new
+                {
+                    SlotId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ChatId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Payload = table.Column<byte[]>(type: "BLOB", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatInputs", x => x.SlotId);
                 });
 
             migrationBuilder.CreateTable(
@@ -266,11 +284,40 @@ namespace Everywhere.Database.Migrations.V2
                 table: "SyncSubmissions",
                 columns: new[] { "AccountId", "CommitId" },
                 unique: true);
+
+            string text;
+            try
+            {
+                // The desktop loads this store before database initialization. Design-time EF
+                // commands have no application services; missing/unreadable old input is optional.
+                text = ServiceLocator.Resolve<PersistentState>().Storage.Get<string>("ChatInputAreaText");
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext<Initial>().Warning(ex, "Failed to read `ChatInputAreaText` for migration");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            var input = new ChatInputSnapshot(new ChatInputDraftSnapshot(text, [], null), null, null);
+            migrationBuilder.InsertData(
+                table: "ChatInputs",
+                columns: ["SlotId", "ChatId", "Payload"],
+                values: [Guid.Empty, Guid.CreateVersion7(), MessagePackSerializer.Serialize(input, cancellationToken: CancellationToken.None)]);
+            // Up builds SQL operations; it has not committed them yet. Leave the unused old key
+            // intact rather than deleting its only durable copy before this transaction succeeds.
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "ChatInputs");
+
             migrationBuilder.DropTable(
                 name: "Blobs");
 
