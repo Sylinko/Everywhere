@@ -173,6 +173,23 @@ class InstallerTests(unittest.TestCase):
             with patch.object(u, 'read_json', side_effect=error):
                 self.assertIsNone(u.refresh_installer('https://site.test/installer.json', []))
 
+    def test_new_installer_download_failure_uses_bundled_without_executing_partial_file(self):
+        data = b'new installer'
+        manifest = {'schema': 1, 'protocol': 1, 'version': '0.3.0', 'asset': asset(data)}
+        for error in (u.DownloadError('offline'), u.DownloadError('HTTP 503')):
+            with self.subTest(error=str(error)), tempfile.TemporaryDirectory() as temporary, \
+                    patch.object(u.Path, 'home', return_value=Path(temporary)), \
+                    patch.object(u, 'read_json', return_value=manifest), \
+                    patch.object(u.subprocess, 'run') as run, patch.object(u.UI, 'status') as status:
+                def interrupted_download(url, path, limit):
+                    path.write_bytes(b'partial')
+                    raise error
+                with patch.object(u, 'fetch', side_effect=interrupted_download):
+                    self.assertIsNone(u.refresh_installer('https://site.test/installer.json', ['update']))
+                run.assert_not_called()
+                status.assert_called_once_with('bundled_installer')
+                self.assertEqual(list((Path(temporary) / '.cache/everywhere-installer').iterdir()), [])
+
     def run_flow(self, current=None, fail=False, corrupt=False, dry=False):
         data = b'package bytes'
         state = [current]

@@ -8,8 +8,11 @@ desktop starter supplied no global listener, so a valid recording on
 Plasma/GNOME/Niri did not produce a global action. This was not a regression in the
 focused scope or a reason to restore the removed RpcConnection changes.
 
-Plasma/GNOME and portal-capable X11 sessions now use `PortalShortcutListener` as
-the global backend. Hyprland keeps its Input Host/compositor bindings. The portal
+Plasma/GNOME and portal-capable X11 sessions use `PortalShortcutListener` as the
+global backend. Plasma 5 registers through KGlobalAccel on both X11 and Wayland;
+Plasma 6/GNOME and other portal-capable desktops request GlobalShortcuts approval.
+Validate the native KGlobalAccel registration on Plasma 5 and portal approval only
+on portal-backed desktops. Hyprland keeps its Input Host/compositor bindings. The portal
 uses the existing Tmds.DBus.Protocol dependency; no package is added. Managed
 D-Bus approval lives in Main because a pending/declined permission request is a
 user decision, not an Input Host transport failure. The starter Input Host stays

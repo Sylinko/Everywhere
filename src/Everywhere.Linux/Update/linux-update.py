@@ -364,7 +364,11 @@ def refresh_installer(source, arguments):
     else:
         with tempfile.TemporaryDirectory(prefix='download-', dir=cache) as directory:
             download = Path(directory) / 'installer.py'
-            fetch(asset['url'], download, asset['size'])
+            try:
+                fetch(asset['url'], download, asset['size'])
+            except DownloadError:
+                UI.status('bundled_installer')
+                return None
             verify_file(download, asset)
             os.replace(download, script)
     UI.status('using_installer', version=version)

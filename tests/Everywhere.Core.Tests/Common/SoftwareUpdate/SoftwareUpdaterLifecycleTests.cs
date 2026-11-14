@@ -20,6 +20,9 @@ namespace Everywhere.Core.Tests.Common.SoftwareUpdate;
 public sealed class SoftwareUpdaterLifecycleTests
 {
     [AvaloniaTest]
+#if DEBUG
+    [Ignore("Automatic update checks are disabled in Debug builds; run this test in Release.")]
+#endif
     public async Task TerminalPlatform_WhenAutomaticCheckFindsRelease_DiscoversWithoutDownloading()
     {
         using var folder = new IsolatedUpdateFolder();
@@ -35,6 +38,26 @@ public sealed class SoftwareUpdaterLifecycleTests
         updater.RunAutomaticCheckInBackground(TimeSpan.FromMilliseconds(50), stop.Token);
         for (var index = 0; index < 100 && updater.LatestUpdate is null; index++) await Task.Delay(20);
         stop.Cancel();
+        Assert.That(updater.LatestUpdate, Is.EqualTo(target));
+        Assert.That(updater.ReadyUpdate, Is.Null);
+        Assert.That(downloader.ReceivedCalls(), Is.Empty);
+    }
+
+    [AvaloniaTest]
+    public async Task TerminalPlatform_WhenExplicitCheckFindsRelease_DiscoversWithoutDownloading()
+    {
+        using var folder = new IsolatedUpdateFolder();
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var platform = Substitute.For<IPlatformUpdateHandler, ITerminalUpdateHandler>();
+        var target = CreateTarget();
+        ((ITerminalUpdateHandler)platform).GetReleasesAsync(UpdateChannel.Stable, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<TerminalUpdateRelease>>([
+                new(target, new Uri("https://example.invalid/release"), "Release notes") ]));
+        var downloader = Substitute.For<IFileDownloadService>();
+        using var updater = CreateUpdater(services, platform, downloader);
+
+        await updater.CheckForUpdatesAsync(true);
+
         Assert.That(updater.LatestUpdate, Is.EqualTo(target));
         Assert.That(updater.ReadyUpdate, Is.Null);
         Assert.That(downloader.ReceivedCalls(), Is.Empty);

@@ -25,7 +25,7 @@ public sealed partial class TerminalUpdateGuidance : UserControl
     /// <summary>
     /// Defines whether the message is still being revealed.
     /// </summary>
-    public static readonly DirectProperty<TerminalUpdateGuidance, bool> IsStreamingProperty =
+    private static readonly DirectProperty<TerminalUpdateGuidance, bool> IsStreamingProperty =
         AvaloniaProperty.RegisterDirect<TerminalUpdateGuidance, bool>(nameof(IsStreaming), control => control.IsStreaming);
 
     /// <summary>

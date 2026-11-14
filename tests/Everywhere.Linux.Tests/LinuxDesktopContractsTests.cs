@@ -65,20 +65,20 @@ public sealed class LinuxDesktopContractsTests
     }
 
     [Test]
-    public void ChangedOutputGeometry_Capture_RejectsPixelsAndReleasesSource()
+    public async Task ChangedOutputGeometry_Capture_RejectsPixelsAndReleasesSource()
     {
         var compositor = new FixtureCompositor();
         var capturer = new FixtureCapturer(compositor)
         {
             HasChangedGeometry = true,
         };
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await LinuxScreenCapture.CaptureAsync(
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await LinuxScreenCapture.CaptureAsync(
             compositor, capturer, new PixelRect(-20, 20, 40, 20), CancellationToken.None));
         Assert.That(capturer.Captures.Single().IsDisposed, Is.True);
     }
 
     [Test]
-    public void CancellationBetweenOutputs_Capture_ReleasesSourceAndSkipsNextOutput()
+    public async Task CancellationBetweenOutputs_Capture_ReleasesSourceAndSkipsNextOutput()
     {
         var compositor = new FixtureCompositor();
         using var cancellation = new CancellationTokenSource();
@@ -86,18 +86,18 @@ public sealed class LinuxDesktopContractsTests
         {
             AfterCapture = cancellation.Cancel,
         };
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await LinuxScreenCapture.CaptureAsync(
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await LinuxScreenCapture.CaptureAsync(
             compositor, capturer, new PixelRect(-20, 20, 40, 20), cancellation.Token));
         Assert.That(capturer.CapturedNames, Is.EqualTo(new[] { "left" }));
         Assert.That(capturer.Captures.Single().IsDisposed, Is.True);
     }
 
     [Test]
-    public void OutsideAllOutputs_Capture_DoesNotRequestUnrelatedPixels()
+    public async Task OutsideAllOutputs_Capture_DoesNotRequestUnrelatedPixels()
     {
         var compositor = new FixtureCompositor();
         var capturer = new FixtureCapturer(compositor);
-        Assert.ThrowsAsync<NotSupportedException>(async () => await LinuxScreenCapture.CaptureAsync(
+        await Assert.ThrowsAsync<NotSupportedException>(async () => await LinuxScreenCapture.CaptureAsync(
             compositor, capturer, new PixelRect(500, 500, 20, 20), CancellationToken.None));
         Assert.That(capturer.CapturedNames, Is.Empty);
     }
