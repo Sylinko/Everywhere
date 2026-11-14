@@ -135,7 +135,7 @@ class InstallerTests(unittest.TestCase):
                 u.prepare_arch(Path('/tmp/archive'), Path(temporary), '1.2.0', 'everywhere-bin', SOURCE, 0)
             run.assert_not_called()
 
-    def test_arch_repackage_preserves_epoch_and_accepts_detached_signature(self):
+    def test_arch_repackage_overrides_pkgdest_preserves_epoch_and_accepts_signature(self):
         data = io.BytesIO()
         with tarfile.open(fileobj=data, mode='w') as archive:
             for name in ('Everywhere', 'Everywhere.Watchdog'):
@@ -145,11 +145,13 @@ class InstallerTests(unittest.TestCase):
         data.seek(0)
         with tempfile.TemporaryDirectory() as temporary, patch.object(u.os, 'geteuid', return_value=1000), \
                 patch.object(u.shutil, 'which', return_value='/bin/tool'), patch.object(u.subprocess, 'Popen') as popen, \
-                patch.object(u, 'execute') as execute:
+                patch.object(u, 'execute') as execute, \
+                patch.dict(os.environ, {'PKGDEST': '/outside-installer'}):
             directory = Path(temporary)
             package = directory / 'everywhere-bin-1.2.0-1-x86_64.pkg.tar.zst'
             def build(args, privileged, cwd):
                 self.assertIn('--syncdeps', args)
+                self.assertIn(f'PKGDEST={cwd}', args)
                 self.assertIn('epoch=2', (cwd / 'PKGBUILD').read_text())
                 package.write_bytes(b'package')
                 Path(str(package) + '.sig').write_bytes(b'signature')

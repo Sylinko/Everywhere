@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "protocol": 1,
-  "version": "0.2.1",
+  "version": "0.2.2",
   "asset": {
     "url": "https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.py",
-    "size": 36439,
-    "sha256": "5fc3955bb8d557fed82fe4190799f84c49e4f2fe8aada1963f9a6e038d106f2f"
+    "size": 36548,
+    "sha256": "5593ba71c934c79633dc911e33291ca9f43248efe671a5c725481a226c496321"
   }
 }
