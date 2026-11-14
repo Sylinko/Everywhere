@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI;
 using Everywhere.Automation;
@@ -314,7 +315,9 @@ public sealed partial class FileAttachment(
         set
         {
             if (!SetProperty(ref field, value)) return;
-            _isImageLoaded = false;
+            _hasRequestedImage = false;
+            Image = null;
+            OnPropertyChanged(nameof(Image));
         }
     } = filePath;
 
@@ -335,48 +338,24 @@ public sealed partial class FileAttachment(
     [IgnoreMember]
     public bool IsImage => FileUtilities.IsOfCategory(MimeType, FileTypeCategory.Image);
 
+    /// <summary>
+    /// Gets the shared, lazily loaded preview. UI bindings request one decode per file path;
+    /// recycled controls and tooltips reuse the cached result. Preview access and path changes
+    /// after publication belong to the UI thread.
+    /// </summary>
     [JsonIgnore]
     [IgnoreMember]
     public Bitmap? Image
     {
         get
         {
-            if (_isImageLoaded) return field;
+            if (_hasRequestedImage || !IsImage) return field;
 
-            Task.Run(async () =>
-            {
-                try
-                {
-                    field = await LoadImageAsync();
-                }
-                catch (Exception ex)
-                {
-                    ex = HandledSystemException.Handle(ex);
-                    Log.Logger.ForContext<FileAttachment>().Error(ex, "Failed to load image from file: {FilePath}", FilePath);
-                    field = null;
-                }
-                finally
-                {
-                    _isImageLoaded = true;
-                    OnPropertyChanged();
-                }
-            });
-
+            _hasRequestedImage = true;
+            LoadImageAsync(FilePath).Detach();
             return field;
-
-            async ValueTask<Bitmap?> LoadImageAsync()
-            {
-                const int maxWidth = 512;
-                const int maxHeight = 512;
-
-                if (!IsImage) return null;
-                if (!File.Exists(FilePath)) return null;
-
-                await using var stream = File.OpenRead(FilePath);
-                var bitmap = Bitmap.DecodeToWidth(stream, maxWidth);
-                return await ResizeImageOnDemandAsync(bitmap, maxWidth, maxHeight).ConfigureAwait(false);
-            }
         }
+        private set;
     }
 
     [JsonIgnore]
@@ -392,7 +371,7 @@ public sealed partial class FileAttachment(
 
     [JsonIgnore]
     [IgnoreMember]
-    private bool _isImageLoaded;
+    private bool _hasRequestedImage;
 
     public override string ToString()
     {
@@ -425,17 +404,46 @@ public sealed partial class FileAttachment(
         },
         cancellationToken);
 
-    private async static ValueTask<Bitmap> ResizeImageOnDemandAsync(Bitmap image, int maxWidth = 2560, int maxHeight = 2560)
+    private async Task LoadImageAsync(string path)
     {
-        if (image.PixelSize.Width <= maxWidth && image.PixelSize.Height <= maxHeight)
+        Bitmap? image = null;
+        try
         {
-            return image;
+            // The attachment owns its preview; unloading one view must not cancel a shared decode.
+            image = await Task.Run(() => DecodeImage(path), CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.ForContext<FileAttachment>().Error(
+                HandledSystemException.Handle(ex), "Failed to load image from file: {FilePath}", path);
         }
 
-        var scale = Math.Min(maxWidth / (double)image.PixelSize.Width, maxHeight / (double)image.PixelSize.Height);
-        var newWidth = (int)(image.PixelSize.Width * scale);
-        var newHeight = (int)(image.PixelSize.Height * scale);
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            // FilePath invalidates the cache. A decode of the preceding path must not republish it.
+            if (FilePath != path)
+            {
+                image?.Dispose();
+                return;
+            }
 
-        return await Task.Run(() => image.CreateScaledBitmap(new PixelSize(newWidth, newHeight)));
+            Image = image;
+            OnPropertyChanged(nameof(Image));
+        });
+    }
+
+    private static Bitmap? DecodeImage(string path)
+    {
+        if (!File.Exists(path)) return null;
+
+        using var stream = File.OpenRead(path);
+        var image = Bitmap.DecodeToWidth(stream, 512);
+        if (image.PixelSize.Height <= 512) return image;
+
+        using (image)
+        {
+            var width = Math.Max(1, (int)(image.PixelSize.Width * 512d / image.PixelSize.Height));
+            return image.CreateScaledBitmap(new PixelSize(width, 512));
+        }
     }
 }

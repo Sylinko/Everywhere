@@ -62,7 +62,7 @@
                   HorizontalSpacing="4" LastChildFill="True">
                   <LucideIcon
                     DockPanel.Dock="Left" VerticalAlignment="Center"
-                    IsVisible="{Binding !IsImage}"
+                    IsVisible="{Binding Image, Converter={x:Static ObjectConverters.IsNull}}"
                     Kind="{Binding Icon}"
                     Size="{DynamicResource FontSizeL}"/>
 
@@ -86,7 +86,7 @@
                     MaxWidth="{DynamicResource LineHeightL}"
                     MaxHeight="{DynamicResource LineHeightL}"
                     Margin="0,4" VerticalAlignment="Center"
-                    IsVisible="{Binding IsImage}"
+                    IsVisible="{Binding Image, Converter={x:Static ObjectConverters.IsNotNull}}"
                     Source="{Binding Image}"
                     Stretch="UniformToFill" ToolTip.Placement="Top">
                     <Image.Styles>
@@ -107,7 +107,7 @@
                   <TextBlock
                     VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeS}"
-                    IsVisible="{Binding !IsImage}"
+                    IsVisible="{Binding Image, Converter={x:Static ObjectConverters.IsNull}}"
                     Text="{Binding HeaderKey^}"
                     TextTrimming="{x:Static TextTrimming.PrefixCharacterEllipsis}">
                     <Interaction.Behaviors>
