@@ -1,4 +1,4 @@
-using Everywhere.Chat;
+﻿using Everywhere.Chat;
 using Everywhere.Configuration;
 using Everywhere.Statistics;
 using Microsoft.EntityFrameworkCore;
@@ -18,11 +18,11 @@ public sealed class StatisticsRecorderTests
             database.Factory,
             settings,
             NullLogger<StatisticsRecorder>.Instance);
-        var chatContext = new ChatContext();
+        var chatContext = new ChatData();
         chatContext.Metadata.Topic = "Statistics plan";
         var userMessage = new UserChatMessage("please implement this", []);
         chatContext.Add(userMessage);
-        var userNode = chatContext.Items.Last(x => ReferenceEquals(x.Message, userMessage));
+        var userNode = chatContext.SelectedNodes.Last(x => ReferenceEquals(x.Message, userMessage));
 
         var sendTurnId = await recorder.RecordTurnAsync(chatContext, userNode, StatisticsTurnKind.Send);
         var editTurnId = await recorder.RecordTurnAsync(chatContext, userNode, StatisticsTurnKind.Edit);
@@ -139,11 +139,11 @@ public sealed class StatisticsRecorderTests
             database.Factory,
             settings,
             NullLogger<StatisticsRecorder>.Instance);
-        var chatContext = new ChatContext();
+        var chatContext = new ChatData();
         chatContext.Add(new UserChatMessage("do not count me", []));
 
         var topicId = await recorder.RecordTopicAsync(chatContext);
-        var turnId = await recorder.RecordTurnAsync(chatContext, chatContext.Items.Last(), StatisticsTurnKind.Send);
+        var turnId = await recorder.RecordTurnAsync(chatContext, chatContext.SelectedNodes.Last(), StatisticsTurnKind.Send);
         await recorder.StartModelInvocationAsync(new StatisticsModelInvocationDraft(
             Guid.CreateVersion7(),
             null,

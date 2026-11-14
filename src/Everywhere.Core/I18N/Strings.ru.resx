@@ -975,6 +975,9 @@
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>Соединение с сервисом было прервано или не удалось его установить.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>Соединение с сервисом было прервано или не удалось его установить.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Сервис временно недоступен. Пожалуйста, попробуйте позже.</value>
     </data>
@@ -1513,8 +1516,8 @@
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Дата</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>Переименовать чат</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>Переименовать</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>Удалить чат</value>
@@ -1565,7 +1568,7 @@
         <value>Добавлять, изменять, удалять или перемещать текстовые файлы.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Размер файла превышает {0} МБ; операция чтения не поддерживается.</value>
+        <value>Размер файла превышает {0} МиБ; операция чтения не поддерживается.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Не удалось создать директорию.</value>
@@ -2311,7 +2314,7 @@
         <value>Запрашивает ограниченную область вокруг визуальной цели типа элемента или композиции.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Зарегистрируйтесь и получите бесплатные кредиты, чтобы использовать популярные модели. Функции, такие как облачная синхронизация, будут добавлены в дальнейшем...</value>
+        <value>Зарегистрируйтесь и получите бесплатные кредиты, чтобы использовать популярные модели.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Войти</value>
@@ -2324,6 +2327,9 @@
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>Подписочные Кредиты</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Управление облачной синхронизацией</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Управлять Подпиской</value>
@@ -2389,21 +2395,6 @@
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Личный кабинет</value>
     </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Облачная синхронизация диалогов</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>После включения ваши чаты будут автоматически синхронизироваться между устройствами</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Последняя успешная синхронизация {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Ошибка последней синхронизации</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Синхронизация...</value>
-    </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Я сам настрою модель</value>
     </data>
@@ -2442,9 +2433,6 @@
     </data>
     <data name="Common_Undo" xml:space="preserve">
         <value>Отменить</value>
-    </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>Удалено «{0}»</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>Отображение</value>
@@ -2718,9 +2706,6 @@
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>Неверный результат от инструмента: {0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>Временный чат: после включения текущий чат не будет сохранен, при переключении или создании нового разговора он будет удален.</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(необязательно) {0}</value>
@@ -4301,6 +4286,9 @@
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
         <value>Прокси-сервер отказался устанавливать соединение. Проверьте настройки прокси и данные аутентификации.</value>
     </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
+        <value>Прокси-сервер отказался устанавливать соединение. Проверьте настройки прокси и данные аутентификации.</value>
+    </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
         <value>Текущий ассистент не поддерживает вызов инструментов. Проверьте настройки или выберите другого ассистента.</value>
     </data>
@@ -4621,5 +4609,71 @@
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Копировать текст ссылки</value>
+    </data>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>Облачная синхронизация чатов</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>Синхронизируйте историю чатов между несколькими устройствами с одним аккаунтом. Вы можете выбрать, какие чаты будут синхронизироваться.</value>
+    </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Архивировать</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Разархивировать</value>
+    </data>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>Удалить навсегда</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>Это навсегда удалит этот чат и все его ветки с этого устройства, и отменить это действие будет невозможно. Вы уверены?</value>
+    </data>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>Чаты теперь используют структуру данных на основе ходов, а загрузка истории стала эффективнее. Теперь вы можете архивировать чаты, а облачная синхронизация также получила повышение производительности.</value>
+    </data>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>Мы создали резервную копию старых данных чата. Они больше не используются, если только вы не вернётесь к более ранней версии Everywhere в будущем. Вы можете их удалить.</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Закрепить сверху</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Переименовать чат</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Рекомендуется оставить коротким и легко читаемым</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>Удалить чат</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Облачная синхронизация чата</value>
+    </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>Сначала войдите в систему, чтобы управлять облачной синхронизацией чатов.</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>Не удалось загрузить облачную синхронизацию чата. Проверьте подключение к сети или повторите попытку позже.</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Управление</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>Включить облачную синхронизацию чата</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>Загрузка облачной синхронизации чата...</value>
+    </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>Недавно изменённые</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>Размер в облаке</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>Запуск синхронизации</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>Остановка синхронизации</value>
     </data>
 </root>

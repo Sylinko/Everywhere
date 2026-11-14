@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Cloud;
 
 namespace Everywhere.Configuration;
@@ -8,6 +8,11 @@ namespace Everywhere.Configuration;
 /// </summary>
 public class PersistentState(IKeyValueStorage storage) : ObservableObject
 {
+    /// <summary>
+    /// Gets the underlying `IKeyValueStorage` for advanced usage.
+    /// </summary>
+    public IKeyValueStorage Storage => storage;
+
     /// <summary>Gets or sets whether the first-use automatic approval notice was accepted locally.</summary>
     public bool HasAcknowledgedAutoApproval
     {
@@ -76,9 +81,12 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value.FiniteOrDefault(300d));
     }
 
-    public string? ChatInputAreaText
+    /// <summary>
+    /// Accounts authorized to sync on this device. Null means the legacy switch has not been attributed yet.
+    /// </summary>
+    public string[]? EnabledChatSyncAccounts
     {
-        get => Get<string?>();
+        get => Get<string[]?>();
         set => Set(value);
     }
 
@@ -94,24 +102,6 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
     public Dictionary<string, bool>? SkillEnabledOverrides
     {
         get => Get<Dictionary<string, bool>>();
-        set => Set(value);
-    }
-
-    public bool IsCloudSyncEnabled
-    {
-        get => Get(false);
-        set => Set(value);
-    }
-
-    public DateTimeOffset? LastCloudSynchronized
-    {
-        get => Get<DateTimeOffset?>();
-        set => Set(value);
-    }
-
-    public IDynamicLocaleKey? LastCloudSynchronizationErrorMessageKey
-    {
-        get => Get<IDynamicLocaleKey?>();
         set => Set(value);
     }
 

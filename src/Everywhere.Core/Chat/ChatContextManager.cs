@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reactive;
@@ -25,11 +24,18 @@ namespace Everywhere.Chat;
 public sealed partial class ChatContextManager :
     ObservableObject,
     IChatContextManager,
-    IAsyncInitializer,
     IRecipient<ChatContextMetadataChangedMessage>,
-    IDisposable
+    IRecipient<ChatPersistenceChangedMessage>,
+    IAsyncInitializer,
+    IDisposable,
+    IAsyncDisposable
 {
-    public ChatContext Current
+    /// <summary>
+    /// Stamps new retained chats even while sync is paused. Existing history keeps its stored owner.
+    /// </summary>
+    public string? SignedInAccountId { get; set; }
+
+    public RootChatContext Current
     {
         get
         {
@@ -40,33 +46,38 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    public ChatContextMetadata? CurrentMetadata
+    public ChatMetadata? CurrentMetadata
     {
-        get => Current.Metadata;
+        get => Current.Data.Metadata;
         set
         {
             Dispatcher.UIThread.VerifyAccess();
             if (value is null) return;
 
             if (value.Id == Guid.Empty)
-                throw new ArgumentException("The provided chat context does not have a valid ID.", nameof(value));
+                throw new ArgumentException("The provided conversation metadata does not have a valid ID.", nameof(value));
 
             if (!_metadataMap.ContainsKey(value.Id))
-                throw new ArgumentException("The provided chat context is not part of the history.", nameof(value));
+                throw new ArgumentException("The provided conversation is not part of the history.", nameof(value));
 
             var previous = _current;
-            if (previous?.Metadata.Id == value.Id) return;
-            var switchVersion = Interlocked.Increment(ref _currentSwitchVersion);
+            if (previous?.Data.Metadata.Id == value.Id)
+            {
+                CancelCurrentSwitch();
+                return;
+            }
+
+            var cancellation = BeginCurrentSwitch();
             OnPropertyChanged();
 
-            SwitchCurrentAsync(value.Id, previous, switchVersion).Detach(_logger.ToExceptionHandler());
+            SwitchCurrentAsync(value.Id, previous, cancellation).Detach(_logger.ToExceptionHandler());
         }
     }
 
     IRelayCommand IChatContextManager.UpdateRecentHistoryCommand => UpdateRecentHistoryCommand;
 
     /// <inheritdoc />
-    public IReadOnlyBindableList<ChatContextHistory> AllHistory { get; }
+    public IReadOnlyBindableList<ChatHistorySection> AllHistory { get; }
 
     /// <inheritdoc />
     public string? HistorySearchQuery
@@ -109,17 +120,36 @@ public sealed partial class ChatContextManager :
     public partial int BackgroundNotificationCount { get; private set; }
 
     [field: AllowNull, MaybeNull]
-    public IRelayCommand CreateNewCommand => field ??= new RelayCommand(CreateNew, () => !IsEmptyContext(_current));
+    public IRelayCommand CreateNewCommand =>
+        field ??= new RelayCommand(CreateNew, () => !ReferenceEquals(_current, _newChatDraft) || !IsEmptyDraft(_current));
 
-    IRelayCommand<ChatContextMetadata> IChatContextManager.RemoveCommand => RemoveCommand;
+    /// <inheritdoc />
+    public ChatHistoryView HistoryView
+    {
+        get;
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                RestartHistoryMaterializationCore(resetRawHistory: true);
+            }
+        }
+    }
 
-    private ICollection<ChatContextMetadata> LoadedMetadata => _metadataMap.Values;
+    private ICollection<ChatMetadata> LoadedMetadata => _metadataMap.Values;
 
-    private ChatContext? _current;
-    private int _currentSwitchVersion;
+    /// <summary>
+    /// Signals eligible edits or completed root work. A connected sync session coalesces
+    /// these signals and flushes local persistence before any network publication.
+    /// </summary>
+    public event EventHandler? SyncRequested;
 
-    private readonly ConcurrentDictionary<Guid, ChatContextMetadata> _metadataMap = [];
-    private readonly SourceList<ChatContextMetadata> _materializedHistorySource = new();
+    private RootChatContext? _current;
+    private RootChatContext? _newChatDraft;
+    private CancellationTokenSource? _currentSwitchCancellation;
+
+    private readonly ConcurrentDictionary<Guid, ChatMetadata> _metadataMap = [];
+    private readonly SourceList<ChatMetadata> _materializedHistorySource = new();
     private readonly Subject<Unit> _historyRegrouper = new();
     private readonly IDisposable _historyConnection;
     private readonly SemaphoreSlim _historyLoadGate = new(1, 1);
@@ -131,24 +161,39 @@ public sealed partial class ChatContextManager :
     private readonly HashSet<Guid> _notificationContexts = [];
 
     /// <summary>
-    /// A buffer for chat contexts and their metadata to be saved.
-    /// Sometimes only metadata needs to be saved (e.g., when only the topic is changed), in which case the context can be null.
+    /// Uncommitted save notifications. Entries retain their first account and canonical root
+    /// until successful commit; a later notification replaces the entry identity, not its owner.
     /// </summary>
-    private readonly Dictionary<Guid, ChatContextMetadataChangedMessage> _saveBuffer = [];
+    private readonly Dictionary<Guid, PendingSave> _pendingSaves = [];
+
+    // Snapshots are captured on input change. They share the ordinary save gate/debounce and
+    // retain their root until committed, but never request synchronization or create history.
+    private readonly Dictionary<Guid, PendingInput> _pendingInputs = [];
+
+    // Accepted local edits finish independently of sync or navigation cancellation.
+    // Shutdown waits for these commits and their publication before releasing the roots.
+    private readonly SemaphoreSlim _commitGate = new(1, 1);
 
     private readonly Settings _settings;
     private readonly IChatContextStorage _chatContextStorage;
     private readonly ILogger<ChatContextManager> _logger;
     private readonly DebounceExecutor<ChatContextManager, ThreadingTimerImpl> _saveDebounceExecutor;
 
+    private readonly Lock _rootsLock = new();
+    private readonly Dictionary<Guid, ResilientReference<RootChatContext>> _roots = [];
+    private readonly Dictionary<Task<RootChatContext>, PendingContextLoad> _loads = [];
+
     private CancellationTokenSource _historyGenerationCancellation = new();
     private string? _normalizedHistorySearchQuery;
-    private Guid? _storageCursor;
+    private ChatHistoryCursor? _storageCursor;
     private int _historyScanIndex;
     private int _historyGeneration;
     private int _activeHistorySessions;
     private bool _rawHistoryExhausted;
-    private bool _isDisposed;
+    private Task? _disposeTask;
+
+    private volatile bool _isClosing;
+    private volatile bool _isDisposed;
 
     public ChatContextManager(
         Settings settings,
@@ -162,46 +207,16 @@ public sealed partial class ChatContextManager :
         AllHistory = _materializedHistorySource
             .Connect()
             .AutoRefresh(static metadata => metadata.DateModified)
-            .GroupOn(GetHumanizedDate, _historyRegrouper)
-            .Transform(static group => new ChatContextHistory(group))
-            .DisposeMany()
-            .Sort(SortExpressionComparer<ChatContextHistory>.Ascending(static history => history.Date))
             .ObserveOnAvaloniaDispatcher()
+            .GroupOn(GetHistorySection, _historyRegrouper)
+            .Transform(static group => new ChatHistorySection(group))
+            .DisposeMany()
+            .Sort(SortExpressionComparer<ChatHistorySection>.Ascending(static history => history.Kind))
             .BindEx(out _historyConnection);
 
         _saveDebounceExecutor = new DebounceExecutor<ChatContextManager, ThreadingTimerImpl>(
             () => this,
-            static that =>
-            {
-                List<ChatContextMetadataChangedMessage> messages;
-                lock (that._saveBuffer)
-                {
-                    // ToList is better than ToArray (less allocation)
-                    // ↑ seems to be wrong in dotnet 10. ToArray is better!
-                    messages = [.. that._saveBuffer.Values];
-                    that._saveBuffer.Clear();
-                }
-                SaveMessagesAsync(that, messages).Detach(that._logger.ToExceptionHandler());
-
-                static async Task SaveMessagesAsync(ChatContextManager that, List<ChatContextMetadataChangedMessage> messages)
-                {
-                    // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-                    foreach (var message in messages)
-                    {
-                        if (IsEmptyContext(message.Context) || message.Metadata.IsTemporary) continue;
-
-                        try
-                        {
-                            if (message.Context is not null) await that._chatContextStorage.SaveChatContextAsync(message.Context);
-                            else await that._chatContextStorage.SaveChatContextMetadataAsync(message.Metadata);
-                        }
-                        catch (Exception ex)
-                        {
-                            that._logger.LogError(ex, "Failed to save chat context {ChatContextId}", message.Metadata.Id);
-                        }
-                    }
-                }
-            },
+            static that => that.FlushPendingSavesAsync().Detach(that._logger.ToExceptionHandler()),
             TimeSpan.FromSeconds(0.5))
         {
             // A continuously streaming response must still be persisted periodically even
@@ -209,55 +224,127 @@ public sealed partial class ChatContextManager :
             MaximumDelay = TimeSpan.FromSeconds(2)
         };
 
-        WeakReferenceMessenger.Default.Register(this);
+        WeakReferenceMessenger.Default.Register<ChatContextMetadataChangedMessage>(this);
+        WeakReferenceMessenger.Default.Register<ChatPersistenceChangedMessage>(this);
 
         Task.Run(CleanupUnusedWorkingDirectories).Detach(logger.ToExceptionHandler());
     }
 
     /// <summary>
-    /// Handles chat context changed events.
+    /// Handles chat data changed events.
     /// </summary>
     /// <param name="message"></param>
     public void Receive(ChatContextMetadataChangedMessage message)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        if (message.PropertyName == nameof(ChatMetadata.States))
+        {
+            // Running roots remain observable even when their history view is not selected.
+            // Nested runtime states are presented inside their root, not counted as separate chats.
+            if (FindRoot(message.Metadata) is null)
+            {
+                return;
+            }
+        }
+        else if (!_metadataMap.TryGetValue(message.Metadata.Id, out var metadata) || !ReferenceEquals(metadata, message.Metadata))
+        {
+            return;
+        }
+
         switch (message.PropertyName)
         {
-            case nameof(ChatContextMetadata.States):
+            case nameof(ChatMetadata.States):
             {
                 Dispatcher.UIThread.PostOnDemand(() =>
                 {
-                    if (message.Metadata.States.HasFlag(ChatContextMetadataStates.Busy)) _busyContexts.Add(message.Metadata.Id);
-                    else _busyContexts.Remove(message.Metadata.Id);
+                    if (_isClosing) return;
+                    if (message.Metadata.States.HasFlag(ChatContextMetadataStates.Busy))
+                    {
+                        _busyContexts.Add(message.Metadata.Id);
+                    }
+                    else
+                    {
+                        _busyContexts.Remove(message.Metadata.Id);
+                    }
                     if (message.Metadata.States.HasFlag(ChatContextMetadataStates.HasNotification)) _notificationContexts.Add(message.Metadata.Id);
                     else _notificationContexts.Remove(message.Metadata.Id);
 
-                    var currentId = _current?.Metadata.Id;
+                    var currentId = _current?.Data.Metadata.Id;
                     BackgroundBusyCount = _busyContexts.AsValueEnumerable().Count(id => id != currentId);
                     BackgroundNotificationCount = _notificationContexts.AsValueEnumerable().Count(id => id != currentId);
                 });
                 break;
             }
-            case nameof(ChatContextMetadata.DateModified):
-            case nameof(ChatContextMetadata.Topic):
+            case nameof(ChatMetadata.IsTemporary):
+            case nameof(ChatMetadata.ArchivedAt):
             {
-                lock (_saveBuffer)
-                {
-                    ref var valueRef = ref CollectionsMarshal.GetValueRefOrAddDefault(_saveBuffer, message.Metadata.Id, out _);
-                    if (valueRef is null) valueRef = message;
-                    else
-                    {
-                        valueRef.Context ??= message.Context;
-                        valueRef.Metadata = message.Metadata;
-                    }
-                }
-                _saveDebounceExecutor.Trigger();
-
                 Dispatcher.UIThread.PostOnDemand(() =>
                 {
+                    if (_isClosing) return;
+                    if (!_metadataMap.ContainsKey(message.Metadata.Id))
+                    {
+                        return;
+                    }
+
+                    if (message.PropertyName == nameof(ChatMetadata.IsTemporary) && FindRoot(message.Metadata) is { } root)
+                    {
+                        HandleInputChanged(root.Input, EventArgs.Empty);
+                    }
+
+                    if (message.PropertyName == nameof(ChatMetadata.IsTemporary) && HistoryView != ChatHistoryView.Temporary)
+                    {
+                        // Retention does not change membership or ordering in Recent/Archived.
+                        // Only an untitled chat's localized fallback can change a search match.
+                        if (_normalizedHistorySearchQuery is not null && string.IsNullOrWhiteSpace(message.Metadata.Topic))
+                        {
+                            RestartHistoryMaterializationCore();
+                        }
+                        return;
+                    }
+
+                    if (_normalizedHistorySearchQuery is not null)
+                    {
+                        // Re-evaluate membership and search together, without a second restart in AddRecentHistoryMetadata.
+                        RestartHistoryMaterializationCore(resetRawHistory: true);
+                        return;
+                    }
+
+                    if (!MatchesHistoryView(message.Metadata))
+                    {
+                        RemoveHistoryMetadata(message.Metadata);
+                    }
+                    RestartHistoryMaterializationCore(resetRawHistory: true, preserveVisibleItems: true);
+                    AddRecentHistoryMetadata(message.Metadata);
+                });
+                break;
+            }
+            case nameof(ChatMetadata.IsPinned):
+            {
+                Dispatcher.UIThread.PostOnDemand(() =>
+                {
+                    if (_isClosing) return;
+                    _historyRegrouper.OnNext(Unit.Default);
+                    RestartHistoryMaterializationCore(resetRawHistory: true, preserveVisibleItems: true);
+                });
+                break;
+            }
+            case nameof(ChatMetadata.DateModified):
+            case nameof(ChatMetadata.Topic):
+            {
+                Dispatcher.UIThread.PostOnDemand(() =>
+                {
+                    if (_isClosing) return;
                     CreateNewCommand.NotifyCanExecuteChanged();
-                    HandleHistoryMetadataChanged(
-                        message.Metadata,
-                        message.PropertyName == nameof(ChatContextMetadata.DateModified));
+                    // AutoRefresh handles timestamp ordering. Content matches refresh after saving;
+                    // only a title change needs to re-evaluate this query immediately.
+                    if (message.PropertyName == nameof(ChatMetadata.Topic) && _normalizedHistorySearchQuery is not null)
+                    {
+                        RestartHistoryMaterializationCore();
+                    }
                 });
                 break;
             }
@@ -265,7 +352,217 @@ public sealed partial class ChatContextManager :
     }
 
     /// <summary>
-    /// Delete all directories in _runtimeConstantProvider.EnsureWritableDataFolderPath($"plugins") that named with date (yyyy-MM-dd)
+    /// Retains pending local changes independently of presentation notifications.
+    /// </summary>
+    public void Receive(ChatPersistenceChangedMessage message)
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+        if (!_metadataMap.TryGetValue(message.Metadata.Id, out var metadata) || !ReferenceEquals(metadata, message.Metadata))
+        {
+            return;
+        }
+        if (!QueueSave(message.Metadata))
+        {
+            return;
+        }
+
+        if (!_isClosing)
+        {
+            _saveDebounceExecutor.Trigger();
+            if (metadata.CaptureChanges().HasIndependentFields)
+            {
+                SyncRequested?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public Task FlushPendingSavesAsync()
+    {
+        // Serialization and SQLite work must not run synchronously on the UI caller. The gate
+        // includes batch capture so a final flush also waits for any earlier in-flight write.
+        return Task.Run(() => FlushPendingSavesCoreAsync(shouldRequestSync: true));
+    }
+
+    internal Task FlushSyncSavesAsync() => Task.Run(() => FlushPendingSavesCoreAsync(shouldRequestSync: false));
+
+    private async Task FlushPendingSavesCoreAsync(bool shouldRequestSync)
+    {
+        bool hasStableWrites;
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_isClosing) return;
+            hasStableWrites = await CommitPendingSavesAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
+        if (shouldRequestSync && hasStableWrites)
+        {
+            SyncRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private async Task<bool> CommitPendingSavesAsync()
+    {
+        // The caller holds _commitGate. Shutdown uses this same batch path after draining roots.
+        PendingSave[] pendingSaves;
+        lock (_pendingSaves)
+        {
+            pendingSaves = [.. _pendingSaves.Values];
+        }
+
+        var failures = new List<Exception>();
+        foreach (var pendingSave in pendingSaves)
+        {
+            try
+            {
+                await SavePendingAsync(pendingSave).ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                failures.Add(new IOException($"Failed to save conversation {pendingSave.Metadata.Id}.", exception));
+            }
+        }
+
+        await CommitPendingInputsAsync(failures).ConfigureAwait(false);
+
+        if (failures.Count > 0)
+        {
+            throw new AggregateException("Some conversations could not be saved.", failures);
+        }
+        return pendingSaves.Any(pendingSave => pendingSave.Root?.HasWork != true);
+    }
+
+    private async Task SavePendingAsync(PendingSave pendingSave)
+    {
+        var capture = await CapturePendingSaveAsync(pendingSave).ConfigureAwait(false);
+        await CommitPendingSaveAsync(pendingSave, capture).ConfigureAwait(false);
+    }
+
+    private async Task<CapturedChatWrite> CapturePendingSaveAsync(PendingSave pendingSave)
+    {
+        if (pendingSave.Root is { } root)
+        {
+            return await root.DispatchAsync(() =>
+            {
+                // Pair the detached input with this graph snapshot, not with whatever input
+                // happens to exist later when storage begins. Newer input stays pending.
+                var input = GetPendingInput(pendingSave.Metadata.Id);
+                var capture = ChatWriteBatch.Capture(root.Data);
+                return capture with { Batch = capture.Batch with { LocalInput = input?.Write } };
+            }).ConfigureAwait(false);
+        }
+
+        var metadata = ChatMetadataWrite.Capture(pendingSave.Metadata, out var changes);
+        return new CapturedChatWrite(new ChatWriteBatch(metadata, []), [], changes);
+    }
+
+    private async Task CommitPendingSaveAsync(PendingSave pendingSave, CapturedChatWrite capture)
+    {
+        if (pendingSave.Root is { } root)
+        {
+            await _chatContextStorage
+                .SaveChatContextAsync(capture.Batch with { LocalAccountId = pendingSave.LocalAccountId }, CancellationToken.None)
+                .ConfigureAwait(false);
+            await root.DispatchAsync(() =>
+            {
+                pendingSave.Metadata.IsPersisted = true;
+                root.Data.PersistenceDirtyState.Acknowledge(capture.Changes);
+                pendingSave.Metadata.Acknowledge(capture.MetadataChanges);
+            }).ConfigureAwait(false);
+            if (capture.Batch.LocalInput is { } input)
+            {
+                AcknowledgeInput(pendingSave.Metadata.Id, input);
+            }
+        }
+        else
+        {
+            await _chatContextStorage.SaveChatContextMetadataAsync(capture.Batch.Metadata, CancellationToken.None).ConfigureAwait(false);
+            pendingSave.Metadata.Acknowledge(capture.MetadataChanges);
+        }
+
+        lock (_pendingSaves)
+        {
+            // A failed write stays queued automatically. A successful write consumes only its
+            // own notification, leaving any later notification and its unacknowledged edits intact.
+            if (_pendingSaves.TryGetValue(pendingSave.Metadata.Id, out var current) && ReferenceEquals(current, pendingSave))
+            {
+                _pendingSaves.Remove(pendingSave.Metadata.Id);
+            }
+        }
+
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            if (_isClosing) return;
+            if (_newChatDraft is not null && ReferenceEquals(_newChatDraft, pendingSave.Root))
+            {
+                _newChatDraft = null;
+            }
+            if (HistorySearchIncludesContent && _normalizedHistorySearchQuery is not null)
+            {
+                RestartHistoryMaterializationCore();
+            }
+        });
+    }
+
+    private async Task SavePendingChatAsync(Guid id)
+    {
+        if (GetPendingSave(id) is { } pending)
+        {
+            await SavePendingAsync(pending).ConfigureAwait(false);
+        }
+    }
+
+    private PendingSave? GetPendingSave(Guid id)
+    {
+        lock (_pendingSaves)
+        {
+            return _pendingSaves.GetValueOrDefault(id);
+        }
+    }
+
+    private static bool CanSave(ChatMetadata metadata, RootChatContext? root) => metadata.IsPersisted || root is { Data.HasHistory: true };
+
+    private bool QueueSave(ChatMetadata metadata)
+    {
+        // Capture the owner at notification ingress, while the writer still holds it. A pending
+        // or failed save must not rely on a later lookup through the manager's weak index.
+        var root = FindRoot(metadata);
+        var localAccountId = SignedInAccountId;
+        lock (_pendingSaves)
+        {
+            if (!_metadataMap.TryGetValue(metadata.Id, out var canonical) || !ReferenceEquals(canonical, metadata))
+            {
+                return false;
+            }
+
+            // Draft edits remain dirty on the model. Its first real node queues the complete
+            // initial write; merely changing title or retention must not create a stored chat.
+            if (!CanSave(metadata, root))
+            {
+                return false;
+            }
+
+            if (_pendingSaves.TryGetValue(metadata.Id, out var pending))
+            {
+                // Preserve initial ownership, including when the account changes during I/O.
+                // Always publish a new entry identity so an older commit cannot consume this edit.
+                root = pending.Root ?? root;
+                localAccountId = pending.LocalAccountId;
+            }
+            _pendingSaves[metadata.Id] = new PendingSave(root, metadata, localAccountId);
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Removes empty dated plugin working directories older than three days.
     /// </summary>
     private void CleanupUnusedWorkingDirectories()
     {
@@ -301,251 +598,643 @@ public sealed partial class ChatContextManager :
     [MemberNotNull(nameof(_current))]
     private void CreateNew()
     {
-        if (IsEmptyContext(_current)) return;
-        Interlocked.Increment(ref _currentSwitchVersion);
-
-        var isCurrentTemporary = _current?.Metadata.IsTemporary is true;
-        if (isCurrentTemporary)
+        CancelCurrentSwitch();
+        if (IsEmptyDraft(_newChatDraft) && _metadataMap.ContainsKey(_newChatDraft.Data.Metadata.Id))
         {
-            // Remove the temporary chat context before creating a new one
-            // Temporary chat contexts are not saved to storage, so no need to delete from storage.
-            if (_metadataMap.Remove(_current!.Metadata.Id, out var removed))
+            PublishCurrent(_newChatDraft);
+            AddRecentHistoryMetadata(_newChatDraft.Data.Metadata);
+            return;
+        }
+        _newChatDraft = null;
+
+        var isCurrentTemporary = _current?.Data.Metadata.IsTemporary is true;
+        var isTemporary = _settings.ChatWindow.TemporaryChatMode switch
+        {
+            TemporaryChatMode.RememberLast => isCurrentTemporary,
+            TemporaryChatMode.Always => true,
+            _ => false
+        };
+        var root = CreateBlankRoot(isTemporary);
+        _newChatDraft = root;
+        PublishCurrent(root);
+        AddRecentHistoryMetadata(root.Data.Metadata);
+    }
+
+    /// <inheritdoc />
+    public RootChatContext CreateChat(bool isTemporary)
+    {
+        CancelCurrentSwitch();
+        var root = CreateBlankRoot(isTemporary);
+        PublishCurrent(root);
+        AddRecentHistoryMetadata(root.Data.Metadata);
+        return root;
+    }
+
+    private RootChatContext CreateBlankRoot(bool isTemporary)
+    {
+        var data = new ChatData();
+        data.Metadata.IsTemporary = isTemporary;
+        return CreateRoot(data);
+    }
+
+    [MemberNotNull(nameof(_current))]
+    private void PublishCurrent(RootChatContext next)
+    {
+        Dispatcher.UIThread.VerifyAccess();
+        var previous = _current;
+        _current = next;
+        NotifyCurrentChanged();
+        if (previous is null || ReferenceEquals(previous, next))
+        {
+            return;
+        }
+
+        if (IsEmptyDraft(previous))
+        {
+            RemoveHistoryMetadata(previous.Data.Metadata);
+            if (!ReferenceEquals(previous, _newChatDraft))
             {
-                RemoveHistoryMetadata(removed);
+                _metadataMap.TryRemove(previous.Data.Metadata.Id, out _);
             }
         }
 
-        _current = new ChatContext
+        // Current keeps a deleted root alive during preparation. Once bindings have moved,
+        // the normal publication path releases it; deletion does not await later navigation.
+        if (!_metadataMap.ContainsKey(previous.Data.Metadata.Id))
         {
-            Metadata =
-            {
-                IsTemporary = _settings.ChatWindow.TemporaryChatMode switch
-                {
-                    TemporaryChatMode.RememberLast => isCurrentTemporary,
-                    TemporaryChatMode.Always => true,
-                    _ => false
-                },
-            },
-        };
-        _metadataMap[_current.Metadata.Id] = _current.Metadata;
-        // After created, the chat context is not added to the storage yet.
-        // It will be added when it's property has changed.
-
-        AddRecentHistoryMetadata(_current.Metadata);
-        NotifyCurrentChanged();
+            ReleaseRoot(previous);
+        }
     }
 
-    private bool CanRemove => _metadataMap.Count > 1 || !IsEmptyContext(_current);
-
-    [RelayCommand(CanExecute = nameof(CanRemove))]
-    private void Remove(ChatContextMetadata metadata)
+    private void ReleaseRoot(RootChatContext root)
     {
-        // delete in background
-        Task.Run(async () =>
-            {
-                metadata.IsTemporaryDeleted = true;
-
-                // If the current chat context is being removed, we need to set a new current context
-                if (metadata.Id == _current?.Metadata.Id)
-                {
-                    await LoadRecentAsCurrentAsync().ConfigureAwait(false);
-                }
-
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    var progress = new Progress<double>();
-                    var currentProgress = 0d;
-                    var timer = new DispatcherTimer(
-                        TimeSpan.FromSeconds(1),
-                        DispatcherPriority.Normal,
-                        delegate
-                        {
-                            currentProgress += 0.2d;
-                            progress.To<IProgress<double>>().Report(currentProgress);
-                        });
-                    ToastManager
-                        .Create(
-                            new FormattedDynamicLocaleKey(
-                                LocaleKey.ChatContextManager_DeletingToast_Content,
-                                new DirectLocaleKey(metadata.ActualTopic ?? string.Empty)).ToString())
-                        .WithProgress(progress)
-                        .WithDurationSeconds(5d)
-                        .WithAction(DynamicLocaleKey.Resolve(LocaleKey.Common_Undo), ButtonStyle.Ghost)
-                        .OnBottomLeft()
-                        .ShowInfoAsync()
-                        .ContinueWith(
-                            t =>
-                            {
-                                // This continuation runs when the toast is dismissed, either by the timer or by user action (Undo).
-                                // It should be UI thread here.
-                                Debug.Assert(Dispatcher.UIThread.CheckAccess());
-
-                                timer.Stop();
-                                if (t.Result != ToastResult.ActionButtonClicked)
-                                {
-                                    Task.Run(ExecuteDeleteAsync);
-                                }
-                                else
-                                {
-                                    metadata.IsTemporaryDeleted = false;
-                                    AddRecentHistoryMetadata(metadata);
-                                    RemoveCommand.NotifyCanExecuteChanged();
-                                }
-                            },
-                            TaskContinuationOptions.ExecuteSynchronously);
-
-                    RemoveHistoryMetadata(metadata);
-                    RemoveCommand.NotifyCanExecuteChanged();
-                });
-            })
-            .Detach(_logger.ToExceptionHandler());
-
-        async Task ExecuteDeleteAsync()
+        using (_rootsLock.EnterScope())
         {
+            if (!_roots.Remove(root.Data.Metadata.Id)) return;
+        }
+        root.Idle -= OnRootIdle;
+        root.Input.Changed -= HandleInputChanged;
+        root.DisposeAsync().AsTask().Detach(_logger.ToExceptionHandler());
+    }
+
+    /// <inheritdoc />
+    public async Task RenameAsync(ChatMetadata metadata, string? topic)
+    {
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_isClosing, this);
+            if (!_metadataMap.TryGetValue(metadata.Id, out var canonical) || !ReferenceEquals(canonical, metadata))
+            {
+                return;
+            }
+
+            RootChatContext? root;
+            using (_rootsLock.EnterScope())
+            {
+                root = _roots.GetValueOrDefault(metadata.Id)?.Target;
+            }
+
+            if (root is null)
+            {
+                metadata.Rename(topic);
+            }
+            else
+            {
+                await root.ApplyAsync(() => metadata.Rename(topic)).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public Task SetPinnedAsync(ChatMetadata metadata, bool isPinned)
+    {
+        if (IsEmptyDraft(FindRoot(metadata)))
+        {
+            return Task.CompletedTask;
+        }
+
+        return Task.Run(async () =>
+        {
+            await _commitGate.WaitAsync().ConfigureAwait(false);
             try
             {
-                metadata.States = ChatContextMetadataStates.None;
-                _metadataMap.TryRemove(metadata.Id, out _);
+                ObjectDisposedException.ThrowIf(_isClosing, this);
+                if (!_metadataMap.TryGetValue(metadata.Id, out var canonical) || !ReferenceEquals(canonical, metadata) ||
+                    metadata.IsPinned == isPinned)
+                {
+                    return;
+                }
 
-                await _chatContextStorage.DeleteChatContextsAsync([metadata.Id]).ConfigureAwait(false);
+                await SavePendingChatAsync(metadata.Id).ConfigureAwait(false);
+                await _chatContextStorage.SetPinnedAsync(metadata.Id, isPinned, CancellationToken.None).ConfigureAwait(false);
+                // Publication is part of the committed operation, not a cancellable UI wait.
+                var root = FindRoot(metadata);
+                if (root is null)
+                {
+                    metadata.IsPinned = isPinned;
+                }
+                else
+                {
+                    await root.DispatchAsync(() => metadata.IsPinned = isPinned).ConfigureAwait(false);
+                }
+                SyncRequested?.Invoke(this, EventArgs.Empty);
             }
             finally
             {
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    RemoveHistoryMetadata(metadata);
-                    RemoveCommand.NotifyCanExecuteChanged();
-                });
+                _commitGate.Release();
             }
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task ArchiveAsync(ChatMetadata metadata)
+    {
+        if (IsEmptyDraft(FindRoot(metadata)))
+        {
+            return;
+        }
+
+        if (metadata.IsTemporary)
+        {
+            throw new InvalidOperationException("Temporary conversations cannot be archived.");
+        }
+
+        await Task.Run(async () =>
+        {
+            await _commitGate.WaitAsync().ConfigureAwait(false);
+            var root = FindRoot(metadata);
+            try
+            {
+                ObjectDisposedException.ThrowIf(_isClosing, this);
+                if (root is not null)
+                {
+                    await root.StopAsync().ConfigureAwait(false);
+                }
+                await SavePendingChatAsync(metadata.Id).ConfigureAwait(false);
+                // Commit model state before releasing the persistence gate. History projection
+                // observes the notification independently; it is not part of this transaction.
+                var archivedAt = await _chatContextStorage.ArchiveAsync(metadata.Id, CancellationToken.None).ConfigureAwait(false);
+                await PublishArchiveStateAsync(metadata, archivedAt).ConfigureAwait(false);
+                SyncRequested?.Invoke(this, EventArgs.Empty);
+            }
+            finally
+            {
+                if (!_isClosing)
+                {
+                    root?.ResumeAfterStop();
+                }
+                _commitGate.Release();
+            }
+        });
+        if (_current?.Data.Metadata.Id == metadata.Id)
+        {
+            await LoadRecentAsCurrentAsync();
+        }
+    }
+
+    /// <summary>Whether stopping sync now could strand work not represented in the inventory.</summary>
+    public bool HasUncommittedWork(Guid chatId)
+    {
+        lock (_pendingSaves)
+        {
+            if (_pendingSaves.ContainsKey(chatId))
+            {
+                return true;
+            }
+        }
+        return FindRoot(chatId)?.HasWork == true;
+    }
+
+    /// <inheritdoc />
+    public bool HasRunningWork(ChatMetadata metadata) => FindRoot(metadata)?.HasWork == true;
+
+    /// <inheritdoc />
+    public async Task RestoreAsync(ChatMetadata metadata)
+    {
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_isClosing, this);
+            await _chatContextStorage.RestoreAsync(metadata.Id, CancellationToken.None).ConfigureAwait(false);
+            await PublishArchiveStateAsync(metadata, null).ConfigureAwait(false);
+            SyncRequested?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
+    }
+
+    private async Task PublishArchiveStateAsync(ChatMetadata metadata, DateTimeOffset? archivedAt)
+    {
+        // The persistence gate keeps topology installation and deletion outside this publication.
+        RootChatContext? root;
+        using (_rootsLock.EnterScope())
+        {
+            root = _roots.GetValueOrDefault(metadata.Id)?.Target;
+        }
+
+        if (root is null)
+        {
+            metadata.ArchivedAt = archivedAt;
+        }
+        else
+        {
+            await root.DispatchAsync(() => metadata.ArchivedAt = archivedAt).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task DeletePermanentlyAsync(ChatMetadata metadata)
+    {
+        return Task.Run(async () =>
+        {
+            await _commitGate.WaitAsync().ConfigureAwait(false);
+            RootChatContext? root;
+            using (_rootsLock.EnterScope())
+            {
+                root = _roots.GetValueOrDefault(metadata.Id)?.Target;
+            }
+
+            try
+            {
+                ObjectDisposedException.ThrowIf(_isClosing, this);
+                if (root is not null)
+                {
+                    root.BeginDeletion();
+                    await root.StopAsync().ConfigureAwait(false);
+                }
+
+                try
+                {
+                    await _chatContextStorage.DeletePermanentlyAsync(metadata.Id, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch
+                {
+                    using (_rootsLock.EnterScope())
+                    {
+                        if (!_isClosing)
+                        {
+                            root?.ResumeAfterStop();
+                        }
+                    }
+
+                    throw;
+                }
+
+                await RemoveDeletedChatAsync(metadata.Id, root).ConfigureAwait(false);
+                SyncRequested?.Invoke(this, EventArgs.Empty);
+            }
+            finally
+            {
+                _commitGate.Release();
+            }
+        });
+    }
+
+    private async Task RemoveDeletedChatAsync(Guid chatId, RootChatContext? root)
+    {
+        CancellationTokenSource historyCancellation;
+        ChatMetadata? removed;
+        lock (_historyStateLock)
+        {
+            _historyGeneration++;
+            historyCancellation = _historyGenerationCancellation;
+            lock (_pendingSaves)
+            {
+                _metadataMap.TryRemove(chatId, out removed);
+                _pendingSaves.Remove(chatId);
+                lock (_pendingInputs)
+                {
+                    _pendingInputs.Remove(chatId);
+                }
+            }
+        }
+
+        await historyCancellation.CancelAsync().ConfigureAwait(false);
+        if (root is not null && !ReferenceEquals(_current, root))
+        {
+            ReleaseRoot(root);
+        }
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            if (removed is not null)
+            {
+                RemoveHistoryMetadata(removed);
+            }
+            RestartHistoryMaterialization();
+            QueueLeaveUnavailableChat(chatId);
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task PersistChatAsync(ChatMetadata metadata)
+    {
+        var root = await GetOrLoadContextAsync(metadata, CancellationToken.None).ConfigureAwait(false);
+        if (!root.Data.HasHistory && !metadata.IsPersisted)
+        {
+            // New drafts only select retention for future messages. Stored empty histories still have a row to update.
+            await root.ApplyAsync(() => metadata.SetTemporary(false)).ConfigureAwait(false);
+            return;
+        }
+
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_isClosing, this);
+            if (!metadata.IsTemporary)
+            {
+                return;
+            }
+
+            // Capture through the existing writer. Only the detached batch changes retention before commit.
+            var (batch, changes, metadataChanges) = await root.DispatchAsync(() => ChatWriteBatch.Capture(root.Data)).ConfigureAwait(false);
+            batch.Metadata.Snapshot.IsTemporary = false;
+            batch = batch with
+            {
+                LocalAccountId = SignedInAccountId,
+                Metadata = batch.Metadata with
+                {
+                    ShouldWriteRetention = true
+                }
+            };
+            await _chatContextStorage.SaveChatContextAsync(batch, CancellationToken.None).ConfigureAwait(false);
+            await root.DispatchAsync(() =>
+            {
+                metadata.IsPersisted = true;
+                root.Data.PersistenceDirtyState.Acknowledge(changes);
+                metadata.Acknowledge(metadataChanges);
+                metadata.IsTemporary = false;
+            }).ConfigureAwait(false);
+            SyncRequested?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            _commitGate.Release();
         }
     }
 
     /// <summary>
-    /// Loads the most recently modified chat context as current.
+    /// Loads the most recently modified chat data as current.
     /// </summary>
     private async Task LoadRecentAsCurrentAsync()
     {
-        var switchVersion = Interlocked.Increment(ref _currentSwitchVersion);
-        ChatContext? next = null;
-
-        // Load the most recently modified chat context that is not marked as temporary deleted
-        if (LoadedMetadata
+        if (_isClosing) return;
+        using var cancellation = BeginCurrentSwitch();
+        var previous = _current;
+        try
+        {
+            var historyItem = LoadedMetadata
                 .AsValueEnumerable()
-                .Where(m => !m.IsTemporaryDeleted)
-                .OrderByDescending(c => c.DateModified)
-                .FirstOrDefault() is { } historyItem)
-        {
-            // Switch to the most recently modified chat context
-            next = await LoadChatContextAsync(historyItem.Id, false).ConfigureAwait(false);
-        }
-
-        if (switchVersion != Volatile.Read(ref _currentSwitchVersion))
-        {
-            if (next is not null) await Dispatcher.UIThread.InvokeAsync(next.Dispose);
-            return;
-        }
-
-        if (next is not null)
-        {
-            await Dispatcher.UIThread.InvokeAsync(() => next.Presentation.PrepareInitialWindowAsync(CancellationToken.None));
-        }
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            if (switchVersion != Volatile.Read(ref _currentSwitchVersion))
+                .Where(metadata => !metadata.IsArchived)
+                .OrderByDescending(metadata => metadata.DateModified)
+                .ThenByDescending(metadata => metadata.Id)
+                .FirstOrDefault();
+            var candidate = await _chatContextStorage.GetMostRecentChatMetadataAsync(cancellation.Token);
+            if (candidate is not null)
             {
-                next?.Dispose();
-                return;
-            }
-
-            if (next is null)
-            {
-                _current = null;
-                CreateNew();
-            }
-            else
-            {
-                _current = next;
-                NotifyCurrentChanged();
-            }
-
-        });
-    }
-
-    public Task<ChatContext?> LoadChatContextAsync(ChatContextMetadata metadata, CancellationToken cancellationToken = default) =>
-        metadata.Id == _current?.Metadata.Id ? Task.FromResult<ChatContext?>(_current) : LoadChatContextAsync(metadata.Id, false, cancellationToken);
-
-    private async Task SwitchCurrentAsync(Guid id, ChatContext? previous, int switchVersion)
-    {
-        var next = await LoadChatContextAsync(id, false, CancellationToken.None).ConfigureAwait(false);
-        if (switchVersion != Volatile.Read(ref _currentSwitchVersion))
-        {
-            if (next is not null) await Dispatcher.UIThread.InvokeAsync(next.Dispose);
-            return;
-        }
-
-        if (next is not null)
-        {
-            // Entering the dispatcher after storage deserialization also acts as a FIFO barrier for
-            // ThreadSafeObservableStringBuilder appends already posted at Normal priority. The
-            // bounded tail window therefore captures committed text and version pairs before it is
-            // published as Current, while older turns remain UI-unmaterialized.
-            await Dispatcher.UIThread.InvokeAsync(() => next.Presentation.PrepareInitialWindowAsync(CancellationToken.None));
-        }
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            if (switchVersion != Volatile.Read(ref _currentSwitchVersion))
-            {
-                next?.Dispose();
-                return;
-            }
-
-            if (next is null)
-            {
-                CreateNew();
-            }
-            else
-            {
-                _current = next;
-                NotifyCurrentChanged();
-            }
-
-
-            // Removing the previous context in the same collection-change pass can make Avalonia
-            // observe an intermediate index map. Keep the established background-priority cleanup.
-            Dispatcher.UIThread.Post(
-                () =>
+                var canonical = _metadataMap.GetOrAdd(candidate.Id, candidate);
+                if (historyItem is null || canonical.DateModified > historyItem.DateModified ||
+                    canonical.DateModified == historyItem.DateModified && canonical.Id.CompareTo(historyItem.Id) > 0)
                 {
-                    CreateNewCommand.NotifyCanExecuteChanged();
+                    historyItem = canonical;
+                }
+            }
 
-                    if (previous is not null &&
-                        (IsEmptyContext(previous) || previous.Metadata.IsTemporary) &&
-                        _metadataMap.Remove(previous.Metadata.Id, out _))
-                    {
-                        RemoveHistoryMetadata(previous.Metadata);
-                    }
-
-                    RemoveCommand.NotifyCanExecuteChanged();
-
-                    var currentId = _current?.Metadata.Id;
-                    BackgroundBusyCount = _busyContexts.AsValueEnumerable().Count(contextId => contextId != currentId);
-                    BackgroundNotificationCount = _notificationContexts.AsValueEnumerable().Count(contextId => contextId != currentId);
-                },
-                DispatcherPriority.Background);
-        });
+            cancellation.Token.ThrowIfCancellationRequested();
+            var next = historyItem is null ? null : await LoadChatContextAsync(historyItem.Id, cancellation.Token);
+            await PrepareAndPublishCurrentAsync(next, previous, cancellation);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            FinishCurrentSwitch(cancellation);
+        }
     }
 
-    private async Task<ChatContext?> LoadChatContextAsync(Guid id, bool deleteIfFailed, CancellationToken cancellationToken = default)
+    public Task<RootChatContext?> LoadChatContextAsync(ChatMetadata metadata, CancellationToken cancellationToken = default)
+    {
+        _metadataMap.TryAdd(metadata.Id, metadata);
+        return metadata.Id == _current?.Data.Metadata.Id ?
+            Task.FromResult<RootChatContext?>(_current) :
+            LoadChatContextAsync(metadata.Id, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task ViewSyncedBranchAsync(RootChatContext root, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ObjectDisposedException.ThrowIf(_isClosing, this);
+        await root.ApplyAsync(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            root.Data.FollowDurableChoices();
+        }).WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private CancellationTokenSource BeginCurrentSwitch()
+    {
+        CancelCurrentSwitch();
+        var cancellation = new CancellationTokenSource();
+        _currentSwitchCancellation = cancellation;
+        return cancellation;
+    }
+
+    private void CancelCurrentSwitch()
+    {
+        var cancellation = _currentSwitchCancellation;
+        _currentSwitchCancellation = null;
+        // The async switch owns disposal. Cancel its waits, not the canonical data or shared parsing.
+        cancellation?.Cancel();
+    }
+
+    private void FinishCurrentSwitch(CancellationTokenSource cancellation)
+    {
+        if (!ReferenceEquals(_currentSwitchCancellation, cancellation)) return;
+        _currentSwitchCancellation = null;
+        // A failed selection may retain an existing chat, but never a deleted one.
+        if (!_isClosing && _current is { } current && !_metadataMap.ContainsKey(current.Data.Metadata.Id))
+        {
+            CreateNew();
+        }
+    }
+
+    private async Task SwitchCurrentAsync(Guid id, RootChatContext? previous, CancellationTokenSource cancellation)
+    {
+        using (cancellation)
+        {
+            try
+            {
+                var next = await LoadChatContextAsync(id, cancellation.Token);
+                await PrepareAndPublishCurrentAsync(next, previous, cancellation);
+            }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+            {
+            }
+            finally
+            {
+                FinishCurrentSwitch(cancellation);
+            }
+        }
+    }
+
+    private async Task PrepareAndPublishCurrentAsync(
+        RootChatContext? next,
+        RootChatContext? previous,
+        CancellationTokenSource cancellation)
+    {
+        cancellation.Token.ThrowIfCancellationRequested();
+        if (next is not null)
+        {
+            if (next.Input.Edit is { } edit && next.Data.FindNode(edit.NodeId) is { IsMessageLoaded: false } target)
+            {
+                await next.EnsureTurnLoadedAsync(target.Turn, cancellation.Token).ConfigureAwait(false);
+            }
+            if (!ReferenceEquals(next, previous))
+            {
+                await ViewSyncedBranchAsync(next, cancellation.Token).ConfigureAwait(false);
+            }
+            // Preparation and publication remain UI-owned; canceled waits do not dispose the model.
+            var isPrepared = await Dispatcher.UIThread.InvokeAsync(
+                () => next.Presentation.PrepareInitialWindowAsync(cancellation.Token),
+                DispatcherPriority.Normal,
+                cancellation.Token).GetTask().Unwrap().WaitAsync(cancellation.Token);
+            if (!isPrepared)
+            {
+                return;
+            }
+        }
+
+        await Dispatcher.UIThread.InvokeAsync(
+            () =>
+            {
+                if (_isClosing || cancellation.IsCancellationRequested ||
+                    !ReferenceEquals(_currentSwitchCancellation, cancellation) ||
+                    next is not null && (next.Data.IsDisposed || !_metadataMap.ContainsKey(next.Data.Metadata.Id)))
+                {
+                    return;
+                }
+
+                if (next is null)
+                {
+                    CreateNew();
+                }
+                else
+                {
+                    PublishCurrent(next);
+                }
+            },
+            DispatcherPriority.Normal,
+            cancellation.Token);
+    }
+
+    private async Task<RootChatContext> GetOrLoadContextAsync(ChatMetadata metadata, CancellationToken cancellationToken)
+    {
+        Task<RootChatContext> loading;
+        using (_rootsLock.EnterScope())
+        {
+            ObjectDisposedException.ThrowIf(_isClosing, this);
+            if (_roots.GetValueOrDefault(metadata.Id)?.Target is { } existing)
+            {
+                return existing;
+            }
+
+            // Topology has no runtime yet. The manager owns this I/O until a canonical root takes
+            // over, so shutdown can cancel and drain it without blocking unrelated saves/archives.
+            var pending = new PendingContextLoad(metadata.Id, CancellationTokenSource.CreateLinkedTokenSource(cancellationToken));
+            loading = Task.Run(() => LoadContextCoreAsync(metadata, pending), CancellationToken.None);
+            _loads.Add(loading, pending);
+        }
+
+        try
+        {
+            return await loading.ConfigureAwait(false);
+        }
+        finally
+        {
+            using var scope = _rootsLock.EnterScope();
+            if (_loads.Remove(loading, out var pending))
+            {
+                pending.Cancellation.Dispose();
+            }
+        }
+    }
+
+    private async Task<RootChatContext> LoadContextCoreAsync(ChatMetadata metadata, PendingContextLoad pending)
+    {
+        var cancellationToken = pending.Cancellation.Token;
+        while (true)
+        {
+            using (_rootsLock.EnterScope())
+            {
+                pending.ShouldReload = false;
+            }
+
+            var data = metadata.IsPersisted ?
+                await _chatContextStorage.GetChatContextAsync(metadata, cancellationToken).ConfigureAwait(false) :
+                new ChatData(metadata, [], new ChatMessageNode(Guid.NewGuid().SetVersion(0), new RootChatMessage()));
+            try
+            {
+                var input = await _chatContextStorage.ReadInputAsync(metadata.Id, cancellationToken).ConfigureAwait(false);
+                await _commitGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    using var scope = _rootsLock.EnterScope();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ObjectDisposedException.ThrowIf(_isClosing, this);
+                    if (!_metadataMap.ContainsKey(metadata.Id))
+                    {
+                        throw new OperationCanceledException("The conversation was removed while loading.");
+                    }
+                    if (_roots.GetValueOrDefault(metadata.Id)?.Target is { } existing)
+                    {
+                        if (!ReferenceEquals(data, existing.Data))
+                        {
+                            data.Dispose();
+                        }
+                        return existing;
+                    }
+                    if (pending.ShouldReload)
+                    {
+                        // Sync committed while this detached read was in flight. Retry outside
+                        // the commit gate; a slow history read must not block unrelated saves/archive.
+                        data.Dispose();
+                        continue;
+                    }
+                    var root = CreateRoot(data);
+                    if (input is not null)
+                    {
+                        root.Input.Restore(input);
+                    }
+                    return root;
+                }
+                finally
+                {
+                    _commitGate.Release();
+                }
+            }
+            catch
+            {
+                data.Dispose();
+                throw;
+            }
+        }
+    }
+
+    private async Task<RootChatContext?> LoadChatContextAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var chatContext = await _chatContextStorage.GetChatContextAsync(id, cancellationToken).ConfigureAwait(false);
-            if (!IsEmptyContext(chatContext)) return chatContext;
-
-            // If the loaded chat context is empty, it means it's corrupted or failed to load. We should delete it from storage and remove it from history.
-            await _chatContextStorage.DeleteChatContextsAsync([id], cancellationToken).ConfigureAwait(false);
-            return null;
+            var context = await GetOrLoadContextAsync(_metadataMap[id], cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            return context;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -554,10 +1243,11 @@ public sealed partial class ChatContextManager :
         catch (Exception ex)
         {
             ex = HandledSystemException.Handle(ex);
-            _logger.LogError(ex, "Failed to load chat context {ChatContextId}", id);
+            _logger.LogError(ex, "Failed to load chat data {ChatContextId}", id);
 
-            await Dispatcher.UIThread.InvokeOnDemandAsync(() =>
+            Dispatcher.UIThread.PostOnDemand(() =>
             {
+                if (_isClosing || cancellationToken.IsCancellationRequested) return;
                 ToastManager
                     .Error(
                         LocaleKey.Common_Error.I18N(),
@@ -566,25 +1256,22 @@ public sealed partial class ChatContextManager :
                             ex.GetFriendlyMessage()));
             });
 
-            if (deleteIfFailed)
-            {
-                await _chatContextStorage.DeleteChatContextsAsync([id], cancellationToken).ConfigureAwait(false);
-            }
-
             return null;
         }
     }
 
     /// <summary>
-    /// Notifies that the current chat context has changed.
+    /// Notifies that the current chat data has changed.
     /// </summary>
     private void NotifyCurrentChanged()
     {
         Dispatcher.UIThread.VerifyAccess();
         OnPropertyChanged(nameof(Current));
         OnPropertyChanged(nameof(CurrentMetadata));
-        RemoveCommand.NotifyCanExecuteChanged();
         CreateNewCommand.NotifyCanExecuteChanged();
+        var currentId = _current?.Data.Metadata.Id;
+        BackgroundBusyCount = _busyContexts.AsValueEnumerable().Count(id => id != currentId);
+        BackgroundNotificationCount = _notificationContexts.AsValueEnumerable().Count(id => id != currentId);
     }
 
     /// <inheritdoc />
@@ -600,6 +1287,7 @@ public sealed partial class ChatContextManager :
     private async ValueTask<IncrementalLoadResult> LoadMoreHistoryAsync(int count, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+        ObjectDisposedException.ThrowIf(_isClosing, this);
 
         await _historyLoadGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -607,6 +1295,10 @@ public sealed partial class ChatContextManager :
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                if (_isClosing)
+                {
+                    throw new OperationCanceledException();
+                }
 
                 int generation;
                 string? query;
@@ -614,6 +1306,7 @@ public sealed partial class ChatContextManager :
                 CancellationToken generationToken;
                 lock (_historyStateLock)
                 {
+                    if (_isClosing) throw new OperationCanceledException();
                     generation = _historyGeneration;
                     query = _normalizedHistorySearchQuery;
                     searchIncludesContent = HistorySearchIncludesContent;
@@ -630,7 +1323,8 @@ public sealed partial class ChatContextManager :
                         generationToken,
                         cancellationToken).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (generationToken.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (!_isClosing && generationToken.IsCancellationRequested &&
+                                                         !cancellationToken.IsCancellationRequested)
                 {
                     // Query changes are internal retargeting, not cancellation of the caller's
                     // viewport-fill operation. Retry the same requested page against the latest
@@ -638,13 +1332,13 @@ public sealed partial class ChatContextManager :
                 }
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (_isClosing || cancellationToken.IsCancellationRequested)
         {
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to incrementally load chat context history");
+            _logger.LogError(ex, "Failed to incrementally load chat data history");
             ToastManager.Error(LocaleKey.Common_Error.I18N(), ex.GetFriendlyMessage());
 
             return new IncrementalLoadResult(0, HasMoreItems);
@@ -665,8 +1359,14 @@ public sealed partial class ChatContextManager :
     {
         using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(generationToken, callerToken);
         var cancellationToken = linkedCancellation.Token;
-        var matches = new List<ChatContextMetadata>(count);
+        var matches = new List<ChatMetadata>(count);
         var pattern = query is null ? null : new TextSearchPattern(query);
+        int scanIndex;
+        lock (_historyStateLock)
+        {
+            ThrowIfHistoryGenerationChanged(generation, cancellationToken);
+            scanIndex = _historyScanIndex;
+        }
 
         while (matches.Count < count)
         {
@@ -677,9 +1377,13 @@ public sealed partial class ChatContextManager :
             lock (_historyStateLock)
             {
                 ThrowIfHistoryGenerationChanged(generation, cancellationToken);
-                if (_historyScanIndex < _historyScanIds.Count)
+                if (scanIndex < _historyScanIds.Count)
                 {
-                    candidateId = _historyScanIds[_historyScanIndex++];
+                    candidateId = _historyScanIds[scanIndex++];
+                    if (_materializedHistoryIds.Contains(candidateId.Value))
+                    {
+                        continue;
+                    }
                 }
                 else if (!_rawHistoryExhausted)
                 {
@@ -694,7 +1398,7 @@ public sealed partial class ChatContextManager :
             }
 
             if (candidateId is not { } id) break;
-            if (!_metadataMap.TryGetValue(id, out var metadata) || metadata.IsTemporaryDeleted) continue;
+            if (!_metadataMap.TryGetValue(id, out var metadata) || !MatchesHistoryView(metadata)) continue;
             if (await MatchesHistorySearchAsync(metadata, pattern, searchIncludesContent, cancellationToken).ConfigureAwait(false))
             {
                 matches.Add(metadata);
@@ -705,7 +1409,7 @@ public sealed partial class ChatContextManager :
         lock (_historyStateLock)
         {
             ThrowIfHistoryGenerationChanged(generation, cancellationToken);
-            hasMoreItems = _historyScanIndex < _historyScanIds.Count || !_rawHistoryExhausted;
+            hasMoreItems = scanIndex < _historyScanIds.Count || !_rawHistoryExhausted;
         }
 
         return await Dispatcher.UIThread.InvokeAsync(
@@ -714,17 +1418,20 @@ public sealed partial class ChatContextManager :
                 lock (_historyStateLock)
                 {
                     ThrowIfHistoryGenerationChanged(generation, cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     matches.RemoveAll(metadata =>
-                        metadata.IsTemporaryDeleted ||
+                        !MatchesHistoryView(metadata) ||
                         !_metadataMap.ContainsKey(metadata.Id) ||
                         !_materializedHistoryIds.Add(metadata.Id));
                     if (matches.Count > 0)
                     {
                         _materializedHistorySource.AddRange(matches);
-                        RemoveCommand.NotifyCanExecuteChanged();
                     }
 
+                    // Consuming candidates and publishing this page are one commit. Cancellation
+                    // before publication leaves the scan position available to the next request.
+                    _historyScanIndex = scanIndex;
                     HasMoreItems = hasMoreItems;
                     return new IncrementalLoadResult(matches.Count, hasMoreItems);
                 }
@@ -738,53 +1445,50 @@ public sealed partial class ChatContextManager :
         int generation,
         CancellationToken cancellationToken)
     {
-        Guid? cursor;
+        ChatHistoryCursor? cursor;
         lock (_historyStateLock)
         {
             cursor = _storageCursor;
         }
 
-        var fetched = new List<ChatContextMetadata>(count);
-        await foreach (var metadata in _chatContextStorage.QueryChatContextsAsync(
-                           count,
-                           ChatContextOrderBy.UpdatedAt,
-                           true,
-                           cursor,
-                           cancellationToken).ConfigureAwait(false))
-        {
-            fetched.Add(metadata);
-        }
+        var page = await _chatContextStorage.ReadHistoryPageAsync(
+            count,
+            cursor,
+            HistoryView,
+            cancellationToken).ConfigureAwait(false);
 
         lock (_historyStateLock)
         {
             ThrowIfHistoryGenerationChanged(generation, cancellationToken);
-            foreach (var metadata in fetched)
+            foreach (var metadata in page.Items)
             {
-                var canonical = _metadataMap.AddOrUpdate(
-                    metadata.Id,
-                    metadata,
-                    (_, existing) =>
-                    {
-                        metadata.IsTemporaryDeleted = existing.IsTemporaryDeleted;
-                        return existing;
-                    });
+                var canonical = _metadataMap.GetOrAdd(metadata.Id, metadata);
 
-                _storageCursor = metadata.Id;
-                if (_rawHistoryIds.Add(canonical.Id) && !canonical.IsTemporaryDeleted)
+                if (_rawHistoryIds.Add(canonical.Id) && MatchesHistoryView(canonical))
                 {
                     _historyScanIds.Add(canonical.Id);
                 }
             }
 
-            if (fetched.Count < count)
-            {
-                _rawHistoryExhausted = true;
-            }
+            _storageCursor = page.NextCursor;
+            _rawHistoryExhausted = page.NextCursor is null;
+            IncludeCurrentHistoryCandidate();
+        }
+    }
+
+    private void IncludeCurrentHistoryCandidate()
+    {
+        // Called under the history lock after the database prefix is complete. Local empty or
+        // not-yet-saved chats remain searchable, without letting cached rows precede unread pins.
+        if (_rawHistoryExhausted && _current is { } current && _metadataMap.ContainsKey(current.Data.Metadata.Id) &&
+            MatchesHistoryView(current.Data.Metadata) && _rawHistoryIds.Add(current.Data.Metadata.Id))
+        {
+            _historyScanIds.Add(current.Data.Metadata.Id);
         }
     }
 
     private async ValueTask<bool> MatchesHistorySearchAsync(
-        ChatContextMetadata metadata,
+        ChatMetadata metadata,
         TextSearchPattern? pattern,
         bool includesContent,
         CancellationToken cancellationToken)
@@ -795,10 +1499,10 @@ public sealed partial class ChatContextManager :
 
         try
         {
-            var context = metadata.Id == _current?.Metadata.Id ?
+            var context = metadata.Id == _current?.Data.Metadata.Id ?
                 _current :
-                await _chatContextStorage.GetChatContextAsync(metadata.Id, cancellationToken).ConfigureAwait(false);
-            return context is not null && ChatTextSearcher.Contains(
+                await GetOrLoadContextAsync(metadata, cancellationToken).ConfigureAwait(false);
+            return context is not null && await ChatTextSearcher.ContainsAsync(
                 context,
                 pattern,
                 ChatTextSearcher.SharedMarkdownTextProjector,
@@ -811,8 +1515,8 @@ public sealed partial class ChatContextManager :
         catch (Exception ex)
         {
             // Filtering is read-only and best-effort. One damaged history entry must not abort the
-            // ordered scan or reuse the interactive load path that can delete data and show a toast.
-            _logger.LogWarning(ex, "Failed to inspect chat context {ChatContextId} while filtering history", metadata.Id);
+            // ordered scan or reuse the interactive load path that shows a toast.
+            _logger.LogWarning(ex, "Failed to inspect chat data {ChatContextId} while filtering history", metadata.Id);
             return false;
         }
     }
@@ -820,9 +1524,10 @@ public sealed partial class ChatContextManager :
     private void RestartHistoryMaterialization() =>
         Dispatcher.UIThread.PostOnDemand(() => RestartHistoryMaterializationCore());
 
-    private void RestartHistoryMaterializationCore(bool resetRawHistory = false)
+    private void RestartHistoryMaterializationCore(bool resetRawHistory = false, bool preserveVisibleItems = false)
     {
         Dispatcher.UIThread.VerifyAccess();
+        if (_isClosing) return;
 
         CancellationTokenSource previousCancellation;
         bool hasMoreItems;
@@ -834,64 +1539,64 @@ public sealed partial class ChatContextManager :
 
             if (resetRawHistory)
             {
-                _metadataMap.Clear();
                 _rawHistoryIds.Clear();
-                if (_current is not null)
-                {
-                    _metadataMap[_current.Metadata.Id] = _current.Metadata;
-                    _rawHistoryIds.Add(_current.Metadata.Id);
-                }
-
+                _historyScanIds.Clear();
                 _storageCursor = null;
                 _rawHistoryExhausted = false;
             }
 
-            _historyScanIds.Clear();
-            _historyScanIds.AddRange(
-                _metadataMap.Values
-                    .Where(static metadata => !metadata.IsTemporaryDeleted)
-                    .OrderByDescending(static metadata => metadata.DateModified)
-                    .ThenByDescending(static metadata => metadata.Id)
-                    .Select(static metadata => metadata.Id));
+            IncludeCurrentHistoryCandidate();
             _historyScanIndex = 0;
-            _materializedHistoryIds.Clear();
+            if (!preserveVisibleItems)
+            {
+                _materializedHistoryIds.Clear();
+            }
             hasMoreItems = _historyScanIds.Count > 0 || !_rawHistoryExhausted;
         }
 
         previousCancellation.Cancel();
         previousCancellation.Dispose();
-        _materializedHistorySource.Clear();
+        if (!preserveVisibleItems)
+        {
+            _materializedHistorySource.Clear();
+            if (_normalizedHistorySearchQuery is null && _current is { } current)
+            {
+                AddRecentHistoryMetadata(current.Data.Metadata);
+            }
+        }
         HasMoreItems = hasMoreItems;
 
-        // A reset must wake the behavior even when the boolean value stayed true. The ScrollViewer
-        // also returns to the top because the materialized result was cleared.
+        // Wake the loader even when HasMoreItems stayed true. Query changes clear results;
+        // pinning changes retain the visible objects while restarting the raw ordering.
         OnPropertyChanged(nameof(HasMoreItems));
     }
 
-    private void AddRecentHistoryMetadata(ChatContextMetadata metadata) =>
+    private void AddRecentHistoryMetadata(ChatMetadata metadata) =>
         Dispatcher.UIThread.PostOnDemand(() =>
         {
-            lock (_historyStateLock)
+            if (_isClosing || !_metadataMap.ContainsKey(metadata.Id)) return;
+            if (!MatchesHistoryView(metadata))
             {
-                _rawHistoryIds.Add(metadata.Id);
+                return;
             }
 
             if (_normalizedHistorySearchQuery is not null)
             {
-                RestartHistoryMaterializationCore();
+                RestartHistoryMaterializationCore(resetRawHistory: true);
                 return;
             }
 
             lock (_historyStateLock)
             {
-                if (metadata.IsTemporaryDeleted || !_materializedHistoryIds.Add(metadata.Id)) return;
+                if (!MatchesHistoryView(metadata) || !_materializedHistoryIds.Add(metadata.Id)) return;
                 _materializedHistorySource.Add(metadata);
             }
         });
 
-    private void RemoveHistoryMetadata(ChatContextMetadata metadata) =>
+    private void RemoveHistoryMetadata(ChatMetadata metadata) =>
         Dispatcher.UIThread.PostOnDemand(() =>
         {
+            if (_isClosing) return;
             lock (_historyStateLock)
             {
                 if (!_materializedHistoryIds.Remove(metadata.Id)) return;
@@ -899,43 +1604,16 @@ public sealed partial class ChatContextManager :
             }
         });
 
-    private void HandleHistoryMetadataChanged(ChatContextMetadata metadata, bool invalidatesStorageCursor)
-    {
-        Dispatcher.UIThread.VerifyAccess();
-
-        if (invalidatesStorageCursor)
-        {
-            lock (_historyStateLock)
-            {
-                // A modified cursor is no longer a valid boundary in UpdatedAt order. Restarting the
-                // raw cursor is cheap because already-known IDs are deduplicated before entering the
-                // scan, and it prevents a selected old conversation from making intermediate rows skip.
-                _storageCursor = null;
-                _rawHistoryExhausted = false;
-            }
-        }
-
-        if (_normalizedHistorySearchQuery is not null)
-        {
-            RestartHistoryMaterializationCore();
-            return;
-        }
-
-        lock (_historyStateLock)
-        {
-            if (!_materializedHistoryIds.Contains(metadata.Id)) return;
-        }
-
-        _historyRegrouper.OnNext(Unit.Default);
-    }
-
     private void EndLoadSession()
     {
         Interlocked.Decrement(ref _activeHistorySessions);
         Dispatcher.UIThread.PostOnDemand(UpdateHistoryBusyState);
     }
 
-    private void UpdateHistoryBusyState() => IsBusy = Volatile.Read(ref _activeHistorySessions) > 0;
+    private void UpdateHistoryBusyState()
+    {
+        if (!_isClosing) IsBusy = Volatile.Read(ref _activeHistorySessions) > 0;
+    }
 
     private void ThrowIfHistoryGenerationChanged(int generation, CancellationToken cancellationToken)
     {
@@ -945,47 +1623,183 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    private static HumanizedDate GetHumanizedDate(ChatContextMetadata metadata) =>
-        (DateTimeOffset.UtcNow - metadata.DateModified).TotalDays switch
+    private bool MatchesHistoryView(ChatMetadata metadata)
+    {
+        return HistoryView switch
         {
-            < 1 => HumanizedDate.Today,
-            < 2 => HumanizedDate.Yesterday,
-            < 7 => HumanizedDate.LastWeek,
-            < 30 => HumanizedDate.LastMonth,
-            < 365 => HumanizedDate.LastYear,
-            _ => HumanizedDate.Earlier
+            ChatHistoryView.Archived => metadata.IsArchived,
+            ChatHistoryView.Temporary => metadata is { IsArchived: false, IsTemporary: true },
+            _ => !metadata.IsArchived
         };
+    }
+
+    private static ChatHistorySectionKind GetHistorySection(ChatMetadata metadata)
+    {
+        if (metadata.IsPinned)
+        {
+            return ChatHistorySectionKind.Pinned;
+        }
+
+        return (DateTimeOffset.UtcNow - metadata.DateModified).TotalDays switch
+        {
+            < 1 => ChatHistorySectionKind.Today,
+            < 2 => ChatHistorySectionKind.Yesterday,
+            < 7 => ChatHistorySectionKind.LastWeek,
+            < 30 => ChatHistorySectionKind.LastMonth,
+            < 365 => ChatHistorySectionKind.LastYear,
+            _ => ChatHistorySectionKind.Earlier
+        };
+    }
 
     private static string? NormalizeHistorySearchQuery(string? query) =>
         string.IsNullOrWhiteSpace(query) ? null : query.Trim();
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
-
-    /// <summary>
-    /// Defers history I/O until the history viewport requests its first page.
-    /// </summary>
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    private RootChatContext CreateRoot(ChatData data)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.CompletedTask;
+        using var scope = _rootsLock.EnterScope();
+        ObjectDisposedException.ThrowIf(_isClosing, this);
+        var root = new RootChatContext(data, _chatContextStorage);
+        RegisterRoot(root);
+        return root;
+    }
+
+    private RootChatContext? FindRoot(ChatMetadata metadata)
+    {
+        var root = FindRoot(metadata.Id);
+        return root is not null && ReferenceEquals(root.Data.Metadata, metadata) ? root : null;
+    }
+
+    private RootChatContext? FindRoot(Guid id)
+    {
+        using var scope = _rootsLock.EnterScope();
+        return _roots.GetValueOrDefault(id)?.Target;
+    }
+
+    private void RegisterRoot(RootChatContext root)
+    {
+        var data = root.Data;
+        root.Idle += OnRootIdle;
+        root.Input.Changed += HandleInputChanged;
+        _roots[data.Metadata.Id] = root.Reference;
+        _metadataMap.TryAdd(data.Metadata.Id, data.Metadata);
+        if (data.PersistenceDirtyState.HasChanges || data.Metadata.CaptureChanges().HasChanges)
+        {
+            QueueSave(data.Metadata);
+        }
+    }
+
+    private void QueueLeaveUnavailableChat(Guid chatId)
+    {
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            if (!_isClosing && _current?.Data.Metadata.Id == chatId && _currentSwitchCancellation is null)
+            {
+                LoadRecentAsCurrentAsync().Detach(_logger.ToExceptionHandler());
+            }
+        });
+    }
+
+    private void OnRootIdle(object? sender, EventArgs args)
+    {
+        // Short draft edits also raise Idle, but have no durable history to synchronize.
+        if (!_isClosing && sender is RootChatContext root && CanSave(root.Data.Metadata, root))
+        {
+            CompleteStableSaveAsync().Detach(_logger.ToExceptionHandler());
+        }
+    }
+
+    private async Task CompleteStableSaveAsync()
+    {
+        await FlushSyncSavesAsync().ConfigureAwait(false);
+        if (!_isClosing)
+        {
+            // Streaming may already have been saved while busy; idle still releases its pending sync work.
+            SyncRequested?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     /// <summary>
-    /// Releases the manager-owned DynamicData pipeline and cancels pending history searches.
+    /// Releases synchronous callers through the same shutdown path as the DI async lifetime.
     /// </summary>
-    public void Dispose()
-    {
-        if (_isDisposed) return;
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 
-        _isDisposed = true;
-        WeakReferenceMessenger.Default.UnregisterAll(this);
-        _historyGenerationCancellation.Cancel();
-        _historyGenerationCancellation.Dispose();
-        _historyConnection.Dispose();
-        _materializedHistorySource.Dispose();
-        _historyRegrouper.Dispose();
-        _historyLoadGate.Dispose();
+    /// <summary>
+    /// Stops every root before final persistence. Final save failures are logged; disposal never
+    /// waits for the UI dispatcher, which may already have exited before DI starts its teardown.
+    /// The injected storage factory can finish writes without resolving services from the root provider.
+    /// </summary>
+    public ValueTask DisposeAsync()
+    {
+        using var scope = _rootsLock.EnterScope();
+        if (_disposeTask is null)
+        {
+            _isClosing = true;
+            var roots = _roots.Values.Select(reference => reference.Target).OfType<RootChatContext>().ToArray();
+            var loads = _loads.Keys.ToArray();
+            var cancellations = _loads.Values.Select(pending => pending.Cancellation.CancelAsync()).ToArray();
+            _disposeTask = Task.Run(() => DisposeCoreAsync(roots, loads, cancellations));
+        }
+
+        return new ValueTask(_disposeTask);
+    }
+
+    private async Task DisposeCoreAsync(RootChatContext[] roots, Task<RootChatContext>[] loads, Task[] cancellations)
+    {
         _saveDebounceExecutor.Dispose();
+        CancelCurrentSwitch();
+        await _historyGenerationCancellation.CancelAsync().ConfigureAwait(false);
+        var stopping = Task.WhenAll(roots.Select(root => root.StopAsync()));
+        try
+        {
+            await Task.WhenAll(cancellations.Concat(loads)).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "A conversation load failed while shutting down.");
+        }
+
+        await stopping.ConfigureAwait(false);
+
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            await CommitPendingSavesAsync().ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to save final chat changes during shutdown.");
+        }
+        finally
+        {
+            _isDisposed = true;
+            _commitGate.Release();
+            WeakReferenceMessenger.Default.UnregisterAll(this);
+            foreach (var root in roots)
+            {
+                await root.DisposeAsync().ConfigureAwait(false);
+            }
+
+            _roots.Clear();
+            _historyGenerationCancellation.Dispose();
+            _historyConnection.Dispose();
+            _materializedHistorySource.Dispose();
+            _historyRegrouper.Dispose();
+            // Existing viewport callers may still release this asynchronous gate after cancellation.
+            // It owns no native wait handle and is collected with the manager.
+        }
+    }
+
+    private sealed record PendingSave(RootChatContext? Root, ChatMetadata Metadata, string? LocalAccountId);
+
+    private sealed record PendingInput(RootChatContext Root, ChatInputWrite Write);
+
+    private sealed record PendingContextLoad(Guid ChatId, CancellationTokenSource Cancellation)
+    {
+        // A remote commit superseded this detached read; retry before publishing a canonical root.
+        public bool ShouldReload { get; set; }
     }
 
     private sealed class IncrementalLoadSession(ChatContextManager owner) : IIncrementalLoadSession
@@ -1007,7 +1821,11 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    private static bool IsEmptyContext([NotNullWhen(true)] ChatContext? chatContext) => chatContext is { Count: 1 };
+    private static bool IsEmptyDraft([NotNullWhen(true)] RootChatContext? chatContext)
+    {
+        // Accepted work can still be queuing its first user node. It is not a reusable draft.
+        return chatContext is { HasWork: false, Data: { HasHistory: false, Metadata.IsPersisted: false } };
+    }
 
     [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}$")]
     private static partial Regex WorkingDirectoryRegex();

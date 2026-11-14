@@ -129,6 +129,58 @@ public sealed class LinuxNativeHelper : INativeHelper
     }
 
     /// <inheritdoc />
+    public async Task MoveToTrashAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken = default)
+    {
+        foreach (var path in paths)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var start = new ProcessStartInfo("gio")
+            {
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                ArgumentList = { "trash", "--", Path.GetFullPath(path) }
+            };
+            var process = default(Process);
+            try
+            {
+                process = Process.Start(start) ?? throw new IOException("The desktop trash service could not start.");
+            }
+            catch (System.ComponentModel.Win32Exception exception)
+            {
+                throw new IOException("The desktop trash service is unavailable.", exception);
+            }
+            using (process)
+            {
+                var error = process.StandardError.ReadToEndAsync();
+                try
+                {
+                    await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    if (process.HasExited && process.ExitCode == 0)
+                    {
+                        await error.ConfigureAwait(false);
+                        continue;
+                    }
+                    if (!process.HasExited)
+                    {
+                        process.Kill(entireProcessTree: true);
+                    }
+                    await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+                    await error.ConfigureAwait(false);
+                    throw;
+                }
+                var message = await error.ConfigureAwait(false);
+                if (process.ExitCode != 0)
+                {
+                    throw new IOException($"The file could not be moved to the trash: {message}");
+                }
+            }
+        }
+    }
+
+    /// <inheritdoc />
     public void OpenFileLocation(string fullPath)
     {
         var start = new ProcessStartInfo("xdg-open")

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Everywhere.Storage;
 
-public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory) : IBlobStorage
+public class BlobStorage(IDbContextFactory<ChatV2DbContext> dbFactory) : IBlobStorage
 {
     private const long MaximumCopiedBlobSizeInBytes = 25L * 1024 * 1024;
 

@@ -82,17 +82,19 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     {
         var (id, response) = await _visualService.ListWindowsAsync(chatContext.VisualState, cancellationToken: cancellationToken);
 
-        displaySink.AppendDynamicLocaleKey(
+        await displaySink.AppendDynamicLocaleKeyAsync(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_ListWindows_WindowCount,
                 new DirectLocaleKey(response.RepresentedTargetCount)));
-        _statisticsRecorder.RecordVisualContextAsync(
-                new StatisticsVisualContextDraft(
-                    null,
-                    chatContext.Metadata.Id,
-                    StatisticsVisualContextSource.VisualContextPlugin,
-                    ElementCount: response.RepresentedTargetCount),
-                CancellationToken.None)
+        // The result is already available. Keep even the synchronous part of SQLite accounting
+        // off its return path. CancellationToken.None lets this completed observation be recorded
+        // independently of the tool request, without retaining the conversation runtime.
+        var statistics = new StatisticsVisualContextDraft(
+            null,
+            chatContext.Data.Metadata.Id,
+            StatisticsVisualContextSource.VisualContextPlugin,
+            ElementCount: response.RepresentedTargetCount);
+        Task.Run(() => _statisticsRecorder.RecordVisualContextAsync(statistics, CancellationToken.None), CancellationToken.None)
             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
         Guid? visualContextId = response.RepresentedTargetCount > 0 ? id : null;
@@ -123,7 +125,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                 await _statisticsRecorder.RecordVisualContextAsync(
                     new StatisticsVisualContextDraft(
                         null,
-                        chatContext.Metadata.Id,
+                        chatContext.Data.Metadata.Id,
                         StatisticsVisualContextSource.ScreenCapture,
                         ScreenshotCount: 1,
                         ImageCount: 1),
@@ -184,17 +186,19 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             cancellationToken);
         scanScope.Complete();
 
-        displaySink.AppendDynamicLocaleKey(
+        await displaySink.AppendDynamicLocaleKeyAsync(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Result,
                 new DirectLocaleKey(result.RepresentedTargetCount)));
-        _statisticsRecorder.RecordVisualContextAsync(
-                new StatisticsVisualContextDraft(
-                    null,
-                    chatContext.Metadata.Id,
-                    StatisticsVisualContextSource.VisualContextPlugin,
-                    ElementCount: result.RepresentedTargetCount),
-                CancellationToken.None)
+        // The result is already available. Keep even the synchronous part of SQLite accounting
+        // off its return path. CancellationToken.None lets this completed observation be recorded
+        // independently of the tool request, without retaining the conversation runtime.
+        var statistics = new StatisticsVisualContextDraft(
+            null,
+            chatContext.Data.Metadata.Id,
+            StatisticsVisualContextSource.VisualContextPlugin,
+            ElementCount: result.RepresentedTargetCount);
+        Task.Run(() => _statisticsRecorder.RecordVisualContextAsync(statistics, CancellationToken.None), CancellationToken.None)
             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
         return new VisualTextFunctionResult(visualContextId, result.Content);
@@ -266,7 +270,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             new ChatPluginDynamicLocaleKeyDisplayBlock(actionsKey),
         };
 
-        userInterface.DisplaySink.AppendBlock(detailBlock);
+        await userInterface.DisplaySink.AppendBlockAsync(detailBlock);
 
         var consent = await userInterface.RequestConsentAsync(
             null,

@@ -13,7 +13,7 @@ namespace Everywhere.Chat;
 /// message, allowing its AsyncLocal value and activity preview to remain unambiguous when calls are
 /// executed concurrently in the future.
 /// </remarks>
-public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
+public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginDisplaySink, IAsyncDisposable
 {
     public Kernel Kernel { get; }
 
@@ -29,35 +29,28 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
 
     public GenerationContext GenerationContext { get; }
 
-    /// <summary>Gets the approval mode captured before this tool started.</summary>
+    /// <summary>
+    /// Gets the approval mode captured before this tool started.
+    /// </summary>
     public ToolApprovalMode ApprovalMode { get; }
 
-    /// <summary>Gets whether a required consent was denied during this invocation.</summary>
+    /// <summary>
+    /// Gets whether a required consent was denied during this invocation.</summary>
     public bool HasApprovalDenied { get; private set; }
 
-    /// <summary>Gets the latest automatic-review failure for invocation outcome reporting.</summary>
+    /// <summary>
+    /// Gets the latest automatic-review failure for invocation outcome reporting.
+    /// </summary>
     public ToolApprovalFailure? ApprovalFailure { get; private set; }
 
-    /// <summary>Gets the stable tool-call ID used to isolate transient invocation state.</summary>
+    /// <summary>
+    /// Gets the stable tool-call ID used to isolate transient invocation state.
+    /// </summary>
     public string InvocationId { get; }
 
     public ObservableToolRulesets ToolBypassApprovalRulesets { get; }
 
-    public IChatPluginDisplaySink DisplaySink { get; }
-
-    /// <summary>
-    /// Gets or sets the lightweight preview owned exclusively by this invocation.
-    /// </summary>
-    /// <remarks>
-    /// Assigning the property replaces one stable slot; it does not mutate the aggregate
-    /// invocation registry. The slot is removed as a whole when this context is disposed, so
-    /// callers normally do not need to assign <see langword="null"/> explicitly.
-    /// </remarks>
-    public ChatPluginActivityPreview? ActivityPreview
-    {
-        get => _activityPresentationSlot.Preview;
-        set => _activityPresentationSlot.Preview = value;
-    }
+    public IChatPluginDisplaySink DisplaySink => this;
 
     /// <summary>
     /// Gets whether the current function call may bypass approval.
@@ -71,6 +64,10 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
     private readonly Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> _reviewAsync;
 
+    /// <summary>
+    /// Creates the invocation and registers its presentation slot inside the root execution domain.
+    /// The caller awaits disposal before completing the enclosing tool operation.
+    /// </summary>
     public FunctionCallContext(
         Kernel kernel,
         ChatContext chatContext,
@@ -98,7 +95,6 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         _reviewAsync = reviewAsync;
         InvocationId = functionCallContent.Id;
         ToolBypassApprovalRulesets = toolBypassApprovalRulesets;
-        DisplaySink = functionCallChatMessage.DisplaySink;
         _activityPresentationSlot = functionCallChatMessage.RegisterActivityPresentation(InvocationId);
     }
 
@@ -199,22 +195,29 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     /// <summary>Reviews this invocation's required consent without entering human-input wait state.</summary>
     public async Task<ToolApprovalResult> ReviewApprovalAsync(ToolApprovalScope? scope, CancellationToken cancellationToken)
     {
-        var previousPreview = ActivityPreview;
-        ActivityPreview = new ChatPluginTextActivityPreview(new DynamicLocaleKey(LocaleKey.ToolApproval_Reviewing));
+        var previousPreview = await ChatContext.DispatchAsync(() =>
+        {
+            var previous = _activityPresentationSlot.Preview;
+            _activityPresentationSlot.Preview = new ChatPluginTextActivityPreview(new DynamicLocaleKey(LocaleKey.ToolApproval_Reviewing));
+            return previous;
+        });
         try
         {
             var result = await _reviewAsync(this, scope, cancellationToken);
             HasApprovalDenied |= !result.IsAllowed;
             ApprovalFailure ??= result.Failure;
             if (!result.IsAllowed)
-                FunctionCallChatMessage.ErrorMessageKey = result.Failure is null ?
+            {
+                await ChatContext.DispatchAsync(() => FunctionCallChatMessage.ErrorMessageKey = result.Failure is null ?
                     new DynamicLocaleKey(LocaleKey.ConsentDecision_Deny) :
-                    new FormattedDynamicLocaleKey(LocaleKey.ToolApproval_Failed, new DirectLocaleKey(result.FormatReason()));
+                    new FormattedDynamicLocaleKey(LocaleKey.ToolApproval_Failed, new DirectLocaleKey(result.FormatReason())));
+            }
+
             return result;
         }
         finally
         {
-            ActivityPreview = previousPreview;
+            await SetActivityPreviewAsync(previousPreview);
         }
     }
 
@@ -228,14 +231,14 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     /// </remarks>
     public async Task<T> WaitForUserInputAsync<T>(Func<Task<T>> interaction)
     {
-        _activityPresentationSlot.EnterUserInputWait();
+        await ChatContext.DispatchAsync(_activityPresentationSlot.EnterUserInputWait);
         try
         {
             return await interaction();
         }
         finally
         {
-            _activityPresentationSlot.ExitUserInputWait();
+            await ChatContext.DispatchAsync(_activityPresentationSlot.ExitUserInputWait);
         }
     }
 
@@ -243,8 +246,28 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     /// Ends the invocation-scoped presentation lifetime. Removing the stable slot cannot clear or
     /// overwrite state owned by another invocation in the same aggregate message.
     /// </summary>
-    public void Dispose()
+    public ValueTask DisposeAsync()
     {
-        FunctionCallChatMessage.UnregisterActivityPresentation(InvocationId, _activityPresentationSlot);
+        return new ValueTask(
+            ChatContext.DispatchAsync(() =>
+                FunctionCallChatMessage.UnregisterActivityPresentation(InvocationId, _activityPresentationSlot)));
+    }
+
+    /// <inheritdoc />
+    public Task SetActivityPreviewAsync(ChatPluginActivityPreview? preview)
+    {
+        return ChatContext.DispatchAsync(() => _activityPresentationSlot.Preview = preview);
+    }
+
+    /// <inheritdoc />
+    public Task AppendBlockAsync(ChatPluginDisplayBlock block)
+    {
+        return ChatContext.DispatchAsync(() => FunctionCallChatMessage.DisplaySink.AppendBlock(block));
+    }
+
+    /// <inheritdoc />
+    public Task AppendBlocksAsync(IEnumerable<ChatPluginDisplayBlock> blocks)
+    {
+        return ChatContext.DispatchAsync(() => FunctionCallChatMessage.DisplaySink.AppendBlocks(blocks));
     }
 }

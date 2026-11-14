@@ -47,14 +47,15 @@ public partial class TextSelectionToolbarWindow : Window
 
     /// <summary>
     /// Submits a freeform draft to its business owner. True transfers the selection to the chat;
-    /// false retains the draft for retry. Invocation is synchronous and occurs after releasing input.
+    /// false retains the draft for retry. The wait covers local message publication, after releasing input.
+    /// The business owner handles dismissal and foreground navigation after acceptance.
     /// </summary>
-    public Func<string, CustomAssistant, bool>? SubmitFreeformChat { get; set; }
+    public Func<string, CustomAssistant, Task<bool>>? SubmitFreeformChat { get; set; }
 
     /// <summary>
     /// Sends the current editor text through the host while keeping rejection non-destructive.
     /// </summary>
-    public IRelayCommand<string> SendFreeformChatCommand { get; }
+    public IAsyncRelayCommand<string> SendFreeformChatCommand { get; }
 
     /// <summary>
     /// Identifies the pointer-distance factor applied to the user's configured opacity.
@@ -110,7 +111,7 @@ public partial class TextSelectionToolbarWindow : Window
         Settings = settings;
         _windowHelper = windowHelper;
         _inputWatcher = inputWatcher;
-        SendFreeformChatCommand = new RelayCommand<string>(SendFreeformChat, CanSendFreeformChat);
+        SendFreeformChatCommand = new AsyncRelayCommand<string>(SendFreeformChatAsync, CanSendFreeformChat);
         InitializeComponent();
 
         windowHelper.SetWindowProperties(this, inputMode: WindowInputMode.NonActivating, layer: WindowLayer.Overlay);
@@ -145,7 +146,7 @@ public partial class TextSelectionToolbarWindow : Window
             (_isUsingActivatedInput || _inputCapture is { IsActive: true });
     }
 
-    private void SendFreeformChat(string? text)
+    private async Task SendFreeformChatAsync(string? text)
     {
         if (!CanSendFreeformChat(text) || text is null ||
             ToolbarRoot.SelectedCustomAssistant is not { } assistant || SubmitFreeformChat is not { } submit)
@@ -155,13 +156,16 @@ public partial class TextSelectionToolbarWindow : Window
 
         var editor = _inputEditor;
         EndTextInput();
-        if (submit(text.Trim(), assistant))
+        var generation = _generation;
+        var isAccepted = await submit(text.Trim(), assistant);
+        if (isAccepted || generation != _generation)
         {
-            Hide();
+            return;
         }
-        else if (IsVisible && ToolbarRoot.IsFreeformChat && editor is not null)
+
+        if (IsVisible && ToolbarRoot.IsFreeformChat && editor is not null)
         {
-            // A busy destination has not consumed anything. Restore this appearance's existing
+            // A rejected submission has not consumed the selection. Restore this appearance's existing
             // prepared route or ordinary activated input, without creating a new native host.
             HandleFreeformChatInputRequested(editor);
         }

@@ -1,5 +1,4 @@
-using System.Net.Sockets;
-using System.Security.Authentication;
+﻿using System.Net.Sockets;
 using System.Text.Json;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -62,7 +61,7 @@ public static partial class ChatExceptionNormalizer
 
     /// <summary>Recognizes SDK-specific concrete causes when no mixin is available.</summary>
     public static HandledChatException? NormalizeKnownSdkException(ChatExceptionEvidence evidence) =>
-        ChatExceptionEvidenceExtractor.EnumerateCauses(evidence.OriginalException).Any(cause => cause is ModelDoesNotSupportToolsException) ?
+        NetworkExceptionEvidence.EnumerateCauses(evidence.OriginalException).Any(cause => cause is ModelDoesNotSupportToolsException) ?
             new HandledChatException.UnsupportedCapability.Tools(evidence.OriginalException, evidence.FriendlyMessageKey) :
             null;
 
@@ -80,7 +79,7 @@ public static partial class ChatExceptionNormalizer
             return Result(new HandledChatException.Timeout(original, message, evidence.RetryAfter), evidence, "request-timeout", "context");
         }
 
-        var causes = ChatExceptionEvidenceExtractor.EnumerateCauses(original).ToArray();
+        var causes = NetworkExceptionEvidence.EnumerateCauses(original).ToArray();
         foreach (var cause in causes)
         {
             // OpenAI's closed SDK enum can reject compatible-provider finish values before
@@ -97,11 +96,11 @@ public static partial class ChatExceptionNormalizer
                 return completionError;
             }
         }
-        if (causes.AsValueEnumerable().Any(cause => cause is AuthenticationException))
+        if (evidence.Network.HasTlsError)
         {
             return Result(new HandledChatException.NetworkError.TlsError(original, message), evidence, "tls-failure", "transport");
         }
-        if (causes.AsValueEnumerable().Any(cause => cause is HttpRequestException { HttpRequestError: HttpRequestError.ProxyTunnelError }))
+        if (evidence.Network.HasProxyTunnelError)
         {
             return Result(
                 new HandledChatException.NetworkError.ProxyTunnelRejected(original, message),

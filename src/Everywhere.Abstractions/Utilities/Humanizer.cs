@@ -24,15 +24,15 @@ public static class Humanizer
     }
 
     /// <summary>
-    /// Converts a byte size into a human-readable string with appropriate units.
-    /// e.g., 1024 -> "1 KB", 1048576 -> "1 MB"
+    /// Formats a byte count in powers of 1024 (B, KiB, MiB, GiB or TiB).
+    /// For example, 1024 becomes "1 KiB" and 1048576 becomes "1 MiB".
     /// </summary>
-    /// <param name="bytes"></param>
-    /// <returns></returns>
+    /// <param name="bytes">Unscaled byte count, not a value already expressed in KiB or MiB.</param>
+    /// <returns>The scaled value with at most two decimal places and its binary unit.</returns>
     public static string HumanizeBytes(long bytes)
     {
-        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
-        double len = bytes;
+        var sizes = new[] { "B", "KiB", "MiB", "GiB", "TiB" };
+        var len = (double)bytes;
         var order = 0;
         while (len >= 1024 && order < sizes.Length - 1)
         {

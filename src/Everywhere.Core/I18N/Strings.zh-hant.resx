@@ -182,7 +182,7 @@
         <value>模型返回了空的上下文摘要。</value>
     </data>
     <data name="ContextCompression_Error_NoHistory" xml:space="preserve">
-        <value>沒有可壓縮的對話歷史。</value>
+        <value>沒有可壓縮的聊天歷史。</value>
     </data>
     <data name="ContextCompression_Error_ToolCallNotAllowed" xml:space="preserve">
         <value>模型在壓縮上下文時嘗試調用工具。</value>
@@ -212,7 +212,7 @@
         <value>包含內容</value>
     </data>
     <data name="ChatWindow_TextSearch_PlaceholderText" xml:space="preserve">
-        <value>在當前對話中查找</value>
+        <value>在當前聊天中查找</value>
     </data>
     <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
         <value>上一个結果</value>
@@ -585,10 +585,10 @@
         <value>支援使用工具</value>
     </data>
     <data name="Assistant_SupportsToolCall_Description" xml:space="preserve">
-        <value>模型支持使用已配置的工具。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。</value>
+        <value>模型支持使用已配置的工具。如果模型不支持，開啟此選項可能會導致聊天時出現錯誤。</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
-        <value>模型支持先思考再回答。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。注意此選項只會影響 Everywhere 如何處理模型響應，不能控制模型是否真的啟用思考。對於可以動態開關思考的模型，請開啟此選項之後，在下方的「啟用思考」選項作進一步調整。</value>
+        <value>模型支持先思考再回答。如果模型不支持，開啟此選項可能會導致聊天時出現錯誤。注意此選項只會影響 Everywhere 如何處理模型響應，不能控制模型是否真的啟用思考。對於可以動態開關思考的模型，請開啟此選項之後，在下方的「啟用思考」選項作進一步調整。</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
         <value>不受配額限制</value>
@@ -597,7 +597,7 @@
         <value>支援圖像輸入</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>對話的最大上下文長度 (context_limit)。此項會影響諸多策略，請盡可能設為真實值。</value>
+        <value>聊天的最大上下文長度 (context_limit)。此項會影響諸多策略，請盡可能設為真實值。</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>最大上下文長度 (context_limit)</value>
@@ -925,7 +925,7 @@
         <value>顯示聊天統計</value>
     </data>
     <data name="ChatWindowSettings_ShowChatStatistics_Description" xml:space="preserve">
-        <value>啟用後，使用數據將顯示在聊天窗口的每輪對話結束時。</value>
+        <value>啟用後，使用數據將顯示在聊天窗口的每輪聊天結束時。</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_InputTokenCountRun" xml:space="preserve">
         <value>輸入</value>
@@ -973,6 +973,9 @@
         <value>請求服務超時。請再試一次。</value>
     </data>
     <data name="HandledChatException_NetworkError" xml:space="preserve">
+        <value>連線服務時發生中斷或未能建立連線。</value>
+    </data>
+    <data name="Common_NetworkError" xml:space="preserve">
         <value>連線服務時發生中斷或未能建立連線。</value>
     </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
@@ -1078,7 +1081,7 @@
         <value>執行 Shell 指令</value>
     </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
-        <value>對話內容超出了目前助手的上下文容量。</value>
+        <value>聊天內容超出了目前助手的上下文容量。</value>
     </data>
     <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
         <value>存取程序</value>
@@ -1513,8 +1516,8 @@
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>日期</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>重新命名聊天</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>重新命名</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>刪除聊天</value>
@@ -1565,7 +1568,7 @@
         <value>新增、改寫、刪除或移動文字檔案。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>檔案大小超過 {0} MB；不支援讀取操作。</value>
+        <value>檔案大小超過 {0} MiB；不支援讀取操作。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>創建目錄失敗。</value>
@@ -1695,7 +1698,7 @@
         <value>請求超時持續時間</value>
     </data>
     <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
-        <value>當已報告的上下文用量達到模型聲明上下文長度的此百分比時，自動壓縮對話上下文。</value>
+        <value>當已報告的上下文用量達到模型聲明上下文長度的此百分比時，自動壓縮聊天上下文。</value>
     </data>
     <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>上下文壓縮閾值</value>
@@ -2121,10 +2124,10 @@
         <value>(空)</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Header" xml:space="preserve">
-        <value>總是開始新的對話</value>
+        <value>總是開始新的聊天</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>使用快捷鍵喚起聊天視窗時，將自動忽略上次對話並開啟全新會話。</value>
+        <value>使用快捷鍵喚起聊天視窗時，將自動忽略上次聊天並開啟新聊天。</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>從 JSON 匯入</value>
@@ -2311,7 +2314,7 @@
         <value>查詢元素或複合視覺目標周圍的有限區域。</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>註冊即享免費積分，獲得開箱即用的主流模型。更有雲同步等功能持續上線中……</value>
+        <value>註冊即享免費積分，獲得開箱即用的主流模型。</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>登入</value>
@@ -2324,6 +2327,9 @@
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>訂閱積分</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>管理雲端同步</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>管理訂閱</value>
@@ -2363,7 +2369,7 @@
         <value>最大輸出長度</value>
     </data>
     <data name="Assistant_OutputLimit_Description" xml:space="preserve">
-        <value>對話的最大輸出長度 (output_limit)。此項會影響模型請求的參數（尤其是 Anthropic），請盡可能設為真實值。</value>
+        <value>聊天的最大輸出長度 (output_limit)。此項會影響模型請求的參數（尤其是 Anthropic），請盡可能設為真實值。</value>
     </data>
     <data name="UserProfilePresenter_CancelLoginButton_Content" xml:space="preserve">
         <value>請在瀏覽器繼續</value>
@@ -2388,21 +2394,6 @@
     </data>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>個人主頁</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>對話雲同步</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>開啟後將會自動在多個設備間同步你的聊天記錄</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>上次成功同步 {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>最近一次同步出錯</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>正在同步...</value>
     </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>我要自己配置模型</value>
@@ -2442,9 +2433,6 @@
     </data>
     <data name="Common_Undo" xml:space="preserve">
         <value>撤銷</value>
-    </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>已刪除「{0}」</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>顯示</value>
@@ -2719,9 +2707,6 @@
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>工具的返回結果有誤：{0}</value>
     </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>臨時聊天：開啟後當前聊天不會被保存，切換或新建對話時即刪除。</value>
-    </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(可選) {0}</value>
     </data>
@@ -2741,7 +2726,7 @@
         <value>當前</value>
     </data>
     <data name="SystemAssistantSettings_TitleGeneration_Desription" xml:space="preserve">
-        <value>配置對話標題自動命名的助手。</value>
+        <value>配置聊天標題自動命名的助手。</value>
     </data>
     <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
         <value>標題生成</value>
@@ -2759,7 +2744,7 @@
         <value>自動總結標題</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyGenerateTitle_Description" xml:space="preserve">
-        <value>啟用後，自動根據第一條消息總結對話標題。</value>
+        <value>啟用後，自動根據第一條消息總結聊天標題。</value>
     </data>
     <data name="Strategy_BuiltIn_Browser_TranslateCommand_ArgumentHint" xml:space="preserve">
         <value>翻譯的目標語言，默認為當前語言</value>
@@ -3020,7 +3005,7 @@
         <value>設置思考輸出的預算，單位為 token。</value>
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
-        <value>簽名是某些思考模型的私有數據，Everywhere 無法解碼。在帶有思考內容的上下文中切換不同提供商的模型可能導致此問題，開啟一個新的對話可以解決此問題。</value>
+        <value>簽名是某些思考模型的私有數據，Everywhere 無法解碼。在帶有思考內容的上下文中切換不同提供商的模型可能導致此問題，開啟一個新的聊天可以解決此問題。</value>
     </data>
     <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>新版本已準備好，點擊立即更新。
@@ -4056,10 +4041,10 @@
         <value>工具活動</value>
     </data>
     <data name="ChatWindowSettings_TurnNavigationMode_Header" xml:space="preserve">
-        <value>對話輪次導航</value>
+        <value>聊天輪次導航</value>
     </data>
     <data name="ChatWindowSettings_TurnNavigationMode_Description" xml:space="preserve">
-        <value>在對話左側顯示輪次導航列。可選擇只上下移動的簡潔動畫、帶縮放的靈動動畫，或將其關閉。</value>
+        <value>在聊天左側顯示輪次導航列。可選擇只上下移動的簡潔動畫、帶縮放的靈動動畫，或將其關閉。</value>
     </data>
     <data name="ChatTurnNavigationMode_None" xml:space="preserve">
         <value>關閉</value>
@@ -4191,7 +4176,7 @@
         <value>已啟用的工具可無需批准執行操作。</value>
     </data>
     <data name="ToolApproval_PendingChange" xml:space="preserve">
-        <value>本輪仍使用「{0}」，將在下個對話輪次切換到「{1}」。</value>
+        <value>本輪仍使用「{0}」，將在下個聊天輪次切換到「{1}」。</value>
     </data>
     <data name="ToolApproval_SwitchNow" xml:space="preserve">
         <value>立即切換</value>
@@ -4218,7 +4203,7 @@
         <value>結合任務內容判斷</value>
     </data>
     <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
-        <value>審批會使用對話上下文和操作內容。如果在設定中允許讀取檔案，還可能讀取檔案內容。這些內容會傳送給所選審批助手，可能包含任務中的敏感資訊。</value>
+        <value>審批會使用聊天上下文和操作內容。如果在設定中允許讀取檔案，還可能讀取檔案內容。這些內容會傳送給所選審批助手，可能包含任務中的敏感資訊。</value>
     </data>
     <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
         <value>拒絕高風險操作</value>
@@ -4299,6 +4284,9 @@
         <value>複製詳情</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>代理伺服器拒絕建立連線，請檢查代理設定和驗證資訊。</value>
+    </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
         <value>代理伺服器拒絕建立連線，請檢查代理設定和驗證資訊。</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
@@ -4419,7 +4407,7 @@
         <value>允許審批助手讀取檔案</value>
     </data>
     <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
-        <value>審批助手可讀取本機檔案內容以輔助判斷，例如查看待執行的指令碼。讀取內容會傳送給所選審批助手，可能包含敏感資訊。關閉時，僅依據對話和操作資訊審批。</value>
+        <value>審批助手可讀取本機檔案內容以輔助判斷，例如查看待執行的指令碼。讀取內容會傳送給所選審批助手，可能包含敏感資訊。關閉時，僅依據聊天和操作資訊審批。</value>
     </data>
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>請求過於頻繁，服務建議等待 {0} 秒後重試。</value>
@@ -4621,5 +4609,260 @@
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>複製連結文字</value>
+    </data>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>聊天雲端同步</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>在使用同一帳號的多部裝置間同步聊天記錄，你可以選擇哪些聊天將被同步。</value>
+    </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>歸檔</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>取消歸檔</value>
+    </data>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>永久刪除</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>這會從此裝置永久刪除該聊天及其所有分支，且無法復原，確定嗎？</value>
+    </data>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>聊天現在採用按輪次組織的資料結構，歷史讀取也更有效率。你現在可以封存聊天，雲端同步也獲得了效能提升。</value>
+    </data>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>我們已備份舊版聊天資料，除非你日後降級 Everywhere，否則這些資料已不再有用。你可以選擇將其刪除。</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>設為置頂</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>重新命名聊天</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>建議保持簡短易讀</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>刪除聊天</value>
+    </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>檢視同步分支</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>封存此聊天？</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>封存會停止此聊天中所有正在進行的工作。你可以稍後從封存聊天中還原。</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>永久刪除此聊天？如果此聊天已同步，其他裝置同步時也會刪除它。此操作無法復原。</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>聊天云同步</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>已用 {0}，共 {1}</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>停止同步</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>開始同步</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>管理同步…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>僅本機</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>已同步</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>等待同步</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>正在同步…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>同步未完成</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>等待重新同步</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>還需釋出 {0} 雲端空間才能同步。</value>
+    </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>請先登入，再管理聊天雲端同步。</value>
+    </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>聊天同步已關閉。</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>無法載入聊天雲端同步，請檢查網路或稍後再試。</value>
+    </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>雲端副本已變更，請重新整理並再次確認。</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>已停止 {0}/{1} 個聊天的同步。請重新整理後檢查其餘聊天。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>所選聊天包含未保存在本機的聊天。如果其他裝置也沒有副本，將無法復原。</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>在裝置之間同步「{0}」？將上傳本機保存的所有分支。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>已選擇 {0} 個</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>無法以目前帳號管理此聊天。</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>帳號已切換，請重新查看目前帳號的聊天。</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>操作結果尚未確認。請重新整理以查看目前狀態。</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>尚未儲存到本機</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>訊息版本不一致，已保留本機內容</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>雲端空間</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>參與同步 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>僅本機 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>多選</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>停止同步 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>還沒有參與同步的聊天。</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>沒有僅儲存在本機的聊天。</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>雲端空間已超出 {0}。已同步的聊天仍可在其他裝置查看。</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>雲端空間不足，部分聊天尚未同步。</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>管理</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>解決</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>釋放空間</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>停止同步以下 {0} 個較早修改的聊天，可釋放 {1}。各裝置已有的聊天會保留，後續修改不再同步。</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>需要釋放 {0}，但本機可安全停止同步的舊聊天不足。你可以自行選擇要停止同步的聊天。</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>此帳號目前沒有雲端空間配額。即使移除舊聊天，也無法同步新聊天。</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>已將 {0} 個聊天改為僅本機。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>停止同步 {0}？將取消上傳，本機聊天會保留。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>停止同步 {0}？將釋放 {1} 雲端空間。各裝置已有的聊天會保留，後續修改不再同步。</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>「{0}」本身就超出了 {1} 的雲端空間配額。移除其他聊天也放不下它，你可以將它設為僅本機。</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>雲端副本大小：{0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>此裝置上的變更不會同步到其他裝置。</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>同步狀態待確認</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>你仍可在本機使用此聊天。請先重新整理同步狀態，再開始同步。</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>正在檢查並同步此聊天的變更。</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>雲端已有此聊天，本機尚無副本。</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>上次檢查時，本機與雲端副本一致。</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>已重新開啟同步，正在等待重建雲端副本。</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>此本機聊天尚未同步到雲端。</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>本機與雲端之間仍有變更尚未同步。</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>雲端狀態已變更</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>兩台裝置修改了同一則訊息。同步沒有覆寫本機內容。</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>此聊天無法在目前帳號下同步。請檢查登入的帳號。</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>上次同步未完成。可按頁面頂端的重新整理按鈕再試。</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>目前沒有可用的雲端空間</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>空間已足夠，正在等待再次同步。</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>此聊天超過雲端空間上限</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>移除其他聊天也無法騰出足夠空間。你可以停止同步，將它保留在本機。</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>還需釋放 {0}。按上方雲端空間提示中的「解決」查看可行方案。</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>啟用聊天雲端同步</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>正在載入聊天雲端同步...</value>
+    </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>最近修改</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>雲端大小</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>正在開始同步</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>正在停止同步</value>
     </data>
 </root>

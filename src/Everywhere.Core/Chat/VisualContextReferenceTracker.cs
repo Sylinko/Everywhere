@@ -1,24 +1,24 @@
-namespace Everywhere.Chat;
+﻿namespace Everywhere.Chat;
 
 /// <summary>
-/// Reads persisted visual Context references from the currently selected chat branch.
+/// Reads persisted visual Context references from the messages selected for a provider request.
 /// </summary>
 internal static class VisualContextReferenceTracker
 {
     /// <summary>
-    /// Collects the visual Context identities whose Agent-visible references remain active on the selected branch.
+    /// Collects the visual Context identities whose Agent-visible references remain active in the selected request context.
     /// </summary>
     /// <remarks>
-    /// The selected branch, its Assistant spans, and its function results are visited once in chronological order.
+    /// The selected messages, their Assistant spans, and its function results are visited once in chronological order.
     /// Reset boundaries discard identities from earlier Contexts while retaining references already owned by the
     /// Context named by the boundary.
     /// </remarks>
-    public static HashSet<Guid> GetActiveContextIds(IReadOnlyList<ChatMessageNode> nodes)
+    public static HashSet<Guid> GetActiveContextIds(IReadOnlyList<ChatMessage> messages)
     {
         var activeContextIds = new HashSet<Guid>();
-        foreach (var node in nodes)
+        foreach (var message in messages)
         {
-            VisitMessage(node.Message, activeContextIds);
+            VisitMessage(message, activeContextIds);
         }
 
         return activeContextIds;

@@ -1,83 +1,45 @@
-﻿using Everywhere.Common;
-
-namespace Everywhere.Chat.Plugins;
+﻿namespace Everywhere.Chat.Plugins;
 
 /// <summary>
-/// Allows chat plugins to display content in the user interface.
+/// Publishes plugin output in the owning conversation's serial execution domain.
+/// Completion means the block has been attached to the message, not that a view has rendered it.
 /// </summary>
 public interface IChatPluginDisplaySink
 {
     /// <summary>
-    /// Appends a display block to the display sink.
+    /// Transfers a prepared block to the conversation. Subsequent changes to an attached block
+    /// must also be dispatched through its conversation runtime.
     /// </summary>
-    /// <param name="block"></param>
-    void AppendBlock(ChatPluginDisplayBlock block);
+    Task AppendBlockAsync(ChatPluginDisplayBlock block);
 
     /// <summary>
-    /// Appends multiple display blocks to the display sink.
+    /// Publishes a prepared collection of blocks together.
     /// </summary>
-    /// <param name="blocks"></param>
-    void AppendBlocks(IEnumerable<ChatPluginDisplayBlock> blocks);
+    Task AppendBlocksAsync(IEnumerable<ChatPluginDisplayBlock> blocks);
 
     /// <summary>
-    /// Appends a group block to the display sink. The caller can use the returned sink to append content to the group.
+    /// Publishes localized output without resolving the user's current language.
     /// </summary>
-    /// <returns></returns>
-    IChatPluginDisplaySink AppendContainer();
+    Task AppendDynamicLocaleKeyAsync(IDynamicLocaleKey resourceKey, string? className = null)
+    {
+        return AppendBlockAsync(new ChatPluginDynamicLocaleKeyDisplayBlock(resourceKey, className));
+    }
 
     /// <summary>
-    /// Appends plain text to the display sink.
+    /// Publishes references to files involved in this invocation.
     /// </summary>
-    /// <param name="text"></param>
-    /// <param name="className"></param>
-    void AppendText(string text, string? className = null);
+    Task AppendFileReferencesAsync(params IReadOnlyList<ChatPluginFileReference> references)
+    {
+        return AppendBlockAsync(new ChatPluginFileReferencesDisplayBlock(references));
+    }
 
     /// <summary>
-    /// Appends a dynamic resource key to the display sink.
+    /// Publishes the URLs involved in this invocation.
     /// </summary>
-    /// <param name="resourceKey"></param>
-    /// <param name="className"></param>
-    void AppendDynamicLocaleKey(IDynamicLocaleKey resourceKey, string? className = null);
+    Task AppendUrlsAsync(IReadOnlyList<ChatPluginUrl> urls) => AppendBlockAsync(new ChatPluginUrlsDisplayBlock(urls));
 
     /// <summary>
-    /// Appends a Markdown builder to the display sink. The caller can use the returned builder to build markdown content.
+    /// Publishes a nested conversation without transferring its runtime lifetime to the view.
     /// </summary>
-    /// <returns></returns>
-    ThreadSafeObservableStringBuilder AppendMarkdown();
-
-    /// <summary>
-    /// Appends a progress indicator to the display sink. The caller can use the returned progress reporter to report progress between 0.0 and 1.0.
-    /// </summary>
-    /// <returns>a progress reporter that accepts values between 0.0 and 1.0, NaN for indeterminate progress</returns>
-    IProgress<double> AppendProgress(IDynamicLocaleKey headerKey);
-
-    /// <summary>
-    /// Appends a file reference to the display sink.
-    /// </summary>
-    /// <param name="references"></param>
-    void AppendFileReferences(params IReadOnlyList<ChatPluginFileReference> references);
-
-    /// <summary>
-    /// Appends a list of URLs to the display sink.
-    /// </summary>
-    /// <param name="urls"></param>
-    void AppendUrls(IReadOnlyList<ChatPluginUrl> urls);
-
-    /// <summary>
-    /// Appends a separator to the display sink.
-    /// </summary>
-    void AppendSeparator(double thickness = 1.0d);
-
-    /// <summary>
-    /// Appends a code block to the display sink.
-    /// </summary>
-    /// <param name="code"></param>
-    /// <param name="language"></param>
-    void AppendCodeBlock(string code, string? language = null);
-
-    /// <summary>
-    /// Appends chat context information to the display sink. Used for subagents that need to display a subconversation.
-    /// </summary>
-    /// <param name="chatContext"></param>
-    void AppendSubagent(ChatContext chatContext);
+    Task AppendSubagentAsync(ChatData chatData) => AppendBlockAsync(new ChatPluginSubagentDisplayBlock(chatData));
 }

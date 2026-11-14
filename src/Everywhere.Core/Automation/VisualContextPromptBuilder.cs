@@ -112,7 +112,11 @@ public static class VisualContextPromptBuilder
     {
         if (roots.Count <= 1)
         {
-            return EnumerateNodes(roots).OrderBy(static node => node.TraversalPriority).ThenBy(static node => node.TraversalOrdinal).ToArray();
+            return EnumerateNodes(roots)
+                .AsValueEnumerable()
+                .OrderBy(static node => node.TraversalPriority)
+                .ThenBy(static node => node.TraversalOrdinal)
+                .ToArray();
         }
 
         var nodesByRoot = new ProjectionNode[roots.Count][];
@@ -156,16 +160,19 @@ public static class VisualContextPromptBuilder
             .AsValueEnumerable()
             .Select(root => EnumerateNodes([root])
                 .Where(node => selectedNodes.Contains(node) && !string.IsNullOrEmpty(node.Content))
-                .OrderBy(static node => node.RelevanceRank).ToArray())
+                .OrderBy(static node => node.RelevanceRank)
+                .ToArray())
             .ToArray();
         var demandsByRoot = bodiesByRoot
             .AsValueEnumerable()
-            .Select(nodes => nodes.AsValueEnumerable()
-                .Select(static node => EstimateBodyTokens(node.Content ?? string.Empty)).ToArray())
+            .Select(nodes => nodes
+                .AsValueEnumerable()
+                .Select(static node => EstimateBodyTokens(node.Content ?? string.Empty))
+                .ToArray())
             .ToArray();
         var rootDemands = demandsByRoot
             .AsValueEnumerable()
-            .Select(static demands => demands.Sum())
+            .Select(static demands => demands.AsValueEnumerable().Sum())
             .ToArray();
         var bodyBudget = Math.Max(0, options.TargetTokenBudget - skeletonTokens);
 

@@ -1,4 +1,4 @@
-using Everywhere.Common;
+﻿using Everywhere.Common;
 
 namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 
@@ -24,7 +24,7 @@ public sealed class BinaryFileHandler : LocalFileHandler
         {
             throw new HandledException(
                 new NotSupportedException(
-                    $"The file '{file.FullName}' is larger than 100 MB, so the read operation is not supported."),
+                    $"The file '{file.FullName}' is larger than 100 MiB, so the read operation is not supported."),
                 new FormattedDynamicLocaleKey(
                     LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
                     100));

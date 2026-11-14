@@ -52,16 +52,6 @@
           <!--  Logged In State  -->
           <DataTemplate x:DataType="v:UserProfileCard">
             <StackPanel Spacing="4">
-              <Interaction.Behaviors>
-                <AttachedToVisualTreeTrigger>
-                  <InvokeCommandAction Command="{x:Static v:UserProfileCard.RefreshUserProfileCommand}"/>
-                </AttachedToVisualTreeTrigger>
-
-                <DetachedFromVisualTreeTrigger>
-                  <InvokeCommandAction Command="{Binding RefreshUserProfileCommand.Cancel}"/>
-                </DetachedFromVisualTreeTrigger>
-              </Interaction.Behaviors>
-
               <ItemsControl ItemsSource="{Binding CloudClient?.Notifications}">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
@@ -99,7 +89,19 @@
                     Padding="4,2" VerticalAlignment="Center"
                     Background="{Binding CloudClient?.Subscription?.Plan, Converter={x:Static v:SubscriptionPlanToBrushValueConverter.Shared}, TargetNullValue={x:Null}}"
                     Content="{Binding CloudClient?.Subscription?.Plan, TargetNullValue={x:Null}}"
-                    Foreground="{DynamicResource BadgeForegroundColor}"/>
+                    Foreground="{DynamicResource BadgeForegroundColor}"
+                    IsVisible="{Binding CloudClient.Subscription, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                  <shadui:Skeleton
+                    Width="44" Height="18">
+                    <shadui:Skeleton.IsVisible>
+                      <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="CloudClient.IsSubscriptionLoading"/>
+                        <Binding
+                          Converter="{x:Static ObjectConverters.IsNull}"
+                          Path="CloudClient.Subscription"/>
+                      </MultiBinding>
+                    </shadui:Skeleton.IsVisible>
+                  </shadui:Skeleton>
                 </StackPanel>
 
                 <TextBlock
@@ -110,212 +112,278 @@
 
               <Separator/>
 
-              <!--  Quota Display  -->
-              <StackPanel
-                Margin="12,4" Spacing="8">
-                <StackPanel
-                  x:Name="PlanCreditsPanel"
-                  IsVisible="{Binding CloudClient.Subscription.Plan, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static cloud:SubscriptionPlan.Free}, FallbackValue={x:False}, TargetNullValue={x:False}}"
-                  Spacing="4">
-                  <DockPanel HorizontalSpacing="4">
-                    <TextBlock
-                      Classes="Caption Muted" DockPanel.Dock="Right">
-                      <TextBlock.Text>
-                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RemainingTextBlock_Text}">
-                          <Binding
-                            Path="CloudClient?.Subscription?.RemainingPlanCreditsRatio" StringFormat="{}{0:P0}"
-                            TargetNullValue="0%"/>
-                        </I18N>
-                      </TextBlock.Text>
-                      <ToolTip.Tip>
-                        <TextBlock Grid.Column="1">
-                          <Run Text="{Binding CloudClient.Subscription.RemainingPlanCredits, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
-                          <Run Text="/"/>
-                          <Run Text="{Binding CloudClient.Subscription.TotalPlanCredits, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
-                        </TextBlock>
-                      </ToolTip.Tip>
-                    </TextBlock>
-                    <TextBlock
-                      Classes="Caption"
-                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_PlanCreditsTextBlock_Text}}"/>
-                  </DockPanel>
-                </StackPanel>
-
-                <DockPanel
-                  x:Name="BonusCreditsPanel" HorizontalSpacing="4">
-                  <TextBlock
-                    Classes="Caption Muted" DockPanel.Dock="Right"
-                    Text="{Binding CloudClient.Subscription?.BonusCredits, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}, TargetNullValue=N/A}">
-                    <ToolTip.Tip>
-                      <TextBlock
-                        Grid.Column="1"
-                        Text="{Binding CloudClient.Subscription?.BonusCredits, StringFormat={}{0:N0}, TargetNullValue=N/A}"/>
-                    </ToolTip.Tip>
-                  </TextBlock>
-                  <TextBlock
-                    Classes="Caption"
-                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_BonusCreditsTextBlock_Text}}"/>
-                </DockPanel>
-
-                <Grid
-                  x:Name="FiveHourWindowPanel" ColumnDefinitions="*,Auto,Auto"
-                  ColumnSpacing="4"
-                  IsVisible="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt, TargetNullValue={x:False}, Converter={x:Static ObjectConverters.IsNotNull}}">
-                  <TextBlock
-                    Classes="Caption" Grid.Column="0"
-                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_FiveHourWindowTextBlock_Text}}"/>
-                  <TextBlock
-                    Classes="Caption Muted" Grid.Column="1"
-                    Text="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour.RemainingPercent, StringFormat={}{0:N0}%, TargetNullValue={x:Null}}"/>
-                  <TextBlock
-                    Classes="Caption Muted" Grid.Column="2"
-                    Text="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt, Converter={x:Static vc:DateTimeOffsetConverters.ToShortDateOrTimeString}, TargetNullValue={x:Null}}">
-                    <ToolTip.Tip>
-                      <I18N Key="{x:Static LocaleKey.UserProfilePresenter_QuotaLimitResetAtToolTip_Tip}">
-                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_FiveHourWindowTextBlock_Text}"/>
-                        <Binding
-                          Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
-                          Path="CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt" StringFormat="{}{0:g}"/>
-                      </I18N>
-                    </ToolTip.Tip>
-                  </TextBlock>
-                </Grid>
-
-                <Grid
-                  x:Name="SevenDayWindowPanel" ColumnDefinitions="*,Auto,Auto"
-                  ColumnSpacing="4"
-                  IsVisible="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay.ResetAt, TargetNullValue={x:False}, Converter={x:Static ObjectConverters.IsNotNull}}">
-                  <TextBlock
-                    Classes="Caption" Grid.Column="0"
-                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_SevenDayWindowTextBlock_Text}}"/>
-                  <TextBlock
-                    Classes="Caption Muted" Grid.Column="1"
-                    Text="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay.RemainingPercent, StringFormat={}{0:N0}%, TargetNullValue={x:Null}}"/>
-                  <TextBlock
-                    Classes="Caption Muted" Grid.Column="2"
-                    Text="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay.ResetAt, Converter={x:Static vc:DateTimeOffsetConverters.ToShortDateOrTimeString}, TargetNullValue={x:Null}}">
-                    <ToolTip.Tip>
-                      <I18N Key="{x:Static LocaleKey.UserProfilePresenter_QuotaLimitResetAtToolTip_Tip}">
-                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_SevenDayWindowTextBlock_Text}"/>
-                        <Binding
-                          Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
-                          Path="CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt" StringFormat="{}{0:g}"/>
-                      </I18N>
-                    </ToolTip.Tip>
-                  </TextBlock>
-                </Grid>
-
-                <StackPanel
-                  x:Name="WebSearchPanel" Spacing="4">
-                  <StackPanel.IsVisible>
+              <v:ConditionalContentControl
+                ContentDataBinding="{Binding}"
+                PageTransition="{x:Null}">
+                <v:ConditionalContentControl.Condition>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="CloudClient.IsSubscriptionLoading"/>
                     <Binding
-                      Converter="{x:Static ObjectConverters.NotEqual}"
-                      FallbackValue="{x:False}"
-                      Path="CloudClient.Subscription.TotalFreeWebSearchCount"
-                      TargetNullValue="{x:False}">
-                      <Binding.ConverterParameter>
-                        <system:Int32>0</system:Int32>
-                      </Binding.ConverterParameter>
-                    </Binding>
-                  </StackPanel.IsVisible>
-
-                  <DockPanel HorizontalSpacing="4">
-                    <TextBlock
-                      Classes="Caption Muted" DockPanel.Dock="Right">
-                      <TextBlock.Text>
-                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RemainingTextBlock_Text}">
-                          <Binding
-                            Path="CloudClient?.Subscription?.RemainingFreeWebSearchRatio" StringFormat="{}{0:P0}"
-                            TargetNullValue="0%"/>
-                        </I18N>
-                      </TextBlock.Text>
-                      <ToolTip.Tip>
-                        <TextBlock Grid.Column="1">
-                          <Run Text="{Binding CloudClient.Subscription.RemainingFreeWebSearchCount, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
-                          <Run Text="/"/>
-                          <Run Text="{Binding CloudClient.Subscription.TotalFreeWebSearchCount, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
-                        </TextBlock>
-                      </ToolTip.Tip>
-                    </TextBlock>
-                    <TextBlock
-                      Classes="Caption"
-                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_WebSearchTextBlock_Text}}"/>
-                  </DockPanel>
-                </StackPanel>
-
-                <v:LazyIndexedContentControl
-                  ContentDataBinding="{Binding CloudClient.Subscription, TargetNullValue={x:Null}}"
-                  ItemIndex="{Binding CloudClient.Subscription.Status, Converter={x:Static vc:Int32Converters.FromEnum}, FallbackValue=-1}">
-                  <v:LazyIndexedContentControl.IsVisible>
-                    <MultiBinding Converter="{x:Static BoolConverters.And}">
-                      <Binding
-                        Converter="{x:Static ObjectConverters.IsNotNull}"
-                        Path="CloudClient?.Subscription?.Status"
-                        TargetNullValue="{x:False}"/>
-                      <Binding
-                        Converter="{x:Static ObjectConverters.NotEqual}"
-                        ConverterParameter="{x:Static cloud:SubscriptionStatus.Unpaid}"
-                        Path="CloudClient?.Subscription?.Status"
-                        TargetNullValue="{x:False}"/>
-                    </MultiBinding>
-                  </v:LazyIndexedContentControl.IsVisible>
-
-                  <!--  Active  -->
-                  <DataTemplate x:DataType="cloud:SubscriptionInformation">
-                    <TextBlock
-                      Classes="Muted Small" TextWrapping="Wrap">
-                      <TextBlock.Text>
-                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RenewsOnTextBlock_Text}">
-                          <Binding
-                            Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
-                            Path="PeriodEnd" StringFormat="{}{0:g}"/>
-                        </I18N>
-                      </TextBlock.Text>
-                    </TextBlock>
+                      Converter="{x:Static ObjectConverters.IsNull}"
+                      Path="CloudClient.Subscription"/>
+                  </MultiBinding>
+                </v:ConditionalContentControl.Condition>
+                <v:ConditionalContentControl.TrueContent>
+                  <DataTemplate x:DataType="v:UserProfileCard">
+                    <StackPanel
+                      Margin="12,4" IsHitTestVisible="False"
+                      Spacing="8">
+                      <Border Height="{DynamicResource LineHeightS}">
+                        <shadui:Skeleton
+                          Height="{DynamicResource FontSizeS}"
+                          VerticalAlignment="Center"/>
+                      </Border>
+                      <Border
+                        Height="{DynamicResource LineHeightS}"
+                        Margin="0,0,48,0">
+                        <shadui:Skeleton
+                          Height="{DynamicResource FontSizeS}"
+                          VerticalAlignment="Center"/>
+                      </Border>
+                      <Border
+                        Height="{DynamicResource LineHeightS}"
+                        Margin="0,0,24,0">
+                        <shadui:Skeleton
+                          Height="{DynamicResource FontSizeS}"
+                          VerticalAlignment="Center"/>
+                      </Border>
+                    </StackPanel>
                   </DataTemplate>
+                </v:ConditionalContentControl.TrueContent>
+                <v:ConditionalContentControl.FalseContent>
+                  <DataTemplate x:DataType="v:UserProfileCard">
+                    <StackPanel Spacing="8">
+                      <!--  Quota Display  -->
+                      <StackPanel
+                        Margin="12,4"
+                        IsVisible="{Binding CloudClient.Subscription, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Spacing="8">
+                        <StackPanel
+                          x:Name="PlanCreditsPanel"
+                          IsVisible="{Binding CloudClient.Subscription.Plan, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static cloud:SubscriptionPlan.Free}, FallbackValue={x:False}, TargetNullValue={x:False}}"
+                          Spacing="4">
+                          <DockPanel
+                            MinHeight="{DynamicResource LineHeightS}"
+                            HorizontalSpacing="4">
+                            <TextBlock
+                              Classes="Caption Muted" DockPanel.Dock="Right">
+                              <TextBlock.Text>
+                                <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RemainingTextBlock_Text}">
+                                  <Binding
+                                    Path="CloudClient?.Subscription?.RemainingPlanCreditsRatio" StringFormat="{}{0:P0}"
+                                    TargetNullValue="0%"/>
+                                </I18N>
+                              </TextBlock.Text>
+                              <ToolTip.Tip>
+                                <TextBlock Grid.Column="1">
+                                  <Run Text="{Binding CloudClient.Subscription.RemainingPlanCredits, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
+                                  <Run Text="/"/>
+                                  <Run Text="{Binding CloudClient.Subscription.TotalPlanCredits, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
+                                </TextBlock>
+                              </ToolTip.Tip>
+                            </TextBlock>
+                            <TextBlock
+                              Classes="Caption"
+                              Text="{I18N {x:Static LocaleKey.UserProfilePresenter_PlanCreditsTextBlock_Text}}"/>
+                          </DockPanel>
+                        </StackPanel>
 
-                  <!--  Trialing  -->
-                  <DataTemplate x:DataType="cloud:SubscriptionInformation">
-                    <TextBlock Classes="Caption">
-                      <TextBlock.Text>
-                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_TrialUntilTextBlock_Text}">
-                          <Binding
-                            Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
-                            Path="PeriodEnd" StringFormat="{}{0:g}"/>
-                        </I18N>
-                      </TextBlock.Text>
-                    </TextBlock>
+                        <DockPanel
+                          x:Name="BonusCreditsPanel"
+                          MinHeight="{DynamicResource LineHeightS}"
+                          HorizontalSpacing="4">
+                          <TextBlock
+                            Classes="Caption Muted" DockPanel.Dock="Right"
+                            Text="{Binding CloudClient.Subscription?.BonusCredits, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}, TargetNullValue=N/A}">
+                            <ToolTip.Tip>
+                              <TextBlock
+                                Grid.Column="1"
+                                Text="{Binding CloudClient.Subscription?.BonusCredits, StringFormat={}{0:N0}, TargetNullValue=N/A}"/>
+                            </ToolTip.Tip>
+                          </TextBlock>
+                          <TextBlock
+                            Classes="Caption"
+                            Text="{I18N {x:Static LocaleKey.UserProfilePresenter_BonusCreditsTextBlock_Text}}"/>
+                        </DockPanel>
+
+                        <Grid
+                          x:Name="FiveHourWindowPanel" ColumnDefinitions="*,Auto,Auto"
+                          ColumnSpacing="4"
+                          IsVisible="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt, TargetNullValue={x:False}, Converter={x:Static ObjectConverters.IsNotNull}}">
+                          <TextBlock
+                            Classes="Caption" Grid.Column="0"
+                            Text="{I18N {x:Static LocaleKey.UserProfilePresenter_FiveHourWindowTextBlock_Text}}"/>
+                          <TextBlock
+                            Classes="Caption Muted" Grid.Column="1"
+                            Text="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour.RemainingPercent, StringFormat={}{0:N0}%, TargetNullValue={x:Null}}"/>
+                          <TextBlock
+                            Classes="Caption Muted" Grid.Column="2"
+                            Text="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt, Converter={x:Static vc:DateTimeOffsetConverters.ToShortDateOrTimeString}, TargetNullValue={x:Null}}">
+                            <ToolTip.Tip>
+                              <I18N Key="{x:Static LocaleKey.UserProfilePresenter_QuotaLimitResetAtToolTip_Tip}">
+                                <I18N Key="{x:Static LocaleKey.UserProfilePresenter_FiveHourWindowTextBlock_Text}"/>
+                                <Binding
+                                  Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
+                                  Path="CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt" StringFormat="{}{0:g}"/>
+                              </I18N>
+                            </ToolTip.Tip>
+                          </TextBlock>
+                        </Grid>
+
+                        <Grid
+                          x:Name="SevenDayWindowPanel" ColumnDefinitions="*,Auto,Auto"
+                          ColumnSpacing="4"
+                          IsVisible="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay.ResetAt, TargetNullValue={x:False}, Converter={x:Static ObjectConverters.IsNotNull}}">
+                          <TextBlock
+                            Classes="Caption" Grid.Column="0"
+                            Text="{I18N {x:Static LocaleKey.UserProfilePresenter_SevenDayWindowTextBlock_Text}}"/>
+                          <TextBlock
+                            Classes="Caption Muted" Grid.Column="1"
+                            Text="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay.RemainingPercent, StringFormat={}{0:N0}%, TargetNullValue={x:Null}}"/>
+                          <TextBlock
+                            Classes="Caption Muted" Grid.Column="2"
+                            Text="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay.ResetAt, Converter={x:Static vc:DateTimeOffsetConverters.ToShortDateOrTimeString}, TargetNullValue={x:Null}}">
+                            <ToolTip.Tip>
+                              <I18N Key="{x:Static LocaleKey.UserProfilePresenter_QuotaLimitResetAtToolTip_Tip}">
+                                <I18N Key="{x:Static LocaleKey.UserProfilePresenter_SevenDayWindowTextBlock_Text}"/>
+                                <Binding
+                                  Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
+                                  Path="CloudClient.Subscription?.QuotaLimit?.SevenDay.ResetAt" StringFormat="{}{0:g}"/>
+                              </I18N>
+                            </ToolTip.Tip>
+                          </TextBlock>
+                        </Grid>
+
+                        <StackPanel
+                          x:Name="WebSearchPanel" Spacing="4">
+                          <StackPanel.IsVisible>
+                            <Binding
+                              Converter="{x:Static ObjectConverters.NotEqual}"
+                              FallbackValue="{x:False}"
+                              Path="CloudClient.Subscription.TotalFreeWebSearchCount"
+                              TargetNullValue="{x:False}">
+                              <Binding.ConverterParameter>
+                                <system:Int32>0</system:Int32>
+                              </Binding.ConverterParameter>
+                            </Binding>
+                          </StackPanel.IsVisible>
+
+                          <DockPanel
+                            MinHeight="{DynamicResource LineHeightS}"
+                            HorizontalSpacing="4">
+                            <TextBlock
+                              Classes="Caption Muted" DockPanel.Dock="Right">
+                              <TextBlock.Text>
+                                <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RemainingTextBlock_Text}">
+                                  <Binding
+                                    Path="CloudClient?.Subscription?.RemainingFreeWebSearchRatio" StringFormat="{}{0:P0}"
+                                    TargetNullValue="0%"/>
+                                </I18N>
+                              </TextBlock.Text>
+                              <ToolTip.Tip>
+                                <TextBlock Grid.Column="1">
+                                  <Run Text="{Binding CloudClient.Subscription.RemainingFreeWebSearchCount, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
+                                  <Run Text="/"/>
+                                  <Run Text="{Binding CloudClient.Subscription.TotalFreeWebSearchCount, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
+                                </TextBlock>
+                              </ToolTip.Tip>
+                            </TextBlock>
+                            <TextBlock
+                              Classes="Caption"
+                              Text="{I18N {x:Static LocaleKey.UserProfilePresenter_WebSearchTextBlock_Text}}"/>
+                          </DockPanel>
+                        </StackPanel>
+
+                        <v:LazyIndexedContentControl
+                          ContentDataBinding="{Binding CloudClient.Subscription, TargetNullValue={x:Null}}"
+                          ItemIndex="{Binding CloudClient.Subscription.Status, Converter={x:Static vc:Int32Converters.FromEnum}, FallbackValue=-1}">
+                          <v:LazyIndexedContentControl.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                              <Binding
+                                Converter="{x:Static ObjectConverters.IsNotNull}"
+                                Path="CloudClient?.Subscription?.Status"
+                                TargetNullValue="{x:False}"/>
+                              <Binding
+                                Converter="{x:Static ObjectConverters.NotEqual}"
+                                ConverterParameter="{x:Static cloud:SubscriptionStatus.Unpaid}"
+                                Path="CloudClient?.Subscription?.Status"
+                                TargetNullValue="{x:False}"/>
+                            </MultiBinding>
+                          </v:LazyIndexedContentControl.IsVisible>
+
+                          <!--  Active  -->
+                          <DataTemplate x:DataType="cloud:SubscriptionInformation">
+                            <TextBlock
+                              Classes="Muted Small" TextWrapping="Wrap">
+                              <TextBlock.Text>
+                                <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RenewsOnTextBlock_Text}">
+                                  <Binding
+                                    Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
+                                    Path="PeriodEnd" StringFormat="{}{0:g}"/>
+                                </I18N>
+                              </TextBlock.Text>
+                            </TextBlock>
+                          </DataTemplate>
+
+                          <!--  Trialing  -->
+                          <DataTemplate x:DataType="cloud:SubscriptionInformation">
+                            <TextBlock Classes="Caption">
+                              <TextBlock.Text>
+                                <I18N Key="{x:Static LocaleKey.UserProfilePresenter_TrialUntilTextBlock_Text}">
+                                  <Binding
+                                    Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
+                                    Path="PeriodEnd" StringFormat="{}{0:g}"/>
+                                </I18N>
+                              </TextBlock.Text>
+                            </TextBlock>
+                          </DataTemplate>
+
+                          <!--  Cancelling  -->
+                          <DataTemplate x:DataType="cloud:SubscriptionInformation">
+                            <TextBlock Classes="Caption">
+                              <TextBlock.Text>
+                                <I18N Key="{x:Static LocaleKey.UserProfilePresenter_EndsOnTextBlock_Text}">
+                                  <Binding
+                                    Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
+                                    Path="PeriodEnd" StringFormat="{}{0:g}"/>
+                                </I18N>
+                              </TextBlock.Text>
+                            </TextBlock>
+                          </DataTemplate>
+
+                          <!--  Unpaid  -->
+                          <shadui:EmptyDataTemplate/>
+
+                          <!--  Expired  -->
+                          <DataTemplate x:DataType="cloud:SubscriptionInformation">
+                            <TextBlock Classes="Caption">
+                              <TextBlock.Text>
+                                <I18N Key="{x:Static LocaleKey.UserProfilePresenter_ExpiredDaysAgoTextBlock_Text}">
+                                  <Binding Path="ExpiredDaysAgo"/>
+                                </I18N>
+                              </TextBlock.Text>
+                            </TextBlock>
+                          </DataTemplate>
+                        </v:LazyIndexedContentControl>
+                      </StackPanel>
+
+                      <StackPanel
+                        Margin="12,4"
+                        IsVisible="{Binding CloudClient.SubscriptionErrorKey, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Spacing="8">
+                        <TextBlock
+                          Classes="Caption Muted"
+                          Text="{Binding CloudClient.SubscriptionErrorKey^, FallbackValue={x:Null}}"
+                          TextWrapping="Wrap"/>
+                        <Button
+                          Classes="Secondary Compact" HorizontalAlignment="Right"
+                          Command="{x:Static v:UserProfileCard.RefreshUserProfileCommand}"
+                          Content="{I18N {x:Static LocaleKey.Common_Retry}}"/>
+                      </StackPanel>
+                    </StackPanel>
                   </DataTemplate>
-
-                  <!--  Cancelling  -->
-                  <DataTemplate x:DataType="cloud:SubscriptionInformation">
-                    <TextBlock Classes="Caption">
-                      <TextBlock.Text>
-                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_EndsOnTextBlock_Text}">
-                          <Binding
-                            Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
-                            Path="PeriodEnd" StringFormat="{}{0:g}"/>
-                        </I18N>
-                      </TextBlock.Text>
-                    </TextBlock>
-                  </DataTemplate>
-
-                  <!--  Unpaid  -->
-                  <shadui:EmptyDataTemplate/>
-
-                  <!--  Expired  -->
-                  <DataTemplate x:DataType="cloud:SubscriptionInformation">
-                    <TextBlock Classes="Caption">
-                      <TextBlock.Text>
-                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_ExpiredDaysAgoTextBlock_Text}">
-                          <Binding Path="ExpiredDaysAgo"/>
-                        </I18N>
-                      </TextBlock.Text>
-                    </TextBlock>
-                  </DataTemplate>
-                </v:LazyIndexedContentControl>
-              </StackPanel>
-
+                </v:ConditionalContentControl.FalseContent>
+              </v:ConditionalContentControl>
               <Separator/>
 
               <!--  Quick Actions  -->
@@ -377,68 +445,32 @@
                 Spacing="4">
                 <Separator/>
 
-                <Grid
-                  Margin="12,0" ColumnDefinitions="Auto,*,Auto,Auto"
-                  ColumnSpacing="6">
-                  <LucideIcon
-                    Grid.Column="0" Kind="CloudSync"
-                    Size="{DynamicResource FontSizeL}"
-                    ToolTip.Placement="Top"
-                    ToolTip.Tip="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggle_Tip}}"/>
-                  <TextBlock
-                    Grid.Column="1" VerticalAlignment="Center"
-                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"/>
+                <DockPanel
+                  Margin="12,4" HorizontalSpacing="8"
+                  ToolTip.Placement="Top"
+                  ToolTip.Tip="{I18N {x:Static LocaleKey.ChatSync_Description}}">
                   <ToggleSwitch
-                    Grid.Column="2" DockPanel.Dock="Right"
-                    VerticalAlignment="Center"
-                    IsChecked="{Binding Path=PersistentState.IsCloudSyncEnabled, Mode=TwoWay}"/>
-                  <LucideIcon
-                    Grid.Column="3" Kind="CircleQuestionMark"
-                    Size="{DynamicResource FontSizeS}"
-                    ToolTip.Placement="Top"
-                    ToolTip.Tip="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggle_Tip}}"/>
-                </Grid>
-
-                <StackPanel
-                  x:Name="SyncStatusPanel" Margin="12,0"
-                  IsVisible="{Binding Path=PersistentState.IsCloudSyncEnabled, Mode=TwoWay}"
-                  Spacing="4">
+                    DockPanel.Dock="Right" VerticalAlignment="Center"
+                    AutomationProperties.HelpText="{I18N {x:Static LocaleKey.ChatSync_Description}}"
+                    AutomationProperties.Name="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"
+                    IsChecked="{Binding ChatSync.IsEnabled, Mode=TwoWay}"
+                    IsEnabled="{Binding IsChatSyncConfigured}"/>
                   <TextBlock
-                    Classes="Caption Muted"
-                    IsVisible="{Binding Path=PersistentState.LastCloudSynchronized, Converter={x:Static ObjectConverters.IsNotNull}}">
-                    <TextBlock.Text>
-                      <I18N Key="{x:Static LocaleKey.UserProfilePresenter_LastSynchronizedTextBlock_Text}">
-                        <Binding
-                          Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
-                          Path="PersistentState.LastCloudSynchronized" StringFormat="{}{0:g}"/>
-                      </I18N>
-                    </TextBlock.Text>
-                  </TextBlock>
+                    VerticalAlignment="Center"
+                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_CloudSyncToggleTextBlock_Text}}"
+                    TextWrapping="Wrap"/>
+                </DockPanel>
 
-                  <StackPanel
-                    IsVisible="{Binding Path=CloudSynchronizer.IsCloudSyncing}"
-                    Orientation="Horizontal" Spacing="4">
-                    <shadui:Loading Size="{DynamicResource FontSizeS}"/>
-                    <TextBlock
-                      Classes="Caption Muted"
-                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_SynchronizingTextBlock_Text}}"/>
-                  </StackPanel>
-
-                  <StackPanel
-                    IsVisible="{Binding Path=PersistentState.LastCloudSynchronizationErrorMessageKey, Converter={x:Static ObjectConverters.IsNotNull}}"
-                    Orientation="Horizontal" Spacing="4">
-                    <TextBlock
-                      Classes="Caption"
-                      Foreground="{DynamicResource WarningColor}"
-                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_LastSynchronizationErrorTextBlock_Text}}"/>
-                    <LucideIcon
-                      Foreground="{DynamicResource WarningColor}"
-                      Kind="CircleQuestionMark"
-                      Size="{DynamicResource FontSizeS}"
-                      ToolTip.Placement="Top"
-                      ToolTip.Tip="{Binding Path=PersistentState.LastCloudSynchronizationErrorMessageKey^, FallbackValue={x:Null}}"/>
-                  </StackPanel>
-                </StackPanel>
+                <Button
+                  Classes="Ghost" Margin="0,-4,0,0"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                  shadui:ButtonAssist.Icon="{LucideIconContent Cloud}"
+                  Command="{Binding ManageChatSyncCommand}"
+                  Content="{I18N {x:Static LocaleKey.UserProfilePresenter_ManageChatSyncButton_Content}}">
+                  <Interaction.Behaviors>
+                    <ButtonHideFlyoutOnClickBehavior/>
+                  </Interaction.Behaviors>
+                </Button>
 
                 <Separator/>
 
@@ -515,6 +547,19 @@
                 Command="{Binding LoginCommand.Cancel, Mode=OneTime}"
                 Content="{I18N {x:Static LocaleKey.Common_Cancel}}"
                 IsVisible="{Binding LoginCommand.IsRunning}"/>
+            </StackPanel>
+          </DataTemplate>
+          <!--  Cloud endpoints were not supplied for this build  -->
+          <DataTemplate x:DataType="v:UserProfileCard">
+            <StackPanel
+              HorizontalAlignment="Center" Spacing="16">
+              <Image
+                Height="80" HorizontalAlignment="Center"
+                Source="avares://Everywhere.Core/Assets/Images/Cloud.png" Stretch="Uniform"/>
+              <TextBlock
+                Classes="Muted"
+                Text="{I18N {x:Static LocaleKey.Common_CloudNotConfigured}}"
+                TextAlignment="Center" TextWrapping="Wrap"/>
             </StackPanel>
           </DataTemplate>
         </v:LazyIndexedContentControl>

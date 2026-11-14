@@ -272,7 +272,7 @@
         <value>Type shortcut...</value>
     </data>
     <data name="ChatContext_Metadata_Topic_Default" xml:space="preserve">
-        <value>Unnamed Session</value>
+        <value>Unnamed chat</value>
     </data>
     <data name="ChatAttachment_RemoveButton_ToolTip" xml:space="preserve">
         <value>Remove</value>
@@ -975,6 +975,9 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>The connection to the service was interrupted or could not be established.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>The connection to the service was interrupted or could not be established.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Service is currently unavailable. Please try again later.</value>
     </data>
@@ -1513,8 +1516,8 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Date</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>Rename Chat</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>Rename</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>Delete Chat</value>
@@ -1565,7 +1568,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Add, modify, delete, or move text files.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>File size exceeds {0} MB; read operation is not supported.</value>
+        <value>File size exceeds {0} MiB; read operation is not supported.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Failed to create the directory.</value>
@@ -2311,7 +2314,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Query a bounded region around a visual element.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Sign up for free credits and get access to popular models right out of the box. More features like cloud sync are coming soon...</value>
+        <value>Sign up for free credits and get access to popular models right out of the box.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Login</value>
@@ -2324,6 +2327,9 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>Plan Credits</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Manage cloud sync</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Manage Subscription</value>
@@ -2389,21 +2395,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Profile Dashboard</value>
     </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Chat Cloud Sync</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Enabling this will automatically sync your chat history across devices</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Last synchronized {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Last synchronization error</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Syncing...</value>
-    </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>I'll Configure the Model Myself</value>
     </data>
@@ -2442,9 +2433,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="Common_Undo" xml:space="preserve">
         <value>Undo</value>
-    </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>&quot;{0}&quot; is deleted</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>Display</value>
@@ -2718,9 +2706,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>The tool's return result is incorrect: {0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>Temporary Chat: Once enabled, the current chat will not be saved and will be deleted when switching or starting a new conversation.</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(Optional) {0}</value>
@@ -4301,6 +4286,9 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
         <value>The proxy server refused to establish a connection. Check the proxy settings and authentication details.</value>
     </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
+        <value>The proxy server refused to establish a connection. Check the proxy settings and authentication details.</value>
+    </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
         <value>The current assistant does not support tool calling. Check the configuration or choose another assistant.</value>
     </data>
@@ -4484,9 +4472,6 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
         <value>Enter a valid exact application identity. Paths and wildcards are not supported here.</value>
     </data>
-    <data name="TextSelectionApplications_InvalidExecutablePath" xml:space="preserve">
-        <value>Enter an absolute path to the application's executable, for example /usr/bin/ghostty.</value>
-    </data>
     <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
         <value>This application rule is already in the list.</value>
     </data>
@@ -4495,9 +4480,6 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
         <value>Include the .exe extension. Matches all processes with this name, regardless of installation location; ignores case. Wildcards are not supported.</value>
-    </data>
-    <data name="TextSelectionApplications_ExecutablePathHint" xml:space="preserve">
-        <value>Enter the absolute path to the application's executable, for example /usr/bin/ghostty. Matching is case-sensitive; wildcards are not supported.</value>
     </data>
     <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
         <value>Add by bundle ID…</value>
@@ -4628,6 +4610,312 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copy link text</value>
     </data>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>Chat Cloud Sync</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>Sync chat history across multiple devices with the same account. You can choose which chats are synced.</value>
+    </data>
+    <data name="ChatHistory_Archived" xml:space="preserve">
+        <value>Archived</value>
+    </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Archive</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Unarchive</value>
+    </data>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>Permanently delete</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>This permanently deletes this chat and all its branches from this device, and it cannot be undone. Are you sure?</value>
+    </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>Stop this chat before permanently deleting it.</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>Your chat data has been upgraded</value>
+    </data>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>Chats now use a turn-based data structure, and history loading is more efficient. You can now archive chats, and cloud sync has also received performance improvements.</value>
+    </data>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>We have backed up your old chat data. It is no longer used unless you downgrade Everywhere in the future. You can choose to delete it.</value>
+    </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>Move the previous-version chat database to the trash (keep attachment files)</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>Continue</value>
+    </data>
+    <data name="ChatHistory_Pinned" xml:space="preserve">
+        <value>Pinned</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Pin to top</value>
+    </data>
+    <data name="ChatHistory_Unpin" xml:space="preserve">
+        <value>Unpin</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Rename chat</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Keep it short and easy to read</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>Delete chat</value>
+    </data>
+    <data name="ChatHistory_Recent" xml:space="preserve">
+        <value>Recent</value>
+    </data>
+    <data name="ChatHistory_Temporary" xml:space="preserve">
+        <value>Temporary</value>
+    </data>
+    <data name="ChatHistory_Persist" xml:space="preserve">
+        <value>Keep chat</value>
+    </data>
+    <data name="ChatHistory_TemporaryNotice" xml:space="preserve">
+        <value>Temporary chat. Automatically deleted when Everywhere exits.</value>
+    </data>
+    <data name="ChatHistory_TemporaryDescription" xml:space="preserve">
+        <value>Start a temporary chat. It will be automatically deleted when Everywhere exits.</value>
+    </data>
+    <data name="ChatHistory_PersistDescription" xml:space="preserve">
+        <value>Keep this temporary chat as a regular chat so it is not automatically deleted.</value>
+    </data>
+    <data name="ChatHistory_Empty" xml:space="preserve">
+        <value>No chats to display</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>Use temporary chats from the toolbar</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>Chats started from the text selection toolbar are temporary and are automatically deleted when Everywhere exits. Turn this off to use regular chats.</value>
+    </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>View synced branch</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>Archive this chat?</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>Archiving will stop all work in this chat. You can restore it later from archived chats.</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>Permanently delete this chat? For a synced chat, this also deletes it from other devices when they sync. This cannot be undone.</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Chat cloud sync</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>{0} of {1} used</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>Stop syncing</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>Start syncing</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>Manage sync…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>Local only</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>Synced</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>Waiting to sync</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>Syncing…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>Sync incomplete</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>Waiting to restart sync</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>Free {0} of cloud space to sync.</value>
+    </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>Please sign in first to manage chat cloud sync.</value>
+    </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>Chat sync is off.</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>Couldn't load chat cloud sync. Check your network or try again later.</value>
+    </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>This copy changed. Refresh and review it before trying again.</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>Stopped {0} of {1}. Refresh and review the remaining chats.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>Your selection includes a chat not stored on this device. If there are no other copies, it cannot be recovered.</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>Sync “{0}” across your devices? All branches stored on this device will be uploaded.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>{0} selected</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>This chat cannot be managed under the current account.</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>The account changed. Review the chats for the current account.</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>The operation could not be confirmed. Refresh to see the current state.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>Not on this device</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>Message versions differ; local content kept</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>Cloud storage</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>Syncing ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>Local only ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>Select multiple</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>Stop sync ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>No chats are set to sync.</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>No local-only chats.</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>Cloud storage is {0} over its limit. Chats already synced are still available on other devices.</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>Some chats need more cloud space to sync.</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Manage</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>Resolve</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>Free up space</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>Stop syncing these {0} older chats to free up {1}? Chats already on your devices stay there. Later changes won’t sync.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>There aren’t enough older, fully synced chats on this device to free up {0}. Review individual chats instead.</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>This account has no cloud storage available. Removing older chats won’t make room for a new one.</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>{0} chats switched to local only.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>Stop syncing {0}? The upload will be cancelled. The chat will stay on this device.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>Stop syncing {0}? This frees {1} of cloud space. Chats already on your devices stay there. Later changes won’t sync.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>“{0}” alone exceeds your {1} cloud storage limit. Removing other chats won’t make it fit. You can keep it local instead.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>Cloud copy size: {0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>Changes on this device won’t sync to your other devices.</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>Sync status not yet confirmed</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>You can still use this chat here. Refresh its status before starting sync.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>Checking this chat and syncing its changes.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>A cloud copy is available. It hasn’t been saved on this device yet.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>The local and cloud copies matched at the last check.</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>Sync is on again. The cloud copy is waiting to be rebuilt.</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>This chat hasn’t been saved to the cloud yet.</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>Some changes haven’t synced between this device and the cloud yet.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>Cloud copy changed</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>The same message was edited on two devices. Sync kept your local version instead of overwriting it.</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>This chat could not be synced under the current account. Check which account is signed in.</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>The last sync did not finish. Use Refresh at the top of this page to try again.</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>No cloud storage available</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>There’s enough space now. This chat is waiting for the next sync.</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>This chat exceeds your cloud limit</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>Removing other chats won’t make this one fit. You can stop syncing it and keep it on this device.</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>Free {0} to sync this chat. Select Resolve in Cloud storage to review your options.</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>Enable chat cloud sync</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>Loading chat cloud sync...</value>
+    </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>Recently modified</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>Cloud size</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>Starting sync</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>Stopping sync</value>
+    </data>
+    <data name="Common_CloudNotConfigured" xml:space="preserve">
+        <value>Official cloud services are not configured in this build.</value>
+    </data>
     <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
         <value>Update Everywhere</value>
     </data>
@@ -4640,5 +4928,11 @@ Copy the command below and run it in your terminal to update.</value>
     </data>
     <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
         <value>Or, download from the </value>
+    </data>
+    <data name="TextSelectionApplications_InvalidExecutablePath" xml:space="preserve">
+        <value>Enter an absolute path to the application's executable, for example /usr/bin/ghostty.</value>
+    </data>
+    <data name="TextSelectionApplications_ExecutablePathHint" xml:space="preserve">
+        <value>Enter the absolute path to the application's executable, for example /usr/bin/ghostty. Matching is case-sensitive; wildcards are not supported.</value>
     </data>
 </root>

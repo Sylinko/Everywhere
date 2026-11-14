@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -57,6 +57,7 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
     private Task? _initializationTask;
     private Task? _activationTask;
+    private bool _isShutdownInProgress;
 
     // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
     // arrive while the first error dialog is still open; without this guard every nested exception
@@ -102,9 +103,32 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     /// </summary>
     public void Shutdown(int exitCode = 0)
     {
-        if (ApplicationLifetime is IControlledApplicationLifetime lifetime)
+        Dispatcher.UIThread.VerifyAccess();
+        if (!_isShutdownInProgress && ApplicationLifetime is IControlledApplicationLifetime lifetime)
         {
+            _isShutdownInProgress = true;
+            ShutdownCoreAsync(lifetime, exitCode).Detach(NativeMessageBox.ExceptionHandler);
+        }
+    }
+
+    private async Task ShutdownCoreAsync(IControlledApplicationLifetime lifetime, int exitCode)
+    {
+        try
+        {
+            // Startup can own a dialog whose cancellation and continuations require the dispatcher.
+            // Drain startup before stopping the UI loop.
+            await _initializationCancellation.CancelAsync();
+            if (_initializationTask is { } initializationTask)
+            {
+                await initializationTask;
+            }
+
             lifetime.Shutdown(exitCode);
+        }
+        catch
+        {
+            _isShutdownInProgress = false;
+            throw;
         }
     }
 
@@ -272,6 +296,18 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
         {
             case IClassicDesktopStyleApplicationLifetime desktop:
             {
+                desktop.ShutdownRequested += (_, args) =>
+                {
+                    if (_initializationTask is not { IsCompleted: false })
+                    {
+                        return;
+                    }
+
+                    // Only unfinished startup needs the dispatcher to drain before exit.
+                    // In normal operation, let the original request complete, including OS shutdown.
+                    args.Cancel = true;
+                    Shutdown();
+                };
                 desktop.Exit += (_, _) => _initializationCancellation.Cancel();
 
                 if (!Design.IsDesignMode)
@@ -329,7 +365,8 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
                     NativeMessageBoxButtons.Ok,
                     NativeMessageBoxIcon.Error);
 
-                Shutdown(1);
+                // Do not make startup await a shutdown that is itself draining startup.
+                Dispatcher.UIThread.Post(() => Shutdown(1));
             }
         }
     }

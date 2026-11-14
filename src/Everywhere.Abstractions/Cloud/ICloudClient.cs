@@ -1,9 +1,6 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Everywhere.Collections;
-using Everywhere.Common;
 using Everywhere.Common.Notification;
-using Everywhere.I18N;
 
 namespace Everywhere.Cloud;
 
@@ -12,7 +9,11 @@ public enum CloudClientLoginStatus
     NotLoggedIn,
     LoggedIn,
     AutoLoggingIn,
-    LoginFailed
+    LoginFailed,
+    /// <summary>
+    /// Account endpoints or the OAuth client ID were not supplied when building the app.
+    /// </summary>
+    NotConfigured
 }
 
 /// <summary>
@@ -28,10 +29,25 @@ public interface ICloudClient : INotifyPropertyChanged
     UserProfile? UserProfile { get; }
 
     /// <summary>
+    /// Account authenticated by restoring the pre-existing device session at startup, not by an interactive login.
+    /// </summary>
+    string? RestoredAccountId { get; }
+
+    /// <summary>
     /// Gets the current subscription information for the logged-in user. Returns null if not logged in or if subscription information is unavailable.
     /// This property raises <see cref="INotifyPropertyChanged.PropertyChanged"/> when updated.
     /// </summary>
     SubscriptionInformation? Subscription { get; }
+
+    /// <summary>
+    /// Whether subscription data is being refreshed independently of authentication.
+    /// </summary>
+    bool IsSubscriptionLoading { get; }
+
+    /// <summary>
+    /// Localized subscription read failure, without invalidating an authenticated profile.
+    /// </summary>
+    IDynamicLocaleKey? SubscriptionErrorKey { get; }
 
     /// <summary>
     /// Gets the current login status of the cloud client, indicating whether the user is logged in, logging in, or if a login attempt has failed.
@@ -39,7 +55,7 @@ public interface ICloudClient : INotifyPropertyChanged
     CloudClientLoginStatus LoginStatus { get; }
 
     /// <summary>
-    /// Gets the resource key for the last error message encountered during login or data retrieval operations. Returns null if there are no errors.
+    /// Gets the resource key for the last error message encountered during authentication. Subscription read failures are reported separately. Returns null if there are no errors.
     /// </summary>
     IDynamicLocaleKey? LastLoginErrorKey { get; }
 
@@ -62,7 +78,8 @@ public interface ICloudClient : INotifyPropertyChanged
     Task LogoutAsync(CancellationToken cancellationToken);
 
     /// <summary>
-    /// Manually refresh user profile and subscription information.
+    /// Refreshes the authenticated profile and subscription, reusing any subscription request already in progress.
+    /// Cancelling this wait does not cancel a subscription request started by login.
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
@@ -72,6 +89,10 @@ public interface ICloudClient : INotifyPropertyChanged
     /// Creates a DelegatingHandler that can be added to the HTTP client pipeline to automatically handle authentication.
     /// It adds the necessary Authorization header to outgoing requests and attempts token refresh on 401 responses.
     /// </summary>
+    /// <remarks>
+    /// Request content must support repeated serialization. The handler does not buffer or own it.
+    /// Callers with a single-use input stream must provide a replayable source before using this handler.
+    /// </remarks>
     /// <returns></returns>
     DelegatingHandler CreateAuthenticationHandler();
 }

@@ -975,6 +975,9 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>Hizmet bağlantısı kesildi veya kurulamadı.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>Hizmet bağlantısı kesildi veya kurulamadı.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Hizmet şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.</value>
     </data>
@@ -1513,8 +1516,8 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Tarih</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>Yeniden adlandırma diyaloğu</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>Yeniden adlandır</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>Sohbeti sil</value>
@@ -1565,7 +1568,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Metin dosyalarını ekleyin, değiştirin, silin veya taşıyın.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Dosya boyutu {0} MB'ı aşıyor; okuma işlemi desteklenmiyor.</value>
+        <value>Dosya boyutu {0} MiB'ı aşıyor; okuma işlemi desteklenmiyor.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Dizini oluşturma başarısız oldu.</value>
@@ -2311,7 +2314,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Bir öğe veya bileşik görsel hedefin çevresindeki sınırlı bir bölgeyi sorgular.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Kaydolduğunuzda ücretsiz puanlar kazanın, kullanıma hazır popüler modellere erişin. Bulut senkronizasyonu gibi özellikler de sürekli olarak ekleniyor...</value>
+        <value>Kaydolduğunuzda ücretsiz puanlar kazanın, kullanıma hazır popüler modellere erişin.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Giriş Yap</value>
@@ -2324,6 +2327,9 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>Abonelik Puanları</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Bulut eşitlemesini yönet</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Aboneliği Yönet</value>
@@ -2389,21 +2395,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Kişisel Sayfa</value>
     </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Sohbet Bulut Senkronizasyonu</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Açıldığında sohbet geçmişiniz otomatik olarak birden fazla cihaz arasında senkronize edilecektir</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Son başarılı senkronizasyon {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Son senkronizasyonda hata oluştu</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Eşitleniyor...</value>
-    </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Kendim Modeli Yapılandırmak İstiyorum</value>
     </data>
@@ -2442,9 +2433,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="Common_Undo" xml:space="preserve">
         <value>Geri Al</value>
-    </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>“{0}” silindi</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>Görüntü</value>
@@ -2718,9 +2706,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>Araçtan dönen sonuç hatalı: {0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>Geçici Sohbet: Açıldığında mevcut sohbet kaydedilmeyecek, geçiş yapıldığında veya yeni bir diyalog açıldığında silinecek.</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(isteğe bağlı) {0}</value>
@@ -4301,6 +4286,9 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
         <value>Proxy sunucusu bağlantı kurmayı reddetti. Proxy ayarlarını ve kimlik doğrulama bilgilerini kontrol edin.</value>
     </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
+        <value>Proxy sunucusu bağlantı kurmayı reddetti. Proxy ayarlarını ve kimlik doğrulama bilgilerini kontrol edin.</value>
+    </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
         <value>Mevcut asistan araç çağrılarını desteklemiyor. Yapılandırmayı kontrol edin veya başka bir asistan seçin.</value>
     </data>
@@ -4621,5 +4609,71 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Bağlantı metnini kopyala</value>
+    </data>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>Sohbet Bulut Senkronizasyonu</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>Aynı hesaptaki birden fazla cihaz arasında sohbet geçmişini eşitleyin. Hangi sohbetlerin eşitleneceğini seçebilirsiniz.</value>
+    </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Arşivle</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Arşivden çıkar</value>
+    </data>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>Kalıcı olarak sil</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>Bu işlem, bu sohbeti ve tüm dallarını bu cihazdan kalıcı olarak siler ve geri alınamaz. Emin misiniz?</value>
+    </data>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>Sohbetler artık tura dayalı bir veri yapısı kullanıyor ve geçmiş yükleme daha verimli. Artık sohbetleri arşivleyebilirsiniz ve bulut eşitleme de performans iyileştirmeleri aldı.</value>
+    </data>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>Eski sohbet verilerini yedekledik. Gelecekte Everywhere'i eski bir sürüme döndürmediğiniz sürece artık kullanılmıyorlar. İsterseniz bunları silebilirsiniz.</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Yukarı sabitle</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Sohbeti yeniden adlandır</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Kısa ve okunması kolay tutulması önerilir</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>Sohbeti sil</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesi</value>
+    </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesini yönetmek için lütfen önce oturum açın.</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesi yüklenemedi. Ağ bağlantınızı kontrol edin veya daha sonra tekrar deneyin.</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Yönet</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesini etkinleştir</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesi yükleniyor...</value>
+    </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>Son değiştirilen</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>Bulut boyutu</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>Eşitleme başlatılıyor</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>Eşitleme durduruluyor</value>
     </data>
 </root>

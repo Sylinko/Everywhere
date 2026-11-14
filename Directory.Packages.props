@@ -8,7 +8,7 @@
     <SentryVersion>6.13.0</SentryVersion>
     <AvaloniaVersion>12.1.6</AvaloniaVersion>
     <AvaloniaEditVersion>12.0.0</AvaloniaEditVersion>
-    <LiveMarkdownVersion>2.6.0</LiveMarkdownVersion>
+    <LiveMarkdownVersion>2.6.1</LiveMarkdownVersion>
     <SkiaSharpVersion>4.156.0</SkiaSharpVersion>
     <XamlBehaviorsVersion>12.1.5</XamlBehaviorsVersion>
     <TikTokenVersion>7.0.0</TikTokenVersion>
@@ -44,7 +44,7 @@
     <PackageVersion Include="ReverseMarkdown" Version="6.3.0" />
     <PackageVersion Include="Sentry" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Extensions.AI" Version="$(SentryVersion)" />
-    <PackageVersion Include="Sentry.OpenTelemetry" Version="$(SentryVersion)" />
+    <PackageVersion Include="Sentry.OpenTelemetry.Exporter" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Serilog" Version="$(SentryVersion)" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />

@@ -1,3 +1,4 @@
+﻿using Everywhere.Core.Tests.Chat;
 using Avalonia.Headless.NUnit;
 using Everywhere.Chat;
 using Everywhere.Common.Notification;
@@ -5,6 +6,7 @@ using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.I18N;
 using Everywhere.Statistics;
+using Everywhere.Storage;
 using Lucide.Avalonia;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +17,31 @@ namespace Everywhere.Core.Tests.Statistics;
 
 public sealed class StatisticsBackfillerTests
 {
+    [AvaloniaTest]
+    public async Task BackfillAsync_WhenCompressionSeparatesUserAndAssistant_UsesNativeTurnMembership()
+    {
+        using var chatDatabase = ChatTestDatabase.Create();
+        using var statisticsDatabase = StatisticsTestDatabase.Create();
+        using var data = new ChatData();
+        var user = data.Add(new UserChatMessage("question", []));
+        data.Add(new ContextCompressionChatMessage(data.RootNode.Id, "test-model", ContextCompressionTrigger.Manual, null, null));
+        var assistant = data.Add(new AssistantChatMessage());
+        await new ChatTurnStorage(chatDatabase.Factory).SaveDataAsync(data);
+
+        var notificationCenter = new NotificationCenter(new InMemoryKeyValueStorage());
+        var backfiller = new StatisticsBackfiller(
+            chatDatabase.Factory,
+            statisticsDatabase.Factory,
+            NullLogger<StatisticsBackfiller>.Instance,
+            new NotificationPublisher<StatisticsBackfiller>(notificationCenter));
+        await backfiller.BackfillAsync();
+
+        await using var db = await statisticsDatabase.Factory.CreateDbContextAsync();
+        var turn = await db.TurnEvents.SingleAsync();
+        Assert.That(turn.UserChatNodeId, Is.EqualTo(user.Id));
+        Assert.That(turn.AssistantChatNodeId, Is.EqualTo(assistant.Id));
+    }
+
     [AvaloniaTest]
     public async Task BackfillAsync_ImportsHistoricalToolCalls_AndDoesNotDuplicate()
     {
@@ -39,18 +66,18 @@ public sealed class StatisticsBackfillerTests
 
         await using (var chatDb = await chatDatabase.Factory.CreateDbContextAsync())
         {
-            chatDb.Chats.Add(new ChatContextEntity
+            chatDb.Chats.Add(new ChatV2Entity
             {
                 Id = chatId,
                 Topic = "Tool history",
                 CreatedAt = now.AddMinutes(-1),
                 UpdatedAt = now
             });
-            chatDb.Nodes.Add(new ChatNodeEntity
+            chatDb.Nodes.Add(new ChatV2NodeEntity
             {
                 Id = assistantNodeId,
                 ChatContextId = chatId,
-                Author = "assistant",
+                MessageKind = ChatMessageKind.Assistant,
                 CreatedAt = now,
                 UpdatedAt = now.AddMilliseconds(25),
                 Payload = MessagePackSerializer.Serialize<ChatMessage>(assistantMessage)

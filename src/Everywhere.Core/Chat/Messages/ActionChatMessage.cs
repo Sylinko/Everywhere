@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Lucide.Avalonia;
 using MessagePack;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -12,32 +11,49 @@ namespace Everywhere.Chat;
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class ActionChatMessage : ChatMessage
 {
+    /// <inheritdoc />
+    public override ChatMessageKind Kind => ChatMessageKind.Action;
+
     [IgnoreMember]
     public override AuthorRole Role => new("action");
 
     [Key(1)]
-    [ObservableProperty]
-    public partial LucideIconKind Icon { get; set; }
+    public LucideIconKind Icon
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(2)]
-    [ObservableProperty]
-    public partial DynamicLocaleKey? HeaderKey { get; set; }
+    public DynamicLocaleKey? HeaderKey
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(3)]
-    [ObservableProperty]
-    public partial string? Content { get; set; }
+    public string? Content
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(4)]
-    [ObservableProperty]
-    public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
+    public IDynamicLocaleKey? ErrorMessageKey
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [Key(5)]
     public override DateTimeOffset CreatedAt { get; }
 
     [Key(6)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ElapsedSeconds))]
-    public partial DateTimeOffset FinishedAt { get; set; }
+    public DateTimeOffset FinishedAt
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     [IgnoreMember]
     [JsonIgnore]
@@ -65,5 +81,11 @@ public sealed partial class ActionChatMessage : ChatMessage
         Icon = icon;
         HeaderKey = headerKey;
         CreatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <inheritdoc />
+    public override ChatActionState Capture()
+    {
+        return new ChatActionState(Icon, HeaderKey, ErrorMessageKey, IsBusy, ElapsedSeconds);
     }
 }

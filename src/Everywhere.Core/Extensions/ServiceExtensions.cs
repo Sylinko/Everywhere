@@ -1,4 +1,4 @@
-using Everywhere.AI;
+﻿using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
 using Everywhere.Automation;
@@ -118,12 +118,43 @@ public static class ServiceExtensions
                 .AddSingleton<VisualElementEffect>()
                 .AddSingleton<IVisualContextScanEffect>(x => x.GetRequiredService<VisualElementEffect>());
 
+        /// <summary>
+        /// Registers database factories and storage, allowing final chat and statistics writes
+        /// through already-injected dependencies during ordinary DI disposal.
+        /// </summary>
+        /// <remarks>
+        /// The platform entry points await this shutdown sequence after Avalonia exits:
+        /// <code>
+        /// ServiceProvider.DisposeAsync() marks the root provider as disposed
+        ///   -> ChatContextManager.DisposeAsync()
+        ///      -> cancel chat work and await its final model/statistics updates
+        ///      -> commit the remaining incremental chat writes
+        /// </code>
+        /// AddDbContextFactory normally stores the application IServiceProvider in its options.
+        /// A newly created context can then resolve ILoggerFactory from that provider on its
+        /// first operation, even though the factory and its consumer were already constructed.
+        /// Such a resolution fails during DI disposal, before the consumer can save its data.
+        /// Merely using the options-only registration overload does not remove this dependency.
+        ///
+        /// Capture the existing ILoggerFactory during options creation, then clear the implicit
+        /// application-provider reference. DI constructs the logger factory before these options
+        /// and their consumers, so it remains available until their disposal has completed.
+        /// This preserves application logging without resolving services from a closed provider.
+        /// EF still owns its internal services, and each storage operation still owns its context;
+        /// there is no second application container or special shutdown database connection.
+        /// </remarks>
         public IServiceCollection AddDatabaseAndStorage() =>
             services
-                .AddDbContextFactory<ChatDbContext>((_, options) =>
+                .AddDbContextFactory<ChatV2DbContext>((provider, options) =>
                 {
-                    var dbPath = RuntimeConstants.GetDatabasePath("chat.db");
-                    options.UseSqlite($"Data Source={dbPath}");
+                    var dbPath = RuntimeConstants.GetDatabasePath("chat-v2.db");
+                    options.UseSqlite(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                    {
+                        DataSource = dbPath,
+                        ForeignKeys = true,
+                    }.ToString());
+                    options.UseLoggerFactory(provider.GetRequiredService<ILoggerFactory>());
+                    options.UseApplicationServiceProvider(null);
                 })
                 // Prompt Manager owns an isolated database. The built-in default prompt is virtual
                 // and is provided by IDefaultPromptProvider rather than inserted into this database.
@@ -132,22 +163,35 @@ public static class ServiceExtensions
                     var dbPath = RuntimeConstants.GetDatabasePath("prompt.db");
                     options.UseSqlite($"Data Source={dbPath}");
                 })
-                .AddDbContextFactory<StatisticsDbContext>((_, options) =>
+                .AddDbContextFactory<StatisticsDbContext>((provider, options) =>
                 {
                     var dbPath = RuntimeConstants.GetDatabasePath("statistics.db");
                     options.UseSqlite($"Data Source={dbPath}");
+                    // Canceled requests complete their invocation statistics before the final
+                    // chat save. Use the same disposal-safe dependencies described above.
+                    options.UseLoggerFactory(provider.GetRequiredService<ILoggerFactory>());
+                    options.UseApplicationServiceProvider(null);
                 })
                 .AddSingleton<IDefaultPromptProvider, DefaultPromptProvider>()
                 .AddSingleton<IPromptService, PromptService>()
                 .AddSingleton<IAssistantPromptReferenceService, AssistantPromptReferenceService>()
                 .AddSingleton<IBlobStorage, BlobStorage>()
-                .AddSingleton<IChatContextStorage, ChatContextStorage>()
+                .AddSingleton<ChatTurnStorage>()
+                .AddSingleton<IChatContextStorage>(provider => provider.GetRequiredService<ChatTurnStorage>())
+                .AddSingleton(provider => new ChatStoreUpgradeService(
+                    provider.GetRequiredService<IDbContextFactory<ChatV2DbContext>>(),
+                    RuntimeConstants.GetDatabasePath("chat.db"),
+                    provider.GetRequiredService<INativeHelper>()))
                 .AddSingleton<NotificationCenter>()
                 .AddSingleton<INotificationCenter>(x => x.GetRequiredService<NotificationCenter>())
                 .AddSingleton(typeof(INotificationPublisher<>), typeof(NotificationPublisher<>))
                 .AddSingleton<IStatisticsRecorder, StatisticsRecorder>()
                 .AddSingleton<IStatisticsService, StatisticsService>()
-                .AddTransient<IAsyncInitializer, ChatDbInitializer>()
+                .AddTransient<IAsyncInitializer>(provider => new ChatV2StoreInitializer(
+                    provider.GetRequiredService<IDbContextFactory<ChatV2DbContext>>(),
+                    RuntimeConstants.GetDatabasePath("chat.db"),
+                    provider.GetRequiredService<ILogger<ChatV2StoreInitializer>>()))
+                .AddTransient<IAsyncInitializer, ChatStoreUpgradeNoticeInitializer>()
                 .AddTransient<IAsyncInitializer, PromptDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsBackfiller>();

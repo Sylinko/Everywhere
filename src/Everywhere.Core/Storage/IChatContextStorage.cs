@@ -1,5 +1,5 @@
 ﻿using Everywhere.Chat;
-using Everywhere.Database;
+using Everywhere.Cloud;
 
 namespace Everywhere.Storage;
 
@@ -8,86 +8,99 @@ namespace Everywhere.Storage;
 /// Only exposes use-case level methods instead of leaking IQueryable,
 /// which keeps the implementation swappable (SQLite, Dapper, etc.).
 /// </summary>
-public interface IChatContextStorage
+public interface IChatContextStorage : IChatTurnLoader
 {
     /// <summary>
-    /// Soft-deletes chat contexts by their IDs. Implementations should mark <see cref="ChatContextEntity.IsDeleted"/> = true
-    /// and update <see cref="ChatContextEntity.UpdatedAt"/> for LWW resolution. Children rows should also be treated accordingly.
+    /// Reads local-only composer values without loading the conversation history.
     /// </summary>
-    /// <param name="chatContextIds">Context Id to delete.</param>
-    /// <param name="cancellationToken">Cancellation.</param>
-    Task DeleteChatContextsAsync(IEnumerable<Guid> chatContextIds, CancellationToken cancellationToken = default);
+    Task<ChatInputSnapshot?> ReadInputAsync(Guid chatId, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Restores soft-deleted chat contexts by their IDs. Implementations should mark <see cref="ChatContextEntity.IsDeleted"/> = false
-    /// and update <see cref="ChatContextEntity.UpdatedAt"/> for LWW resolution. Children rows should also be treated accordingly.
+    /// Saves captured local input independently of sync intents. A null payload removes it.
+    /// False defers input for standalone work whose first message is not persisted yet.
     /// </summary>
-    /// <param name="chatContextIds"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task RestoreChatContextsAsync(IEnumerable<Guid> chatContextIds, CancellationToken cancellationToken = default);
+    Task<bool> SaveInputAsync(Guid chatId, ChatInputWrite input, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Queries chat contexts metadata with simple cursor-based pagination.
+    /// Reads the single new-chat draft and its real identity without manufacturing a Chats row.
     /// </summary>
-    /// <param name="take">Maximum number of items to return (page size).</param>
-    /// <param name="orderBy">Sort field.</param>
-    /// <param name="descending">Whether to sort in descending order.</param>
-    /// <param name="startAfterId">
-    /// Optional "start after" cursor. When provided, the page starts after this ID using the same sort order.
-    /// Implementations should use a deterministic tie-breaker (ID) when multiple rows share the same sort key.
-    /// </param>
-    /// <param name="cancellationToken">Cancellation.</param>
-    /// <returns>Async sequence of contexts, ordered.</returns>
-    IAsyncEnumerable<ChatContextMetadata> QueryChatContextsAsync(
+    Task<StoredChatInput?> ReadNewChatInputAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Freezes committed changes without replacing an uncertain submission. An unstable chat
+    /// can publish independent metadata, but not the active generation.
+    /// </summary>
+    Task FreezeUploadAsync(string accountId, Guid chatId, bool isStable, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Merges a fully downloaded delta and its sync progress in one local transaction.
+    /// The returned replacements for loaded bodies are published only after commit.
+    /// A null result means only the sync head advanced; there is no local chat change to publish.
+    /// </summary>
+    Task<ReceivedChatCommit?> MergeSnapshotAsync(
+        string accountId,
+        ChatSyncDownloadedSnapshot download,
+        IReadOnlySet<Guid> loadedNodes,
+        bool shouldDiscardSubmission,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Installs a cleared cloud head without materializing content or changing the local graph.
+    /// Older heads cannot reverse a newer installed decision.
+    /// </summary>
+    Task ApplyClearedHeadAsync(string accountId, ChatSyncHead head, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Moves a conversation into the archive without modifying its nodes or stopping active work.
+    /// </summary>
+    /// <returns>The committed timestamp. The manager publishes it to the owning execution domain.</returns>
+    Task<DateTimeOffset> ArchiveAsync(Guid chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restores an archived conversation to the active history listing.
+    /// </summary>
+    Task RestoreAsync(Guid chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Permanently deletes a conversation after the manager stops its work. Pending writes are discarded after deletion succeeds.
+    /// Shared attachment files are retained.
+    /// </summary>
+    Task DeletePermanentlyAsync(Guid chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Reads history in descending IsPinned/UpdatedAt/Id order, after the captured database values.
+    /// </summary>
+    Task<ChatHistoryPage> ReadHistoryPageAsync(
         int take,
-        ChatContextOrderBy orderBy,
-        bool descending,
-        Guid? startAfterId = null,
+        ChatHistoryCursor? cursor = null,
+        ChatHistoryView view = ChatHistoryView.Recent,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Loads a chat context with its full message tree.
-    /// Throws if not found or is soft-deleted (unless includeDeleted is true).
+    /// Reads the most recently modified active conversation, regardless of pinning.
     /// </summary>
-    Task<ChatContext> GetChatContextAsync(Guid chatContextId, CancellationToken cancellationToken = default);
+    Task<ChatMetadata?> GetMostRecentChatMetadataAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Explicitly persists the current in-memory ChatContext graph to the database.
-    /// Strategy: snapshot-diff by Node.Id (Guid v7) => upsert/update; mark missing nodes as soft-deleted.
-    /// - Updates ChatContextEntity (Topic, UpdatedAt).
-    /// - Upserts ChatNodeEntity rows (Payload, ParentId, ChoiceChildId, Author, InsertKey).
-    /// - Soft-deletes nodes that exist in DB but are absent from memory (unreachable).
-    /// This method is idempotent and safe to call frequently.
+    /// Commits a history pin without loading message history or changing activity time.
+    /// The caller publishes the new value only after this operation commits.
     /// </summary>
-    Task SaveChatContextAsync(ChatContext context, CancellationToken cancellationToken = default);
+    Task SetPinnedAsync(Guid chatId, bool isPinned, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Saves chat context metadata only (e.g., topic changes).
+    /// Loads detached lightweight topology for an active or archived conversation.
+    /// Message bodies are loaded explicitly by turn.
     /// </summary>
-    /// <param name="metadata"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task SaveChatContextMetadataAsync(ChatContextMetadata metadata, CancellationToken cancellationToken = default);
-}
-
-/// <summary>
-/// Sort fields for querying chat contexts.
-/// </summary>
-public enum ChatContextOrderBy
-{
-    /// <summary>
-    /// Sort by <see cref="ChatContextEntity.UpdatedAt"/>.
-    /// </summary>
-    UpdatedAt = 0,
+    Task<ChatData> GetChatContextAsync(ChatMetadata metadata, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sort by <see cref="ChatContextEntity.CreatedAt"/>.
+    /// Persists explicit node, choice, and metadata changes in one transaction.
+    /// Choice-only writes do not load payloads; unchanged fields retain their stored values.
     /// </summary>
-    CreatedAt = 1,
+    Task SaveChatContextAsync(ChatWriteBatch batch, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sort by <see cref="ChatContextEntity.Topic"/> (culture-invariant).
+    /// Saves explicitly changed metadata fields without loading the conversation.
     /// </summary>
-    Topic = 2,
+    Task SaveChatContextMetadataAsync(ChatMetadataWrite metadata, CancellationToken cancellationToken = default);
 }

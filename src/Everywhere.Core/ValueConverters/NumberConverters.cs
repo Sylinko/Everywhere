@@ -2,7 +2,6 @@
 using System.Numerics;
 using Avalonia.Data.Converters;
 using Everywhere.Utilities;
-using ZLinq;
 
 namespace Everywhere.ValueConverters;
 
@@ -72,7 +71,7 @@ public abstract class NumberConverters<T> where T : struct, INumber<T>
 
     /// <summary>
     /// Converts a byte size into a human-readable string with appropriate units.
-    /// e.g., 1024 -> "1 KB", 1048576 -> "1 MB"
+    /// e.g., 1024 -> "1 KiB", 1048576 -> "1 MiB"
     /// </summary>
     public static IValueConverter HumanizeBytes { get; } = new FuncValueConverter<T, string>(n => Humanizer.HumanizeBytes(long.CreateChecked(n)));
 
@@ -101,7 +100,13 @@ public abstract class NumberConverters<T> where T : struct, INumber<T>
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            return value is null ? 0 : Enum.ToObject(targetType, System.Convert.ChangeType(value, TypeCode.Int64));
+            if (value is null)
+            {
+                return 0;
+            }
+
+            var underlyingValue = System.Convert.ChangeType(value is UnsetValueType ? 0 : value, Enum.GetUnderlyingType(targetType), culture);
+            return Enum.ToObject(targetType, underlyingValue);
         }
     }
 }

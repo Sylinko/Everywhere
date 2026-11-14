@@ -6,16 +6,15 @@ namespace Everywhere.Core.Tests;
 
 public static class AvaloniaHeadlessTestApp
 {
-    public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<Application>()
+    public static AppBuilder BuildAvaloniaApp()
+    {
+        var shouldRender = Environment.GetEnvironmentVariable("EVERYWHERE_RENDER_OUTPUT") is not null;
+        var builder = AppBuilder.Configure<Application>()
             .AfterSetup(builder =>
             {
                 builder.Instance?.Styles.Add(new SimpleTheme());
             })
-            .WithInterFont()
-            .UseSkia()
-            .UseHeadless(new AvaloniaHeadlessPlatformOptions
-            {
-                UseHeadlessDrawing = Environment.GetEnvironmentVariable("EVERYWHERE_UPDATE_PREVIEW_DIR") is null
-            });
+            .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = !shouldRender });
+        return shouldRender ? builder.UseSkia() : builder;
+    }
 }

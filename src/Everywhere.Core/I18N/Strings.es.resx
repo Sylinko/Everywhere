@@ -975,6 +975,9 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
     <data name="HandledChatException_NetworkError" xml:space="preserve">
         <value>La conexión con el servicio se interrumpió o no pudo establecerse.</value>
     </data>
+    <data name="Common_NetworkError" xml:space="preserve">
+        <value>La conexión con el servicio se interrumpió o no pudo establecerse.</value>
+    </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>El servicio no está disponible en este momento. Por favor, inténtalo más tarde.</value>
     </data>
@@ -1513,8 +1516,8 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Fecha</value>
     </data>
-    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
-        <value>Renombrar chat</value>
+    <data name="ChatHistory_Rename_Header" xml:space="preserve">
+        <value>Cambiar nombre</value>
     </data>
     <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
         <value>Eliminar chat</value>
@@ -1565,7 +1568,7 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
         <value>Agregar, modificar, eliminar o mover archivos de texto.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>El tamaño del archivo excede {0} MB; la operación de lectura no es compatible.</value>
+        <value>El tamaño del archivo excede {0} MiB; la operación de lectura no es compatible.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>No se pudo crear el directorio.</value>
@@ -2311,7 +2314,7 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
         <value>Consulta una región acotada alrededor de un objetivo visual de tipo elemento o compuesto.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
-        <value>Regístrate para obtener créditos gratuitos y acceder a modelos populares listos para usar. Más funciones como sincronización en la nube estarán disponibles pronto...</value>
+        <value>Regístrate para obtener créditos gratuitos y acceder a modelos populares listos para usar.</value>
     </data>
     <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
         <value>Iniciar Sesión</value>
@@ -2324,6 +2327,9 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
         <value>Créditos de Suscripción</value>
+    </data>
+    <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Gestionar la sincronización en la nube</value>
     </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Gestionar Suscripción</value>
@@ -2389,21 +2395,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
         <value>Perfil</value>
     </data>
-    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
-        <value>Sincronización en la Nube</value>
-    </data>
-    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
-        <value>Al activarlo, tus registros de chat se sincronizarán automáticamente entre varios dispositivos</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
-        <value>Última sincronización exitosa {0}</value>
-    </data>
-    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
-        <value>Error en la última sincronización</value>
-    </data>
-    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
-        <value>Sincronizando...</value>
-    </data>
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>Quiero Configurar el Modelo Yo Mismo</value>
     </data>
@@ -2442,9 +2433,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="Common_Undo" xml:space="preserve">
         <value>Deshacer</value>
-    </data>
-    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>Se ha eliminado “{0}”</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>Pantalla</value>
@@ -2718,9 +2706,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
         <value>El resultado devuelto por la herramienta es incorrecto: {0}</value>
-    </data>
-    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
-        <value>Chat Temporal: Al activarlo, el chat actual no se guardará y se eliminará al cambiar o crear una nueva conversación.</value>
     </data>
     <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(Opcional) {0}</value>
@@ -4301,6 +4286,9 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
         <value>El servidor proxy rechazó establecer la conexión. Revisa la configuración del proxy y los datos de autenticación.</value>
     </data>
+    <data name="Common_ProxyTunnelRejected" xml:space="preserve">
+        <value>El servidor proxy rechazó establecer la conexión. Revisa la configuración del proxy y los datos de autenticación.</value>
+    </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
         <value>El asistente actual no admite llamadas a herramientas. Revisa la configuración o cambia de asistente.</value>
     </data>
@@ -4621,5 +4609,71 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     </data>
     <data name="Common_CopyLinkText" xml:space="preserve">
         <value>Copiar texto del vínculo</value>
+    </data>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>Sincronización de chats en la nube</value>
+    </data>
+    <data name="ChatSync_Description" xml:space="preserve">
+        <value>Sincroniza el historial de chats entre varios dispositivos con la misma cuenta. Puedes elegir qué chats se sincronizan.</value>
+    </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Archivar</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Desarchivar</value>
+    </data>
+    <data name="ChatHistory_Delete_Header" xml:space="preserve">
+        <value>Eliminar permanentemente</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
+        <value>Esto eliminará permanentemente este chat y todas sus ramas de este dispositivo, y no se puede deshacer. ¿Estás seguro?</value>
+    </data>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>Los chats ahora usan una estructura de datos basada en turnos y la carga del historial es más eficiente. Ahora puedes archivar chats y la sincronización en la nube también ha mejorado su rendimiento.</value>
+    </data>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>Hemos hecho una copia de seguridad de los datos de chat antiguos. Ya no se utilizan, a menos que en el futuro vuelvas a una versión anterior de Everywhere. Puedes elegir eliminarlos.</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Fijar arriba</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
+        <value>Cambiar nombre del chat</value>
+    </data>
+    <data name="ChatHistory_RenameDialog_Label" xml:space="preserve">
+        <value>Se recomienda mantenerlo breve y fácil de leer</value>
+    </data>
+    <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
+        <value>Eliminar chat</value>
+    </data>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Sincronización del chat en la nube</value>
+    </data>
+    <data name="ChatSync_SignInRequired" xml:space="preserve">
+        <value>Inicia sesión primero para administrar la sincronización en la nube del chat.</value>
+    </data>
+    <data name="ChatSync_LoadFailed" xml:space="preserve">
+        <value>No se pudo cargar la sincronización en la nube del chat. Comprueba tu conexión de red o inténtalo de nuevo más tarde.</value>
+    </data>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Gestionar</value>
+    </data>
+    <data name="ChatSync_Enable" xml:space="preserve">
+        <value>Activar la sincronización en la nube del chat</value>
+    </data>
+    <data name="ChatSync_Loading" xml:space="preserve">
+        <value>Cargando la sincronización en la nube del chat...</value>
+    </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>Modificados recientemente</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>Tamaño en la nube</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>Iniciando sincronización</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>Deteniendo sincronización</value>
     </data>
 </root>

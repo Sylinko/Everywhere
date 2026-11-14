@@ -1,4 +1,4 @@
-using Everywhere.AI;
+﻿using Everywhere.AI;
 
 namespace Everywhere.Common;
 
@@ -12,7 +12,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_NetworkError);
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.Common_NetworkError);
 
         /// <inheritdoc />
         public override ChatExceptionRecovery Recovery { get; } = new ChatExceptionRecovery.Retry(retryAfter);
@@ -59,7 +59,7 @@ public abstract partial class HandledChatException
         ) : NetworkError(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_NetworkError_ProxyTunnelRejected);
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.Common_ProxyTunnelRejected);
 
             /// <inheritdoc />
             public override ChatExceptionRecovery Recovery => new ChatExceptionRecovery.Stop();

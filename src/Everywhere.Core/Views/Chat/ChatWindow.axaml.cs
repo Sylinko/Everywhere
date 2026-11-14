@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -10,7 +11,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AttachedProperties;
 using Everywhere.Chat;
-using Everywhere.Collections;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Interop;
@@ -29,8 +29,11 @@ public sealed partial class ChatWindow :
     IRecipient<FlashChatWindowMessage>,
     IRecipient<ApplicationMessage>
 {
-    public IReadOnlyBindableList<DynamicNotification> ModelAvailabilityNotifications =>
-        _modelAvailabilityPresenter.Notifications;
+    /// <summary>
+    /// Gets the model and temporary-chat notices displayed above the input area.
+    /// </summary>
+    public ObservableCollection<DynamicNotification> ChatInputNotifications =>
+        _inputNotificationPresenter.Notifications;
 
     /// <summary>
     /// Defines the <see cref="IsWindowPinned"/> property.
@@ -57,8 +60,12 @@ public sealed partial class ChatWindow :
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
     private readonly ChatModelAvailabilityPresenter _modelAvailabilityPresenter;
+    private readonly ChatInputNotificationPresenter _inputNotificationPresenter;
+    private readonly NotificationCenter _notificationCenter;
     private readonly ILogger<ChatWindow> _logger;
+
     private IDisposable? _pendingHiddenCompaction;
+    private IDisposable? _notificationWindow;
 
     /// <summary>
     /// Indicates whether the window has been resized by the user.
@@ -77,6 +84,7 @@ public sealed partial class ChatWindow :
         INativeHelper nativeHelper,
         Settings settings,
         PersistentState persistentState,
+        NotificationCenter notificationCenter,
         AssistantCatalog assistantCatalog,
         IKeyValueStorage keyValueStorage,
         IScreenSelectionService screenSelectionService,
@@ -89,6 +97,7 @@ public sealed partial class ChatWindow :
         _nativeHelper = nativeHelper;
         _settings = settings;
         _persistentState = persistentState;
+        _notificationCenter = notificationCenter;
         _modelAvailabilityPresenter = new ChatModelAvailabilityPresenter(assistantCatalog, keyValueStorage);
 
         _screenSelectionService = screenSelectionService;
@@ -96,7 +105,14 @@ public sealed partial class ChatWindow :
         _visualElementEffect = visualElementEffect;
         _logger = logger;
 
+        _inputNotificationPresenter = new ChatInputNotificationPresenter(
+            ViewModel.ChatContextManager,
+            _modelAvailabilityPresenter.Notifications,
+            ViewModel.PersistChatCommand,
+            ViewModel.SyncService,
+            ViewModel.OpenChatSyncManagementCommand);
         InitializeComponent();
+        ChatMessages.SetViewportActive(IsVisible && WindowState != WindowState.Minimized);
 
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel, true);
         ViewModel.TextSearch.FocusRequested += HandleTextSearchFocusRequested;
@@ -115,6 +131,18 @@ public sealed partial class ChatWindow :
 
         settings.Model.PropertyChanged += HandleModelSettingsChanged;
         _modelAvailabilityPresenter.SetAssistant(settings.Model.SelectedCustomAssistant);
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e)
+    {
+        base.OnLoaded(e);
+        _notificationWindow = _notificationCenter.RegisterPopupWindow(this, NotificationWindows.Chat);
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        DisposeHelper.DisposeToDefault(ref _notificationWindow);
+        base.OnUnloaded(e);
     }
 
     private void SetupDragDropHandlers()
@@ -166,6 +194,23 @@ public sealed partial class ChatWindow :
                 e.Handled = true;
                 break;
             }
+            case { Key: Key.G } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
+            {
+                if (TemporaryChatButton.IsVisible && TemporaryChatButton.IsEffectivelyEnabled)
+                {
+                    var isTemporary = !ViewModel.ChatContextManager.Current.Data.Metadata.IsTemporary;
+                    ViewModel.SetTemporaryChatCommand.Execute(isTemporary);
+                    e.Handled = true;
+                }
+                break;
+            }
+            case { Key: Key.F } when e.KeyModifiers.IsApplicationShortcutModifierOnly(KeyModifiers.Shift):
+            {
+                HistorySearchToggle.IsChecked = !HistorySearchToggle.IsChecked;
+                SwitchHistorySearch();
+                e.Handled = true;
+                break;
+            }
             case { Key: Key.F } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
             {
                 ViewModel.TextSearch.OpenSearchCommand.Execute(null);
@@ -205,20 +250,28 @@ public sealed partial class ChatWindow :
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == IsVisibleProperty)
+        if (change.Property == IsVisibleProperty || change.Property == WindowStateProperty)
         {
-            var isVisible = change.NewValue is true;
-            ViewModel.IsOpened = isVisible;
-            _modelAvailabilityPresenter.SetActive(isVisible);
+            if (change.Property == IsVisibleProperty)
+            {
+                ViewModel.IsOpened = IsVisible;
+            }
+            var isActive = IsVisible && WindowState != WindowState.Minimized;
+            _modelAvailabilityPresenter.SetActive(isActive);
+            ChatMessages.SetViewportActive(isActive);
 
             DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
-            if (!isVisible)
+            if (!isActive)
             {
+                ViewModel.CancelSyncDialogs();
                 _pendingHiddenCompaction = DispatcherTimer.RunOnce(
                     () =>
                     {
                         _pendingHiddenCompaction = null;
-                        if (!IsVisible) ChatMessages.CompactCurrentViewport();
+                        if (!IsVisible || WindowState == WindowState.Minimized)
+                        {
+                            ChatMessages.CompactCurrentViewport();
+                        }
                     },
                     TimeSpan.FromSeconds(1));
             }
@@ -345,21 +398,28 @@ public sealed partial class ChatWindow :
 
     void IRecipient<FlashChatWindowMessage>.Receive(FlashChatWindowMessage message)
     {
-        Dispatcher.Invoke(() =>
+        // Notifications are presentation-only. A producer may finish after the UI loop has exited.
+        Dispatcher.PostOnDemand(() =>
         {
+            if (_canCloseWindow) return;
             if (!IsFocused) _windowHelper.RequestUserAttention(this);
 
             if (!_windowHelper.GetEffectiveVisible(this) && message.Prompt is { Length: > 0 } prompt)
             {
-                _nativeHelper.ShowDesktopNotificationAsync(prompt).ContinueWith(t =>
-                {
-                    if (t is { IsCompletedSuccessfully: true, Result: true })
-                    {
-                        Dispatcher.Invoke(() => RequestCloaked(false));
-                    }
-                });
+                ShowDesktopNotificationAsync(prompt).Detach(_logger.ToExceptionHandler());
             }
         });
+    }
+
+    private async Task ShowDesktopNotificationAsync(string prompt)
+    {
+        if (await _nativeHelper.ShowDesktopNotificationAsync(prompt).ConfigureAwait(false))
+        {
+            Dispatcher.PostOnDemand(() =>
+            {
+                if (!_canCloseWindow) RequestCloaked(false);
+            });
+        }
     }
 
     void IRecipient<ApplicationMessage>.Receive(ApplicationMessage message)
@@ -426,6 +486,31 @@ public sealed partial class ChatWindow :
         }
     }
 
+    private void HandleHistorySearchClicked(object? sender, RoutedEventArgs e)
+    {
+        SwitchHistorySearch();
+    }
+
+    private void SwitchHistorySearch()
+    {
+        if (HistorySearchToggle.IsChecked == true)
+        {
+            _persistentState.IsChatWindowHistoryOpened = true;
+            Dispatcher.UIThread.Post(
+                () =>
+                {
+                    HistorySearchBox.Focus();
+                    HistorySearchBox.SelectAll();
+                },
+                DispatcherPriority.Input);
+        }
+        else
+        {
+            HistorySearchBox.SetCurrentValue(TextBox.TextProperty, null);
+            ViewModel.ChatContextManager.HistorySearchQuery = null;
+        }
+    }
+
     private void HandleChatInputAreaTextChanged(object? sender, TextChangedEventArgs e)
     {
         if (IsWindowPinned == false)
@@ -471,6 +556,8 @@ public sealed partial class ChatWindow :
 
         DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
         _settings.Model.PropertyChanged -= HandleModelSettingsChanged;
+        ViewModel.CancelSyncDialogs();
+        _inputNotificationPresenter.Dispose();
         _modelAvailabilityPresenter.Dispose();
 
         base.OnClosed(e);
@@ -555,21 +642,9 @@ public sealed partial class ChatWindow :
                 var files = e.DataTransfer.TryGetFiles();
                 if (files is null) return;
 
-                foreach (var item in files)
-                {
-                    if (!TryGetLocalFilePath(item, out var localPath)) continue;
-
-                    try
-                    {
-                        await ViewModel.AddFileFromDragDropAsync(localPath, CancellationToken.None);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.ForContext<ChatWindow>().Error(ex, "Failed to add dropped file: {FilePath}", localPath);
-                    }
-
-                    if (ViewModel.ChatAttachments.Count >= _persistentState.MaxChatAttachmentCount) break;
-                }
+                var paths = files.Select(item => TryGetLocalFilePath(item, out var path) ? path : null).OfType<string>();
+                // The view's drop event has no cancellation owner; the VM captures one target for the batch.
+                await ViewModel.AddFilesFromDragDropAsync(paths, CancellationToken.None);
             }
 
 

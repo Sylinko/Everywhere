@@ -1,5 +1,4 @@
-using System.Text;
-using Avalonia.Threading;
+﻿using System.Text;
 using Everywhere.AI;
 using Everywhere.Common;
 using Everywhere.Statistics;
@@ -39,13 +38,15 @@ public sealed partial class ChatService
         var metadata = new Dictionary<string, object?>();
         var segments = new List<(bool IsReasoning, StringBuilder Text, Dictionary<string, object?> Metadata)>();
         var calls = new FunctionCallContentBuilder();
+        // Auxiliary requests retain their own invocation purpose and usage in statistics. They do
+        // not accumulate into the visible answer's usage or token rate, even when it owns the node.
         await using var statistics = new RequestStatistics(
             this,
             mixin,
             chatContextId,
             messageNodeId,
             purpose,
-            (message as AssistantChatMessage)?.UsageDetails);
+            null);
 
         var retryActivity = default(IBusyActivity);
         try
@@ -57,7 +58,10 @@ public sealed partial class ChatService
                 await statistics.HandleAsync(update, hasGeneratedOutput, cancellationToken);
                 if (hasGeneratedOutput)
                 {
-                    retryActivity?.Dispose();
+                    if (context is not null)
+                    {
+                        await context.DispatchAsync(() => retryActivity?.Dispose());
+                    }
                     retryActivity = null;
                 }
                 switch (update)
@@ -103,7 +107,12 @@ public sealed partial class ChatService
                         calls = new FunctionCallContentBuilder();
                         if (context is not null && message is not null)
                         {
-                            retryActivity = await UpdateRequestRetryAsync(context, message, mixin.RequestMaxRetries, retryActivity, failed);
+                            retryActivity = await context.DispatchAsync(() => UpdateRequestRetry(
+                                context.Data,
+                                message,
+                                mixin.RequestMaxRetries,
+                                retryActivity,
+                                failed));
                         }
                         break;
                     }
@@ -118,7 +127,10 @@ public sealed partial class ChatService
         }
         finally
         {
-            retryActivity?.Dispose();
+            if (context is not null)
+            {
+                await context.DispatchAsync(() => retryActivity?.Dispose());
+            }
         }
 
         // Commit only the accepted attempt. Reasoning metadata must survive subsequent review
@@ -126,9 +138,10 @@ public sealed partial class ChatService
         var response = new ChatMessageContent(AuthorRole.Assistant, (string?)null) { Metadata = metadata };
         foreach (var segment in segments)
         {
-            response.Items.Add(segment.IsReasoning ?
-                new ReasoningContent(segment.Text.ToString()) { Metadata = segment.Metadata } :
-                new TextContent(segment.Text.ToString()) { Metadata = segment.Metadata });
+            response.Items.Add(
+                segment.IsReasoning ?
+                    new ReasoningContent(segment.Text.ToString()) { Metadata = segment.Metadata } :
+                    new TextContent(segment.Text.ToString()) { Metadata = segment.Metadata });
         }
 
         var functionCalls = calls.Build();
@@ -168,7 +181,7 @@ public sealed partial class ChatService
         Guid chatContextId,
         Guid? messageNodeId,
         StatisticsModelInvocationPurpose purpose,
-        ChatUsageDetails? accumulatedUsage
+        Func<ChatUsageDetails, double, Task>? accumulateUsageAsync
     ) : IAsyncDisposable
     {
         public Guid AttemptInvocationId { get; private set; }
@@ -233,7 +246,10 @@ public sealed partial class ChatService
             var seconds = _firstTokenAt is { } first ? Math.Max(0, (end - first).TotalSeconds) : 0;
             var invocationUsage = new ChatUsageDetails();
             invocationUsage.Accumulate(AttemptUsage, seconds);
-            accumulatedUsage?.Accumulate(AttemptUsage, seconds);
+            if (accumulateUsageAsync is not null)
+            {
+                await accumulateUsageAsync(AttemptUsage, seconds);
+            }
             owner.RecordChatUsageMetrics(AttemptUsage, mixin.Configuration.ModelId);
             owner._chatRequestsCounter.Add(1, GetModelTag(mixin.Configuration.ModelId));
 
@@ -259,8 +275,8 @@ public sealed partial class ChatService
             StreamingTextContent { Text.Length: > 0 } or StreamingChatMessageContent { Content.Length: > 0 } or
             StreamingReasoningContent { Text.Length: > 0 } || item.InnerContent is BinaryContent { Data: not null });
 
-    private static async Task<IBusyActivity> UpdateRequestRetryAsync(
-        ChatContext context,
+    private static IBusyActivity UpdateRequestRetry(
+        ChatData data,
         ChatMessage message,
         int maxRetries,
         IBusyActivity? activity,
@@ -275,7 +291,7 @@ public sealed partial class ChatService
 
         if (activity is null)
         {
-            return await context.Presentation.SetBusyActivityAsync(
+            return data.StartActivity(
                 LucideIconKind.WifiSync,
                 header,
                 true,
@@ -283,11 +299,8 @@ public sealed partial class ChatService
                 message);
         }
 
-        await Dispatcher.UIThread.InvokeOnDemandAsync(() =>
-        {
-            activity.HeaderKey = header;
-            activity.SecondaryHeaderKey = failed.Failure.Exception.FriendlyMessageKey;
-        });
+        activity.HeaderKey = header;
+        activity.SecondaryHeaderKey = failed.Failure.Exception.FriendlyMessageKey;
         return activity;
     }
 

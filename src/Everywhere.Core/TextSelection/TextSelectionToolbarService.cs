@@ -76,7 +76,7 @@ public sealed class TextSelectionToolbarService : IDisposable
             {
                 _toolbar = new TextSelectionToolbarWindow(_windowHelper, _inputWatcher, _settings);
                 _toolbar.ActionInvoked += HandleActionInvoked;
-                _toolbar.SubmitFreeformChat = SubmitFreeformChat;
+                _toolbar.SubmitFreeformChat = SubmitFreeformChatAsync;
                 _toolbar.ExcludeApplicationRequested += ExcludeApplication;
                 _toolbar.Hidden += ReleaseSelection;
             }
@@ -112,48 +112,48 @@ public sealed class TextSelectionToolbarService : IDisposable
             return;
         }
 
-        // Ownership moves to the draft before any synchronous collection notifications can run.
-        _selection = null;
-        _ownsSelection = false;
-        try
-        {
-            var chatWindow = _serviceProvider.GetRequiredService<ChatWindow>();
-            chatWindow.ViewModel.RunStrategyOnTextSelection(selection, strategy);
-            _windowHelper.BringToForeground(chatWindow);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Failed to run text selection strategy {StrategyId}.", strategy.Id);
-        }
-        finally
-        {
-            Hide();
-        }
+        var message = new UserStrategyChatMessage(string.Empty, [selection], strategy);
+        SubmitChatMessageAsync(message, _settings.Model.SelectedCustomAssistant).Detach(_logger.ToExceptionHandler());
     }
 
-    private bool SubmitFreeformChat(string text, CustomAssistant assistant)
+    private Task<bool> SubmitFreeformChatAsync(string text, CustomAssistant assistant)
     {
         if (_selection is not { } selection || _observation?.IsCurrent != true)
         {
             Hide();
-            return false;
+            return Task.FromResult(false);
         }
 
+        return SubmitChatMessageAsync(new UserChatMessage(text, [selection]), assistant);
+    }
+
+    private async Task<bool> SubmitChatMessageAsync(UserChatMessage message, CustomAssistant? assistant)
+    {
+        var observation = _observation;
+        var selection = _selection;
+        var wasSelectionOwned = _ownsSelection;
+
+        // Hold ownership locally while publication is pending. Hiding or replacing the toolbar
+        // must not dispose anchors already handed to the submitted message.
+        _selection = null;
+        _ownsSelection = false;
         var isAccepted = false;
         try
         {
             var chatWindow = _serviceProvider.GetRequiredService<ChatWindow>();
-            var message = new UserChatMessage(text, [selection]);
-            isAccepted = chatWindow.ViewModel.SendTextSelectionMessage(message, assistant);
+            isAccepted = await chatWindow.ViewModel.SendTextSelectionMessageAsync(message, assistant);
             if (!isAccepted)
             {
                 return false;
             }
 
-            // Acceptance transfers ownership. Removing a borrowed selection may already have
-            // hidden the toolbar through ValidateChatSelection; owned selections leave this service here.
-            _selection = null;
-            _ownsSelection = false;
+            // A dismissed/replaced selection no longer owns foreground navigation. Its accepted
+            // message still runs, but must not close the new toolbar or reopen the chat window.
+            if (!ReferenceEquals(_observation, observation))
+            {
+                return true;
+            }
+
             Hide();
             WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
             _windowHelper.BringToForeground(chatWindow);
@@ -163,6 +163,21 @@ public sealed class TextSelectionToolbarService : IDisposable
         {
             _logger.LogError(exception, "Failed to submit text selection chat.");
             return isAccepted;
+        }
+        finally
+        {
+            if (!isAccepted)
+            {
+                if (ReferenceEquals(_observation, observation))
+                {
+                    _selection = selection;
+                    _ownsSelection = wasSelectionOwned;
+                }
+                else if (wasSelectionOwned)
+                {
+                    selection?.Dispose();
+                }
+            }
         }
     }
 

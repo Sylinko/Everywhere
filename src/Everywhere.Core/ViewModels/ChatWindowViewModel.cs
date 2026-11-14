@@ -1,4 +1,6 @@
+﻿using System.ComponentModel;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using Avalonia.Input;
@@ -12,6 +14,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.Automation;
 using Everywhere.Chat;
+using Everywhere.Cloud;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -73,20 +76,24 @@ public sealed partial class ChatWindowViewModel :
     /// </summary>
     public bool IsPickingFiles { get; set; }
 
-    public IReadOnlyBindableList<ChatAttachment> ChatAttachments { get; }
+    public IReadOnlyBindableList<ChatAttachment> ChatAttachments => Input.ActiveDraft.Attachments;
 
-    internal bool CanAddAttachment => _chatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount;
+    internal bool CanAddAttachment => ChatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount;
 
     internal Func<VisualElementCaptureRequest, CancellationToken, Task>? VisualElementCaptureRequested { get; set; }
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(EditMessageNodeCommand))]
-    public partial ChatMessageNode? EditingMessageNode { get; private set; }
+    /// <summary>
+    /// Gets the edit target in the currently displayed conversation, never in a hidden chat.
+    /// </summary>
+    public ChatMessageNode? EditingMessageNode => Input.Edit is { } edit ? ChatContextManager.Current.Data.FindNode(edit.NodeId) : null;
 
-    public bool CanEdit => !IsBusy && EditingMessageNode is null;
+    public bool CanEdit => !IsBusy && EditingMessageNode is null && CanChangeDraft;
 
-    [ObservableProperty]
-    public partial Strategy? SelectedStrategy { get; set; }
+    public Strategy? SelectedStrategy
+    {
+        get => Input.ActiveDraft.SelectedStrategy;
+        set => Input.ActiveDraft.SelectedStrategy = value;
+    }
 
     public static int ChatInputAreaTextMaxLength => 100_000;
 
@@ -95,13 +102,8 @@ public sealed partial class ChatWindowViewModel :
     /// </summary>
     public string? ChatInputAreaText
     {
-        get;
-        set
-        {
-            value = value.SafeSubstring(0, ChatInputAreaTextMaxLength);
-            if (!SetProperty(ref field, value)) return;
-            if (EditingMessageNode is null) PersistentState.ChatInputAreaText = value;
-        }
+        get => Input.ActiveDraft.Text;
+        set => Input.ActiveDraft.Text = value.SafeSubstring(0, ChatInputAreaTextMaxLength);
     }
 
     /// <summary>
@@ -122,12 +124,19 @@ public sealed partial class ChatWindowViewModel :
     private readonly TextSelectionToolbarService _toolbarService;
     private readonly ILogger<ChatWindowViewModel> _logger;
     private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
-    private readonly SourceList<ChatAttachment> _chatAttachmentsSource = new();
+    private ChatInputState Input => ChatContextManager.Current.Input;
+    private bool CanChangeDraft => !_submittingDrafts.Contains(Input.ActiveDraft);
+    private SourceList<ChatAttachment> ChatAttachmentsSource => Input.ActiveDraft.AttachmentsSource;
+    private readonly SerialDisposable _inputSubscriptions = new();
+    private ChatInputState? _observedInput;
+
+    // Protect drafts submitting or lending attachments until publication. Standalone toolbar
+    // selections do not involve a draft; navigation must not redirect an actual handoff.
+    private readonly HashSet<ChatInputDraft> _submittingDrafts = [];
 
     private readonly Meter _meter = new(typeof(ChatWindowViewModel).FullName.NotNull(), App.Version);
     private readonly Gauge<int> _activeChatWindowsGauge;
 
-    private ChatInputAreaSnapshot? _snapshotBeforeEdit;
     private int _textSelectionVersion;
 
     public ChatWindowViewModel(
@@ -142,11 +151,13 @@ public sealed partial class ChatWindowViewModel :
         IGreetings greetings,
         ChatVisualService visualService,
         TextSelectionToolbarService toolbarService,
-        ILogger<ChatWindowViewModel> logger)
+        ILogger<ChatWindowViewModel> logger,
+        IChatSyncService? syncService = null)
     {
         Settings = settings;
         PersistentState = persistentState;
         ChatContextManager = chatContextManager;
+        SyncService = syncService;
         TextSearch = new ChatTextSearchViewModel(chatContextManager);
         LifetimeDisposables.Add(TextSearch);
         SoftwareUpdater = softwareUpdater;
@@ -162,33 +173,22 @@ public sealed partial class ChatWindowViewModel :
 
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
 
-        // Initialize chat attachments
-        ChatAttachments = _chatAttachmentsSource
-            .Connect()
-            .ObserveOnAvaloniaDispatcher()
-            .BindEx(LifetimeDisposables);
-        LifetimeDisposables.Add(_chatAttachmentsSource);
-        LifetimeDisposables.Add(_chatAttachmentsSource.Connect()
-            .Subscribe(_ => _toolbarService.ValidateChatSelection(_chatAttachmentsSource.Items)));
-
-        // Initialize strategy commands
-        LifetimeDisposables.Add(
-            _chatAttachmentsSource
-                .Connect()
-                .ToCollection()
-                .ThrottleWithLeadingEdge(TimeSpan.FromMilliseconds(250))
-                .ObserveOn(TaskPoolScheduler.Default)
-                .Subscribe(HandleChatAttachmentsChanged)
-        );
-        Task.Run(() => HandleChatAttachmentsChanged([])).Detach();
-
-        // Load the saved input box text
-        ChatInputAreaText = PersistentState.ChatInputAreaText;
         ChatInputAreaWatermarkKey = _defaultWatermarkKey;
+        LifetimeDisposables.Add(_inputSubscriptions);
+        LifetimeDisposables.Add(
+            ChatContextManager.WhenValueChanged(manager => manager.Current)
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(context =>
+                {
+                    if (context is not null)
+                    {
+                        ObserveInput(context.Input);
+                    }
+                }));
 
         LifetimeDisposables.Add(
             ChatContextManager.WhenValueChanged(x => x.Current)
-                .Select(context => context is null ? Observable.Return(false) : context.WhenValueChanged(x => x.IsBusy))
+                .Select(context => context is { } runtime ? runtime.WhenValueChanged(x => x.IsBusy) : Observable.Return(false))
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(HandleCurrentChatContextIsBusyChanged)
@@ -209,6 +209,18 @@ public sealed partial class ChatWindowViewModel :
                 .Subscribe(_ => UpdateCurrentContextUsageModel())
         );
 
+        LifetimeDisposables.Add(
+            ChatContextManager.WhenValueChanged(manager => manager.Current)
+                .Select(context => context is { } runtime ? runtime.Data.WhenValueChanged(data => data.HasHistory) : Observable.Return(false))
+                .Switch()
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(_ =>
+                {
+                    ToggleChatPinCommand.NotifyCanExecuteChanged();
+                    ArchiveChatCommand.NotifyCanExecuteChanged();
+                })
+        );
+
         InitializeToolApproval();
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
@@ -218,7 +230,10 @@ public sealed partial class ChatWindowViewModel :
         if (disposing)
         {
             WeakReferenceMessenger.Default.UnregisterAll(this);
-            foreach (var attachment in _chatAttachmentsSource.Items.OfType<IDisposable>()) attachment.Dispose();
+            if (_observedInput is not null)
+            {
+                _observedInput.PropertyChanged -= HandleInputPropertyChanged;
+            }
         }
 
         base.Dispose(disposing);
@@ -230,8 +245,8 @@ public sealed partial class ChatWindowViewModel :
     }
 
     public bool CanAddVisualElement(RemoteVisualAnchor anchor) =>
-        _chatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount &&
-        !_chatAttachmentsSource.Items
+        ChatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount &&
+        !ChatAttachmentsSource.Items
             .AsValueEnumerable()
             .OfType<VisualElementAttachment>()
             .Any(attachment => attachment is { IsElementValid: true, Anchor: { } existingAnchor } &&
@@ -242,12 +257,12 @@ public sealed partial class ChatWindowViewModel :
     {
         if (attachment.Anchor is not { } anchor || !CanAddVisualElement(anchor)) return false;
 
-        _chatAttachmentsSource.Add(attachment);
+        ChatAttachmentsSource.Add(attachment);
         return true;
     }
 
     public bool ContainsAttachment(VisualElementAttachment attachment) =>
-        _chatAttachmentsSource.Items.Any(item => ReferenceEquals(item, attachment));
+        ChatAttachmentsSource.Items.Any(item => ReferenceEquals(item, attachment));
 
     public void PrepareChatWindowActivation()
     {
@@ -314,9 +329,11 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand]
     private async Task TakeScreenshotAsync(CancellationToken cancellationToken)
     {
+        var destination = ChatContextManager.Current;
+        var draft = destination.Input.ActiveDraft;
         try
         {
-            if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
+            if (draft.AttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
 
             // Hide the chat window to avoid picking itself
             var isOpened = IsOpened;
@@ -335,7 +352,8 @@ public sealed partial class ChatWindowViewModel :
             }
             using var screenshot = bitmap;
             if (bitmap is null) return;
-            _chatAttachmentsSource.Add(await Task.Run(() => CreateFromBitmapAsync(bitmap, cancellationToken), cancellationToken));
+
+            AddImportedAttachment(destination, draft, await Task.Run(() => CreateFromBitmapAsync(bitmap, cancellationToken), cancellationToken));
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -348,9 +366,11 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand]
     private async Task AddClipboardAsync(CancellationToken cancellationToken)
     {
+        var destination = ChatContextManager.Current;
+        var draft = destination.Input.ActiveDraft;
         try
         {
-            if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
+            if (draft.AttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
 
             var formats = await Clipboard.GetDataFormatsAsync();
             if (formats.Count == 0)
@@ -366,8 +386,8 @@ public sealed partial class ChatWindowViewModel :
                 {
                     var uri = storageItem.Path;
                     if (!uri.IsFile) continue;
-                    addedFiles |= await AddFileUncheckAsync(uri.LocalPath, "from clipboard, temporary filepath", cancellationToken);
-                    if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
+                    addedFiles |= await ImportFileAsync(destination, draft, uri.LocalPath, "from clipboard, temporary filepath", cancellationToken);
+                    if (draft.AttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
                 }
             }
 
@@ -375,7 +395,7 @@ public sealed partial class ChatWindowViewModel :
             // usually offers bitmap data only. Use the bitmap when no file could be added.
             if (!addedFiles && formats.Contains(DataFormat.Bitmap) && await Clipboard.TryGetBitmapAsync() is { } bitmap)
             {
-                _chatAttachmentsSource.Add(await Task.Run(() => CreateFromBitmapAsync(bitmap, cancellationToken), cancellationToken));
+                AddImportedAttachment(destination, draft, await Task.Run(() => CreateFromBitmapAsync(bitmap, cancellationToken), cancellationToken));
             }
 
             // TODO: add as text attachment when text is too long
@@ -398,9 +418,11 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand]
     private async Task AddFileAsync(CancellationToken cancellationToken)
     {
+        var destination = ChatContextManager.Current;
+        var draft = destination.Input.ActiveDraft;
         try
         {
-            if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
+            if (draft.AttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
 
             IReadOnlyList<IStorageFile> files;
             IsPickingFiles = true;
@@ -450,14 +472,14 @@ public sealed partial class ChatWindowViewModel :
 
             foreach (var file in files)
             {
-                if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
+                if (draft.AttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
                 if (file.TryGetLocalPath() is not { } filePath)
                 {
                     _logger.LogWarning("File path is not available for {File}.", file.Name);
                     continue;
                 }
 
-                await AddFileUncheckAsync(filePath, cancellationToken: cancellationToken);
+                await ImportFileAsync(destination, draft, filePath, cancellationToken: cancellationToken);
             }
         }
         catch (OperationCanceledException) { }
@@ -469,12 +491,19 @@ public sealed partial class ChatWindowViewModel :
     }
 
     /// <summary>
-    /// Add a file to the chat attachments without checking the attachment count limit.
+    /// Imports a file into the captured draft, checking its attachment limit when the result arrives.
     /// </summary>
+    /// <param name="destination">The conversation captured before opening a picker or reading the clipboard.</param>
+    /// <param name="draft">The ordinary or editing draft that requested the import.</param>
     /// <param name="filePath"></param>
     /// <param name="description"></param>
     /// <param name="cancellationToken"></param>
-    private async ValueTask<bool> AddFileUncheckAsync(string filePath, string? description = null, CancellationToken cancellationToken = default)
+    private async ValueTask<bool> ImportFileAsync(
+        ChatContext destination,
+        ChatInputDraft draft,
+        string filePath,
+        string? description = null,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(filePath)) return false;
 
@@ -500,23 +529,26 @@ public sealed partial class ChatWindowViewModel :
             return false;
         }
 
-        _chatAttachmentsSource.Add(attachment);
-        return true;
+        return AddImportedAttachment(destination, draft, attachment);
     }
 
     /// <summary>
-    /// Add a file to the chat attachments from drag and drop.
+    /// Imports one drop batch into the conversation and draft that received it.
     /// Checks the attachment count limit.
     /// </summary>
-    /// <param name="filePath">The file path to add.</param>
+    /// <param name="filePaths">The local files from this drop.</param>
     /// <param name="cancellationToken"></param>
-    public async Task AddFileFromDragDropAsync(string filePath, CancellationToken cancellationToken)
+    public async Task AddFilesFromDragDropAsync(IEnumerable<string> filePaths, CancellationToken cancellationToken)
     {
+        var destination = ChatContextManager.Current;
+        var draft = destination.Input.ActiveDraft;
         try
         {
-            if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
-
-            await AddFileUncheckAsync(filePath, "from drag&drop", cancellationToken);
+            foreach (var filePath in filePaths)
+            {
+                if (draft.AttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
+                await ImportFileAsync(destination, draft, filePath, "from drag&drop", cancellationToken);
+            }
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -549,41 +581,40 @@ public sealed partial class ChatWindowViewModel :
             blob.MimeType);
     }
 
-    [RelayCommand]
+    private bool AddImportedAttachment(ChatContext destination, ChatInputDraft draft, FileAttachment attachment)
+    {
+        // Navigation does not redirect an import. A canceled edit or deleted chat no longer
+        // owns its old draft; imported files retain their ordinary file/blob storage lifetime.
+        if (destination.Data.IsDisposed ||
+            !ReferenceEquals(destination.Input.Draft, draft) && !ReferenceEquals(destination.Input.Edit?.Draft, draft) ||
+            draft.AttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount)
+        {
+            return false;
+        }
+
+        draft.AttachmentsSource.Add(attachment);
+        return true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanChangeDraft))]
     private void RemoveAttachment(ChatAttachment attachment)
     {
-        _chatAttachmentsSource.Remove(attachment);
-        (attachment as IDisposable)?.Dispose();
+        Input.ActiveDraft.RemoveAttachment(attachment);
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task SendMessage(string? message)
     {
         message = message?.Trim() ?? string.Empty;
+        if (message.Length == 0 && SelectedStrategy is null && ChatAttachmentsSource.Count == 0) return;
 
-        if (message.Length == 0 && SelectedStrategy is null && _chatAttachmentsSource.Count == 0) return;
-
-        var editingMessageNode = EditingMessageNode;
-        var submittedStrategy = SelectedStrategy;
-        var destinationContext = editingMessageNode?.Context ?? ChatContextManager.Current;
-        var submittedAttachments = _chatAttachmentsSource.Items.ToArray();
-        try
-        {
-            foreach (var attachment in submittedAttachments.OfType<VisualElementAttachment>())
-            {
-                if (attachment.Anchor is not { } sourceAnchor) continue;
-                var destinationAnchor = await _visualService.MoveAnchorAsync(destinationContext.VisualState, sourceAnchor);
-                if (!ReferenceEquals(sourceAnchor, destinationAnchor)) attachment.ReplaceAnchor(sourceAnchor, destinationAnchor);
-            }
-        }
-        catch (Exception exception)
-        {
-            if (ChatInputAreaText.IsNullOrEmpty()) ChatInputAreaText = message;
-            _logger.LogError(exception, "Failed to move draft visual attachments into the destination chat");
-            ToastExceptionHandler.HandleException(HandledSystemException.Handle(exception));
-            return;
-        }
-
+        var destinationContext = ChatContextManager.Current;
+        var input = destinationContext.Input;
+        var draft = input.ActiveDraft;
+        var submittedText = draft.Text;
+        var editingMessageNode = input.Edit is { } edit ? destinationContext.Data.FindNode(edit.NodeId) : null;
+        var submittedStrategy = draft.SelectedStrategy;
+        var submittedAttachments = draft.AttachmentsSource.Items.ToArray();
         UserChatMessage userMessage;
         if (submittedStrategy is not null)
         {
@@ -594,106 +625,57 @@ public sealed partial class ChatWindowViewModel :
             userMessage = new UserChatMessage(message, submittedAttachments);
         }
 
-        var isAccepted = editingMessageNode is not null ?
-            _chatService.Edit(editingMessageNode, userMessage) :
-            _chatService.SendMessage(destinationContext, userMessage);
+        if (!_submittingDrafts.Add(draft)) return;
+        NotifyDraftCommandsChanged();
 
-        if (!isAccepted)
+        try
         {
-            if (ChatInputAreaText.IsNullOrEmpty()) ChatInputAreaText = message;
-            return;
-        }
+            // Wait for the local model operation, not visual RPC, generation or persistence.
+            // Clearing earlier could persist an empty input before its message joins the graph.
+            // Shutdown drains root work without waiting for this UI continuation. Exiting in
+            // this gap may restore a redundant draft rather than discard accepted user input.
+            var isAccepted = editingMessageNode is not null ?
+                await _chatService.EditAsync(destinationContext, editingMessageNode, userMessage) :
+                await _chatService.SendMessageAsync(destinationContext, userMessage, Settings.Model.SelectedCustomAssistant);
 
-        _chatAttachmentsSource.Edit(list =>
-        {
-            foreach (var attachment in submittedAttachments) list.Remove(attachment);
-        });
-        if (editingMessageNode is not null)
-        {
-            CompleteEditingSubmission(editingMessageNode, submittedStrategy);
+            if (!isAccepted || destinationContext.Data.IsDisposed)
+            {
+                return;
+            }
+
+            input.CompleteSubmission(draft, submittedText, userMessage);
         }
-        else if (submittedStrategy is not null && ReferenceEquals(SelectedStrategy, submittedStrategy))
+        finally
         {
-            SelectedStrategy = null;
+            _submittingDrafts.Remove(draft);
+            NotifyDraftCommandsChanged();
         }
     }
 
     [RelayCommand(CanExecute = nameof(CanEdit))]
     private void EditMessageNode(ChatMessageNode userChatMessageNode)
     {
-        if (userChatMessageNode is not { Message: UserChatMessage userChatMessage }) return;
-
-        var textBeforeEdit = ChatInputAreaText;
-        var strategyCommandBeforeEdit = SelectedStrategy;
-
-        EditingMessageNode = userChatMessageNode;
-        ChatInputAreaText = userChatMessage.Content;
-        SelectedStrategy = userChatMessage.As<UserStrategyChatMessage>()?.Strategy;
-
-        _chatAttachmentsSource.Edit(list =>
-        {
-            _snapshotBeforeEdit = new ChatInputAreaSnapshot(
-                textBeforeEdit,
-                list.Count == 0 ? null : list.ToArray(),
-                strategyCommandBeforeEdit);
-
-            list.Reset(userChatMessage.Attachments.Where(a => a is not VisualElementAttachment { IsElementValid: false }));
-        });
+        Input.BeginEdit(userChatMessageNode);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChangeDraft))]
     public void CancelEditing()
     {
-        if (EditingMessageNode is null) return;
-
-        var snapshot = _snapshotBeforeEdit;
-        _snapshotBeforeEdit = null;
-        EditingMessageNode = null;
-        ChatAttachment[] discardedAttachments = [];
-        _chatAttachmentsSource.Edit(list =>
-        {
-            var preservedAttachments = snapshot?.Attachments ?? [];
-            var preservedSet = new HashSet<ChatAttachment>(preservedAttachments, ReferenceEqualityComparer.Instance);
-            discardedAttachments = list.Where(attachment => !preservedSet.Contains(attachment)).ToArray();
-            list.Reset(preservedAttachments);
-        });
-        foreach (var attachment in discardedAttachments.OfType<IDisposable>()) attachment.Dispose();
-
-        ChatInputAreaText = snapshot?.Text;
-        SelectedStrategy = snapshot?.Strategy;
-    }
-
-    private void CompleteEditingSubmission(ChatMessageNode editingMessageNode, Strategy? submittedStrategy)
-    {
-        if (!ReferenceEquals(EditingMessageNode, editingMessageNode)) return;
-
-        var snapshot = _snapshotBeforeEdit;
-        _snapshotBeforeEdit = null;
-        EditingMessageNode = null;
-        _chatAttachmentsSource.Edit(list =>
-        {
-            var attachmentsAddedWhileSubmitting = list.ToArray();
-            list.Reset(snapshot?.Attachments ?? []);
-            foreach (var attachment in attachmentsAddedWhileSubmitting)
-            {
-                if (!list.Contains(attachment)) list.Add(attachment);
-            }
-        });
-
-        if (ChatInputAreaText.IsNullOrEmpty()) ChatInputAreaText = snapshot?.Text;
-        if (ReferenceEquals(SelectedStrategy, submittedStrategy)) SelectedStrategy = snapshot?.Strategy;
+        // Escape calls this directly, bypassing the command's CanExecute check.
+        if (!CanChangeDraft) return;
+        Input.EndEdit();
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void RetryMessageNode(ChatMessageNode chatMessageNode)
     {
-        _chatService.Retry(chatMessageNode);
+        _chatService.Retry(ChatContextManager.Current, chatMessageNode);
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void ContinueMessageNode(ChatMessageNode chatMessageNode)
     {
-        _chatService.Continue(chatMessageNode);
+        _chatService.Continue(ChatContextManager.Current, chatMessageNode);
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
@@ -706,9 +688,9 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
-    private Task CopyMessageAsync(ChatMessage chatMessage)
+    private Task CopyMessageNodeAsync(ChatMessageNode node)
     {
-        return Clipboard.SetTextAsync(chatMessage.ToString());
+        return Clipboard.SetTextAsync(node.Message.ToString());
     }
 
     [RelayCommand]
@@ -724,7 +706,7 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
-    private async Task ExportMarkdownAsync(ChatContextMetadata metadata, CancellationToken cancellationToken)
+    private async Task ExportMarkdownAsync(ChatMetadata metadata, CancellationToken cancellationToken)
     {
         var chatContext = await ChatContextManager.LoadChatContextAsync(metadata, cancellationToken);
         if (chatContext is null)
@@ -738,7 +720,7 @@ public sealed partial class ChatWindowViewModel :
             return;
         }
 
-        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
         var safeTopicName = string.Join("_", (metadata.Topic ?? "chat").Split(Path.GetInvalidFileNameChars()));
         var suggestedFileName = $"{safeTopicName}_{timestamp}.md";
         var exportPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), suggestedFileName);
@@ -775,14 +757,14 @@ public sealed partial class ChatWindowViewModel :
         try
         {
             await using var stream = await storageFile.OpenWriteAsync();
-            await ChatContextExporter.ExportAsMarkdown(chatContext, stream, cancellationToken);
+            await ChatDataExporter.ExportAsMarkdown(chatContext, stream, cancellationToken);
             exportPath = storageFile.TryGetLocalPath() ?? exportPath;
         }
         catch (Exception e)
         {
             e = HandledSystemException.Handle(e);
 
-            _logger.LogError(e, "Failed to export chat context to markdown file.");
+            _logger.LogError(e, "Failed to export chat data to markdown file.");
 
             ToastHost
                 .CreateToast(LocaleKey.ChatWindowViewModel_ExportMarkdown_FailedToSaveFile.I18N())
@@ -818,9 +800,9 @@ public sealed partial class ChatWindowViewModel :
     private void UpdateCurrentContextUsageModel()
     {
         var assistant = Settings.Model.SelectedCustomAssistant;
-        ChatContextManager.Current.ContextUsage.UpdateModel(
+        ChatContextManager.Current.UpdateContextUsageModelAsync(
             assistant?.Configuration.ModelId,
-            assistant?.Configuration.ContextLimit ?? 0);
+            assistant?.Configuration.ContextLimit ?? 0).Detach(_logger.ToExceptionHandler());
     }
 
     partial void OnIsBusyChanged(bool value)
@@ -835,9 +817,75 @@ public sealed partial class ChatWindowViewModel :
         UpdateWatermark(value, SelectedStrategy);
     }
 
-    partial void OnSelectedStrategyChanged(Strategy? value)
+    private void ObserveInput(ChatInputState input)
     {
-        UpdateWatermark(IsBusy, value);
+        if (_observedInput is not null)
+        {
+            _observedInput.PropertyChanged -= HandleInputPropertyChanged;
+        }
+        _observedInput = input;
+        input.PropertyChanged += HandleInputPropertyChanged;
+        ObserveActiveDraft();
+    }
+
+    private void HandleInputPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatInputState.ActiveDraft))
+        {
+            ObserveActiveDraft();
+        }
+        else if (e.PropertyName == nameof(ChatInputState.Edit))
+        {
+            OnPropertyChanged(nameof(EditingMessageNode));
+        }
+    }
+
+    private void ObserveActiveDraft()
+    {
+        var draft = Input.ActiveDraft;
+        var subscriptions = new CompositeDisposable();
+        draft.PropertyChanged += HandleDraftPropertyChanged;
+        subscriptions.Add(Disposable.Create(() => draft.PropertyChanged -= HandleDraftPropertyChanged));
+        subscriptions.Add(
+            draft.AttachmentsSource.Connect().ToCollection()
+                // Empty lists do not emit an initial change set. Initialize both projections from
+                // this draft's current snapshot, including when switching back to an empty composer.
+                .StartWith(draft.AttachmentsSource.Items)
+                .Do(_toolbarService.ValidateChatSelection)
+                .ThrottleWithLeadingEdge(TimeSpan.FromMilliseconds(250))
+                .ObserveOn(TaskPoolScheduler.Default)
+                .Select(GetAttachmentStrategies)
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(strategies => StrategiesSnapshot = strategies));
+        _inputSubscriptions.Disposable = subscriptions;
+
+        OnPropertyChanged(nameof(ChatAttachments));
+        OnPropertyChanged(nameof(ChatInputAreaText));
+        OnPropertyChanged(nameof(EditingMessageNode));
+        OnPropertyChanged(nameof(SelectedStrategy));
+        NotifyDraftCommandsChanged();
+        UpdateWatermark(IsBusy, draft.SelectedStrategy);
+    }
+
+    private void NotifyDraftCommandsChanged()
+    {
+        OnPropertyChanged(nameof(CanEdit));
+        EditMessageNodeCommand.NotifyCanExecuteChanged();
+        CancelEditingCommand.NotifyCanExecuteChanged();
+        RemoveAttachmentCommand.NotifyCanExecuteChanged();
+    }
+
+    private void HandleDraftPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatInputDraft.Text))
+        {
+            OnPropertyChanged(nameof(ChatInputAreaText));
+        }
+        else if (e.PropertyName == nameof(ChatInputDraft.SelectedStrategy))
+        {
+            OnPropertyChanged(nameof(SelectedStrategy));
+            UpdateWatermark(IsBusy, SelectedStrategy);
+        }
     }
 
     private void UpdateWatermark(bool isBusy, Strategy? selectedStrategy)
@@ -870,7 +918,7 @@ public sealed partial class ChatWindowViewModel :
     {
         Dispatcher.UIThread.PostOnDemand(() =>
         {
-            var version = Interlocked.Increment(ref _textSelectionVersion);
+            var version = ++_textSelectionVersion;
             _toolbarService.Hide();
             HandleTextSelectionAsync(data, version).Detach(_logger.ToExceptionHandler());
         });
@@ -905,16 +953,16 @@ public sealed partial class ChatWindowViewModel :
                 }
             }
 
-            if (version != Volatile.Read(ref _textSelectionVersion) || !data.IsCurrent) return;
+            if (version != _textSelectionVersion || !data.IsCurrent) return;
 
-            var shouldAttach = Settings.TextSelection.IsAutomaticAttachmentEnabled &&
-                (_chatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount ||
-                 _chatAttachmentsSource.Items.OfType<TextSelectionAttachment>().Any());
+            var shouldAttach = CanChangeDraft && Settings.TextSelection.IsAutomaticAttachmentEnabled &&
+                (ChatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount ||
+                    ChatAttachmentsSource.Items.AsValueEnumerable().OfType<TextSelectionAttachment>().Any());
             if (shouldAttach)
             {
-                _chatAttachmentsSource.Edit(list =>
+                ChatAttachmentsSource.Edit(list =>
                 {
-                    foreach (var attachment in list.OfType<TextSelectionAttachment>().ToArray())
+                    foreach (var attachment in list.AsValueEnumerable().OfType<TextSelectionAttachment>().ToArray())
                     {
                         list.Remove(attachment);
                         attachment.Dispose();
@@ -943,98 +991,58 @@ public sealed partial class ChatWindowViewModel :
 
     /// <summary>
     /// Submits a standalone selection message without consuming or replacing the main window's draft.
-    /// On acceptance, the chat service owns its attachments and a borrowed selection leaves the draft.
+    /// Completes after publication, when the chat service owns its attachments and a borrowed selection leaves the draft.
     /// On rejection, the caller retains ownership.
     /// This method must be called on the UI thread.
     /// </summary>
-    public bool SendTextSelectionMessage(UserChatMessage message, CustomAssistant assistant)
+    public async Task<bool> SendTextSelectionMessageAsync(UserChatMessage message, CustomAssistant? assistant)
     {
-        PrepareChatWindowActivation();
-
-        if (!_chatService.SendMessage(ChatContextManager.Current, message, assistant))
+        var source = ChatContextManager.Current;
+        var sourceDraft = source.Input.ActiveDraft;
+        var hasBorrowedAttachments = message.Attachments.Any(sourceDraft.AttachmentsSource.Items.Contains);
+        if (hasBorrowedAttachments)
         {
-            return false;
+            if (!_submittingDrafts.Add(sourceDraft)) return false;
+            NotifyDraftCommandsChanged();
         }
-
-        // Do not cancel editing, select a strategy or change draft text. Only the exact attachments
-        // adopted by this message leave the draft; unrelated attachments remain available.
-        _chatAttachmentsSource.Edit(list =>
-        {
-            foreach (var attachment in message.Attachments)
-            {
-                list.Remove(attachment);
-            }
-        });
-
-        return true;
-    }
-
-    /// <summary>
-    /// Takes ownership of a text selection, opens the chat window and runs <paramref name="strategy"/> against it.
-    /// </summary>
-    /// <remarks>
-    /// This is the entry point for the text selection toolbar, which resolves the strategy itself and
-    /// then hands both over. It intentionally does not go through <see cref="ActivateChatSessionMessage"/>:
-    /// that path removes a primary <see cref="VisualElementAttachment"/> at index 0 when no target
-    /// element is supplied, which would discard the very <see cref="TextSelectionAttachment"/> being added.
-    /// </remarks>
-    public void RunStrategyOnTextSelection(TextSelectionAttachment selection, Strategy strategy)
-    {
-        var isAdopted = false;
         try
         {
-            // Detach a borrowed selection before cancelling edits or switching drafts can dispose it.
-            _chatAttachmentsSource.Remove(selection);
-            CancelEditing();
+            var destination = ChatContextManager.CreateChat(Settings.TextSelection.ShouldStartToolbarChatsAsTemporary);
+            if (!await _chatService.SendMessageAsync(destination, message, assistant)) return false;
 
-            if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null))
+            // Only adopted references leave the captured source. Never consume its text,
+            // strategy, edit state or singleton draft slot, even when navigation changed.
+            if (hasBorrowedAttachments && !source.Data.IsDisposed &&
+                (ReferenceEquals(source.Input.Draft, sourceDraft) || ReferenceEquals(source.Input.Edit?.Draft, sourceDraft)))
             {
-                ChatContextManager.CreateNewCommand.Execute(null);
+                sourceDraft.AttachmentsSource.Edit(list =>
+                {
+                    foreach (var attachment in message.Attachments) list.Remove(attachment);
+                });
             }
-
-            _chatAttachmentsSource.Edit(list =>
-            {
-                // ReSharper disable once AccessToDisposedClosure
-                // ReSharper disable once AccessToModifiedClosure
-                foreach (var previous in list.OfType<TextSelectionAttachment>().ToArray())
-                {
-                    list.Remove(previous);
-                    if (!ReferenceEquals(previous, selection)) previous.Dispose();
-                }
-
-                while (list.Count >= PersistentState.MaxChatAttachmentCount && list.Count > 0)
-                {
-                    var removed = list[^1];
-                    list.RemoveAt(list.Count - 1);
-                    (removed as IDisposable)?.Dispose();
-                }
-
-                // ReSharper disable once AccessToDisposedClosure
-                // ReSharper disable once AccessToModifiedClosure
-                list.Insert(0, selection);
-                isAdopted = true;
-            });
-
-            SelectedStrategy = strategy;
-            WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
-            if (SendMessageCommand.CanExecute(string.Empty)) SendMessageCommand.Execute(string.Empty);
+            return true;
         }
         finally
         {
-            if (!isAdopted) selection.Dispose();
+            if (hasBorrowedAttachments)
+            {
+                _submittingDrafts.Remove(sourceDraft);
+                NotifyDraftCommandsChanged();
+            }
         }
     }
 
-    private void HandleChatAttachmentsChanged(IReadOnlyCollection<ChatAttachment> attachments)
+    private IReadOnlyList<Strategy> GetAttachmentStrategies(IReadOnlyCollection<ChatAttachment> attachments)
     {
         try
         {
             var context = StrategyContext.FromAttachments([.. attachments]);
-            StrategiesSnapshot = _strategyEngine.GetStrategies(context);
+            return _strategyEngine.GetStrategies(context);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to get strategies for current attachments.");
+            return [];
         }
     }
 
@@ -1046,5 +1054,4 @@ public sealed partial class ChatWindowViewModel :
 
     #endregion
 
-    private sealed record ChatInputAreaSnapshot(string? Text, IReadOnlyList<ChatAttachment>? Attachments, Strategy? Strategy);
 }

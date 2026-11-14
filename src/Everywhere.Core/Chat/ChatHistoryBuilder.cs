@@ -13,7 +13,7 @@ namespace Everywhere.Chat;
 /// <summary>
 /// Builds ChatHistory (SK) from ChatMessages (Everywhere).
 /// </summary>
-public static class ChatHistoryBuilder
+public static partial class ChatHistoryBuilder
 {
     // Retain useful recent user instructions after compression while bounding their contribution
     // to the next prompt. The absolute cap and context-relative cap trade off continuity against
@@ -57,25 +57,64 @@ public static class ChatHistoryBuilder
             cancellationToken);
     }
 
+    /// <summary>
+    /// Captures provider input in the owning execution domain, then reads only captured attachment
+    /// paths. Detached message consumers may omit the context when they own their input exclusively.
+    /// </summary>
     public static async ValueTask<ChatHistory> BuildSelectedChatHistoryAsync(
         IPromptRenderer promptRenderer,
         string systemPrompt,
         IReadOnlyList<ChatMessage> selectedMessages,
         Modalities supportedModalities,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ChatContext? context = null)
     {
-        var chatHistory = new ChatHistory();
-        chatHistory.AddSystemMessage(systemPrompt);
+        cancellationToken.ThrowIfCancellationRequested();
+        var (chatHistory, pendingFiles) = context is null ? Capture() : await context.DispatchAsync(Capture).ConfigureAwait(false);
 
-        foreach (var chatMessage in selectedMessages)
+        (ChatHistory History, List<PendingFileContent> Files) Capture()
         {
-            await foreach (var chatMessageContent in CreateChatMessageContentsAsync(
-                               promptRenderer,
-                               chatMessage,
-                               supportedModalities,
-                               cancellationToken))
+            var history = new ChatHistory();
+            history.AddSystemMessage(systemPrompt);
+            var files = new List<PendingFileContent>();
+            foreach (var message in selectedMessages)
             {
-                chatHistory.Add(chatMessageContent);
+                history.AddRange(CaptureChatMessageContents(promptRenderer, message, files));
+            }
+
+            return (history, files);
+        }
+
+        foreach (var pending in pendingFiles)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var contents = new ChatMessageContentItemCollection();
+            if (pending.IsGeneratedImage)
+            {
+                try
+                {
+                    var data = await File.ReadAllBytesAsync(pending.File.FilePath, cancellationToken);
+                    contents.Add(new ImageContent(data, pending.File.MimeType) { Metadata = pending.Metadata });
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    contents.Add(new TextContent("The image is generated but failed to be read from disk.", metadata: pending.Metadata));
+                }
+            }
+            else
+            {
+                await ReadFileContentsAsync(pending.File, contents, supportedModalities, cancellationToken);
+            }
+
+            var index = pending.Target.IndexOf(pending.Placeholder);
+            pending.Target.RemoveAt(index);
+            foreach (var content in contents)
+            {
+                pending.Target.Insert(index++, content);
             }
         }
 
@@ -257,15 +296,13 @@ public static class ChatHistoryBuilder
     /// Creates chat message contents from a chat message.
     /// </summary>
     /// <param name="promptRenderer"></param>
-    /// <param name="supportedModalities"></param>
     /// <param name="chatMessage"></param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="pendingFiles"></param>
     /// <returns></returns>
-    private static async IAsyncEnumerable<ChatMessageContent> CreateChatMessageContentsAsync(
+    private static IEnumerable<ChatMessageContent> CaptureChatMessageContents(
         IPromptRenderer promptRenderer,
         ChatMessage chatMessage,
-        Modalities supportedModalities,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+        List<PendingFileContent> pendingFiles)
     {
         switch (chatMessage)
         {
@@ -284,7 +321,7 @@ public static class ChatHistoryBuilder
                         case AssistantChatMessageFunctionCallSpan { Items: { Count: > 0 } functionCalls }:
                         {
                             // 1. Add all function calls as content items.
-                            items.AddRange(functionCalls.SelectMany(f => f.Calls));
+                            items.AddRange(functionCalls.SelectMany(function => function.Calls).Select(CaptureFunctionCall));
 
                             // 2. Yield the assistant message with function call items first
                             yield return new ChatMessageContent(AuthorRole.Assistant, items, metadata: assistantChatMessage.Metadata);
@@ -306,41 +343,33 @@ public static class ChatHistoryBuilder
                                     var resultContent = functionCall.Results.AsValueEnumerable().FirstOrDefault(r => r.CallId == callId);
                                     var persistedResult = resultContent?.Result;
                                     var modelResult = persistedResult is ChatFunctionResult structuredResult ? structuredResult.Value : persistedResult;
-                                    if (resultContent is not null && modelResult is PromptNode promptNode)
+                                    if (resultContent is not null)
                                     {
-                                        // Preserve the node in chat history and render only the temporary
-                                        // provider-facing copy, including any declared local token limit.
+                                        // Render prompt nodes now; neither the result container nor a mutable
+                                        // attachment may be read again after asynchronous file loading begins.
+                                        var capturedResult = modelResult switch
+                                        {
+                                            PromptNode promptNode => promptNode.ToString(),
+                                            FileAttachment file => CaptureFile(file),
+                                            _ => modelResult,
+                                        };
                                         resultItems.Add(
                                             new FunctionResultContent(
                                                 resultContent.FunctionName,
                                                 resultContent.PluginName,
                                                 resultContent.CallId,
-                                                promptNode.ToString())
+                                                capturedResult)
                                             {
-                                                Metadata = resultContent.Metadata,
-                                                InnerContent = resultContent.InnerContent
-                                            });
-                                    }
-                                    else if (resultContent is not null && persistedResult is ChatFunctionResult)
-                                    {
-                                        resultItems.Add(
-                                            new FunctionResultContent(
-                                                resultContent.FunctionName,
-                                                resultContent.PluginName,
-                                                resultContent.CallId,
-                                                modelResult)
-                                            {
-                                                Metadata = resultContent.Metadata,
+                                                Metadata = resultContent.Metadata?.ToDictionary(),
                                                 InnerContent = resultContent.InnerContent
                                             });
                                     }
                                     else
                                     {
-                                        resultItems.Add(
-                                            resultContent ?? new FunctionResultContent(
-                                                call,
-                                                $"Error: No result found for function call ID '{callId}'. " +
-                                                $"This may caused by an error during function execution or user cancellation."));
+                                        resultItems.Add(new FunctionResultContent(
+                                            call,
+                                            $"Error: No result found for function call ID '{callId}'. " +
+                                            "This may caused by an error during function execution or user cancellation."));
                                     }
 
                                     // If the function call result owns ChatAttachments, add them as extra attachment message(s).
@@ -364,7 +393,7 @@ public static class ChatHistoryBuilder
                                 var attachmentItems = new ChatMessageContentItemCollection { new TextContent("<ExtraToolCallResultAttachments>") };
                                 foreach (var extraToolCallResult in extraToolCallResults)
                                 {
-                                    await PopulateKernelContentsAsync(extraToolCallResult, attachmentItems, supportedModalities, cancellationToken);
+                                    CaptureAttachment(extraToolCallResult, attachmentItems, pendingFiles);
                                 }
 
                                 // No valid attachment added, do nothing
@@ -394,19 +423,7 @@ public static class ChatHistoryBuilder
                         }
                         case AssistantChatMessageImageSpan { ImageOutput: { } imageOutput }:
                         {
-                            try
-                            {
-                                var imageData = await File.ReadAllBytesAsync(imageOutput.FilePath, cancellationToken);
-                                items.Add(
-                                    new ImageContent(imageData, imageOutput.MimeType)
-                                    {
-                                        Metadata = span.Metadata
-                                    });
-                            }
-                            catch
-                            {
-                                items.Add(new TextContent("The image is generated but failed to be read from disk.", metadata: span.Metadata));
-                            }
+                            AddPendingFile(imageOutput, items, pendingFiles, isGeneratedImage: true, span.Metadata);
                             break;
                         }
                     }
@@ -423,7 +440,7 @@ public static class ChatHistoryBuilder
                 var items = new ChatMessageContentItemCollection();
                 foreach (var chatAttachment in userChatMessage.Attachments.AsValueEnumerable().ToArray())
                 {
-                    await PopulateKernelContentsAsync(chatAttachment, items, supportedModalities, cancellationToken);
+                    CaptureAttachment(chatAttachment, items, pendingFiles);
                 }
 
                 if (userChatMessage is UserStrategyChatMessage { Strategy.Body: { Length: > 0 } strategyBody } userStrategyMessage)
@@ -459,18 +476,28 @@ public static class ChatHistoryBuilder
         }
     }
 
-    /// <summary>
-    /// Creates KernelContent from a chat attachment, and adds them to the contents list.
-    /// </summary>
-    /// <param name="chatAttachment"></param>
-    /// <param name="contents"></param>
-    /// <param name="supportedModalities"></param>
-    /// <param name="cancellationToken"></param>
-    private static async ValueTask PopulateKernelContentsAsync(
+    private static FunctionCallContent CaptureFunctionCall(FunctionCallContent call)
+    {
+        return new FunctionCallContent(
+            call.FunctionName,
+            call.PluginName,
+            call.Id,
+            call.Arguments is null ? null : new KernelArguments(call.Arguments))
+        {
+            Metadata = call.Metadata?.ToDictionary(),
+            InnerContent = call.InnerContent,
+        };
+    }
+
+    private static FileAttachment CaptureFile(FileAttachment file)
+    {
+        return new FileAttachment(file.HeaderKey, file.FilePath, file.Sha256, file.MimeType, file.Description);
+    }
+
+    private static void CaptureAttachment(
         ChatAttachment chatAttachment,
         ChatMessageContentItemCollection contents,
-        Modalities supportedModalities,
-        CancellationToken cancellationToken)
+        List<PendingFileContent> pendingFiles)
     {
         switch (chatAttachment)
         {
@@ -515,67 +542,102 @@ public static class ChatHistoryBuilder
             }
             case FileAttachment file:
             {
-                var fileInfo = new FileInfo(file.FilePath);
-                if (!fileInfo.Exists)
-                {
-                    contents.Add(GetOmittedContent("file not found"));
-                    break;
-                }
-                if (fileInfo.Length == 0)
-                {
-                    contents.Add(GetOmittedContent("file is empty"));
-                    break;
-                }
-                if (fileInfo.Length > FileAttachment.MaximumInlineContentSizeInBytes)
-                {
-                    contents.Add(
-                        GetOmittedContent(
-                            $"file size {Humanizer.HumanizeBytes(fileInfo.Length)} exceeds the maximum supported size " +
-                            Humanizer.HumanizeBytes(FileAttachment.MaximumInlineContentSizeInBytes)));
-                    break;
-                }
-                if (!supportedModalities.SupportsMimeType(file.MimeType))
-                {
-                    contents.Add(GetOmittedContent("file modality is unsupported, try process with tool if any. e.g. `run_subagent`"));
-                    break;
-                }
-
-                byte[] data;
-                try
-                {
-                    data = await File.ReadAllBytesAsync(file.FilePath, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    // Keep the reference in the prompt even when the content cannot be read.
-                    ex = HandledSystemException.Handle(ex, true); // treat all as expected
-                    Log.ForContext(typeof(ChatHistoryBuilder)).Warning(ex, "Failed to read attachment file '{FilePath}'", file.FilePath);
-                    contents.Add(GetOmittedContent("file could not be read"));
-                    break;
-                }
-
-                contents.Add(
-                    new TextContent(
-                        $"""
-                         <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
-                         """));
-                contents.Add(
-                    FileUtilities.GetCategory(file.MimeType) switch
-                    {
-                        FileTypeCategory.Audio => new AudioContent(data, file.MimeType),
-                        FileTypeCategory.Image => new ImageContent(data, file.MimeType),
-                        _ => new BinaryContent(data, file.MimeType)
-                    });
-                contents.Add(new TextContent("</Attachment>"));
+                AddPendingFile(file, contents, pendingFiles, isGeneratedImage: false, MetadataDictionary.Empty);
                 break;
-
-                TextContent GetOmittedContent(string reason) => new(
-                    $"""
-                     <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
-                     Content omitted because {reason}
-                     </Attachment>
-                     """);
             }
         }
     }
+
+    private static void AddPendingFile(
+        FileAttachment file,
+        ChatMessageContentItemCollection target,
+        List<PendingFileContent> pendingFiles,
+        bool isGeneratedImage,
+        MetadataDictionary metadata)
+    {
+        var placeholder = new TextContent(string.Empty);
+        target.Add(placeholder);
+        pendingFiles.Add(new PendingFileContent(target, placeholder, CaptureFile(file), isGeneratedImage, metadata));
+    }
+
+    private static async ValueTask ReadFileContentsAsync(
+        FileAttachment file,
+        ChatMessageContentItemCollection contents,
+        Modalities supportedModalities,
+        CancellationToken cancellationToken)
+    {
+        var fileInfo = new FileInfo(file.FilePath);
+        if (!fileInfo.Exists)
+        {
+            contents.Add(GetOmittedContent("file not found"));
+            return;
+        }
+        if (fileInfo.Length == 0)
+        {
+            contents.Add(GetOmittedContent("file is empty"));
+            return;
+        }
+        if (fileInfo.Length > FileAttachment.MaximumInlineContentSizeInBytes)
+        {
+            contents.Add(
+                GetOmittedContent(
+                    $"file size {Humanizer.HumanizeBytes(fileInfo.Length)} exceeds the maximum supported size " +
+                    Humanizer.HumanizeBytes(FileAttachment.MaximumInlineContentSizeInBytes)));
+            return;
+        }
+        if (!supportedModalities.SupportsMimeType(file.MimeType))
+        {
+            contents.Add(GetOmittedContent("file modality is unsupported, try process with tool if any. e.g. `run_subagent`"));
+            return;
+        }
+
+        byte[] data;
+        try
+        {
+            data = await File.ReadAllBytesAsync(file.FilePath, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Keep the reference in the prompt even when the content cannot be read.
+            ex = HandledSystemException.Handle(ex, true); // treat all as expected
+            Log.ForContext(typeof(ChatHistoryBuilder)).Warning(ex, "Failed to read attachment file '{FilePath}'", file.FilePath);
+            contents.Add(GetOmittedContent("file could not be read"));
+            return;
+        }
+
+        contents.Add(
+            new TextContent(
+                $"""
+                 <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
+                 """));
+        contents.Add(
+            FileUtilities.GetCategory(file.MimeType) switch
+            {
+                FileTypeCategory.Audio => new AudioContent(data, file.MimeType),
+                FileTypeCategory.Image => new ImageContent(data, file.MimeType),
+                _ => new BinaryContent(data, file.MimeType)
+            });
+        contents.Add(new TextContent("</Attachment>"));
+        return;
+
+        TextContent GetOmittedContent(string reason) => new(
+            $"""
+             <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
+             Content omitted because {reason}
+             </Attachment>
+             """);
+    }
+
+    // These placeholders are private to request construction and are all expanded before return.
+    // Keeping the target collection preserves the existing ordering of text, tools and attachments.
+    private sealed record PendingFileContent(
+        ChatMessageContentItemCollection Target,
+        TextContent Placeholder,
+        FileAttachment File,
+        bool IsGeneratedImage,
+        MetadataDictionary Metadata);
 }

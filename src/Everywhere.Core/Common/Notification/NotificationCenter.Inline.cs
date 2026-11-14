@@ -1,0 +1,228 @@
+﻿using System.Windows.Input;
+using Avalonia.Controls.Notifications;
+using CommunityToolkit.Mvvm.Input;
+using Everywhere.Collections;
+using ObservableCollections;
+
+namespace Everywhere.Common.Notification;
+
+partial class NotificationCenter
+{
+    private static readonly IComparer<NotificationEntry> NotificationComparer =
+        SortExpressionComparer<NotificationEntry>
+            .Ascending(static entry => GetNotificationTypePriority(entry.Notification.Type))
+            .ThenByDescending(static entry => entry.SortSequence);
+
+    public IReadOnlyBindableList<DynamicNotification> Notifications { get; private set; }
+
+    private readonly SourceCache<NotificationEntry, string> _notificationsSource = new(static entry => entry.StorageKey);
+    private readonly ObservableList<NotificationEntry> _notificationEntries = [];
+    private readonly CompositeDisposable _notificationsDisposables = [];
+    private readonly Lock _gate = new();
+    private long _nextSortSequence;
+
+    [System.Diagnostics.CodeAnalysis.MemberNotNull(nameof(Notifications))]
+    private void InitializeInlineNotifications()
+    {
+        _notificationsSource
+            .Connect()
+            .ObserveOnAvaloniaDispatcher()
+            .SortAndBind(_notificationEntries, NotificationComparer)
+            .Subscribe()
+            .AddTo(_notificationsDisposables);
+        Notifications = _notificationEntries
+            .CreateView(static entry => entry.Notification)
+            .ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current)
+            .ToReadOnlyBindableList(_notificationsDisposables);
+    }
+
+    public INotificationPublisher GetPublisher(string categoryName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(categoryName);
+        return new NotificationPublisher(this, categoryName);
+    }
+
+    private void Push(string categoryName, DynamicNotificationDescriptor dynamicNotification)
+    {
+        ValidateCategoryName(categoryName);
+        ValidateDescriptor(dynamicNotification);
+
+        var storageKey = CreateStorageKey(dynamicNotification.Id, categoryName);
+        lock (_gate)
+        {
+            if (dynamicNotification is { CanDismiss: true, ForceShow: false } && _keyValueStorage.Contains(storageKey)) return;
+            var sequence = _nextSortSequence++;
+            _notificationsSource.AddOrUpdate(CreateEntry(categoryName, dynamicNotification, sequence));
+        }
+    }
+
+    private void Dismiss(string categoryName, string id)
+    {
+        ValidateCategoryName(categoryName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
+        lock (_gate)
+        {
+            _notificationsSource.RemoveKey(CreateStorageKey(id, categoryName));
+        }
+    }
+
+    private void Clear(string categoryName)
+    {
+        ValidateCategoryName(categoryName);
+
+        lock (_gate)
+        {
+            RemoveCategoryNotifications(categoryName);
+        }
+    }
+
+    private void Reset(string categoryName, IEnumerable<DynamicNotificationDescriptor> notifications)
+    {
+        ValidateCategoryName(categoryName);
+        ArgumentNullException.ThrowIfNull(notifications);
+
+        var descriptors = notifications.ToArray();
+        foreach (var notification in descriptors)
+        {
+            ValidateDescriptor(notification);
+        }
+
+        lock (_gate)
+        {
+            RemoveCategoryNotifications(categoryName);
+
+            var visibleDescriptors = descriptors
+                .AsValueEnumerable()
+                .Where(notification =>
+                    notification is not { CanDismiss: true, ForceShow: false } ||
+                    !_keyValueStorage.Contains(CreateStorageKey(notification.Id, categoryName)))
+                .ToArray();
+
+            var batchStart = _nextSortSequence;
+            _nextSortSequence += visibleDescriptors.Length;
+
+            for (var index = 0; index < visibleDescriptors.Length; index++)
+            {
+                var sequence = batchStart + visibleDescriptors.Length - index - 1;
+                _notificationsSource.AddOrUpdate(CreateEntry(categoryName, visibleDescriptors[index], sequence));
+            }
+        }
+    }
+
+    private void DismissNotification(DynamicNotification? notification)
+    {
+        if (notification is not { CanDismiss: true, Category: { } categoryName }) return;
+
+        var storageKey = CreateStorageKey(notification.Id, categoryName);
+        _keyValueStorage.Set(storageKey, true);
+
+        lock (_gate)
+        {
+            _notificationsSource.RemoveKey(storageKey);
+        }
+    }
+
+    private void RemoveCategoryNotifications(string categoryName)
+    {
+        var keys = _notificationsSource.Items
+            .AsValueEnumerable()
+            .Where(entry => entry.CategoryName == categoryName)
+            .Select(static entry => entry.StorageKey)
+            .ToArray();
+
+        _notificationsSource.Edit(updater => updater.RemoveKeys(keys));
+    }
+
+    private NotificationEntry CreateEntry(
+        string categoryName,
+        DynamicNotificationDescriptor notification,
+        long sortSequence)
+    {
+        var storageKey = CreateStorageKey(notification.Id, categoryName);
+        return new NotificationEntry(
+            storageKey,
+            categoryName,
+            CreateNotification(categoryName, notification),
+            sortSequence);
+    }
+
+    private DynamicNotification CreateNotification(string categoryName, DynamicNotificationDescriptor notification) => new(
+        notification.Id,
+        notification.ContentKey,
+        notification.Type,
+        notification.CanDismiss ? new RelayCommand<DynamicNotification>(DismissNotification) : null,
+        notification.ActionButtonContentKey,
+        notification.ActionCommand,
+        categoryName);
+
+    private static string CreateStorageKey(string id, string categoryName) =>
+        $"NotificationCenter:{EscapeStorageSegment(categoryName)}:{EscapeStorageSegment(id)}";
+
+    private static string EscapeStorageSegment(string value) => Uri.EscapeDataString(value);
+
+    private static void ValidateCategoryName(string categoryName) =>
+        ArgumentException.ThrowIfNullOrWhiteSpace(categoryName);
+
+    private static void ValidateDescriptor(DynamicNotificationDescriptor notification)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(notification.Id);
+        ArgumentNullException.ThrowIfNull(notification.ContentKey);
+    }
+
+    private static int GetNotificationTypePriority(NotificationType type) => type switch
+    {
+        NotificationType.Error => 0,
+        NotificationType.Warning => 1,
+        NotificationType.Success => 2,
+        _ => 3
+    };
+
+    private void DisposeInlineNotifications()
+    {
+        _notificationsDisposables.Dispose();
+        _notificationsSource.Dispose();
+    }
+
+    private sealed record NotificationEntry(
+        string StorageKey,
+        string CategoryName,
+        DynamicNotification Notification,
+        long SortSequence
+    );
+
+    private sealed class NotificationPublisher(NotificationCenter notificationCenter, string categoryName) : INotificationPublisher
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Push(
+            string id,
+            IDynamicLocaleKey contentKey,
+            NotificationType type = NotificationType.Information,
+            bool canDismiss = true,
+            bool forceShow = false,
+            IDynamicLocaleKey? actionButtonContentKey = null,
+            ICommand? actionCommand = null)
+        {
+            notificationCenter.Push(
+                categoryName,
+                new DynamicNotificationDescriptor(
+                    id,
+                    contentKey,
+                    type,
+                    canDismiss,
+                    forceShow,
+                    actionButtonContentKey,
+                    actionCommand));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dismiss(string id) => notificationCenter.Dismiss(categoryName, id);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Reset(params IEnumerable<DynamicNotificationDescriptor> notifications) =>
+            notificationCenter.Reset(categoryName, notifications);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear() => notificationCenter.Clear(categoryName);
+    }
+}

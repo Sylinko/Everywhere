@@ -1,0 +1,678 @@
+﻿using Avalonia.Headless.NUnit;
+using Avalonia.Threading;
+using Everywhere.Chat;
+using Everywhere.Chat.Plugins;
+using Everywhere.Configuration;
+using Everywhere.Cloud;
+using Everywhere.Core.Tests.Statistics;
+using Everywhere.Storage;
+using MessagePack;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
+
+namespace Everywhere.Core.Tests.Chat;
+
+public sealed partial class ChatContextManagerIncrementalLoadingTests
+{
+    // An old device-wide switch must wait for account attribution, not silently opt an
+    // unrelated login into uploading this machine's history.
+    [AvaloniaTest]
+    public async Task LegacySyncSwitch_WhenAnotherAccountLogsIn_DoesNotEnableItsSync()
+    {
+        using var files = ChatTestDatabase.Create();
+        var storage = new ChatTurnStorage(files.Factory);
+        await using var manager = CreateManager(storage);
+        var keyValue = new InMemoryKeyValueStorage();
+        keyValue.Set("IsCloudSyncEnabled", true);
+        var state = new PersistentState(keyValue);
+        var cloud = Substitute.For<ICloudClient>();
+        cloud.LoginStatus.Returns(CloudClientLoginStatus.NotLoggedIn);
+        cloud.RestoredAccountId.Returns("original-account");
+        var http = Substitute.For<IHttpClientFactory>();
+        await using var sync = new ChatSyncService(files.Factory, storage, manager, cloud, state, http, NullLogger<ChatSyncService>.Instance);
+        await sync.InitializeAsync(CancellationToken.None);
+        Assert.That(state.EnabledChatSyncAccounts, Is.Null);
+        Assert.That(keyValue.Contains("IsCloudSyncEnabled"), Is.True);
+        cloud.UserProfile.Returns(new UserProfile { Subject = "another-account", Name = "User", Email = "user@example.invalid" });
+        cloud.LoginStatus.Returns(CloudClientLoginStatus.LoggedIn);
+        cloud.PropertyChanged += Raise.Event<System.ComponentModel.PropertyChangedEventHandler>(cloud,
+            new System.ComponentModel.PropertyChangedEventArgs(nameof(ICloudClient.LoginStatus)));
+        Assert.That(state.EnabledChatSyncAccounts, Is.Empty);
+        Assert.That(sync.IsEnabled, Is.False);
+        Assert.That(keyValue.Contains("IsCloudSyncEnabled"), Is.False);
+        http.DidNotReceive().CreateClient(Arg.Any<string>());
+
+        // A local build may retain an enabled device preference, but no address means no session.
+        http.CreateClient(nameof(IChatSyncService)).Returns(new HttpClient());
+        sync.IsEnabled = true;
+        Assert.That(sync.IsEnabled, Is.True);
+        Assert.That(sync.Session, Is.Null);
+    }
+
+    [AvaloniaTest]
+    public async Task RootRetention_WhenSaveFails_RetainsDataUntilRetryThenAllowsCollection()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        var reference = OpenUnselectedRoot(manager);
+        storage.ContextSaver = _ => Task.FromException(new IOException("disk unavailable"));
+        await Assert.ThatAsync(() => manager.FlushPendingSavesAsync(), Throws.TypeOf<AggregateException>());
+        Collect();
+        Assert.That(IsRootAlive(reference), Is.True, "Pending changes must retain their runtime.");
+
+        storage.ContextSaver = _ => Task.CompletedTask;
+        await manager.FlushPendingSavesAsync();
+        await PumpDispatcherAsync();
+        Collect();
+        Assert.That(IsRootAlive(reference), Is.False, "An idle, saved root must not be retained by the registry.");
+
+        static void Collect()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+    }
+
+    // Keep TryGetTarget's temporary strong reference inside a non-inlined synchronous frame.
+    // Debug Runtime Async can otherwise retain it across awaits in the test, making the test
+    // itself keep the root alive after the manager has released its pending save.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static bool IsRootAlive(WeakReference<RootChatContext> reference) => reference.TryGetTarget(out _);
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static WeakReference<RootChatContext> OpenUnselectedRoot(ChatContextManager manager)
+    {
+        var data = Data(new UserChatMessage("pending", []));
+        var dataRuntime = ChatStorageTestExtensions.AttachRoot(manager, data);
+        return new WeakReference<RootChatContext>(dataRuntime.Root);
+    }
+
+    [AvaloniaTest]
+    public async Task RootRetention_WhenNestedWorkIsCanceled_RemainsStrongThroughItsFinalMutation()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        var root = manager.Current;
+        var child = root.CreateNested("child");
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var finishing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var backgroundRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var background = root.RunBackgroundAsync(_ => backgroundRelease.Task);
+        var operation = child.ExecuteAsync(async token =>
+        {
+            started.SetResult();
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+            }
+            finally
+            {
+                finishing.SetResult();
+                await release.Task;
+                await child.DispatchAsync(() => child.Data.Add(new UserChatMessage("stopped", [])));
+            }
+        });
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            child.Cancel();
+            await finishing.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            backgroundRelease.SetResult();
+            await background;
+            Assert.That(root.Reference.IsActive, Is.True);
+            Assert.That(child.WorkingDirectory, Is.EqualTo(((ChatContext)root).WorkingDirectory));
+            Assert.That(root.GetNested(child.Data), Is.SameAs(child));
+        }
+        finally
+        {
+            backgroundRelease.TrySetResult();
+            release.SetResult();
+            await Assert.ThatAsync(async () => await operation, Throws.InstanceOf<OperationCanceledException>());
+        }
+
+        Assert.That(root.Reference.IsActive, Is.False);
+        Assert.That(((UserChatMessage)child.Data.SelectedNodes[^1].Message).Content, Is.EqualTo("stopped"));
+    }
+
+    [AvaloniaTest]
+    public async Task Cancel_WhenCallbackOutlivesBody_KeepsForegroundAdmissionUntilCallbackFinishes()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        var root = manager.Current;
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var bodyFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var callbackStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var operation = root.ExecuteAsync(async token =>
+        {
+            token.Register(() =>
+            {
+                callbackStarted.SetResult();
+                release.Task.GetAwaiter().GetResult();
+            });
+            var waiting = Task.Delay(Timeout.InfiniteTimeSpan, token);
+            started.SetResult();
+            try
+            {
+                await waiting;
+            }
+            finally
+            {
+                bodyFinished.SetResult();
+            }
+        });
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            root.Cancel();
+            await Task.WhenAll(callbackStarted.Task, bodyFinished.Task).WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.That(operation.IsCompleted, Is.False);
+            Assert.That(root.IsBusy, Is.True);
+            Assert.That(root.Reference.IsActive, Is.True);
+            Assert.Throws<InvalidOperationException>(() => root.ExecuteAsync(_ => Task.CompletedTask));
+            Assert.That(await root.TryStartAsync(() => true, (_, _) => Task.CompletedTask,
+                Everywhere.Common.IExceptionHandler.DangerouslyIgnoreAllException), Is.False);
+        }
+        finally
+        {
+            release.SetResult();
+            await Assert.ThatAsync(async () => await operation, Throws.InstanceOf<OperationCanceledException>());
+        }
+
+        Assert.That(root.IsBusy, Is.False);
+        Assert.That(root.Reference.IsActive, Is.False);
+    }
+
+    [AvaloniaTest]
+    public async Task LoadTurn_WhenOneReaderCancels_SharesIoAndInstallsIntoTheExistingNode()
+    {
+        var metadata = Metadata("stored", 1);
+        var rootNode = new ChatMessageNode(Guid.Empty, new RootChatMessage());
+        var userNode = new ChatMessageNode(Guid.NewGuid(), ChatMessageKind.User, metadata.DateCreated, metadata.DateModified);
+        rootNode.AddChild(userNode.Id);
+        rootNode.SetChoiceChild(userNode.Id);
+        var data = new ChatData(metadata, [userNode], rootNode);
+        var loader = Substitute.For<IChatTurnLoader>();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var bodies = new TaskCompletionSource<IReadOnlyDictionary<Guid, ChatMessage>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var loadingToken = CancellationToken.None;
+        loader.LoadMessagesAsync(metadata.Id, userNode.Id, Arg.Any<CancellationToken>()).Returns(call =>
+        {
+            loadingToken = call.ArgAt<CancellationToken>(2);
+            started.SetResult();
+            return bodies.Task.WaitAsync(loadingToken);
+        });
+        await using var runtime = new RootChatContext(data, loader);
+        var turn = data.SelectedTurns.Single();
+        using var cancellation = new CancellationTokenSource();
+        var first = runtime.EnsureTurnLoadedAsync(turn, cancellation.Token);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var second = runtime.EnsureTurnLoadedAsync(turn);
+        cancellation.Cancel();
+        await Assert.ThatAsync(async () => await first, Throws.InstanceOf<OperationCanceledException>());
+        Assert.That(loadingToken.IsCancellationRequested, Is.False);
+        var message = new UserChatMessage("loaded", []);
+        bodies.SetResult(new Dictionary<Guid, ChatMessage> { [userNode.Id] = message });
+        await second;
+
+        await loader.Received(1).LoadMessagesAsync(metadata.Id, userNode.Id, Arg.Any<CancellationToken>());
+        Assert.That(data.SelectedTurns.Single(), Is.SameAs(turn));
+        Assert.That(data.FindNode(userNode.Id), Is.SameAs(userNode));
+        Assert.That(userNode.Message, Is.SameAs(message));
+        Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
+    }
+
+    [AvaloniaTest]
+    public void DisposeAsync_WhenFinalSaveFails_DrainsOwnedWorkAndLogsWithoutUiDispatch()
+    {
+        var storage = new TestChatContextStorage([]);
+        var logger = Substitute.For<ILogger<ChatContextManager>>();
+        // Disposal is explicitly bounded below. A using scope would synchronously wait again
+        // after a timeout, hiding the shutdown deadlock this regression test must report.
+        var manager = new ChatContextManager(
+            new Settings(new ServiceCollection().BuildServiceProvider()), storage, logger);
+        using var firstData = new ChatData();
+        using var secondData = new ChatData();
+        var first = ChatStorageTestExtensions.AttachRoot(manager, firstData);
+        var second = ChatStorageTestExtensions.AttachRoot(manager, secondData);
+        var nested = first.CreateNested("child");
+        var entered = new CountdownEvent(4);
+        var completed = 0;
+        var operations = new[]
+        {
+            first.ExecuteAsync(token => RunAsync(first, token)),
+            second.ExecuteAsync(token => RunAsync(second, token)),
+            nested.ExecuteAsync(token => RunAsync(nested, token)),
+            first.RunBackgroundAsync(async token =>
+            {
+                entered.Signal();
+                try
+                {
+                    await Task.Delay(Timeout.InfiniteTimeSpan, token);
+                }
+                finally
+                {
+                    await first.DispatchAsync(() => firstData.Metadata.Rename("final title"));
+                    Interlocked.Increment(ref completed);
+                }
+            })
+        };
+        var saved = new List<Guid>();
+        storage.ContextSaver = data =>
+        {
+            Assert.That(completed, Is.EqualTo(4));
+            Assert.That(first.IsBusy || second.IsBusy || nested.IsBusy, Is.False);
+            Assert.That(first.ContextCompaction.IsRunning || second.ContextCompaction.IsRunning || nested.ContextCompaction.IsRunning, Is.False);
+            Assert.That(firstData.Metadata.Topic, Is.EqualTo("final title"));
+            var user = data.Nodes.Single(node => node.Topology.MessageKind == ChatMessageKind.User);
+            var payload = user.Payload ?? throw new AssertionException("Missing user payload.");
+            var message = (UserChatMessage)MessagePackSerializer.Deserialize<ChatMessage>(payload);
+            Assert.That(message.Content, Is.EqualTo("stopped"));
+            saved.Add(data.Metadata.Snapshot.Id);
+            return Task.FromException(new IOException("final save failed"));
+        };
+
+        // Deliberately block the Avalonia thread: runtime cancellation must not ask it to run jobs.
+        Assert.That(entered.Wait(TimeSpan.FromSeconds(5)), Is.True);
+        Task.Run(async () => await manager.DisposeAsync()).WaitAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+        Assert.That(saved, Is.EquivalentTo(new[] { firstData.Metadata.Id, secondData.Metadata.Id }));
+        Assert.That(operations.All(task => task.IsCanceled), Is.True);
+        Assert.That(firstData.Metadata.States | secondData.Metadata.States, Is.EqualTo(ChatContextMetadataStates.None));
+        Assert.That(logger.ReceivedCalls().Any(call => call.GetMethodInfo().Name == "Log" &&
+            call.GetArguments()[0] is LogLevel.Error), Is.True);
+        Assert.Throws<InvalidOperationException>(() => first.ExecuteAsync(_ => Task.CompletedTask));
+
+        async Task RunAsync(ChatContext context, CancellationToken token)
+        {
+            await context.DispatchAsync(() => context.Data.Add(new UserChatMessage("running", [])));
+            await using var compaction = await context.BeginContextCompactionAsync();
+            var interaction = context.UserInterfaceBroker.HandleAskQuestionAsync(
+                [new ChatPluginQuestion { Id = "question", Question = "Continue?" }], token);
+            entered.Signal();
+            try
+            {
+                await interaction;
+            }
+            finally
+            {
+                await context.DispatchAsync(() => ((UserChatMessage)context.Data.SelectedNodes[^1].Message).Content = "stopped");
+                Interlocked.Increment(ref completed);
+            }
+        }
+    }
+
+    [AvaloniaTest]
+    public async Task DisposeAsync_WithArchiveAndHistoryInFlight_DrainsStorageWithoutUiPublication()
+    {
+        var metadata = Metadata("history", 1);
+        var storage = new TestChatContextStorage([metadata]);
+        var manager = CreateManager(storage); // Explicit bounded disposal below owns this lifetime.
+        using var target = Data(new UserChatMessage("target", []));
+        var targetRuntime = ChatStorageTestExtensions.AttachRoot(manager, target);
+
+
+        manager.HistorySearchQuery = "needle";
+        manager.HistorySearchIncludesContent = true;
+        using var session = manager.BeginLoadSession();
+        var historyStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var archiveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var commit = new TaskCompletionSource<DateTimeOffset>(TaskCreationOptions.RunContinuationsAsynchronously);
+        storage.ContextLoader = async (_, token) =>
+        {
+            historyStarted.SetResult();
+            await Task.Delay(Timeout.InfiniteTimeSpan, token);
+            return target;
+        };
+        storage.Archiver = _ =>
+        {
+            archiveStarted.SetResult();
+            return commit.Task;
+        };
+
+        var history = Task.Run(async () => await session.LoadMoreAsync(1));
+        var archive = manager.ArchiveAsync(target.Metadata);
+        await Task.WhenAll(historyStarted.Task, archiveStarted.Task).WaitAsync(TimeSpan.FromSeconds(5));
+        var closing = Task.Run(async () => await manager.DisposeAsync());
+        commit.SetResult(DateTimeOffset.UtcNow);
+        closing.WaitAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+        await archive;
+        await Assert.ThatAsync(async () => await history, Throws.InstanceOf<OperationCanceledException>());
+        Assert.That(target.Metadata.IsArchived, Is.True);
+        Assert.That(storage.LoadedContextIds, Has.Count.EqualTo(1));
+    }
+
+    [AvaloniaTest]
+    public async Task Current_WhenReselectedDuringAnotherLoad_CancelsPendingSwitch()
+    {
+        var other = Metadata("other", 1);
+        var storage = new TestChatContextStorage([other]);
+        using var manager = CreateManager(storage);
+        var current = manager.Current;
+        var original = current.Data.Add(new UserChatMessage("current", []));
+        var received = current.Data.Append(current.Data.RootNode, new UserChatMessage("synced branch", []), shouldSelectChild: false);
+        // Model a merged durable choice while retaining the current reading projection.
+        await current.DispatchAsync(() => current.Data.RootNode.SetChoiceChild(received.Id));
+        using var session = manager.BeginLoadSession();
+        await session.LoadMoreAsync(2);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var canceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        storage.ContextLoader = async (_, token) =>
+        {
+            started.SetResult();
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+            }
+            finally
+            {
+                canceled.SetResult();
+            }
+            return current.Data;
+        };
+
+        manager.CurrentMetadata = other;
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        manager.CurrentMetadata = current.Data.Metadata;
+        await canceled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await PumpDispatcherAsync();
+        Assert.That(manager.Current, Is.SameAs(current));
+        Assert.That(current.Data.IsDisposed, Is.False);
+        Assert.That(current.Data.SelectedNodes[^1], Is.SameAs(original));
+        await manager.FlushPendingSavesAsync();
+
+        storage.ContextLoader = null;
+        storage.Contexts[other.Id] = Data(other, new UserChatMessage("other", []));
+        var switched = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manager.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(ChatContextManager.Current))
+            {
+                switched.TrySetResult();
+            }
+        };
+        manager.CurrentMetadata = other;
+        await switched.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        switched = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manager.CurrentMetadata = current.Data.Metadata;
+        await switched.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.That(manager.Current, Is.SameAs(current));
+        Assert.That(current.Data.SelectedNodes[^1], Is.SameAs(received));
+        Assert.That(current.Data.HasSyncedBranchUpdate, Is.False);
+        Assert.That(current.Data.PersistenceDirtyState.HasChanges, Is.False);
+    }
+
+    [AvaloniaTest]
+    public async Task LoadMore_WhenCanceledDuringSecondMatch_RetriesTheWholeUnpublishedPage()
+    {
+        var first = Metadata("first", 1);
+        var second = Metadata("second", 2);
+        var storage = new TestChatContextStorage([first, second]);
+        using var firstContext = Data(first, new UserChatMessage("needle", []));
+        using var secondContext = Data(second, new UserChatMessage("needle", []));
+        storage.Contexts[first.Id] = firstContext;
+        storage.Contexts[second.Id] = secondContext;
+        var secondStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var shouldWait = true;
+        storage.ContextLoader = async (id, token) =>
+        {
+            if (id == second.Id && shouldWait)
+            {
+                shouldWait = false;
+                secondStarted.SetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+            }
+            return storage.Contexts[id];
+        };
+        using var manager = CreateManager(storage);
+        manager.HistorySearchQuery = "needle";
+        manager.HistorySearchIncludesContent = true;
+        using var session = manager.BeginLoadSession();
+        using var cancellation = new CancellationTokenSource();
+        var pending = session.LoadMoreAsync(2, cancellation.Token).AsTask();
+        await secondStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+        await Assert.ThatAsync(async () => await pending, Throws.InstanceOf<OperationCanceledException>());
+        Assert.That(Flatten(manager), Is.Empty);
+
+        var result = await session.LoadMoreAsync(2);
+        Assert.That(result.AddedItemCount, Is.EqualTo(2));
+        Assert.That(Flatten(manager), Is.EqualTo(new[] { first, second }));
+    }
+
+    [AvaloniaTest]
+    public async Task Archive_WhenAnotherChatCannotSave_SavesOnlyTargetAndRetainsOtherForRetry()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        using var target = Data(new UserChatMessage("target", []));
+        var targetRuntime = ChatStorageTestExtensions.AttachRoot(manager, target);
+
+        using var other = Data(new UserChatMessage("other", []));
+        var otherRuntime = ChatStorageTestExtensions.AttachRoot(manager, other);
+
+        var saved = new List<Guid>();
+        storage.ContextSaver = context =>
+        {
+            saved.Add(context.Metadata.Snapshot.Id);
+            return context.Metadata.Snapshot.Id == other.Metadata.Id ? Task.FromException(new IOException("other failed")) : Task.CompletedTask;
+        };
+
+        await manager.ArchiveAsync(target.Metadata);
+        Assert.That(target.Metadata.IsArchived, Is.True);
+        Assert.That(saved, Is.EqualTo(new[] { target.Metadata.Id }));
+        await Assert.ThatAsync(() => manager.FlushPendingSavesAsync(), Throws.TypeOf<AggregateException>());
+        Assert.That(saved.Last(), Is.EqualTo(other.Metadata.Id));
+    }
+
+    [AvaloniaTest]
+    public async Task Archive_WhenTargetSaveFails_KeepsPendingChangesAndDoesNotPublishArchive()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        using var target = Data(new UserChatMessage("target", []));
+        var targetRuntime = ChatStorageTestExtensions.AttachRoot(manager, target);
+
+        var attempts = 0;
+        var archives = 0;
+        storage.ContextSaver = _ => ++attempts == 1 ? Task.FromException(new IOException("save failed")) : Task.CompletedTask;
+        storage.Archiver = _ =>
+        {
+            archives++;
+            return Task.FromResult(DateTimeOffset.UtcNow);
+        };
+
+        await Assert.ThatAsync(() => manager.ArchiveAsync(target.Metadata), Throws.TypeOf<IOException>());
+        Assert.That(target.Metadata.IsArchived, Is.False);
+        Assert.That(archives, Is.Zero);
+        await manager.ArchiveAsync(target.Metadata);
+        Assert.That(target.Metadata.IsArchived, Is.True);
+        Assert.That(attempts, Is.EqualTo(2));
+        Assert.That(archives, Is.EqualTo(1));
+    }
+
+    [AvaloniaTest]
+    public async Task ArchiveThenRestore_WhenArchiveIsPending_PublishesCommittedStatesInOrder()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        var metadata = Metadata("archived", 1);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var commit = new TaskCompletionSource<DateTimeOffset>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var hasRestored = false;
+        storage.Archiver = _ =>
+        {
+            started.SetResult();
+            return commit.Task;
+        };
+        storage.Restorer = _ =>
+        {
+            Assert.That(metadata.IsArchived, Is.True);
+            hasRestored = true;
+            return Task.CompletedTask;
+        };
+        var published = new List<DateTimeOffset?>();
+        metadata.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ChatMetadata.ArchivedAt))
+            {
+                published.Add(metadata.ArchivedAt);
+            }
+        };
+
+        var archive = manager.ArchiveAsync(metadata);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var restore = manager.RestoreAsync(metadata);
+        Assert.That(metadata.IsArchived, Is.False);
+        Assert.That(hasRestored, Is.False);
+        var timestamp = DateTimeOffset.UtcNow;
+        commit.SetResult(timestamp);
+        await Task.WhenAll(archive, restore);
+        Assert.That(published, Is.EqualTo(new DateTimeOffset?[] { timestamp, null }));
+    }
+
+    [AvaloniaTest]
+    public async Task Delete_WhenTargetHasUnsavableChanges_DiscardsOnlyTargetWithoutSavingIt()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        var user = new UserChatMessage("target", []);
+        using var target = Data(user);
+        var targetRuntime = ChatStorageTestExtensions.AttachRoot(manager, target);
+
+        using var other = Data(new UserChatMessage("other", []));
+        var otherRuntime = ChatStorageTestExtensions.AttachRoot(manager, other);
+
+        var saved = new List<Guid>();
+        storage.ContextSaver = batch =>
+        {
+            saved.Add(batch.Metadata.Snapshot.Id);
+            return Task.FromException(new IOException("cannot serialize"));
+        };
+
+        await manager.DeletePermanentlyAsync(target.Metadata);
+        Assert.That(saved, Is.Empty);
+        user.Content = "late notification";
+        await Assert.ThatAsync(() => manager.FlushPendingSavesAsync(), Throws.TypeOf<AggregateException>());
+        Assert.That(saved, Is.EqualTo(new[] { other.Metadata.Id }));
+    }
+
+    [AvaloniaTest]
+    public async Task Delete_WhenItFails_RetainsPendingSaveForRetry()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        using var target = Data(new UserChatMessage("target", []));
+        var targetRuntime = ChatStorageTestExtensions.AttachRoot(manager, target);
+
+        target.Metadata.ArchivedAt = DateTimeOffset.UtcNow;
+        storage.Deleter = _ => Task.FromException(new IOException("delete failed"));
+        var saves = 0;
+        storage.ContextSaver = _ =>
+        {
+            saves++;
+            return Task.CompletedTask;
+        };
+
+        await Assert.ThatAsync(() => manager.DeletePermanentlyAsync(target.Metadata), Throws.TypeOf<IOException>());
+        Assert.That(saves, Is.Zero);
+        await manager.FlushPendingSavesAsync();
+        Assert.That(saves, Is.EqualTo(1));
+    }
+
+    [AvaloniaTest]
+    public async Task Delete_WhenWriteIsInFlight_WaitsWithoutFlushingTheNextRevision()
+    {
+        var storage = new TestChatContextStorage([]);
+        using var manager = CreateManager(storage);
+        var user = new UserChatMessage("before", []);
+        using var target = Data(user);
+        var targetRuntime = ChatStorageTestExtensions.AttachRoot(manager, target);
+
+        target.Metadata.ArchivedAt = DateTimeOffset.UtcNow;
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var saves = 0;
+        storage.ContextSaver = async _ =>
+        {
+            saves++;
+            started.TrySetResult();
+            await release.Task;
+        };
+        var hasDeleted = false;
+        storage.Deleter = _ =>
+        {
+            hasDeleted = true;
+            return Task.CompletedTask;
+        };
+
+        var writing = manager.FlushPendingSavesAsync();
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await targetRuntime.DispatchAsync(() => user.Content = "after");
+        var deleting = manager.DeletePermanentlyAsync(target.Metadata);
+        Assert.That(hasDeleted, Is.False);
+        release.SetResult();
+        await Task.WhenAll(writing, deleting);
+        await manager.FlushPendingSavesAsync();
+        Assert.That(saves, Is.EqualTo(1));
+        Assert.That(hasDeleted, Is.True);
+    }
+
+    [AvaloniaTest]
+    public async Task Current_WhenSwitchedOrArchivedWhileRunning_RecomputesBackgroundCount()
+    {
+        foreach (var action in new[] { "create", "archive", "temporary" })
+        {
+            var storage = new TestChatContextStorage([]);
+            using var manager = CreateManager(storage);
+            var current = manager.Current;
+            var runtime = current;
+            await runtime.DispatchAsync(() => current.Data.Metadata.SetTemporary(action == "temporary"));
+            await runtime.DispatchAsync(() => current.Data.Add(new UserChatMessage("running", [])));
+            var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var operation = current.ExecuteAsync(token =>
+            {
+                started.SetResult();
+                return release.Task.WaitAsync(token);
+            });
+            try
+            {
+                await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                // Starting work publishes model state before its UI notification is consumed.
+                await PumpDispatcherAsync();
+                Assert.That(current.IsBusy, Is.True);
+                Assert.That(manager.BackgroundBusyCount, Is.Zero);
+                if (action == "archive")
+                {
+                    await manager.ArchiveAsync(current.Data.Metadata);
+                }
+                else
+                {
+                    manager.CreateNewCommand.Execute(null);
+                }
+                Assert.That(manager.Current, Is.Not.SameAs(current));
+                Assert.That(manager.BackgroundBusyCount, Is.EqualTo(action == "archive" ? 0 : 1));
+            }
+            finally
+            {
+                release.TrySetResult();
+                if (action == "archive")
+                {
+                    await Assert.ThatAsync(async () => await operation, Throws.InstanceOf<OperationCanceledException>());
+                }
+                else
+                {
+                    await operation;
+                }
+                await manager.FlushPendingSavesAsync();
+            }
+            await PumpDispatcherAsync();
+            Assert.That(manager.BackgroundBusyCount, Is.Zero);
+        }
+    }
+}

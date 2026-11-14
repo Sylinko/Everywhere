@@ -22,9 +22,44 @@ public sealed class GenerationContext(
     int contextCompressionThreshold,
     int maxContextRounds,
     GenerationApprovalState approvalState,
-    bool isConversationTurn
+    bool isConversationTurn,
+    ChatMessageNode appendTailNode
 )
 {
+    /// <summary>
+    /// Gets the last node on this execution's path, independently of displayed branch choices.
+    /// A pre-output compression may advance this node without replacing the writable assistant.
+    /// </summary>
+    public ChatMessageNode AppendTailNode { get; private set; } = appendTailNode;
+
+    /// <summary>
+    /// Gets the assistant currently accepting output, if this is a conversational generation.
+    /// </summary>
+    public ChatMessageNode? CurrentAssistantNode { get; private set; } =
+        isConversationTurn && appendTailNode.Message is AssistantChatMessage ? appendTailNode : null;
+
+    /// <summary>
+    /// Appends an execution-owned node without consulting the displayed branch.
+    /// </summary>
+    public ChatMessageNode Append(ChatMessage message)
+    {
+        AppendTailNode = AppendTailNode.Data.Append(AppendTailNode, message);
+        if (message is AssistantChatMessage)
+        {
+            CurrentAssistantNode = AppendTailNode;
+        }
+
+        return AppendTailNode;
+    }
+
+    /// <summary>
+    /// Captures the parent path used by the next provider request.
+    /// </summary>
+    public IReadOnlyList<ChatMessageNode> GetPath()
+    {
+        return AppendTailNode.Data.GetPathTo(AppendTailNode);
+    }
+
     /// <summary>Gets the kernel built for this generation.</summary>
     public Kernel Kernel { get; } = kernel;
 
