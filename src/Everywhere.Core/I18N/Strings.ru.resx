@@ -4616,6 +4616,9 @@
     <data name="ChatSync_Description" xml:space="preserve">
         <value>Синхронизируйте историю чатов между несколькими устройствами с одним аккаунтом. Вы можете выбрать, какие чаты будут синхронизироваться.</value>
     </data>
+    <data name="ChatHistory_Archived" xml:space="preserve">
+        <value>В архиве</value>
+    </data>
     <data name="ChatHistory_Archive_Header" xml:space="preserve">
         <value>Архивировать</value>
     </data>
@@ -4628,14 +4631,32 @@
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>Это навсегда удалит этот чат и все его ветки с этого устройства, и отменить это действие будет невозможно. Вы уверены?</value>
     </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>Сначала остановите задачи в этом чате, а затем удалите его без возможности восстановления.</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>Данные чатов обновлены</value>
+    </data>
     <data name="ChatUpgrade_Body" xml:space="preserve">
         <value>Чаты теперь используют структуру данных на основе ходов, а загрузка истории стала эффективнее. Теперь вы можете архивировать чаты, а облачная синхронизация также получила повышение производительности.</value>
     </data>
     <data name="ChatUpgrade_Compatibility" xml:space="preserve">
         <value>Мы создали резервную копию старых данных чата. Они больше не используются, если только вы не вернётесь к более ранней версии Everywhere в будущем. Вы можете их удалить.</value>
     </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>Удалите старую базу данных чатов, чтобы освободить место</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>Продолжить</value>
+    </data>
+    <data name="ChatHistory_Pinned" xml:space="preserve">
+        <value>Закреплено</value>
+    </data>
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>Закрепить сверху</value>
+    </data>
+    <data name="ChatHistory_Unpin" xml:space="preserve">
+        <value>Открепить</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>Переименовать чат</value>
@@ -4646,17 +4667,233 @@
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Удалить чат</value>
     </data>
+    <data name="ChatHistory_Recent" xml:space="preserve">
+        <value>Недавние</value>
+    </data>
+    <data name="ChatHistory_Temporary" xml:space="preserve">
+        <value>Временный</value>
+    </data>
+    <data name="ChatHistory_Persist" xml:space="preserve">
+        <value>Сохранить чат</value>
+    </data>
+    <data name="ChatHistory_TemporaryNotice" xml:space="preserve">
+        <value>Временный чат. Он будет автоматически удалён при выходе из Everywhere.</value>
+    </data>
+    <data name="ChatHistory_TemporaryDescription" xml:space="preserve">
+        <value>Начните временный чат. Он будет автоматически удалён при выходе из Everywhere.</value>
+    </data>
+    <data name="ChatHistory_PersistDescription" xml:space="preserve">
+        <value>Сохраните этот временный чат как обычный, чтобы он больше не удалялся автоматически.</value>
+    </data>
+    <data name="ChatHistory_Empty" xml:space="preserve">
+        <value>История чатов пуста</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>Временные чаты с панели инструментов</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>Чаты, начатые с панели выделения текста, будут временными и автоматически удалятся при выходе из Everywhere. Если отключить эту настройку, будут использоваться обычные чаты.</value>
+    </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>Просмотреть синхронизированную ветку</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>Архивировать этот чат?</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>Архивация остановит все текущие задачи в этом чате. Позже вы сможете продолжить работу с ним из архива.</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>Удалить этот чат без возможности восстановления? Если чат синхронизирован, он будет удалён и на других устройствах при синхронизации. Это действие нельзя отменить.</value>
+    </data>
     <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
         <value>Облачная синхронизация чата</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>Использовано {0} из {1}</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>Остановить синхронизацию</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>Начать синхронизацию</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>Управление синхронизацией…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>Только на этом устройстве</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>Синхронизировано</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>Ожидает синхронизации</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>Синхронизация…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>Не удалось синхронизировать</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>Ожидает повторной синхронизации</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>Освободите ещё {0} в облачном хранилище, чтобы синхронизировать.</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>Сначала войдите в систему, чтобы управлять облачной синхронизацией чатов.</value>
     </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>Синхронизация чатов отключена.</value>
+    </data>
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>Не удалось загрузить облачную синхронизацию чата. Проверьте подключение к сети или повторите попытку позже.</value>
     </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>Копия в облаке изменилась. Обновите данные и подтвердите действие ещё раз.</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>Синхронизация остановлена для {0} из {1} чатов. Обновите данные, чтобы проверить остальные чаты.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>Среди выбранных чатов есть те, которые не сохранены на этом устройстве. Если копии нет и на других устройствах, восстановить их не удастся.</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>Синхронизировать «{0}» между устройствами? Все ветки, сохранённые на этом устройстве, будут загружены в облако.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>Выбрано: {0}</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>Не удаётся управлять этим чатом в текущем аккаунте.</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>Аккаунт изменён. Просмотрите чаты текущего аккаунта ещё раз.</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>Не удалось подтвердить результат действия. Обновите данные, чтобы проверить текущее состояние.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>Ещё не сохранено на этом устройстве</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>Версии сообщения не совпадают. Сохранено содержимое на этом устройстве</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>Облачное хранилище</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>Синхронизируются ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>Только на этом устройстве ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>Выбрать несколько</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>Остановить синхронизацию ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>Пока нет чатов, участвующих в синхронизации.</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>Нет чатов, сохранённых только на этом устройстве.</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>Превышен лимит облачного хранилища на {0}. Синхронизированные чаты по-прежнему доступны на других устройствах.</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>Недостаточно места в облачном хранилище. Некоторые чаты ещё не синхронизированы.</value>
+    </data>
     <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>Управление</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>Освободить место</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>Освободить место</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>Остановить синхронизацию {0} чатов, которые давно не изменялись, чтобы освободить {1}. Существующие копии чатов на устройствах сохранятся, но дальнейшие изменения синхронизироваться не будут.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>Нужно освободить {0}, но на этом устройстве недостаточно старых чатов, синхронизацию которых можно безопасно остановить. Вы можете выбрать чаты самостоятельно.</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>Для этого аккаунта сейчас не выделено место в облачном хранилище. Даже после удаления старых чатов синхронизировать новые не получится.</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>Синхронизация {0} чатов остановлена. Они доступны только на этом устройстве.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>Остановить синхронизацию чата «{0}»? Загрузка будет отменена, чат останется на этом устройстве.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>Остановить синхронизацию чата «{0}»? Это освободит {1} в облачном хранилище. Существующие копии чата на устройствах сохранятся, но дальнейшие изменения синхронизироваться не будут.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>Чат «{0}» сам по себе превышает лимит облачного хранилища ({1}). Освобождение места за счёт других чатов не поможет. Вы можете оставить его только на этом устройстве.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>Размер облачной копии: {0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>Изменения на этом устройстве не будут синхронизироваться с другими устройствами.</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>Статус синхронизации не подтверждён</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>Чатом на этом устройстве по-прежнему можно пользоваться. Обновите статус синхронизации, прежде чем запускать синхронизацию.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>Проверка и синхронизация изменений в этом чате.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>Этот чат есть в облаке, но на этом устройстве его копии нет.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>При последней проверке копии на этом устройстве и в облаке совпадали.</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>Синхронизация возобновлена. Ожидание создания облачной копии.</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>Этот чат с этого устройства ещё не синхронизирован с облаком.</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>Есть изменения, которые ещё не синхронизированы между этим устройством и облаком.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>Состояние облачной копии изменилось</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>На двух устройствах изменили одно и то же сообщение. Синхронизация не перезаписала данные на этом устройстве.</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>Этот чат нельзя синхронизировать с текущим аккаунтом. Проверьте, в какой аккаунт вы вошли.</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>Последнюю синхронизацию не удалось завершить. Нажмите кнопку обновления вверху страницы, чтобы повторить попытку.</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>В облаке нет свободного места</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>Места достаточно. Ожидание следующей синхронизации.</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>Чат превышает лимит облачного хранилища</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>Даже после удаления других чатов для него не хватит места. Можно отключить синхронизацию и оставить его на этом устройстве.</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>Нужно освободить ещё {0}. Нажмите «Решить» в уведомлении о месте в облаке выше, чтобы посмотреть варианты.</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>Включить облачную синхронизацию чата</value>
@@ -4675,5 +4912,80 @@
     </data>
     <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
         <value>Остановка синхронизации</value>
+    </data>
+    <data name="Common_CloudNotConfigured" xml:space="preserve">
+        <value>В этой сборке не настроен официальный облачный сервис.</value>
+    </data>
+    <data name="ChatLink_Reveal" xml:space="preserve">
+        <value>Показать в проводнике</value>
+    </data>
+    <data name="ChatLink_Open" xml:space="preserve">
+        <value>Открыть</value>
+    </data>
+    <data name="ChatLink_Run" xml:space="preserve">
+        <value>Запустить…</value>
+    </data>
+    <data name="ChatLink_OpenWith" xml:space="preserve">
+        <value>Открыть с помощью…</value>
+    </data>
+    <data name="ChatLink_SaveAs" xml:space="preserve">
+        <value>Сохранить как…</value>
+    </data>
+    <data name="ChatLink_CopyPath" xml:space="preserve">
+        <value>Копировать путь</value>
+    </data>
+    <data name="ChatLink_ActionUnavailable" xml:space="preserve">
+        <value>Это действие недоступно для данной ссылки или на этом устройстве.</value>
+    </data>
+    <data name="ChatLink_RevealFailed" xml:space="preserve">
+        <value>Не удалось показать объект в проводнике.</value>
+    </data>
+    <data name="ChatLink_SaveFailed" xml:space="preserve">
+        <value>Не удалось сохранить копию файла.</value>
+    </data>
+    <data name="ChatLink_OpenFileFailed" xml:space="preserve">
+        <value>Не удалось открыть файл или папку.</value>
+    </data>
+    <data name="ChatLink_OpenWebFailed" xml:space="preserve">
+        <value>Не удалось открыть ссылку в браузере.</value>
+    </data>
+    <data name="ChatLink_AccessDenied" xml:space="preserve">
+        <value>Недостаточно прав для выполнения этого действия.</value>
+    </data>
+    <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
+        <value>Для открытия этого файла не назначено приложение по умолчанию. Выберите «Открыть с помощью…» в меню.</value>
+    </data>
+    <data name="ChatLink_NoApplicationsAvailable" xml:space="preserve">
+        <value>Нет установленных приложений для открытия этого файла.</value>
+    </data>
+    <data name="ChatLink_NoBrowser" xml:space="preserve">
+        <value>Укажите браузер по умолчанию в настройках системы и повторите попытку.</value>
+    </data>
+    <data name="ChatLink_OpenWithUnavailable" xml:space="preserve">
+        <value>Системный выбор приложений недоступен.</value>
+    </data>
+    <data name="ChatLink_OpenWithFailed" xml:space="preserve">
+        <value>Не удалось открыть этот файл в другом приложении.</value>
+    </data>
+    <data name="ChatLink_RequiresFile" xml:space="preserve">
+        <value>Это действие доступно только для файлов, но не для папок.</value>
+    </data>
+    <data name="ChatLink_SameFile" xml:space="preserve">
+        <value>Выберите другое имя файла или расположение для сохранения копии.</value>
+    </data>
+    <data name="ChatLink_MissingTarget" xml:space="preserve">
+        <value>Файл или папка больше не существуют. Путь можно скопировать из меню.</value>
+    </data>
+    <data name="ChatLink_ParentOpened" xml:space="preserve">
+        <value>Открыта родительская папка; текущий файловый менеджер не позволяет выбрать этот элемент.</value>
+    </data>
+    <data name="ChatLink_ConfirmExecution" xml:space="preserve">
+        <value>Открыть исполняемый файл? Продолжайте, только если доверяете его источнику.</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header" xml:space="preserve">
+        <value>Загружать значки сайтов и предпросмотр ссылок</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
+        <value>Загружать значки сайтов для видимых ссылок, а при наведении — предпросмотр веб-страниц. Для ссылок с параметрами запроса отображается только домен.</value>
     </data>
 </root>

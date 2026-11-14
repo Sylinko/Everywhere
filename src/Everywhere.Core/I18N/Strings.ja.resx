@@ -4616,6 +4616,9 @@
     <data name="ChatSync_Description" xml:space="preserve">
         <value>同じアカウントの複数のデバイス間でチャット履歴を同期します。同期するチャットを選択できます。</value>
     </data>
+    <data name="ChatHistory_Archived" xml:space="preserve">
+        <value>アーカイブ済み</value>
+    </data>
     <data name="ChatHistory_Archive_Header" xml:space="preserve">
         <value>アーカイブ</value>
     </data>
@@ -4628,14 +4631,32 @@
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>このチャットとそのすべてのブランチがこのデバイスから完全に削除され、元に戻すことはできません。よろしいですか？</value>
     </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>完全に削除するには、このチャットのタスクを先に停止してください。</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>チャットデータがアップグレードされました</value>
+    </data>
     <data name="ChatUpgrade_Body" xml:space="preserve">
         <value>チャットはターン単位で整理されたデータ構造になり、履歴の読み込みもより効率的になりました。チャットをアーカイブできるようになり、クラウド同期のパフォーマンスも向上しています。</value>
     </data>
     <data name="ChatUpgrade_Compatibility" xml:space="preserve">
         <value>以前のチャットデータをバックアップしました。将来 Everywhere をダウングレードしない限り、このデータは使用されません。削除することもできます。</value>
     </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>容量を空けるため、以前のチャットデータベースを削除</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>続行</value>
+    </data>
+    <data name="ChatHistory_Pinned" xml:space="preserve">
+        <value>ピン留め済み</value>
+    </data>
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>ピン留めする</value>
+    </data>
+    <data name="ChatHistory_Unpin" xml:space="preserve">
+        <value>ピン留めを解除</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>チャット名を変更</value>
@@ -4646,17 +4667,233 @@
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>チャットを削除</value>
     </data>
+    <data name="ChatHistory_Recent" xml:space="preserve">
+        <value>最近</value>
+    </data>
+    <data name="ChatHistory_Temporary" xml:space="preserve">
+        <value>一時</value>
+    </data>
+    <data name="ChatHistory_Persist" xml:space="preserve">
+        <value>チャットを保存</value>
+    </data>
+    <data name="ChatHistory_TemporaryNotice" xml:space="preserve">
+        <value>一時チャットです。Everywhere の終了時に自動的に削除されます。</value>
+    </data>
+    <data name="ChatHistory_TemporaryDescription" xml:space="preserve">
+        <value>一時チャットを開始します。Everywhere の終了時に自動的に削除されます。</value>
+    </data>
+    <data name="ChatHistory_PersistDescription" xml:space="preserve">
+        <value>この一時チャットを通常のチャットとして保存し、自動削除されないようにします。</value>
+    </data>
+    <data name="ChatHistory_Empty" xml:space="preserve">
+        <value>チャット履歴はありません</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>ツールバーのチャットを一時チャットにする</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>テキスト選択ツールバーから開始したチャットを一時チャットにし、Everywhere の終了時に自動的に削除します。オフにすると通常のチャットになります。</value>
+    </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>同期されたブランチを表示</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>このチャットをアーカイブしますか？</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>アーカイブすると、このチャットで進行中のすべての作業が停止します。後からアーカイブ済みチャットを再開できます。</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>このチャットを完全に削除しますか？このチャットが同期済みの場合、他のデバイスでも同期時に削除されます。この操作は取り消せません。</value>
+    </data>
     <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
         <value>チャットのクラウド同期</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>{0}使用済み、合計{1}</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>同期を停止</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>同期を開始</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>同期を管理…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>ローカルのみ</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>同期済み</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>同期待ち</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>同期中…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>同期未完了</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>再同期待ち</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>同期するには、クラウドストレージの空き容量をあと{0}確保する必要があります。</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>チャットのクラウド同期を管理するには、先にサインインしてください。</value>
     </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>チャットの同期はオフになっています。</value>
+    </data>
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>チャットのクラウド同期を読み込めませんでした。ネットワークを確認するか、しばらくしてからもう一度お試しください。</value>
     </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>クラウド上のコピーが変更されています。更新して、もう一度確認してください。</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>{0}/{1}件のチャットの同期を停止しました。更新して、残りのチャットを確認してください。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>選択したチャットの中に、このデバイスに保存されていないものがあります。他のデバイスにもコピーがない場合、復元できません。</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>「{0}」をデバイス間で同期しますか？このデバイスに保存されているすべてのブランチがアップロードされます。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>{0}件を選択</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>現在のアカウントでは、このチャットを管理できません。</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>アカウントが切り替わりました。現在のアカウントのチャットをもう一度確認してください。</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>操作の結果を確認できませんでした。更新して現在の状態を確認してください。</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>まだこのデバイスに保存されていません</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>メッセージのバージョンが一致しないため、このデバイスの内容を保持しました</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>クラウドストレージ</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>同期中 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>このデバイスのみ ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>複数選択</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>選択した項目の同期を停止 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>同期中のチャットはありません。</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>このデバイスにのみ保存されているチャットはありません。</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>クラウドストレージの上限を {0} 超過しています。同期済みのチャットは引き続き他のデバイスで確認できます。</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>クラウドストレージの空き容量が不足しているため、一部のチャットはまだ同期されていません。</value>
+    </data>
     <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>管理</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>対処</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>空き容量を確保</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>変更日時の古いチャットを {0} 件同期停止すると、{1} の空き容量を確保できます。各デバイスにあるチャットは保持されますが、今後の変更は同期されなくなります。</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>{0} の空き容量が必要ですが、このデバイスで安全に同期を停止できる古いチャットが足りません。同期を停止するチャットを自分で選択できます。</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>このアカウントには現在、クラウドストレージの割り当てがありません。古いチャットを削除しても、新しいチャットは同期できません。</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>{0} 件のチャットをこのデバイスのみ保存に変更しました。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>{0} の同期を停止しますか？アップロードはキャンセルされ、このデバイスのチャットは保持されます。</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>{0} の同期を停止しますか？クラウドストレージを {1} 解放できます。各デバイスにあるチャットは保持されますが、今後の変更は同期されなくなります。</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>「{0}」だけでクラウドストレージの上限 {1} を超えています。他のチャットを整理しても保存できないため、このチャットをこのデバイスのみ保存に設定できます。</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>クラウド上のコピーサイズ：{0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>このデバイスでの変更は、他のデバイスに同期されません。</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>同期状態未確認</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>ローカルのチャットは引き続き使用できます。同期状態を更新してから、同期を開始してください。</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>このチャットの変更を確認して同期しています。</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>クラウドにはこのチャットがありますが、ローカルにはコピーがありません。</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>前回の確認時、ローカルとクラウド上のコピーは一致していました。</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>同期が再開され、クラウド上のコピーの再作成を待っています。</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>このローカルのチャットは、まだクラウドに同期されていません。</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>ローカルとクラウドの間に、まだ同期されていない変更があります。</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>クラウド側の状態が変更されました</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>2台のデバイスで同じメッセージが編集されました。同期によってローカルの内容が上書きされることはありません。</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>このチャットは現在のアカウントでは同期できません。ログイン中のアカウントを確認してください。</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>前回の同期は完了しませんでした。ページ上部の更新ボタンをクリックして、もう一度お試しください。</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>利用可能なクラウドストレージがありません</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>空き容量が確保されました。次回の同期を待っています。</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>このチャットはクラウドストレージの上限を超えています</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>他のチャットを整理しても、このチャットを保存する空き容量は確保できません。同期を停止して、ローカルに残すことができます。</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>あと {0} の空き容量が必要です。上部のクラウドストレージに関する通知で「解決」をクリックすると、選択肢を確認できます。</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>チャットのクラウド同期を有効にする</value>
@@ -4675,5 +4912,80 @@
     </data>
     <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
         <value>同期を停止しています</value>
+    </data>
+    <data name="Common_CloudNotConfigured" xml:space="preserve">
+        <value>このビルドでは公式クラウドサービスが設定されていません。</value>
+    </data>
+    <data name="ChatLink_Reveal" xml:space="preserve">
+        <value>エクスプローラーで表示</value>
+    </data>
+    <data name="ChatLink_Open" xml:space="preserve">
+        <value>開く</value>
+    </data>
+    <data name="ChatLink_Run" xml:space="preserve">
+        <value>実行…</value>
+    </data>
+    <data name="ChatLink_OpenWith" xml:space="preserve">
+        <value>プログラムから開く…</value>
+    </data>
+    <data name="ChatLink_SaveAs" xml:space="preserve">
+        <value>名前を付けて保存…</value>
+    </data>
+    <data name="ChatLink_CopyPath" xml:space="preserve">
+        <value>パスをコピー</value>
+    </data>
+    <data name="ChatLink_ActionUnavailable" xml:space="preserve">
+        <value>このリンクまたは現在のデバイスでは、この操作を利用できません。</value>
+    </data>
+    <data name="ChatLink_RevealFailed" xml:space="preserve">
+        <value>エクスプローラーで表示できませんでした。</value>
+    </data>
+    <data name="ChatLink_SaveFailed" xml:space="preserve">
+        <value>ファイルのコピーを保存できませんでした。</value>
+    </data>
+    <data name="ChatLink_OpenFileFailed" xml:space="preserve">
+        <value>ファイルまたはフォルダーを開けませんでした。</value>
+    </data>
+    <data name="ChatLink_OpenWebFailed" xml:space="preserve">
+        <value>ブラウザーでリンクを開けませんでした。</value>
+    </data>
+    <data name="ChatLink_AccessDenied" xml:space="preserve">
+        <value>この操作を実行する権限がありません。</value>
+    </data>
+    <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
+        <value>このファイルを開く既定のアプリがありません。メニューから「プログラムから開く…」を選択してください。</value>
+    </data>
+    <data name="ChatLink_NoApplicationsAvailable" xml:space="preserve">
+        <value>このファイルを開けるアプリがインストールされていません。</value>
+    </data>
+    <data name="ChatLink_NoBrowser" xml:space="preserve">
+        <value>システム設定で既定のブラウザーを指定してから、もう一度お試しください。</value>
+    </data>
+    <data name="ChatLink_OpenWithUnavailable" xml:space="preserve">
+        <value>システムのアプリ選択画面を利用できません。</value>
+    </data>
+    <data name="ChatLink_OpenWithFailed" xml:space="preserve">
+        <value>別のアプリでこのファイルを開けませんでした。</value>
+    </data>
+    <data name="ChatLink_RequiresFile" xml:space="preserve">
+        <value>この操作はファイルにのみ適用できます。フォルダーには適用できません。</value>
+    </data>
+    <data name="ChatLink_SameFile" xml:space="preserve">
+        <value>コピーの保存先に別のファイル名または場所を指定してください。</value>
+    </data>
+    <data name="ChatLink_MissingTarget" xml:space="preserve">
+        <value>ファイルまたはフォルダーは既に存在しません。メニューからパスをコピーできます。</value>
+    </data>
+    <data name="ChatLink_ParentOpened" xml:space="preserve">
+        <value>親フォルダーを開きました。現在のファイルマネージャーではこの項目を選択できません。</value>
+    </data>
+    <data name="ChatLink_ConfirmExecution" xml:space="preserve">
+        <value>実行可能ファイルを開きますか？信頼できる提供元のファイルである場合のみ続行してください。</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header" xml:space="preserve">
+        <value>リンクのアイコンとプレビューを読み込む</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
+        <value>表示されているリンクのサイトアイコンを読み込み、ホバー時にウェブページのプレビューを表示します。クエリパラメーター付きのリンクはドメインのみ表示します。</value>
     </data>
 </root>

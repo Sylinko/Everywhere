@@ -4616,6 +4616,9 @@
     <data name="ChatSync_Description" xml:space="preserve">
         <value>같은 계정의 여러 기기 간에 채팅 기록을 동기화합니다. 동기화할 채팅을 선택할 수 있습니다.</value>
     </data>
+    <data name="ChatHistory_Archived" xml:space="preserve">
+        <value>보관됨</value>
+    </data>
     <data name="ChatHistory_Archive_Header" xml:space="preserve">
         <value>보관</value>
     </data>
@@ -4628,14 +4631,32 @@
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>이 채팅과 모든 분기가 이 기기에서 영구적으로 삭제되며 되돌릴 수 없습니다. 계속하시겠습니까?</value>
     </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>영구 삭제하기 전에 이 채팅의 작업을 먼저 중지하세요.</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>채팅 데이터가 업그레이드되었습니다</value>
+    </data>
     <data name="ChatUpgrade_Body" xml:space="preserve">
         <value>채팅은 이제 턴 기반 데이터 구조를 사용하며 기록 불러오기도 더 효율적입니다. 이제 채팅을 보관할 수 있고 클라우드 동기화 성능도 향상되었습니다.</value>
     </data>
     <data name="ChatUpgrade_Compatibility" xml:space="preserve">
         <value>이전 채팅 데이터를 백업했습니다. 향후 Everywhere를 다운그레이드하지 않는 한 더 이상 사용되지 않습니다. 원하시면 삭제할 수 있습니다.</value>
     </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>공간을 확보하려면 이전 버전의 채팅 데이터베이스를 삭제하세요</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>계속 사용</value>
+    </data>
+    <data name="ChatHistory_Pinned" xml:space="preserve">
+        <value>고정됨</value>
+    </data>
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>상단에 고정</value>
+    </data>
+    <data name="ChatHistory_Unpin" xml:space="preserve">
+        <value>고정 해제</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>채팅 이름 바꾸기</value>
@@ -4646,17 +4667,233 @@
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>채팅 삭제</value>
     </data>
+    <data name="ChatHistory_Recent" xml:space="preserve">
+        <value>최근</value>
+    </data>
+    <data name="ChatHistory_Temporary" xml:space="preserve">
+        <value>임시</value>
+    </data>
+    <data name="ChatHistory_Persist" xml:space="preserve">
+        <value>채팅 보관</value>
+    </data>
+    <data name="ChatHistory_TemporaryNotice" xml:space="preserve">
+        <value>임시 채팅입니다. Everywhere를 종료하면 자동으로 삭제됩니다.</value>
+    </data>
+    <data name="ChatHistory_TemporaryDescription" xml:space="preserve">
+        <value>임시 채팅을 시작합니다. Everywhere를 종료하면 자동으로 삭제됩니다.</value>
+    </data>
+    <data name="ChatHistory_PersistDescription" xml:space="preserve">
+        <value>이 임시 채팅을 일반 채팅으로 보관해 자동 삭제되지 않도록 합니다.</value>
+    </data>
+    <data name="ChatHistory_Empty" xml:space="preserve">
+        <value>채팅 기록이 없습니다</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>도구 모음에서 임시 채팅 사용</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>텍스트 선택 도구 모음에서 시작한 채팅을 임시 채팅으로 사용합니다. Everywhere를 종료하면 자동으로 삭제됩니다. 끄면 일반 채팅을 사용합니다.</value>
+    </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>동기화된 분기 보기</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>이 채팅을 보관하시겠습니까?</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>보관하면 이 채팅에서 진행 중인 모든 작업이 중지됩니다. 나중에 보관된 채팅에서 다시 시작할 수 있습니다.</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>이 채팅을 영구 삭제하시겠습니까? 이 채팅이 동기화된 경우 다른 기기에서도 동기화 시 삭제됩니다. 이 작업은 취소할 수 없습니다.</value>
+    </data>
     <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
         <value>채팅 클라우드 동기화</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>{0} 사용 중 / 총 {1}</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>동기화 중지</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>동기화 시작</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>동기화 관리…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>로컬에만 있음</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>동기화됨</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>동기화 대기 중</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>동기화 중…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>동기화되지 않음</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>재동기화 대기 중</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>동기화하려면 클라우드 공간을 {0}만큼 더 확보해야 합니다.</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>채팅 클라우드 동기화를 관리하려면 먼저 로그인하세요.</value>
     </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>채팅 동기화가 꺼져 있습니다.</value>
+    </data>
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>채팅 클라우드 동기화를 불러오지 못했습니다. 네트워크를 확인하거나 잠시 후 다시 시도해 주세요.</value>
     </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>클라우드 사본이 변경되었습니다. 새로 고친 후 다시 확인하세요.</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>{0}/{1}개 채팅의 동기화를 중지했습니다. 나머지 채팅을 확인하려면 새로 고치세요.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>선택한 채팅 중 이 기기에 저장되지 않은 채팅이 있습니다. 다른 기기에도 사본이 없다면 복구할 수 없습니다.</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>기기 간에 “{0}”을(를) 동기화할까요? 이 기기에 저장된 모든 분기를 업로드합니다.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>{0}개 선택됨</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>현재 계정에서는 이 채팅을 관리할 수 없습니다.</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>계정이 전환되었습니다. 현재 계정의 채팅을 다시 확인하세요.</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>작업 결과를 확인하지 못했습니다. 새로 고쳐 현재 상태를 확인하세요.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>아직 이 기기에 저장되지 않음</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>메시지 버전이 일치하지 않아 이 기기의 내용을 유지했습니다</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>클라우드 저장 공간</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>동기화 중 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>이 기기에만 저장 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>여러 개 선택</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>선택 항목 동기화 중지 ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>아직 동기화 중인 채팅이 없습니다.</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>이 기기에만 저장된 채팅이 없습니다.</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>클라우드 저장 공간이 {0} 초과되었습니다. 동기화된 채팅은 다른 기기에서 계속 확인할 수 있습니다.</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>클라우드 저장 공간이 부족하여 일부 채팅이 아직 동기화되지 않았습니다.</value>
+    </data>
     <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>관리</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>해결</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>공간 확보</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>오래전에 수정한 채팅 {0}개의 동기화를 중지하면 {1}의 공간을 확보할 수 있습니다. 각 기기에 이미 저장된 채팅은 유지되지만, 이후 수정 사항은 동기화되지 않습니다.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>{0}의 공간을 확보해야 하지만, 이 기기에서 안전하게 동기화를 중지할 수 있는 오래된 채팅이 부족합니다. 동기화를 중지할 채팅을 직접 선택할 수 있습니다.</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>이 계정에는 현재 클라우드 저장 공간 할당량이 없습니다. 오래된 채팅을 삭제해도 새 채팅을 동기화할 수 없습니다.</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>채팅 {0}개를 이 기기에만 저장하도록 변경했습니다.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>{0}의 동기화를 중지할까요? 업로드가 취소되며, 이 기기의 채팅은 유지됩니다.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>{0}의 동기화를 중지할까요? 클라우드 저장 공간 {1}을 확보합니다. 각 기기에 이미 저장된 채팅은 유지되지만, 이후 수정 사항은 동기화되지 않습니다.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>“{0}”의 크기만으로도 클라우드 저장 공간 할당량 {1}을 초과합니다. 다른 채팅을 정리해도 저장할 수 없으므로, 이 채팅을 이 기기에만 저장하도록 설정할 수 있습니다.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>클라우드 사본 크기: {0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>이 장치에서 변경한 내용은 다른 장치와 동기화되지 않습니다.</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>동기화 상태 확인 필요</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>이 장치에서 채팅을 계속 사용할 수 있습니다. 동기화 상태를 새로 고친 후 동기화를 시작하세요.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>이 채팅의 변경 사항을 확인하고 동기화하는 중입니다.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>클라우드에는 이 채팅이 있지만 이 장치에는 사본이 없습니다.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>마지막 확인 시 이 장치의 사본과 클라우드 사본이 일치했습니다.</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>동기화가 다시 활성화되었습니다. 클라우드 사본을 다시 만드는 중입니다.</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>이 장치의 채팅은 아직 클라우드와 동기화되지 않았습니다.</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>이 장치와 클라우드 간에 아직 동기화되지 않은 변경 사항이 있습니다.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>클라우드 상태 변경됨</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>두 장치에서 같은 메시지를 수정했습니다. 동기화 과정에서 이 장치의 내용은 덮어쓰지 않았습니다.</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>현재 계정으로는 이 채팅을 동기화할 수 없습니다. 로그인한 계정을 확인하세요.</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>마지막 동기화가 완료되지 않았습니다. 페이지 상단의 새로 고침 버튼을 눌러 다시 시도하세요.</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>사용 가능한 클라우드 저장 공간 없음</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>저장 공간이 충분합니다. 다시 동기화할 때까지 기다리는 중입니다.</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>이 채팅이 클라우드 저장 공간 한도를 초과함</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>다른 채팅을 정리해도 이 채팅을 저장할 공간이 부족합니다. 동기화를 중지하고 이 장치에 보관할 수 있습니다.</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>{0}의 공간을 확보해야 합니다. 위의 클라우드 저장 공간 알림에서 ‘해결’을 클릭해 가능한 방법을 확인하세요.</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>채팅 클라우드 동기화 사용</value>
@@ -4675,5 +4912,80 @@
     </data>
     <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
         <value>동기화 중지 중</value>
+    </data>
+    <data name="Common_CloudNotConfigured" xml:space="preserve">
+        <value>이 빌드에는 공식 클라우드 서비스가 구성되어 있지 않습니다.</value>
+    </data>
+    <data name="ChatLink_Reveal" xml:space="preserve">
+        <value>파일 탐색기에서 찾기</value>
+    </data>
+    <data name="ChatLink_Open" xml:space="preserve">
+        <value>열기</value>
+    </data>
+    <data name="ChatLink_Run" xml:space="preserve">
+        <value>실행…</value>
+    </data>
+    <data name="ChatLink_OpenWith" xml:space="preserve">
+        <value>다른 앱으로 열기…</value>
+    </data>
+    <data name="ChatLink_SaveAs" xml:space="preserve">
+        <value>다른 이름으로 저장…</value>
+    </data>
+    <data name="ChatLink_CopyPath" xml:space="preserve">
+        <value>경로 복사</value>
+    </data>
+    <data name="ChatLink_ActionUnavailable" xml:space="preserve">
+        <value>이 링크 또는 현재 장치에서는 이 작업을 지원하지 않습니다.</value>
+    </data>
+    <data name="ChatLink_RevealFailed" xml:space="preserve">
+        <value>파일 탐색기에서 찾을 수 없습니다.</value>
+    </data>
+    <data name="ChatLink_SaveFailed" xml:space="preserve">
+        <value>파일 복사본을 저장할 수 없습니다.</value>
+    </data>
+    <data name="ChatLink_OpenFileFailed" xml:space="preserve">
+        <value>파일 또는 폴더를 열 수 없습니다.</value>
+    </data>
+    <data name="ChatLink_OpenWebFailed" xml:space="preserve">
+        <value>브라우저에서 링크를 열 수 없습니다.</value>
+    </data>
+    <data name="ChatLink_AccessDenied" xml:space="preserve">
+        <value>이 작업을 수행할 권한이 없습니다.</value>
+    </data>
+    <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
+        <value>이 파일을 열 기본 앱이 없습니다. 메뉴에서 ‘다른 앱으로 열기…’를 선택하세요.</value>
+    </data>
+    <data name="ChatLink_NoApplicationsAvailable" xml:space="preserve">
+        <value>이 파일을 열 수 있는 앱이 설치되어 있지 않습니다.</value>
+    </data>
+    <data name="ChatLink_NoBrowser" xml:space="preserve">
+        <value>시스템 설정에서 기본 브라우저를 지정한 후 다시 시도하세요.</value>
+    </data>
+    <data name="ChatLink_OpenWithUnavailable" xml:space="preserve">
+        <value>시스템 앱 선택기를 사용할 수 없습니다.</value>
+    </data>
+    <data name="ChatLink_OpenWithFailed" xml:space="preserve">
+        <value>다른 앱으로 이 파일을 열 수 없습니다.</value>
+    </data>
+    <data name="ChatLink_RequiresFile" xml:space="preserve">
+        <value>이 작업은 폴더가 아닌 파일에만 사용할 수 있습니다.</value>
+    </data>
+    <data name="ChatLink_SameFile" xml:space="preserve">
+        <value>복사본을 저장할 다른 파일 이름이나 위치를 선택하세요.</value>
+    </data>
+    <data name="ChatLink_MissingTarget" xml:space="preserve">
+        <value>파일 또는 폴더가 더 이상 존재하지 않습니다. 메뉴에서 경로를 복사할 수 있습니다.</value>
+    </data>
+    <data name="ChatLink_ParentOpened" xml:space="preserve">
+        <value>상위 폴더를 열었습니다. 현재 파일 관리자에서는 이 항목을 선택할 수 없습니다.</value>
+    </data>
+    <data name="ChatLink_ConfirmExecution" xml:space="preserve">
+        <value>실행 파일을 여시겠습니까? 출처를 신뢰하는 경우에만 계속하세요.</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header" xml:space="preserve">
+        <value>링크 아이콘 및 미리 보기 로드</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
+        <value>표시된 링크의 사이트 아이콘을 로드하고, 마우스를 올리면 웹페이지 미리 보기를 로드합니다. 쿼리 매개변수가 있는 링크는 도메인만 표시합니다.</value>
     </data>
 </root>

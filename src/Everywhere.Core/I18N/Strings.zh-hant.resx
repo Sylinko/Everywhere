@@ -4616,6 +4616,9 @@
     <data name="ChatSync_Description" xml:space="preserve">
         <value>在使用同一帳號的多部裝置間同步聊天記錄，你可以選擇哪些聊天將被同步。</value>
     </data>
+    <data name="ChatHistory_Archived" xml:space="preserve">
+        <value>已封存</value>
+    </data>
     <data name="ChatHistory_Archive_Header" xml:space="preserve">
         <value>歸檔</value>
     </data>
@@ -4628,14 +4631,32 @@
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>這會從此裝置永久刪除該聊天及其所有分支，且無法復原，確定嗎？</value>
     </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>請先停止此聊天中的任務，再永久刪除。</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>聊天資料已升級</value>
+    </data>
     <data name="ChatUpgrade_Body" xml:space="preserve">
         <value>聊天現在採用按輪次組織的資料結構，歷史讀取也更有效率。你現在可以封存聊天，雲端同步也獲得了效能提升。</value>
     </data>
     <data name="ChatUpgrade_Compatibility" xml:space="preserve">
         <value>我們已備份舊版聊天資料，除非你日後降級 Everywhere，否則這些資料已不再有用。你可以選擇將其刪除。</value>
     </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>刪除舊版聊天資料庫以釋出空間</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>繼續使用</value>
+    </data>
+    <data name="ChatHistory_Pinned" xml:space="preserve">
+        <value>已置頂</value>
+    </data>
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>設為置頂</value>
+    </data>
+    <data name="ChatHistory_Unpin" xml:space="preserve">
+        <value>取消置頂</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>重新命名聊天</value>
@@ -4645,6 +4666,33 @@
     </data>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>刪除聊天</value>
+    </data>
+    <data name="ChatHistory_Recent" xml:space="preserve">
+        <value>最近</value>
+    </data>
+    <data name="ChatHistory_Temporary" xml:space="preserve">
+        <value>臨時</value>
+    </data>
+    <data name="ChatHistory_Persist" xml:space="preserve">
+        <value>保留聊天</value>
+    </data>
+    <data name="ChatHistory_TemporaryNotice" xml:space="preserve">
+        <value>這是臨時聊天，離開 Everywhere 時會自動刪除。</value>
+    </data>
+    <data name="ChatHistory_TemporaryDescription" xml:space="preserve">
+        <value>開始臨時聊天，離開 Everywhere 時會自動刪除。</value>
+    </data>
+    <data name="ChatHistory_PersistDescription" xml:space="preserve">
+        <value>將此臨時聊天保留為一般聊天，不再自動刪除。</value>
+    </data>
+    <data name="ChatHistory_Empty" xml:space="preserve">
+        <value>目前沒有聊天記錄</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>工具列使用臨時聊天</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>使用文字選取工具列發起的聊天會是臨時聊天，離開 Everywhere 時會自動刪除。關閉後則使用一般聊天。</value>
     </data>
     <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
         <value>檢視同步分支</value>
@@ -4864,5 +4912,80 @@
     </data>
     <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
         <value>正在停止同步</value>
+    </data>
+    <data name="Common_CloudNotConfigured" xml:space="preserve">
+        <value>此版本未設定官方雲端服務。</value>
+    </data>
+    <data name="ChatLink_Reveal" xml:space="preserve">
+        <value>在檔案總管中顯示</value>
+    </data>
+    <data name="ChatLink_Open" xml:space="preserve">
+        <value>開啟</value>
+    </data>
+    <data name="ChatLink_Run" xml:space="preserve">
+        <value>執行…</value>
+    </data>
+    <data name="ChatLink_OpenWith" xml:space="preserve">
+        <value>開啟方式…</value>
+    </data>
+    <data name="ChatLink_SaveAs" xml:space="preserve">
+        <value>另存新檔…</value>
+    </data>
+    <data name="ChatLink_CopyPath" xml:space="preserve">
+        <value>複製路徑</value>
+    </data>
+    <data name="ChatLink_ActionUnavailable" xml:space="preserve">
+        <value>此連結或目前裝置不支援此操作。</value>
+    </data>
+    <data name="ChatLink_RevealFailed" xml:space="preserve">
+        <value>無法在檔案管理員中找到此項目。</value>
+    </data>
+    <data name="ChatLink_SaveFailed" xml:space="preserve">
+        <value>無法儲存檔案副本。</value>
+    </data>
+    <data name="ChatLink_OpenFileFailed" xml:space="preserve">
+        <value>無法開啟檔案或資料夾。</value>
+    </data>
+    <data name="ChatLink_OpenWebFailed" xml:space="preserve">
+        <value>無法在瀏覽器中開啟連結。</value>
+    </data>
+    <data name="ChatLink_AccessDenied" xml:space="preserve">
+        <value>沒有權限完成此操作。</value>
+    </data>
+    <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
+        <value>沒有可開啟此檔案的預設應用程式。請從選單選擇「開啟方式…」。</value>
+    </data>
+    <data name="ChatLink_NoApplicationsAvailable" xml:space="preserve">
+        <value>沒有已安裝的應用程式可開啟此檔案。</value>
+    </data>
+    <data name="ChatLink_NoBrowser" xml:space="preserve">
+        <value>請在系統設定中指定預設瀏覽器後再試一次。</value>
+    </data>
+    <data name="ChatLink_OpenWithUnavailable" xml:space="preserve">
+        <value>系統的應用程式選擇器無法使用。</value>
+    </data>
+    <data name="ChatLink_OpenWithFailed" xml:space="preserve">
+        <value>無法使用其他應用程式開啟此檔案。</value>
+    </data>
+    <data name="ChatLink_RequiresFile" xml:space="preserve">
+        <value>此操作僅適用於檔案，不適用於資料夾。</value>
+    </data>
+    <data name="ChatLink_SameFile" xml:space="preserve">
+        <value>請選擇其他檔名或位置來儲存副本。</value>
+    </data>
+    <data name="ChatLink_MissingTarget" xml:space="preserve">
+        <value>檔案或資料夾已不存在。您可以從選單複製路徑。</value>
+    </data>
+    <data name="ChatLink_ParentOpened" xml:space="preserve">
+        <value>已開啟上層資料夾；目前的檔案管理員無法選取此項目。</value>
+    </data>
+    <data name="ChatLink_ConfirmExecution" xml:space="preserve">
+        <value>要開啟此執行檔嗎？只有在信任其來源時才繼續。</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header" xml:space="preserve">
+        <value>載入連結圖示和預覽</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
+        <value>為可見連結載入網站圖示，將游標停留在連結上時載入網頁預覽。包含查詢參數的連結只會顯示網域。</value>
     </data>
 </root>
