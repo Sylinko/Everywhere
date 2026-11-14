@@ -23,13 +23,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # ARM64 is disabled until native compatibility has been validated.
         include:
           - runtime: linux-x64
             runner: ubuntu-24.04
             asset_name: Linux-x64
-          - runtime: linux-arm64
-            runner: ubuntu-24.04-arm
-            asset_name: Linux-arm64
 
     runs-on: ${{ matrix.runner }}
 
