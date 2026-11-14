@@ -1,9 +1,10 @@
 # Linux releases and AUR
 
-`linux-release.yml` builds x64 and ARM64 from version tags (`vX.Y.Z` or
+`linux-release.yml` builds x64 from version tags (`vX.Y.Z` or
 `vX.Y.Z-canary.<numeric qualifiers>`). It uploads DEB, RPM and self-contained
-tar.zst assets to a draft release. Wait for both matrix builds, then publish the
+tar.zst assets to a draft release. Wait for the x64 build, then publish the
 release as stable or prerelease. The manual build input retries an existing tag.
+ARM64 release builds and packaging checks are disabled pending native acceptance.
 
 RPM packages use `~canary` versions so stable versions sort after previews.
 The RPM runtime dependencies have been validated on Fedora 44; other RPM
@@ -16,7 +17,7 @@ contributor-owned release source is hardcoded.
 
 `aur-publish.yml` optionally notifies the independent AUR maintainer after
 `release: published`, covering stable and prereleases. The Linux build also
-notifies after both builds succeed, covering releases published before their
+notifies after the Linux build succeeds, covering releases published before their
 assets finished uploading. Drafts and releases without an x64 archive are skipped.
 The notifier sends only the release tag; it does not push to AUR.
 
