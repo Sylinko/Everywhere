@@ -31,6 +31,11 @@ case "$runtime" in
         ;;
 esac
 bash src/Everywhere.Linux/packaging_deb.sh "$runtime" "$version" ./publish
+# The no-override path must follow the framework selected by upstream.
+default_publish="src/Everywhere.Linux/bin/Release/net11.0/$runtime/publish"
+mkdir -p "$default_publish"
+cp publish/Everywhere publish/Everywhere.Watchdog "$default_publish/"
+bash src/Everywhere.Linux/packaging_deb.sh "$runtime" "$version"
 deb="Everywhere-${asset}-v${version}.deb"
 test "$(dpkg-deb -f "$deb" Package)" = everywhere
 test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
@@ -38,6 +43,8 @@ test "$(dpkg-deb -f "$deb" Version)" = 1.2.3~canary.20261026.1
 dpkg-deb -x "$deb" unpacked-deb
 dpkg-deb -e "$deb" unpacked-control
 test -L unpacked-deb/usr/bin/Everywhere
+test "$(readlink unpacked-deb/usr/bin/Everywhere)" = /opt/Everywhere/Everywhere
+cmp publish/Everywhere unpacked-deb/opt/Everywhere/Everywhere
 test "$(readlink unpacked-deb/usr/bin/ew)" = /opt/Everywhere/Everywhere
 dpkg-deb -f "$deb" Depends | grep -q "python3 (>= 3.9)"
 test -x unpacked-deb/opt/Everywhere/Everywhere.Watchdog
@@ -54,6 +61,7 @@ rpm -qp --requires "$rpm" | grep -qx libicu
 mkdir unpacked-rpm
 (cd unpacked-rpm && rpm2cpio "../$rpm" | cpio -idm --quiet)
 test -L unpacked-rpm/usr/bin/Everywhere
+test "$(readlink unpacked-rpm/usr/bin/Everywhere)" = /opt/Everywhere/Everywhere
 test "$(readlink unpacked-rpm/usr/bin/ew)" = /opt/Everywhere/Everywhere
 rpm -qp --requires "$rpm" | grep -qx "python3 >= 3.9"
 test -x unpacked-rpm/opt/Everywhere/Everywhere.Watchdog

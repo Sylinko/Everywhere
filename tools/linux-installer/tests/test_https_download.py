@@ -92,6 +92,7 @@ class HttpsDownloadTests(unittest.TestCase):
                 super().update(received, force)
         with patch.dict(os.environ, {'SSL_CERT_FILE': str(self.root / 'cert.pem'),
                                      'EVERYWHERE_UPDATE_PROXY': 'none', 'TERM': 'xterm',
+                                     'NO_PROXY': '*', 'no_proxy': '*',
                                      'EVERYWHERE_UPDATE_TRANSPORT': json.dumps(transport) if transport else ''}), \
                 patch.object(u, 'DownloadProgress', ObservedProgress):
             destination = self.root / ('native' if transport else 'python')
@@ -120,7 +121,7 @@ class HttpsDownloadTests(unittest.TestCase):
         if not bootstrap.exists():
             self.skipTest('Bootstrap is maintained in the standalone installer directory')
         env = dict(os.environ, SSL_CERT_FILE=str(self.root / 'cert.pem'),
-                   EVERYWHERE_INSTALLER_MANIFEST=self.base + manifest)
+                   NO_PROXY='*', no_proxy='*', EVERYWHERE_INSTALLER_MANIFEST=self.base + manifest)
         return subprocess.run(['/bin/sh', str(bootstrap), '--installer-version'],
                               text=True, capture_output=True, timeout=30, env=env)
 

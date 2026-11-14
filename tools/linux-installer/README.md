@@ -92,6 +92,7 @@ Stable uses a separate `stable` entry with a stable version. arm64 uses an `arm6
 ```sh
 python3 tools/linux-installer/sync-bundle.py .
 python3 tools/linux-installer/sync-bundle.py . --check
+cd tools/linux-installer
 python3 -m unittest discover -s tests -v
 sh -n install.sh
 python3 build-release.py --base-url https://HOST/install/v0.1.0 --output /tmp/installer-release

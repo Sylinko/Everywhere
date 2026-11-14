@@ -36,7 +36,7 @@ public sealed class LinuxSessionTests
     [TestCase("GNOME-Classic:GNOME", LinuxDesktopKind.GnomeWayland)]
     [TestCase("niri", LinuxDesktopKind.NiriWayland)]
     [TestCase("test:NIRI", LinuxDesktopKind.NiriWayland)]
-    public void ExplicitWaylandDesktop_WithInheritedHyprlandMarker_LeavesGlobalCapabilitiesUnavailable(
+    public async Task ExplicitWaylandDesktop_WithInheritedHyprlandMarker_LeavesGlobalCapabilitiesUnavailable(
         string currentDesktop,
         LinuxDesktopKind expectedKind)
     {
@@ -54,7 +54,7 @@ public sealed class LinuxSessionTests
             Assert.That(desktop.IsStandardWayland, Is.True);
             Assert.That(desktop.CreateOverlayInputWatcher().IsSupported, Is.False);
             Assert.That(desktop.Compositor.StackingOrderKind, Is.EqualTo(WindowStackingOrderKind.Unavailable));
-            Assert.ThrowsAsync<NotSupportedException>(async () => await desktop.Compositor.GetOutputsAsync());
+            await Assert.ThrowsAsync<NotSupportedException>(async () => await desktop.Compositor.GetOutputsAsync());
         }
         finally
         {

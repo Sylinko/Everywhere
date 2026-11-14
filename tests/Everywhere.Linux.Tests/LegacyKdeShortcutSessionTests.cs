@@ -17,11 +17,11 @@ public sealed class LegacyKdeShortcutSessionTests
     [SetUp]
     public void RequirePrivateBus()
     {
+        _previousDesktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP");
+        _previousKdeVersion = Environment.GetEnvironmentVariable("KDE_SESSION_VERSION");
         var address = Environment.GetEnvironmentVariable("EVERYWHERE_PORTAL_TEST_BUS");
         Assert.That(address, Is.Not.Null.And.Not.Empty);
         Assert.That(DBusAddress.Session, Is.EqualTo(address));
-        _previousDesktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP");
-        _previousKdeVersion = Environment.GetEnvironmentVariable("KDE_SESSION_VERSION");
         Environment.SetEnvironmentVariable("XDG_CURRENT_DESKTOP", "KDE");
         Environment.SetEnvironmentVariable("KDE_SESSION_VERSION", "5");
     }

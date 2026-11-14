@@ -51,7 +51,7 @@ public sealed class PortalShortcutListenerTests
     }
 
     [Test]
-    public async Task Listener_Dispose_DiscardsQueuedActivationAndRejectsNewRegistrations()
+    public async Task Listener_AfterDisposal_RejectsDirectActivationAndNewRegistrations()
     {
         var listener = new PortalShortcutListener(NullLogger<PortalShortcutListener>.Instance);
         var shortcut = new KeyboardShortcut(Key.E, KeyModifiers.Control | KeyModifiers.Shift);
