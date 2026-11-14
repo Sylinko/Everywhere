@@ -174,7 +174,6 @@ Translation Guidelines:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": json.dumps(resources_to_translate, ensure_ascii=False, indent=2)}
                 ],
-                temperature=0.3,
                 response_format={"type": "json_object"}
             )
             content = response.choices[0].message.content.strip()
