@@ -23,6 +23,11 @@ public sealed partial class HyprlandWindowState : IDisposable, IWindowPresentati
     public bool IsAnchoredPopup { get; set; }
 
     /// <summary>
+    /// Gets or sets whether explicit activation brings this window to the active workspace.
+    /// </summary>
+    public bool ShouldFollowActiveWorkspace { get; set; }
+
+    /// <summary>
     /// Gets or sets whether compositor focus changes should raise this surface.
     /// </summary>
     public bool IsTopmost
@@ -248,7 +253,10 @@ public sealed partial class HyprlandWindowState : IDisposable, IWindowPresentati
     {
         if (_window is not null && CanActivate)
         {
-            _connection.ExecuteLua($"hl.dispatch(hl.dsp.focus({{window='address:{_window.Address}'}}))");
+            var move = ShouldFollowActiveWorkspace
+                ? $"hl.dispatch(hl.dsp.window.move({{workspace=hl.get_active_workspace(),follow=false,window='address:{_window.Address}'}}));"
+                : string.Empty;
+            _connection.ExecuteLua($"{move}hl.dispatch(hl.dsp.focus({{window='address:{_window.Address}'}}))");
         }
     }
 

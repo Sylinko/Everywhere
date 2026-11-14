@@ -74,6 +74,34 @@ public sealed class HyprlandWindowPolicyTests
         }
     }
 
+    // Reopening chat from another workspace must move the owned window before focusing it.
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task ExplicitActivation_FollowWorkspacePolicy_MovesOnlyChatBeforeFocus(bool shouldFollowWorkspace)
+    {
+        using var endpoint = new HyprlandConnectionTests.CompositorEndpoint();
+        using var state = new HyprlandWindowState(
+            DispatchProxy.Create<IWindowImpl, NativeWindowStub>(), false, 1, _ => { }, _ => { })
+        {
+            ShouldFollowActiveWorkspace = shouldFollowWorkspace
+        };
+        var field = typeof(HyprlandWindowState).GetField("_window", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(nameof(HyprlandWindowState), "_window");
+        field.SetValue(state, new HyprlandWindow { Address = "0x123" });
+        var serving = endpoint.ServeAsync(ReplyAsync);
+        state.Activate();
+        await serving;
+        var request = endpoint.Request ?? throw new InvalidDataException("Missing activation request.");
+        Assert.That(request, Does.Contain("hl.dsp.focus({window='address:0x123'})"));
+        Assert.That(request.Contains("hl.get_active_workspace()"), Is.EqualTo(shouldFollowWorkspace));
+        if (shouldFollowWorkspace)
+        {
+            Assert.That(request, Does.Contain("follow=false,window='address:0x123'"));
+            Assert.That(request.IndexOf("hl.dsp.window.move", StringComparison.Ordinal),
+                Is.LessThan(request.IndexOf("hl.dsp.focus", StringComparison.Ordinal)));
+        }
+    }
+
     [Test]
     public void OverlayBoundsChange_Placement_PreservesIndependentKeyboardAndPointerPolicy()
     {

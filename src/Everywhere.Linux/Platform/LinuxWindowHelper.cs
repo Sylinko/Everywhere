@@ -79,7 +79,12 @@ public sealed partial class LinuxWindowHelper(
         }
         else
         {
+            var wasVisible = window.IsVisible;
             window.Show();
+            if (wasVisible && window is ChatWindow && desktop.Kind == LinuxDesktopKind.Hyprland)
+            {
+                overlays.Activate(window);
+            }
         }
     }
 

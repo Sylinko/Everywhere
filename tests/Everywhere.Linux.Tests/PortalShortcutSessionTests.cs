@@ -12,12 +12,26 @@ namespace Everywhere.Linux.Tests;
 [Explicit("Run on a private dbus-run-session bus with EVERYWHERE_PORTAL_TEST_BUS set to its address.")]
 public sealed class PortalShortcutSessionTests
 {
+    private string? _previousDesktop;
+    private string? _previousKdeVersion;
+
     [SetUp]
     public void RequirePrivateBus()
     {
+        _previousDesktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP");
+        _previousKdeVersion = Environment.GetEnvironmentVariable("KDE_SESSION_VERSION");
         var address = Environment.GetEnvironmentVariable("EVERYWHERE_PORTAL_TEST_BUS");
         Assert.That(address, Is.Not.Null.And.Not.Empty, "These tests must never use the desktop's real portal.");
         Assert.That(DBusAddress.Session, Is.EqualTo(address));
+        Environment.SetEnvironmentVariable("XDG_CURRENT_DESKTOP", "KDE");
+        Environment.SetEnvironmentVariable("KDE_SESSION_VERSION", "6");
+    }
+
+    [TearDown]
+    public void RestoreDesktopEnvironment()
+    {
+        Environment.SetEnvironmentVariable("XDG_CURRENT_DESKTOP", _previousDesktop);
+        Environment.SetEnvironmentVariable("KDE_SESSION_VERSION", _previousKdeVersion);
     }
 
     [TestCase(false)]

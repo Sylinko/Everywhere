@@ -262,7 +262,7 @@ public sealed class TerminalUpdatePresentationTests
                 "Everywhere-Linux-x64-v99.0.0-canary.1.tar.zst",
                 "sha256:" + new string('a', 64),
                 1024,
-                "https://github.com/pasical/Everywhere/releases",
-                "https://github.com/pasical/Everywhere/releases"));
+                "https://github.com/Sylinko/Everywhere/releases",
+                "https://github.com/Sylinko/Everywhere/releases"));
     }
 }

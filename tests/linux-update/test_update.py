@@ -108,17 +108,17 @@ class InstallerTests(unittest.TestCase):
 
     def test_fork_catalog_uses_release_assets_and_ignores_installer_tags(self):
         data = b'archive'
-        url = 'https://github.com/pasical/Everywhere/releases/download/v1.2.0/Everywhere-Linux-x64-v1.2.0.tar.zst'
+        url = 'https://github.com/Sylinko/Everywhere/releases/download/v1.2.0/Everywhere-Linux-x64-v1.2.0.tar.zst'
         releases = [{'tag_name': 'linux-installer-latest', 'prerelease': False},
                     {'tag_name': 'v1.2.0', 'prerelease': False, 'assets': [{
                         'name': 'Everywhere-Linux-x64-v1.2.0.tar.zst', 'state': 'uploaded',
                         'size': len(data), 'digest': 'sha256:' + hashlib.sha256(data).hexdigest(),
                         'browser_download_url': url}]}]
         with patch.object(u, 'fetch', return_value=json.dumps(releases).encode()) as fetch:
-            target, item = u.select_package(u.read_catalog('github:pasical/Everywhere'), 'stable', 'x64', 'pacman')
+            target, item = u.select_package(u.read_catalog('github:Sylinko/Everywhere'), 'stable', 'x64', 'pacman')
             self.assertEqual(target, '1.2.0')
             self.assertEqual(item['url'], url)
-            self.assertIn('api.github.com/repos/pasical/Everywhere/releases', fetch.call_args.args[0])
+            self.assertIn('api.github.com/repos/Sylinko/Everywhere/releases', fetch.call_args.args[0])
 
     def test_arch_archive_traversal_rejected_before_build(self):
         data = io.BytesIO()
@@ -167,6 +167,14 @@ class InstallerTests(unittest.TestCase):
             with self.assertRaises(u.UpdateError):
                 u.refresh_installer('https://site.test/installer.json', ['install'])
             run.assert_not_called()
+
+    def test_metadata_transport_timeout_retries_then_uses_bundled_installer(self):
+        with patch.dict(os.environ, {'EVERYWHERE_UPDATE_TRANSPORT': '["ew", "--linux-update-download"]'}), \
+                patch.object(u.subprocess, 'run', side_effect=subprocess.TimeoutExpired('ew', 200)) as run, \
+                patch.object(u.time, 'sleep'), patch.object(u.UI, 'status') as status:
+            self.assertIsNone(u.refresh_installer('https://site.test/installer.json', ['update']))
+            self.assertEqual(run.call_count, 3)
+            status.assert_called_with('bundled_installer')
 
     def test_network_failure_uses_bundled_installer(self):
         for error in (OSError('offline'), u.DownloadError('application transport failed')):
@@ -241,6 +249,8 @@ class InstallerTests(unittest.TestCase):
             pid, fd = pty.fork()
             if pid == 0:
                 try:
+                    os.environ['TERM'] = 'xterm'
+                    os.environ['COLUMNS'] = '80'
                     sys.stdin = io.StringIO('script bytes, not keyboard input')
                     try:
                         print('RESULT:' + u.choose_channel(), flush=True)
