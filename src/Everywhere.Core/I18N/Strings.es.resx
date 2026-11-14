@@ -4616,6 +4616,9 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     <data name="ChatSync_Description" xml:space="preserve">
         <value>Sincroniza el historial de chats entre varios dispositivos con la misma cuenta. Puedes elegir qué chats se sincronizan.</value>
     </data>
+    <data name="ChatHistory_Archived" xml:space="preserve">
+        <value>Archivado</value>
+    </data>
     <data name="ChatHistory_Archive_Header" xml:space="preserve">
         <value>Archivar</value>
     </data>
@@ -4628,14 +4631,32 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>Esto eliminará permanentemente este chat y todas sus ramas de este dispositivo, y no se puede deshacer. ¿Estás seguro?</value>
     </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>Detén primero las tareas de este chat para poder eliminarlo permanentemente.</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>Se han actualizado los datos de tus chats</value>
+    </data>
     <data name="ChatUpgrade_Body" xml:space="preserve">
         <value>Los chats ahora usan una estructura de datos basada en turnos y la carga del historial es más eficiente. Ahora puedes archivar chats y la sincronización en la nube también ha mejorado su rendimiento.</value>
     </data>
     <data name="ChatUpgrade_Compatibility" xml:space="preserve">
         <value>Hemos hecho una copia de seguridad de los datos de chat antiguos. Ya no se utilizan, a menos que en el futuro vuelvas a una versión anterior de Everywhere. Puedes elegir eliminarlos.</value>
     </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>Eliminar la base de datos antigua de chats para liberar espacio</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>Continuar</value>
+    </data>
+    <data name="ChatHistory_Pinned" xml:space="preserve">
+        <value>Fijado</value>
+    </data>
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>Fijar arriba</value>
+    </data>
+    <data name="ChatHistory_Unpin" xml:space="preserve">
+        <value>Desfijar</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>Cambiar nombre del chat</value>
@@ -4646,17 +4667,233 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Eliminar chat</value>
     </data>
+    <data name="ChatHistory_Recent" xml:space="preserve">
+        <value>Recientes</value>
+    </data>
+    <data name="ChatHistory_Temporary" xml:space="preserve">
+        <value>Temporal</value>
+    </data>
+    <data name="ChatHistory_Persist" xml:space="preserve">
+        <value>Conservar chat</value>
+    </data>
+    <data name="ChatHistory_TemporaryNotice" xml:space="preserve">
+        <value>Chat temporal. Se eliminará automáticamente al cerrar Everywhere.</value>
+    </data>
+    <data name="ChatHistory_TemporaryDescription" xml:space="preserve">
+        <value>Inicia un chat temporal que se eliminará automáticamente al cerrar Everywhere.</value>
+    </data>
+    <data name="ChatHistory_PersistDescription" xml:space="preserve">
+        <value>Conserva este chat temporal como un chat normal para que no se elimine automáticamente.</value>
+    </data>
+    <data name="ChatHistory_Empty" xml:space="preserve">
+        <value>No hay chats todavía</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>Chats temporales desde la barra de herramientas</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>Los chats iniciados desde la barra de herramientas de selección de texto serán temporales y se eliminarán automáticamente al cerrar Everywhere. Si desactivas esta opción, se usarán chats normales.</value>
+    </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>Ver rama sincronizada</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>¿Archivar este chat?</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>Al archivar, se detendrán todas las tareas en curso de este chat. Podrás reanudarlas más tarde desde los chats archivados.</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>¿Eliminar este chat permanentemente? Si está sincronizado, también se eliminará en los demás dispositivos cuando se sincronicen. Esta acción no se puede deshacer.</value>
+    </data>
     <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
         <value>Sincronización del chat en la nube</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>{0} usados de {1}</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>Detener sincronización</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>Iniciar sincronización</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>Administrar sincronización…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>Solo local</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>Sincronizado</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>Pendiente de sincronización</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>Sincronizando…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>Sincronización incompleta</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>Pendiente de volver a sincronizar</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>Libera {0} más de espacio en la nube para sincronizar.</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>Inicia sesión primero para administrar la sincronización en la nube del chat.</value>
     </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>La sincronización de chats está desactivada.</value>
+    </data>
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>No se pudo cargar la sincronización en la nube del chat. Comprueba tu conexión de red o inténtalo de nuevo más tarde.</value>
     </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>La copia en la nube ha cambiado. Actualiza y vuelve a confirmar.</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>Se ha detenido la sincronización de {0} de {1} chats. Actualiza para revisar los demás.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>Algunos chats seleccionados no están guardados en este dispositivo. No se podrán recuperar si tampoco hay una copia en otros dispositivos.</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>¿Sincronizar «{0}» entre dispositivos? Se subirán todas las ramas guardadas en este dispositivo.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>{0} seleccionados</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>No se puede administrar este chat con la cuenta actual.</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>La cuenta ha cambiado. Vuelve a consultar los chats de la cuenta actual.</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>No se ha podido confirmar el resultado de la acción. Actualiza para ver el estado actual.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>Aún no se ha guardado en este dispositivo</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>Las versiones del mensaje no coinciden; se ha conservado el contenido de este dispositivo</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>Espacio en la nube</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>Sincronizados ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>Solo en este dispositivo ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>Seleccionar varios</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>Detener sincronización ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>Aún no hay chats sincronizados.</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>No hay chats guardados solo en este dispositivo.</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>Se ha superado el límite de espacio en la nube de {0}. Los chats sincronizados siguen disponibles en otros dispositivos.</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>No hay suficiente espacio en la nube. Algunos chats aún no se han sincronizado.</value>
+    </data>
     <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>Gestionar</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>Solucionar</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>Liberar espacio</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>Deja de sincronizar estos {0} chats modificados hace más tiempo para liberar {1}. Los chats que ya están en cada dispositivo se conservarán, pero los cambios posteriores no se sincronizarán.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>Tienes que liberar {0}, pero no hay suficientes chats antiguos en este dispositivo cuya sincronización se pueda detener de forma segura. Puedes elegir qué chats dejar de sincronizar.</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>Esta cuenta no tiene una cuota de espacio en la nube. Aunque elimines chats antiguos, no podrás sincronizar chats nuevos.</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>{0} chats ahora solo se guardan en este dispositivo.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>¿Dejar de sincronizar {0}? Se cancelará la carga y el chat se conservará en este dispositivo.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>¿Dejar de sincronizar {0}? Se liberará {1} de espacio en la nube. Los chats que ya están en cada dispositivo se conservarán, pero los cambios posteriores no se sincronizarán.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>“{0}” supera por sí solo la cuota de espacio en la nube de {1}. No cabrá aunque elimines otros chats; puedes dejarlo solo en este dispositivo.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>Tamaño de la copia en la nube: {0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>Los cambios en este dispositivo no se sincronizarán con otros dispositivos.</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>Estado de sincronización pendiente de confirmar</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>Puedes seguir usando el chat en este dispositivo. Actualiza el estado de sincronización antes de empezar a sincronizar.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>Comprobando y sincronizando los cambios de este chat.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>Este chat está en la nube, pero aún no tiene una copia en este dispositivo.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>La última vez que se comprobó, las copias de este dispositivo y de la nube coincidían.</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>La sincronización se ha reanudado. Esperando a reconstruir la copia en la nube.</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>Este chat de este dispositivo aún no se ha sincronizado con la nube.</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>Hay cambios pendientes de sincronizar entre este dispositivo y la nube.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>El estado de la nube ha cambiado</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>Dos dispositivos han modificado el mismo mensaje. La sincronización no ha sobrescrito el contenido de este dispositivo.</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>Este chat no se puede sincronizar con la cuenta actual. Comprueba qué cuenta has iniciado sesión.</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>La última sincronización no se completó. Haz clic en el botón de actualizar de la parte superior de la página para volver a intentarlo.</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>No hay espacio en la nube disponible</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>Hay espacio suficiente. Esperando para volver a sincronizar.</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>Este chat supera el límite de espacio en la nube</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>Ni siquiera al borrar otros chats habrá espacio suficiente. Puedes dejar de sincronizarlo y conservarlo en este dispositivo.</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>Libera {0}. Haz clic en «Solucionar» en el aviso de espacio en la nube de arriba para ver las opciones.</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>Activar la sincronización en la nube del chat</value>
@@ -4675,5 +4912,80 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     </data>
     <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
         <value>Deteniendo sincronización</value>
+    </data>
+    <data name="Common_CloudNotConfigured" xml:space="preserve">
+        <value>Los servicios oficiales en la nube no están configurados en esta compilación.</value>
+    </data>
+    <data name="ChatLink_Reveal" xml:space="preserve">
+        <value>Mostrar en el Explorador de archivos</value>
+    </data>
+    <data name="ChatLink_Open" xml:space="preserve">
+        <value>Abrir</value>
+    </data>
+    <data name="ChatLink_Run" xml:space="preserve">
+        <value>Ejecutar…</value>
+    </data>
+    <data name="ChatLink_OpenWith" xml:space="preserve">
+        <value>Abrir con…</value>
+    </data>
+    <data name="ChatLink_SaveAs" xml:space="preserve">
+        <value>Guardar como…</value>
+    </data>
+    <data name="ChatLink_CopyPath" xml:space="preserve">
+        <value>Copiar ruta</value>
+    </data>
+    <data name="ChatLink_ActionUnavailable" xml:space="preserve">
+        <value>Esta acción no está disponible para este enlace o en este dispositivo.</value>
+    </data>
+    <data name="ChatLink_RevealFailed" xml:space="preserve">
+        <value>No se pudo mostrar en el Explorador de archivos.</value>
+    </data>
+    <data name="ChatLink_SaveFailed" xml:space="preserve">
+        <value>No se pudo guardar una copia del archivo.</value>
+    </data>
+    <data name="ChatLink_OpenFileFailed" xml:space="preserve">
+        <value>No se pudo abrir el archivo o la carpeta.</value>
+    </data>
+    <data name="ChatLink_OpenWebFailed" xml:space="preserve">
+        <value>No se pudo abrir el enlace en el navegador.</value>
+    </data>
+    <data name="ChatLink_AccessDenied" xml:space="preserve">
+        <value>No tienes permiso para completar esta acción.</value>
+    </data>
+    <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
+        <value>No hay ninguna aplicación predeterminada para abrir este archivo. Selecciona «Abrir con…» en el menú.</value>
+    </data>
+    <data name="ChatLink_NoApplicationsAvailable" xml:space="preserve">
+        <value>No hay ninguna aplicación instalada que pueda abrir este archivo.</value>
+    </data>
+    <data name="ChatLink_NoBrowser" xml:space="preserve">
+        <value>Especifica un navegador predeterminado en la configuración del sistema e inténtalo de nuevo.</value>
+    </data>
+    <data name="ChatLink_OpenWithUnavailable" xml:space="preserve">
+        <value>El selector de aplicaciones del sistema no está disponible.</value>
+    </data>
+    <data name="ChatLink_OpenWithFailed" xml:space="preserve">
+        <value>No se pudo abrir este archivo con otra aplicación.</value>
+    </data>
+    <data name="ChatLink_RequiresFile" xml:space="preserve">
+        <value>Esta acción solo se aplica a archivos, no a carpetas.</value>
+    </data>
+    <data name="ChatLink_SameFile" xml:space="preserve">
+        <value>Elige otro nombre o ubicación para guardar la copia.</value>
+    </data>
+    <data name="ChatLink_MissingTarget" xml:space="preserve">
+        <value>El archivo o la carpeta ya no existe. Puedes copiar la ruta desde el menú.</value>
+    </data>
+    <data name="ChatLink_ParentOpened" xml:space="preserve">
+        <value>Se abrió la carpeta superior; el administrador de archivos actual no puede seleccionar este elemento.</value>
+    </data>
+    <data name="ChatLink_ConfirmExecution" xml:space="preserve">
+        <value>¿Quieres abrir el archivo ejecutable? Continúa solo si confías en su origen.</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header" xml:space="preserve">
+        <value>Cargar iconos y vistas previas de enlaces</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
+        <value>Carga los iconos de los sitios de los enlaces visibles y muestra una vista previa de la página web al pasar el cursor. Los enlaces con parámetros de consulta solo muestran el dominio.</value>
     </data>
 </root>

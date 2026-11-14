@@ -4616,6 +4616,9 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatSync_Description" xml:space="preserve">
         <value>Aynı hesaptaki birden fazla cihaz arasında sohbet geçmişini eşitleyin. Hangi sohbetlerin eşitleneceğini seçebilirsiniz.</value>
     </data>
+    <data name="ChatHistory_Archived" xml:space="preserve">
+        <value>Arşivlendi</value>
+    </data>
     <data name="ChatHistory_Archive_Header" xml:space="preserve">
         <value>Arşivle</value>
     </data>
@@ -4628,14 +4631,32 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>Bu işlem, bu sohbeti ve tüm dallarını bu cihazdan kalıcı olarak siler ve geri alınamaz. Emin misiniz?</value>
     </data>
+    <data name="ChatHistory_Delete_Running" xml:space="preserve">
+        <value>Kalıcı olarak silmeden önce lütfen bu sohbetteki görevleri durdurun.</value>
+    </data>
+    <data name="ChatUpgrade_Title" xml:space="preserve">
+        <value>Sohbet verileriniz yükseltildi</value>
+    </data>
     <data name="ChatUpgrade_Body" xml:space="preserve">
         <value>Sohbetler artık tura dayalı bir veri yapısı kullanıyor ve geçmiş yükleme daha verimli. Artık sohbetleri arşivleyebilirsiniz ve bulut eşitleme de performans iyileştirmeleri aldı.</value>
     </data>
     <data name="ChatUpgrade_Compatibility" xml:space="preserve">
         <value>Eski sohbet verilerini yedekledik. Gelecekte Everywhere'i eski bir sürüme döndürmediğiniz sürece artık kullanılmıyorlar. İsterseniz bunları silebilirsiniz.</value>
     </data>
+    <data name="ChatUpgrade_TrashPrevious" xml:space="preserve">
+        <value>Yer açmak için eski sohbet veritabanını silin</value>
+    </data>
+    <data name="ChatUpgrade_Continue" xml:space="preserve">
+        <value>Kullanmaya devam et</value>
+    </data>
+    <data name="ChatHistory_Pinned" xml:space="preserve">
+        <value>Sabitlendi</value>
+    </data>
     <data name="ChatHistory_Pin" xml:space="preserve">
         <value>Yukarı sabitle</value>
+    </data>
+    <data name="ChatHistory_Unpin" xml:space="preserve">
+        <value>Sabitlemeyi kaldır</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>Sohbeti yeniden adlandır</value>
@@ -4646,17 +4667,233 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Sohbeti sil</value>
     </data>
+    <data name="ChatHistory_Recent" xml:space="preserve">
+        <value>Son</value>
+    </data>
+    <data name="ChatHistory_Temporary" xml:space="preserve">
+        <value>Geçici</value>
+    </data>
+    <data name="ChatHistory_Persist" xml:space="preserve">
+        <value>Sohbeti kalıcı tut</value>
+    </data>
+    <data name="ChatHistory_TemporaryNotice" xml:space="preserve">
+        <value>Geçici sohbet. Everywhere kapatıldığında otomatik olarak silinir.</value>
+    </data>
+    <data name="ChatHistory_TemporaryDescription" xml:space="preserve">
+        <value>Geçici bir sohbet başlatın. Everywhere kapatıldığında otomatik olarak silinir.</value>
+    </data>
+    <data name="ChatHistory_PersistDescription" xml:space="preserve">
+        <value>Bu geçici sohbeti normal bir sohbet olarak saklayın; artık otomatik olarak silinmez.</value>
+    </data>
+    <data name="ChatHistory_Empty" xml:space="preserve">
+        <value>Henüz sohbet geçmişi yok</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Header" xml:space="preserve">
+        <value>Araç çubuğunda geçici sohbet kullan</value>
+    </data>
+    <data name="TextSelectionSettings_ShouldStartToolbarChatsAsTemporary_Description" xml:space="preserve">
+        <value>Metin seçimi araç çubuğundan başlatılan sohbetler geçici olur ve Everywhere kapatıldığında otomatik olarak silinir. Kapatıldığında normal sohbetler kullanılır.</value>
+    </data>
+    <data name="ChatWindow_ViewSyncedBranchButton_Content" xml:space="preserve">
+        <value>Eşitlenen dalı görüntüle</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Title" xml:space="preserve">
+        <value>Bu sohbet arşivlensin mi?</value>
+    </data>
+    <data name="ChatWindowViewModel_ArchiveRunningChatDialog_Content" xml:space="preserve">
+        <value>Arşivleme, bu sohbette devam eden tüm işleri durdurur. Daha sonra sohbeti arşivden geri yükleyebilirsiniz.</value>
+    </data>
+    <data name="ChatWindowViewModel_DeleteChatDialog_Content" xml:space="preserve">
+        <value>Bu sohbet kalıcı olarak silinsin mi? Sohbet eşitlendiyse, diğer cihazlar eşitlendiğinde oradan da silinir. Bu işlem geri alınamaz.</value>
+    </data>
     <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
         <value>Sohbet bulut eşitlemesi</value>
+    </data>
+    <data name="ChatSyncPage_StorageUsageTextBlock_Text" xml:space="preserve">
+        <value>{0} kullanıldı, toplam {1}</value>
+    </data>
+    <data name="Common_StopChatSync" xml:space="preserve">
+        <value>Senkronizasyonu durdur</value>
+    </data>
+    <data name="Common_StartChatSync" xml:space="preserve">
+        <value>Senkronizasyonu başlat</value>
+    </data>
+    <data name="ChatWindow_ManageChatSyncMenuItem_Header" xml:space="preserve">
+        <value>Senkronizasyonu yönet…</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_Text" xml:space="preserve">
+        <value>Yalnızca yerel</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
+        <value>Senkronize edildi</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_Text" xml:space="preserve">
+        <value>Senkronizasyon bekleniyor</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_Text" xml:space="preserve">
+        <value>Senkronize ediliyor…</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_Text" xml:space="preserve">
+        <value>Senkronizasyon tamamlanmadı</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_Text" xml:space="preserve">
+        <value>Yeniden senkronizasyon bekleniyor</value>
+    </data>
+    <data name="ChatSync_SpaceRequired" xml:space="preserve">
+        <value>Senkronizasyon için bulutta {0} daha fazla alan açmanız gerekiyor.</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>Sohbet bulut eşitlemesini yönetmek için lütfen önce oturum açın.</value>
     </data>
+    <data name="ChatSync_Disabled" xml:space="preserve">
+        <value>Sohbet senkronizasyonu kapalı.</value>
+    </data>
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>Sohbet bulut eşitlemesi yüklenemedi. Ağ bağlantınızı kontrol edin veya daha sonra tekrar deneyin.</value>
     </data>
+    <data name="ChatSync_CopyChanged" xml:space="preserve">
+        <value>Bulut kopyası değişti. Lütfen yenileyip tekrar onaylayın.</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedToast_PartialResult" xml:space="preserve">
+        <value>{0}/{1} sohbetin senkronizasyonu durduruldu. Lütfen yenileyip kalan sohbetleri kontrol edin.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_RemoteOnlyWarning" xml:space="preserve">
+        <value>Seçilen sohbetlerden bazıları bu cihazda kayıtlı değil. Diğer cihazlarda da kopyaları yoksa kurtarılamazlar.</value>
+    </data>
+    <data name="ChatSyncDialogs_StartSyncDialog_Content" xml:space="preserve">
+        <value>“{0}” cihazlar arasında senkronize edilsin mi? Bu cihazda kayıtlı tüm dallar yüklenecek.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_SelectedCount" xml:space="preserve">
+        <value>{0} seçildi</value>
+    </data>
+    <data name="ChatWindowViewModel_ChatSyncUnavailableToast_Content" xml:space="preserve">
+        <value>Bu sohbeti mevcut hesapla yönetemezsiniz.</value>
+    </data>
+    <data name="ChatSync_AccountChanged" xml:space="preserve">
+        <value>Hesap değişti. Lütfen mevcut hesabın sohbetlerini yeniden kontrol edin.</value>
+    </data>
+    <data name="ChatSync_ActionUnconfirmed" xml:space="preserve">
+        <value>İşlem sonucu doğrulanamadı. Lütfen yenileyip mevcut durumu kontrol edin.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_Text" xml:space="preserve">
+        <value>Henüz bu cihaza kaydedilmedi</value>
+    </data>
+    <data name="ChatSync_PayloadConflict" xml:space="preserve">
+        <value>Mesaj sürümleri eşleşmiyor; bu cihazdaki içerik korundu</value>
+    </data>
+    <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
+        <value>Bulut Depolama Alanı</value>
+    </data>
+    <data name="ChatSyncPage_ParticipatingTabItem_Header" xml:space="preserve">
+        <value>Senkronize Edilenler ({0})</value>
+    </data>
+    <data name="ChatSyncPage_LocalOnlyTabItem_Header" xml:space="preserve">
+        <value>Yalnızca Bu Cihazda ({0})</value>
+    </data>
+    <data name="ChatSyncPage_SelectMultipleButton_Content" xml:space="preserve">
+        <value>Çoklu Seç</value>
+    </data>
+    <data name="ChatSyncPage_StopSelectedButton_Content" xml:space="preserve">
+        <value>Seçilenlerin Senkronizasyonunu Durdur ({0})</value>
+    </data>
+    <data name="ChatSyncPage_NoParticipatingChatsTextBlock_Text" xml:space="preserve">
+        <value>Henüz senkronizasyona katılan sohbet yok.</value>
+    </data>
+    <data name="ChatSyncPage_NoLocalOnlyChatsTextBlock_Text" xml:space="preserve">
+        <value>Yalnızca bu cihazda kayıtlı sohbet yok.</value>
+    </data>
+    <data name="ChatSync_StorageOverLimit" xml:space="preserve">
+        <value>Bulut depolama alanı {0} aşıldı. Senkronize edilmiş sohbetleri diğer cihazlarda görüntülemeye devam edebilirsiniz.</value>
+    </data>
+    <data name="ChatSync_UploadsBlocked" xml:space="preserve">
+        <value>Bulut depolama alanı yetersiz. Bazı sohbetler henüz senkronize edilmedi.</value>
+    </data>
     <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>Yönet</value>
+    </data>
+    <data name="ChatSyncPage_ResolveQuotaButton_Content" xml:space="preserve">
+        <value>Çöz</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Title" xml:space="preserve">
+        <value>Alan Aç</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_Content" xml:space="preserve">
+        <value>Daha önce düzenlenmiş {0} sohbetin senkronizasyonunu durdurarak {1} alan açabilirsiniz. Cihazlardaki mevcut sohbetler korunur, sonraki değişiklikler senkronize edilmez.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_InsufficientCopies" xml:space="preserve">
+        <value>{0} alan açmanız gerekiyor ancak bu cihazda senkronizasyonu güvenle durdurulabilecek yeterli sayıda eski sohbet yok. Senkronizasyonunu durdurmak istediğiniz sohbetleri kendiniz seçebilirsiniz.</value>
+    </data>
+    <data name="ChatSync_NoCloudStorage" xml:space="preserve">
+        <value>Bu hesapta şu anda bulut depolama kotası yok. Eski sohbetleri kaldırsanız bile yeni sohbetleri senkronize edemezsiniz.</value>
+    </data>
+    <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
+        <value>{0} sohbet yalnızca bu cihazda tutulacak şekilde ayarlandı.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_CancelUpload" xml:space="preserve">
+        <value>{0} sohbetinin senkronizasyonu durdurulsun mu? Yükleme iptal edilir, sohbet bu cihazda kalır.</value>
+    </data>
+    <data name="ChatSyncDialogs_StopSyncDialog_StopCloudCopies" xml:space="preserve">
+        <value>{0} sohbetinin senkronizasyonu durdurulsun mu? {1} bulut depolama alanı boşalır. Cihazlardaki mevcut sohbetler korunur, sonraki değişiklikler senkronize edilmez.</value>
+    </data>
+    <data name="ChatSyncDialogs_ReleaseSpaceDialog_ChatExceedsLimit" xml:space="preserve">
+        <value>“{0}” sohbeti tek başına {1} bulut depolama kotasını aşıyor. Diğer sohbetleri silseniz bile bu sohbet sığmaz; onu yalnızca bu cihazda tutulacak şekilde ayarlayabilirsiniz.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudSize_ToolTip" xml:space="preserve">
+        <value>Bulut kopyasının boyutu: {0}</value>
+    </data>
+    <data name="ChatSyncListRow_LocalOnlyStatus_ToolTip" xml:space="preserve">
+        <value>Bu cihazdaki değişiklikler diğer cihazlarla senkronize edilmeyecek.</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_Text" xml:space="preserve">
+        <value>Senkronizasyon durumu doğrulanmayı bekliyor</value>
+    </data>
+    <data name="ChatSyncListRow_UnconfirmedStatus_ToolTip" xml:space="preserve">
+        <value>Yerel sohbet kullanılmaya devam edebilir. Senkronizasyon durumunu yeniledikten sonra senkronizasyonu başlatın.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncingStatus_ToolTip" xml:space="preserve">
+        <value>Bu sohbetteki değişiklikler kontrol edilip senkronize ediliyor.</value>
+    </data>
+    <data name="ChatSyncListRow_RemoteOnlyStatus_ToolTip" xml:space="preserve">
+        <value>Bu sohbet bulutta mevcut, ancak bu cihazda henüz bir kopyası yok.</value>
+    </data>
+    <data name="ChatSyncListRow_SyncedStatus_ToolTip" xml:space="preserve">
+        <value>Son kontrolde yerel ve bulut kopyaları eşleşiyordu.</value>
+    </data>
+    <data name="ChatSyncListRow_RestartPendingStatus_ToolTip" xml:space="preserve">
+        <value>Senkronizasyon yeniden etkinleştirildi; bulut kopyasının yeniden oluşturulması bekleniyor.</value>
+    </data>
+    <data name="ChatSyncListRow_FirstUploadStatus_ToolTip" xml:space="preserve">
+        <value>Bu yerel sohbet henüz bulutla senkronize edilmedi.</value>
+    </data>
+    <data name="ChatSyncListRow_PendingStatus_ToolTip" xml:space="preserve">
+        <value>Yerel ve bulut kopyaları arasında henüz senkronize edilmemiş değişiklikler var.</value>
+    </data>
+    <data name="ChatSyncListRow_CloudCopyChangedStatus_Text" xml:space="preserve">
+        <value>Bulut durumu değişti</value>
+    </data>
+    <data name="ChatSyncListRow_PayloadConflictStatus_ToolTip" xml:space="preserve">
+        <value>İki cihaz da aynı mesajı değiştirdi. Senkronizasyon yerel içeriğin üzerine yazmadı.</value>
+    </data>
+    <data name="ChatSyncListRow_AccountMismatchStatus_ToolTip" xml:space="preserve">
+        <value>Bu sohbet mevcut hesapla senkronize edilemiyor. Lütfen giriş yaptığınız hesabı kontrol edin.</value>
+    </data>
+    <data name="ChatSyncListRow_FailedStatus_ToolTip" xml:space="preserve">
+        <value>Son senkronizasyon tamamlanmadı. Sayfanın üstündeki yenile düğmesine tıklayarak tekrar deneyebilirsiniz.</value>
+    </data>
+    <data name="ChatSyncListRow_NoCloudStorageStatus_Text" xml:space="preserve">
+        <value>Kullanılabilir bulut alanı yok</value>
+    </data>
+    <data name="ChatSyncListRow_SpaceAvailableStatus_ToolTip" xml:space="preserve">
+        <value>Yeterli alan var; yeniden senkronizasyon bekleniyor.</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_Text" xml:space="preserve">
+        <value>Bu sohbet bulut alanı sınırını aşıyor</value>
+    </data>
+    <data name="ChatSyncListRow_ChatExceedsLimitStatus_ToolTip" xml:space="preserve">
+        <value>Diğer sohbetleri temizlemek de bu sohbet için yeterli alan açmaz. Senkronizasyonu durdurup sohbeti bu cihazda tutabilirsiniz.</value>
+    </data>
+    <data name="ChatSyncListRow_QuotaExceededStatus_ToolTip" xml:space="preserve">
+        <value>{0} alan boşaltmanız gerekiyor. Seçenekleri görmek için yukarıdaki bulut alanı uyarısındaki “Çöz” seçeneğine tıklayın.</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>Sohbet bulut eşitlemesini etkinleştir</value>
@@ -4675,5 +4912,80 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     </data>
     <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
         <value>Eşitleme durduruluyor</value>
+    </data>
+    <data name="Common_CloudNotConfigured" xml:space="preserve">
+        <value>Bu derlemede resmi bulut hizmeti yapılandırılmamış.</value>
+    </data>
+    <data name="ChatLink_Reveal" xml:space="preserve">
+        <value>Dosya Gezgini'nde Göster</value>
+    </data>
+    <data name="ChatLink_Open" xml:space="preserve">
+        <value>Aç</value>
+    </data>
+    <data name="ChatLink_Run" xml:space="preserve">
+        <value>Çalıştır…</value>
+    </data>
+    <data name="ChatLink_OpenWith" xml:space="preserve">
+        <value>Birlikte Aç…</value>
+    </data>
+    <data name="ChatLink_SaveAs" xml:space="preserve">
+        <value>Farklı Kaydet…</value>
+    </data>
+    <data name="ChatLink_CopyPath" xml:space="preserve">
+        <value>Yolu Kopyala</value>
+    </data>
+    <data name="ChatLink_ActionUnavailable" xml:space="preserve">
+        <value>Bu işlem bu bağlantı veya mevcut cihaz tarafından desteklenmiyor.</value>
+    </data>
+    <data name="ChatLink_RevealFailed" xml:space="preserve">
+        <value>Dosya Gezgini'nde gösterilemedi.</value>
+    </data>
+    <data name="ChatLink_SaveFailed" xml:space="preserve">
+        <value>Dosyanın kopyası kaydedilemedi.</value>
+    </data>
+    <data name="ChatLink_OpenFileFailed" xml:space="preserve">
+        <value>Dosya veya klasör açılamadı.</value>
+    </data>
+    <data name="ChatLink_OpenWebFailed" xml:space="preserve">
+        <value>Bağlantı tarayıcıda açılamadı.</value>
+    </data>
+    <data name="ChatLink_AccessDenied" xml:space="preserve">
+        <value>Bu işlemi gerçekleştirmek için izniniz yok.</value>
+    </data>
+    <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
+        <value>Bu dosyayı açmak için varsayılan bir uygulama yok. Menüden &quot;Birlikte Aç…&quot; seçeneğini belirleyin.</value>
+    </data>
+    <data name="ChatLink_NoApplicationsAvailable" xml:space="preserve">
+        <value>Bu dosyayı açabilecek yüklü bir uygulama yok.</value>
+    </data>
+    <data name="ChatLink_NoBrowser" xml:space="preserve">
+        <value>Lütfen sistem ayarlarından varsayılan tarayıcıyı belirleyip yeniden deneyin.</value>
+    </data>
+    <data name="ChatLink_OpenWithUnavailable" xml:space="preserve">
+        <value>Sistem uygulama seçicisi kullanılamıyor.</value>
+    </data>
+    <data name="ChatLink_OpenWithFailed" xml:space="preserve">
+        <value>Bu dosya başka bir uygulamayla açılamadı.</value>
+    </data>
+    <data name="ChatLink_RequiresFile" xml:space="preserve">
+        <value>Bu işlem klasörlerde değil, yalnızca dosyalarda kullanılabilir.</value>
+    </data>
+    <data name="ChatLink_SameFile" xml:space="preserve">
+        <value>Kopyayı kaydetmek için farklı bir dosya adı veya konum seçin.</value>
+    </data>
+    <data name="ChatLink_MissingTarget" xml:space="preserve">
+        <value>Dosya veya klasör artık mevcut değil. Yolu menüden kopyalayabilirsiniz.</value>
+    </data>
+    <data name="ChatLink_ParentOpened" xml:space="preserve">
+        <value>Üst klasör açıldı; mevcut dosya yöneticisi bu öğeyi seçemiyor.</value>
+    </data>
+    <data name="ChatLink_ConfirmExecution" xml:space="preserve">
+        <value>Yürütülebilir dosya açılsın mı? Yalnızca kaynağına güveniyorsanız devam edin.</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header" xml:space="preserve">
+        <value>Bağlantı simgelerini ve önizlemelerini yükle</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
+        <value>Görünür bağlantıların site simgelerini yükler, üzerine gelindiğinde web sayfasının önizlemesini gösterir. Sorgu parametresi içeren bağlantılarda yalnızca alan adı gösterilir.</value>
     </data>
 </root>
