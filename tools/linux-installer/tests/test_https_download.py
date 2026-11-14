@@ -91,7 +91,7 @@ class HttpsDownloadTests(unittest.TestCase):
                 observations.append(received)
                 super().update(received, force)
         with patch.dict(os.environ, {'SSL_CERT_FILE': str(self.root / 'cert.pem'),
-                                     'EVERYWHERE_UPDATE_PROXY': 'none', 'TERM': 'xterm',
+                                     'EVERYWHERE_UPDATE_PROXY': 'none', 'TERM': 'xterm', 'COLUMNS': '80',
                                      'NO_PROXY': '*', 'no_proxy': '*',
                                      'EVERYWHERE_UPDATE_TRANSPORT': json.dumps(transport) if transport else ''}), \
                 patch.object(u, 'DownloadProgress', ObservedProgress):

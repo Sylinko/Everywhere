@@ -4,6 +4,7 @@ using Avalonia.Platform;
 using Avalonia.Threading;
 using Everywhere.Linux.Desktop;
 using Everywhere.Linux.Platform;
+using Everywhere.Views;
 
 namespace Everywhere.Linux.Hyprland;
 
@@ -17,6 +18,7 @@ public sealed class HyprlandOverlayWindowController : IOverlayWindowController
     {
         var state = GetState(window);
         state.IsFloating = true;
+        state.ShouldFollowActiveWorkspace = window is ChatWindow;
         state.IsAnchoredPopup = role == OverlayRole.SelectionToolbar;
         if (role is OverlayRole.PassiveHighlight or OverlayRole.ScreenSelector)
         {

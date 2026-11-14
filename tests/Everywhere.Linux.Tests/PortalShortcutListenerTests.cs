@@ -3,9 +3,11 @@ using Avalonia.Input;
 using Everywhere.Interop;
 using Everywhere.Linux.Desktop;
 using Microsoft.Extensions.Logging.Abstractions;
+using Tmds.DBus.Protocol;
 
 namespace Everywhere.Linux.Tests;
 
+[NonParallelizable]
 public sealed class PortalShortcutListenerTests
 {
     [TestCase(Key.E, KeyModifiers.Control | KeyModifiers.Shift, "CTRL+SHIFT+e")]
@@ -22,8 +24,10 @@ public sealed class PortalShortcutListenerTests
     }
 
     [Test]
+    [Explicit("Requires a private session bus with EVERYWHERE_PORTAL_TEST_BUS set.")]
     public async Task SharedRegistration_DisposeOneHandler_KeepsOtherCallbacksAndSuspendsDuringRecording()
     {
+        RequirePrivateBus();
         await using var listener = new PortalShortcutListener(NullLogger<PortalShortcutListener>.Instance);
         var shortcut = new KeyboardShortcut(Key.E, KeyModifiers.Control | KeyModifiers.Shift);
         var firstCalls = 0;
@@ -51,8 +55,10 @@ public sealed class PortalShortcutListenerTests
     }
 
     [Test]
+    [Explicit("Requires a private session bus with EVERYWHERE_PORTAL_TEST_BUS set.")]
     public async Task Listener_AfterDisposal_RejectsDirectActivationAndNewRegistrations()
     {
+        RequirePrivateBus();
         var listener = new PortalShortcutListener(NullLogger<PortalShortcutListener>.Instance);
         var shortcut = new KeyboardShortcut(Key.E, KeyModifiers.Control | KeyModifiers.Shift);
         var calls = 0;
@@ -61,6 +67,13 @@ public sealed class PortalShortcutListenerTests
         Activate(listener, shortcut);
         Assert.That(calls, Is.Zero);
         Assert.Throws<ObjectDisposedException>(() => listener.Register(shortcut, () => calls++));
+    }
+
+    private static void RequirePrivateBus()
+    {
+        var address = Environment.GetEnvironmentVariable("EVERYWHERE_PORTAL_TEST_BUS");
+        Assert.That(address, Is.Not.Null.And.Not.Empty);
+        Assert.That(DBusAddress.Session, Is.EqualTo(address));
     }
 
     private static void Activate(PortalShortcutListener listener, KeyboardShortcut shortcut)

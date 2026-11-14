@@ -217,13 +217,15 @@ public sealed class HyprlandConnectionTests
         /// </summary>
         public async Task ServeAsync(Func<Socket, CancellationToken, Task> reply)
         {
+            using var operation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+            operation.CancelAfter(TimeSpan.FromSeconds(5));
             try
             {
-                using var client = await _server.AcceptAsync(_lifetime.Token);
+                using var client = await _server.AcceptAsync(operation.Token);
                 var buffer = new byte[4096];
-                var count = await client.ReceiveAsync(buffer, SocketFlags.None, _lifetime.Token);
+                var count = await client.ReceiveAsync(buffer, SocketFlags.None, operation.Token);
                 Request = Encoding.UTF8.GetString(buffer, 0, count);
-                await reply(client, _lifetime.Token);
+                await reply(client, operation.Token);
             }
             catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
             {
