@@ -35,6 +35,11 @@
     <PackageReference Include="MessagePackAnalyzer" PrivateAssets="all"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite"/>
+    <!-- EF 11 tools no longer reference the design-time services transitively. -->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Microsoft.EntityFrameworkCore.Tools">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -63,9 +68,7 @@
     <PackageReference Include="Serilog.Sinks.Console"/>
     <PackageReference Include="Serilog.Sinks.File"/>
     <PackageReference Include="SharpYaml"/>
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3"/>
     <PackageReference Include="Svg.Controls.Skia.Avalonia"/>
-    <PackageReference Include="Sylinko.CSharpMath.Avalonia"/>
     <PackageReference Include="System.Drawing.Common"/>
     <PackageReference Include="TextMateSharp.Grammars"/>
   </ItemGroup>

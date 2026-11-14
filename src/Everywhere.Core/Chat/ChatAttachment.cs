@@ -17,10 +17,10 @@ using Serilog;
 namespace Everywhere.Chat;
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-[Union(0, typeof(VisualElementAttachment))]
-[Union(1, typeof(TextSelectionAttachment))]
-[Union(2, typeof(TextAttachment))]
-[Union(3, typeof(FileAttachment))]
+[MessagePackUnion(0, typeof(VisualElementAttachment))]
+[MessagePackUnion(1, typeof(TextSelectionAttachment))]
+[MessagePackUnion(2, typeof(TextAttachment))]
+[MessagePackUnion(3, typeof(FileAttachment))]
 public abstract partial class ChatAttachment(IDynamicLocaleKey headerKey) : ObservableObject
 {
     public abstract LucideIconKind Icon { get; }

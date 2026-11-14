@@ -167,7 +167,8 @@ public sealed class AdversarialSnapshotTests
             Assert.That(observed, Has.Length.EqualTo(nodes.Length));
             Assert.That(snapshot.Status, Does.Not.Contain("Snapshot provider-failure limit reached"));
             Assert.That(observed.Skip(1).SelectMany(node => node.Status).Count(), Is.EqualTo(nodes.Length - 1));
-            Assert.That(observed, Has.All.Matches<VisualContextSnapshotNode>(node => (node.AvailableFields & node.MissingFields) == 0));
+            Assert.That(observed, Has.All.Matches<VisualContextSnapshotNode>(node =>
+                node is not null && (node.AvailableFields & node.MissingFields) == 0));
         });
     }
 

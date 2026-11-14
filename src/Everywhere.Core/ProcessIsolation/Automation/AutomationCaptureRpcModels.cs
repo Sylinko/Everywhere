@@ -46,8 +46,8 @@ public sealed partial class CaptureAutomationVisualRequest
 
 /// <summary>Base item in a capture stream. The header is followed by zero or more ordered pixel chunks.</summary>
 [MessagePackObject]
-[Union(0, typeof(AutomationCaptureHeader))]
-[Union(1, typeof(AutomationCaptureChunk))]
+[MessagePackUnion(0, typeof(AutomationCaptureHeader))]
+[MessagePackUnion(1, typeof(AutomationCaptureChunk))]
 public abstract partial class AutomationCaptureFrame;
 
 /// <summary>Describes the raw bitmap that follows in the capture stream.</summary>
@@ -106,8 +106,8 @@ public sealed partial class AutomationCaptureChunk : AutomationCaptureFrame
 
 /// <summary>Base item in a query stream containing scan captures followed by one final query result.</summary>
 [MessagePackObject]
-[Union(0, typeof(AutomationVisualQueryCaptureFrame))]
-[Union(1, typeof(AutomationVisualQueryResultFrame))]
+[MessagePackUnion(0, typeof(AutomationVisualQueryCaptureFrame))]
+[MessagePackUnion(1, typeof(AutomationVisualQueryResultFrame))]
 public abstract partial class AutomationVisualQueryFrame;
 
 /// <summary>Wraps one frame from the shared capture protocol in a query stream.</summary>

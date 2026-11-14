@@ -128,6 +128,10 @@ if __name__ == "__main__":
     
     if not username or not otp_token:
         raise RuntimeError("SIGN_USERNAME or SIGN_OTP_TOKEN environment variables are missing.")
+
+    fingerprint = normalize_sha1(os.getenv('SIGN_FINGERPRINT', ''))
+    if len(fingerprint) != 40 or any(c not in '0123456789abcdefABCDEF' for c in fingerprint):
+        raise RuntimeError("SIGN_FINGERPRINT must contain the signing certificate's 40-character SHA-1 thumbprint.")
     
     # Parse command line arguments
     publish_path = None
@@ -178,22 +182,13 @@ if __name__ == "__main__":
         creationflags=creation_flags
     )
 
-    fingerprint: str = None
-    
     try:
-        # Read the fingerprint output from the application
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
-
-            fingerprint = normalize_sha1(line.strip())
-            break
-
-        if not fingerprint:
+        # The patched client emits fingerprints after registering all cards. Its first line
+        # signals readiness; the configured fingerprint selects the signer, not card order.
+        if not proc.stdout.readline().strip():
             raise RuntimeError("No fingerprint received from SimplySignDesktop.exe. Authentication may have failed.")
 
-        print(f"Successfully obtained certificate fingerprint: {fingerprint}")
+        print(f"Using configured certificate fingerprint: {fingerprint}")
 
         # Phase 1: Sign all executables and libraries concurrently
         print(f"\nPhase 1: Scanning and signing binaries in '{publish_path}'")

@@ -8,8 +8,8 @@ namespace Everywhere.Serialization;
 /// Represents an inline element in a message, such as text or line breaks.
 /// </summary>
 [MessagePackObject]
-[Union(0, typeof(MessagePackRun))]
-[Union(1, typeof(MessagePackLineBreak))]
+[MessagePackUnion(0, typeof(MessagePackRun))]
+[MessagePackUnion(1, typeof(MessagePackLineBreak))]
 public abstract partial class MessagePackInline
 {
     public abstract Inline ToInline();

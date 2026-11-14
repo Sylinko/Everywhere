@@ -1,21 +1,23 @@
-# macOS native panel input
+﻿# macOS native panel input
 
 The selection toolbar uses a native NSPanel while retaining the existing Avalonia Window, presentation and pooled lifetime. Its constructor selects `AvaloniaNativeWindowFactory.CreatePanel(new() { IsNonActivating = true })` under `#if MACOS`. Windows and Linux keep their normal platform constructors. Creation happens before AXAML properties or opened events, so an initialized native window is never replaced.
 
 ## Package dependency
 
-The compatibility fork is `Sylinko/Avalonia`, based on upstream 12.1.3 (`8eeda4f6f546165b3f72e63c9f42247abb306905`). Only `Avalonia.Native` is replaced; package and assembly versions stay **12.1.3**. This is an explicit exception to the feed's usual `999.YYYYMMDD.run` producer convention. The native and managed assets in this package form one unit. Do not substitute only the dylib or only the DLL.
+The compatibility fork is `Sylinko/Avalonia`. Published package 12.1.6 comes from commit `a2c0be7e8cf61c04632ce93a4da5df81501feae8`, based on upstream 12.1.6 (`cf8e564674700348947e93ab19105f27afe859a9`). Its complete managed/native package is available through the Sylinko feed and selected by Everywhere.
 
-The reviewed package is published through the Sylinko feed. The repository's `nuget.config` maps the exact `Avalonia.Native` ID to that feed; other Avalonia packages retain their existing sources. Normal restore and build commands use the published package without a local override:
+Only `Avalonia.Native` is replaced; the new package and assembly versions stay **12.1.6**. This is an explicit exception to the feed's usual `999.YYYYMMDD.run` producer convention. The native and managed assets in this package form one unit. Do not substitute only the dylib or only the DLL.
+
+The repository's `nuget.config` maps the exact `Avalonia.Native` ID to the Sylinko feed; other Avalonia packages retain their existing sources. Normal restore and build commands use the published Native package without a local override:
 
 ```sh
 dotnet restore src/Everywhere.Mac/Everywhere.Mac.csproj
 dotnet build src/Everywhere.Mac/Everywhere.Mac.csproj -c Debug
 ```
 
-NuGet reuses installed packages before consulting source mappings; see the [NuGet source mapping rules](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping#package-pattern-precedence). When switching from the official package with the same ID/version, close build processes and remove or back up only `avalonia.native/12.1.3` under the configured global packages folder before restoring. Do not clear unrelated packages. The restored package's `.nupkg.metadata` must name `https://nuget.sylinko.com/v3/index.json` as its source.
+NuGet reuses installed packages before consulting source mappings; see the [NuGet source mapping rules](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping#package-pattern-precedence). When switching from the official package with the same ID/version, close build processes and remove or back up only `avalonia.native/12.1.6` under the configured global packages folder before restoring. Do not clear unrelated packages. The restored package's `.nupkg.metadata` must name `https://nuget.sylinko.com/v3/index.json` as its source.
 
-The published native library targets macOS 10.13 for Intel and 11.0 for Apple Silicon. Fork builds, publication and upstream upgrades are documented in the [Avalonia fork's maintenance guide](https://github.com/Sylinko/Avalonia/blob/sylinko/native-panels-12.1.3/docs/sylinko/native-panels.md).
+The new 12.1.6 native build targets macOS 12.0 for both architectures, matching upstream's native floor; Everywhere's .NET 11 app requires macOS 14.0. The published 12.1.3 library targeted 10.13 for Intel and 11.0 for Apple Silicon. The fork checkout contains the updated build script and `docs/sylinko/native-panels.md`; see [the upgrade record](DotNet11Upgrade.md#native-and-porta-release-validation-on-2026-11-12) for published-package validation and the remaining platform acceptance.
 
 ## Input ownership
 
@@ -31,7 +33,13 @@ Passive toolbar/effect windows do not count as ordinary Dock-visible application
 
 Source element focus can change after panel input is released, as observed with Edge's address bar. This remains an unresolved application-specific limitation; no source-focus restoration mechanism is included.
 
-## Published package verification (2026-10-22)
+## Published 12.1.6 package verification (2026-11-12)
+
+A fresh restore from the Sylinko feed matched release SHA-256 `e9b78646a6ec2988d8f326797a03b8664b1d0eec9b48b292649d256dd0c0da9e`. The previous local artifact using the same ID/version was backed up before restore. Both native architectures retain deployment floor 12.0; all 59 native IID/IDL comparisons and 33 standalone window/panel/nested-popup/style/shadow checks passed. The consumer showed no windows or product UI.
+
+The Everywhere Mac Debug build, Watchdog NativeAOT and development signing passed with the same 10 existing warnings. Full manual UI/IME and Intel/macOS 14 runtime acceptance are separate from these package checks. The final unchanged build passed in 4.33 seconds with zero warnings/errors and all 10 monitored outputs unchanged. Strict final bundle signature verification passed. The previous 12.1.3 validation below is historical evidence.
+
+## Published 12.1.3 package verification (2026-10-22)
 
 Normal restore downloaded the published package from the Sylinko service index into the default global packages folder. Its archive matches SHA-256 `a75732e885f08288405f58b6a613f8f7932dd8c9440a9afd5f6ac84843142ffb` in the merged version manifest, from fork commit `f08f1de0c1510b00f1912b909a53f05daf6171fe`. Product assets no longer reference the local feed, isolated cache or fallback folders.
 

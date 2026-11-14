@@ -53,7 +53,7 @@ public sealed class VisualQueryCaptureTests
     }
 
     [Test]
-    public void BuildAsync_WhenCanceledAfterCapture_DisposesUndeliveredImageWithoutPublishing()
+    public async Task BuildAsync_WhenCanceledAfterCapture_DisposesUndeliveredImageWithoutPublishing()
     {
         using var context = new VisualContext();
         using var retention = context.CreateRetention();
@@ -66,7 +66,7 @@ public sealed class VisualQueryCaptureTests
             Assert.Fail("Canceled capture must not be delivered.");
             return ValueTask.CompletedTask;
         });
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await query.BuildAsync(
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await query.BuildAsync(
             [element],
             new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin },
             VisualContextPromptOptions.Default,

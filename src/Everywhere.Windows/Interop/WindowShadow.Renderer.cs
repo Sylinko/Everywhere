@@ -151,6 +151,7 @@ internal sealed partial class WindowShadow
 
             _clipGeometry = compositor.CreatePathGeometry();
             _clip = compositor.CreateGeometricClip(_clipGeometry);
+            _shadowVisual.BorderMode = CompositionBorderMode.Soft;
             _shadowVisual.Clip = _clip;
             _root = compositor.CreateContainerVisual();
             _root.RelativeSizeAdjustment = Vector2.One;
@@ -296,7 +297,7 @@ internal sealed partial class WindowShadow
             using var outer = _geometryFactory.CreateRectangleGeometry(
                 new RectangleF(0, 0, width, height));
             using var inner = _geometryFactory.CreateRoundedRectangleGeometry(
-                new RoundedRectangle(new RectangleF(padding, padding, width - padding * 2, height - padding * 2), radius, radius));
+                new RoundedRectangle(new RectangleF(padding, padding, width - padding * 2, height - padding * 2), radius + 1f, radius + 1f));
             var source = new CompositionGeometrySource(_geometryFactory.CreateGeometryGroup(FillMode.Alternate, [outer, inner]));
 
             try

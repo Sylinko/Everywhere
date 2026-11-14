@@ -1,4 +1,4 @@
-# Everywhere Agent Guidelines
+﻿# Everywhere Agent Guidelines
 
 This file contains repository-wide rules. Keep it short enough to read before every task.
 Topic-specific guidance lives under `docs/References` and must be read only when the task touches the corresponding area.
@@ -14,10 +14,10 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 ## Source of Truth and Change Discipline
 
 - Inspect the current implementation and its call sites before changing it. Design documents may lag behind the code after later refactoring and are not automatically authoritative.
-- Preserve unrelated and uncommitted user changes. Do not clean up, revert, reformat, or otherwise alter files outside the task's scope.
-- Do not run repository-wide or file-wide formatting when it would create unrelated diffs. Format only the code affected by the task.
 - Discuss new NuGet packages or other dependencies with the user before introducing them, especially when the existing code can implement the requirement at a reasonable cost.
 - Remove obsolete compatibility layers when they have no real callers and are not required by a public API, serialized format, or other compatibility boundary.
+- State your assumptions explicitly. If anything is unclear or has multiple interpretations, stop, describe the ambiguity, and ask before proceeding.
+- If a simpler approach exists, say so. Push back when warranted.
 
 ## C# Style and Type Layout
 
@@ -47,8 +47,7 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 - Optimize for the application's real ownership, call paths, and lifetime. Do not design internal APIs as generic libraries for hypothetical consumers.
 - Match runtime argument validation to a real boundary. Within trusted, nullable-enabled solution code, rely on the type system and nullable analysis instead of repeating null or argument checks by default. Validate data that crosses external, serialization, reflection, plugin, native, or other boundaries where compile-time contracts do not apply.
 - Prefer fewer states, objects, synchronization mechanisms, and intermediate abstractions, but never at the cost of stable identity, incremental updates, correct lifetime, or readability. Judge simplicity by ownership and behavior, not line count.
-- Constructors must express a clear production purpose. Avoid ambiguous default parameters, forwarding-only constructor chains, and constructors added solely for tests.
-- Do not add production methods, constructors, properties, or other hooks solely to make tests easier. Tests should use normal production entry points, mocks, reflection, or `UnsafeAccessor` where appropriate. Reconsider tests that would materially distort the production design.
+- Constructors must express a clear production purpose. Avoid ambiguous default parameters and forwarding-only constructor chains.
 
 ## Comments and Documentation
 
@@ -69,7 +68,12 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 - Name localization keys after their current semantic meaning and owning area. Do not preserve an obsolete feature prefix after a value becomes shared.
 - Prefix genuinely shared localization keys with `Common_`.
 
-## Tests
+## Tests and Verification
 
+- Retain tests only when they protect an agreed requirement or necessary contract, reproduce a bug from a real usage scenario, or serve another concrete, lasting need. Use comments to record non-obvious contract or bug context; explicitly justify the need for any other retained test.
+- Treat tests as temporary when they serve only a one-off investigation or implementation check without lasting behavioral value, cover invented scenarios or failures unsupported by real usage or required contracts, or exercise speculative extensibility outside the agreed scope.
+- Give every temporary test a prominent `// [TEMPORARY] ...` comment stating its purpose. Keep temporary tests and newly added helpers used exclusively by them out of staging and commits. List their locations at handoff so the user can remove them during pre-commit review.
 - Name test methods in PascalCase, with underscores separating the scenario, action, and expected result. For example: `UpdateContent_WhenConditionBecomesFalse_ClearsChild`.
+- Do not add production methods, constructors, properties, or other hooks solely to make tests easier. Tests should use normal production entry points, mocks, reflection, or `UnsafeAccessor` where appropriate. Reconsider tests that would materially distort the production design.
 - Follow the repository's existing build and test practices and choose verification proportionate to the scope and risk of the change.
+- After implementation, use Rider MCP to inspect changed files for errors, warnings, and relevant code-analysis findings, alongside the appropriate build and tests. If Rider is unavailable, report the missing inspection rather than treating it as passed.

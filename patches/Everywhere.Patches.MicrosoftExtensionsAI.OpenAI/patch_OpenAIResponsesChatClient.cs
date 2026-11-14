@@ -1,7 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license (LICENSE.txt).
-// Complete streaming conversion copied from Microsoft.Extensions.AI.OpenAI 10.9.0,
-// commit b10f9c0a081b5dbb7755b8f5592e1d3c3f550a3a. Everywhere changes are marked below.
+// Complete streaming conversion copied from Microsoft.Extensions.AI.OpenAI 11.0.0,
+// commit c60d72e7973a90cd4e4300d9153e97b93315e4b7. Everywhere changes are marked below.
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -20,7 +20,7 @@ namespace Everywhere.Patches.MicrosoftExtensionsAI.OpenAI;
 /// annotations, and continuation state. Terminal cases reuse the SDK's own reason and
 /// usage mappings and its existing ErrorContent contract. This makes the evidence
 /// available to Everywhere without interpreting it as an application retry decision.
-/// See <see href="https://github.com/dotnet/extensions/blob/b10f9c0a081b5dbb7755b8f5592e1d3c3f550a3a/src/Libraries/Microsoft.Extensions.AI.OpenAI/OpenAIResponsesChatClient.cs">the pinned upstream converter</see>.
+/// See <see href="https://github.com/dotnet/extensions/blob/c60d72e7973a90cd4e4300d9153e97b93315e4b7/src/Libraries/Microsoft.Extensions.AI.OpenAI/OpenAIResponsesChatClient.cs">the pinned upstream converter</see>.
 /// </remarks>
 [MonoModPatch("Microsoft.Extensions.AI.OpenAIResponsesChatClient")]
 internal static class patch_OpenAIResponsesChatClient
@@ -286,6 +286,15 @@ internal static class patch_OpenAIResponsesChatClient
                             yield return CreateUpdate(CreateReasoningContent(text: null, protectedData: encryptedContent, itemId: rri.Id));
                             break;
 
+                        // The ImageGenerationToolCallContent has already been yielded as part of in-progress updates,
+                        // but any partial images yielded along the way are lower-quality intermediate renders rather than
+                        // deltas of the final image. Yield the final image here; coalescing will replace the partial
+                        // results with this one, since they share the same CallId. This mirrors the non-streaming path,
+                        // which produces a result for every ImageGenerationCallResponseItem.
+                        case ImageGenerationCallResponseItem imageGenItem:
+                            yield return CreateUpdate(CreateImageGenerationResultContent(imageGenItem, options));
+                            break;
+
                         // For ResponseItems where we've already yielded partial deltas for the whole content,
                         // we still want to yield an update, but we don't want it to include the ResponseItem
                         // as the RawRepresentation, since if it did, when roundtripping we'd end up sending
@@ -406,6 +415,9 @@ internal static class patch_OpenAIResponsesChatClient
 
     [MonoModIgnore]
     private static extern ImageGenerationToolResultContent GetImageGenerationResult(StreamingResponseImageGenerationCallPartialImageUpdate update, CreateResponseOptions? options);
+
+    [MonoModIgnore]
+    private static extern ImageGenerationToolResultContent CreateImageGenerationResultContent(ImageGenerationCallResponseItem outputItem, CreateResponseOptions? options);
 
     [MonoModIgnore]
     private static extern void AddMcpToolCallContent(McpToolCallItem item, IList<AIContent> contents);

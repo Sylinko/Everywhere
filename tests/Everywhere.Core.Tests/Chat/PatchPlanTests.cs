@@ -213,7 +213,7 @@ public class PatchPlanTests
 
         try
         {
-            var exception = Assert.ThrowsAsync<PatchMatchException>(async () =>
+            var exception = await Assert.ThrowsAsync<PatchMatchException>(async () =>
                 await BuildAsync(
                     """
                     *** Begin Patch
@@ -247,7 +247,7 @@ public class PatchPlanTests
 
         try
         {
-            var exception = Assert.ThrowsAsync<PatchMatchException>(async () =>
+            var exception = await Assert.ThrowsAsync<PatchMatchException>(async () =>
                 await BuildAsync(
                     """
                     *** Begin Patch
@@ -330,7 +330,7 @@ public class PatchPlanTests
     }
 
     [Test]
-    public void BuildAsync_MissingHunkTarget_ReportsFileHunkAndPatchLine()
+    public async Task BuildAsync_MissingHunkTarget_ReportsFileHunkAndPatchLine()
     {
         var root = CreateTemporaryDirectory();
         var path = Path.Combine(root, "file.txt");
@@ -338,7 +338,7 @@ public class PatchPlanTests
 
         try
         {
-            var exception = Assert.ThrowsAsync<PatchMatchException>(async () =>
+            var exception = await Assert.ThrowsAsync<PatchMatchException>(async () =>
                 await BuildAsync(
                     """
                     *** Begin Patch
@@ -570,7 +570,7 @@ public class PatchPlanTests
     }
 
     [Test]
-    public void BuildAsync_LinkTargetWithMissingThenParentTraversal_ReportsMissingComponent()
+    public async Task BuildAsync_LinkTargetWithMissingThenParentTraversal_ReportsMissingComponent()
     {
         var root = CreateTemporaryDirectory();
         var targetPath = Path.Combine(root, "target.txt");
@@ -580,7 +580,7 @@ public class PatchPlanTests
         try
         {
             CreateFileLinkOrIgnore(linkPath, Path.Combine("missing", "..", "target.txt"));
-            var exception = Assert.ThrowsAsync<PatchPlanException>(async () => await BuildAsync(
+            var exception = await Assert.ThrowsAsync<PatchPlanException>(async () => await BuildAsync(
                 """
                 *** Begin Patch
                 *** Update File: link.txt
@@ -606,7 +606,7 @@ public class PatchPlanTests
     }
 
     [Test]
-    public void BuildAsync_DifferentAliasesToSameTarget_RejectsAmbiguousPlan()
+    public async Task BuildAsync_DifferentAliasesToSameTarget_RejectsAmbiguousPlan()
     {
         var root = CreateTemporaryDirectory();
         var targetPath = Path.Combine(root, "target.txt");
@@ -618,7 +618,7 @@ public class PatchPlanTests
         {
             CreateFileLinkOrIgnore(firstLink, "target.txt");
             CreateFileLinkOrIgnore(secondLink, "target.txt");
-            var exception = Assert.ThrowsAsync<PatchPlanException>(async () => await BuildAsync(
+            var exception = await Assert.ThrowsAsync<PatchPlanException>(async () => await BuildAsync(
                 """
                 *** Begin Patch
                 *** Update File: first.txt
@@ -642,7 +642,7 @@ public class PatchPlanTests
     }
 
     [Test]
-    public void BuildAsync_DanglingDestinationLink_TreatsEntryAsOccupied()
+    public async Task BuildAsync_DanglingDestinationLink_TreatsEntryAsOccupied()
     {
         var root = CreateTemporaryDirectory();
         var sourcePath = Path.Combine(root, "source.txt");
@@ -652,7 +652,7 @@ public class PatchPlanTests
         try
         {
             CreateFileLinkOrIgnore(destinationPath, "missing.txt");
-            var exception = Assert.ThrowsAsync<PatchPlanException>(async () => await BuildAsync(
+            var exception = await Assert.ThrowsAsync<PatchPlanException>(async () => await BuildAsync(
                 """
                 *** Begin Patch
                 *** Update File: source.txt
@@ -702,7 +702,7 @@ public class PatchPlanTests
     }
 
     [Test]
-    public void BuildAsync_DanglingUpdateLink_ReportsOperationLinkAndTarget()
+    public async Task BuildAsync_DanglingUpdateLink_ReportsOperationLinkAndTarget()
     {
         var root = CreateTemporaryDirectory();
         var linkPath = Path.Combine(root, "link.txt");
@@ -710,7 +710,7 @@ public class PatchPlanTests
         try
         {
             CreateFileLinkOrIgnore(linkPath, "missing.txt");
-            var exception = Assert.ThrowsAsync<PatchPlanException>(async () => await BuildAsync(
+            var exception = await Assert.ThrowsAsync<PatchPlanException>(async () => await BuildAsync(
                 """
                 *** Begin Patch
                 *** Update File: link.txt

@@ -111,7 +111,7 @@ public sealed class RpcDuplexTests
         await handlerStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
         cancellation.Cancel();
 
-        Assert.CatchAsync<OperationCanceledException>(async () => await invocation);
+        await Assert.CatchAsync<OperationCanceledException>(async () => await invocation);
         await cancellationObserved.Task.WaitAsync(TimeSpan.FromSeconds(5));
     }
 
@@ -147,7 +147,7 @@ public sealed class RpcDuplexTests
         pair.Start();
 
         var received = new List<byte[]>();
-        var exception = Assert.ThrowsAsync<RpcRemoteException>(async () =>
+        var exception = await Assert.ThrowsAsync<RpcRemoteException>(async () =>
         {
             await foreach (var item in pair.Client.InvokeStreamAsync<int, byte[]>(0x20007, 0)) received.Add(item);
         });

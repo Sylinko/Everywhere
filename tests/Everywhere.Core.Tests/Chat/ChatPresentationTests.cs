@@ -248,8 +248,8 @@ public class ChatPresentationTests
                 Assert.That(((UserChatMessage)users[0].Node.Message).Content, Is.EqualTo("Question 0"));
                 Assert.That(presentation.HasEarlierTurns, Is.False);
                 Assert.That(outputs, Has.All.Matches<AssistantTextOutputPresentationRow>(row =>
-                    row.CachedDocumentUpdate?.Version == row.TextSpan.ContentMarkdownBuilder.Version));
-                Assert.That(outputs, Has.All.Matches<AssistantTextOutputPresentationRow>(row => row.RenderingMarkdownBuilder is null));
+                    row is not null && row.CachedDocumentUpdate?.Version == row.TextSpan.ContentMarkdownBuilder.Version));
+                Assert.That(outputs, Has.All.Matches<AssistantTextOutputPresentationRow>(row => row is not null && row.RenderingMarkdownBuilder is null));
             });
         }
     }

@@ -48,7 +48,7 @@ public sealed class RequestExecutionTests
         await server.RespondAsync(new { statusCode = 503, body = "temporarily unavailable" });
         using var mixin = CreateMixin(provider, server.CreateClient(), 0);
         var updates = new List<ChatRequestUpdate>();
-        var error = Assert.ThrowsAsync<ChatRequestException>(async () =>
+        var error = await Assert.ThrowsAsync<ChatRequestException>(async () =>
         {
             await foreach (var update in mixin.StreamRequestAsync([new(Microsoft.SemanticKernel.ChatCompletion.AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) updates.Add(update);
         });
@@ -74,7 +74,7 @@ public sealed class RequestExecutionTests
         await server.RespondAsync(new { statusCode = 503, body = "temporarily unavailable" });
         using var mixin = CreateMixin(provider, server.CreateClient(), -1);
         using var cancellation = new CancellationTokenSource();
-        Assert.CatchAsync<OperationCanceledException>(async () =>
+        await Assert.CatchAsync<OperationCanceledException>(async () =>
         {
             await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings(), cancellationToken: cancellation.Token))
                 if (update is ChatRequestUpdate.AttemptFailed) cancellation.Cancel();
@@ -109,7 +109,7 @@ public sealed class RequestExecutionTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new { statusCode = 503, body = "temporarily unavailable" });
         using var mixin = CreateMixin(provider, server.CreateClient(), 1);
-        var error = Assert.ThrowsAsync<ChatRequestException>(async () =>
+        var error = await Assert.ThrowsAsync<ChatRequestException>(async () =>
         {
             await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) { }
         });
@@ -138,7 +138,7 @@ public sealed class RequestExecutionTests
             headers = new Dictionary<string, string[]> { ["Content-Type"] = ["application/json"] }
         });
         using var mixin = CreateMixin(provider, server.CreateClient(), -1);
-        var error = Assert.ThrowsAsync<ChatRequestException>(async () =>
+        var error = await Assert.ThrowsAsync<ChatRequestException>(async () =>
         {
             await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) { }
         });
@@ -155,7 +155,7 @@ public sealed class RequestExecutionTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.CompleteAsync(provider, new { text = "partial", streaming = true, stopReason });
         using var mixin = CreateMixin(provider, server.CreateClient(), 5);
-        var error = Assert.ThrowsAsync<ChatRequestException>(async () =>
+        var error = await Assert.ThrowsAsync<ChatRequestException>(async () =>
         {
             await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) { }
         });

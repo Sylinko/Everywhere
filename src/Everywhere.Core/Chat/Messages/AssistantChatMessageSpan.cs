@@ -12,11 +12,11 @@ namespace Everywhere.Chat;
 /// Represents a span of content in an assistant chat message.
 /// </summary>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-[Union(0, typeof(AssistantChatMessageTextSpan))]
-[Union(1, typeof(AssistantChatMessageFunctionCallSpan))]
-[Union(2, typeof(AssistantChatMessageReasoningSpan))]
-[Union(3, typeof(AssistantChatMessageImageSpan))]
-[Union(4, typeof(AssistantChatMessageVisualContextResetSpan))]
+[MessagePackUnion(0, typeof(AssistantChatMessageTextSpan))]
+[MessagePackUnion(1, typeof(AssistantChatMessageFunctionCallSpan))]
+[MessagePackUnion(2, typeof(AssistantChatMessageReasoningSpan))]
+[MessagePackUnion(3, typeof(AssistantChatMessageImageSpan))]
+[MessagePackUnion(4, typeof(AssistantChatMessageVisualContextResetSpan))]
 public abstract partial class AssistantChatMessageSpan : ObservableObject
 {
     /// <summary>

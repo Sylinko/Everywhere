@@ -52,7 +52,7 @@ public sealed class AutomationHostSessionTests
             Assert.That(anchor.FailureAgentMessage, Is.EqualTo("The visual relation reached its test limit."));
         });
 
-        var exception = Assert.ThrowsAsync<HandledException>(async () =>
+        var exception = await Assert.ThrowsAsync<HandledException>(async () =>
             await context.GetElementSnapshotAsync(anchor, VisualElementFields.Bounds));
         Assert.Multiple(() =>
         {
@@ -398,7 +398,7 @@ public sealed class AutomationHostSessionTests
         try
         {
             cancellation.Cancel();
-            Assert.CatchAsync<OperationCanceledException>(async () => await creation.WaitAsync(TimeSpan.FromSeconds(5)));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await creation.WaitAsync(TimeSpan.FromSeconds(5)));
             await releaseReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
         }
         finally
@@ -458,7 +458,7 @@ public sealed class AutomationHostSessionTests
         });
 
         await context.AdvanceTurnAsync();
-        var exception = Assert.ThrowsAsync<RpcRemoteException>(async () =>
+        var exception = await Assert.ThrowsAsync<RpcRemoteException>(async () =>
             await context.GetTargetSnapshotAsync(root.TargetId, VisualElementFields.Bounds));
         Assert.Multiple(() =>
         {
@@ -555,7 +555,7 @@ public sealed class AutomationHostSessionTests
         await observationReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
         backend.ElementQueryException = new TimeoutException("test provider timeout");
-        var exception = Assert.ThrowsAsync<TimeoutException>(async () => await pump.ConfirmAsync());
+        var exception = await Assert.ThrowsAsync<TimeoutException>(async () => await pump.ConfirmAsync());
         Assert.Multiple(() =>
         {
             Assert.That(exception?.Message, Is.EqualTo("The Automation Host visual-element operation timed out."));
@@ -632,7 +632,7 @@ public sealed class AutomationHostSessionTests
         pair.Client.Start();
         var values = new List<int>();
 
-        var exception = Assert.ThrowsAsync<TimeoutException>(async () =>
+        var exception = await Assert.ThrowsAsync<TimeoutException>(async () =>
         {
             await foreach (var value in pair.Client.InvokeStreamAsync<int, int>(0x7FFF0002, 0)) values.Add(value);
         });
@@ -824,7 +824,7 @@ public sealed class AutomationHostSessionTests
 
         await visualService.EnsureTurnAsync(visualState);
         var secondContextId = await visualService.GetCurrentContextIdAsync(visualState, CancellationToken.None);
-        var staleQuery = Assert.ThrowsAsync<VisualContextResetException>(async () =>
+        var staleQuery = await Assert.ThrowsAsync<VisualContextResetException>(async () =>
             await visualService.QueryTargetAsync(
                 visualState,
                 1,
@@ -857,7 +857,7 @@ public sealed class AutomationHostSessionTests
 
         using var firstDestination = await visualService.MoveAnchorAsync(visualState, firstSource);
         backend.ShouldFailAdoption = true;
-        Assert.ThrowsAsync<RpcRemoteException>(async () => await visualService.MoveAnchorAsync(visualState, secondSource));
+        await Assert.ThrowsAsync<RpcRemoteException>(async () => await visualService.MoveAnchorAsync(visualState, secondSource));
         using var movedCapture = await firstDestination.Context.CaptureAnchorAsync(firstDestination);
         using var remainingCapture = await secondSource.Context.CaptureAnchorAsync(secondSource);
 
@@ -882,12 +882,12 @@ public sealed class AutomationHostSessionTests
     [TestCase(AutomationCapturePixelFormat.Rgb32, 4)]
     [TestCase(AutomationCapturePixelFormat.Rgb565, 2)]
     [TestCase(AutomationCapturePixelFormat.Alpha8, 1)]
-    public void RemoteCapture_WhenStrideCannotContainOnePixelRow_RejectsHeader(
+    public async Task RemoteCapture_WhenStrideCannotContainOnePixelRow_RejectsHeader(
         AutomationCapturePixelFormat format,
         int bytesPerPixel)
     {
         var header = CreateCaptureHeader(format, width: 2, height: 2, stride: 2 * bytesPerPixel - 1);
-        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
+        await Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
     }
 
     [TestCase(0, 2, 8, 16)]
@@ -898,25 +898,25 @@ public sealed class AutomationHostSessionTests
     [TestCase(2, 2, -8, -16)]
     [TestCase(2, 2, 8, 15)]
     [TestCase(2, 2, int.MaxValue, -2)]
-    public void RemoteCapture_WhenDimensionsOrLengthAreInvalid_RejectsHeader(int width, int height, int stride, int dataLength)
+    public async Task RemoteCapture_WhenDimensionsOrLengthAreInvalid_RejectsHeader(int width, int height, int stride, int dataLength)
     {
         var header = CreateCaptureHeader(AutomationCapturePixelFormat.Bgra8888, width, height, stride, dataLength);
-        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
+        await Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
     }
 
     [Test]
-    public void RemoteCapture_WhenPixelFormatIsUnknown_RejectsHeader()
+    public async Task RemoteCapture_WhenPixelFormatIsUnknown_RejectsHeader()
     {
         var header = CreateCaptureHeader((AutomationCapturePixelFormat)int.MaxValue, 2, 2, 8);
-        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
+        await Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
     }
 
     [Test]
-    public void RemoteCapture_WhenAlphaFormatIsUnknown_RejectsHeader()
+    public async Task RemoteCapture_WhenAlphaFormatIsUnknown_RejectsHeader()
     {
         var header = CreateCaptureHeader(AutomationCapturePixelFormat.Bgra8888, 2, 2, 8,
             alphaFormat: (AutomationCaptureAlphaFormat)int.MaxValue);
-        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
+        await Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
     }
 
     [TestCase(AutomationCapturePixelFormat.Bgra8888, 4)]
@@ -940,10 +940,10 @@ public sealed class AutomationHostSessionTests
     [TestCase(0)]
     [TestCase(15)]
     [TestCase(17)]
-    public void RemoteCapture_WhenStreamLengthDiffersFromHeader_RejectsStream(int actualLength)
+    public async Task RemoteCapture_WhenStreamLengthDiffersFromHeader_RejectsStream(int actualLength)
     {
         var header = CreateCaptureHeader(AutomationCapturePixelFormat.Bgra8888, 2, 2, 8);
-        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, [new byte[actualLength]]));
+        await Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, [new byte[actualLength]]));
     }
 
     private static AutomationCaptureHeader CreateCaptureHeader(

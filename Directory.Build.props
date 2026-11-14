@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <LangVersion>preview</LangVersion>
-    <TargetFrameworkPrefix>net10.0</TargetFrameworkPrefix>
+    <TargetFrameworkPrefix>net11.0</TargetFrameworkPrefix>
     <TargetFramework>$(TargetFrameworkPrefix)</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

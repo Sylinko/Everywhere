@@ -157,7 +157,7 @@ public sealed class TerminalView : TemplatedControl
             if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key == Key.C)
             {
                 e.Handled = true;
-                await block.WriteInputAsync("\x03");
+                await block.WriteInputAsync("\x03"u8);
                 return;
             }
 
@@ -173,31 +173,31 @@ public sealed class TerminalView : TemplatedControl
             {
                 case Key.Enter:
                     e.Handled = true;
-                    await block.WriteInputAsync("\r");
+                    await block.WriteInputAsync("\r"u8);
                     break;
                 case Key.Back:
                     e.Handled = true;
-                    await block.WriteInputAsync("\x7f");
+                    await block.WriteInputAsync("\x7f"u8);
                     break;
                 case Key.Delete:
                     e.Handled = true;
-                    await block.WriteInputAsync("\e[3~");
+                    await block.WriteInputAsync("\e[3~"u8);
                     break;
                 case Key.Left:
                     e.Handled = true;
-                    await block.WriteInputAsync("\e[D");
+                    await block.WriteInputAsync("\e[D"u8);
                     break;
                 case Key.Right:
                     e.Handled = true;
-                    await block.WriteInputAsync("\e[C");
+                    await block.WriteInputAsync("\e[C"u8);
                     break;
                 case Key.Up:
                     e.Handled = true;
-                    await block.WriteInputAsync("\e[A");
+                    await block.WriteInputAsync("\e[A"u8);
                     break;
                 case Key.Down:
                     e.Handled = true;
-                    await block.WriteInputAsync("\e[B");
+                    await block.WriteInputAsync("\e[B"u8);
                     break;
             }
         }

@@ -16,7 +16,7 @@ case "$runtime" in
 esac
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-canary\.[0-9.]+)?$ ]] || { echo 'Invalid version' >&2; exit 1; }
 deb_version=${version/-canary./~canary.}
-publish_dir=$(cd -- "${3:-$script_dir/bin/Release/net10.0/$runtime/publish}" && pwd)
+publish_dir=$(cd -- "${3:-$script_dir/bin/Release/net11.0/$runtime/publish}" && pwd)
 test -x "$publish_dir/Everywhere"
 test -x "$publish_dir/Everywhere.Watchdog"
 package_dir=$(mktemp -d)

@@ -111,23 +111,23 @@ public sealed class PromptServiceTests
     }
 
     [Test]
-    public void CreatePromptAsync_RejectsDefaultPromptId()
+    public async Task CreatePromptAsync_RejectsDefaultPromptId()
     {
         using var database = PromptTestDatabase.Create();
         var service = CreateService(database);
 
-        Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             async () => await service.CreatePromptAsync(
                 new PromptCreateRequest("Template", Id: Guid.Empty)));
     }
 
     [Test]
-    public void CreatePromptAsync_RejectsEmptyTemplate()
+    public async Task CreatePromptAsync_RejectsEmptyTemplate()
     {
         using var database = PromptTestDatabase.Create();
         var service = CreateService(database);
 
-        Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             async () => await service.CreatePromptAsync(new PromptCreateRequest("   ")));
     }
 

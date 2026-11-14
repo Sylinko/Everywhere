@@ -3,8 +3,8 @@ using MessagePack;
 namespace Everywhere.ProcessIsolation.Activation;
 
 /// <summary>External activation data; validated before queue acceptance.</summary>
-[Union(0, typeof(ShowChatWindowActivationRequest))]
-[Union(1, typeof(UrlCallbackActivationRequest))]
+[MessagePackUnion(0, typeof(ShowChatWindowActivationRequest))]
+[MessagePackUnion(1, typeof(UrlCallbackActivationRequest))]
 public abstract class ApplicationActivationRequest
 {
     /// <summary>

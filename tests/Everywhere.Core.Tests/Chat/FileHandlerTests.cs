@@ -34,11 +34,11 @@ public class FileHandlerTests
     }
 
     [Test]
-    public void Factory_RejectsUnknownUri()
+    public async Task Factory_RejectsUnknownUri()
     {
         var factory = CreateLocalFactory();
 
-        Assert.ThrowsAsync<HandledException>(async () =>
+        await Assert.ThrowsAsync<HandledException>(async () =>
             await factory.CreateAsync("unknown://resource/file.txt", Path.GetTempPath()));
     }
 
@@ -199,15 +199,15 @@ public class FileHandlerTests
             var empty = await factory.CreateAsync(emptyPath, directory);
             var damaged = await factory.CreateAsync(damagedPath, directory);
 
-            Assert.Multiple(() =>
+            await Assert.MultipleAsync(async () =>
             {
                 Assert.That(
-                    Assert.ThrowsAsync<HandledException>(async () =>
-                        await empty.Handler.ReadAsync(empty, 1, 10, CancellationToken.None))!.Message,
+                    (await Assert.ThrowsAsync<HandledException>(async () =>
+                        await empty.Handler.ReadAsync(empty, 1, 10, CancellationToken.None)))!.Message,
                     Does.Contain("no extractable text"));
                 Assert.That(
-                    Assert.ThrowsAsync<HandledException>(async () =>
-                        await damaged.Handler.ReadAsync(damaged, 1, 10, CancellationToken.None))!.Message,
+                    (await Assert.ThrowsAsync<HandledException>(async () =>
+                        await damaged.Handler.ReadAsync(damaged, 1, 10, CancellationToken.None)))!.Message,
                     Does.Contain("damaged"));
             });
         }
@@ -278,13 +278,13 @@ public class FileHandlerTests
                 Assert.That(topLevelResources, Does.Contain("skill://builtin.demo/references"));
             });
 
-            Assert.ThrowsAsync<HandledException>(async () =>
+            await Assert.ThrowsAsync<HandledException>(async () =>
                 await factory.CreateAsync("skill://agents.sample/%2E%2E/outside.txt", root));
-            Assert.ThrowsAsync<HandledException>(async () =>
+            await Assert.ThrowsAsync<HandledException>(async () =>
                 await factory.CreateAsync("skill://agents.sample/references%2Ftips.md", root));
-            Assert.ThrowsAsync<HandledException>(async () =>
+            await Assert.ThrowsAsync<HandledException>(async () =>
                 await factory.CreateAsync("skill://sample/reference.txt", root));
-            Assert.ThrowsAsync<HandledException>(async () =>
+            await Assert.ThrowsAsync<HandledException>(async () =>
                 await factory.CreateAsync("skill://unknown.missing/SKILL.md", root));
         }
         finally

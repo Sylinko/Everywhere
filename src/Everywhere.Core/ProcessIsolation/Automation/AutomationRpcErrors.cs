@@ -6,7 +6,7 @@ namespace Everywhere.ProcessIsolation.Automation;
 
 /// <summary>Base contract for strongly typed failures returned by the Automation Host.</summary>
 [MessagePackObject]
-[Union(0, typeof(VisualElementQueryRpcError))]
+[MessagePackUnion(0, typeof(VisualElementQueryRpcError))]
 public abstract partial class AutomationRpcError;
 
 /// <summary>Describes a failed visual-element provider operation without exposing platform error details.</summary>
