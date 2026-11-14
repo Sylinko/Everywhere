@@ -46,8 +46,8 @@ jobs:
         GH_TOKEN: ${{ github.token }}
       run: |
         $ErrorActionPreference = "Stop"
-        $version = "7.1.0"
-        $release = "is-7_1_0"
+        $version = "7.1.1"
+        $release = "is-7_1_1"
         $asset = "innosetup-$version-x64.exe"
         $installerPath = Join-Path $env:RUNNER_TEMP $asset
         $installDirectory = Join-Path $env:RUNNER_TEMP "Inno Setup 7"
@@ -56,7 +56,7 @@ jobs:
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to download Inno Setup $version."
         }
-        gh release verify-asset $installerPath --repo jrsoftware/issrc
+        gh release verify-asset $release $installerPath --repo jrsoftware/issrc
         if ($LASTEXITCODE -ne 0) {
             throw "GitHub attestation verification failed for Inno Setup $version."
         }
