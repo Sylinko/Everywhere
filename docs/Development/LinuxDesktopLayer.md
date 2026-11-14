@@ -123,7 +123,124 @@ contract behavior; they do not establish runtime support for another desktop.
 
 ## Additional starter backends
 
-See [X11](LinuxX11Starter.md) for restored EWMH/native-pixel designs and
-[ordinary Wayland desktops](LinuxWaylandStarter.md) for the limited Plasma/GNOME
-window and input scope. The shared selection lifecycle does not manufacture
-capabilities for backends that have not implemented their three services.
+
+## X11 backend
+
+This restores core designs from `fork/dev-linux` through the current Linux desktop
+contracts, targeting a minimal Plasma/KWin X11 session. It does not restore the
+old branch's complete facade, shortcut hooks, selection listener or toolbar.
+
+`X11CompositorStateProvider` reads EWMH stacking, foreground, desktop visibility,
+PID, client geometry and optional frame extents. `X11SilentScreenCapturer` reads
+visible root pixels. Short-lived XCB connections own every reply and native error;
+foreign-window races do not install a global Xlib error handler in Avalonia.
+`X11WindowController` uses Avalonia's ordinary X11 windows, WM_HINTS and input
+shapes. The shared AT-SPI and picker/capture pipeline remain available.
+
+The first target is one X screen at scale 1 and a standard little-endian 32-bit
+TrueColor pixel layout. RandR output enumeration, mixed DPI and text-selection
+assistance remain unported. Plasma 5 global keyboard shortcuts use KGlobalAccel; other supported desktops use
+the user-approved GlobalShortcuts portal when available; global mouse shortcuts remain
+unsupported. Focused shortcut recording uses the common `LinuxShortcutListener`
+implementation and `IKeyboardShortcutScope`, while the authenticated Input Host
+remains healthy and idle.
+
+An explicit X11 session takes precedence over inherited Wayland/Hyprland markers.
+Main selects Avalonia X11 directly rather than falling back from Wayland.
+
+Validate ordinary Main/Chat windows, EWMH foreground/stacking, client/frame
+geometry, visible root-pixel capture and ordinary input in a disposable profile.
+Follow the [Linux acceptance checklist](LinuxHyprlandValidation.md). The supported
+single-screen scale/pixel-layout boundary must be retained when reporting results.
+## Ordinary Wayland backends
+
+Plasma, GNOME and Niri Wayland start through Avalonia.Wayland's ordinary toplevel and text-input
+implementation. It does not install `HyprlandWindowingPlatform`, issue compositor
+commands, assign guessed global coordinates or reuse Hyprland's input bindings.
+`StandardWaylandWindowController` permits ordinary floating-application intent
+while explicitly rejecting overlay roles and unsupported global window policies.
+
+`UnavailableWaylandStateProvider`, `UnavailableWaylandScreenCapturer` and
+`UnavailableWaylandSelectionService` mark global observation, silent capture and
+interactive picking as unported. The selection service rejects requests before
+creating a surface. Text-selection assistance remains unported. Plasma 5 registers
+global keyboard shortcuts through KGlobalAccel on both X11 and Wayland. Plasma 6,
+GNOME and portal-capable X11 desktops use the user-approved XDG GlobalShortcuts
+portal. Niri still requires a compositor binding to the application command;
+recording a chord does not create that binding.
+Focused shortcut recording uses `LinuxShortcutListener` and the shared
+`IKeyboardShortcutScope` contract; it requires no compositor-specific keyboard
+hook. Portal approval is managed separately from the Input Host so user denial
+does not repeatedly restart a healthy Host.
+
+This is a starting point for desktop contributors, not feature parity with
+Hyprland. Future desktop work should replace the unavailable capabilities at the
+composition root without moving desktop policies into shared Core or changing
+Windows/macOS behavior. Ordinary input uses the framework's native protocols;
+no separate input-method implementation or dependency is introduced here.
+
+
+## Shortcut backends and activation identity
+
+
+`LinuxShortcutListener` records focused events through `IKeyboardShortcutScope`.
+That contract does not register a chord with a compositor. Global activation is supplied separately by the selected desktop backend.
+
+Plasma/GNOME and portal-capable X11 sessions use `PortalShortcutListener` as the
+global backend. Plasma 5 registers through KGlobalAccel on both X11 and Wayland;
+Plasma 6/GNOME and other portal-capable desktops request GlobalShortcuts approval.
+Validate the native KGlobalAccel registration on Plasma 5 and portal approval only
+on portal-backed desktops. Hyprland keeps its Input Host/compositor bindings. The portal
+uses the existing Tmds.DBus.Protocol dependency; no package is added. Managed
+D-Bus approval lives in Main because a pending/declined permission request is a
+user decision, not an Input Host transport failure. The starter Input Host stays
+healthy and continues to reject unsupported native capture operations.
+
+One worker owns the complete desired set and one portal session. Registering the
+same chord fans out to multiple handlers; disposing a lease removes only that
+handler. Changes create a new session because BindShortcuts accepts one set per
+session. Entering focused recording closes the current session to release its
+grabs, and disposing the recording lease restores the desired set. The response
+signal is subscribed before each request, and the session is explicitly closed
+before disconnecting. Queued activations from a disposed session are discarded.
+Denial is logged without an automatic Host restart or permission-dialog loop.
+
+The portal identity matches the packaged `com.Sylinko.Everywhere.desktop` entry.
+The test VM supplies that identity for its unpacked build. Preferred keys are a
+proposal: native approval, existing desktop conflicts and desktop shortcut
+settings remain authoritative. In particular, a chord recorded in Everywhere
+must still be granted by the desktop. A permission dialog may appear behind Main
+when the desktop cannot associate it with an exported Wayland parent window.
+
+Protocol references:
+
+- https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html
+- https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.host.portal.Registry.html
+- https://specifications.freedesktop.org/shortcuts/latest/
+
+## Linux activation identity
+
+Activation endpoints use display identity, not the POSIX process session ID,
+which can differ between a user service, terminal job and desktop launch.
+Explicit X11 sessions use DISPLAY with an omitted screen normalized to screen
+zero. Wayland uses the socket resolved against XDG_RUNTIME_DIR, including on
+Hyprland: compositor-specific variables may be absent in desktop launchers.
+Absolute and relative names of the same socket share an endpoint; nested sockets
+remain separate. The Hyprland instance signature is a fallback when no Wayland
+socket is available. Windows/macOS behavior and RPC notification dispatch are
+unchanged.
+
+## Niri boundary
+
+Niri 26.04 in this VM does not offer a usable GlobalShortcuts portal backend.
+The VM therefore explicitly binds Ctrl+Shift+E to its Everywhere launcher. A
+secondary launch activates Chat through the authenticated activation endpoint,
+rather than creating a new application instance. This binding is VM configuration;
+changing the chord in the application's editor does not rewrite a Niri config.
+Other Niri installations need an equivalent binding to their installed command.
+
+The nested test wrapper selects Niri's actual Wayland socket, sets its desktop
+identity and removes an inherited Hyprland marker. Mod+E uses the same environment.
+Niri's Mod becomes Alt in nested mode, so its close action is Alt+W there and
+Super+W in a standalone session. This avoids the parent compositor consuming the
+same Super chord. Standalone DRM remains unavailable on this software GPU VM.

@@ -80,8 +80,40 @@ limitations explicit in the review; no model request is needed for these checks.
 
 ## Other desktop backends
 
-For [X11](LinuxX11Starter.md), validate EWMH foreground/stacking, frame extents,
-visible root pixels and ordinary input at the supported scale/layout. For
-[GNOME/Plasma Wayland](LinuxWaylandStarter.md), validate ordinary Main/Chat windows,
-input methods and healthy Hosts, and check that unavailable global capabilities
-fail explicitly before creating an overlay.
+See [desktop adaptation](LinuxDesktopLayer.md) for X11 and ordinary Wayland
+capability boundaries. Validate ordinary Main/Chat rendering, native text input,
+shortcut recording and activation separately. Unsupported selection/capture
+must fail explicitly before creating overlays; a working window is not feature parity.
+
+## Isolated shortcut protocol tests
+
+
+The explicit `PortalShortcutSessionTests` fixture requires `dbus-daemon` and a
+private session bus. It owns a synthetic portal that deliberately leaves shortcut
+approval pending; it does not use the desktop's portal or show native dialogs.
+Run it separately from the normal Linux suite:
+
+```sh
+dbus-run-session -- sh -c '
+    export EVERYWHERE_PORTAL_TEST_BUS="$DBUS_SESSION_BUS_ADDRESS"
+    filter="FullyQualifiedName~PortalShortcutSessionTests"
+    filter="$filter|FullyQualifiedName~LegacyKdeShortcutSessionTests"
+    filter="$filter|FullyQualifiedName~SharedRegistration_DisposeOneHandler"
+    filter="$filter|FullyQualifiedName~Listener_AfterDisposal"
+    dotnet test tests/Everywhere.Linux.Tests/Everywhere.Linux.Tests.csproj -c Release \
+        --filter "$filter"
+'
+```
+
+The tests verify that removing a registration closes the pending session, and that
+recording closes it before restoring the same registration set after the lease
+ends. This exercises the real D-Bus request/response and session-close paths;
+it does not establish compositor permission UI or native key activation support.
+
+## Chat workspace activation
+
+In Hyprland, keep chat open on workspace A, switch to workspace B, then invoke
+the chat shortcut. Chat must move to B and receive input focus without switching
+back to A. Repeat with pinned/unpinned chat and a different active monitor.
+Passive overlays and the text-selection toolbar must not follow this policy.
+IPC tests verify the dispatch order; physical desktop acceptance remains separate.
