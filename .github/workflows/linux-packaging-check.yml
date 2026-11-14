@@ -7,6 +7,7 @@ on:
       - 'scripts/notify-aur.py'
       - 'scripts/github_release.py'
       - 'tests/automation/**'
+      - 'tools/linux-installer/**'
       - 'scripts/test-linux-packaging.sh'
       - 'src/Everywhere.Linux/*.sh'
       - 'src/Everywhere.Linux/PKGBUILD.in'
@@ -17,6 +18,7 @@ on:
       - 'scripts/notify-aur.py'
       - 'scripts/github_release.py'
       - 'tests/automation/**'
+      - 'tools/linux-installer/**'
       - 'scripts/test-linux-packaging.sh'
       - 'src/Everywhere.Linux/*.sh'
       - 'src/Everywhere.Linux/PKGBUILD.in'
@@ -39,3 +41,4 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y rpm cpio zstd desktop-file-utils
       - run: bash scripts/test-linux-packaging.sh ${{ matrix.runtime }}
       - run: python3 -m unittest discover -s tests/automation -v
+      - run: python3 -m unittest discover -s tools/linux-installer/tests -p test_repository_manifest.py -v

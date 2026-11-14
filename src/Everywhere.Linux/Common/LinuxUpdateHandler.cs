@@ -10,9 +10,9 @@ namespace Everywhere.Linux.Common;
 public sealed class LinuxUpdateHandler(IHttpClientFactory httpClientFactory) : IPlatformUpdateHandler, ITerminalUpdateHandler
 {
     /// <summary>
-    /// Identifies the explicitly selected fork release source until official Linux publication is available.
+    /// Identifies the official application release source.
     /// </summary>
-    public const string ReleaseRepository = "pasical/Everywhere";
+    public const string ReleaseRepository = "Sylinko/Everywhere";
 
     /// <inheritdoc />
     public string OsIdentifier => RuntimeInformation.ProcessArchitecture switch

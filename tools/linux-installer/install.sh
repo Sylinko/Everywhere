@@ -67,7 +67,7 @@ def get(url, limit, progress=False):
 def main():
     print('Checking installer', flush=True)
     url = os.environ.get('EVERYWHERE_INSTALLER_MANIFEST',
-                         'https://github.com/pasical/Everywhere/releases/download/linux-installer-latest/installer.json')
+                         'https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.json')
     manifest = json.loads(get(url, 65536))
     if not isinstance(manifest, dict) or manifest.get('schema') != 1 or manifest.get('protocol') != 1:
         raise ValueError('Unsupported installer protocol.')

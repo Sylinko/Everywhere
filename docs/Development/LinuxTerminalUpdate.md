@@ -46,10 +46,10 @@ automatically download, or graphically install packages for this capability.
 The existing changelog history uses the same source; its graphical installer action
 is disabled on Linux, without changing its view layout.
 
-The temporary application release authority is `pasical/Everywhere`. The installer
-selects published payloads from this fork, independently of package repositories.
-The launcher no longer injects the application discovery repository into script arguments. A future official rollout must switch this authority
-deliberately.
+The application release authority is the official `Sylinko/Everywhere` repository.
+The installer selects published payloads from that repository, independently of
+package repositories. The launcher does not inject the application discovery
+repository into script arguments.
 There is no silent official/fork fallback. An incomplete newest Linux release does not
 silently select an older version. Native package validation remains in the script.
 
@@ -114,3 +114,8 @@ Set `EVERYWHERE_UPDATE_PREVIEW_DIR` while running `TerminalUpdatePresentationTes
 render the real dialog in light/dark themes and Chinese/English with Avalonia/Skia.
 Version 99.0.0-canary.1 is fixture data. Headless renders and message-routing tests do
 not represent physical-desktop activation or Linux package installation acceptance.
+
+The installer checks `tools/linux-installer/installer.json` on official main through
+raw.githubusercontent.com. The manifest and script are committed together; no
+installer GitHub Release is required. Increment `INSTALLER_VERSION` and regenerate
+the manifest with `build-manifest.py` when changing the distributed installer.
