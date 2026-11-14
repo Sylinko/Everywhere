@@ -44,7 +44,7 @@
     <PackageVersion Include="ReverseMarkdown" Version="6.3.0" />
     <PackageVersion Include="Sentry" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Extensions.AI" Version="$(SentryVersion)" />
-    <PackageVersion Include="Sentry.OpenTelemetry" Version="$(SentryVersion)" />
+    <PackageVersion Include="Sentry.OpenTelemetry.Exporter" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Serilog" Version="$(SentryVersion)" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />

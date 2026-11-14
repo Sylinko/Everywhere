@@ -1,54 +1,39 @@
 ﻿using System.Buffers;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using Everywhere.Configuration;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using PuppeteerSharp;
-using Sentry.OpenTelemetry;
-using ZLinq;
-using OpenTelemetrySdk = OpenTelemetry.Sdk;
 
 namespace Everywhere.Common;
 
 public static partial class Telemetry
 {
+    /// <summary>
+    /// Suppresses traces, new breadcrumbs, and cloud logs below Warning without disabling error reporting or metrics.
+    /// The current value is checked when spans end and new SDK logs or breadcrumbs are captured.
+    /// </summary>
     public static bool SendOnlyNecessaryData { get; set; }
 
     private static SentryMeterListener? _sentryMeterListener;
 
+#if DEBUG
+    private const string EnvironmentName = "debug";
+    private const double TraceSampleRate = 1.0;
+#else
+    private const string EnvironmentName = "stable";
+    private const double TraceSampleRate = 0.2;
+#endif
+
+    /// <summary>
+    /// Initializes SDK event reporting and the separate OTLP tracing pipeline for the main application process.
+    /// </summary>
     public static void Initialize()
     {
         if (string.IsNullOrEmpty(SentryDsn)) return;
 
-        var sentry = SentrySdk.Init(o =>
-        {
-            o.Dsn = SentryDsn;
-            o.AutoSessionTracking = true;
-            o.IsGlobalModeEnabled = true;
-            o.EnableLogs = true;
-#if DEBUG
-            o.TracesSampleRate = 1.0;
-            o.Environment = "debug";
-            o.Debug = true;
-#else
-            o.TracesSampleRate = 0.2;
-            o.Environment = "stable";
-#endif
-            o.Release = RuntimeConstants.Version.ToString();
-
-            o.UseOpenTelemetry();
-            o.SetBeforeSend(evt =>
-                evt.Exception.Segregate()
-                    .AsValueEnumerable()
-                    .Any(e => e is
-                        OperationCanceledException or
-                        TimeoutException or
-                        HandledException { IsExpected: true } or
-                        PuppeteerException) ? // No one knows why PuppeteerSharp throws so many exceptions and leave them unhandled in Task.Run
-                    null :
-                    evt);
-            o.SetBeforeSendTransaction(transaction => SendOnlyNecessaryData ? null : transaction);
-            o.SetBeforeBreadcrumb(breadcrumb => SendOnlyNecessaryData ? null : breadcrumb);
-        });
+        var sentry = SentrySdk.Init(ConfigureSentry);
 
         SentrySdk.ConfigureScope(scope =>
         {
@@ -58,13 +43,10 @@ public static partial class Telemetry
             scope.User.Email = null;
         });
 
-        var traceProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
-            .AddSource("Everywhere.*")
-            .AddSentry()
-            .Build();
+        var traceProvider = CreateTraceProviderBuilder().AddSentryOtlpExporter(SentryDsn).Build();
 
         // Start listening to System.Diagnostics.Metrics and forwarding to Sentry.
-        // Metrics are always sent (anonymous aggregated data, no PII).
+        // Metrics remain enabled in both diagnostic modes, with the existing device ID tag.
         _sentryMeterListener = new SentryMeterListener();
 
         AppDomain.CurrentDomain.ProcessExit += delegate
@@ -75,10 +57,70 @@ public static partial class Telemetry
         };
     }
 
+    private static void ConfigureSentry(SentryOptions options)
+    {
+        options.Dsn = SentryDsn;
+        options.AutoSessionTracking = true;
+        options.IsGlobalModeEnabled = true;
+        options.EnableLogs = true;
+        options.Environment = EnvironmentName;
+        options.Release = RuntimeConstants.Version.ToString();
+#if DEBUG
+        options.Debug = true;
+#endif
+        options.UseOtlp();
+        options.SetBeforeSend(evt =>
+            evt.Exception.Segregate()
+                .AsValueEnumerable()
+                .Any(e => e is
+                    OperationCanceledException or
+                    TimeoutException or
+                    HandledException { IsExpected: true } or
+                    PuppeteerException) ? // No one knows why PuppeteerSharp throws so many exceptions and leave them unhandled in Task.Run
+                null :
+                evt);
+        options.SetBeforeBreadcrumb(breadcrumb => SendOnlyNecessaryData ? null : breadcrumb);
+        options.SetBeforeSendLog(log => SendOnlyNecessaryData && log.Level < SentryLogLevel.Warning ? null : log);
+    }
+
+    private static TracerProviderBuilder CreateTraceProviderBuilder()
+    {
+        return Sdk
+            .CreateTracerProviderBuilder()
+            .AddSource("Everywhere.*")
+            .SetResourceBuilder(
+                ResourceBuilder.CreateDefault()
+                    .AddService("Everywhere", serviceVersion: RuntimeConstants.Version.ToString())
+                    .AddAttributes([new KeyValuePair<string, object>("deployment.environment.name", EnvironmentName)]))
+            .SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(TraceSampleRate)))
+            // This processor must run before the exporter's batch processor accepts an ended span.
+            .AddProcessor(new SentryTraceProcessor());
+    }
+
+    private sealed class SentryTraceProcessor : BaseProcessor<Activity>
+    {
+        /// <inheritdoc />
+        public override void OnStart(Activity activity)
+        {
+            // SDK scope fields are not automatically copied into the separate OTLP payload.
+            activity.SetTag("user.id", RuntimeConstants.DeviceId);
+        }
+
+        /// <inheritdoc />
+        public override void OnEnd(Activity activity)
+        {
+            if (SendOnlyNecessaryData)
+            {
+                // Recheck at completion: the user may have opted out while this span was running.
+                activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+            }
+        }
+    }
+
     /// <summary>
     /// Bridges <see cref="System.Diagnostics.Metrics"/> instruments to Sentry Metrics API.
     /// Listens on all meters whose name starts with "Everywhere." and forwards measurements
-    /// to SentrySdk.Experimental.Metrics.
+    /// to SentrySdk.Metrics.
     /// </summary>
     /// <remarks>
     /// Sentry currently has no native OpenTelemetry Metrics export, so we use

@@ -61,7 +61,7 @@
     <PackageReference Include="ReverseMarkdown"/>
     <PackageReference Include="Riok.Mapperly" PrivateAssets="all"/>
     <PackageReference Include="Sentry"/>
-    <PackageReference Include="Sentry.OpenTelemetry"/>
+    <PackageReference Include="Sentry.OpenTelemetry.Exporter"/>
     <PackageReference Include="Sentry.Serilog"/>
     <PackageReference Include="Serilog"/>
     <PackageReference Include="Serilog.Extensions.Logging"/>
