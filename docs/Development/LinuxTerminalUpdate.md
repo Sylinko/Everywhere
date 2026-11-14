@@ -73,9 +73,10 @@ confirmation use the controlling terminal when launched through `curl | sh`.
 
 The engine checks a separately versioned installer manifest before system routing.
 Verified new code runs from a private user cache, without changing package-owned
-files. The reserved fork installer manifest has not been published; its network
-failure falls back visibly to the bundled engine. The application download source
-is already the live fork. Website deployment can instead supply a schema-1 catalog.
+files. The manifest and script are maintained in the official repository directory;
+no installer Release is required. Network failure falls back visibly to the bundled
+engine. Application downloads come from official releases. An explicit `--catalog`
+can select a schema-1 website catalog instead.
 
 - `ew update --dry-run`: preview without downloading application packages.
 - `ew update --channel stable`: override the channel for this invocation.
@@ -83,10 +84,10 @@ is already the live fork. Website deployment can instead supply a schema-1 catal
 - `ew update --no-installer-update`: use the bundled script directly.
 - `ew update --proxy none`: override saved network behavior for this invocation.
 
-Arch downloads the selected fork archive and makes a local native package. It uses
+Arch downloads the selected official archive and makes a local native package. It uses
 `pacman -U`, never an AUR helper or a full system upgrade. Unsupported systems and
 missing assets fail explicitly. The independent installer's README documents the
-release protocol, initial backend scope and offline staging inputs.
+manifest protocol, initial backend scope and offline staging inputs.
 
 ## Packaging and limits
 
