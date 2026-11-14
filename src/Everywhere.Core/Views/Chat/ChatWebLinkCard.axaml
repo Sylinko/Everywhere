@@ -1,0 +1,65 @@
+<UserControl
+  x:Class="Everywhere.Views.ChatWebLinkCard" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" FlowDirection="LeftToRight">
+  <Border
+    Margin="{DynamicResource PopupShadowMargin}"
+    BoxShadow="{DynamicResource PopupShadow}"
+    CornerRadius="{DynamicResource XlCornerRadius}">
+    <shadui:SmoothBorder
+      Background="{DynamicResource PopupBackgroundColor}"
+      BorderBrush="{DynamicResource BorderColor}"
+      BorderThickness="{DynamicResource PopupBorderThickness}"
+      ClipToBounds="True"
+      CornerRadius="{DynamicResource XlCornerRadius}">
+      <v:ContentSizeTransitionPanel
+        x:Name="PreviewPanel" AnimateContentSize="True"
+        ClipToBounds="True" ContentSizeTransitionDuration="0:0:0.18">
+        <ContentPresenter
+          x:Name="PreviewPresenter" HorizontalContentAlignment="Stretch">
+          <StackPanel>
+            <DockPanel
+              Margin="12,10" HorizontalSpacing="8">
+              <Panel
+                DockPanel.Dock="Left"
+                Width="{DynamicResource FontSizeL}"
+                Height="{DynamicResource FontSizeL}"
+                VerticalAlignment="Center">
+                <LucideIcon
+                  x:Name="DefaultIcon" Kind="Globe"
+                  Size="{DynamicResource FontSizeL}"/>
+                <Image
+                  x:Name="SiteIcon" IsVisible="False"/>
+              </Panel>
+              <TextBlock
+                x:Name="AddressText" VerticalAlignment="Center"
+                FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
+            <Border
+              x:Name="Details"
+              BorderBrush="{DynamicResource BorderColor}"
+              BorderThickness="0,1,0,0" IsVisible="False">
+              <StackPanel>
+                <Image
+                  x:Name="CoverImage" MaxHeight="175"
+                  IsVisible="False" Stretch="Uniform"/>
+                <StackPanel
+                  x:Name="TextDetails" Margin="12,10"
+                  IsVisible="False" Spacing="4">
+                  <TextBlock
+                    x:Name="TitleText" FontWeight="SemiBold"
+                    IsVisible="False" MaxLines="2"
+                    TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+                  <TextBlock
+                    x:Name="SummaryText" Classes="Muted"
+                    IsVisible="False" MaxLines="3"
+                    TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ContentPresenter>
+      </v:ContentSizeTransitionPanel>
+    </shadui:SmoothBorder>
+  </Border>
+</UserControl>

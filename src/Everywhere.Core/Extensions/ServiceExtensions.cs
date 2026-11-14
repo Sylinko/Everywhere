@@ -3,6 +3,7 @@ using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
 using Everywhere.Automation;
 using Everywhere.Chat;
+using Everywhere.Chat.Links;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
@@ -89,6 +90,11 @@ public static class ServiceExtensions
         public IServiceCollection AddViewsAndViewModels() =>
             services
                 .AddSingleton<VisualTreeDebugger>()
+                .AddSingleton(provider => new ChatLinkInteraction(
+                    provider.GetRequiredService<ILinkFileOperations>(),
+                    provider.GetRequiredService<WebPreviewService>(),
+                    provider.GetRequiredService<Settings>().ChatWindow,
+                    provider.GetRequiredService<ILogger<ChatLinkInteraction>>()))
                 .AddSingleton<ChatWindowViewModel>()
                 .AddSingleton<ChatWindow>()
                 .AddSingleton<HomePageViewModel>()

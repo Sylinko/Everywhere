@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngleSharp"/>
     <PackageReference Include="Anthropic"/>
     <PackageReference Include="Avalonia"/>
     <PackageReference Include="Avalonia.Native" Condition="'$(IsMacOS)' == 'true'"/>

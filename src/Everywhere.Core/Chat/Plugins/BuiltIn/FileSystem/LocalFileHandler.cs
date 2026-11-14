@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Everywhere.Common;
 
 namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
@@ -63,7 +63,7 @@ public abstract class LocalFileHandler : FileHandler
     }
 
     // ReSharper disable once AsyncMethodWithoutAwait
-    public override async IAsyncEnumerable<string> EnumerateAsync(
+    public override async IAsyncEnumerable<(string Path, bool IsDirectory)> EnumerateAsync(
         FileHandlerContext context,
         Regex filePattern,
         bool recurseSubdirectories,
@@ -72,7 +72,7 @@ public abstract class LocalFileHandler : FileHandler
     {
         if (context.FileSystemInfo is FileInfo file)
         {
-            if (file.Exists && filePattern.IsMatch(file.Name)) yield return file.FullName;
+            if (file.Exists && filePattern.IsMatch(file.Name)) yield return (file.FullName, false);
             yield break;
         }
 
@@ -117,7 +117,7 @@ public abstract class LocalFileHandler : FileHandler
 
                 var isDirectory = (attributes & FileAttributes.Directory) != 0;
                 var name = Path.GetFileName(entry);
-                if (filePattern.IsMatch(name)) yield return Path.GetFullPath(entry);
+                if (filePattern.IsMatch(name)) yield return (Path.GetFullPath(entry), isDirectory);
 
                 if (!isDirectory || !recurseSubdirectories || current.Depth >= 32) continue;
                 if (ignoreCommonBuildFolders && ShouldIgnoreDirectory(name, attributes)) continue;

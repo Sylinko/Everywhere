@@ -4914,4 +4914,76 @@
   <data name="Common_CloudNotConfigured" xml:space="preserve">
     <value>此构建未配置官方云服务。</value>
   </data>
+    <data name="ChatLink_Reveal" xml:space="preserve">
+        <value>在文件管理器中定位</value>
+    </data>
+    <data name="ChatLink_Open" xml:space="preserve">
+        <value>打开</value>
+    </data>
+    <data name="ChatLink_Run" xml:space="preserve">
+        <value>运行…</value>
+    </data>
+    <data name="ChatLink_OpenWith" xml:space="preserve">
+        <value>打开方式…</value>
+    </data>
+    <data name="ChatLink_SaveAs" xml:space="preserve">
+        <value>另存为…</value>
+    </data>
+    <data name="ChatLink_CopyPath" xml:space="preserve">
+        <value>复制路径</value>
+    </data>
+    <data name="ChatLink_ActionUnavailable" xml:space="preserve">
+        <value>此链接或当前设备不支持该操作。</value>
+    </data>
+    <data name="ChatLink_RevealFailed" xml:space="preserve">
+        <value>无法在文件管理器中定位。</value>
+    </data>
+    <data name="ChatLink_SaveFailed" xml:space="preserve">
+        <value>无法保存文件副本。</value>
+    </data>
+    <data name="ChatLink_OpenFileFailed" xml:space="preserve">
+        <value>无法打开文件或文件夹。</value>
+    </data>
+    <data name="ChatLink_OpenWebFailed" xml:space="preserve">
+        <value>无法在浏览器中打开链接。</value>
+    </data>
+    <data name="ChatLink_AccessDenied" xml:space="preserve">
+        <value>没有权限完成此操作。</value>
+    </data>
+    <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
+        <value>没有可打开此文件的默认应用。请从菜单选择「打开方式…」。</value>
+    </data>
+    <data name="ChatLink_NoApplicationsAvailable" xml:space="preserve">
+        <value>没有已安装的应用可打开此文件。</value>
+    </data>
+    <data name="ChatLink_NoBrowser" xml:space="preserve">
+        <value>请在系统设置中指定默认浏览器后重试。</value>
+    </data>
+    <data name="ChatLink_OpenWithUnavailable" xml:space="preserve">
+        <value>系统的应用选择器不可用。</value>
+    </data>
+    <data name="ChatLink_OpenWithFailed" xml:space="preserve">
+        <value>无法使用其他应用打开此文件。</value>
+    </data>
+    <data name="ChatLink_RequiresFile" xml:space="preserve">
+        <value>此操作只适用于文件，不适用于文件夹。</value>
+    </data>
+    <data name="ChatLink_SameFile" xml:space="preserve">
+        <value>请选择其他文件名或位置来保存副本。</value>
+    </data>
+    <data name="ChatLink_MissingTarget" xml:space="preserve">
+        <value>文件或文件夹已不存在。可从菜单复制路径。</value>
+    </data>
+    <data name="ChatLink_ParentOpened" xml:space="preserve">
+        <value>已打开上级文件夹；当前文件管理器无法选中该项目。</value>
+    </data>
+    <data name="ChatLink_ConfirmExecution" xml:space="preserve">
+        <value>要打开可执行文件吗？仅在信任其来源时继续。</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header" xml:space="preserve">
+        <value>加载链接图标和预览</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
+        <value>为可见链接加载站点图标，悬停时加载网页预览。带查询参数的链接只显示域名。</value>
+    </data>
 </root>

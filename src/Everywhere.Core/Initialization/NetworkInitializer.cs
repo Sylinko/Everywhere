@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Everywhere.Common;
+using Everywhere.Chat.Links;
 using Everywhere.Configuration;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -120,6 +121,12 @@ public static class NetworkExtension
                     AllowAutoRedirect = true,
                 })
             .AddHttpMessageHandler<UserAgentHandler>();
+
+        services.AddSingleton<WebPreviewService>()
+            .AddHttpClient(WebPreviewService.HttpClientName, client => client.Timeout = Timeout.InfiniteTimeSpan)
+            .ConfigurePrimaryHttpMessageHandler(provider =>
+                LinkPreviewTransport.CreateHandler(provider.GetRequiredService<IWebProxy>()))
+            .RemoveAllLoggers();
 
         return services;
     }

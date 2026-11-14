@@ -116,6 +116,7 @@ public static class Program
                 .AddSingleton<WindowsScreenSelectionService>()
                 .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<WindowsScreenSelectionService>())
                 .AddSingleton<INativeHelper, NativeHelper>()
+                .AddSingleton<ILinkFileOperations, LinkFileOperations>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
                 .AddSingleton<IOverlayInputWatcher, OverlayInputWatcher>()
                 .AddSingleton<IPlatformUpdateHandler, WindowsUpdateHandler>()

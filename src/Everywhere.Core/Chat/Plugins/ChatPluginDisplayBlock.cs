@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
-using Everywhere.Common;
-using Everywhere.Interop;
+using Everywhere.Chat.Links;
 using Everywhere.Terminal;
 using Lucide.Avalonia;
 using MessagePack;
@@ -214,28 +213,14 @@ public partial class ChatPluginFileReference(
     [Key(2)]
     public IReadOnlySet<ChatPluginFileReferenceLocation>? Locations { get; } = locations;
 
-    [IgnoreMember]
-    public Task<LucideIconKind> IconAsync => Task.Run(() =>
-    {
-        if (Directory.Exists(FullPath)) return LucideIconKind.Folder;
-        return Path.GetExtension(FullPath).ToLowerInvariant() switch
-        {
-            ".cs" or ".rs" or ".py" or ".js" or ".ts" or ".cpp" or ".c" or ".html" or ".css" or ".java" => LucideIconKind.FileCode,
-            ".txt" or ".md" or ".markdown" or ".doc" or ".docx" or ".rtf" => LucideIconKind.FileText,
-            ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" => LucideIconKind.FileImage,
-            ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv" => LucideIconKind.FileVideoCamera,
-            ".sh" or ".exe" or ".bat" or ".cmd" or ".ps1" => LucideIconKind.FileTerminal,
-            ".zip" or ".rar" or ".7z" or ".tar" or ".gz" => LucideIconKind.FileArchive,
-            ".mp3" or ".wav" or ".flac" or ".aac" => LucideIconKind.FileMusic,
-            _ => LucideIconKind.File
-        };
-    });
+    /// <summary>
+    /// Whether the tool identified this reference as a directory. Older records omit this hint.
+    /// </summary>
+    [Key(3)]
+    public bool IsDirectory { get; init; }
 
-    [RelayCommand]
-    private void OpenFileLocation()
-    {
-        ServiceLocator.Resolve<INativeHelper>().OpenFileLocation(FullPath);
-    }
+    [IgnoreMember]
+    public LucideIconKind Icon => ChatFileIcons.FromPath(FullPath, IsDirectory);
 }
 
 /// <summary>

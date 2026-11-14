@@ -9,6 +9,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.I18N;
 using Everywhere.Prompting.Documents;
+using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
@@ -63,12 +64,18 @@ public class FileSystemPluginTests
 
             await InvokeTransferPathAsync(plugin, userInterface, source, destination, "Copy");
 
+            var preview = userInterface.ReceivedCalls()
+                .Select(call => call.GetArguments().FirstOrDefault())
+                .OfType<ChatPluginFileTransferActivityPreview>()
+                .Single();
             Assert.Multiple(() =>
             {
                 Assert.That(Directory.Exists(source), Is.True);
                 Assert.That(
                     File.ReadAllText(Path.Combine(destination, "nested", "content.txt")),
                     Is.EqualTo("content"));
+                Assert.That(preview.Source.Icon, Is.EqualTo(LucideIconKind.Folder));
+                Assert.That(preview.Destination.Icon, Is.EqualTo(LucideIconKind.Folder));
             });
         }
         finally

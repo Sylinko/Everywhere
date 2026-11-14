@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
 using Everywhere.AI;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
@@ -256,7 +256,7 @@ public class FileHandlerTests
             var virtualRead = await virtualContext.Handler.ReadAsync(virtualContext, 1, 10, CancellationToken.None);
             var prompt = manager.GetPrompt(ToolCallStatus.Enabled);
             var virtualRoot = await factory.CreateAsync("skill://builtin.demo/", root);
-            var topLevelResources = new List<string>();
+            var topLevelResources = new List<(string Path, bool IsDirectory)>();
             await foreach (var resource in virtualRoot.Handler.EnumerateAsync(
                                virtualRoot,
                                new Regex(".*"),
@@ -275,7 +275,7 @@ public class FileHandlerTests
                 Assert.That(prompt, Does.Contain($"<file>{physicalSkillPath}</file>"));
                 Assert.That(prompt, Does.Not.Contain("skill://agents.sample/SKILL.md"));
                 Assert.That(prompt, Does.Contain("<file>skill://builtin.demo/SKILL.md</file>"));
-                Assert.That(topLevelResources, Does.Contain("skill://builtin.demo/references"));
+                Assert.That(topLevelResources, Does.Contain(("skill://builtin.demo/references", true)));
             });
 
             await Assert.ThrowsAsync<HandledException>(async () =>

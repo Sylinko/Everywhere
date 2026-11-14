@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AttachedProperties;
 using Everywhere.Chat;
+using Everywhere.Chat.Links;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Interop;
@@ -76,6 +77,7 @@ public sealed partial class ChatWindow :
     /// Indicates whether the window can be closed.
     /// </summary>
     private bool _canCloseWindow;
+    private int _activeLinkPickers;
     private long _cloakInteractionVersion;
 
     public ChatWindow(
@@ -90,6 +92,7 @@ public sealed partial class ChatWindow :
         IScreenSelectionService screenSelectionService,
         ChatVisualService visualService,
         VisualElementEffect visualElementEffect,
+        ChatLinkInteraction linkInteraction,
         ILogger<ChatWindow> logger
     ) : base(serviceProvider, disposeOnUnloaded: false)
     {
@@ -104,6 +107,7 @@ public sealed partial class ChatWindow :
         _visualService = visualService;
         _visualElementEffect = visualElementEffect;
         _logger = logger;
+        SetValue(ChatLinkInteraction.InteractionProperty, linkInteraction);
 
         _inputNotificationPresenter = new ChatInputNotificationPresenter(
             ViewModel.ChatContextManager,
@@ -362,9 +366,24 @@ public sealed partial class ChatWindow :
     {
         base.OnLostFocus(e);
 
-        if (!ViewModel.IsPickingFiles && !IsActive && IsWindowPinned is false && !_windowHelper.AnyModelDialogOpened(this))
+        if (!ViewModel.IsPickingFiles && _activeLinkPickers == 0 && !IsActive && IsWindowPinned is false &&
+            !_windowHelper.AnyModelDialogOpened(this))
         {
             RequestCloaked(true);
+        }
+    }
+
+    internal async Task<T> RunLinkPickerAsync<T>(Func<Task<T>> pick)
+    {
+        // Native pickers can take focus without being recognized as modal by the window manager.
+        _activeLinkPickers++;
+        try
+        {
+            return await pick();
+        }
+        finally
+        {
+            _activeLinkPickers--;
         }
     }
 

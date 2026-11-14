@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using Avalonia.Threading;
 using Everywhere.Chat;
-using LiveMarkdown.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -9,7 +8,7 @@ namespace Everywhere.Views;
 /// Bridges an explicitly expanded standalone display block to parsed Markdown. It also works in
 /// consent/review views without a ChatTurn. Detaching releases observation and its document cache.
 /// </summary>
-public sealed class ChatMarkdownRenderer : MarkdownRenderer
+public sealed class ChatMarkdownRenderer : ChatLinkRenderer
 {
     /// <summary>
     /// Defines the single model text source.
@@ -25,8 +24,6 @@ public sealed class ChatMarkdownRenderer : MarkdownRenderer
         get => GetValue(SourceProperty);
         set => SetValue(SourceProperty, value);
     }
-
-    protected override Type StyleKeyOverride => typeof(MarkdownRenderer);
 
     private ChatTextBuffer? _observedSource;
     private ChatMarkdownPresentation? _presentation;

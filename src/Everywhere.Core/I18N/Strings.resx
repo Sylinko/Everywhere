@@ -4916,4 +4916,76 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="Common_CloudNotConfigured" xml:space="preserve">
         <value>Official cloud services are not configured in this build.</value>
     </data>
+    <data name="ChatLink_Reveal" xml:space="preserve">
+        <value>Show in file manager</value>
+    </data>
+    <data name="ChatLink_Open" xml:space="preserve">
+        <value>Open</value>
+    </data>
+    <data name="ChatLink_Run" xml:space="preserve">
+        <value>Run…</value>
+    </data>
+    <data name="ChatLink_OpenWith" xml:space="preserve">
+        <value>Open with…</value>
+    </data>
+    <data name="ChatLink_SaveAs" xml:space="preserve">
+        <value>Save a copy…</value>
+    </data>
+    <data name="ChatLink_CopyPath" xml:space="preserve">
+        <value>Copy path</value>
+    </data>
+    <data name="ChatLink_ActionUnavailable" xml:space="preserve">
+        <value>This action is unavailable for the link or on this device.</value>
+    </data>
+    <data name="ChatLink_RevealFailed" xml:space="preserve">
+        <value>Couldn't show the location in the file manager.</value>
+    </data>
+    <data name="ChatLink_SaveFailed" xml:space="preserve">
+        <value>Couldn't save a copy of the file.</value>
+    </data>
+    <data name="ChatLink_OpenFileFailed" xml:space="preserve">
+        <value>Couldn't open the file or folder.</value>
+    </data>
+    <data name="ChatLink_OpenWebFailed" xml:space="preserve">
+        <value>Couldn't open the link in your browser.</value>
+    </data>
+    <data name="ChatLink_AccessDenied" xml:space="preserve">
+        <value>Permission denied.</value>
+    </data>
+    <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
+        <value>No default app can open this file. Try “Open with…” from the menu.</value>
+    </data>
+    <data name="ChatLink_NoApplicationsAvailable" xml:space="preserve">
+        <value>No installed app can open this file.</value>
+    </data>
+    <data name="ChatLink_NoBrowser" xml:space="preserve">
+        <value>Set a default browser in your system settings, then try again.</value>
+    </data>
+    <data name="ChatLink_OpenWithUnavailable" xml:space="preserve">
+        <value>The system app picker is not available.</value>
+    </data>
+    <data name="ChatLink_OpenWithFailed" xml:space="preserve">
+        <value>Couldn't open the file with another app.</value>
+    </data>
+    <data name="ChatLink_RequiresFile" xml:space="preserve">
+        <value>This action works on files, not folders.</value>
+    </data>
+    <data name="ChatLink_SameFile" xml:space="preserve">
+        <value>Choose a different name or location to save a copy.</value>
+    </data>
+    <data name="ChatLink_MissingTarget" xml:space="preserve">
+        <value>This file or folder no longer exists. You can copy its path from the menu.</value>
+    </data>
+    <data name="ChatLink_ParentOpened" xml:space="preserve">
+        <value>Opened the parent folder; this file manager could not select the item.</value>
+    </data>
+    <data name="ChatLink_ConfirmExecution" xml:space="preserve">
+        <value>Open an executable file? Continue only if you trust its source.</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header" xml:space="preserve">
+        <value>Load link icons and previews</value>
+    </data>
+    <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
+        <value>Load site icons for visible links and page previews on hover. Links with a query string only show the domain.</value>
+    </data>
 </root>

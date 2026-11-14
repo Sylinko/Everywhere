@@ -1,6 +1,6 @@
-<ResourceDictionary
+﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins"
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
   xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
@@ -61,22 +61,23 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="plugins:ChatPluginFileReference">
                   <Button
-                    x:Name="FileReferenceButton" Classes="Ghost Compact"
-                    Margin="-5,0,5,0" Padding="5,1"
-                    shadui:ButtonAssist.Icon="{LucideIconContent File}"
-                    shadui:ButtonAssist.IconSize="{DynamicResource FontSizeS}"
-                    Command="{Binding OpenFileLocationCommand}"
-                    Foreground="{DynamicResource MutedColor}">
-                    <TextBlock
-                      FontSize="{DynamicResource FontSizeXs}"
-                      Text="{Binding FullPath}"
-                      TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
-                      <Interaction.Behaviors>
-                        <shadui:TextTrimmedToolTipBehavior
-                          Target="{Binding #FileReferenceButton}"
-                          Tip="{Binding FullPath}"/>
-                      </Interaction.Behaviors>
-                    </TextBlock>
+                    Classes="Ghost Compact" Margin="-5,0,5,0"
+                    Padding="5,1"
+                    Foreground="{DynamicResource MutedColor}"
+                    ToolTip.Tip="{Binding FullPath}">
+                    <Interaction.Behaviors>
+                      <in:ChatFileLinkBehavior Reference="{Binding}" Icon="{Binding #ReferenceIcon}"/>
+                    </Interaction.Behaviors>
+                    <DockPanel HorizontalSpacing="6">
+                      <LucideIcon
+                        DockPanel.Dock="Left"
+                        x:Name="ReferenceIcon"
+                        Size="{DynamicResource FontSizeS}"/>
+                      <TextBlock
+                        FontSize="{DynamicResource FontSizeXs}"
+                        Text="{Binding FullPath}"
+                        TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                    </DockPanel>
                   </Button>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
@@ -88,44 +89,44 @@
           <StackPanel
             Margin="-5,0,5,0" Orientation="Horizontal">
             <Button
-              x:Name="SourceFileButton" Classes="Ghost Compact"
-              Padding="5,1"
-              shadui:ButtonAssist.Icon="{LucideIconContent File}"
-              shadui:ButtonAssist.IconSize="{DynamicResource FontSizeS}"
-              Command="{Binding Source.OpenFileLocationCommand}"
-              Foreground="{DynamicResource MutedColor}">
-              <TextBlock
-                FontSize="{DynamicResource FontSizeXs}"
-                Text="{Binding Source.FullPath}"
-                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
-                <Interaction.Behaviors>
-                  <shadui:TextTrimmedToolTipBehavior
-                    Target="{Binding #SourceFileButton}"
-                    Tip="{Binding Source.FullPath}"/>
-                </Interaction.Behaviors>
-              </TextBlock>
+              Classes="Ghost Compact" Padding="5,1"
+              Foreground="{DynamicResource MutedColor}"
+              ToolTip.Tip="{Binding Source.FullPath}">
+              <Interaction.Behaviors>
+                <in:ChatFileLinkBehavior Reference="{Binding Source}" Icon="{Binding #SourceIcon}"/>
+              </Interaction.Behaviors>
+              <DockPanel HorizontalSpacing="6">
+                <LucideIcon
+                  DockPanel.Dock="Left"
+                  x:Name="SourceIcon"
+                  Size="{DynamicResource FontSizeS}"/>
+                <TextBlock
+                  FontSize="{DynamicResource FontSizeXs}"
+                  Text="{Binding Source.FullPath}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+              </DockPanel>
             </Button>
             <TextBlock
               Classes="Muted" VerticalAlignment="Center"
               FontSize="{DynamicResource FontSizeXs}"
               Text="{Binding ActionKey^}"/>
             <Button
-              x:Name="DestinationFileButton" Classes="Ghost Compact"
-              Padding="5,1"
-              shadui:ButtonAssist.Icon="{LucideIconContent File}"
-              shadui:ButtonAssist.IconSize="{DynamicResource FontSizeS}"
-              Command="{Binding Destination.OpenFileLocationCommand}"
-              Foreground="{DynamicResource MutedColor}">
-              <TextBlock
-                FontSize="{DynamicResource FontSizeXs}"
-                Text="{Binding Destination.FullPath}"
-                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
-                <Interaction.Behaviors>
-                  <shadui:TextTrimmedToolTipBehavior
-                    Target="{Binding #DestinationFileButton}"
-                    Tip="{Binding Destination.FullPath}"/>
-                </Interaction.Behaviors>
-              </TextBlock>
+              Classes="Ghost Compact" Padding="5,1"
+              Foreground="{DynamicResource MutedColor}"
+              ToolTip.Tip="{Binding Destination.FullPath}">
+              <Interaction.Behaviors>
+                <in:ChatFileLinkBehavior Reference="{Binding Destination}" Icon="{Binding #DestinationIcon}"/>
+              </Interaction.Behaviors>
+              <DockPanel HorizontalSpacing="6">
+                <LucideIcon
+                  DockPanel.Dock="Left"
+                  x:Name="DestinationIcon"
+                  Size="{DynamicResource FontSizeS}"/>
+                <TextBlock
+                  FontSize="{DynamicResource FontSizeXs}"
+                  Text="{Binding Destination.FullPath}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+              </DockPanel>
             </Button>
           </StackPanel>
         </DataTemplate>
@@ -158,12 +159,7 @@
                     <Panel
                       DockPanel.Dock="Left" Width="12"
                       Height="12">
-                      <Image
-                        x:Name="FaviconImage" MaxWidth="12"
-                        MaxHeight="12" md:AsyncImageLoader.SizeToContent="Manual"
-                        md:AsyncImageLoader.Source="{Binding Converter={x:Static vc:UrlConverters.ToFaviconUrl}}"/>
                       <LucideIcon
-                        IsVisible="{Binding #FaviconImage.Bounds.Width, Converter={x:Static vc:DoubleConverters.NotGreaterThan}, ConverterParameter=1}"
                         Kind="Link" Size="12"/>
                     </Panel>
                     <TextBlock

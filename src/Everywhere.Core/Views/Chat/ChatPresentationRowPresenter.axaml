@@ -549,17 +549,16 @@
         </DataTemplate>
 
         <DataTemplate x:DataType="v:AssistantTextOutputPresentationRow">
-          <md:MarkdownRenderer
+          <v:ChatLinkRenderer
             Margin="4,8"
-            DocumentUpdate="{Binding Markdown.DocumentUpdate}"
-            LinkCommand="{Binding $parent[v:ChatMessageItemsControl].OpenUrlCommand}">
+            DocumentUpdate="{Binding Markdown.DocumentUpdate}">
             <Interaction.Behaviors>
               <in:ChatTextSearchSurfaceBehavior
                 Coordinator="{Binding $parent[v:ChatMessageItemsControl].TextSearch}"
                 Host="{Binding $parent[v:ChatMessageItemsControl]}"
                 Row="{Binding $parent[v:ChatPresentationRowPresenter].Content}"/>
             </Interaction.Behaviors>
-          </md:MarkdownRenderer>
+          </v:ChatLinkRenderer>
         </DataTemplate>
 
         <DataTemplate x:DataType="v:AssistantImageOutputPresentationRow">

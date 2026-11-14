@@ -181,6 +181,7 @@ public static class Program
                 .AddSingleton<MacScreenSelectionService>()
                 .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<MacScreenSelectionService>())
                 .AddSingleton<INativeHelper, NativeHelper>()
+                .AddSingleton<ILinkFileOperations, LinkFileOperations>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
                 .AddSingleton<IOverlayInputWatcher, OverlayInputWatcher>()
                 .AddSingleton<IPlatformUpdateHandler, MacUpdateHandler>()

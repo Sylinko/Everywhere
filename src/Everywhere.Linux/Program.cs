@@ -78,6 +78,7 @@ public static class Program
             .AddSingleton<IVisualElementContext, VisualElementContext>()
             .AddSingleton<IShortcutListener, ShortcutListener>()
             .AddSingleton<INativeHelper, NativeHelper>()
+            .AddSingleton<ILinkFileOperations, LinkFileOperations>()
             .AddSingleton<IOverlayInputWatcher, UnsupportedOverlayInputWatcher>()
             .AddSingleton<IPlatformUpdateHandler, LinuxUpdateHandler>()
             .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()

@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Everywhere.Common;
 
 namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
@@ -47,7 +47,7 @@ public abstract class FileHandler
     /// Enumerates matching entries beneath a resource.
     /// </summary>
     /// <remarks>The default implementation reports that the operation is unsupported.</remarks>
-    public virtual IAsyncEnumerable<string> EnumerateAsync(
+    public virtual IAsyncEnumerable<(string Path, bool IsDirectory)> EnumerateAsync(
         FileHandlerContext context,
         Regex filePattern,
         bool recurseSubdirectories,
@@ -133,7 +133,10 @@ public abstract class FileHandler
             $"The file handler '{GetType().Name}' cannot perform the '{operation}' operation for '{context.Path}'. The resource format is not supported for that operation."),
         LocaleKey.BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage);
 
-    private IAsyncEnumerable<string> UnsupportedEnumerable(FileHandlerContext context, string operation, CancellationToken cancellationToken)
+    private IAsyncEnumerable<(string Path, bool IsDirectory)> UnsupportedEnumerable(
+        FileHandlerContext context,
+        string operation,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         throw UnsupportedOperation(context, operation);

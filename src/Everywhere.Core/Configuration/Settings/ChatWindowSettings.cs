@@ -78,6 +78,16 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     public partial bool ShowChatStatistics { get; set; } = true;
 
     /// <summary>
+    /// Allows site icons for visible chat links and page previews on hover.
+    /// </summary>
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Header,
+        LocaleKey.ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Display)]
+    public partial bool IsAutomaticLinkPreviewEnabled { get; set; } = true;
+
+    /// <summary>
     /// Controls how turn navigation and its previews are presented in the chat window.
     /// </summary>
     [ObservableProperty]

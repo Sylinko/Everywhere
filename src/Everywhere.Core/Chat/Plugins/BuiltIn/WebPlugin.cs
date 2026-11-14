@@ -160,9 +160,7 @@ public sealed class WebPlugin : BuiltInChatPlugin
             .Distinct()
             .ToArray();
 
-        // The invocation preview contains only validated URIs. Host labels and favicon locations
-        // are derived by the View, where AsyncImageLoader can reuse its normal image cache instead
-        // of making the plugin fetch presentation metadata.
+        // The invocation preview contains only validated URIs; the view derives their host labels.
         await userInterface.SetActivityPreviewAsync(new ChatPluginUrlsActivityPreview(validatedUrls));
 
         // Keep one compact durable URL block for the explicitly expanded history view. This

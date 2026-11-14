@@ -1,8 +1,8 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
   <Design.PreviewWith>
     <v:ChatPluginDisplayBlockPresenter/>
   </Design.PreviewWith>
@@ -82,22 +82,21 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="plugins:ChatPluginFileReference">
                   <HyperlinkButton
-                    Command="{Binding OpenFileLocationCommand}"
-                    TextBlock.TextTrimming="CharacterEllipsis">
+                    TextBlock.TextTrimming="CharacterEllipsis"
+                    ToolTip.Tip="{Binding FullPath}">
+                    <Interaction.Behaviors>
+                      <in:ChatFileLinkBehavior Reference="{Binding}" Icon="{Binding #ReferenceIcon}"/>
+                    </Interaction.Behaviors>
                     <HyperlinkButton.Content>
                       <StackPanel
                         Orientation="Horizontal" Spacing="4">
                         <LucideIcon
-                          Kind="{Binding IconAsync^}"
+                          x:Name="ReferenceIcon"
                           Size="14"/>
                         <TextBlock
                           FontSize="{DynamicResource FontSizeS}"
                           Text="{Binding FullPath, Mode=OneTime}"
-                          TextTrimming="PathSegmentEllipsis">
-                          <Interaction.Behaviors>
-                            <shadui:TextTrimmedToolTipBehavior Tip="{Binding FullPath, Mode=OneTime}"/>
-                          </Interaction.Behaviors>
-                        </TextBlock>
+                          TextTrimming="PathSegmentEllipsis"/>
                       </StackPanel>
                     </HyperlinkButton.Content>
                   </HyperlinkButton>
@@ -159,12 +158,7 @@
                     CommandParameter="{Binding Url}"
                     ToolTip.Tip="{Binding Url}">
                     <StackPanel Orientation="Horizontal">
-                      <Image
-                        x:Name="FaviconImage" MaxWidth="12"
-                        MaxHeight="12" md:AsyncImageLoader.SizeToContent="Manual"
-                        md:AsyncImageLoader.Source="{Binding Url, Converter={x:Static vc:UrlConverters.ToFaviconUrl}}"/>
                       <LucideIcon
-                        IsVisible="{Binding #FaviconImage.Bounds.Width, Converter={x:Static vc:DoubleConverters.NotGreaterThan}, ConverterParameter=1}"
                         Kind="Link" Size="12"/>
                       <TextBlock
                         Margin="4,0,0,0"

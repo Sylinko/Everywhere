@@ -78,8 +78,10 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             maxCount);
 
         var context = await _contextFactory.CreateAsync(path, chatContext.WorkingDirectory, cancellationToken);
-        await userInterface.SetActivityPreviewAsync(CreateFilePreview(context.Path, filePattern is ".*" ? null : new DirectLocaleKey(filePattern)));
-        await userInterface.DisplaySink.AppendFileReferencesAsync(new ChatPluginFileReference(context.Path));
+        await PublishFileReferenceAsync(
+            userInterface,
+            new ChatPluginFileReference(context.Path) { IsDirectory = context.IsDirectory },
+            filePattern is ".*" ? null : new DirectLocaleKey(filePattern));
 
         var regex = CreateRegex(filePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
         var fileReferences = new List<ChatPluginFileReference>();
@@ -91,13 +93,13 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         try
         {
-            await foreach (var item in context.Handler.EnumerateAsync(context, regex, true, true, cts.Token))
+            await foreach (var (itemPath, isDirectory) in context.Handler.EnumerateAsync(context, regex, true, true, cts.Token))
             {
                 totalResults++;
                 if (totalResults <= skip || results.Count >= maxCount) continue;
 
-                results.Add(item);
-                fileReferences.Add(new ChatPluginFileReference(item));
+                results.Add(itemPath);
+                fileReferences.Add(new ChatPluginFileReference(itemPath) { IsDirectory = isDirectory });
             }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -149,8 +151,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         _logger.LogDebug("Getting file information for path: {Path}", path);
 
         var context = await _contextFactory.CreateAsync(path, chatContext.WorkingDirectory, cancellationToken);
-        await userInterface.SetActivityPreviewAsync(CreateFilePreview(context.Path));
-        await userInterface.DisplaySink.AppendFileReferencesAsync(new ChatPluginFileReference(context.Path));
+        await PublishFileReferenceAsync(userInterface, new ChatPluginFileReference(context.Path) { IsDirectory = context.IsDirectory });
 
         var record = await context.Handler.GetFileInformationAsync(context, cancellationToken);
         return $"{FileRecord.Header}{Environment.NewLine}{record}";
@@ -186,8 +187,10 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var searchRegex = CreateRegex(isRegex ? pattern : Regex.Escape(pattern), options);
         var fileRegex = CreateRegex(filePattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
         var root = await _contextFactory.CreateAsync(path, chatContext.WorkingDirectory, cancellationToken);
-        await userInterface.SetActivityPreviewAsync(CreateFilePreview(root.Path, new DirectLocaleKey(pattern)));
-        await userInterface.DisplaySink.AppendFileReferencesAsync(new ChatPluginFileReference(root.Path));
+        await PublishFileReferenceAsync(
+            userInterface,
+            new ChatPluginFileReference(root.Path) { IsDirectory = root.IsDirectory },
+            new DirectLocaleKey(pattern));
 
         maxResults = Math.Clamp(maxResults, 1, 200);
         var internalMaxResults = maxResults * 5;
@@ -198,7 +201,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         try
         {
-            await foreach (var item in root.Handler.EnumerateAsync(root, fileRegex, true, true, cts.Token))
+            await foreach (var (itemPath, _) in root.Handler.EnumerateAsync(root, fileRegex, true, true, cts.Token))
             {
                 if (matches.Count >= internalMaxResults)
                 {
@@ -206,7 +209,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                     break;
                 }
 
-                var context = await _contextFactory.CreateAsync(item, root.WorkingDirectory, cts.Token);
+                var context = await _contextFactory.CreateAsync(itemPath, root.WorkingDirectory, cts.Token);
                 try
                 {
                     var result = await context.Handler.SearchContentAsync(context, searchRegex, cts.Token);
@@ -276,8 +279,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             attachment);
 
         var context = await _contextFactory.CreateAsync(path, chatContext.WorkingDirectory, cancellationToken);
-        await userInterface.SetActivityPreviewAsync(CreateFilePreview(context.Path));
-        await userInterface.DisplaySink.AppendFileReferencesAsync(new ChatPluginFileReference(context.Path));
+        await PublishFileReferenceAsync(userInterface, new ChatPluginFileReference(context.Path) { IsDirectory = context.IsDirectory });
         if (attachment)
         {
             if (context.FileSystemInfo is not FileInfo { Exists: true } file)
@@ -364,20 +366,21 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             ResolveFileOperationPath(source, PathResolutionMode.FollowFinalComponent);
         destination = ResolveFileOperationPath(destination, PathResolutionMode.PreserveFinalComponent);
 
+        var isFile = File.Exists(source);
+        var isDirectory = !isFile && Directory.Exists(source);
+        var sourceReference = new ChatPluginFileReference(source) { IsDirectory = isDirectory };
+        var destinationReference = new ChatPluginFileReference(destination) { IsDirectory = isDirectory };
         await userInterface.SetActivityPreviewAsync(new ChatPluginFileTransferActivityPreview(
-            new ChatPluginFileReference(source),
+            sourceReference,
             new DynamicLocaleKey(
                 operation is FileTransferOperation.Copy ?
                     LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_CopyTo :
                     LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_MoveTo),
-            new ChatPluginFileReference(destination)));
-        await userInterface.DisplaySink.AppendFileReferencesAsync(
-            new ChatPluginFileReference(source),
-            new ChatPluginFileReference(destination));
+            destinationReference));
+        await userInterface.DisplaySink.AppendFileReferencesAsync(sourceReference, destinationReference);
 
         var operationName = operation is FileTransferOperation.Copy ? "copy" : "move";
-        var isFile = File.Exists(source);
-        if (!isFile && !Directory.Exists(source))
+        if (!isFile && !isDirectory)
         {
             throw new HandledException(
                 new FileNotFoundException($"The source path does not exist, so cannot {operationName}: '{source}'.", source),
@@ -437,7 +440,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 new DirectLocaleKey(Path.GetFileName(Path.TrimEndingDirectorySeparator(source))),
                 new DirectLocaleKey(Path.GetFileName(Path.TrimEndingDirectorySeparator(destination)))),
             [source, destination],
-            () => CreateFileTransferContent(source, destination, operation),
+            () => CreateFileTransferContent(sourceReference, destinationReference, operation),
             cancellationToken);
 
         Directory.CreateDirectory(destinationDirectory);
@@ -487,15 +490,13 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             .ToArray();
         if (targets.Length == 0) return "No files or directories to delete.";
 
-        var targetPaths = targets
+        var references = targets
             .AsValueEnumerable()
-            .Select(static info => info.FullName)
-            .Order(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static info => info.FullName, StringComparer.OrdinalIgnoreCase)
+            .Select(static info => new ChatPluginFileReference(info.FullName) { IsDirectory = info is DirectoryInfo })
             .ToArray();
-        await userInterface.SetActivityPreviewAsync(new ChatPluginFileReferencesActivityPreview(
-            targetPaths.AsValueEnumerable().Select(static path => new ChatPluginFileReference(path)).ToArray()));
-        await userInterface.DisplaySink.AppendFileReferencesAsync(
-            targetPaths.AsValueEnumerable().Select(static path => new ChatPluginFileReference(path)).ToArray());
+        await userInterface.SetActivityPreviewAsync(new ChatPluginFileReferencesActivityPreview(references));
+        await userInterface.DisplaySink.AppendFileReferencesAsync(references);
         var requiresExplicitApproval = recursive && targets.AsValueEnumerable().Any(static target => target is DirectoryInfo);
         await RequestFileOperationConsentAsync(
             userInterface,
@@ -504,8 +505,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_DeletionConsent_Header,
                 targets.Length),
-            targetPaths,
-            null,
+            references.AsValueEnumerable().Select(static reference => reference.FullPath).ToArray(),
+            () => new ChatPluginFileReferencesDisplayBlock(references),
             cancellationToken,
             forceConsent: requiresExplicitApproval);
 
@@ -613,10 +614,12 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         path = ExpandLocalPath(chatContext, path);
         path = ResolveFileOperationPath(path, PathResolutionMode.PreserveFinalComponent);
-        await userInterface.SetActivityPreviewAsync(CreateFilePreview(path));
-        await userInterface.DisplaySink.AppendFileReferencesAsync(new ChatPluginFileReference(path));
-        if (Directory.Exists(path)) return;
-        if (File.Exists(path))
+        var isDirectory = Directory.Exists(path);
+        var isFile = !isDirectory && File.Exists(path);
+        var reference = new ChatPluginFileReference(path) { IsDirectory = !isFile };
+        await PublishFileReferenceAsync(userInterface, reference);
+        if (isDirectory) return;
+        if (isFile)
         {
             throw new HandledException(
                 new IOException(
@@ -632,7 +635,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header,
                 new DirectLocaleKey(Path.GetFileName(Path.TrimEndingDirectorySeparator(path)))),
             [path],
-            null,
+            () => new ChatPluginFileReferencesDisplayBlock(reference),
             cancellationToken);
         Directory.CreateDirectory(path);
     }
@@ -1316,21 +1319,26 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             showDetails: true);
     }
 
-    private static ChatPluginContainerDisplayBlock CreateFileTransferContent(string source, string destination, FileTransferOperation operation) =>
-        new()
+    private static ChatPluginContainerDisplayBlock CreateFileTransferContent(
+        ChatPluginFileReference source,
+        ChatPluginFileReference destination,
+        FileTransferOperation operation)
+    {
+        return new ChatPluginContainerDisplayBlock
         {
             new ChatPluginDynamicLocaleKeyDisplayBlock(
                 new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_Consent_From),
                 "Muted"),
-            new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(source)),
+            new ChatPluginFileReferencesDisplayBlock(source),
             new ChatPluginDynamicLocaleKeyDisplayBlock(
                 new DynamicLocaleKey(
                     operation is FileTransferOperation.Copy ?
                         LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_CopyTo :
                         LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_MoveTo),
                 "Muted"),
-            new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(destination))
+            new ChatPluginFileReferencesDisplayBlock(destination)
         };
+    }
 
     private static void EnsureDirectoryCanBeCopied(DirectoryInfo directory, CancellationToken cancellationToken)
     {
@@ -1381,12 +1389,16 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     }
 
     /// <summary>
-    /// Creates the compact request preview used by file operations. The detailed file reference is
-    /// still appended to the display sink separately, so this helper never duplicates durable output
-    /// or exposes operation results in the running activity row.
+    /// Publishes the same resolved reference to the compact preview and detailed output.
     /// </summary>
-    private static ChatPluginFileReferencesActivityPreview CreateFilePreview(string path, IDynamicLocaleKey? prefixKey = null) =>
-        new([new ChatPluginFileReference(path)], prefixKey);
+    private static async Task PublishFileReferenceAsync(
+        IChatPluginUserInterface userInterface,
+        ChatPluginFileReference reference,
+        IDynamicLocaleKey? prefixKey = null)
+    {
+        await userInterface.SetActivityPreviewAsync(new ChatPluginFileReferencesActivityPreview([reference], prefixKey));
+        await userInterface.DisplaySink.AppendFileReferencesAsync(reference);
+    }
 
     private async Task RequestFileOperationConsentAsync(
         IChatPluginUserInterface userInterface,
@@ -1688,7 +1700,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 return null;
             }
 
-            return CreateFileTransferContent(source, destination, operation);
+            return CreateFileTransferContent(new ChatPluginFileReference(source), new ChatPluginFileReference(destination), operation);
         }
     }
 }

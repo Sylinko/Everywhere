@@ -1,4 +1,4 @@
-namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
+﻿namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 
 /// <summary>
 /// Represents an immutable, fully resolved association between a resource and its handler.
@@ -12,4 +12,9 @@ public sealed class FileHandlerContext(FileHandler handler, string path, string 
     internal string WorkingDirectory { get; } = workingDirectory;
 
     public FileSystemInfo? FileSystemInfo { get; } = fileSystemInfo;
+
+    /// <summary>
+    /// Indicates a directory using metadata already available when the handler resolves the resource.
+    /// </summary>
+    public bool IsDirectory { get; init; } = fileSystemInfo is DirectoryInfo;
 }

@@ -203,7 +203,23 @@ ul, ol { padding-left: 2em; }
     <Setter Property="ZIndex" Value="1"/>
   </Style>
 
+  <!--  Keep the link menu rows contiguous without shrinking their click targets.  -->
+  <Style Selector="ContextMenu.ChatLinkMenu MenuItem">
+    <Setter Property="Padding" Value="8,6"/>
+    <Style Selector="^ /template/ Panel">
+      <Setter Property="Margin" Value="4,0"/>
+    </Style>
+  </Style>
+
   <!--  Markdown  -->
+  <Style Selector=":is(v|ChatLinkRenderer) md|Link:pointerover">
+    <Setter Property="TextDecorations">
+      <TextDecorationCollection>
+        <TextDecoration Location="Underline" StrokeDashArray="2,2" StrokeThickness="1" StrokeThicknessUnit="Pixel"/>
+      </TextDecorationCollection>
+    </Setter>
+  </Style>
+
   <Style Selector="md|MarkdownRenderer">
     <Setter Property="CodeBlockColorTheme" Value="{DynamicResource ColorTheme}"/>
 

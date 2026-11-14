@@ -55,6 +55,12 @@ You will never be asked to provide consent for any personal information because 
 
 ## Third-Party Services
 
+Visible chat links can load the site's `/favicon.ico` without sending the link's path, query string, or fragment.
+Hovering can request the linked page without its fragment and load a cover image. Links with a query string make no
+automatic icon or preview requests; their hover card shows only the domain. Opening or copying still uses the full URL.
+Requests use your configured proxy, do not send browser cookies or a referrer, and do not run website scripts.
+Results are cached in memory. To stop these requests, turn off **Load link icons and previews** in the chat window settings.
+
 We use **Sentry** for error and diagnostic data collection.
 - Only anonymous event data (such as stack traces and version tags) is sent.
 - We configure Sentry to automatically remove or scrub any potential sensitive data before storage.
@@ -67,7 +73,7 @@ All such integrations comply with the same principles of **minimality and anonym
 
 ## Security Practices
 
-- All network communication is encrypted (HTTPS / TLS).
+- Everywhere services use HTTPS. Previews of HTTP links may use an unencrypted connection.
 - No personal identifiers or user-generated content are ever included in telemetry.
 - Before sending, data is filtered to remove file paths, local usernames, or other potentially identifying information.
 - We regularly review our telemetry and error collection setup to ensure compliance with privacy best practices.

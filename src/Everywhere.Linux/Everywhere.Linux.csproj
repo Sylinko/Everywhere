@@ -19,6 +19,7 @@
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
     <PackageReference Include="Tmds.LibC" />
+    <PackageReference Include="Tmds.DBus.Protocol" />
     <PackageReference Include="X11.Net" />
   </ItemGroup>
 

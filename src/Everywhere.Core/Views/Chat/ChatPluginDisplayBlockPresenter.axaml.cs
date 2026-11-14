@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using Avalonia.Threading;
 using Everywhere.Chat;
+using Everywhere.Chat.Links;
 using Everywhere.Chat.Plugins;
 
 namespace Everywhere.Views;
@@ -119,5 +120,19 @@ public partial class ChatPluginDisplayBlockPresenter : ContentControl
     /// outside <see cref="ChatMessageItemsControl"/>, so it cannot depend on the chat-root command.
     /// </summary>
     [RelayCommand]
-    private static Task<bool> OpenUrlAsync(string url) => App.Launcher.LaunchUriAsync(new Uri(url));
+    private Task OpenUrlAsync(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return Task.CompletedTask;
+
+        // Tool URL blocks display web results. Local paths use the dedicated file reference actions.
+        var target = ChatLinkTarget.Parse(url);
+        if (target.Kind != ChatLinkKind.Web) return Task.CompletedTask;
+
+        if (TopLevel.GetTopLevel(this) is not { } owner || owner.GetValue(ChatLinkInteraction.InteractionProperty) is not { } interaction)
+        {
+            return Task.CompletedTask;
+        }
+
+        return interaction.ExecuteAsync(owner, target, ChatLinkAction.Open);
+    }
 }

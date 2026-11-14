@@ -25,7 +25,8 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         try
         {
             var resource = skillManager.ResolveResource(path);
-            return ValueTask.FromResult<FileHandlerContext?>(new FileHandlerContext(this, resource.Uri, workingDirectory));
+            return ValueTask.FromResult<FileHandlerContext?>(
+                new FileHandlerContext(this, resource.Uri, workingDirectory) { IsDirectory = resource.IsDirectory });
         }
         catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or UnauthorizedAccessException or UriFormatException)
         {
@@ -51,7 +52,7 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
     }
 
     // ReSharper disable once AsyncMethodWithoutAwait
-    public override async IAsyncEnumerable<string> EnumerateAsync(
+    public override async IAsyncEnumerable<(string Path, bool IsDirectory)> EnumerateAsync(
         FileHandlerContext context,
         Regex filePattern,
         bool recurseSubdirectories,
@@ -62,7 +63,7 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         {
             cancellationToken.ThrowIfCancellationRequested();
             var name = resource.RelativePath.Length == 0 ? new Uri(resource.Uri).Host : resource.RelativePath.Split('/').Last();
-            if (filePattern.IsMatch(name)) yield return resource.Uri;
+            if (filePattern.IsMatch(name)) yield return (resource.Uri, resource.IsDirectory);
         }
     }
 

@@ -2,9 +2,9 @@
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
+using Everywhere.Chat.Links;
 using Everywhere.Chat.Plugins;
 using Everywhere.Interactions;
-using LiveMarkdown.Avalonia;
 using ShadUI;
 
 namespace Everywhere.Views;
@@ -200,18 +200,15 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
     /// here instead of being duplicated by individual presenters.
     /// </summary>
     [RelayCommand]
-    private static Task<bool> OpenUrlAsync(object? value)
+    private Task OpenUrlAsync(Uri? address)
     {
-        var uri = value switch
+        if (address is not { IsAbsoluteUri: true, Scheme: "http" or "https" }) return Task.CompletedTask;
+        if (TopLevel.GetTopLevel(this) is not { } owner || owner.GetValue(ChatLinkInteraction.InteractionProperty) is not { } interaction)
         {
-            Uri u => u,
-            LinkClickedEventArgs e => e.HRef,
-            _ when Uri.TryCreate(value?.ToString(), UriKind.Absolute, out var u) => u,
-            _ => null,
-        };
+            return Task.CompletedTask;
+        }
 
-        // TODO: file schema and more with safety check.
-        return uri is not { Scheme: "http" or "https" } ? Task.FromResult(false) : App.Launcher.LaunchUriAsync(uri);
+        return interaction.ExecuteAsync(owner, ChatLinkTarget.Parse(address.OriginalString), ChatLinkAction.Open);
     }
 
     /// <summary>
@@ -223,8 +220,10 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
     private void OpenSubagent(ChatPluginSubagentDisplayBlock block)
     {
         if (ChatContext is not { } context) return;
+        if (TopLevel.GetTopLevel(this) is not { } owner || DialogManager.ResolveHost(owner) is not { } host ||
+            !ReferenceEquals(TopLevel.GetTopLevel(host), owner)) return;
 
-        DialogManager
+        host
             .CreateCustomDialog(
                 new ChatSubagentView
                 {
