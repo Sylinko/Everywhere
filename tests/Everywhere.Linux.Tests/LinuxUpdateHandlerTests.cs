@@ -24,14 +24,14 @@ public sealed class LinuxUpdateHandlerTests
     }
 
     [Test]
-    public void Discovery_WhenNewestReleaseIsIncomplete_DoesNotOfferAnOlderVersion()
+    public async Task Discovery_WhenNewestReleaseIsIncomplete_DoesNotOfferAnOlderVersion()
     {
         using var factory = new ReleaseClientFactory(JsonSerializer.Serialize(new[]
         {
             Release("99.0.0", hasAsset: false), Release("98.0.0")
         }));
         var handler = new LinuxUpdateHandler(factory);
-        Assert.ThrowsAsync<InvalidDataException>(() => handler.GetReleasesAsync(UpdateChannel.Stable, CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidDataException>(() => handler.GetReleasesAsync(UpdateChannel.Stable, CancellationToken.None));
     }
 
     [Test]
@@ -46,10 +46,10 @@ public sealed class LinuxUpdateHandlerTests
     }
 
     [Test]
-    public void Discovery_WhenAssetUrlChanges_RejectsUnexpectedSource()
+    public async Task Discovery_WhenAssetUrlChanges_RejectsUnexpectedSource()
     {
         using var factory = new ReleaseClientFactory(JsonSerializer.Serialize(new[] { Release("99.0.0", isUnexpectedSource: true) }));
-        Assert.ThrowsAsync<InvalidDataException>(() => new LinuxUpdateHandler(factory).GetReleasesAsync(UpdateChannel.Stable, CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidDataException>(() => new LinuxUpdateHandler(factory).GetReleasesAsync(UpdateChannel.Stable, CancellationToken.None));
     }
 
     [Test]

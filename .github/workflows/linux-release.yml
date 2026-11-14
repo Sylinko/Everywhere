@@ -144,18 +144,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/github_release.py
-      - name: Upload complete Linux release
-        uses: softprops/action-gh-release@v3
-        with:
-          draft: ${{ steps.state.outputs.draft }}
-          prerelease: ${{ steps.state.outputs.prerelease }}
-          make_latest: false
-          tag_name: ${{ env.RELEASE_TAG }}
-          fail_on_unmatched_files: true
-          files: |
-            release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.deb
-            release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.rpm
-            release-assets/**/Everywhere-Linux-*-v${{ env.VERSION }}.tar.zst
+      - name: Upload Linux assets without changing publication state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_EXISTS: ${{ steps.state.outputs.exists }}
+        run: |
+          assets=(release-assets/Everywhere-Linux-*-v"${VERSION}".{deb,rpm,tar.zst})
+          if [[ "$RELEASE_EXISTS" == true ]]; then
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            options=(--draft --latest=false --title "$RELEASE_TAG")
+            if [[ "$PRERELEASE" == true ]]; then
+              options+=(--prerelease)
+            fi
+            # Creation fails if another publisher won the race; never rewrite its release state.
+            gh release create "$RELEASE_TAG" "${assets[@]}" "${options[@]}" --repo "$GITHUB_REPOSITORY"
+          fi
 
   notify-aur:
     needs: release-linux

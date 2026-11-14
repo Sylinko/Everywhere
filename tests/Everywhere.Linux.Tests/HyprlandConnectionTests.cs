@@ -13,7 +13,7 @@ namespace Everywhere.Linux.Tests;
 public sealed class HyprlandConnectionTests
 {
     [Test]
-    public void DifferentCompositorInstances_GetActivationEndpoint_AreIsolated()
+    public void HeadlessCompositorInstances_GetActivationEndpoint_AreIsolated()
     {
         using var server = new CompositorEndpoint();
         var first = RpcRuntimeIdentity.GetDesktopSessionId();
@@ -162,7 +162,7 @@ public sealed class HyprlandConnectionTests
         using var server = new CompositorEndpoint();
         var serving = server.ServeAsync(async (_, token) => await Task.Delay(Timeout.Infinite, token));
         using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
-        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
             await new HyprlandConnection().ReadAsync<HyprlandMonitor[]>("monitors", cancellation.Token));
         server.Cancel();
         await serving;
@@ -173,7 +173,7 @@ public sealed class HyprlandConnectionTests
     {
         using var server = new CompositorEndpoint();
         var serving = server.ServeAsync(async (_, token) => await Task.Delay(Timeout.Infinite, token));
-        Assert.ThrowsAsync<TimeoutException>(async () =>
+        await Assert.ThrowsAsync<TimeoutException>(async () =>
             await new HyprlandConnection().ReadAsync<HyprlandMonitor[]>("monitors"));
         server.Cancel();
         await serving;
@@ -187,8 +187,11 @@ public sealed class HyprlandConnectionTests
         public string? Request { get; private set; }
 
         private readonly string _directory = Path.Combine(Path.GetTempPath(), "everywhere-ipc-" + Guid.NewGuid().ToString("N"));
-        private readonly string? _oldRuntime = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
-        private readonly string? _oldInstance = Environment.GetEnvironmentVariable("HYPRLAND_INSTANCE_SIGNATURE");
+        private readonly Dictionary<string, string?> _previousEnvironment = new[]
+        {
+            "XDG_RUNTIME_DIR", "HYPRLAND_INSTANCE_SIGNATURE", "WAYLAND_DISPLAY",
+            "XDG_SESSION_TYPE", "XDG_CURRENT_DESKTOP", "DISPLAY"
+        }.ToDictionary(name => name, Environment.GetEnvironmentVariable);
         private readonly Socket _server = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
         private readonly CancellationTokenSource _lifetime = new();
 
@@ -203,6 +206,10 @@ public sealed class HyprlandConnectionTests
             _server.Listen(1);
             Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR", _directory);
             Environment.SetEnvironmentVariable("HYPRLAND_INSTANCE_SIGNATURE", "owned-test-instance");
+            Environment.SetEnvironmentVariable("WAYLAND_DISPLAY", null);
+            Environment.SetEnvironmentVariable("DISPLAY", null);
+            Environment.SetEnvironmentVariable("XDG_SESSION_TYPE", "wayland");
+            Environment.SetEnvironmentVariable("XDG_CURRENT_DESKTOP", "Hyprland");
         }
 
         /// <summary>
@@ -234,8 +241,10 @@ public sealed class HyprlandConnectionTests
             _lifetime.Cancel();
             _server.Dispose();
             _lifetime.Dispose();
-            Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR", _oldRuntime);
-            Environment.SetEnvironmentVariable("HYPRLAND_INSTANCE_SIGNATURE", _oldInstance);
+            foreach (var pair in _previousEnvironment)
+            {
+                Environment.SetEnvironmentVariable(pair.Key, pair.Value);
+            }
             Directory.Delete(_directory, true);
         }
     }

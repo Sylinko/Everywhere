@@ -40,7 +40,10 @@ def main():
     draft = release["draft"] if release else True
     prerelease = release["prerelease"] if release else os.environ["PRERELEASE"] == "true"
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-        output.write(f"draft={str(draft).lower()}\nprerelease={str(prerelease).lower()}\n")
+        output.write(
+            f"exists={str(release is not None).lower()}\n"
+            f"draft={str(draft).lower()}\nprerelease={str(prerelease).lower()}\n"
+        )
 
 
 if __name__ == "__main__":

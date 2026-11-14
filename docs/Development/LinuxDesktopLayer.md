@@ -10,9 +10,10 @@ dispatch remains unchanged from upstream. Hyprland retains the full current
 integration. A minimal EWMH X11 backend and
 ordinary Plasma/GNOME/Niri Wayland windows are now available as contributor starting
 points. The latter intentionally provide no global state, selection overlays or
-silent capture. Plasma/GNOME and portal-capable X11 sessions use the user-approved
-GlobalShortcuts portal; Niri still requires an external compositor binding and
-reuses the standard Wayland UI backend.
+silent capture. Plasma 5 uses KGlobalAccel on X11 and Wayland. Plasma 6/GNOME and
+portal-capable X11 sessions use the user-approved GlobalShortcuts portal; Niri
+still requires an external compositor binding and reuses the standard Wayland UI
+backend.
 
 `Desktop/LinuxDesktopServices.cs` is the per-process composition root. It selects
 the explicitly inherited desktop backend, constructs its three services and

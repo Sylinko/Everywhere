@@ -9,10 +9,11 @@ while explicitly rejecting overlay roles and unsupported global window policies.
 `UnavailableWaylandStateProvider`, `UnavailableWaylandScreenCapturer` and
 `UnavailableWaylandSelectionService` mark global observation, silent capture and
 interactive picking as unported. The selection service rejects requests before
-creating a surface. Text-selection assistance remains unported. Plasma/GNOME
-(and portal-capable X11 desktops) register global keyboard shortcuts through the
-user-approved XDG GlobalShortcuts portal. Niri still requires a compositor binding
-to the application command; recording a chord does not create that binding.
+creating a surface. Text-selection assistance remains unported. Plasma 5 registers
+global keyboard shortcuts through KGlobalAccel on both X11 and Wayland. Plasma 6,
+GNOME and portal-capable X11 desktops use the user-approved XDG GlobalShortcuts
+portal. Niri still requires a compositor binding to the application command;
+recording a chord does not create that binding.
 Focused shortcut recording uses `LinuxShortcutListener` and the shared
 `IKeyboardShortcutScope` contract; it requires no compositor-specific keyboard
 hook. Portal approval is managed separately from the Input Host so user denial
@@ -31,8 +32,9 @@ native input method. Check preedit, candidate placement, Unicode commits and foc
 transitions. Both authenticated Hosts should remain healthy without recovery loops.
 Global observation, overlays and silent capture must report their unavailable
 capabilities rather than borrowing Hyprland's session services. Validate global
-shortcut activation separately from focused recording, including native portal
-approval, recording an existing chord and activation from another application.
+shortcut activation separately from focused recording, including recording an
+existing chord and activation from another application. Check native portal approval
+only on portal-backed desktops; on Plasma 5, inspect KGlobalAccel registrations.
 
 Use the [Linux acceptance checklist](LinuxHyprlandValidation.md) for shared setup
 and cleanup. Ordinary window/input checks do not establish full desktop parity,

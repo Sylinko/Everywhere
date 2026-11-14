@@ -39,8 +39,11 @@ public sealed class TerminalUpdatePresentationTests
         var updater = Substitute.For<ISoftwareUpdater>();
         updater.TerminalUpdateHandler.Returns(Substitute.For<ITerminalUpdateHandler>());
         using var model = new ChangeLogViewModel(updater, Substitute.For<IHttpClientFactory>(), NullLogger<ChangeLogViewModel>.Instance);
-        typeof(ChangeLogViewModel).GetMethod("SetResolvedAction", BindingFlags.Instance | BindingFlags.NonPublic)?
-            .Invoke(model, [UpdatePageAction.DownloadAndInstall, CreateTarget()]);
+        var setResolvedAction = typeof(ChangeLogViewModel).GetMethod("SetResolvedAction", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingMethodException(nameof(ChangeLogViewModel), "SetResolvedAction");
+        var target = CreateTarget();
+        setResolvedAction.Invoke(model, [UpdatePageAction.DownloadAndInstall, target]);
+        Assert.That(model.UpdateTarget, Is.SameAs(target));
         Assert.That(model.IsUpdateButtonVisible, Is.False);
         await model.PerformUpdateCommand.ExecuteAsync(null);
         await updater.DidNotReceive().PerformUpdateAsync(Arg.Any<SoftwareUpdateMetadata>(), Arg.Any<CancellationToken>());
@@ -248,8 +251,18 @@ public sealed class TerminalUpdatePresentationTests
         Assert.Fail("The complete update command was not rendered.");
     }
 
-    private static SoftwareUpdateMetadata CreateTarget() => new(
-        UpdateChannel.Canary, "v99.0.0-canary.1", SemanticVersion.Parse("99.0.0-canary.1") ?? throw new InvalidOperationException("Invalid test version."), DateTimeOffset.UtcNow,
-        new SoftwareUpdateMetadata.UpdateAsset("Everywhere-Linux-x64-v99.0.0-canary.1.tar.zst", "sha256:" + new string('a', 64), 1024,
-            "https://github.com/pasical/Everywhere/releases", "https://github.com/pasical/Everywhere/releases"));
+    private static SoftwareUpdateMetadata CreateTarget()
+    {
+        return new SoftwareUpdateMetadata(
+            UpdateChannel.Canary,
+            "v99.0.0-canary.1",
+            SemanticVersion.Parse("99.0.0-canary.1") ?? throw new InvalidOperationException("Invalid test version."),
+            DateTimeOffset.UtcNow,
+            new SoftwareUpdateMetadata.UpdateAsset(
+                "Everywhere-Linux-x64-v99.0.0-canary.1.tar.zst",
+                "sha256:" + new string('a', 64),
+                1024,
+                "https://github.com/pasical/Everywhere/releases",
+                "https://github.com/pasical/Everywhere/releases"));
+    }
 }
