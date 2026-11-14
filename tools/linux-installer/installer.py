@@ -293,7 +293,7 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
         time.sleep(attempt + 1)
 
 
-INSTALLER_VERSION = '0.2.1'
+INSTALLER_VERSION = '0.2.2'
 INSTALLER_URL = 'https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.json'
 CATALOG_URL = 'github:Sylinko/Everywhere'
 
@@ -629,7 +629,8 @@ package() {
     (directory / 'com.Sylinko.Everywhere.desktop').write_text(
         '[Desktop Entry]\nName=Everywhere\nExec=/usr/bin/Everywhere %U\nType=Application\n'
         'Icon=Everywhere\nTerminal=false\nCategories=Utility;\nStartupWMClass=Everywhere\n')
-    execute(['makepkg', '--syncdeps', '--cleanbuild', '--force'], False, cwd=directory)
+    # Keep generated packages inside this transaction despite user makepkg settings.
+    execute(['makepkg', f'PKGDEST={directory}', '--syncdeps', '--cleanbuild', '--force'], False, cwd=directory)
     packages = [path for path in directory.glob('*.pkg.tar*') if not path.name.endswith('.sig')]
     if len(packages) != 1:
         raise UpdateError('Arch packaging did not produce exactly one package.')
