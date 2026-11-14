@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Italian (Italiano) -->
 <root>
     <resheader name="resmimetype">
@@ -2331,9 +2331,6 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>Gestisci la sincronizzazione cloud</value>
     </data>
-    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
-        <value>Gestisci</value>
-    </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Gestisci Abbonamento</value>
     </data>
@@ -4619,17 +4616,26 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="ChatSync_Description" xml:space="preserve">
         <value>Sincronizza la cronologia delle chat tra più dispositivi con lo stesso account. Puoi scegliere quali chat sincronizzare.</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Archivia</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Annulla archiviazione</value>
+    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Elimina definitivamente</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>Questa operazione elimina definitivamente questa chat e tutti i suoi rami da questo dispositivo e non può essere annullata. Sei sicuro?</value>
     </data>
-    <data name="ChatHistory_Archive_Header" xml:space="preserve">
-        <value>Archivia</value>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>Le chat ora utilizzano una struttura dati basata sui turni e il caricamento della cronologia è più efficiente. Ora puoi archiviare le chat e anche la sincronizzazione cloud ha ottenuto miglioramenti delle prestazioni.</value>
     </data>
-    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
-        <value>Annulla archiviazione</value>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>Abbiamo eseguito il backup dei vecchi dati delle chat. Non sono più utilizzati, a meno che in futuro non torni a una versione precedente di Everywhere. Puoi scegliere di eliminarli.</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Fissa in alto</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>Rinomina chat</value>
@@ -4640,8 +4646,8 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Elimina chat</value>
     </data>
-    <data name="ChatHistory_Pin" xml:space="preserve">
-        <value>Fissa in alto</value>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Sincronizzazione cloud della chat</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>Accedi prima per gestire la sincronizzazione cloud della chat.</value>
@@ -4649,8 +4655,8 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>Impossibile caricare la sincronizzazione cloud della chat. Controlla la connessione di rete o riprova più tardi.</value>
     </data>
-    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
-        <value>Sincronizzazione cloud della chat</value>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Gestisci</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>Attiva la sincronizzazione cloud della chat</value>
@@ -4658,22 +4664,16 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="ChatSync_Loading" xml:space="preserve">
         <value>Caricamento della sincronizzazione cloud della chat...</value>
     </data>
-  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
-    <value>Modificati di recente</value>
-  </data>
-  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
-    <value>Dimensione nel cloud</value>
-  </data>
-  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
-    <value>Avvio sincronizzazione</value>
-  </data>
-  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
-    <value>Arresto sincronizzazione</value>
-  </data>
-  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
-    <value>Abbiamo eseguito il backup dei vecchi dati delle chat. Non sono più utilizzati, a meno che in futuro non torni a una versione precedente di Everywhere. Puoi scegliere di eliminarli.</value>
-  </data>
-  <data name="ChatUpgrade_Body" xml:space="preserve">
-    <value>Le chat ora utilizzano una struttura dati basata sui turni e il caricamento della cronologia è più efficiente. Ora puoi archiviare le chat e anche la sincronizzazione cloud ha ottenuto miglioramenti delle prestazioni.</value>
-  </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>Modificati di recente</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>Dimensione nel cloud</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>Avvio sincronizzazione</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>Arresto sincronizzazione</value>
+    </data>
 </root>
