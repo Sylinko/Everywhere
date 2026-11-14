@@ -1,5 +1,10 @@
 <Project>
+  <!-- Local builds can supply the same public endpoint/client configuration as CI
+       without hardcoding deployment values or committing a private build profile. -->
+  <Import Project="$(EverywhereCloudConfigurationFile)" Condition="'$(EverywhereCloudConfigurationFile)' != '' And Exists('$(EverywhereCloudConfigurationFile)')" />
   <Target Name="GenerateCloudConstants" BeforeTargets="CoreCompile">
+    <Warning Condition="'$(ClientId)' == '' Or '$(AccountBaseUrl)' == ''" Code="EVERYWHERECLOUD001"
+             Text="Account sign-in is disabled: supply ClientId and AccountBaseUrl, or EverywhereCloudConfigurationFile, as in release builds." />
     <PropertyGroup>
       <ClientId Condition="'$(ClientId)' == ''"/>
       <AccountBaseUrl Condition="'$(AccountBaseUrl)' == ''"/>

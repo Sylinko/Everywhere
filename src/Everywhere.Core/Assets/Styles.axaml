@@ -411,4 +411,11 @@ ul, ol { padding-left: 2em; }
   <Style Selector="ContentPresenter">
     <Setter Property="FontFamily" Value="{DynamicResource CommonFontFamily}"/>
   </Style>
+
+  <Style Selector="shadui|DialogHost.ChatUpdateGuidance">
+    <Setter Property="CornerRadius" Value="{DynamicResource XlCornerRadius}"/>
+    <Style Selector="^ /template/ shadui|SmoothBorder#DialogContent">
+      <Setter Property="Background" Value="{DynamicResource AcrylicWindowBackgroundColor}"/>
+    </Style>
+  </Style>
 </Styles>

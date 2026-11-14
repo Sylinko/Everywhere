@@ -38,3 +38,8 @@ public class UrlProtocolCallbackMessage(string url) : ApplicationMessage
 
     public string Url { get; } = url;
 }
+
+/// <summary>
+/// Opens the main window and presents its terminal update guidance dialog.
+/// </summary>
+public sealed class ShowTerminalUpdateGuidanceMessage : ApplicationMessage;

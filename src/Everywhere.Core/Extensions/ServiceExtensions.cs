@@ -59,12 +59,17 @@ public static class ServiceExtensions
                 .AddSingleton<IAsyncInitializer>(sp => sp.GetRequiredService<HostProcessCoordinator>())
                 .AddSingleton<IAsyncInitializer>(sp => sp.GetRequiredService<MainHostControlServer>());
 
-        /// <summary>Registers Main's connection-restoring Input Host proxy.</summary>
-        public IServiceCollection AddInputHostShortcutListener() =>
-            services.AddSingleton<IShortcutListener>(sp =>
-                new InputHostShortcutListener(
+        /// <summary>
+        /// Registers Main's connection-restoring Input Host proxy for direct use or platform composition.
+        /// </summary>
+        public IServiceCollection AddInputHostShortcutListener()
+        {
+            return services
+                .AddSingleton(sp => new InputHostShortcutListener(
                     sp.GetRequiredService<IHostConnectionSource>(),
-                    sp.GetRequiredService<ILogger<InputHostShortcutListener>>()));
+                    sp.GetRequiredService<ILogger<InputHostShortcutListener>>()))
+                .AddSingleton<IShortcutListener>(sp => sp.GetRequiredService<InputHostShortcutListener>());
+        }
 
         public IServiceCollection AddSettings() =>
             services

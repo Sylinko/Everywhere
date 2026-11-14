@@ -49,4 +49,11 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>You've exhausted your free cloud search queries. Future searches will deduct credits.</value>
     </data>
+
+  <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+    <value>Account sign-in is not configured in this build.</value>
+  </data>
+  <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+    <value>Everywhere could not register the sign-in callback. Please try again.</value>
+  </data>
 </root>

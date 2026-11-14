@@ -4914,4 +4914,17 @@
   <data name="Common_CloudNotConfigured" xml:space="preserve">
     <value>此构建未配置官方云服务。</value>
   </data>
+  <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+    <value>更新 Everywhere</value>
+  </data>
+  <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+    <value>官网下载</value>
+  </data>
+  <data name="TerminalUpdate_Introduction" xml:space="preserve">
+    <value>当前系统不支持软件内更新。
+请复制下方命令，在终端中运行即可更新。</value>
+  </data>
+  <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+    <value>或者，从 </value>
+  </data>
 </root>

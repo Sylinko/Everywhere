@@ -12,7 +12,7 @@
       IsHitTestVisible="False">
       <v:ConditionalContentControl.Margin>
         <OnPlatform
-          x:TypeArguments="Thickness" Linux="16,0"
+          x:TypeArguments="Thickness" Linux="16,8,16,6"
           Windows="16,0" macOS="76,0,0,0"/>
       </v:ConditionalContentControl.Margin>
 

@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Headless.NUnit" />
+    <PackageReference Include="Avalonia.Themes.Simple" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <Using Include="NUnit.Framework" />
+    <ProjectReference Include="../../src/Everywhere.Linux/Everywhere.Linux.csproj" />
+  </ItemGroup>
+</Project>

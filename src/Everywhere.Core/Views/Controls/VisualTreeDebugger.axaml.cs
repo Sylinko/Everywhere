@@ -61,6 +61,7 @@ public partial class VisualTreeDebugger : UserControl, IDisposable
                 Opacity = 0.2
             },
         };
+        _windowHelper.InitializeWindow(_treeViewPointerOverOverlayWindow);
     }
 
     private void HandleVisualTreeViewPointerMoved(object? sender, PointerEventArgs e)

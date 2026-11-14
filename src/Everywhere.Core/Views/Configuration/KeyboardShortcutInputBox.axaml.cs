@@ -95,6 +95,7 @@ public partial class KeyboardShortcutInputBox : TemplatedControl
 
     private void HandleClearButtonClicked(object? sender, RoutedEventArgs e)
     {
+        StopRecording(shouldRestoreShortcut: false);
         Shortcut = default;
         e.Handled = true;
     }
@@ -160,7 +161,7 @@ public partial class KeyboardShortcutInputBox : TemplatedControl
         _shortcutScope.ShortcutFinished += HandleShortcutScopeShortcutFinished;
 
         _shortcutBeforePressed = Shortcut;
-        Shortcut = default;
+        DisplayShortcut = default;
         IsRecording = true;
         Focus();
     }
@@ -170,37 +171,60 @@ public partial class KeyboardShortcutInputBox : TemplatedControl
     {
         base.OnLostFocus(e);
 
-        IsRecording = false;
+        StopRecording(shouldRestoreShortcut: true);
+    }
 
-        if (_shortcutBeforePressed.IsValid)
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        StopRecording(shouldRestoreShortcut: true);
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private void StopRecording(bool shouldRestoreShortcut)
+    {
+        if (!IsRecording)
         {
-            Shortcut = _shortcutBeforePressed;
+            return;
         }
 
-        UpdateDisplayShortcut(Shortcut);
-
+        IsRecording = false;
         _shortcutScope?.PressingShortcutChanged -= HandleShortcutScopePressingShortcutChanged;
         _shortcutScope?.ShortcutFinished -= HandleShortcutScopeShortcutFinished;
         DisposeHelper.DisposeToDefault(ref _shortcutScope);
+
+        if (shouldRestoreShortcut)
+        {
+            Shortcut = _shortcutBeforePressed;
+        }
+        UpdateDisplayShortcut(Shortcut);
     }
 
-    private void HandleShortcutScopePressingShortcutChanged(IKeyboardShortcutScope _, KeyboardShortcut hotkey)
+    private void HandleShortcutScopePressingShortcutChanged(IKeyboardShortcutScope scope, KeyboardShortcut hotkey)
     {
         Dispatcher.UIThread.Invoke(() =>
         {
-            UpdateDisplayShortcut(hotkey);
-            _shortcutBeforePressed = default;
+            if (IsRecording && ReferenceEquals(_shortcutScope, scope))
+            {
+                UpdateDisplayShortcut(hotkey);
+            }
         });
     }
 
-    private void HandleShortcutScopeShortcutFinished(IKeyboardShortcutScope _, KeyboardShortcut shortcut)
+    private void HandleShortcutScopeShortcutFinished(IKeyboardShortcutScope scope, KeyboardShortcut shortcut)
     {
         Dispatcher.UIThread.Invoke(() =>
         {
-            Shortcut = shortcut;
+            if (!IsRecording || !ReferenceEquals(_shortcutScope, scope))
+            {
+                return;
+            }
+
+            // Keep the configured value until a complete chord is accepted. A partial
+            // modifier, cancellation or disconnected Host must not erase the old setting.
+            Shortcut = shortcut.IsValid && shortcut.Key != Key.Escape ? shortcut : _shortcutBeforePressed;
+            StopRecording(shouldRestoreShortcut: false);
             TopLevel.GetTopLevel(this)?.Focus();
         });
-
-        DisposeHelper.DisposeToDefault(ref _shortcutScope);
     }
 }

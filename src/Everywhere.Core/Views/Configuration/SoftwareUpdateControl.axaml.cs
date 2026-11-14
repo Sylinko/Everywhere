@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls.Primitives;
+﻿using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -20,6 +21,11 @@ public partial class SoftwareUpdateControl(
 
     public ISoftwareUpdater SoftwareUpdater { get; } = softwareUpdater;
 
+    /// <summary>
+    /// Gets whether the current platform uses terminal-managed updates.
+    /// </summary>
+    public bool IsTerminalUpdate => SoftwareUpdater.TerminalUpdateHandler is not null;
+
     public static readonly StyledProperty<IDynamicLocaleKey?> UpdateOrCheckTitleProperty = AvaloniaProperty.Register<SoftwareUpdateControl, IDynamicLocaleKey?>(
         nameof(UpdateOrCheckTitle));
 
@@ -35,6 +41,11 @@ public partial class SoftwareUpdateControl(
         UpdateOrCheckTitle = new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text);
         if (SoftwareUpdater.DisplayUpdate is not null)
         {
+            if (IsTerminalUpdate)
+            {
+                await TerminalUpdateGuidance.ShowAsync(TopLevel.GetTopLevel(this), cancellationToken);
+                return;
+            }
             serviceProvider.GetRequiredService<MainViewModel>().NavigateTo(serviceProvider.GetRequiredService<ChangeLogView>());
             return;
         }

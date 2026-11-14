@@ -4916,4 +4916,23 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="Common_CloudNotConfigured" xml:space="preserve">
         <value>Official cloud services are not configured in this build.</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>Update Everywhere</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>official website</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>In-app updates are not supported on this system.
+Copy the command below and run it in your terminal to update.</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>Or, download from the </value>
+    </data>
+    <data name="TextSelectionApplications_InvalidExecutablePath" xml:space="preserve">
+        <value>Enter an absolute path to the application's executable, for example /usr/bin/ghostty.</value>
+    </data>
+    <data name="TextSelectionApplications_ExecutablePathHint" xml:space="preserve">
+        <value>Enter the absolute path to the application's executable, for example /usr/bin/ghostty. Matching is case-sensitive; wildcards are not supported.</value>
+    </data>
 </root>

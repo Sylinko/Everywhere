@@ -105,6 +105,11 @@ public static class SaveWindowPlacementAssist
     {
         if (KeyValueStorage.Get<WindowPlacement?>($"WindowPlacement.{key}") is not { } placement) return;
 
+#if LINUX
+        // Select the destination before asking the platform for desktop scaling.
+        // Native Wayland desktop coordinates are logical even on a dense output.
+        window.Position = placement.Position;
+#endif
         double x, y;
         if (window.Screens.All.Count == 0)
         {
@@ -117,7 +122,11 @@ public static class SaveWindowPlacementAssist
             var targetScreen = window.Screens.ScreenFromPoint(placement.Position)
                 ?? window.Screens.Primary
                 ?? window.Screens.All.FirstOrDefault();
+#if LINUX
+            var scaling = window.DesktopScaling;
+#else
             var scaling = targetScreen?.Scaling ?? 1.0;
+#endif
 
             var screenBounds = targetScreen?.WorkingArea ?? default;
             var actualWidth = placement.Width <= 0 ? 200d : placement.Width * scaling;
@@ -157,17 +166,26 @@ public static class SaveWindowPlacementAssist
     {
         // Do not save placement if the window is minimized
         if (window.WindowState == WindowState.Minimized) return;
+#if LINUX
+        // Hiding a Wayland surface may report a transient empty client size.
+        if (!window.IsVisible) return;
+#endif
 
         key = $"WindowPlacement.{key}";
 
         // Only save size and position if the window is in Normal state
         if (window.WindowState == WindowState.Normal)
         {
+#if LINUX
+            var size = window.ClientSize;
+#else
+            var size = new Size(window.Width, window.Height);
+#endif
             var (width, height) = window.SizeToContent switch
             {
-                SizeToContent.Width => (-1, (int)window.Height),
-                SizeToContent.Height => ((int)window.Width, -1),
-                SizeToContent.Manual => ((int)window.Width, (int)window.Height),
+                SizeToContent.Width => (-1, (int)size.Height),
+                SizeToContent.Height => ((int)size.Width, -1),
+                SizeToContent.Manual => ((int)size.Width, (int)size.Height),
                 _ => (-1, -1)
             };
 

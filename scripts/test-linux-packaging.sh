@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -euo pipefail
+runtime=${1:?Pass linux-x64 or linux-arm64}
+repo_root=$(cd "$(dirname "$0")/.." && pwd)
+fixture=$(mktemp -d)
+trap 'rm -rf "$fixture"' EXIT
+mkdir -p "$fixture/src/Everywhere.Linux" "$fixture/img" "$fixture/publish"
+cp "$repo_root/src/Everywhere.Linux/packaging_deb.sh" \
+    "$repo_root/src/Everywhere.Linux/packaging_rpm.sh" \
+    "$fixture/src/Everywhere.Linux/"
+cp "$repo_root/img/Everywhere-icon.png" "$fixture/img/"
+cp "$repo_root/LICENSE" "$fixture/"
+printf '#!/bin/sh\nprintf "packaging-fixture\\n"\n' > "$fixture/publish/Everywhere"
+cp "$fixture/publish/Everywhere" "$fixture/publish/Everywhere.Watchdog"
+chmod +x "$fixture/publish/Everywhere" "$fixture/publish/Everywhere.Watchdog"
+cd "$fixture"
+version=1.2.3-canary.20261026.1
+case "$runtime" in
+    linux-x64)
+        asset=Linux-x64
+        arch=amd64
+        rpm_arch=x86_64
+        ;;
+    linux-arm64)
+        asset=Linux-arm64
+        arch=arm64
+        rpm_arch=aarch64
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+bash src/Everywhere.Linux/packaging_deb.sh "$runtime" "$version" ./publish
+# The no-override path must follow the framework selected by upstream.
+default_publish="src/Everywhere.Linux/bin/Release/net11.0/$runtime/publish"
+mkdir -p "$default_publish"
+cp publish/Everywhere publish/Everywhere.Watchdog "$default_publish/"
+bash src/Everywhere.Linux/packaging_deb.sh "$runtime" "$version"
+deb="Everywhere-${asset}-v${version}.deb"
+test "$(dpkg-deb -f "$deb" Package)" = everywhere
+test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+test "$(dpkg-deb -f "$deb" Version)" = 1.2.3~canary.20261026.1
+dpkg-deb -x "$deb" unpacked-deb
+dpkg-deb -e "$deb" unpacked-control
+test -L unpacked-deb/usr/bin/Everywhere
+test "$(readlink unpacked-deb/usr/bin/Everywhere)" = /opt/Everywhere/Everywhere
+cmp publish/Everywhere unpacked-deb/opt/Everywhere/Everywhere
+test "$(readlink unpacked-deb/usr/bin/ew)" = /opt/Everywhere/Everywhere
+dpkg-deb -f "$deb" Depends | grep -q "python3 (>= 3.9)"
+test -x unpacked-deb/opt/Everywhere/Everywhere.Watchdog
+desktop-file-validate unpacked-deb/usr/share/applications/com.Sylinko.Everywhere.desktop
+grep -q "StartupWMClass=Everywhere" unpacked-deb/usr/share/applications/com.Sylinko.Everywhere.desktop
+dpkg-deb -f "$deb" Depends | grep -q "libicu78"
+test ! -e unpacked-control/prerm
+bash src/Everywhere.Linux/packaging_rpm.sh "$runtime" "$version" ./publish
+rpm="Everywhere-${asset}-v${version}.rpm"
+test "$(rpm -qp --queryformat '%{NAME}' "$rpm")" = everywhere
+test "$(rpm -qp --queryformat '%{ARCH}' "$rpm")" = "$rpm_arch"
+test "$(rpm -qp --queryformat '%{VERSION}' "$rpm")" = 1.2.3~canary.20261026.1
+rpm -qp --requires "$rpm" | grep -qx libicu
+mkdir unpacked-rpm
+(cd unpacked-rpm && rpm2cpio "../$rpm" | cpio -idm --quiet)
+test -L unpacked-rpm/usr/bin/Everywhere
+test "$(readlink unpacked-rpm/usr/bin/Everywhere)" = /opt/Everywhere/Everywhere
+test "$(readlink unpacked-rpm/usr/bin/ew)" = /opt/Everywhere/Everywhere
+rpm -qp --requires "$rpm" | grep -qx "python3 >= 3.9"
+test -x unpacked-rpm/opt/Everywhere/Everywhere.Watchdog
+desktop-file-validate unpacked-rpm/usr/share/applications/com.Sylinko.Everywhere.desktop
+cmp publish/Everywhere unpacked-rpm/opt/Everywhere/Everywhere
+echo "DEB and RPM packaging fixtures passed for $runtime."

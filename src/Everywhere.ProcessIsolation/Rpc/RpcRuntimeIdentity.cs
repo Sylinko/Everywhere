@@ -54,12 +54,56 @@ public static class RpcRuntimeIdentity
     }
 
     /// <summary>
-    /// Returns the operating-system desktop/login session identifier exposed by
-    /// the current process. Unix environments without a process session API use
-    /// their session environment variable and finally a stable default value.
+    /// Returns the desktop/login session shared by cooperating processes. Linux uses
+    /// the explicit display or compositor identity rather than a POSIX process session,
+    /// which can differ between terminal jobs, compositor launches and user services.
+    /// Headless environments fall back to the platform's process session API.
     /// </summary>
     public static string GetDesktopSessionId()
     {
+        if (OperatingSystem.IsLinux())
+        {
+            var sessionType = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE");
+            var display = Environment.GetEnvironmentVariable("DISPLAY");
+            if (sessionType == "x11" && !string.IsNullOrEmpty(display))
+            {
+                return "x11:" + NormalizeX11Display(display);
+            }
+
+            // Desktop launchers may omit compositor-specific variables. The socket
+            // remains shared with terminal launches and distinguishes nested sessions.
+            var waylandDisplay = Environment.GetEnvironmentVariable("WAYLAND_DISPLAY");
+            if (!string.IsNullOrEmpty(waylandDisplay))
+            {
+                var runtimeDirectory = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
+                var socketPath = waylandDisplay;
+                if (Path.IsPathFullyQualified(waylandDisplay))
+                {
+                    socketPath = Path.GetFullPath(waylandDisplay);
+                }
+                else if (!string.IsNullOrEmpty(runtimeDirectory) && Path.IsPathFullyQualified(runtimeDirectory))
+                {
+                    socketPath = Path.GetFullPath(waylandDisplay, runtimeDirectory);
+                }
+
+                return "wayland:" + socketPath;
+            }
+
+            var desktops = (Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP") ?? string.Empty)
+                .Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var compositorInstance = Environment.GetEnvironmentVariable("HYPRLAND_INSTANCE_SIGNATURE");
+            if (!string.IsNullOrEmpty(compositorInstance) &&
+                (desktops.Length == 0 || desktops.Contains("Hyprland", StringComparer.OrdinalIgnoreCase)))
+            {
+                return "hyprland:" + compositorInstance;
+            }
+
+            if (!string.IsNullOrEmpty(display))
+            {
+                return "x11:" + NormalizeX11Display(display);
+            }
+        }
+
         try
         {
             using var process = Process.GetCurrentProcess();
@@ -72,5 +116,21 @@ public static class RpcRuntimeIdentity
 
         var environmentSession = Environment.GetEnvironmentVariable("XDG_SESSION_ID");
         return string.IsNullOrWhiteSpace(environmentSession) ? "default" : environmentSession;
+    }
+
+    /// <summary>
+    /// Treats an omitted X11 screen as screen zero without merging distinct screens or servers.
+    /// </summary>
+    private static string NormalizeX11Display(string display)
+    {
+        var separator = display.LastIndexOf(':');
+        var number = display.AsSpan(separator + 1);
+        if (separator >= 0 && number.Length > 2 && number.EndsWith(".0", StringComparison.Ordinal) &&
+            int.TryParse(number[..^2], NumberStyles.None, CultureInfo.InvariantCulture, out _))
+        {
+            return display[..^2];
+        }
+
+        return display;
     }
 }
