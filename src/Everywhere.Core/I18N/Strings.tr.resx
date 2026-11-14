@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Turkish (Turkey) -->
 <root>
     <resheader name="resmimetype">
@@ -2331,9 +2331,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>Bulut eşitlemesini yönet</value>
     </data>
-    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
-        <value>Yönet</value>
-    </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Aboneliği Yönet</value>
     </data>
@@ -4619,17 +4616,26 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatSync_Description" xml:space="preserve">
         <value>Aynı hesaptaki birden fazla cihaz arasında sohbet geçmişini eşitleyin. Hangi sohbetlerin eşitleneceğini seçebilirsiniz.</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Arşivle</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Arşivden çıkar</value>
+    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Kalıcı olarak sil</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>Bu işlem, bu sohbeti ve tüm dallarını bu cihazdan kalıcı olarak siler ve geri alınamaz. Emin misiniz?</value>
     </data>
-    <data name="ChatHistory_Archive_Header" xml:space="preserve">
-        <value>Arşivle</value>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>Sohbetler artık tura dayalı bir veri yapısı kullanıyor ve geçmiş yükleme daha verimli. Artık sohbetleri arşivleyebilirsiniz ve bulut eşitleme de performans iyileştirmeleri aldı.</value>
     </data>
-    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
-        <value>Arşivden çıkar</value>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>Eski sohbet verilerini yedekledik. Gelecekte Everywhere'i eski bir sürüme döndürmediğiniz sürece artık kullanılmıyorlar. İsterseniz bunları silebilirsiniz.</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Yukarı sabitle</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>Sohbeti yeniden adlandır</value>
@@ -4640,8 +4646,8 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Sohbeti sil</value>
     </data>
-    <data name="ChatHistory_Pin" xml:space="preserve">
-        <value>Yukarı sabitle</value>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Sohbet bulut eşitlemesi</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>Sohbet bulut eşitlemesini yönetmek için lütfen önce oturum açın.</value>
@@ -4649,8 +4655,8 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>Sohbet bulut eşitlemesi yüklenemedi. Ağ bağlantınızı kontrol edin veya daha sonra tekrar deneyin.</value>
     </data>
-    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
-        <value>Sohbet bulut eşitlemesi</value>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Yönet</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>Sohbet bulut eşitlemesini etkinleştir</value>
@@ -4658,22 +4664,16 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatSync_Loading" xml:space="preserve">
         <value>Sohbet bulut eşitlemesi yükleniyor...</value>
     </data>
-  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
-    <value>Son değiştirilen</value>
-  </data>
-  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
-    <value>Bulut boyutu</value>
-  </data>
-  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
-    <value>Eşitleme başlatılıyor</value>
-  </data>
-  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
-    <value>Eşitleme durduruluyor</value>
-  </data>
-  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
-    <value>Eski sohbet verilerini yedekledik. Gelecekte Everywhere'i eski bir sürüme döndürmediğiniz sürece artık kullanılmıyorlar. İsterseniz bunları silebilirsiniz.</value>
-  </data>
-  <data name="ChatUpgrade_Body" xml:space="preserve">
-    <value>Sohbetler artık tura dayalı bir veri yapısı kullanıyor ve geçmiş yükleme daha verimli. Artık sohbetleri arşivleyebilirsiniz ve bulut eşitleme de performans iyileştirmeleri aldı.</value>
-  </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>Son değiştirilen</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>Bulut boyutu</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>Eşitleme başlatılıyor</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>Eşitleme durduruluyor</value>
+    </data>
 </root>

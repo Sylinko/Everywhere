@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Russian (Русский) -->
 <root>
     <resheader name="resmimetype">
@@ -2331,9 +2331,6 @@
     <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>Управление облачной синхронизацией</value>
     </data>
-    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
-        <value>Управление</value>
-    </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>Управлять Подпиской</value>
     </data>
@@ -4619,17 +4616,26 @@
     <data name="ChatSync_Description" xml:space="preserve">
         <value>Синхронизируйте историю чатов между несколькими устройствами с одним аккаунтом. Вы можете выбрать, какие чаты будут синхронизироваться.</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>Архивировать</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>Разархивировать</value>
+    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>Удалить навсегда</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>Это навсегда удалит этот чат и все его ветки с этого устройства, и отменить это действие будет невозможно. Вы уверены?</value>
     </data>
-    <data name="ChatHistory_Archive_Header" xml:space="preserve">
-        <value>Архивировать</value>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>Чаты теперь используют структуру данных на основе ходов, а загрузка истории стала эффективнее. Теперь вы можете архивировать чаты, а облачная синхронизация также получила повышение производительности.</value>
     </data>
-    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
-        <value>Разархивировать</value>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>Мы создали резервную копию старых данных чата. Они больше не используются, если только вы не вернётесь к более ранней версии Everywhere в будущем. Вы можете их удалить.</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>Закрепить сверху</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>Переименовать чат</value>
@@ -4640,8 +4646,8 @@
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>Удалить чат</value>
     </data>
-    <data name="ChatHistory_Pin" xml:space="preserve">
-        <value>Закрепить сверху</value>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>Облачная синхронизация чата</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>Сначала войдите в систему, чтобы управлять облачной синхронизацией чатов.</value>
@@ -4649,8 +4655,8 @@
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>Не удалось загрузить облачную синхронизацию чата. Проверьте подключение к сети или повторите попытку позже.</value>
     </data>
-    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
-        <value>Облачная синхронизация чата</value>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>Управление</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>Включить облачную синхронизацию чата</value>
@@ -4658,22 +4664,16 @@
     <data name="ChatSync_Loading" xml:space="preserve">
         <value>Загрузка облачной синхронизации чата...</value>
     </data>
-  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
-    <value>Недавно изменённые</value>
-  </data>
-  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
-    <value>Размер в облаке</value>
-  </data>
-  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
-    <value>Запуск синхронизации</value>
-  </data>
-  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
-    <value>Остановка синхронизации</value>
-  </data>
-  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
-    <value>Мы создали резервную копию старых данных чата. Они больше не используются, если только вы не вернётесь к более ранней версии Everywhere в будущем. Вы можете их удалить.</value>
-  </data>
-  <data name="ChatUpgrade_Body" xml:space="preserve">
-    <value>Чаты теперь используют структуру данных на основе ходов, а загрузка истории стала эффективнее. Теперь вы можете архивировать чаты, а облачная синхронизация также получила повышение производительности.</value>
-  </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>Недавно изменённые</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>Размер в облаке</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>Запуск синхронизации</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>Остановка синхронизации</value>
+    </data>
 </root>

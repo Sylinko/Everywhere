@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Japanese (日本語) -->
 <root>
     <resheader name="resmimetype">
@@ -2331,9 +2331,6 @@
     <data name="UserProfilePresenter_ManageChatSyncButton_Content" xml:space="preserve">
         <value>クラウド同期を管理</value>
     </data>
-    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
-        <value>管理</value>
-    </data>
     <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
         <value>サブスクリプションを管理</value>
     </data>
@@ -4619,17 +4616,26 @@
     <data name="ChatSync_Description" xml:space="preserve">
         <value>同じアカウントの複数のデバイス間でチャット履歴を同期します。同期するチャットを選択できます。</value>
     </data>
+    <data name="ChatHistory_Archive_Header" xml:space="preserve">
+        <value>アーカイブ</value>
+    </data>
+    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
+        <value>アーカイブを解除</value>
+    </data>
     <data name="ChatHistory_Delete_Header" xml:space="preserve">
         <value>完全に削除</value>
     </data>
     <data name="ChatHistory_DeleteDialog_Content" xml:space="preserve">
         <value>このチャットとそのすべてのブランチがこのデバイスから完全に削除され、元に戻すことはできません。よろしいですか？</value>
     </data>
-    <data name="ChatHistory_Archive_Header" xml:space="preserve">
-        <value>アーカイブ</value>
+    <data name="ChatUpgrade_Body" xml:space="preserve">
+        <value>チャットはターン単位で整理されたデータ構造になり、履歴の読み込みもより効率的になりました。チャットをアーカイブできるようになり、クラウド同期のパフォーマンスも向上しています。</value>
     </data>
-    <data name="ChatHistory_Unarchive_Header" xml:space="preserve">
-        <value>アーカイブを解除</value>
+    <data name="ChatUpgrade_Compatibility" xml:space="preserve">
+        <value>以前のチャットデータをバックアップしました。将来 Everywhere をダウングレードしない限り、このデータは使用されません。削除することもできます。</value>
+    </data>
+    <data name="ChatHistory_Pin" xml:space="preserve">
+        <value>ピン留めする</value>
     </data>
     <data name="ChatHistory_RenameDialog_Title" xml:space="preserve">
         <value>チャット名を変更</value>
@@ -4640,8 +4646,8 @@
     <data name="ChatHistory_DeleteDialog_Title" xml:space="preserve">
         <value>チャットを削除</value>
     </data>
-    <data name="ChatHistory_Pin" xml:space="preserve">
-        <value>ピン留めする</value>
+    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
+        <value>チャットのクラウド同期</value>
     </data>
     <data name="ChatSync_SignInRequired" xml:space="preserve">
         <value>チャットのクラウド同期を管理するには、先にサインインしてください。</value>
@@ -4649,8 +4655,8 @@
     <data name="ChatSync_LoadFailed" xml:space="preserve">
         <value>チャットのクラウド同期を読み込めませんでした。ネットワークを確認するか、しばらくしてからもう一度お試しください。</value>
     </data>
-    <data name="ChatSyncPage_TitleTextBlock_Text" xml:space="preserve">
-        <value>チャットのクラウド同期</value>
+    <data name="ChatInputNotificationPresenter_ManageChatSyncButton_Content" xml:space="preserve">
+        <value>管理</value>
     </data>
     <data name="ChatSync_Enable" xml:space="preserve">
         <value>チャットのクラウド同期を有効にする</value>
@@ -4658,22 +4664,16 @@
     <data name="ChatSync_Loading" xml:space="preserve">
         <value>チャットのクラウド同期を読み込み中...</value>
     </data>
-  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
-    <value>更新日時</value>
-  </data>
-  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
-    <value>クラウドのサイズ</value>
-  </data>
-  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
-    <value>同期を開始しています</value>
-  </data>
-  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
-    <value>同期を停止しています</value>
-  </data>
-  <data name="ChatUpgrade_Compatibility" xml:space="preserve">
-    <value>以前のチャットデータをバックアップしました。将来 Everywhere をダウングレードしない限り、このデータは使用されません。削除することもできます。</value>
-  </data>
-  <data name="ChatUpgrade_Body" xml:space="preserve">
-    <value>チャットはターン単位で整理されたデータ構造になり、履歴の読み込みもより効率的になりました。チャットをアーカイブできるようになり、クラウド同期のパフォーマンスも向上しています。</value>
-  </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>更新日時</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>クラウドのサイズ</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>同期を開始しています</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>同期を停止しています</value>
+    </data>
 </root>

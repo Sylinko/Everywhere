@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- English -->
 <root>
     <resheader name="resmimetype">
@@ -4901,19 +4901,19 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="ChatSync_Loading" xml:space="preserve">
         <value>Loading chat cloud sync...</value>
     </data>
-  <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
-    <value>Recently modified</value>
-  </data>
-  <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
-    <value>Cloud size</value>
-  </data>
-  <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
-    <value>Starting sync</value>
-  </data>
-  <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
-    <value>Stopping sync</value>
-  </data>
-  <data name="Common_CloudNotConfigured" xml:space="preserve">
-    <value>Official cloud services are not configured in this build.</value>
-  </data>
+    <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
+        <value>Recently modified</value>
+    </data>
+    <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
+        <value>Cloud size</value>
+    </data>
+    <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
+        <value>Starting sync</value>
+    </data>
+    <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
+        <value>Stopping sync</value>
+    </data>
+    <data name="Common_CloudNotConfigured" xml:space="preserve">
+        <value>Official cloud services are not configured in this build.</value>
+    </data>
 </root>
