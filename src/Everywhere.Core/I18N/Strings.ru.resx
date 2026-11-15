@@ -4985,4 +4985,28 @@
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>Загружать значки сайтов для видимых ссылок, а при наведении — предпросмотр веб-страниц. Для ссылок с параметрами запроса отображается только домен.</value>
     </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>Просмотр изображения</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>Просмотр локальных изображений с помощью моделей, поддерживающих ввод изображений.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>Просмотрено изображений: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>Укажите от 1 до 8 путей к изображениям.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>Путь к изображению не указан.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>Изображение слишком большое. Уменьшите его или обрежьте нужную область.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>Недопустимое изображение или неподдерживаемый формат.</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>Запрос превышает ограничение сервиса на размер входных данных.</value>
+    </data>
 </root>

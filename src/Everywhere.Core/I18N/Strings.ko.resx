@@ -4985,4 +4985,28 @@
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>표시된 링크의 사이트 아이콘을 로드하고, 마우스를 올리면 웹페이지 미리 보기를 로드합니다. 쿼리 매개변수가 있는 링크는 도메인만 표시합니다.</value>
     </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>이미지 보기</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>이미지 입력을 지원하는 모델로 로컬 이미지를 확인합니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>이미지 {0}개를 확인했습니다</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>이미지 경로를 1~8개 입력하세요.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>이미지 경로가 비어 있습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>이미지가 너무 큽니다. 이미지 크기를 줄이거나 필요한 영역을 잘라내세요.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>이미지가 유효하지 않거나 지원되지 않는 형식입니다.</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>요청이 서비스의 입력 한도를 초과했습니다.</value>
+    </data>
 </root>

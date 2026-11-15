@@ -4985,4 +4985,28 @@
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>為可見連結載入網站圖示，將游標停留在連結上時載入網頁預覽。包含查詢參數的連結只會顯示網域。</value>
     </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>檢視圖片</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>使用支援圖片輸入的模型檢視本機圖片。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>已檢視 {0} 張圖片</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>請提供 1 到 8 個圖片路徑。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>圖片路徑不可為空。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>圖片過大，請縮小圖片或裁切所需區域。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>圖片無效，或使用了不支援的格式。</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>要求超出服務的輸入限制。</value>
+    </data>
 </root>
