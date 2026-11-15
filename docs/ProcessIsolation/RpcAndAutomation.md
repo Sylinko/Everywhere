@@ -6,6 +6,18 @@ Process-isolation RPC uses framed named-pipe connections with MessagePack payloa
 
 The transport owns correlation, cancellation, stream completion, graceful shutdown, and connection failure. Application services own semantic retries and state recovery. An RPC request is never replayed automatically after connection loss.
 
+## Input notification ordering
+
+The Input Host sends activations, capture previews and capture completion in pipe order.
+Main opts these three notification handlers into a single ordered sequence on that connection.
+Each waits for the previous handler off the pipe reader. Diagnostic notifications, requests
+and responses do not wait for Input. Sequence numbers reject duplicates. UTC timestamps are used only
+to reject stale events.
+
+The shortcut listener queues callbacks under its state lock and runs them outside it on one
+consumer. A slow UI callback cannot block input admission or let completion overtake a preview.
+Disconnect cancels an active capture even if the host has not acknowledged it yet.
+
 ## Remote resources
 
 Remote resources are addressed by a nonzero signed `long` scoped to one authenticated connection. They represent ownership of a Context, Anchor, Picker, or another releasable object, not a native handle or native element identity. Two anchors may retain the same canonical element under different resource IDs.

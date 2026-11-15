@@ -90,9 +90,15 @@ internal static class RpcSourceEmitter
 
     private static void AppendBinding(StringBuilder builder, RpcContractModel contract)
     {
+        var hasNotifications = contract.Methods.Any(static method => method.Kind == RpcMethodKind.Notification);
         builder.Append(contract.Accessibility).Append(" static class ").Append(contract.Stem).AppendLine("RpcBinding");
         builder.AppendLine("{");
-        builder.Append("    public static void Bind(global::Everywhere.ProcessIsolation.Rpc.RpcConnection connection, ").Append(contract.InterfaceType).AppendLine(" implementation)");
+        builder.Append("    public static void Bind(global::Everywhere.ProcessIsolation.Rpc.RpcConnection connection, ").Append(contract.InterfaceType).Append(" implementation");
+        if (hasNotifications)
+        {
+            builder.Append(", bool shouldPreserveOrder = false");
+        }
+        builder.AppendLine(")");
         builder.AppendLine("    {");
         foreach (var method in contract.Methods)
         {
@@ -121,9 +127,10 @@ internal static class RpcSourceEmitter
 
         builder.Append("            ").Append(contract.Stem).Append("RpcOperations.").Append(method.OperationName).AppendLine(",");
         builder.Append("            ");
+        var registrationEnd = method.Kind == RpcMethodKind.Notification ? ", shouldPreserveOrder);" : ");";
         if (method is { ReturnsTask: false, CancellationTokenParameterName: not null })
         {
-            builder.Append("implementation.").Append(method.EscapedName).AppendLine(");");
+            builder.Append("implementation.").Append(method.EscapedName).AppendLine(registrationEnd);
             return;
         }
 
@@ -151,6 +158,6 @@ internal static class RpcSourceEmitter
             builder.Append(')');
         }
 
-        builder.AppendLine(");");
+        builder.AppendLine(registrationEnd);
     }
 }

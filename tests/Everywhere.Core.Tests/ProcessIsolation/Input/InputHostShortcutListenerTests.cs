@@ -84,9 +84,10 @@ public sealed class InputHostShortcutListenerTests
 
         using var scope = listener.StartCaptureKeyboardShortcut();
         var changed = new TaskCompletionSource<KeyboardShortcut>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var finished = new TaskCompletionSource<KeyboardShortcut>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var finished = new TaskCompletionSource<(KeyboardShortcut Shortcut, bool HasPreview)>(TaskCreationOptions.RunContinuationsAsynchronously);
         scope.PressingShortcutChanged += (_, shortcut) => changed.TrySetResult(shortcut);
-        scope.ShortcutFinished += (_, shortcut) => finished.TrySetResult(shortcut);
+        // The recorder stops listening on completion; a preview delivered later is lost.
+        scope.ShortcutFinished += (_, shortcut) => finished.TrySetResult((shortcut, changed.Task.IsCompletedSuccessfully));
         source.Publish(client);
 
         var state = await host.NextStateAsync();
@@ -113,11 +114,12 @@ public sealed class InputHostShortcutListenerTests
 
         var expected = new KeyboardShortcut(Key.P, KeyModifiers.Meta);
         var changedShortcut = await changed.Task.WaitAsync(TimeSpan.FromSeconds(5));
-        var finishedShortcut = await finished.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var completion = await finished.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Multiple(() =>
         {
             Assert.That(changedShortcut, Is.EqualTo(expected));
-            Assert.That(finishedShortcut, Is.EqualTo(expected));
+            Assert.That(completion.Shortcut, Is.EqualTo(expected));
+            Assert.That(completion.HasPreview, Is.True);
             Assert.That(scope.PressingShortcut, Is.EqualTo(expected));
         });
         var completedState = await host.NextStateAsync();
@@ -161,8 +163,9 @@ public sealed class InputHostShortcutListenerTests
             Is.EqualTo(firstState.KeyboardRegistrations.Single().RegistrationId));
     }
 
-    [Test]
-    public async Task ActiveCapture_WhenConnectionDisconnects_IsCancelledLocally()
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task ActiveCapture_WhenConnectionDisconnects_IsCancelledLocally(bool shouldAcknowledge)
     {
         var source = new TestHostConnectionSource();
         await using var listener = new InputHostShortcutListener(
@@ -170,7 +173,8 @@ public sealed class InputHostShortcutListenerTests
             NullLogger<InputHostShortcutListener>.Instance);
         var pair = await InputConnectionPair.CreateAsync();
         await using var server = pair.Server;
-        var host = new TestInputHostRpc();
+        // Disconnect can arrive after the host receives the capture but before Main gets its acknowledgement.
+        var host = new TestInputHostRpc(shouldAcknowledge);
         InputHostRpcBinding.Bind(server, host);
         server.Start();
         pair.Client.Start();
@@ -195,16 +199,21 @@ public sealed class InputHostShortcutListenerTests
         UtcTicks = utcTicks ?? DateTimeOffset.UtcNow.UtcTicks
     };
 
-    private sealed class TestInputHostRpc : IInputHostRpc
+    private sealed class TestInputHostRpc(bool shouldAcknowledge = true) : IInputHostRpc
     {
         private readonly Channel<ApplyInputStateRequest> _states = Channel.CreateUnbounded<ApplyInputStateRequest>();
 
-        public ValueTask<ApplyInputStateResponse> ApplyStateAsync(
+        public async ValueTask<ApplyInputStateResponse> ApplyStateAsync(
             ApplyInputStateRequest request,
             CancellationToken cancellationToken = default)
         {
             _states.Writer.TryWrite(request);
-            return ValueTask.FromResult(new ApplyInputStateResponse { IsApplied = true });
+            if (!shouldAcknowledge)
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+
+            return new ApplyInputStateResponse { IsApplied = true };
         }
 
         public Task<ApplyInputStateRequest> NextStateAsync() =>
