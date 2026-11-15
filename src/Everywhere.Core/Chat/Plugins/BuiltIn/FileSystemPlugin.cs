@@ -19,7 +19,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 /// <summary>
 /// Provides model-facing file operations while delegating resource semantics to file handlers.
 /// </summary>
-public sealed class FileSystemPlugin : BuiltInChatPlugin
+public sealed partial class FileSystemPlugin : BuiltInChatPlugin
 {
     private static TimeSpan RegexTimeout => TimeSpan.FromSeconds(3);
 
@@ -70,12 +70,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         skip = Math.Max(0, skip);
         maxCount = Math.Clamp(maxCount, 0, 1000);
 
-        _logger.LogDebug(
-            "Searching files in path: {Path} with pattern: {SearchPattern}, skip: {Skip}, maxCount: {MaxCount}",
-            path,
-            filePattern,
-            skip,
-            maxCount);
+        LogSearchingFilesInPath(path, filePattern, skip, maxCount);
 
         var context = await _contextFactory.CreateAsync(path, chatContext.WorkingDirectory, cancellationToken);
         await PublishFileReferenceAsync(
@@ -148,7 +143,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         string path,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Getting file information for path: {Path}", path);
+        LogGettingFileInformationForPath(path);
 
         var context = await _contextFactory.CreateAsync(path, chatContext.WorkingDirectory, cancellationToken);
         await PublishFileReferenceAsync(userInterface, new ChatPluginFileReference(context.Path) { IsDirectory = context.IsDirectory });
@@ -174,13 +169,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         [Description("Maximum number of matching lines to return. Max is 200")] int maxResults = 20,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug(
-            "Searching file content in path: {Path} with pattern: {SearchPattern}, isRegex: {IsRegex}, ignoreCase: {IgnoreCase}, filePattern: {FilePattern}",
-            path,
-            pattern,
-            isRegex,
-            ignoreCase,
-            filePattern);
+        LogSearchingFileContentInPath(path, pattern, isRegex, ignoreCase, filePattern);
 
         var options = RegexOptions.Compiled | RegexOptions.Multiline;
         if (ignoreCase) options |= RegexOptions.IgnoreCase;
@@ -250,10 +239,11 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         Read a local path, file:// URI, or a skill:// resource in bounded chunks.
         Text files use 1-based logical line offsets; PDFs use text extraction and global logical line offsets with page metadata; binary files use 1-based byte offsets and return hexadecimal data.
         docx, xlsx, pptx are not supported. Use `officecli` instead.
+        To see an image, use `view_image` when available.
         """)]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
-    private async Task<object> ReadFileAsync(
+    private async Task<PromptNode> ReadFileAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         [Description(
@@ -267,47 +257,16 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         [Description("1-based line or byte offset. Use `nextOffset` from the previous result to continue.")]
         int offset = 1,
         [Description("Maximum number of logical lines or bytes to return.")] int limit = 2000,
-        [Description("Treat a local file as an attachment. Keep this as false for most use cases.")]
-        bool attachment = false,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug(
-            "Reading file at path: {Path}, offset: {Offset}, limit: {Limit}, attachment: {Attachment}",
-            path,
-            offset,
-            limit,
-            attachment);
+        LogReadingFileAtPath(path, offset, limit);
 
         var context = await _contextFactory.CreateAsync(path, chatContext.WorkingDirectory, cancellationToken);
         await PublishFileReferenceAsync(userInterface, new ChatPluginFileReference(context.Path) { IsDirectory = context.IsDirectory });
-        if (attachment)
-        {
-            if (context.FileSystemInfo is not FileInfo { Exists: true } file)
-            {
-                throw new HandledException(
-                    new NotSupportedException(
-                        "The 'attachment' option was requested, but the path is not an existing local file. Only existing local files can be attached."),
-                    LocaleKey.BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage);
-            }
-
-            return file.Length switch
-            {
-                0 => $"(The file `{context.Path}` exists, but is empty)",
-                > 10L * 1024 * 1024 => throw new HandledException(
-                    new NotSupportedException(
-                        "The requested attachment is larger than 10 MiB, so it cannot be attached."),
-                    new FormattedDynamicLocaleKey(
-                        LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
-                        10),
-                    showDetails: false),
-                _ => await FileAttachment.CreateAsync(context.Path, cancellationToken: cancellationToken)
-            };
-        }
-
         return await ReadContentAsync(context, offset, limit, cancellationToken);
     }
 
-    /// <summary>Reads a review resource through the normal handlers without attachments or chat presentation.</summary>
+    /// <summary>Reads a review resource through the normal handlers without chat presentation.</summary>
     public async Task<PromptNode> ReadForApprovalAsync(
         string path,
         string workingDirectory,
@@ -342,14 +301,10 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         [Description("The operation to perform: copy or move.")] FileTransferOperation operation,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug(
-            "{Operation} file from {Source} to {Destination}",
-            operation,
-            source,
-            destination);
+        LogOperationFileFromSourceToDestination(operation, source, destination);
 
-        source = ExpandLocalPath(chatContext, source);
-        destination = ExpandLocalPath(chatContext, destination);
+        source = LocalFileHandler.ExpandLocalPath(source, chatContext.WorkingDirectory);
+        destination = LocalFileHandler.ExpandLocalPath(destination, chatContext.WorkingDirectory);
         if (operation is not FileTransferOperation.Copy and not FileTransferOperation.Move)
         {
             throw new HandledException(
@@ -472,7 +427,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         [Description("Whether non-empty directories may be deleted recursively.")] bool recursive = false,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Deleting paths: {Paths}, recursive: {Recursive}", paths, recursive);
+        LogDeletingPaths(paths, recursive);
         if (paths.Count == 0)
         {
             throw new HandledException(
@@ -483,7 +438,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var workingDirectory = chatContext.WorkingDirectory;
         var targets = paths
             .AsValueEnumerable()
-            .Select(path => ExpandLocalPath(chatContext, path))
+            .Select(path => LocalFileHandler.ExpandLocalPath(path, chatContext.WorkingDirectory))
             .Select(path => ResolveFileOperationPath(path, PathResolutionMode.PreserveFinalComponent))
             .Distinct(PathUtilities.SystemPathComparer)
             .Select(path => PrepareDeleteTarget(path, workingDirectory, recursive, cancellationToken))
@@ -610,9 +565,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         string path,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Creating directory at {Path}", path);
+        LogCreatingDirectoryAtPath(path);
 
-        path = ExpandLocalPath(chatContext, path);
+        path = LocalFileHandler.ExpandLocalPath(path, chatContext.WorkingDirectory);
         path = ResolveFileOperationPath(path, PathResolutionMode.PreserveFinalComponent);
         var isDirectory = Directory.Exists(path);
         var isFile = !isDirectory && File.Exists(path);
@@ -749,7 +704,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         string? patch,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Applying a file patch with {CharacterCount} characters", patch?.Length ?? 0);
+        LogApplyingAFilePatch(patch?.Length ?? 0);
         if (string.IsNullOrWhiteSpace(patch))
         {
             throw new HandledException(
@@ -857,8 +812,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     private static ChatPluginDisplayBlock CreatePatchReviewContent(PatchReviewItem item)
     {
-        if (item.File is PatchUpdatePlanFile update &&
-            !string.Equals(update.SourceEntryPath, update.SourcePath, PathUtilities.SystemPathComparison))
+        if (item.File is PatchUpdatePlanFile update && !string.Equals(update.SourceEntryPath, update.SourcePath, PathUtilities.SystemPathComparison))
         {
             return new ChatPluginContainerDisplayBlock
             {
@@ -1280,30 +1234,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         }
     }
 
-    private static string ExpandLocalPath(ChatContext chatContext, string path)
-    {
-        Uri? uri = null;
-        if (PathUtilities.HasExplicitUriScheme(path) &&
-            (!Uri.TryCreate(path, UriKind.Absolute, out uri) || !uri.IsFile))
-        {
-            throw new HandledException(
-                new NotSupportedException(
-                    "The requested path uses a non-file URI scheme. This file-system tool supports local paths and file:// URIs only."),
-                LocaleKey.BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage);
-        }
-
-        try
-        {
-            return PathUtilities.ExpandFullPath(uri?.IsFile == true ? uri.LocalPath : path, chatContext.WorkingDirectory);
-        }
-        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
-        {
-            throw new HandledException(
-                new ArgumentException($"The path '{path}' could not be resolved as a valid local path: {ex.Message}", ex),
-                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
-        }
-    }
-
     private static string ResolveFileOperationPath(string path, PathResolutionMode mode)
     {
         var result = PathUtilities.ResolvePath(path, mode);
@@ -1703,4 +1633,28 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             return CreateFileTransferContent(new ChatPluginFileReference(source), new ChatPluginFileReference(destination), operation);
         }
     }
+
+    [LoggerMessage(LogLevel.Debug, "Searching files in path: {Path} with pattern: {SearchPattern}, skip: {Skip}, maxCount: {MaxCount}")]
+    partial void LogSearchingFilesInPath(string path, string searchPattern, int skip, int maxCount);
+
+    [LoggerMessage(LogLevel.Debug, "Getting file information for path: {Path}")]
+    partial void LogGettingFileInformationForPath(string path);
+
+    [LoggerMessage(LogLevel.Debug, "Searching file content in path: {Path} with pattern: {SearchPattern}, isRegex: {IsRegex}, ignoreCase: {IgnoreCase}, filePattern: {FilePattern}")]
+    partial void LogSearchingFileContentInPath(string path, string searchPattern, bool isRegex, bool ignoreCase, string filePattern);
+
+    [LoggerMessage(LogLevel.Debug, "Reading file at path: {Path}, offset: {Offset}, limit: {Limit}")]
+    partial void LogReadingFileAtPath(string path, int offset, int limit);
+
+    [LoggerMessage(LogLevel.Debug, "{Operation} file from {Source} to {Destination}")]
+    partial void LogOperationFileFromSourceToDestination(FileTransferOperation operation, string source, string destination);
+
+    [LoggerMessage(LogLevel.Debug, "Deleting paths: {Paths}, recursive: {Recursive}")]
+    partial void LogDeletingPaths(IReadOnlyList<string> paths, bool recursive);
+
+    [LoggerMessage(LogLevel.Debug, "Creating directory at {Path}")]
+    partial void LogCreatingDirectoryAtPath(string path);
+
+    [LoggerMessage(LogLevel.Debug, "Applying a file patch with {CharacterCount} characters")]
+    partial void LogApplyingAFilePatch(int characterCount);
 }

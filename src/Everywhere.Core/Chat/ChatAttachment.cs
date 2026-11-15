@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Everywhere.AI;
 using Everywhere.Automation;
 using Everywhere.Common;
 using Everywhere.Prompting.Documents;
@@ -301,11 +300,6 @@ public sealed partial class FileAttachment(
     string? description = null
 ) : ChatAttachment(headerKey)
 {
-    /// <summary>
-    /// The maximum size of the file content that can be inlined in the chat message. Default is 25 MiB.
-    /// </summary>
-    public const long MaximumInlineContentSizeInBytes = 25L * 1024 * 1024;
-
     public override LucideIconKind Icon => LucideIconKind.File;
 
     [Key(1)]
@@ -357,17 +351,6 @@ public sealed partial class FileAttachment(
         }
         private set;
     }
-
-    [JsonIgnore]
-    [IgnoreMember]
-    public Modalities? RequiredModalities => FileUtilities.GetCategory(MimeType) switch
-    {
-        FileTypeCategory.Image => Modalities.Image,
-        FileTypeCategory.Audio => Modalities.Audio,
-        FileTypeCategory.Video => Modalities.Video,
-        FileTypeCategory.Document when MimeType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase) => Modalities.Pdf,
-        _ => null
-    };
 
     [JsonIgnore]
     [IgnoreMember]

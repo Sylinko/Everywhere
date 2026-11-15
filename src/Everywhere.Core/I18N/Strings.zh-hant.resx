@@ -2794,9 +2794,6 @@
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>查看定價詳情</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>此附件類型不被模型支持，但模型仍可看到元數據並被提示使用工具處理</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>已阻止模型調用工具。</value>
     </data>

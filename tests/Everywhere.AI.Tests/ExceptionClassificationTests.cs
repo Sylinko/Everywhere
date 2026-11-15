@@ -156,6 +156,19 @@ public sealed class ExceptionClassificationTests
         Assert.That(handled.InnerException, Is.SameAs(original));
     }
 
+    [TestCase(413, "Request body too large", true)]
+    [TestCase(400, "Too many images in request: 31 > 30", true)]
+    [TestCase(400, "Invalid image format", false)]
+    [TestCase(429, "Too many requests", false)]
+    public void Handle_WhenProviderRejectsRequest_OnlyExplicitInputLimitsAreClassifiedAsOversize(
+        int statusCode,
+        string message,
+        bool isInputLimit)
+    {
+        var handled = Normalize(new HttpRequestException(message, null, (HttpStatusCode)statusCode));
+        Assert.That(handled is HandledChatException.InvalidRequest.RequestInputTooLarge, Is.EqualTo(isInputLimit));
+    }
+
     [Test]
     public void FromErrorCode_WhenGenericServerErrorHasNoHttpStatus_UsesCodeBaseline()
     {

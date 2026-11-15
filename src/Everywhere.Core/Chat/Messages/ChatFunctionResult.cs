@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using MessagePack;
 
 namespace Everywhere.Chat;
@@ -9,6 +9,7 @@ namespace Everywhere.Chat;
 [MessagePackObject(OnlyIncludeKeyedMembers = true)]
 [MessagePackUnion(0, typeof(VisualTextFunctionResult))]
 [MessagePackUnion(1, typeof(VisualAttachmentFunctionResult))]
+[MessagePackUnion(2, typeof(ViewImageFunctionResult))]
 public abstract partial class ChatFunctionResult : IHaveChatAttachments
 {
     /// <summary>Gets the value presented to the model as the function result.</summary>

@@ -9,8 +9,9 @@ namespace Everywhere.Storage;
 public interface IBlobStorage
 {
     /// <summary>
-    /// Creates a blob from a stream, calculates its SHA256 hash, and saves it to the blob store if it doesn't already exist.
-    /// It creates or updates the corresponding BlobEntity in the database, then saves the stream to disk.
+    /// Stores a snapshot of the stream and updates the blob's access time. If the same
+    /// content was registered by path, its registration is kept and the returned path
+    /// refers to the managed snapshot instead of the external file.
     /// </summary>
     /// <param name="content">The stream containing the blob data.</param>
     /// <param name="mimeType">The MIME type of the blob.</param>

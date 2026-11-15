@@ -72,7 +72,7 @@ public interface IChatPluginManager
     /// </summary>
     /// <returns></returns>
     Task<IChatPluginScope> CreateScopeAsync(
-        Assistant assistant,
+        AssistantConfiguration configuration,
         ChatContext chatContext,
         ChatMessageNode ownerNode,
         IToolRulesets? toolRulesets,

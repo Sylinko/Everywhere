@@ -554,7 +554,7 @@ public sealed partial class ChatService : IChatService
             ]);
 
             var chatPluginScope = await _chatPluginManager.CreateScopeAsync(
-                assistant,
+                kernelMixin.Configuration,
                 chatContext,
                 appendTailNode,
                 toolRulesets,
@@ -667,8 +667,6 @@ public sealed partial class ChatService : IChatService
             activity?.SetTag("id", chatData.Metadata.Id);
             var kernel = generationContext.Kernel;
             var kernelMixin = generationContext.KernelMixin;
-            var promptRenderer = generationContext.PromptRenderer;
-            var systemPrompt = generationContext.SystemPrompt;
             var hasAttemptedAutomaticCompaction = false;
             var hasAttemptedContextLengthRecovery = false;
 
@@ -703,26 +701,23 @@ public sealed partial class ChatService : IChatService
                     generationContext.MaxContextRounds,
                     generationContext.KernelMixin.Configuration.ContextLimit,
                     cancellationToken);
-                var chatHistory = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
-                    promptRenderer,
-                    systemPrompt,
-                    selection.Messages,
-                    generationContext.InputModalities,
-                    cancellationToken,
-                    context: chatContext);
-
                 // Process streaming chat message contents (thinking, text, function calls, etc.)
                 // It will return the function call contents for further processing.
                 ModelInvocationResult invocationResult;
                 try
                 {
-                    invocationResult = await GetStreamingChatMessageContentsAsync(
-                        kernel,
-                        kernelMixin,
+                    invocationResult = await RequestWithImageRecoveryAsync(
                         chatContext,
-                        chatHistory,
-                        assistantChatMessage,
-                        purpose,
+                        generationContext,
+                        selection.Messages,
+                        history => GetStreamingChatMessageContentsAsync(
+                            kernel,
+                            kernelMixin,
+                            chatContext,
+                            history,
+                            assistantChatMessage,
+                            purpose,
+                            cancellationToken),
                         cancellationToken);
                 }
                 catch (Exception ex) when (!hasAttemptedContextLengthRecovery && IsContextLengthExceeded(ex, kernelMixin))
@@ -928,7 +923,9 @@ public sealed partial class ChatService : IChatService
                 {
                     case ChatRequestUpdate.AttemptFailed failed:
                     {
-                        if (failed.RetryDelay is not null)
+                        var isImageLimitFailure = IsImageRecoveryFailure(failed.Failure.Exception) &&
+                            chatHistory.Any(message => message.Items.Any(item => item is ImageContent));
+                        if (failed.RetryDelay is not null || isImageLimitFailure)
                         {
                             await chatContext.DispatchAsync(() =>
                             {
@@ -940,12 +937,15 @@ public sealed partial class ChatService : IChatService
                                 functionCallContentBuilder = new FunctionCallContentBuilder();
                                 callingToolsActivity?.Dispose();
                                 callingToolsActivity = null;
-                                retryActivity = UpdateRequestRetry(
-                                    chatData,
-                                    assistantChatMessage,
-                                    kernelMixin.RequestMaxRetries,
-                                    retryActivity,
-                                    failed);
+                                if (failed.RetryDelay is not null)
+                                {
+                                    retryActivity = UpdateRequestRetry(
+                                        chatData,
+                                        assistantChatMessage,
+                                        kernelMixin.RequestMaxRetries,
+                                        retryActivity,
+                                        failed);
+                                }
                             });
                         }
                         continue;

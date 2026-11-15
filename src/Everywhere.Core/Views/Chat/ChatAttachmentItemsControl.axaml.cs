@@ -5,7 +5,6 @@ using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
-using Everywhere.AI;
 using Everywhere.Chat;
 
 namespace Everywhere.Views;
@@ -20,15 +19,6 @@ public class ChatAttachmentItemsControl : TemplatedControl
     {
         get => GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
-    }
-
-    public static readonly StyledProperty<Modalities> SupportedModalitiesProperty =
-        AvaloniaProperty.Register<ChatAttachmentItemsControl, Modalities>(nameof(SupportedModalities));
-
-    public Modalities SupportedModalities
-    {
-        get => GetValue(SupportedModalitiesProperty);
-        set => SetValue(SupportedModalitiesProperty, value);
     }
 
     /// <summary>

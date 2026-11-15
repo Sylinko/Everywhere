@@ -44,8 +44,10 @@ partial class ChatHistoryBuilder
             break;
         }
 
-        var suffix = path.Skip(summaryNode is null ? 0 : coveredIndex + 1)
-            .Where(node => node.MessageKind is not (ChatMessageKind.Root or ChatMessageKind.Compression))
+        var suffix = path
+            .AsValueEnumerable()
+            .Skip(summaryNode is null ? 0 : coveredIndex + 1)
+            .Where(node => node.MessageKind is not (ChatMessageKind.Root or ChatMessageKind.Compression or ChatMessageKind.ImageOffload))
             .ToArray();
         var startIndex = 0;
         if (maxContextRounds >= 0 && suffix.Length > 0)
@@ -116,6 +118,32 @@ partial class ChatHistoryBuilder
 
         messages.AddRange(suffix.Skip(startIndex).Select(node => node.Message));
         return new ChatHistorySelection(messages, startIndex > 0);
+    }
+
+    internal static async Task<HashSet<ChatImageOccurrence>> ReadImageOffloadsAsync(
+        ChatContext context,
+        IReadOnlyList<ChatMessageNode> path,
+        CancellationToken cancellationToken)
+    {
+        var images = new HashSet<ChatImageOccurrence>();
+        // An omission can be recorded after the source prefix of a summary, or before the
+        // round limit. Read the branch's decisions independently of which messages it sends.
+        foreach (var node in path)
+        {
+            if (node.MessageKind != ChatMessageKind.ImageOffload)
+            {
+                continue;
+            }
+
+            if (!node.IsMessageLoaded)
+            {
+                await context.EnsureTurnLoadedAsync(node.Turn, cancellationToken);
+            }
+
+            images.UnionWith(((ChatImageOffloadMessage)node.Message).Images);
+        }
+
+        return images;
     }
 }
 

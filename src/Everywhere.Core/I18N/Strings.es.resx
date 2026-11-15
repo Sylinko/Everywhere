@@ -2794,9 +2794,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>Ver detalles de precios</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>Este tipo de archivo no es compatible con el modelo, pero el modelo aún puede ver los metadatos y se le sugiere usar herramientas para procesarlo.</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>Se ha bloqueado la llamada a herramientas por parte del modelo.</value>
     </data>

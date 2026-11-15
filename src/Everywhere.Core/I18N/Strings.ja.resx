@@ -2794,9 +2794,6 @@
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>価格の詳細を見る</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>この添付ファイルタイプはモデルでサポートされていませんが、モデルはメタデータを確認し、ツールを使用するように指示されます。</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>モデルによるツールの呼び出しがブロックされました。</value>
     </data>

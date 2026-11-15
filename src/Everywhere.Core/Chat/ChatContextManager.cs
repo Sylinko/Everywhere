@@ -389,6 +389,23 @@ public sealed partial class ChatContextManager :
 
     internal Task FlushSyncSavesAsync() => Task.Run(() => FlushPendingSavesCoreAsync(shouldRequestSync: false));
 
+    /// <inheritdoc />
+    public async Task FlushPendingChatAsync(ChatContext context, CancellationToken cancellationToken)
+    {
+        // Archive and delete hold this gate while stopping the root. The wait must release
+        // the foreground operation when it is canceled, so those operations can finish.
+        await _commitGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await SavePendingChatAsync(context.Root.Data.Metadata.Id).ConfigureAwait(false);
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
+    }
+
     private async Task FlushPendingSavesCoreAsync(bool shouldRequestSync)
     {
         bool hasStableWrites;

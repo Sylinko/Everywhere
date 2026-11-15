@@ -2794,9 +2794,6 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>Preisinformationen anzeigen</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>Dieser Anhangstyp wird vom Modell nicht unterstützt, aber das Modell kann weiterhin die Metadaten sehen und aufgefordert werden, das Tool zu verwenden.</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>Das Modell kann das Tool nicht aufrufen.</value>
     </data>

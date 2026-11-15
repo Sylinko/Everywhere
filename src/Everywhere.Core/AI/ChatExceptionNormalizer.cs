@@ -161,6 +161,11 @@ public static partial class ChatExceptionNormalizer
     private static HandledChatException ClassifyResponse(ChatExceptionEvidence evidence)
     {
         var baseline = FromStatus(evidence);
+        if ((int?)evidence.StatusCode == 413)
+        {
+            return Result(baseline, evidence, "request-payload-too-large", "http");
+        }
+
         var baselineSource = evidence.StatusCode is null ? "fallback" : "http";
         if (baseline is HandledChatException.Unknown &&
             (FromGenericCode(evidence, evidence.ErrorCode) ?? FromGenericCode(evidence, evidence.ErrorType)) is { } codeBaseline)
@@ -199,7 +204,8 @@ public static partial class ChatExceptionNormalizer
 
     private static HandledChatException FromStatus(ChatExceptionEvidence evidence) => (int?)evidence.StatusCode switch
     {
-        400 or 405 or 406 or 409 or 411 or 413 or 415 or 422 => new HandledChatException.InvalidRequest(evidence.OriginalException, evidence.FriendlyMessageKey),
+        400 or 405 or 406 or 409 or 411 or 415 or 422 => new HandledChatException.InvalidRequest(evidence.OriginalException, evidence.FriendlyMessageKey),
+        413 => new HandledChatException.InvalidRequest.RequestInputTooLarge(evidence.OriginalException, evidence.FriendlyMessageKey),
         401 => new HandledChatException.AuthenticationFailure.InvalidApiKey(evidence.OriginalException, evidence.FriendlyMessageKey),
         402 => new HandledChatException.QuotaExceeded(evidence.OriginalException, evidence.FriendlyMessageKey),
         403 or 451 => new HandledChatException.PermissionDenied(evidence.OriginalException, evidence.FriendlyMessageKey),
@@ -215,8 +221,10 @@ public static partial class ChatExceptionNormalizer
 
     private static HandledChatException? FromConnectionCode(ChatExceptionEvidence evidence, string code) => code.ToLowerInvariant() switch
     {
-        "validation_error" or "invalid_request" or "request_entity_too_large" =>
+        "validation_error" or "invalid_request" =>
             new HandledChatException.InvalidRequest(evidence.OriginalException, evidence.FriendlyMessageKey),
+        "request_entity_too_large" =>
+            new HandledChatException.InvalidRequest.RequestInputTooLarge(evidence.OriginalException, evidence.FriendlyMessageKey),
         "invalid_model" or "model_not_found" or "not_found" =>
             new HandledChatException.InvalidConfiguration(evidence.OriginalException, evidence.FriendlyMessageKey),
         "auth_missing" or "auth_invalid" or "auth_expired" =>
@@ -258,8 +266,9 @@ public static partial class ChatExceptionNormalizer
                 parameter is null ?
                     FromMessage(evidence, evidence.ErrorMessage, null) ?? ParameterFailure(evidence, null) :
                     ParameterFailure(evidence, parameter),
-            "request_too_large" =>
-                new HandledChatException.InvalidRequest(evidence.OriginalException, evidence.FriendlyMessageKey),
+            "request_too_large" or "image_too_large" or "image_file_too_large" or "too_many_images"
+                when (int?)evidence.StatusCode is null or 400 or 422 =>
+                new HandledChatException.InvalidRequest.RequestInputTooLarge(evidence.OriginalException, evidence.FriendlyMessageKey),
             "overloaded_error" or "unavailable" =>
                 new HandledChatException.ServiceUnavailable(evidence.OriginalException, evidence.FriendlyMessageKey, evidence.RetryAfter),
             "timeout_error" or "deadline_exceeded" =>
@@ -345,6 +354,18 @@ public static partial class ChatExceptionNormalizer
             Has("context length exceeded") ||
             Has("context window exceeded"))
             return Result(new HandledChatException.InvalidRequest.ContextLengthExceeded(evidence.OriginalException, evidence.FriendlyMessageKey), evidence, "context-overflow", "message");
+
+        if ((int?)evidence.StatusCode is null or 400 &&
+            (Has("too many images") ||
+                Has("image dimensions exceed max allowed size") ||
+                Has("image exceeds") && Has("maximum") && (Has("pixels") || Has("bytes"))))
+        {
+            return Result(
+                new HandledChatException.InvalidRequest.RequestInputTooLarge(evidence.OriginalException, evidence.FriendlyMessageKey),
+                evidence,
+                "image-input-limit",
+                "message");
+        }
 
         if (Has("does not support tools") ||
             Has("tools are not supported") ||

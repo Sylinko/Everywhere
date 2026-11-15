@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Globalization;
+using System.Security.Cryptography;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
@@ -9,7 +10,10 @@ namespace Everywhere.Storage;
 
 public class BlobStorage(IDbContextFactory<ChatV2DbContext> dbFactory) : IBlobStorage
 {
-    private const long MaximumCopiedBlobSizeInBytes = 25L * 1024 * 1024;
+    /// <summary>
+    /// Maximum encoded size of a file copied into the blob store.
+    /// </summary>
+    public const long MaximumCopiedBlobSizeInBytes = 25L * 1024 * 1024;
 
     private readonly string _blobBasePath = RuntimeConstants.EnsureWritableDataFolderPath("blob");
 
@@ -58,49 +62,76 @@ public class BlobStorage(IDbContextFactory<ChatV2DbContext> dbFactory) : IBlobSt
         var blobEntity = await db.Blobs.FirstOrDefaultAsync(b => b.Sha256 == sha256String, cancellationToken);
         if (blobEntity is not null)
         {
-            // Blob already exists, just update its access time
             blobEntity.LastAccessAt = now;
             await db.SaveChangesAsync(cancellationToken);
-            return blobEntity;
+            if (localPath is not null ||
+                PathUtilities.IsResolvedPathInsideDirectory(blobEntity.LocalPath, _blobBasePath) && File.Exists(blobEntity.LocalPath))
+            {
+                return blobEntity;
+            }
+
+            // A user attachment can register the hash by reference. A stream caller needs
+            // a snapshot, not the mutable external path that registered those bytes.
+            return CreateEntity(await CopyBlobAsync(blobEntity.CreatedAt), blobEntity.CreatedAt);
         }
 
-        if (localPath is null)
+        localPath ??= await CopyBlobAsync(now);
+        blobEntity = CreateEntity(localPath, now);
+        db.Blobs.Add(blobEntity);
+        await db.SaveChangesAsync(cancellationToken);
+        return blobEntity;
+
+        async Task<string> CopyBlobAsync(DateTimeOffset createdAt)
         {
             // Organize blobs by date to avoid having too many files in one directory
-            var datePath = now.ToString("yyyyMMdd");
+            var datePath = createdAt.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
             var blobDirectory = Path.Combine(_blobBasePath, datePath);
             Directory.CreateDirectory(blobDirectory);
 
             extension ??= FileUtilities.GetExtensionByMimeType(mimeType);
             var fileName = extension.IsNullOrWhiteSpace() ? sha256String : $"{sha256String}.{extension.TrimStart('.')}";
-            localPath = Path.Combine(_blobBasePath, datePath, fileName);
-            if (localPath.Length > 1024)
+            var path = Path.Combine(blobDirectory, fileName);
+            if (path.Length > 1024)
             {
-                throw new PathTooLongException($"Blob local path is too long: {localPath}");
+                throw new PathTooLongException($"Blob local path is too long: {path}");
             }
 
-            await using (var fileStream = File.Create(localPath))
+            if (File.Exists(path))
             {
-                content.Seek(0, SeekOrigin.Begin);
-                await content.CopyToAsync(fileStream, cancellationToken);
+                return path;
+            }
+
+            // Publish only a complete copy at the content-addressed path.
+            var temporaryPath = Path.Combine(blobDirectory, $"{Guid.NewGuid():N}.tmp");
+            try
+            {
+                await using (var fileStream = File.Create(temporaryPath))
+                {
+                    content.Seek(0, SeekOrigin.Begin);
+                    await content.CopyToAsync(fileStream, cancellationToken);
+                }
+
+                File.Move(temporaryPath, path, overwrite: true);
+                return path;
+            }
+            finally
+            {
+                File.Delete(temporaryPath);
             }
         }
 
-        // Blob doesn't exist, so save it
-        blobEntity = new BlobEntity
+        BlobEntity CreateEntity(string path, DateTimeOffset createdAt)
         {
-            Sha256 = sha256String,
-            LocalPath = localPath,
-            MimeType = mimeType,
-            Size = content.Length,
-            CreatedAt = now,
-            LastAccessAt = now
-        };
-
-        db.Blobs.Add(blobEntity);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return blobEntity;
+            return new BlobEntity
+            {
+                Sha256 = sha256String,
+                LocalPath = path,
+                MimeType = mimeType,
+                Size = content.Length,
+                CreatedAt = createdAt,
+                LastAccessAt = now
+            };
+        }
     }
 
     public async Task<BlobEntity?> QueryBlobAsync(string sha256, CancellationToken cancellationToken = default)

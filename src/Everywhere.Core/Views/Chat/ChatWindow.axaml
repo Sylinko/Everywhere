@@ -1,6 +1,6 @@
 ﻿<v:ReactiveShadWindow
   x:Class="Everywhere.Views.ChatWindow" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
   xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:notification="clr-namespace:Everywhere.Common.Notification;assembly=Everywhere.Abstractions"
   xmlns:notifications="clr-namespace:Avalonia.Controls.Notifications;assembly=Avalonia.Controls" xmlns:p="clr-namespace:Everywhere.Chat.Plugins"
@@ -897,7 +897,6 @@
                 IsVisible="{Binding $self.ItemCount, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=0}"
                 RetryMessageNodeCommand="{Binding RetryMessageNodeCommand}"
                 ShowStatistics="{Binding Settings.ChatWindow.ShowChatStatistics}"
-                SupportedModalities="{Binding Settings.Model.SelectedCustomAssistant?.Configuration.InputModalities, TargetNullValue={x:Static ai:Modalities.None}}"
                 TextSearch="{Binding TextSearch}"/>
             </StackPanel>
           </ScrollViewer>

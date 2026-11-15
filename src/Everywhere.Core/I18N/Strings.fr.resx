@@ -2794,9 +2794,6 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>Voir les détails des prix</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>Ce type de fichier n'est pas pris en charge par le modèle, mais le modèle peut toujours voir les métadonnées et être invité à utiliser des outils.</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>L'appel d'outils par le modèle est désactivé.</value>
     </data>

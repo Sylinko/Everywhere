@@ -118,4 +118,9 @@ public interface IChatContextManager : IIncrementalLoader
     /// Failures remain queued and are reported to the caller, including application shutdown.
     /// </summary>
     Task FlushPendingSavesAsync();
+
+    /// <summary>
+    /// Commits pending changes for this conversation's root before a dependent operation.
+    /// </summary>
+    Task FlushPendingChatAsync(ChatContext context, CancellationToken cancellationToken);
 }

@@ -12,6 +12,7 @@
     <SkiaSharpVersion>4.156.0</SkiaSharpVersion>
     <XamlBehaviorsVersion>12.1.5</XamlBehaviorsVersion>
     <TikTokenVersion>7.0.0</TikTokenVersion>
+    <MessagePackVersion>999.20261115.3</MessagePackVersion>
   </PropertyGroup>
   <ItemGroup Label="Common">
     <PackageVersion Include="AngleSharp" Version="1.5.2" />
@@ -147,8 +148,8 @@
     <PackageVersion Include="Porta.Pty" Version="999.20261111.4" />
     <PackageVersion Include="Porta.Pty.Native" Version="999.20261111.4" />
     <PackageVersion Include="EverythingNetCore" Version="999.20261111.5" />
-    <PackageVersion Include="MessagePack" Version="999.20261111.2" />
-    <PackageVersion Include="MessagePack.Annotations" Version="999.20261111.2" />
-    <PackageVersion Include="MessagePackAnalyzer" Version="999.20261111.2" />
+    <PackageVersion Include="MessagePack" Version="$(MessagePackVersion)" />
+    <PackageVersion Include="MessagePack.Annotations" Version="$(MessagePackVersion)" />
+    <PackageVersion Include="MessagePackAnalyzer" Version="$(MessagePackVersion)" />
   </ItemGroup>
 </Project>

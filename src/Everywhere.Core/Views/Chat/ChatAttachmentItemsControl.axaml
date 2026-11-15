@@ -1,8 +1,7 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:ChatAttachmentItemsControl}"
     TargetType="v:ChatAttachmentItemsControl">
@@ -13,11 +12,6 @@
           ItemsSource="{TemplateBinding ItemsSource}">
 
           <v:ChatAttachmentItemsPresenter.Styles>
-            <Style Selector="shadui|SmoothBorder#PART_Border:not(.Supported)">
-              <Setter Property="BorderBrush" Value="{DynamicResource WarningColor}"/>
-              <Setter Property="ToolTip.Tip" Value="{I18N {x:Static LocaleKey.ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip}}"/>
-            </Style>
-
             <Style Selector="Button#PART_RemoveButton:disabled">
               <Setter Property="IsVisible" Value="False"/>
             </Style>
@@ -33,14 +27,12 @@
           <v:ChatAttachmentItemsPresenter.DataTemplates>
             <DataTemplate DataType="chat:FileAttachment">
               <shadui:SmoothBorder
-                x:Name="PART_Border"
                 Height="{DynamicResource LineHeightL}"
                 MaxWidth="240"
                 Background="{DynamicResource CardBackgroundColor}"
                 BorderBrush="{DynamicResource BorderColor}"
                 BorderThickness="1"
-                CornerRadius="{DynamicResource XlCornerRadius}"
-                ToolTip.Placement="Top">
+                CornerRadius="{DynamicResource XlCornerRadius}">
                 <Interaction.Behaviors>
                   <in:MiddleClickEventTrigger>
                     <!--  Middle click to close  -->
@@ -49,13 +41,6 @@
                       CommandParameter="{Binding}"/>
                   </in:MiddleClickEventTrigger>
                 </Interaction.Behaviors>
-
-                <Classes.Supported>
-                  <MultiBinding Converter="{x:Static vc:ModalitiesConverters.IsSupported}">
-                    <Binding Path="$parent[v:ChatAttachmentItemsControl].SupportedModalities"/>
-                    <Binding Path="RequiredModalities"/>
-                  </MultiBinding>
-                </Classes.Supported>
 
                 <DockPanel
                   Margin="6,0" ClipToBounds="False"
@@ -120,7 +105,6 @@
 
             <DataTemplate DataType="chat:VisualElementAttachment">
               <shadui:SmoothBorder
-                x:Name="PART_Border" Classes="Supported"
                 Height="{DynamicResource LineHeightL}"
                 MaxWidth="240"
                 Background="{DynamicResource CardBackgroundColor}"
@@ -200,7 +184,6 @@
 
             <DataTemplate DataType="chat:ChatAttachment">
               <shadui:SmoothBorder
-                x:Name="PART_Border" Classes="Supported"
                 Height="{DynamicResource LineHeightL}"
                 MaxWidth="240"
                 Background="{DynamicResource CardBackgroundColor}"

@@ -2794,9 +2794,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>Fiyatlandırma detaylarını görüntüle</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>Bu ek dosya türü model tarafından desteklenmiyor, ancak model yine de meta verileri görebilir ve araç kullanması için yönlendirilebilir.</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>Modelin araç çağrısı engellendi.</value>
     </data>

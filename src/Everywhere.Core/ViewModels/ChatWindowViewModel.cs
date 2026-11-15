@@ -552,14 +552,14 @@ public sealed partial class ChatWindowViewModel :
     {
         using var memoryStream = new MemoryStream();
         bitmap.Save(memoryStream, PngBitmapEncoderOptions.Default);
-        if (memoryStream.Length > FileAttachment.MaximumInlineContentSizeInBytes)
+        if (memoryStream.Length > BlobStorage.MaximumCopiedBlobSizeInBytes)
         {
             throw new HandledException(
                 new NotSupportedException("The image is too large to store as a chat attachment."),
                 new FormattedDynamicLocaleKey(
                     LocaleKey.FileAttachment_Create_FileTooLarge,
                     new DirectLocaleKey(Humanizer.HumanizeBytes(memoryStream.Length)),
-                    new DirectLocaleKey(Humanizer.HumanizeBytes(FileAttachment.MaximumInlineContentSizeInBytes))),
+                    new DirectLocaleKey(Humanizer.HumanizeBytes(BlobStorage.MaximumCopiedBlobSizeInBytes))),
                 showDetails: false);
         }
 

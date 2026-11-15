@@ -1,4 +1,4 @@
-using Everywhere.AI;
+﻿using Everywhere.AI;
 
 namespace Everywhere.Common;
 
@@ -24,6 +24,19 @@ public abstract partial class HandledChatException
 
             /// <inheritdoc />
             public override ChatExceptionRecovery Recovery => new ChatExceptionRecovery.RecoverContext();
+        }
+
+        /// <summary>
+        /// Represents a rejected request whose payload size or image limits were exceeded.
+        /// </summary>
+        public sealed class RequestInputTooLarge(
+            Exception originalException,
+            IDynamicLocaleKey? customFriendlyMessageKey = null
+        ) : InvalidRequest(originalException, customFriendlyMessageKey)
+        {
+            /// <inheritdoc />
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey =>
+                new DynamicLocaleKey(LocaleKey.HandledChatException_RequestInputTooLarge);
         }
 
         /// <summary>Represents InvalidThoughtSignature failures within InvalidRequest.</summary>

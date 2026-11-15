@@ -2794,9 +2794,6 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>Ver detalhes de preços</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>Este tipo de anexo não é compatível pelo modelo. No entanto, o modelo ainda pode acessar os metadados e ser instruído a usar ferramentas para processá-los.</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>As chamadas de ferramentas pelo modelo foram bloqueadas.</value>
     </data>

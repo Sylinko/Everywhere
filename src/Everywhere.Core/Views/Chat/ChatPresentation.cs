@@ -446,7 +446,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         var count = 0;
         foreach (var node in Data.SelectedNodes)
         {
-            if (node.MessageKind is ChatMessageKind.Root or ChatMessageKind.VisualContextReset ||
+            if (node.MessageKind is ChatMessageKind.Root or ChatMessageKind.VisualContextReset or ChatMessageKind.ImageOffload ||
                 node is { IsMessageLoaded: true, Message.IsHidden: true })
             {
                 continue;
