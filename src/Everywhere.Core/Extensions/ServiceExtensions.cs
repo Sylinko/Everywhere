@@ -180,7 +180,6 @@ public static class ServiceExtensions
                 })
                 .AddSingleton<IDefaultPromptProvider, DefaultPromptProvider>()
                 .AddSingleton<IPromptService, PromptService>()
-                .AddSingleton<IAssistantPromptReferenceService, AssistantPromptReferenceService>()
                 .AddSingleton<IBlobStorage, BlobStorage>()
                 .AddSingleton<ChatTurnStorage>()
                 .AddSingleton<IChatContextStorage>(provider => provider.GetRequiredService<ChatTurnStorage>())

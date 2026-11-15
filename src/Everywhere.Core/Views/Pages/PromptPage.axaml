@@ -1,7 +1,7 @@
 <UserControl
   x:Class="Everywhere.Views.Pages.PromptPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:in="clr-namespace:Everywhere.Interactions"
-  xmlns:prompts="clr-namespace:Everywhere.AI.Prompts" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:ai="clr-namespace:Everywhere.AI" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
   x:Name="Self" x:DataType="vm:PromptPageViewModel"
   ClipToBounds="False">
@@ -232,7 +232,7 @@
                   Margin="0,0,12,0"
                   ItemsSource="{Binding #Self.ViewModel.SelectedPromptReferences}">
                   <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="prompts:AssistantPromptReference">
+                    <DataTemplate DataType="ai:CustomAssistant">
                       <Button
                         Classes="Ghost" HorizontalContentAlignment="Stretch"
                         Command="{Binding #Self.ViewModel.OpenAssistantReferenceCommand}"

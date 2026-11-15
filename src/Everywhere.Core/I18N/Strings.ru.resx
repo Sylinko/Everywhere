@@ -2048,9 +2048,6 @@
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>Переключение промпта во время диалога может снизить долю попаданий в кэш промптов и повысить стоимость LLM.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>Вы уверены, что хотите удалить {0} API ключей? Это действие нельзя отменить!</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>Скопировано</value>
     </data>
@@ -2086,9 +2083,6 @@
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Добавить</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>Удалить выделенные</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>Нажмите, чтобы просмотреть</value>
@@ -3712,9 +3706,6 @@
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} с точностью до секунд может снизить вероятность кэширования и увеличить затраты. Если нет необходимости, используйте {Date}.</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>Не найдена подсказка: {0}. Будет использована стандартная подсказка.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Создано вручную</value>

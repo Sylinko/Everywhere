@@ -2048,9 +2048,6 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>Changer de prompt pendant une conversation peut réduire le taux de réussite du cache des prompts et augmenter le coût des LLM.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>Êtes-vous sûr de vouloir supprimer {0} clés API ? Cette action est irréversible !</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>Copié</value>
     </data>
@@ -2086,9 +2083,6 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Ajouter</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>Supprimer les éléments sélectionnés</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>Cliquez ici pour voir</value>
@@ -3712,9 +3706,6 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} précis à la seconde, cela pourrait réduire le taux de réussite du cache et augmenter les coûts d'utilisation. Si ce n'est pas nécessaire, utilisez {Date}.</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>Prompt introuvable : {0}. Le prompt par défaut sera utilisé.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Création manuelle</value>

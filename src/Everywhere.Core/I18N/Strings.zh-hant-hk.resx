@@ -2048,9 +2048,6 @@
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>聊天過程中切換提示詞可能會降低快取命中率，提升大模型使用成本。</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>你確定要刪除 {0} 個 API 密鑰嗎？此操作無法撤銷！</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>已複製</value>
     </data>
@@ -2086,9 +2083,6 @@
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>添加</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>刪除選中項</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>點我查看</value>
@@ -3712,9 +3706,6 @@
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} 精確到秒，可能會降低緩存命中率，提高使用成本。如非必要，請使用 {Date}。</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>找不到提示詞：{0}。將改用默認提示詞。</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>手動創建</value>

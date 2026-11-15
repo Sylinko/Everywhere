@@ -2048,9 +2048,6 @@
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>聊天过程中切换提示词可能会降低缓存命中率，提升大模型使用成本。</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>你确定要删除 {0} 个 API 密钥吗？此操作无法撤销！</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>已复制</value>
     </data>
@@ -2086,9 +2083,6 @@
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>添加</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>删除选中项</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>点我查看</value>
@@ -3713,9 +3707,6 @@
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} 精确到秒，可能会降低缓存命中率，提高使用成本。如非必要，请使用 {Date}。</value>
     </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>找不到提示词：{0}。将改用默认提示词。</value>
-    </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>手动创建</value>
     </data>
@@ -5020,5 +5011,8 @@
     </data>
     <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
         <value>或者，从 </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>此 API Key 仍被以下配置使用：{0}。请先在这些配置中更换密钥，再删除。</value>
     </data>
 </root>

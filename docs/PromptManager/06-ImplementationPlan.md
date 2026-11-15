@@ -27,7 +27,7 @@ Tasks:
 2. add prompt service
 3. add built-in default prompt provider
 4. add CRUD operations
-5. add reverse reference service
+5. query assistant references from settings on demand
 6. add shared prompt template parser
 7. update renderer to use parser-backed expansion
 8. add renderer adapter for preview and picker
@@ -140,7 +140,7 @@ Acceptance criteria:
 1. users can understand prompt usage before deletion
 2. deleting prompts does not silently break assistants
 3. deleting ApiKeys does not leave the secret behind
-4. unreferenced ApiKeys are visible as unreferenced but are not auto-deleted by migration
+4. the key list offers Add and per-row deletion; it does not scan or mark unused keys
 5. deleting a referenced prompt intentionally falls references back to `Guid.Empty`
 
 ## 8. Phase 7: Tests

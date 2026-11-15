@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using LiveMarkdown.Avalonia;
 using ShadUI;
 
@@ -41,7 +42,7 @@ public sealed partial class TerminalUpdateGuidance : UserControl
         new DirectLocaleKey(UpdateCommand));
     private readonly DispatcherTimer _streamTimer;
     private IDisposable? _messageSubscription;
-    private DialogHost? _dialogHost;
+    private DialogLayer? _dialogLayer;
     private string _pendingMarkdown = string.Empty;
     private int[] _textElementOffsets = [];
     private int _nextTextElement;
@@ -76,8 +77,8 @@ public sealed partial class TerminalUpdateGuidance : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _dialogHost = DialogManager.ResolveHost(TopLevel.GetTopLevel(this));
-        _dialogHost?.Classes.Add("ChatUpdateGuidance");
+        _dialogLayer = this.FindAncestorOfType<DialogLayer>();
+        _dialogLayer?.Classes.Add("ChatUpdateGuidance");
         _messageSubscription = _messageKey.Subscribe(value => StartStreaming(value?.ToString() ?? string.Empty));
     }
 
@@ -87,8 +88,8 @@ public sealed partial class TerminalUpdateGuidance : UserControl
         _messageSubscription?.Dispose();
         _messageSubscription = null;
         StopStreaming();
-        _dialogHost?.Classes.Remove("ChatUpdateGuidance");
-        _dialogHost = null;
+        _dialogLayer?.Classes.Remove("ChatUpdateGuidance");
+        _dialogLayer = null;
         base.OnDetachedFromVisualTree(e);
     }
 
@@ -143,6 +144,6 @@ public sealed partial class TerminalUpdateGuidance : UserControl
     private void HandleCancelClick(object? sender, RoutedEventArgs e)
     {
         StopStreaming();
-        _dialogHost?.Close(this);
+        this.FindAncestorOfType<DialogHost>()?.Close(this);
     }
 }

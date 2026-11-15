@@ -2048,9 +2048,6 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>Sohbet sırasında istemi değiştirmek, istem önbelleği isabet oranını düşürebilir ve LLM maliyetini artırabilir.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>{0} adet API anahtarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz!</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>Kopyalandı</value>
     </data>
@@ -2086,9 +2083,6 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Ekle</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>Seçilenleri Sil</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>Beni tıklayın</value>
@@ -3712,9 +3706,6 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} saniye hassasiyetinde, önbellek hit oranını azaltabilir ve maliyeti artırabilir. Gerekmedikçe {Date} kullanın.</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>İpucu bulunamadı: {0}. Varsayılan ipucu kullanılacak.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Manuel Oluştur</value>

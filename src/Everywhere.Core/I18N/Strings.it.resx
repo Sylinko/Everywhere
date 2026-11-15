@@ -2048,9 +2048,6 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>Cambiare il prompt durante una conversazione può ridurre il tasso di hit della cache dei prompt e aumentare il costo degli LLM.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>Sei sicuro di voler eliminare {0} chiavi API? Questa operazione non può essere annullata!</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>Copiato</value>
     </data>
@@ -2086,9 +2083,6 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Aggiungi</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>Elimina selezionati</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>Clicca qui per vedere</value>
@@ -3712,9 +3706,6 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} preciso al secondo potrebbe ridurre il tasso di hit della cache e aumentare i costi d'uso. Se non necessario, utilizzare {Date}.</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>Prompt non trovato: {0}. Verrà utilizzato il prompt predefinito.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Creazione manuale</value>

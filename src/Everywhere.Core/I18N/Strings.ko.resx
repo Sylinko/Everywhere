@@ -2048,9 +2048,6 @@
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>대화 중에 프롬프트를 전환하면 프롬프트 캐시 적중률이 낮아지고 LLM 비용이 증가할 수 있습니다.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>{0} 개의 API 키를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다!</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>복사됨</value>
     </data>
@@ -2086,9 +2083,6 @@
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>추가</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>선택 항목 삭제</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>여기를 클릭하여 보기</value>
@@ -3712,9 +3706,6 @@
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time}이 초 단위로 정확하면 캐시 적중률이 낮아져 사용 비용이 증가할 수 있습니다. 필요하지 않다면 {Date}를 사용하세요.</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>프롬프트를 찾을 수 없습니다: {0}. 기본 프롬프트로 대체됩니다.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>수동 생성</value>
