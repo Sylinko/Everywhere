@@ -1,7 +1,9 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -221,6 +223,7 @@ public sealed partial class ChatTurnRenderTests
         await VerifyUpgradeNoticeAsync();
         await VerifyHistoryOpeningAndSwitchingAsync();
         // ShadUI owns process-wide theme resources; keep real-template scenarios in one app lifetime.
+        await Timeline_WhenFailedToolHasNoOtherDetails_ShowsLocalizedError();
         await Navigation_WhenTurnJumpSupersedesLatest_KeepsNewestTargetAndStableRows();
         await Navigation_WhenEdgeLoadIsSuperseded_DoesNotRestoreOldDirection();
         await SearchNavigation_WhenSurfaceUpdatesAfterUserScroll_DoesNotRecenter();
@@ -231,6 +234,93 @@ public sealed partial class ChatTurnRenderTests
         await HiddenWindow_WhenReadingBranchIsRemoved_FallsBackToLatestAndKeepsNavigationUsable();
         await Navigation_WhenUserScrollsDuringPreparation_CancelsTheJump();
         await HiddenWindow_WhenTailStreamsOrContextChanges_ResumesOnlyTheCurrentTail();
+    }
+
+    private static async Task Timeline_WhenFailedToolHasNoOtherDetails_ShowsLocalizedError()
+    {
+        var previousLocale = LocaleManager.CurrentLocale;
+        LocaleManager.CurrentLocale = LocaleName.En;
+        try
+        {
+            await using var context = new RootChatContext(new ChatData(), null);
+            context.Data.Add(new UserChatMessage("Inspect the attached image.", []));
+            var tool = new FunctionCallChatMessage(
+                LucideIconKind.Image,
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ViewImage_Header))
+            {
+                ErrorMessageKey = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ViewImage_PathCount)
+            };
+            var assistant = new AssistantChatMessage { IsBusy = true };
+            assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
+            context.Data.Add(assistant);
+            await context.Presentation.PrepareInitialWindowAsync();
+            var group = context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
+            group.IsExpanded = true;
+            var row = group.Items.OfType<FunctionCallActivityItemPresentationRow>().Single();
+
+            // Argument rejection can leave a tool with only an error, without any display blocks or image results.
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(row.State.DisplayBlocks, Is.Empty);
+                Assert.That(row.State.ImageViews, Is.Empty);
+                Assert.That(row.State.HasDetails, Is.True);
+            }
+
+            var items = new ChatMessageItemsControl { ChatContext = context, Margin = new Thickness(20) };
+            var window = CreateWindow(new ScrollViewer { Content = items }, 720, 340);
+            try
+            {
+                window.Show();
+                SettleLayout(window);
+                var marker = items.GetVisualDescendants().OfType<ActivityMarker>().Single(control => ReferenceEquals(control.DataContext, row));
+                var englishMessage = LocaleKey.BuiltInChatPlugin_Essential_ViewImage_PathCount.I18N();
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(marker.IsExpandable, Is.True);
+                    Assert.That(marker.IsExpanded, Is.False);
+                    Assert.That(marker.GetVisualDescendants().OfType<SelectableTextBlock>(), Is.Empty);
+                }
+
+                var toggle = marker.GetVisualDescendants().OfType<ToggleButton>().Single(button => button.Name == "PART_ToggleButton");
+                var point = toggle.TranslatePoint(new Point(40, toggle.Bounds.Height / 2), window)
+                    ?? throw new AssertionException("The tool toggle is outside the window.");
+                window.MouseDown(point, MouseButton.Left);
+                window.MouseUp(point, MouseButton.Left);
+                SettleLayout(window);
+                var errorText = marker.GetVisualDescendants().OfType<SelectableTextBlock>().Single();
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(marker.IsExpanded, Is.True);
+                    Assert.That(errorText.IsEffectivelyVisible, Is.True);
+                    Assert.That(errorText.Text, Is.EqualTo(englishMessage));
+                }
+
+                LocaleManager.CurrentLocale = LocaleName.ZhHans;
+                SettleLayout(window);
+                var localizedMessage = LocaleKey.BuiltInChatPlugin_Essential_ViewImage_PathCount.I18N();
+                Assert.That(localizedMessage, Is.Not.EqualTo(englishMessage));
+                Assert.That(errorText.Text, Is.EqualTo(localizedMessage));
+                await Task.Delay(300);
+                SettleLayout(window);
+                SaveRender(window, "chatturn-tool-error.png");
+
+                await context.DispatchAsync(() => tool.ErrorMessageKey = null);
+                SettleLayout(window);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(marker.IsExpandable, Is.False);
+                    Assert.That(errorText.IsEffectivelyVisible, Is.False);
+                }
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+        finally
+        {
+            LocaleManager.CurrentLocale = previousLocale;
+        }
     }
 
     private static async Task VerifyUpgradeNoticeAsync()

@@ -20,8 +20,9 @@ public sealed record ChatImage(
     private const int MaximumInputFileBytes = 25 * 1024 * 1024;
 
     /// <summary>
-    /// Reads the raster header before allocating pixels. JPEG and PNG files that already fit
-    /// retain their original bytes; other images are converted to a bounded still image.
+    /// Checks the raster header before allocating pixels and validates decoding before returning.
+    /// JPEG and PNG files that already fit retain their original bytes; other images are converted
+    /// to a bounded still image.
     /// </summary>
     /// <exception cref="ImageLimitException">The file or its decoded dimensions exceed the input limits.</exception>
     /// <exception cref="InvalidDataException">The file is not a supported raster image or cannot be decoded.</exception>
@@ -58,18 +59,19 @@ public sealed record ChatImage(
             SKEncodedImageFormat.Jpeg => "image/jpeg",
             _ => null
         };
+        using var bitmap = new SKBitmap(info.WithColorType(SKColorType.Bgra8888).WithAlphaType(SKAlphaType.Premul));
+        var result = codec.GetPixels(bitmap.Info, bitmap.GetPixels());
+        if (result != SKCodecResult.Success)
+        {
+            throw new InvalidDataException($"The image could not be decoded: {result}.");
+        }
+
         if (mimeType is not null && longestEdge <= MaximumEdge && length <= MaximumEncodedBytes)
         {
             stream.Position = 0;
             var bytes = new byte[(int)length];
             stream.ReadExactly(bytes);
             return new ChatImage(bytes, mimeType, originalWidth, originalHeight, originalWidth, originalHeight);
-        }
-
-        using var bitmap = new SKBitmap(info.WithColorType(SKColorType.Bgra8888).WithAlphaType(SKAlphaType.Premul));
-        if (codec.GetPixels(bitmap.Info, bitmap.GetPixels()) != SKCodecResult.Success)
-        {
-            throw new InvalidDataException("The image could not be decoded.");
         }
 
         var scale = Math.Min(1d, (double)MaximumEdge / longestEdge);
