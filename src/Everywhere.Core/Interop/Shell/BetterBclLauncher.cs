@@ -16,8 +16,6 @@ public sealed class BetterBclLauncher : ILauncher
 
     public Task<bool> LaunchUriAsync(Uri uri)
     {
-        ArgumentNullException.ThrowIfNull(uri);
-
         return uri.IsAbsoluteUri ? ExecAsync(uri.AbsoluteUri) : Task.FromResult(false);
     }
 
@@ -27,8 +25,6 @@ public sealed class BetterBclLauncher : ILauncher
     /// </summary>
     public Task<bool> LaunchFileAsync(IStorageItem storageItem)
     {
-        ArgumentNullException.ThrowIfNull(storageItem);
-
         return storageItem.TryGetLocalPath() is { } localPath ? ExecAsync(localPath) : Task.FromResult(false);
     }
 
