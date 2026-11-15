@@ -2048,9 +2048,6 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>Alternar o prompt durante uma conversa pode reduzir a taxa de acertos do cache de prompts e aumentar o custo do LLM.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>Você tem certeza de que deseja excluir {0} chaves de API? Esta ação não pode ser desfeita!</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>Copiado</value>
     </data>
@@ -2086,9 +2083,6 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Adicionar</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>Excluir Selecionados</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>Clique aqui para visualizar</value>
@@ -3712,9 +3706,6 @@ Deseja realmente excluir “{1}” permanentemente?</value>
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} com precisão até segundos pode reduzir a taxa de acerto do cache, aumentando o custo de uso. Se não for necessário, use {Date}.</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>Prompt não encontrado: {0}. Usando o prompt padrão.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Criar manualmente</value>

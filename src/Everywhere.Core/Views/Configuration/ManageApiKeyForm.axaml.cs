@@ -5,6 +5,7 @@ using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Collections;
+using Everywhere.Common;
 using Everywhere.Configuration;
 using ShadUI;
 
@@ -38,9 +39,7 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
         }
 
         /// <summary>
-        /// Gets or sets the name of the API key.
-        /// This property is bound to the data grid and updates the underlying ApiKey model.
-        /// Should use LostFocus or similar to avoid excessive validation calls.
+        /// Reads the stored key for editing or copying and saves edits on focus loss.
         /// </summary>
         public string? SecretKey
         {
@@ -57,14 +56,18 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
                 ApiKey.SecretKey = value;
                 ApiKey.ValidateAndSave();
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(RevealedSecretKey));
             }
         }
 
         [ObservableProperty]
-        public partial bool IsChecked { get; set; }
-
-        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(RevealedSecretKey))]
         public partial bool IsApiKeyVisible { get; set; }
+
+        /// <summary>
+        /// Hidden controls still evaluate their bindings. Only open the vault for a revealed row.
+        /// </summary>
+        public string? RevealedSecretKey => IsApiKeyVisible ? SecretKey : null;
 
         [RelayCommand]
         private async Task CopyApiKeyToClipboardAsync()
@@ -78,87 +81,26 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
 
     public IReadOnlyBindableList<DataGridApiKeyModel> ItemsSource { get; }
 
-    public static readonly DirectProperty<ManageApiKeyForm, bool?> IsApiKeysCheckedProperty =
-        AvaloniaProperty.RegisterDirect<ManageApiKeyForm, bool?>(
-            nameof(IsApiKeysChecked),
-            o => o.IsApiKeysChecked,
-            (o, v) => o.IsApiKeysChecked = v);
-
-    public bool? IsApiKeysChecked
-    {
-        get
-        {
-            var checkedCount = ItemsSource.AsValueEnumerable().Count(item => item.IsChecked);
-            if (checkedCount == 0) return false;
-            if (checkedCount == ItemsSource.Count) return true;
-            return null;
-        }
-        set
-        {
-            switch (value)
-            {
-                case true:
-                {
-                    foreach (var item in ItemsSource.AsValueEnumerable())
-                    {
-                        item.IsChecked = true;
-                    }
-                    break;
-                }
-                case false:
-                {
-                    foreach (var item in ItemsSource.AsValueEnumerable())
-                    {
-                        item.IsChecked = false;
-                    }
-                    break;
-                }
-            }
-
-            RaisePropertyChanged(IsApiKeysCheckedProperty, null, value);
-            DeleteApiKeysCommand.NotifyCanExecuteChanged();
-        }
-    }
-
-    public static readonly DirectProperty<ManageApiKeyForm, bool> CanDeleteApiKeysProperty =
-        AvaloniaProperty.RegisterDirect<ManageApiKeyForm, bool>(
-            nameof(CanDeleteApiKeys),
-            o => o.CanDeleteApiKeys);
-
-    public bool CanDeleteApiKeys => ItemsSource.AsValueEnumerable().Any(item => item.IsChecked);
-
+    private readonly Settings _settings;
     private readonly string? _defaultName;
     private readonly ObservableCollection<ApiKey> _apiKeys;
     private readonly IDisposable _itemsSourceSubscription;
-    private readonly IDisposable _selectionSubscription;
-    private readonly IObservableList<DataGridApiKeyModel> _sharedList;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ManageApiKeyForm"/> class.
     /// </summary>
     /// <param name="itemsSource"></param>
     /// <param name="defaultName"></param>
-    public ManageApiKeyForm(ObservableCollection<ApiKey> itemsSource, string? defaultName)
+    /// <param name="settings">Settings that own the key lists and their references.</param>
+    public ManageApiKeyForm(ObservableCollection<ApiKey> itemsSource, string? defaultName, Settings settings)
     {
         _defaultName = defaultName;
+        _settings = settings;
         _apiKeys = itemsSource;
 
-        _sharedList = _apiKeys
-            .ToObservableChangeSet()
-            .Transform(apiKey => new DataGridApiKeyModel(apiKey))
-            .AsObservableList();
-
-        ItemsSource = _sharedList.Connect().BindEx(out _itemsSourceSubscription);
-
-        _selectionSubscription = _sharedList.Connect()
-            .AutoRefresh(x => x.IsChecked)
-            .ToCollection()
-            .Subscribe(_ =>
-            {
-                RaisePropertyChanged(IsApiKeysCheckedProperty, null, IsApiKeysChecked);
-                RaisePropertyChanged(CanDeleteApiKeysProperty, false, CanDeleteApiKeys);
-                DeleteApiKeysCommand.NotifyCanExecuteChanged();
-            });
+        ItemsSource = _apiKeys.ToObservableChangeSet()
+            .Transform(static apiKey => new DataGridApiKeyModel(apiKey))
+            .BindEx(out _itemsSourceSubscription);
     }
 
     [RelayCommand]
@@ -178,42 +120,22 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
     }
 
     [RelayCommand]
-    private void DeleteApiKey(DataGridApiKeyModel model)
+    private async Task DeleteApiKeyAsync(DataGridApiKeyModel model)
     {
-        _apiKeys.Remove(model.ApiKey);
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteApiKeys))]
-    private async Task DeleteApiKeysAsync()
-    {
-        var keysToDelete = ItemsSource
-            .AsValueEnumerable()
-            .Where(item => item.IsChecked)
-            .Select(item => item.ApiKey)
-            .ToArray();
-
-        if (keysToDelete.Length == 0) return;
-
-        var result = await DialogManager.CreateDialog(
-                LocaleKey.ManageApiKeyForm_DeleteApiKeys_Dialog_Message.I18N().Format(keysToDelete.Length),
-                LocaleKey.Common_Warning.I18N(),
-                TopLevel.GetTopLevel(this))
-            .WithPrimaryButton(LocaleKey.Common_Yes.I18N())
-            .WithCancelButton(LocaleKey.Common_No.I18N())
-            .ShowAsync();
-
-        if (result != DialogResult.Primary) return;
-
-        foreach (var key in keysToDelete.AsValueEnumerable())
+        IsEnabled = false;
+        try
         {
-            _apiKeys.Remove(key);
+            await _settings.RemoveApiKeyAsync(_apiKeys, model.ApiKey);
+        }
+        catch (Exception exception)
+        {
+            ToastManager.Error(LocaleKey.Common_Error.I18N(), HandledSystemException.Handle(exception).GetFriendlyMessage());
+        }
+        finally
+        {
+            IsEnabled = true;
         }
     }
 
-    public void Dispose()
-    {
-        _itemsSourceSubscription.Dispose();
-        _selectionSubscription.Dispose();
-        _sharedList.Dispose();
-    }
+    public void Dispose() => _itemsSourceSubscription.Dispose();
 }

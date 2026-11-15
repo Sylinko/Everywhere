@@ -214,7 +214,7 @@ public sealed class SettingsEngineTests
 
         var initializers = serviceProvider.GetServices<IAsyncInitializer>().ToList();
         Assert.That(initializers.OfType<SettingsEngine>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Settings));
-        Assert.That(initializers.OfType<PersistentKeyValueStorage>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Settings + 1));
+        Assert.That(initializers.OfType<PersistentKeyValueStorage>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Database - 1));
     }
 
     [Test]

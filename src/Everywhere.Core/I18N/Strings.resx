@@ -2048,9 +2048,6 @@ Scroll wheel or number keys to switch pick modes</value>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>Switching the prompt during a chat may reduce the cache hit rate and increase the cost of LLM.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>Are you sure to delete {0} API key(s)? This action cannot be undone.</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>Copied</value>
     </data>
@@ -2086,9 +2083,6 @@ Scroll wheel or number keys to switch pick modes</value>
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Add</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>Delete selected items</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>Click me to view</value>
@@ -3713,9 +3707,6 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} includes second-level precision and may reduce cache hit rate. Use {Date} instead unless exact time is needed.</value>
     </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>Prompt not found: {0}. The default prompt will be used instead.</value>
-    </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Custom</value>
     </data>
@@ -5027,5 +5018,8 @@ Copy the command below and run it in your terminal to update.</value>
     </data>
     <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
         <value>Or, download from the </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>This API key is still used by: {0}. Choose another key in those configurations before deleting it.</value>
     </data>
 </root>

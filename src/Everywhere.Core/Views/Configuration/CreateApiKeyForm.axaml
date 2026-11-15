@@ -14,13 +14,10 @@
             <TextBox
               Classes="Clearable"
               shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.CreateApiKeyForm_NameTextBox_Label}}"
+              shadui:ElementAssist.FocusOnLoad="True"
               MaxLines="2"
               Text="{Binding ApiKey.Name, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-              TextWrapping="Wrap">
-              <Interaction.Behaviors>
-                <FocusOnAttachedBehavior/>
-              </Interaction.Behaviors>
-            </TextBox>
+              TextWrapping="Wrap"/>
             <TextBox
               shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.CreateApiKeyForm_SecretKeyTextBox_Label}}"
               MaxLines="5"

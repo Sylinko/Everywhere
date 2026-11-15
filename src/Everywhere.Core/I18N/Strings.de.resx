@@ -2048,9 +2048,6 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>Das Wechseln des Prompts während einer Unterhaltung kann die Trefferquote des Prompt-Caches verringern und die Kosten für LLM erhöhen.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>Sind Sie sicher, dass Sie {0} API-Schlüssel löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden!</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>Kopiert</value>
     </data>
@@ -2086,9 +2083,6 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Hinzufügen</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>Ausgewählte löschen</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>Klicken Sie hier, um zu sehen</value>
@@ -3712,9 +3706,6 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} auf die Sekunde genau kann die Cache-Trefferquote verringern und die Nutzungskosten erhöhen. Verwenden Sie, wenn möglich, {Date}.</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>Eingabeaufforderung nicht gefunden: {0}. Es wird auf die Standard-Eingabeaufforderung zurückgegriffen.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Manuell erstellt</value>

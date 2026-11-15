@@ -12,8 +12,10 @@
     <Setter Property="Width" Value="640"/>
     <Setter Property="Template">
       <ControlTemplate TargetType="v:McpTransportConfigurationForm">
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-          <StackPanel Spacing="8">
+        <ScrollViewer
+          Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel
+            Margin="0,0,12,0" Spacing="8">
             <TextBox
               Classes="Clearable"
               shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_NameTextBox_Label}}"

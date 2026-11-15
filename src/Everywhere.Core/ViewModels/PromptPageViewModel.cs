@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Collections;
+using Everywhere.Configuration;
 using Everywhere.Messages;
 using Everywhere.Skills;
 using Everywhere.Views.Pages;
@@ -16,16 +17,11 @@ using ShadUI;
 namespace Everywhere.ViewModels;
 
 /// <summary>
-/// Read-only backing model for the first Prompt Manager page.
+/// Manages prompt selection, previews, and edits from the Prompt Manager page.
 /// </summary>
-/// <remarks>
-/// The page intentionally does not create, edit, or delete prompts yet. Its job is to make the
-/// already-established prompt domain visible, prove route selection and preview rendering, and give
-/// later editor work a stable layout to extend.
-/// </remarks>
 public sealed partial class PromptPageViewModel(
     IPromptService promptService,
-    IAssistantPromptReferenceService assistantPromptReferenceService,
+    Settings settings,
     ISkillPromptProvider skillPromptProvider,
     IServiceProvider serviceProvider
 ) : BusyViewModelBase
@@ -47,7 +43,7 @@ public sealed partial class PromptPageViewModel(
     /// <summary>
     /// Assistants that currently use the selected prompt.
     /// </summary>
-    public IReadOnlyBindableList<AssistantPromptReference> SelectedPromptReferences => _selectedPromptReferences;
+    public IReadOnlyBindableList<CustomAssistant> SelectedPromptReferences => _selectedPromptReferences;
 
     public bool HasAnyPrompts => _prompts.Count > 0;
 
@@ -90,7 +86,7 @@ public sealed partial class PromptPageViewModel(
     private readonly BindableList<PromptItem> _prompts = [];
     private readonly BindableList<PromptItem> _filteredPrompts = [];
     private readonly BindableList<PromptDiagnosticItem> _selectedPromptDiagnostics = [];
-    private readonly BindableList<AssistantPromptReference> _selectedPromptReferences = [];
+    private readonly BindableList<CustomAssistant> _selectedPromptReferences = [];
 
     private bool _hasLoadedPrompts;
     private Guid? _pendingRoutePromptId;
@@ -191,9 +187,9 @@ public sealed partial class PromptPageViewModel(
             return;
         }
 
-        var references = assistantPromptReferenceService.ListReferences(prompt.Id);
+        var references = settings.FindAssistantsUsingPrompt(prompt.Id);
         var result = await DialogHost.CreateDialog(
-                CreateDeletePromptDialogMessage(prompt, references.Count),
+                CreateDeletePromptDialogMessage(prompt, references.Length),
                 LocaleKey.Common_Warning.I18N())
             .WithPrimaryButton(LocaleKey.Common_Delete.I18N(), buttonStyle: ButtonStyle.Destructive)
             .WithCancelButton(LocaleKey.Common_Cancel.I18N())
@@ -206,11 +202,16 @@ public sealed partial class PromptPageViewModel(
         await ExecuteBusyTaskAsync(
             async cancellationToken =>
             {
-                assistantPromptReferenceService.ResetReferencesToDefault(prompt.Id);
                 if (!await promptService.DeletePromptAsync(prompt.Id, cancellationToken))
                 {
                     RefreshSelectedPromptDetails(prompt);
                     return;
+                }
+
+                // Assignments may have changed while the dialog or database operation was pending.
+                foreach (var assistant in settings.FindAssistantsUsingPrompt(prompt.Id))
+                {
+                    assistant.SystemPromptId = Guid.Empty;
                 }
 
                 ClearSelectedPrompt();
@@ -241,12 +242,12 @@ public sealed partial class PromptPageViewModel(
     }
 
     [RelayCommand]
-    private static void OpenAssistantReference(AssistantPromptReference? reference)
+    private static void OpenAssistantReference(CustomAssistant? assistant)
     {
-        if (reference is null) return;
+        if (assistant is null) return;
 
         WeakReferenceMessenger.Default.Send(
-            new MainViewNavigateMessage(MainViewNavigateMessage.ToCustomAssistant(reference.Id)));
+            new MainViewNavigateMessage(MainViewNavigateMessage.ToCustomAssistant(assistant.Id)));
     }
 
     private async Task LoadPromptsAsync(CancellationToken cancellationToken)
@@ -358,7 +359,7 @@ public sealed partial class PromptPageViewModel(
                 .AsValueEnumerable()
                 .Select(static diagnostic => new PromptDiagnosticItem(diagnostic))
                 .ToArray());
-        _selectedPromptReferences.Reset(assistantPromptReferenceService.ListReferences(promptItem.Id));
+        _selectedPromptReferences.Reset(settings.FindAssistantsUsingPrompt(promptItem.Id));
     }
 
     /// <summary>

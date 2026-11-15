@@ -2048,9 +2048,6 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>Cambiar el prompt durante una conversación puede reducir la tasa de aciertos de la caché de prompts y aumentar el coste de los LLM.</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>¿Estás seguro de que deseas eliminar {0} claves API? ¡Esta acción no se puede deshacer!</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>Copiado</value>
     </data>
@@ -2086,9 +2083,6 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Agregar</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>Eliminar selección</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>Haz clic aquí para ver</value>
@@ -3712,9 +3706,6 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} con precisión de segundos puede reducir la tasa de aciertos de caché y aumentar los costos de uso. A menos que sea necesario, use {Date}.</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>No se encuentra el aviso: {0}. Se utilizará el aviso predeterminado.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Creación manual</value>

@@ -19,7 +19,7 @@ finishes. The code block keeps its chat copy action and
 success feedback, with the text-wrap toggle hidden in this dialog only. A bottom-right
 Cancel button replaces the header X; Escape also cancels. Opening, rendering or
 canceling does not modify the clipboard. Detachment stops the timer, releases
-localization subscriptions and restores the host's temporary appearance class.
+localization subscriptions and removes the appearance class from its dialog layer.
 
 The chat toolbar first cloaks the chat window using its normal close-message path,
 then activates the main window and opens this dialog. This preserves pin settings
@@ -106,15 +106,10 @@ installer backend; its package dependencies and runtime need separate validation
 ## Validation
 
 `tests/linux-update` exercises package commands using fake executables in an isolated
-PATH/HOME. Core tests cover discovery-only policy, the real settings control, localization,
-inline clipboard copying, close behavior and the chat-to-main-window update
-request. Linux tests cover release selection,
+PATH/HOME. Core tests cover the discovery-only policy: automatic and explicit checks
+can find a release, but the graphical updater does not download or install it.
+Linux tests cover release selection,
 settings precedence, read-only settings loading and the existing proxy behavior.
-
-Set `EVERYWHERE_UPDATE_PREVIEW_DIR` while running `TerminalUpdatePresentationTests` to
-render the real dialog in light/dark themes and Chinese/English with Avalonia/Skia.
-Version 99.0.0-canary.1 is fixture data. Headless renders and message-routing tests do
-not represent physical-desktop activation or Linux package installation acceptance.
 
 The installer checks `tools/linux-installer/installer.json` on official main through
 raw.githubusercontent.com. The manifest and script are committed together; no

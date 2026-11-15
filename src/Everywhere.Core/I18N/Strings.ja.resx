@@ -2048,9 +2048,6 @@
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
         <value>会話中にプロンプトを切り替えると、プロンプトキャッシュのヒット率が低下し、LLM のコストが増加するおそれがあります。</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
-        <value>{0} 個のAPIキーを削除してもよろしいですか？この操作は元に戻せません！</value>
-    </data>
     <data name="Common_Copied" xml:space="preserve">
         <value>コピーしました</value>
     </data>
@@ -2086,9 +2083,6 @@
     </data>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>追加</value>
-    </data>
-    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
-        <value>選択項目を削除</value>
     </data>
     <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
         <value>こちらをクリックして確認</value>
@@ -3712,9 +3706,6 @@
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} は秒単位で、キャッシュヒット率を低下させ、使用コストを増加させる可能性があります。必要がない場合は {Date} を使用してください。</value>
-    </data>
-    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
-        <value>プロンプトが見つかりません：{0}。デフォルトプロンプトに切り替えます。</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>手動作成</value>

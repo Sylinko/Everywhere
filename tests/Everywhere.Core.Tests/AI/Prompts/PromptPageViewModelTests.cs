@@ -1,9 +1,13 @@
+using Avalonia.Controls;
+using Avalonia.Headless.NUnit;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
-using Everywhere.I18N;
+using Everywhere.Configuration;
 using Everywhere.Skills;
 using Everywhere.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
+using ShadUI;
 
 namespace Everywhere.Core.Tests.AI.Prompts;
 
@@ -58,16 +62,62 @@ public sealed class PromptPageViewModelTests
         });
     }
 
+    [AvaloniaTest]
+    public async Task DeletePrompt_WhenDatabaseCompletes_ResetsOnlyCurrentReferencesOnSuccess()
+    {
+        using var provider = new ServiceCollection().BuildServiceProvider();
+        var settings = new Settings(provider);
+        var prompt = UserPrompt("To delete");
+        var assistant = new CustomAssistant { SystemPromptId = prompt.Id };
+        settings.Model.CustomAssistants.Add(assistant);
+        var prompts = Substitute.For<IPromptService>();
+        prompts.ListPromptsAsync().Returns([new DefaultPromptProvider().DefaultPrompt, prompt]);
+        var firstAttempt = new TaskCompletionSource<bool>();
+        var retry = new TaskCompletionSource<bool>();
+        prompts.DeletePromptAsync(prompt.Id, Arg.Any<CancellationToken>()).Returns(firstAttempt.Task, retry.Task);
+        using var model = new PromptPageViewModel(prompts, settings, new TestSkillPromptProvider(""), provider);
+        var host = new DialogHost();
+        var window = new Window { Content = host };
+        try
+        {
+            window.Show();
+            await model.ViewLoaded(CancellationToken.None);
+            model.OnNavigatedTo([prompt.Id.ToString()]);
+
+            var pending = model.DeleteSelectedPromptCommand.ExecuteAsync(null);
+            host.CloseAll(DialogResult.Primary);
+            firstAttempt.SetResult(false);
+            await pending;
+            Assert.That(assistant.SystemPromptId, Is.EqualTo(prompt.Id));
+
+            pending = model.DeleteSelectedPromptCommand.ExecuteAsync(null);
+            host.CloseAll(DialogResult.Primary);
+            var otherId = Guid.NewGuid();
+            assistant.SystemPromptId = otherId;
+            var lateReference = new CustomAssistant { SystemPromptId = prompt.Id };
+            settings.Model.CustomAssistants.Add(lateReference);
+            retry.SetResult(true);
+            await pending;
+            Assert.That(assistant.SystemPromptId, Is.EqualTo(otherId));
+            Assert.That(lateReference.SystemPromptId, Is.EqualTo(Guid.Empty));
+        }
+        finally
+        {
+            await model.ViewUnloaded();
+            window.Close();
+        }
+    }
+
     private static PromptPageViewModel CreateViewModel(
         IReadOnlyList<PromptDefinition> prompts,
-        IAssistantPromptReferenceService? referenceService = null,
         ISkillPromptProvider? skillPromptProvider = null)
     {
+        var serviceProvider = new ServiceCollection().BuildServiceProvider();
         return new PromptPageViewModel(
             new TestPromptService(prompts),
-            referenceService ?? new TestAssistantPromptReferenceService([]),
+            new Settings(serviceProvider),
             skillPromptProvider ?? new TestSkillPromptProvider(string.Empty),
-            new ServiceCollection().BuildServiceProvider());
+            serviceProvider);
     }
 
     private static PromptDefinition UserPrompt(
@@ -106,19 +156,6 @@ public sealed class PromptPageViewModelTests
 
         public Task<bool> DeletePromptAsync(Guid id, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
-    }
-
-    private sealed class TestAssistantPromptReferenceService(IReadOnlyList<AssistantPromptReference> references)
-        : IAssistantPromptReferenceService
-    {
-        public IReadOnlyList<AssistantPromptReference> ListReferences(Guid promptId) =>
-            references.Where(reference => reference.SystemPromptId == promptId).ToList();
-
-        public Task<IReadOnlyList<UnresolvedAssistantPromptReference>> ListUnresolvedReferencesAsync(
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<UnresolvedAssistantPromptReference>>([]);
-
-        public int ResetReferencesToDefault(Guid promptId) => 0;
     }
 
     private sealed class TestSkillPromptProvider(string prompt) : ISkillPromptProvider

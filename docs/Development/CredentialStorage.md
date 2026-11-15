@@ -28,3 +28,21 @@ deletes from the current service.
 
 The newer migration propagates native errors. The settings version stays unchanged
 on failure, and a retry recognizes a copy already written before deletion failed.
+
+## Explicit deletion checks the current settings
+
+Opening the list shows names and masks without reading the vault. Revealing,
+copying or editing a key reads only that row's secret.
+
+Use **Add** to create a key, or the trash button on a row to delete just that
+key. After confirmation, `Settings.RemoveApiKeyAsync` queries the
+current custom assistants, four system assistants and all configured search
+providers, including inactive providers. Users must reassign a key that is
+still in use. There is no subscription, reverse index or vault-wide cleanup.
+
+Removing a row keeps the native item if another row owns the same key ID.
+For the last owner, native deletion must succeed before the row is removed.
+If the store refuses the operation, the row remains available for retry.
+Importing or replacing settings is not a deletion request.
+
+Explicit deletion runs off the UI thread because a native call may prompt or block.

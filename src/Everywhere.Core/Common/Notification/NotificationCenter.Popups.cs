@@ -175,13 +175,8 @@ partial class NotificationCenter
 
         _popupPresentation = null;
         presentation.View.Acknowledged -= HandlePopupAcknowledged;
-        presentation.Host.Close(presentation.View);
-        // Normal closure keeps the host's exit animation. Hidden/unloaded owners must release
-        // the old parent immediately so another window can reuse the same View.
-        if (shouldDetachView && ReferenceEquals(presentation.Host.Dialog, presentation.View))
-        {
-            presentation.Host.Dialog = null;
-        }
+        // A hidden window must release the visual immediately so another host can reuse it.
+        presentation.Host.Close(presentation.View, DialogResult.Cancel, shouldAnimate: !shouldDetachView);
     }
 
     private void WindowChanged(WindowRegistration registration)

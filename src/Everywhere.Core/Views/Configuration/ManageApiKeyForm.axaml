@@ -4,42 +4,25 @@
   <ControlTheme
     x:Key="{x:Type v:ManageApiKeyForm}"
     TargetType="v:ManageApiKeyForm">
-    <Setter Property="MinWidth" Value="800"/>
+    <Setter Property="ClipToBounds" Value="False"/>
     <Setter Property="MaxWidth" Value="640"/>
-    <Setter Property="Margin" Value="0,-40,0,0"/>
     <Setter Property="Template">
       <ControlTemplate TargetType="v:ManageApiKeyForm">
-        <DockPanel VerticalSpacing="8">
-          <shadui:ControlGroup
-            DockPanel.Dock="Top" HorizontalAlignment="Right"
-            Orientation="Horizontal">
-            <Button
-              Classes="Secondary"
-              shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
-              Command="{Binding AddApiKeyCommand, RelativeSource={RelativeSource TemplatedParent}}"
-              Content="{I18N {x:Static LocaleKey.ManageApiKeyForm_AddApiKeyButton_Content}}"/>
-            <Button
-              Classes="Secondary Destructive"
-              shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
-              Command="{Binding DeleteApiKeysCommand, RelativeSource={RelativeSource TemplatedParent}}"
-              Content="{I18N {x:Static LocaleKey.ManageApiKeyForm_DeleteApiKeysButton_Content}}"
-              Foreground="{DynamicResource DestructiveColor}"/>
-          </shadui:ControlGroup>
+        <DockPanel
+          Margin="0,-46,0,0" VerticalSpacing="8">
+          <Button
+            Classes="Secondary" DockPanel.Dock="Top"
+            Margin="0,0,0,6" HorizontalAlignment="Right"
+            shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+            Command="{Binding AddApiKeyCommand, RelativeSource={RelativeSource TemplatedParent}}"
+            Content="{I18N {x:Static LocaleKey.ManageApiKeyForm_AddApiKeyButton_Content}}"/>
 
           <DataGrid
             CanUserReorderColumns="False" CanUserResizeColumns="True"
             CanUserSortColumns="True" GridLinesVisibility="Horizontal"
-            ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}">
+            ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
+            SelectionMode="Single">
             <DataGrid.Columns>
-              <DataGridCheckBoxColumn
-                Binding="{ReflectionBinding IsChecked, Mode=TwoWay}"
-                CanUserResize="False" CanUserSort="False"
-                IsReadOnly="False">
-                <DataGridCheckBoxColumn.Header>
-                  <CheckBox IsChecked="{Binding $parent[v:ManageApiKeyForm].IsApiKeysChecked, Mode=TwoWay}"/>
-                </DataGridCheckBoxColumn.Header>
-              </DataGridCheckBoxColumn>
-
               <DataGridTextColumn
                 Binding="{ReflectionBinding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                 Header="{I18N {x:Static LocaleKey.ManageApiKeyForm_NameDataGridTextColumn_Header}}"
@@ -59,7 +42,7 @@
                         MaxHeight="72" HorizontalScrollBarVisibility="Disabled"
                         IsVisible="{Binding IsApiKeyVisible}">
                         <SelectableTextBlock
-                          Text="{Binding SecretKey}"
+                          Text="{Binding RevealedSecretKey}"
                           TextWrapping="Wrap"/>
                       </ScrollViewer>
                     </Panel>
@@ -111,8 +94,10 @@
                         <Button.Flyout>
                           <Flyout>
                             <StackPanel
-                              Margin="4" Spacing="8">
-                              <TextBlock Text="{I18N {x:Static LocaleKey.ManageApiKeyForm_DeleteApiKey_Flyout_Content}}"/>
+                              Margin="6" Spacing="4">
+                              <TextBlock
+                                Margin="6,4"
+                                Text="{I18N {x:Static LocaleKey.ManageApiKeyForm_DeleteApiKey_Flyout_Content}}"/>
                               <StackPanel
                                 HorizontalAlignment="Right" Orientation="Horizontal"
                                 Spacing="4">

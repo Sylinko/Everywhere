@@ -163,19 +163,13 @@ Prompt Manager does not expose this as an editable local file. Local prompt cont
 
 ## 8. Reverse References
 
-Prompt Manager should be able to answer:
+Prompt details and delete confirmation query the current custom assistants in
+settings by `SystemPromptId`. `Guid.Empty` means the built-in default. After
+deleting a user prompt from the database, reset only assistants that still use
+it. Failed deletion leaves their assignments intact. The preview timer does
+not refresh references.
 
-1. which assistants reference a prompt
-2. whether a prompt is unreferenced
-3. whether a prompt is the built-in default
-4. whether a reference is unresolved
-
-Delete and migration workflows depend on this lookup.
-
-The same reference-query pattern should be reused by ApiKey management:
-
-1. which assistants reference an ApiKey
-2. which web search providers reference an ApiKey
-3. whether an ApiKey is unreferenced
-
-ApiKey deletion must remove both the settings entry and the secure secret. Migration should not automatically delete currently unreferenced ApiKeys because users may keep spare keys intentionally.
+API-key deletion also queries settings on demand, but treats an explicit use by
+an assistant or search provider as a reason to refuse deletion. An unreferenced
+listed key can be a spare: only an explicit delete removes the last owning
+entry and its credential. Neither lookup requires a maintained index.
