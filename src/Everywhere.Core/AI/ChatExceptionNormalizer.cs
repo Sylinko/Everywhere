@@ -263,9 +263,7 @@ public static partial class ChatExceptionNormalizer
             "model_not_found" =>
                 new HandledChatException.InvalidConfiguration.ModelUnavailable(evidence.OriginalException, evidence.FriendlyMessageKey),
             "unsupported_parameter" or "invalid_parameter" =>
-                parameter is null ?
-                    FromMessage(evidence, evidence.ErrorMessage, null) ?? ParameterFailure(evidence, null) :
-                    ParameterFailure(evidence, parameter),
+                FromMessage(evidence, evidence.ErrorMessage, parameter) ?? ParameterFailure(evidence, parameter),
             "request_too_large" or "image_too_large" or "image_file_too_large" or "too_many_images"
                 when (int?)evidence.StatusCode is null or 400 or 422 =>
                 new HandledChatException.InvalidRequest.RequestInputTooLarge(evidence.OriginalException, evidence.FriendlyMessageKey),

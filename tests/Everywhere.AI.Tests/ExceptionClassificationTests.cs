@@ -1,4 +1,4 @@
-using System.ClientModel;
+﻿using System.ClientModel;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -167,6 +167,53 @@ public sealed class ExceptionClassificationTests
     {
         var handled = Normalize(new HttpRequestException(message, null, (HttpStatusCode)statusCode));
         Assert.That(handled is HandledChatException.InvalidRequest.RequestInputTooLarge, Is.EqualTo(isInputLimit));
+    }
+
+    [TestCase("invalid_parameter", "images", 400, true)]
+    [TestCase("unsupported_parameter", "images", 400, true)]
+    [TestCase("invalid_parameter", null, 400, true)]
+    [TestCase("invalid_parameter", "images", 429, false)]
+    public void Handle_WhenParameterErrorReportsImageLimit_UsesInputLimitClassification(
+        string code,
+        string? parameter,
+        int statusCode,
+        bool isInputLimit)
+    {
+        // Synthetic regression input: a populated param must not hide a recoverable image limit.
+        var body = JsonSerializer.Serialize(new
+        {
+            error = new { code, param = parameter, message = "Too many images in request: 31 > 30" }
+        });
+        var handled = Normalize(new HttpOperationException((HttpStatusCode)statusCode, body, "Request failed", null));
+        Assert.That(handled is HandledChatException.InvalidRequest.RequestInputTooLarge, Is.EqualTo(isInputLimit));
+    }
+
+    [TestCase("invalid_parameter", "temperature", typeof(HandledChatException.InvalidConfiguration.InvalidTemperature))]
+    [TestCase("unsupported_parameter", "top_p", typeof(HandledChatException.InvalidConfiguration.InvalidTopP))]
+    public void Handle_WhenParameterErrorHasNoSpecificDiagnosis_KeepsParameterClassification(string code, string parameter, Type expectedType)
+    {
+        var body = JsonSerializer.Serialize(new
+        {
+            error = new { code, param = parameter, message = "The parameter is not supported by this model." }
+        });
+        var handled = Normalize(new HttpOperationException(HttpStatusCode.BadRequest, body, "Request failed", null));
+        Assert.That(handled, Is.TypeOf(expectedType));
+    }
+
+    [Test]
+    public void Handle_WhenParameterErrorReportsContextLimit_UsesContextClassification()
+    {
+        // The generic parameter-code fallback must reuse message diagnosis beyond image limits.
+        var body = JsonSerializer.Serialize(new
+        {
+            error = new { code = "invalid_parameter", param = "messages", message = "Maximum context length exceeded" }
+        });
+        var handled = Normalize(new HttpOperationException(HttpStatusCode.BadRequest, body, "Request failed", null));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(handled, Is.TypeOf<HandledChatException.InvalidRequest.ContextLengthExceeded>());
+            Assert.That(handled.Recovery, Is.TypeOf<ChatExceptionRecovery.RecoverContext>());
+        }
     }
 
     [Test]

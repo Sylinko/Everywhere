@@ -12,6 +12,14 @@
         </Style>
       </StackPanel.Styles>
 
+      <SelectableTextBlock
+        Classes="Muted" Margin="0,2,0,0"
+        FontSize="{DynamicResource FontSizeS}"
+        Foreground="{DynamicResource ErrorColor60}"
+        IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+        Text="{Binding ErrorMessageKey^, FallbackValue={x:Null}}"
+        TextWrapping="Wrap"/>
+
       <ItemsControl ItemsSource="{Binding DisplayBlocks}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
@@ -429,13 +437,6 @@
                 </shadui:Badge.Styles>
               </shadui:Badge>
             </AdornerLayer.Adorner>
-
-            <v:ChatActionBubble.ErrorContent>
-              <SelectableTextBlock
-                Classes="Muted" Margin="6,4"
-                FontSize="{DynamicResource FontSizeS}"
-                Text="{Binding ErrorMessageKey^, FallbackValue={x:Null}}"/>
-            </v:ChatActionBubble.ErrorContent>
 
             <v:ConditionalContentControl
               Condition="{Binding #FunctionCallChatActionBubble.IsExpanded}"

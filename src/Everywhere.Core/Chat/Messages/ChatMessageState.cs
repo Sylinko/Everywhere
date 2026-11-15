@@ -65,7 +65,7 @@ public sealed record ChatFunctionState(
     /// <summary>
     /// Gets whether the call has anything to present when expanded.
     /// </summary>
-    public bool HasDetails => DisplayBlocks.Count > 0 || ImageViews.Count > 0;
+    public bool HasDetails => ErrorMessageKey is not null || DisplayBlocks.Count > 0 || ImageViews.Count > 0;
 }
 
 /// <summary>
