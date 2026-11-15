@@ -155,7 +155,7 @@ public sealed class RpcConnection : IAsyncDisposable
     /// <summary>Registers a fixed notification operation initiated by the peer.</summary>
     public void RegisterNotificationHandler(uint operationId, RpcNotificationHandler handler)
     {
-        _router.RegisterNotification(operationId, handler);
+        _router.RegisterNotification(operationId, handler, shouldPreserveOrder: false);
     }
 
     /// <summary>Registers a typed request handler using this connection's codec.</summary>
@@ -171,16 +171,23 @@ public sealed class RpcConnection : IAsyncDisposable
             });
     }
 
-    /// <summary>Registers a typed peer-notification handler.</summary>
-    public void RegisterNotificationHandler<TNotification>(uint operationId, Func<TNotification, CancellationToken, ValueTask> handler)
+    /// <summary>
+    /// Registers a typed peer-notification handler. On each connection, handlers that opt into
+    /// ordering run in receive order. Other notifications and requests remain independent.
+    /// </summary>
+    public void RegisterNotificationHandler<TNotification>(
+        uint operationId,
+        Func<TNotification, CancellationToken, ValueTask> handler,
+        bool shouldPreserveOrder = false)
     {
-        RegisterNotificationHandler(
+        _router.RegisterNotification(
             operationId,
             async (payload, cancellationToken) =>
             {
                 var notification = _codec.Deserialize<TNotification>(payload);
                 await handler(notification, cancellationToken).ConfigureAwait(false);
-            });
+            },
+            shouldPreserveOrder);
     }
 
     /// <summary>Registers a fixed streamed-response operation initiated by the peer.</summary>
@@ -509,7 +516,10 @@ public sealed class RpcConnection : IAsyncDisposable
             throw new RpcProtocolException("The RPC notification operation is not registered.");
         }
 
-        _router.Dispatch(() => handler(frame.Payload, cancellationToken), FailDispatch);
+        _router.Dispatch(
+            () => handler.Handler(frame.Payload, cancellationToken),
+            FailDispatch,
+            handler.ShouldPreserveOrder);
     }
 
     private async ValueTask DispatchStreamRequestAsync(
@@ -1091,9 +1101,10 @@ public sealed class RpcConnection : IAsyncDisposable
         private readonly Lock _dispatchGate = new();
         private readonly Lock _handlerGate = new();
         private readonly HashSet<Task> _dispatches = [];
-        private readonly Dictionary<uint, RpcNotificationHandler> _notifications = [];
+        private readonly Dictionary<uint, NotificationRegistration> _notifications = [];
         private readonly Dictionary<uint, RpcRequestHandler> _requests = [];
         private readonly Dictionary<uint, RpcStreamHandler> _streams = [];
+        private Task _lastOrderedNotification = Task.CompletedTask;
 
         public void RegisterRequest(uint operationId, RpcRequestHandler handler)
         {
@@ -1103,11 +1114,11 @@ public sealed class RpcConnection : IAsyncDisposable
             }
         }
 
-        public void RegisterNotification(uint operationId, RpcNotificationHandler handler)
+        public void RegisterNotification(uint operationId, RpcNotificationHandler handler, bool shouldPreserveOrder)
         {
             lock (_handlerGate)
             {
-                _notifications.Add(operationId, handler);
+                _notifications.Add(operationId, new NotificationRegistration(handler, shouldPreserveOrder));
             }
         }
 
@@ -1127,7 +1138,7 @@ public sealed class RpcConnection : IAsyncDisposable
             }
         }
 
-        public bool TryGetNotification(uint operationId, [NotNullWhen(true)] out RpcNotificationHandler? handler)
+        public bool TryGetNotification(uint operationId, [NotNullWhen(true)] out NotificationRegistration? handler)
         {
             lock (_handlerGate)
             {
@@ -1143,7 +1154,7 @@ public sealed class RpcConnection : IAsyncDisposable
             }
         }
 
-        public void Dispatch(Func<ValueTask> dispatch, Action<Exception> failed)
+        public void Dispatch(Func<ValueTask> dispatch, Action<Exception> failed, bool shouldPreserveOrder = false)
         {
             Task tracked;
             lock (_dispatchGate)
@@ -1151,7 +1162,13 @@ public sealed class RpcConnection : IAsyncDisposable
                 // Invoke handlers on the default thread pool so their synchronous
                 // prefix cannot block the transport reader. Do not pass the connection
                 // token to Task.Run: accepted work still owns its cancellation cleanup.
-                tracked = Task.Run(() => ObserveAsync(dispatch, failed));
+                var previous = shouldPreserveOrder ? _lastOrderedNotification : Task.CompletedTask;
+                tracked = Task.Run(() => ObserveAsync(previous, dispatch, failed));
+                if (shouldPreserveOrder)
+                {
+                    _lastOrderedNotification = tracked;
+                }
+
                 _dispatches.Add(tracked);
             }
 
@@ -1178,8 +1195,9 @@ public sealed class RpcConnection : IAsyncDisposable
             }
         }
 
-        private async static Task ObserveAsync(Func<ValueTask> dispatch, Action<Exception> failed)
+        private static async Task ObserveAsync(Task previous, Func<ValueTask> dispatch, Action<Exception> failed)
         {
+            await previous.ConfigureAwait(false);
             try
             {
                 await dispatch().ConfigureAwait(false);
@@ -1198,6 +1216,8 @@ public sealed class RpcConnection : IAsyncDisposable
             }
         }
     }
+
+    private sealed record NotificationRegistration(RpcNotificationHandler Handler, bool ShouldPreserveOrder);
 
     /// <summary>Owns correlation IDs and both sides' cancellable operation state.</summary>
     private sealed class OperationRegistry

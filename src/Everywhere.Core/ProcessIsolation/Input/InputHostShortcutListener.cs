@@ -35,6 +35,13 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
             SingleWriter = false,
             AllowSynchronousContinuations = false
         });
+    private readonly Channel<Action> _callbacks = Channel.CreateUnbounded<Action>(
+        new UnboundedChannelOptions
+        {
+            SingleReader = true,
+            AllowSynchronousContinuations = false
+        });
+    private readonly Task _callbackTask;
     private readonly Task _runTask;
 
     private RpcConnection? _activeConnection;
@@ -49,6 +56,7 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
     {
         _connectionSource = connectionSource;
         _logger = logger;
+        _callbackTask = RunCallbacksAsync();
         _runTask = RunAsync();
     }
 
@@ -151,6 +159,8 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
             _registrationsById.Clear();
         }
 
+        _callbacks.Writer.TryComplete();
+        await _callbackTask.ConfigureAwait(false);
         _lifetime.Dispose();
     }
 
@@ -182,7 +192,7 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
 
     private async Task RunConnectionAsync(RpcConnection connection, CancellationToken cancellationToken)
     {
-        InputHostNotificationRpcBinding.Bind(connection, new ConnectionNotificationSink(this, connection));
+        InputHostNotificationRpcBinding.Bind(connection, new ConnectionNotificationSink(this, connection), shouldPreserveOrder: true);
         var client = new InputHostRpcClient(connection);
 
         lock (_stateGate)
@@ -197,7 +207,7 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
 
         try
         {
-            await ApplyStateAsync(connection, client, cancellationToken).ConfigureAwait(false);
+            await ApplyStateAsync(client, cancellationToken).ConfigureAwait(false);
             while (!cancellationToken.IsCancellationRequested)
             {
                 using var stateWait = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -222,7 +232,7 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
                 while (_stateChanges.Reader.TryRead(out _))
                 {
                 }
-                await ApplyStateAsync(connection, client, cancellationToken).ConfigureAwait(false);
+                await ApplyStateAsync(client, cancellationToken).ConfigureAwait(false);
             }
         }
         finally
@@ -231,7 +241,7 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
         }
     }
 
-    private async Task ApplyStateAsync(RpcConnection connection, InputHostRpcClient client, CancellationToken cancellationToken)
+    private async Task ApplyStateAsync(InputHostRpcClient client, CancellationToken cancellationToken)
     {
         ApplyInputStateRequest request;
         lock (_stateGate)
@@ -243,16 +253,6 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
         if (!response.IsApplied)
         {
             throw new InvalidOperationException("Input Host did not apply Main's complete desired-state snapshot.");
-        }
-
-        lock (_stateGate)
-        {
-            if (ReferenceEquals(_activeConnection, connection) &&
-                request.CaptureId != 0 &&
-                _captureScope?.CaptureId == request.CaptureId)
-            {
-                _captureScope.Connection = connection;
-            }
         }
     }
 
@@ -279,9 +279,23 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
         CaptureId = _captureScope is { IsDisposedLocked: false } ? _captureScope.CaptureId : 0
     };
 
+    private async Task RunCallbacksAsync()
+    {
+        await foreach (var callback in _callbacks.Reader.ReadAllAsync().ConfigureAwait(false))
+        {
+            try
+            {
+                callback();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "An Input Host callback failed.");
+            }
+        }
+    }
+
     private void HandleShortcutTriggered(RpcConnection connection, ShortcutTriggeredNotification notification)
     {
-        Action[] handlers;
         lock (_stateGate)
         {
             if (!AcceptNotificationLocked(connection, notification.Sequence, notification.UtcTicks) ||
@@ -290,11 +304,10 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
                 return;
             }
 
-            handlers = [.. registration.Handlers];
-        }
-
-        ThreadPool.QueueUserWorkItem(
-            _ =>
+            var handlers = registration.Handlers.ToArray();
+            // All callbacks enter the same FIFO before releasing the state lock.
+            // User code runs outside this lock and never on the transport reader.
+            _callbacks.Writer.TryWrite(() =>
             {
                 foreach (var handler in handlers)
                 {
@@ -308,11 +321,11 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
                     }
                 }
             });
+        }
     }
 
     private void HandleCaptureChanged(RpcConnection connection, ShortcutCaptureChangedNotification notification)
     {
-        RemoteKeyboardShortcutScope? scope;
         var shortcut = new KeyboardShortcut((Key)notification.Key, (KeyModifiers)notification.Modifiers);
         lock (_stateGate)
         {
@@ -324,15 +337,12 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
             }
 
             current.PressingShortcutLocked = shortcut;
-            scope = current;
+            current.PublishChanged(shortcut);
         }
-
-        scope.PublishChanged(shortcut);
     }
 
     private void HandleCaptureFinished(RpcConnection connection, ShortcutCaptureFinishedNotification notification)
     {
-        RemoteKeyboardShortcutScope? scope;
         var shortcut = new KeyboardShortcut((Key)notification.Key, (KeyModifiers)notification.Modifiers);
         lock (_stateGate)
         {
@@ -344,13 +354,11 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
             }
 
             current.PressingShortcutLocked = shortcut;
-            current.Connection = null;
             _captureScope = null;
-            scope = current;
+            current.PublishFinished(shortcut);
         }
 
         SignalStateChanged();
-        scope.PublishFinished(shortcut);
     }
 
     private bool AcceptNotificationLocked(RpcConnection connection, ulong sequence, long utcTicks)
@@ -374,7 +382,6 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
 
     private void CancelConnectionState(RpcConnection connection)
     {
-        RemoteKeyboardShortcutScope? cancelledScope = null;
         lock (_stateGate)
         {
             if (!ReferenceEquals(_activeConnection, connection))
@@ -384,19 +391,15 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
 
             _activeConnection = null;
             _lastSequence = 0;
-            if (_captureScope?.Connection == connection)
+            // Desired capture state belongs to this active connection even before
+            // ApplyState is acknowledged. Disconnect must also cancel that admission.
+            if (_captureScope is { } cancelledScope)
             {
-                cancelledScope = _captureScope;
-                cancelledScope.Connection = null;
                 cancelledScope.PressingShortcutLocked = default;
                 _captureScope = null;
+                cancelledScope.PublishChanged(default);
+                cancelledScope.PublishFinished(default);
             }
-        }
-
-        if (cancelledScope is not null)
-        {
-            cancelledScope.PublishChanged(default);
-            cancelledScope.PublishFinished(default);
         }
     }
 
@@ -532,8 +535,6 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
 
         public ulong CaptureId { get; } = captureId;
 
-        public RpcConnection? Connection { get; set; }
-
         public bool IsDisposedLocked { get; private set; }
 
         public KeyboardShortcut PressingShortcutLocked { get; set; }
@@ -542,25 +543,26 @@ public sealed class InputHostShortcutListener : IShortcutListener, IAsyncDisposa
 
         public void MarkDisposedLocked() => IsDisposedLocked = true;
 
-        public void PublishChanged(KeyboardShortcut shortcut) =>
+        public void PublishChanged(KeyboardShortcut shortcut)
+        {
             QueueNotification(() => PressingShortcutChanged?.Invoke(this, shortcut));
+        }
 
-        public void PublishFinished(KeyboardShortcut shortcut) =>
+        public void PublishFinished(KeyboardShortcut shortcut)
+        {
             QueueNotification(() => ShortcutFinished?.Invoke(this, shortcut));
+        }
 
-        private void QueueNotification(Action notification) =>
-            ThreadPool.QueueUserWorkItem(
-                _ =>
+        private void QueueNotification(Action notification)
+        {
+            owner._callbacks.Writer.TryWrite(() =>
+            {
+                if (!IsDisposed)
                 {
-                    try
-                    {
-                        notification();
-                    }
-                    catch (Exception exception)
-                    {
-                        owner._logger.LogError(exception, "An Input Host capture callback failed.");
-                    }
-                });
+                    notification();
+                }
+            });
+        }
     }
 
     private sealed class ConnectionNotificationSink(InputHostShortcutListener owner, RpcConnection connection) : IInputHostNotificationRpc
