@@ -3,8 +3,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Everywhere.Chat.Plugins;
-using Everywhere.Collections;
-using Everywhere.Common;
 using Lucide.Avalonia;
 using MessagePack;
 using Microsoft.SemanticKernel;
@@ -86,18 +84,8 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     private IEnumerable<ChatPluginDisplayBlock> SerializableDisplayBlocks => _displaySink.Items;
 
     /// <summary>
-    /// The display blocks that make up the content of this function call message,
-    /// which can include text, markdown, progress indicators, file references, and function call/result displays.
-    /// These blocks are rendered in the chat UI to present the function call information to the user.
-    /// And can be serialized for persistence or transmission.
+    /// Gets the durable display blocks published by the tool.
     /// </summary>
-    /// <remarks>
-    /// The reason why we need to populate the Content property of function call/result display blocks
-    /// is that during deserialization, the references to the actual FunctionCallContent and FunctionResultContent
-    /// objects are not automatically restored. Therefore, we need to manually link them back
-    /// based on their IDs after deserialization. This ensures that the display blocks have access
-    /// to the full details of the function calls and results they are meant to represent.
-    /// </remarks>
     [IgnoreMember]
     public IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks => _displaySink.Items;
 
@@ -200,9 +188,26 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public override ChatFunctionState Capture()
     {
         var isRunning = IsBusy;
+        var imageViews = default(List<ViewImageFunctionResult>);
+        var viewedCount = 0;
+        foreach (var result in Results)
+        {
+            if (result.Result is not ViewImageFunctionResult images)
+            {
+                continue;
+            }
+
+            imageViews ??= [];
+            imageViews.Add(images);
+            viewedCount += images.ViewedCount;
+        }
+
+        var headerKey = imageViews is not null && !isRunning ?
+            new FormattedDynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ViewImage_ViewedCount, new DirectLocaleKey(viewedCount)) :
+            HeaderKey;
         return new ChatFunctionState(
             Icon,
-            HeaderKey,
+            headerKey,
             Content,
             ActivityPreview,
             ErrorMessageKey,
@@ -210,7 +215,8 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
             isRunning ? null : FinishedAt,
             isRunning,
             IsWaitingForUserInput,
-            DisplayBlocks);
+            DisplayBlocks,
+            imageViews is null ? Array.Empty<ViewImageFunctionResult>() : imageViews);
     }
 
     private void HandleDisplayBlocksChanged(object? sender, EventArgs e) => NotifyChanged();

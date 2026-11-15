@@ -16,6 +16,7 @@ namespace Everywhere.Chat;
 [MessagePackUnion(6, typeof(UserActionChatMessage))]
 [MessagePackUnion(7, typeof(ContextCompressionChatMessage))]
 [MessagePackUnion(8, typeof(VisualContextResetChatMessage))]
+[MessagePackUnion(9, typeof(ChatImageOffloadMessage))]
 public abstract partial class ChatMessage
 {
     /// <summary>

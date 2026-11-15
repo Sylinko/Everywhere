@@ -1,6 +1,5 @@
 ﻿using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
-using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Chat.Links;
 using Everywhere.Chat.Plugins;
@@ -72,22 +71,6 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
     {
         get => GetValue(IsReadonlyProperty);
         set => SetValue(IsReadonlyProperty, value);
-    }
-
-    /// <summary>
-    /// Defines the <see cref="SupportedModalities"/> property.
-    /// </summary>
-    public static readonly StyledProperty<Modalities> SupportedModalitiesProperty =
-        AvaloniaProperty.Register<ChatMessageItemsControl, Modalities>(nameof(SupportedModalities));
-
-    /// <summary>
-    /// Gets or sets the modalities supported by this control. This can be used to determine which
-    /// types of content (for example text, images, or videos) can be displayed or interacted with.
-    /// </summary>
-    public Modalities SupportedModalities
-    {
-        get => GetValue(SupportedModalitiesProperty);
-        set => SetValue(SupportedModalitiesProperty, value);
     }
 
     /// <summary>

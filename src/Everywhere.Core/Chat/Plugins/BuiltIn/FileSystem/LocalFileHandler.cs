@@ -15,14 +15,45 @@ public abstract class LocalFileHandler : FileHandler
     {
         if (PathUtilities.HasExplicitUriScheme(path))
         {
-            if (!Uri.TryCreate(path, UriKind.Absolute, out var uri) || !uri.IsFile) return null;
+            if (!Uri.TryCreate(path, UriKind.Absolute, out var uri) || !uri.IsFile)
+            {
+                return null;
+            }
+
             path = uri.LocalPath;
         }
 
+        // Normalize local input before format probing so every handler sees the same path syntax.
+        path = NormalizeLocalPath(path, workingDirectory);
+        FileSystemInfo info = File.Exists(path) ? new FileInfo(path) : Directory.Exists(path) ? new DirectoryInfo(path) : new FileInfo(path);
+        return await CanHandleLocalAsync(path, info, cancellationToken) ? new FileHandlerContext(this, path, workingDirectory, info) : null;
+    }
+
+    /// <summary>
+    /// Resolves a local path or file URI against the conversation working directory.
+    /// </summary>
+    public static string ExpandLocalPath(string path, string workingDirectory)
+    {
+        if (PathUtilities.HasExplicitUriScheme(path))
+        {
+            if (!Uri.TryCreate(path, UriKind.Absolute, out var uri) || !uri.IsFile)
+            {
+                throw new HandledException(
+                    new NotSupportedException("This tool only accepts local paths and file:// URIs."),
+                    LocaleKey.BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage);
+            }
+
+            path = uri.LocalPath;
+        }
+
+        return NormalizeLocalPath(path, workingDirectory);
+    }
+
+    private static string NormalizeLocalPath(string path, string workingDirectory)
+    {
         try
         {
-            // Normalize local input before format probing so every handler sees the same path syntax.
-            path = PathUtilities.ExpandFullPath(path, workingDirectory);
+            return PathUtilities.ExpandFullPath(path, workingDirectory);
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
@@ -30,12 +61,6 @@ public abstract class LocalFileHandler : FileHandler
                 new ArgumentException($"The local path '{path}' could not be resolved: {ex.Message}", ex),
                 LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
         }
-
-        FileSystemInfo info = File.Exists(path) ? new FileInfo(path)
-            : Directory.Exists(path) ? new DirectoryInfo(path)
-            : new FileInfo(path);
-
-        return await CanHandleLocalAsync(path, info, cancellationToken) ? new FileHandlerContext(this, path, workingDirectory, info) : null;
     }
 
     public override ValueTask<FileRecord> GetFileInformationAsync(FileHandlerContext context, CancellationToken cancellationToken)

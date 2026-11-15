@@ -184,33 +184,11 @@ partial class ChatService
         CancellationToken cancellationToken)
     {
         var chatData = chatContext.Data;
-        var chatHistory = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
-            generationContext.PromptRenderer,
-            generationContext.SystemPrompt,
-            messages,
-            generationContext.InputModalities,
-            cancellationToken,
-            context: chatContext);
-
-        if (chatHistory.Count <= 1)
-        {
-            throw new ContextCompressionOutputException(
-                "There is no conversation history to compact.",
-                LocaleKey.ContextCompression_Error_NoHistory);
-        }
-
-        chatHistory.AddUserMessage(DefaultPrompts.ContextCompressionPrompt);
-
-        var response = await ReadResponseAsync(
-            generationContext.KernelMixin,
-            chatHistory,
-            generationContext.KernelMixin.GetPromptExecutionSettings(FunctionChoiceBehavior.None()),
-            generationContext.Kernel,
-            chatData.Metadata.Id,
-            compressionNode.Id,
-            StatisticsModelInvocationPurpose.ContextCompression,
+        var response = await RequestWithImageRecoveryAsync(
             chatContext,
-            compressionNode.Message,
+            generationContext,
+            messages,
+            RequestSummaryAsync,
             cancellationToken);
         if (response.FunctionCalls.Count > 0)
         {
@@ -228,6 +206,29 @@ partial class ChatService
         }
 
         return summary;
+
+        Task<AssembledResponse> RequestSummaryAsync(ChatHistory history)
+        {
+            if (history.Count <= 1)
+            {
+                throw new ContextCompressionOutputException(
+                    "There is no conversation history to compact.",
+                    LocaleKey.ContextCompression_Error_NoHistory);
+            }
+
+            history.AddUserMessage(DefaultPrompts.ContextCompressionPrompt);
+            return ReadResponseAsync(
+                generationContext.KernelMixin,
+                history,
+                generationContext.KernelMixin.GetPromptExecutionSettings(FunctionChoiceBehavior.None()),
+                generationContext.Kernel,
+                chatData.Metadata.Id,
+                compressionNode.Id,
+                StatisticsModelInvocationPurpose.ContextCompression,
+                chatContext,
+                compressionNode.Message,
+                cancellationToken);
+        }
     }
 
     private static async Task<ContextCompressionTrigger?> ResolvePendingAutomaticCompressionTriggerAsync(

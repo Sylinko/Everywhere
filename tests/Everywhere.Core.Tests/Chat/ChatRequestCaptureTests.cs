@@ -11,31 +11,33 @@ namespace Everywhere.Core.Tests.Chat;
 public sealed class ChatRequestCaptureTests
 {
     [Test]
-    public async Task BuildSelectedHistory_WhenModelChangesDuringFileRead_UsesCapturedTextAndFileValues()
+    public async Task BuildSelectedHistory_WhenFilesAreAttached_SendsOnlyMetadataEvenForSupportedModalities()
     {
-        var path = Path.Combine(Path.GetTempPath(), "Everywhere-request-" + Guid.NewGuid() + ".png");
+        var path = Path.Combine(Path.GetTempPath(), $"Everywhere-request-{Guid.NewGuid():N}.png");
         try
         {
-            await File.WriteAllBytesAsync(path, new byte[8 * 1024 * 1024]);
-            var file = new FileAttachment(new DirectLocaleKey("image"), path, "test-image", "image/png", "before");
-            var user = new UserChatMessage("before user", [file]);
+            await File.WriteAllBytesAsync(path, [1, 2, 3]);
+            var file = new FileAttachment(new DirectLocaleKey("image"), path, "test-image", "image/png", "from clipboard");
+            var user = new UserChatMessage("Compare my image and the file from earlier.", [file]);
+            var legacyCall = new FunctionCallContent("read_file", id: "old-read");
+            var legacyTool = new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("read_file"));
+            legacyTool.AddCall(legacyCall);
+            legacyTool.AddResult(new FunctionResultContent(legacyCall, file));
             using var assistant = new AssistantChatMessage();
-            var text = new AssistantChatMessageTextSpan("before assistant");
-            assistant.AddSpan(text);
+            assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(legacyTool));
 
-            var pending = ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
-                Substitute.For<IPromptRenderer>(), "system", [user, assistant], Modalities.Text | Modalities.Image);
-            user.Content = "after user";
-            file.FilePath = "missing-after.png";
-            file.Description = "after";
-            text.ContentMarkdownBuilder.Append(" after assistant");
-            var history = await pending;
-
-            Assert.That(history[1].Items.OfType<ImageContent>().Single().Data?.Length, Is.EqualTo(8 * 1024 * 1024));
-            Assert.That(history[1].Items.OfType<TextContent>().Select(item => item.Text), Has.Some.EqualTo("before user"));
-            Assert.That(history[1].Items.OfType<TextContent>().First().Text, Does.Contain("description=\"before\""));
-            Assert.That(history[2].Content, Is.EqualTo("before assistant"));
-            Assert.That(history.SelectMany(message => message.Items).OfType<TextContent>().Any(item => item.Text == string.Empty), Is.False);
+            // The legacy read_file result used to re-inject bytes whenever this chat was resumed.
+            var history = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
+                Substitute.For<IPromptRenderer>(), "system", [assistant, user], Modalities.Text | Modalities.Image);
+            var result = history.Single(message => message.Role == AuthorRole.Tool).Items.OfType<FunctionResultContent>().Single();
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(history.SelectMany(message => message.Items).OfType<BinaryContent>(), Is.Empty);
+                Assert.That(result.Result, Does.Contain(path).And.Contain("mimeType=\"image/png\""));
+                Assert.That(history[^1].Items.OfType<TextContent>().First().Text,
+                    Does.Contain(path).And.Contain("description=\"from clipboard\""));
+                Assert.That(history[^1].Items.OfType<TextContent>().Last().Text, Is.EqualTo(user.Content));
+            }
         }
         finally
         {

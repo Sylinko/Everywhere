@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.Mcp;
 using Lucide.Avalonia;
@@ -34,6 +35,11 @@ public abstract class ChatFunction
     public bool IsExperimental { get; protected init; }
 
     public bool IsVisible { get; protected init; } = true;
+
+    /// <summary>
+    /// Gets the input modalities a model must support for this function to be available.
+    /// </summary>
+    public Modalities RequiredModalities { get; init; } = Modalities.None;
 
     public abstract KernelFunction KernelFunction { get; }
 

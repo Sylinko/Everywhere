@@ -4,9 +4,11 @@ using System.Text.Json.Serialization;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Chat.Permissions;
+using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Statistics;
+using Everywhere.Storage;
 using Lucide.Avalonia;
 using Microsoft.SemanticKernel;
 
@@ -25,6 +27,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
 
     private readonly SystemAssistantSettings _systemAssistantSettings;
     private readonly AssistantSpecializationResolver _assistantSpecializationResolver;
+    private readonly IBlobStorage _blobStorage;
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     private enum TodoAction
@@ -37,11 +40,13 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
 
     public EssentialPlugin(
         Settings settings,
-        AssistantSpecializationResolver assistantSpecializationResolver
+        AssistantSpecializationResolver assistantSpecializationResolver,
+        IBlobStorage blobStorage
     ) : base("essential")
     {
         _systemAssistantSettings = settings.SystemAssistant;
         _assistantSpecializationResolver = assistantSpecializationResolver;
+        _blobStorage = blobStorage;
 
         _functionsSource.Edit(list =>
         {
@@ -57,6 +62,11 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                 new BuiltInChatFunction(
                     AskUserQuestionAsync,
                     ChatFunctionPermissions.None));
+            list.Add(
+                new BuiltInChatFunction(ViewImageAsync, ChatFunctionPermissions.FileRead, LucideIconKind.Image)
+                {
+                    RequiredModalities = Modalities.Image
+                });
         });
     }
 
@@ -95,7 +105,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         await userInterface.SetActivityPreviewAsync(new ChatPluginSubagentActivityPreview(forkedChatContext));
         await userInterface.DisplaySink.AppendSubagentAsync(forkedChatContext);
 
-        var specializations = specialization?.ToLower() switch
+        var specializations = specialization?.ToLowerInvariant() switch
         {
             // ReSharper disable StringLiteralTypo
             "image-understanding" or "image_understanding" or "imageunderstanding" => ModelSpecializations.ImageUnderstanding,
@@ -400,5 +410,58 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         }
 
         return result;
+    }
+
+    [KernelFunction("view_image")]
+    [Description(
+        """
+        View still images from local files, including image attachments. Pass up to 8 paths in the order you want to compare them.
+        Large images are resized automatically. If small details are unreadable, crop the relevant region into a separate file and view that file.
+        """)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ViewImage_Header, LocaleKey.BuiltInChatPlugin_Essential_ViewImage_Description)]
+    private async Task<ViewImageFunctionResult> ViewImageAsync(
+        [FromKernelServices] ChatContext chatContext,
+        [Description("Local paths or file:// URIs. Relative paths resolve against the working directory.")]
+        string[] paths,
+        CancellationToken cancellationToken)
+    {
+        if (paths is null || paths.Length is < 1 or > 8)
+        {
+            throw new HandledException(
+                new ArgumentException("Provide between 1 and 8 image paths.", nameof(paths)),
+                LocaleKey.BuiltInChatPlugin_Essential_ViewImage_PathCount);
+        }
+
+        var items = new List<ViewImageItem>(paths.Length);
+        foreach (var path in paths)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                items.Add(ViewImageItem.EmptyPath(path));
+                continue;
+            }
+
+            var localPath = path;
+            try
+            {
+                localPath = LocalFileHandler.ExpandLocalPath(localPath, chatContext.WorkingDirectory);
+                var image = ChatImage.Read(localPath);
+                using var stream = new MemoryStream(image.Bytes, writable: false);
+                var blob = await _blobStorage.StorageBlobAsync(stream, image.MimeType, cancellationToken: cancellationToken);
+                var preview = new FileAttachment(
+                    new DirectLocaleKey(Path.GetFileName(localPath)),
+                    blob.LocalPath,
+                    blob.Sha256,
+                    image.MimeType);
+                items.Add(ViewImageItem.FromPreparedImage(localPath, preview, image));
+            }
+            catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or HandledException)
+            {
+                items.Add(ViewImageItem.FromError(localPath, error));
+            }
+        }
+
+        return new ViewImageFunctionResult(items);
     }
 }

@@ -2794,9 +2794,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>View Pricing Details</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>This attachment type is not supported by the model, but the model can still see the metadata and be prompted to use tools to process it.</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>The model is blocked from calling tools.</value>
     </data>
@@ -4987,5 +4984,29 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>Load site icons for visible links and page previews on hover. Links with a query string only show the domain.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>View images</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>View local images when the model accepts image input.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>Images viewed: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>Provide 1 to 8 image paths.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>The image path is empty.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>Image too large. Resize it or crop the part you need.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>The image is invalid or uses an unsupported format.</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>The request exceeds the service’s input limits.</value>
     </data>
 </root>

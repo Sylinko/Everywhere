@@ -2794,9 +2794,6 @@
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>查看定价详情</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>此附件类型不被模型支持，但模型仍可看到元数据并被提示使用工具处理</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>已阻止模型调用工具。</value>
     </data>
@@ -4985,5 +4982,29 @@
     </data>
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>为可见链接加载站点图标，悬停时加载网页预览。带查询参数的链接只显示域名。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>查看图像</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>使用支持图像输入的模型查看本地图像。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>查看了 {0} 张图像</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>请提供 1 到 8 个图像路径。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>图像路径为空。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>图像过大，请缩小图像或裁剪所需区域。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>图像无效，或使用了不支持的格式。</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>请求超出了服务的输入限制。</value>
     </data>
 </root>

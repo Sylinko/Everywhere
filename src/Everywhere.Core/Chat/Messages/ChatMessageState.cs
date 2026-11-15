@@ -45,7 +45,7 @@ public sealed record ChatActionState(
 ) : ChatMessageState;
 
 /// <summary>
-/// Captured function activity values. Display-block membership is a stable reference snapshot;
+/// Captured function activity values. Display blocks and image results keep their source identities;
 /// expanded block presenters capture their own mutable values.
 /// </summary>
 public sealed record ChatFunctionState(
@@ -58,8 +58,15 @@ public sealed record ChatFunctionState(
     DateTimeOffset? FinishedAt,
     bool IsRunning,
     bool IsWaitingForUserInput,
-    IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks
-) : ChatMessageState;
+    IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks,
+    IReadOnlyList<ViewImageFunctionResult> ImageViews
+) : ChatMessageState
+{
+    /// <summary>
+    /// Gets whether the call has anything to present when expanded.
+    /// </summary>
+    public bool HasDetails => DisplayBlocks.Count > 0 || ImageViews.Count > 0;
+}
 
 /// <summary>
 /// Captured assistant outcome and usage values. Spans are read independently.

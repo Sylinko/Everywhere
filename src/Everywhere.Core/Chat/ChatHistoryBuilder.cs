@@ -1,9 +1,7 @@
 ﻿using System.Security;
 using Everywhere.AI;
-using Everywhere.Common;
 using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
-using Everywhere.Utilities;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Serilog;
@@ -49,12 +47,20 @@ public static partial class ChatHistoryBuilder
         CancellationToken cancellationToken = default)
     {
         var selectedMessages = SelectContextMessages(chatNodes, maxContextRounds, declaredContextLimit);
-        return await BuildSelectedChatHistoryAsync(
+        var offloadedImages = chatNodes
+            .AsValueEnumerable()
+            .Select(node => node.Message)
+            .OfType<ChatImageOffloadMessage>()
+            .SelectMany(message => message.Images)
+            .ToHashSet();
+        var input = await BuildModelInputAsync(
             promptRenderer,
             systemPrompt,
             selectedMessages,
             supportedModalities,
+            offloadedImages,
             cancellationToken);
+        return input.History;
     }
 
     /// <summary>
@@ -69,56 +75,96 @@ public static partial class ChatHistoryBuilder
         CancellationToken cancellationToken = default,
         ChatContext? context = null)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        var (chatHistory, pendingFiles) = context is null ? Capture() : await context.DispatchAsync(Capture).ConfigureAwait(false);
+        var input = await BuildModelInputAsync(
+            promptRenderer,
+            systemPrompt,
+            selectedMessages,
+            supportedModalities,
+            offloadedImages: null,
+            cancellationToken,
+            context);
+        return input.History;
+    }
 
-        (ChatHistory History, List<PendingFileContent> Files) Capture()
+    public static async ValueTask<ChatModelInput> BuildModelInputAsync(
+        IPromptRenderer promptRenderer,
+        string systemPrompt,
+        IReadOnlyList<ChatMessage> selectedMessages,
+        Modalities supportedModalities,
+        IReadOnlySet<ChatImageOccurrence>? offloadedImages,
+        CancellationToken cancellationToken,
+        ChatContext? context = null)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var (chatHistory, pendingImages) = context is null ? Capture() : await context.DispatchAsync(Capture).ConfigureAwait(false);
+
+        var sent = new List<ChatImageOccurrence>(pendingImages.Count);
+        foreach (var pending in pendingImages)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var index = pending.Target.IndexOf(pending.Placeholder);
+            try
+            {
+                var prepared = pending.Image;
+                byte[] bytes;
+                var mimeType = prepared.MimeType;
+                var originalWidth = pending.OriginalWidth;
+                var originalHeight = pending.OriginalHeight;
+                if (prepared.IsSnapshot)
+                {
+                    await using var stream = File.OpenRead(prepared.Path);
+                    var length = stream.Length;
+                    if (length is <= 0 or > ChatImage.MaximumEncodedBytes)
+                    {
+                        throw new InvalidDataException("The stored image is empty or exceeds the prepared image size limit.");
+                    }
+
+                    bytes = new byte[(int)length];
+                    await stream.ReadExactlyAsync(bytes, cancellationToken);
+                }
+                else
+                {
+                    var image = ChatImage.Read(prepared.Path);
+                    bytes = image.Bytes;
+                    mimeType = image.MimeType;
+                    if (image.Width != image.OriginalWidth || image.Height != image.OriginalHeight)
+                    {
+                        originalWidth = image.OriginalWidth;
+                        originalHeight = image.OriginalHeight;
+                    }
+                    prepared = prepared with { MimeType = mimeType, Width = image.Width, Height = image.Height };
+                }
+
+                pending.Target[index] = new TextContent(DescribeImage(prepared, originalWidth, originalHeight, "Image follows."));
+                pending.Target.Insert(index + 1, new ImageContent(bytes, mimeType) { Metadata = pending.Metadata });
+                sent.Add(pending.Occurrence);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
+            {
+                pending.Target[index] = new TextContent(
+                    DescribeImage(
+                        pending.Image,
+                        pending.OriginalWidth,
+                        pending.OriginalHeight,
+                        $"Image not provided: {error.Message}"));
+                Log.ForContext(typeof(ChatHistoryBuilder)).Debug(error, "Could not prepare contextual image {Path}", pending.Image.Path);
+            }
+        }
+
+        return new ChatModelInput(chatHistory, sent);
+
+        (ChatHistory History, List<PendingImage> Images) Capture()
         {
             var history = new ChatHistory();
             history.AddSystemMessage(systemPrompt);
-            var files = new List<PendingFileContent>();
+            var images = new List<PendingImage>();
             foreach (var message in selectedMessages)
             {
-                history.AddRange(CaptureChatMessageContents(promptRenderer, message, files));
+                history.AddRange(CaptureChatMessageContents(promptRenderer, message, supportedModalities.SupportsImage, offloadedImages, images));
             }
 
-            return (history, files);
+            return (history, images);
         }
-
-        foreach (var pending in pendingFiles)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var contents = new ChatMessageContentItemCollection();
-            if (pending.IsGeneratedImage)
-            {
-                try
-                {
-                    var data = await File.ReadAllBytesAsync(pending.File.FilePath, cancellationToken);
-                    contents.Add(new ImageContent(data, pending.File.MimeType) { Metadata = pending.Metadata });
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    contents.Add(new TextContent("The image is generated but failed to be read from disk.", metadata: pending.Metadata));
-                }
-            }
-            else
-            {
-                await ReadFileContentsAsync(pending.File, contents, supportedModalities, cancellationToken);
-            }
-
-            var index = pending.Target.IndexOf(pending.Placeholder);
-            pending.Target.RemoveAt(index);
-            foreach (var content in contents)
-            {
-                pending.Target.Insert(index++, content);
-            }
-        }
-
-        return chatHistory;
     }
 
     public static IReadOnlyList<ChatMessage> SelectContextMessages(
@@ -130,20 +176,21 @@ public static partial class ChatHistoryBuilder
         {
             var startIndex = ResolveStartIndex(chatMessages, maxContextRounds, 0);
             return chatMessages
+                .AsValueEnumerable()
                 .Skip(startIndex)
-                .Where(static message => message is not ContextCompressionChatMessage and not RootChatMessage)
+                .Where(static message => message is not (ContextCompressionChatMessage or RootChatMessage or ChatImageOffloadMessage))
                 .ToArray();
         }
 
         var suffixStartIndex = ResolveStartIndex(chatMessages, maxContextRounds, compressionIndex + 1);
-        var result = new List<ChatMessage>(chatMessages.Count - suffixStartIndex + 1)
-        {
-            chatMessages[compressionIndex]
-        };
-        result.AddRange(
-            chatMessages
+        List<ChatMessage> result =
+        [
+            with(chatMessages.Count - suffixStartIndex + 1),
+            chatMessages[compressionIndex],
+            .. chatMessages
                 .Skip(suffixStartIndex)
-                .Where(static message => message is not ContextCompressionChatMessage and not RootChatMessage));
+                .Where(static message => message is not (ContextCompressionChatMessage or RootChatMessage or ChatImageOffloadMessage)),
+        ];
         return result;
     }
 
@@ -172,7 +219,7 @@ public static partial class ChatHistoryBuilder
             var messages = chatNodes
                 .AsValueEnumerable()
                 .Select(static node => node.Message)
-                .Where(static message => message is not ContextCompressionChatMessage and not RootChatMessage)
+                .Where(static message => message is not (ContextCompressionChatMessage or RootChatMessage or ChatImageOffloadMessage))
                 .ToArray();
             var startIndex = ResolveStartIndex(messages, maxContextRounds, 0);
             wasHistoryTrimmed = startIndex > 0;
@@ -183,15 +230,18 @@ public static partial class ChatHistoryBuilder
             .AsValueEnumerable()
             .Skip(anchorIndex + 1)
             .Select(static node => node.Message)
-            .Where(static message => message is not ContextCompressionChatMessage and not RootChatMessage)
+            .Where(static message => message is not (ContextCompressionChatMessage or RootChatMessage or ChatImageOffloadMessage))
             .ToArray();
         var suffixStartIndex = ResolveStartIndex(suffix, maxContextRounds, 0);
         wasHistoryTrimmed = suffixStartIndex > 0;
         var retainedUserMessages = SelectRetainedUserMessages(chatNodes, anchorIndex, declaredContextLimit);
-        var result = new List<ChatMessage>(retainedUserMessages.Count + suffix.Length - suffixStartIndex + 1);
-        result.AddRange(retainedUserMessages);
-        result.Add(chatNodes[compressionIndex].Message);
-        result.AddRange(suffix.Skip(suffixStartIndex));
+        List<ChatMessage> result =
+        [
+            with(retainedUserMessages.Count + suffix.Length - suffixStartIndex + 1),
+            .. retainedUserMessages,
+            chatNodes[compressionIndex].Message,
+            .. suffix.Skip(suffixStartIndex),
+        ];
         return result;
     }
 
@@ -292,25 +342,23 @@ public static partial class ChatHistoryBuilder
         return minimumIndex;
     }
 
-    /// <summary>
-    /// Creates chat message contents from a chat message.
-    /// </summary>
-    /// <param name="promptRenderer"></param>
-    /// <param name="chatMessage"></param>
-    /// <param name="pendingFiles"></param>
-    /// <returns></returns>
     private static IEnumerable<ChatMessageContent> CaptureChatMessageContents(
         IPromptRenderer promptRenderer,
         ChatMessage chatMessage,
-        List<PendingFileContent> pendingFiles)
+        bool canSendImages,
+        IReadOnlySet<ChatImageOccurrence>? offloadedImages,
+        List<PendingImage> pendingImages)
     {
         switch (chatMessage)
         {
             case AssistantChatMessage assistantChatMessage:
             {
                 var items = new ChatMessageContentItemCollection();
-                foreach (var span in assistantChatMessage.Items)
+                var spans = assistantChatMessage.Items;
+                var nodeId = assistantChatMessage.Owner?.Id ?? Guid.Empty;
+                for (var spanIndex = 0; spanIndex < spans.Count; spanIndex++)
                 {
+                    var span = spans[spanIndex];
                     switch (span)
                     {
                         case AssistantChatMessageTextSpan { Content: { Length: > 0 } content }:
@@ -327,9 +375,9 @@ public static partial class ChatHistoryBuilder
                             yield return new ChatMessageContent(AuthorRole.Assistant, items, metadata: assistantChatMessage.Metadata);
                             items = [];
 
-                            // 3. Yield the function call results as separate tool messages
                             var resultItems = new ChatMessageContentItemCollection();
-                            var extraToolCallResults = new List<ChatAttachment>();
+                            var imageItems = new ChatMessageContentItemCollection();
+                            var imageIndex = 0;
                             foreach (var functionCall in functionCalls)
                             {
                                 foreach (var call in functionCall.Calls)
@@ -342,7 +390,9 @@ public static partial class ChatHistoryBuilder
 
                                     var resultContent = functionCall.Results.AsValueEnumerable().FirstOrDefault(r => r.CallId == callId);
                                     var persistedResult = resultContent?.Result;
-                                    var modelResult = persistedResult is ChatFunctionResult structuredResult ? structuredResult.Value : persistedResult;
+                                    var modelResult = persistedResult is ChatFunctionResult structuredResult ?
+                                        structuredResult.Value :
+                                        persistedResult;
                                     if (resultContent is not null)
                                     {
                                         // Render prompt nodes now; neither the result container nor a mutable
@@ -350,7 +400,7 @@ public static partial class ChatHistoryBuilder
                                         var capturedResult = modelResult switch
                                         {
                                             PromptNode promptNode => promptNode.ToString(),
-                                            FileAttachment file => CaptureFile(file),
+                                            FileAttachment file => DescribeFile(file),
                                             _ => modelResult,
                                         };
                                         resultItems.Add(
@@ -366,41 +416,56 @@ public static partial class ChatHistoryBuilder
                                     }
                                     else
                                     {
-                                        resultItems.Add(new FunctionResultContent(
-                                            call,
-                                            $"Error: No result found for function call ID '{callId}'. " +
-                                            "This may caused by an error during function execution or user cancellation."));
+                                        resultItems.Add(
+                                            new FunctionResultContent(
+                                                call,
+                                                $"Error: No result found for function call ID '{callId}'. " +
+                                                "This may caused by an error during function execution or user cancellation."));
                                     }
 
-                                    // If the function call result owns ChatAttachments, add them as extra attachment message(s).
-                                    if (persistedResult is ChatAttachment extraToolCallResult)
+                                    switch (persistedResult)
                                     {
-                                        extraToolCallResults.Add(extraToolCallResult);
-                                    }
-                                    else if (persistedResult is ChatFunctionResult structuredAttachmentResult)
-                                    {
-                                        extraToolCallResults.AddRange(structuredAttachmentResult.Attachments);
+                                        case ViewImageFunctionResult imageResult:
+                                        {
+                                            foreach (var view in imageResult.Items.OfType<ViewImageItem.Success>())
+                                            {
+                                                AddImage(
+                                                    imageItems,
+                                                    view.Preview,
+                                                    new ChatImageOccurrence(nodeId, spanIndex, imageIndex++),
+                                                    callId: callId,
+                                                    view: view);
+                                            }
+
+                                            break;
+                                        }
+                                        case VisualAttachmentFunctionResult { Content: { IsImage: true } screenshot }:
+                                        {
+                                            AddImage(
+                                                imageItems,
+                                                screenshot,
+                                                new ChatImageOccurrence(nodeId, spanIndex, imageIndex++),
+                                                callId: callId);
+                                            break;
+                                        }
+                                        case ChatAttachment attachment and not FileAttachment:
+                                        {
+                                            CaptureAttachment(attachment, imageItems);
+                                            break;
+                                        }
                                     }
                                 }
                             }
 
                             yield return new ChatMessageContent(AuthorRole.Tool, resultItems);
 
-                            // 4. Workaround for any function call results that are ChatAttachments
-                            // We put them as user message because tool message doesn't support attachments
-                            if (extraToolCallResults.Count > 0)
+                            // Some connectors accept only text in tool results. Keep the tool
+                            // cycle intact, then supply its image blocks in a user message.
+                            if (imageItems.Count > 0)
                             {
-                                var attachmentItems = new ChatMessageContentItemCollection { new TextContent("<ExtraToolCallResultAttachments>") };
-                                foreach (var extraToolCallResult in extraToolCallResults)
-                                {
-                                    CaptureAttachment(extraToolCallResult, attachmentItems, pendingFiles);
-                                }
-
-                                // No valid attachment added, do nothing
-                                if (attachmentItems.Count == 1) break;
-
-                                attachmentItems.Add(new TextContent("</ExtraToolCallResultAttachments>"));
-                                yield return new ChatMessageContent(AuthorRole.User, attachmentItems);
+                                imageItems.Insert(0, new TextContent("<ExtraToolCallResultAttachments>"));
+                                imageItems.Add(new TextContent("</ExtraToolCallResultAttachments>"));
+                                yield return new ChatMessageContent(AuthorRole.User, imageItems);
                             }
 
                             break;
@@ -423,7 +488,7 @@ public static partial class ChatHistoryBuilder
                         }
                         case AssistantChatMessageImageSpan { ImageOutput: { } imageOutput }:
                         {
-                            AddPendingFile(imageOutput, items, pendingFiles, isGeneratedImage: true, span.Metadata);
+                            AddImage(items, imageOutput, new ChatImageOccurrence(nodeId, spanIndex, 0), metadata: span.Metadata);
                             break;
                         }
                     }
@@ -440,7 +505,7 @@ public static partial class ChatHistoryBuilder
                 var items = new ChatMessageContentItemCollection();
                 foreach (var chatAttachment in userChatMessage.Attachments.AsValueEnumerable().ToArray())
                 {
-                    CaptureAttachment(chatAttachment, items, pendingFiles);
+                    CaptureAttachment(chatAttachment, items);
                 }
 
                 if (userChatMessage is UserStrategyChatMessage { Strategy.Body: { Length: > 0 } strategyBody } userStrategyMessage)
@@ -474,6 +539,51 @@ public static partial class ChatHistoryBuilder
                 break;
             }
         }
+
+        void AddImage(
+            ChatMessageContentItemCollection target,
+            FileAttachment file,
+            ChatImageOccurrence occurrence,
+            string? callId = null,
+            ViewImageItem.Success? view = null,
+            MetadataDictionary? metadata = null)
+        {
+            var image = new ImageReference(
+                file.FilePath,
+                file.MimeType,
+                view is not null,
+                view?.Width,
+                view?.Height,
+                callId,
+                view?.SourcePath);
+            var originalWidth = view?.OriginalWidth;
+            var originalHeight = view?.OriginalHeight;
+            if (!canSendImages)
+            {
+                target.Add(
+                    new TextContent(
+                        DescribeImage(image, originalWidth, originalHeight, "Image not provided: this model does not accept image input."),
+                        metadata: metadata));
+                return;
+            }
+
+            if (offloadedImages?.Contains(occurrence) == true)
+            {
+                target.Add(
+                    new TextContent(
+                        DescribeImage(
+                            image,
+                            originalWidth,
+                            originalHeight,
+                            "Image omitted to fit the request. If needed, use view_image on the path, with fewer images or a smaller crop."),
+                        metadata: metadata));
+                return;
+            }
+
+            var placeholder = new TextContent(string.Empty);
+            target.Add(placeholder);
+            pendingImages.Add(new PendingImage(target, placeholder, image, occurrence, originalWidth, originalHeight, metadata));
+        }
     }
 
     private static FunctionCallContent CaptureFunctionCall(FunctionCallContent call)
@@ -489,15 +599,9 @@ public static partial class ChatHistoryBuilder
         };
     }
 
-    private static FileAttachment CaptureFile(FileAttachment file)
-    {
-        return new FileAttachment(file.HeaderKey, file.FilePath, file.Sha256, file.MimeType, file.Description);
-    }
-
     private static void CaptureAttachment(
         ChatAttachment chatAttachment,
-        ChatMessageContentItemCollection contents,
-        List<PendingFileContent> pendingFiles)
+        ChatMessageContentItemCollection contents)
     {
         switch (chatAttachment)
         {
@@ -542,102 +646,54 @@ public static partial class ChatHistoryBuilder
             }
             case FileAttachment file:
             {
-                AddPendingFile(file, contents, pendingFiles, isGeneratedImage: false, MetadataDictionary.Empty);
+                contents.Add(new TextContent(DescribeFile(file)));
                 break;
             }
         }
     }
 
-    private static void AddPendingFile(
-        FileAttachment file,
-        ChatMessageContentItemCollection target,
-        List<PendingFileContent> pendingFiles,
-        bool isGeneratedImage,
-        MetadataDictionary metadata)
+    private static string DescribeFile(FileAttachment file)
     {
-        var placeholder = new TextContent(string.Empty);
-        target.Add(placeholder);
-        pendingFiles.Add(new PendingFileContent(target, placeholder, CaptureFile(file), isGeneratedImage, metadata));
+        return $"""
+                <Attachment type="file" name="{SecurityElement.Escape(Path.GetFileName(file.FilePath))}" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
+                File reference only. Use the relevant tool to inspect it if needed.
+                </Attachment>
+                """;
     }
 
-    private static async ValueTask ReadFileContentsAsync(
-        FileAttachment file,
-        ChatMessageContentItemCollection contents,
-        Modalities supportedModalities,
-        CancellationToken cancellationToken)
+    private static string DescribeImage(ImageReference image, int? originalWidth, int? originalHeight, string status)
     {
-        var fileInfo = new FileInfo(file.FilePath);
-        if (!fileInfo.Exists)
-        {
-            contents.Add(GetOmittedContent("file not found"));
-            return;
-        }
-        if (fileInfo.Length == 0)
-        {
-            contents.Add(GetOmittedContent("file is empty"));
-            return;
-        }
-        if (fileInfo.Length > FileAttachment.MaximumInlineContentSizeInBytes)
-        {
-            contents.Add(
-                GetOmittedContent(
-                    $"file size {Humanizer.HumanizeBytes(fileInfo.Length)} exceeds the maximum supported size " +
-                    Humanizer.HumanizeBytes(FileAttachment.MaximumInlineContentSizeInBytes)));
-            return;
-        }
-        if (!supportedModalities.SupportsMimeType(file.MimeType))
-        {
-            contents.Add(GetOmittedContent("file modality is unsupported, try process with tool if any. e.g. `run_subagent`"));
-            return;
-        }
-
-        byte[] data;
-        try
-        {
-            data = await File.ReadAllBytesAsync(file.FilePath, cancellationToken);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            // Keep the reference in the prompt even when the content cannot be read.
-            ex = HandledSystemException.Handle(ex, true); // treat all as expected
-            Log.ForContext(typeof(ChatHistoryBuilder)).Warning(ex, "Failed to read attachment file '{FilePath}'", file.FilePath);
-            contents.Add(GetOmittedContent("file could not be read"));
-            return;
-        }
-
-        contents.Add(
-            new TextContent(
-                $"""
-                 <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
-                 """));
-        contents.Add(
-            FileUtilities.GetCategory(file.MimeType) switch
-            {
-                FileTypeCategory.Audio => new AudioContent(data, file.MimeType),
-                FileTypeCategory.Image => new ImageContent(data, file.MimeType),
-                _ => new BinaryContent(data, file.MimeType)
-            });
-        contents.Add(new TextContent("</Attachment>"));
-        return;
-
-        TextContent GetOmittedContent(string reason) => new(
-            $"""
-             <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
-             Content omitted because {reason}
-             </Attachment>
-             """);
+        var dimensions = image is { Width: { } width, Height: { } height } ? $" pixels=\"{width}x{height}\"" : string.Empty;
+        var original = originalWidth is { } ow && originalHeight is { } oh ? $" originalPixels=\"{ow}x{oh}\"" : string.Empty;
+        var source = image.SourcePath is { } path ? $" sourcePath=\"{SecurityElement.Escape(path)}\"" : string.Empty;
+        var call = image.CallId is { } id ? $" callId=\"{SecurityElement.Escape(id)}\"" : string.Empty;
+        return $"""
+                <Image path="{SecurityElement.Escape(image.Path)}" mimeType="{SecurityElement.Escape(image.MimeType)}"{source}{call}{dimensions}{original}>
+                {SecurityElement.Escape(status)}
+                </Image>
+                """;
     }
 
-    // These placeholders are private to request construction and are all expanded before return.
-    // Keeping the target collection preserves the existing ordering of text, tools and attachments.
-    private sealed record PendingFileContent(
+    private sealed record ImageReference(
+        string Path,
+        string MimeType,
+        bool IsSnapshot,
+        int? Width,
+        int? Height,
+        string? CallId,
+        string? SourcePath
+    );
+
+    // The placeholder connects the captured position with its disk read without revisiting live messages.
+    private sealed record PendingImage(
         ChatMessageContentItemCollection Target,
         TextContent Placeholder,
-        FileAttachment File,
-        bool IsGeneratedImage,
-        MetadataDictionary Metadata);
+        ImageReference Image,
+        ChatImageOccurrence Occurrence,
+        int? OriginalWidth,
+        int? OriginalHeight,
+        MetadataDictionary? Metadata
+    );
 }
+
+public sealed record ChatModelInput(ChatHistory History, IReadOnlyList<ChatImageOccurrence> SentImages);

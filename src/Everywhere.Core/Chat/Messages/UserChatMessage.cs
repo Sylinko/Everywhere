@@ -12,8 +12,7 @@ public partial class UserChatMessage : ChatMessage, IHaveChatAttachments, IHaveV
     public override AuthorRole Role => AuthorRole.User;
 
     /// <summary>
-    /// The actual prompt that sends to the LLM.
-    /// Including attachments converted prompts that are invisible to the user.
+    /// The user's text before strategy rendering and attachment projection.
     /// </summary>
     [Key(0)]
     public string Content

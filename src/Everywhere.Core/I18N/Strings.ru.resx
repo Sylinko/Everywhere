@@ -2794,9 +2794,6 @@
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>Посмотреть детали цен</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>Этот тип вложения не поддерживается моделью, но модель все равно может видеть метаданные и предложить использовать инструменты для обработки.</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>Вызов инструментов моделью заблокирован.</value>
     </data>

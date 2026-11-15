@@ -2794,9 +2794,6 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
         <value>Visualizza i dettagli dei prezzi</value>
     </data>
-    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
-        <value>Questo tipo di allegato non è supportato dal modello, ma il modello può comunque vedere i metadati e suggerire l'uso degli strumenti per elaborarlo.</value>
-    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>Chiamata agli strumenti bloccata dal modello.</value>
     </data>

@@ -17,6 +17,7 @@ public enum ChatMessageKind
     UserAction = 6,
     Compression = 7,
     VisualContextReset = 8,
+    ImageOffload = 9,
 }
 
 /// <summary>

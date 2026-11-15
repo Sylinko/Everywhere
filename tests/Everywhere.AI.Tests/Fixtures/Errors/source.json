@@ -158,7 +158,7 @@
     },
     "provenance": "source",
     "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs",
-    "expectedType": "InvalidRequest",
+    "expectedType": "InvalidRequest.RequestInputTooLarge",
     "expectedRecovery": "Stop"
   },
   {

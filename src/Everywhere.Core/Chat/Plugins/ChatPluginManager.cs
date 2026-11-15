@@ -386,7 +386,7 @@ public class ChatPluginManager : IChatPluginManager
     private static string NormalizeCommand(string command) => command.Trim().Trim('"');
 
     public async Task<IChatPluginScope> CreateScopeAsync(
-        Assistant assistant,
+        AssistantConfiguration configuration,
         ChatContext chatContext,
         ChatMessageNode ownerNode,
         IToolRulesets? toolRulesets,
@@ -408,14 +408,11 @@ public class ChatPluginManager : IChatPluginManager
 
                 if (plugin is McpChatPlugin mcpChatPlugin)
                 {
-                    if (startingMcpActivity is null)
-                    {
-                        startingMcpActivity = await chatContext.DispatchAsync(() => chatContext.Data.StartActivity(
-                            LucideIconKind.Server,
-                            new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp),
-                            removeAfterCompletion: false,
-                            owner: ownerNode.Message));
-                    }
+                    startingMcpActivity ??= await chatContext.DispatchAsync(() => chatContext.Data.StartActivity(
+                        LucideIconKind.Server,
+                        new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp),
+                        removeAfterCompletion: false,
+                        owner: ownerNode.Message));
 
                     try
                     {
@@ -437,6 +434,7 @@ public class ChatPluginManager : IChatPluginManager
 
                 var actualFunctions = (await plugin.GetAvailableFunctionsAsync(cancellationToken))
                     .AsValueEnumerable()
+                    .Where(function => configuration.InputModalities.HasFlag(function.RequiredModalities))
                     .Where(function => toolRulesets?.GetFunctionRule(plugin, function) ??
                         _settings.Plugin.ToolEnablementRulesets.GetFunctionRule(plugin, function) ??
                         function.IsDefaultEnabled)
