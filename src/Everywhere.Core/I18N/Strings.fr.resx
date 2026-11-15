@@ -4985,4 +4985,28 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>Charge les icônes des sites pour les liens visibles et l’aperçu de la page au survol. Les liens avec des paramètres de requête affichent uniquement le domaine.</value>
     </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>Afficher les images</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>Afficher des images locales avec un modèle prenant en charge les images.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>Images affichées : {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>Veuillez fournir entre 1 et 8 chemins d’accès à des images.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>Le chemin d’accès à l’image est vide.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>L’image est trop volumineuse. Réduisez sa taille ou recadrez la zone souhaitée.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>L’image est invalide ou son format n’est pas pris en charge.</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>La requête dépasse la limite de saisie du service.</value>
+    </data>
 </root>

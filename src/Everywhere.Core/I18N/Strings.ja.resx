@@ -4985,4 +4985,28 @@
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>表示されているリンクのサイトアイコンを読み込み、ホバー時にウェブページのプレビューを表示します。クエリパラメーター付きのリンクはドメインのみ表示します。</value>
     </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>画像を見る</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>画像入力に対応したモデルでローカル画像を確認します。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>{0} 枚の画像を確認しました</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>画像パスを1～8件指定してください。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>画像パスが空です。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>画像が大きすぎます。画像を縮小するか、必要な範囲を切り抜いてください。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>画像が無効か、対応していない形式です。</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>リクエストがサービスの入力上限を超えています。</value>
+    </data>
 </root>

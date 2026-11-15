@@ -4985,4 +4985,28 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>Carga los iconos de los sitios de los enlaces visibles y muestra una vista previa de la página web al pasar el cursor. Los enlaces con parámetros de consulta solo muestran el dominio.</value>
     </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>Ver imagen</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>Ver imágenes locales con un modelo compatible con la entrada de imágenes.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>Se han visto {0} imágenes</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>Proporciona entre 1 y 8 rutas de imágenes.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>La ruta de la imagen está vacía.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>La imagen es demasiado grande. Reduce su tamaño o recorta la zona que necesitas.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>La imagen no es válida o tiene un formato no compatible.</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>La solicitud supera el límite de entrada del servicio.</value>
+    </data>
 </root>

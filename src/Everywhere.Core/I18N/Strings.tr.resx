@@ -4985,4 +4985,28 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ChatWindowSettings_IsAutomaticLinkPreviewEnabled_Description" xml:space="preserve">
         <value>Görünür bağlantıların site simgelerini yükler, üzerine gelindiğinde web sayfasının önizlemesini gösterir. Sorgu parametresi içeren bağlantılarda yalnızca alan adı gösterilir.</value>
     </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Header" xml:space="preserve">
+        <value>Görseli Görüntüle</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_Description" xml:space="preserve">
+        <value>Görsel girdisini destekleyen modellerle yerel görselleri görüntüleyin.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ViewedCount" xml:space="preserve">
+        <value>{0} görsel görüntülendi</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_PathCount" xml:space="preserve">
+        <value>Lütfen 1 ile 8 arasında görsel yolu belirtin.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_EmptyPath" xml:space="preserve">
+        <value>Görsel yolu boş.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_ImageTooLarge" xml:space="preserve">
+        <value>Görsel çok büyük. Lütfen görseli küçültün veya istediğiniz alanı kırpın.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ViewImage_InvalidImage" xml:space="preserve">
+        <value>Görsel geçersiz veya desteklenmeyen bir biçimde.</value>
+    </data>
+    <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
+        <value>İstek, hizmetin girdi sınırını aşıyor.</value>
+    </data>
 </root>
