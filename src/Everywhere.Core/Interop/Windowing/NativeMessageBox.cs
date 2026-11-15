@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Everywhere.Common;
 
 namespace Everywhere.Interop;
@@ -57,11 +58,8 @@ public static class NativeMessageBox
     /// </summary>
     public static void Register(NativeMessageBoxHandler handler)
     {
-        ArgumentNullException.ThrowIfNull(handler);
-        if (Interlocked.CompareExchange(ref _handler, handler, null) is not null)
-        {
-            throw new InvalidOperationException("The native message-box handler is already registered.");
-        }
+        Debug.Assert(_handler == null, "The native message-box handler is already registered.");
+        _handler = handler;
     }
 
     public static NativeMessageBoxResult Show(
@@ -70,7 +68,7 @@ public static class NativeMessageBox
         NativeMessageBoxButtons buttons = NativeMessageBoxButtons.Ok,
         NativeMessageBoxIcon icon = NativeMessageBoxIcon.None)
     {
-        return Volatile.Read(ref _handler)?.Invoke(title, message, buttons, icon) ??
+        return _handler?.Invoke(title, message, buttons, icon) ??
             throw new InvalidOperationException("The native message-box handler has not been registered.");
     }
 
