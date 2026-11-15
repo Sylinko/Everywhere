@@ -78,10 +78,10 @@
     <TrimmerRootAssembly Include="Everywhere.Cloud"/>
     <TrimmerRootAssembly Include="Everywhere.Patches.Contracts"/>
     <TrimmerRootAssembly Include="Everywhere.I18N.Abstractions"/>
+    <TrimmerRootAssembly Include="AngleSharp"/>
     <TrimmerRootAssembly Include="Anthropic"/>
     <TrimmerRootAssembly Include="DirectWriteForwarder"/>
     <TrimmerRootAssembly Include="ExCSS"/>
-    <TrimmerRootAssembly Include="HtmlAgilityPack"/>
     <TrimmerRootAssembly Include="MessagePack"/>
     <TrimmerRootAssembly Include="MicroCom.Runtime"/>
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore"/>
