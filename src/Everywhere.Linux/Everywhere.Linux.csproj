@@ -13,11 +13,7 @@
     <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Interop\**\*.cs" />
-    <Compile Include="Interop\LinuxNativeMessageBox.cs" />
-    <Compile Include="Interop\LinkFileOperations.cs" />
-  </ItemGroup>
+  <!-- The legacy Linux desktop adapter was removed. Its source is available in Git history. -->
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
