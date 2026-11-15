@@ -17,7 +17,6 @@ using Everywhere.Configuration;
 using Everywhere.Extensions;
 using Everywhere.Interop;
 using Everywhere.Messages;
-using GnomeStack.Os.Secrets;
 using Microsoft.Extensions.Logging;
 using ShadUI.Extensions;
 
@@ -719,7 +718,7 @@ public sealed partial class OAuthCloudClient :
             {
                 try
                 {
-                    var json = OsSecretVault.GetSecret(ServiceName, TokenDataKey);
+                    var json = NativeSecretStore.Instance.GetSecret(ServiceName, TokenDataKey);
                     _tokenData = string.IsNullOrEmpty(json) ? null : TokenData.FromJson(json);
                 }
                 catch (Exception ex)
@@ -747,7 +746,7 @@ public sealed partial class OAuthCloudClient :
 
             try
             {
-                OsSecretVault.SetSecret(ServiceName, TokenDataKey, data.ToJson());
+                NativeSecretStore.Instance.SetSecret(ServiceName, TokenDataKey, data.ToJson());
                 _tokenData = data;
             }
             catch (Exception ex)
@@ -760,7 +759,7 @@ public sealed partial class OAuthCloudClient :
 
                 try
                 {
-                    OsSecretVault.DeleteSecret(ServiceName, TokenDataKey);
+                    NativeSecretStore.Instance.DeleteSecret(ServiceName, TokenDataKey);
                 }
                 catch (Exception deleteEx)
                 {
@@ -781,7 +780,7 @@ public sealed partial class OAuthCloudClient :
                 _tokenData = null;
                 try
                 {
-                    OsSecretVault.DeleteSecret(ServiceName, TokenDataKey);
+                    NativeSecretStore.Instance.DeleteSecret(ServiceName, TokenDataKey);
                 }
                 catch (Exception ex)
                 {

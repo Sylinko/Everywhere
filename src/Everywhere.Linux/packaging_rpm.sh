@@ -66,7 +66,7 @@ AutoReqProv: no
 Requires: python3 >= 3.9, glibc, libgcc, libstdc++, zlib, openssl-libs, libicu
 Requires: fontconfig, libX11, libICE, libSM, libXext, libxcb
 Requires: libXrandr, libXrender, libXi, libXcursor, libwayland-client.so.0()(64bit), libxkbcommon
-Requires: glib2, at-spi2-core, xdg-utils, desktop-file-utils
+Requires: glib2, at-spi2-core, libsecret, xdg-utils, desktop-file-utils
 Recommends: libnotify
 
 %description

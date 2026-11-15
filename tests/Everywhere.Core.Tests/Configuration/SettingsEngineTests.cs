@@ -13,6 +13,7 @@ using Everywhere.Utilities;
 using Everywhere.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 using SettingsDescriptorProviderFactory = Everywhere.Configuration.Engine.SettingsDescriptorProviderFactory;
 
 namespace Everywhere.Core.Tests.Configuration;
@@ -156,6 +157,42 @@ public sealed class SettingsEngineTests
             Assert.That(chatWindow.ContainsKey("Modifiers"), Is.False);
             Assert.That(engine.Diagnostics, Is.Empty);
         });
+    }
+
+    [Test, NonParallelizable, Platform("Win,MacOsX")]
+    public async Task InitializeAsync_After059Upgrade_RetriesLegacyKeyWithoutOverwritingTheReplacement()
+    {
+        const string previousVersion = "0.9.0-canary.20261022.27";
+        const string legacyService = "com.sylinko.everywhere.apikeys";
+        var id = Guid.NewGuid();
+        var account = id.ToString("N");
+        using var file = TestSettingsFile($$"""
+            { "Version": "{{previousVersion}}", "Model": { "ApiKeys": [{ "Id": "{{id}}", "Name": "model" }] } }
+            """);
+        using var provider = new ServiceCollection().BuildServiceProvider();
+        using var scope = new SecretStoreScope();
+        var store = scope.Store;
+        store.EnumerateAccounts(legacyService).Returns([account]);
+        store.GetSecret(legacyService, account).Returns("saved");
+        store.GetSecret(ApiKey.ServiceName, account).Returns((string?)null, "saved");
+        var shouldFailDeletion = true;
+        store.When(item => item.DeleteSecret(legacyService, account)).Do(_ =>
+        {
+            if (shouldFailDeletion)
+            {
+                throw new IOException("Deletion refused");
+            }
+        });
+        using var engine = new SettingsEngine(new Settings(provider), file.Path, provider, NullLoggerFactory.Instance);
+
+        await Assert.ThrowsAsync<IOException>(() => engine.InitializeAsync(default));
+        Assert.That(Require(JsonNode.Parse(File.ReadAllText(file.Path)))["Version"]?.ToString(), Is.EqualTo(previousVersion));
+
+        shouldFailDeletion = false;
+        await engine.InitializeAsync(default);
+        Assert.That(engine.Settings.Version, Is.Not.EqualTo(previousVersion));
+        store.Received(1).SetSecret(ApiKey.ServiceName, account, "saved");
+        store.Received(2).DeleteSecret(legacyService, account);
     }
 
     [Test]
@@ -945,8 +982,10 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
+    [NonParallelizable]
     public async Task InitializeAsync_TavilyApiKeyChanges_PersistsSelectionAcrossReload()
     {
+        using var storeScope = new SecretStoreScope();
         using var file = TestSettingsFile("""{ "Version": "99.0.0" }""");
         using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);

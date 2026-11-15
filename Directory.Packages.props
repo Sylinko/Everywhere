@@ -20,7 +20,6 @@
     <PackageVersion Include="DiffPlex" Version="1.9.0" />
     <PackageVersion Include="DynamicData" Version="9.5.0" />
     <PackageVersion Include="FuzzySharp" Version="2.0.2" />
-    <PackageVersion Include="GnomeStack.Os.Secrets" Version="0.1.3" />
     <PackageVersion Include="Google.Protobuf" Version="3.36.2" />
     <PackageVersion Include="Grpc.Core.Api" Version="2.85.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.85.0" />
@@ -124,6 +123,7 @@
     <PackageVersion Include="Tmds.DBus.Protocol" Version="0.94.1" />
     <PackageVersion Include="X11.Net" Version="1.0.7" />
     <PackageVersion Include="GirCore.GObject-2.0" Version="0.8.1" />
+    <PackageVersion Include="GirCore.Secret-1" Version="0.8.1" />
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />

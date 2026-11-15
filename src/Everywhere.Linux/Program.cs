@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Everywhere.AI;
 using Everywhere.Chat;
@@ -52,6 +51,7 @@ public static class Program
         }
 
         NativeMessageBox.Register(LinuxNativeMessageBox.Show);
+        NativeSecretStore.Initialize(new LinuxSecretStore());
         Environment.ExitCode = RunAsync(args).GetAwaiter().GetResult();
     }
 

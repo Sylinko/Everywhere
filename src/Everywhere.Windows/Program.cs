@@ -34,6 +34,7 @@ public static class Program
     public static int Main(string[] args)
     {
         NativeMessageBox.Register(WindowsNativeMessageBox.Show);
+        NativeSecretStore.Initialize(new WindowsSecretStore());
         return RunAsync(args).GetAwaiter().GetResult();
     }
 

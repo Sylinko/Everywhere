@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Nodes;
 using Everywhere.Common;
-using GnomeStack.Os.Secrets.Win32;
-using ZLinq;
+using Everywhere.Interop;
 
 namespace Everywhere.Configuration.Migrations;
 
@@ -25,32 +24,36 @@ public class _20260106195452_0_5_9 : SettingsMigration
     {
         if (!OperatingSystem.IsWindows()) return false;
 
-        var secretsToMigrate = new Dictionary<string, string>();
-        foreach (var credential in WinCredManager.EnumerateCredentials())
+        var store = NativeSecretStore.Instance;
+        var hasMigrated = false;
+        foreach (var account in store.EnumerateAccounts(LegacyApiKeyCredential.ServiceName))
         {
-            // com.sylinko.everywhere.apikeys/[GUID]
-            if (!credential.Service.StartsWith("com.sylinko.everywhere.apikeys/")) continue;
-            if (credential.Account is not { } account) continue;
+            // The Windows migration predates settings-based selection. Released writers
+            // used a non-empty, lowercase N-format GUID for every API-key account.
+            if (!Guid.TryParseExact(account, "N", out var id) || id == Guid.Empty || account != id.ToString("N"))
+            {
+                continue;
+            }
 
-            if (WinCredManager.GetSecret("com.sylinko.everywhere.apikeys", account) is { } secret) secretsToMigrate[account] = secret;
+            if (!LegacyApiKeyCredential.EnsureCurrentCopy(store, account))
+            {
+                continue;
+            }
 
-            // Delete original credential
             try
             {
-                WinCredManager.DeleteSecret("com.sylinko.everywhere.apikeys", account);
+                store.DeleteSecret(LegacyApiKeyCredential.ServiceName, account);
             }
-            catch
+            catch (Exception exception)
             {
-                // Ignore
+                // In 0.5.9 cleanup was best-effort; the prompt migration must still run.
+                Serilog.Log.Warning(exception, "Could not remove a superseded API-key credential after migration.");
             }
+
+            hasMigrated = true;
         }
 
-        foreach (var (account, secret) in secretsToMigrate.AsValueEnumerable())
-        {
-            WinCredManager.SetSecret("com.sylinko.everywhere", account, secret);
-        }
-
-        return secretsToMigrate.Count > 0;
+        return hasMigrated;
     }
 
     private static bool MigrateTask2(JsonObject root)
