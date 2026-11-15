@@ -145,3 +145,11 @@ RoInitialize
 RoUninitialize
 WindowsCreateString
 WindowsDeleteString
+
+CredRead
+CredWrite
+CredDelete
+CredEnumerate
+CredFree
+CRED_MAX_CREDENTIAL_BLOB_SIZE
+WIN32_ERROR

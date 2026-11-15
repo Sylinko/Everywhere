@@ -4,21 +4,21 @@ using System.Text.Json.Serialization;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GnomeStack.Os.Secrets;
+using Everywhere.Interop;
 using Serilog;
 
 namespace Everywhere.Configuration;
 
 /// <summary>
 /// Represents an API key with a friendly name and secure storage for the key itself.
-/// When serialized, only the Id and Name are stored. The actual key is stored securely using OsSecretVault.
+/// When serialized, only the Id and Name are stored. The actual key is stored securely through the registered platform store.
 /// </summary>
 public partial class ApiKey : ObservableValidator
 {
     /// <summary>
     /// The service name used for secure storage of API keys.
     /// </summary>
-    private const string ServiceName = "com.sylinko.everywhere";
+    public const string ServiceName = "com.sylinko.everywhere";
 
     public static ApiKey Empty { get; } = new()
     {
@@ -31,13 +31,18 @@ public partial class ApiKey : ObservableValidator
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    public static string? GetKey(Guid id) => id == Guid.Empty ? null : OsSecretVault.GetSecret(ServiceName, id.ToString("N"));
+    public static string? GetKey(Guid id)
+    {
+        return id == Guid.Empty ? null : NativeSecretStore.Instance.GetSecret(ServiceName, id.ToString("N"));
+    }
 
     /// <summary>
-    /// Deletes the API key from secure storage based on the given ID.
+    /// Deletes the stored API key with the given ID.
     /// </summary>
-    /// <param name="id"></param>
-    public static void DeleteKey(Guid id) => OsSecretVault.DeleteSecret(ServiceName, id.ToString("N"));
+    public static void DeleteKey(Guid id)
+    {
+        NativeSecretStore.Instance.DeleteSecret(ServiceName, id.ToString("N"));
+    }
 
     public Guid Id { get; init; } = Guid.CreateVersion7();
 
@@ -135,7 +140,7 @@ public partial class ApiKey : ObservableValidator
 
         try
         {
-            OsSecretVault.SetSecret(ServiceName, Id.ToString("N"), _pendingKey);
+            NativeSecretStore.Instance.SetSecret(ServiceName, Id.ToString("N"), _pendingKey);
         }
         catch (Exception ex)
         {

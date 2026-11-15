@@ -32,6 +32,7 @@ public static class Program
     public static int Main(string[] args)
     {
         NativeMessageBox.Register(NSAlertMessageBox.Show);
+        NativeSecretStore.Initialize(new MacSecretStore());
         return RunAsync(args).GetAwaiter().GetResult();
     }
 

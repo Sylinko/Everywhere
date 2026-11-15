@@ -171,10 +171,10 @@ License:   MIT
 
 --------------------------------------------------------------------------------
 
-GirCore.GObject-2.0
+GirCore Linux bindings
 
-Id:        GirCore.GObject-2.0
-Version:   0.7.0
+Id:        GirCore.Secret-1, GirCore.Gio-2.0, GirCore.GObject-2.0, GirCore.GLib-2.0
+Version:   0.8.1
 Project:   https://github.com/gircore/gir.core
 Copyright: 
 License:   MIT
@@ -184,9 +184,9 @@ License:   MIT
 GnomeStack.Os.Secrets
 
 Id:        GnomeStack.Os.Secrets
-Version:   0.1.3
-Project:   
-Copyright: ©️ 2010-2023 GnomeStack
+Version:   0.1.3 (native interop adapted from f90dd8d76eedebc7de4f597cdfcdc6360031bf29)
+Project:   https://github.com/gnomestack/dotnet
+Copyright: (c) 2022-2024 GnomeStack, BowTiedGnome
 License:   MIT
 
 --------------------------------------------------------------------------------

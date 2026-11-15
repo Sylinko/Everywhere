@@ -293,7 +293,7 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
         time.sleep(attempt + 1)
 
 
-INSTALLER_VERSION = '0.2.2'
+INSTALLER_VERSION = '0.2.3'
 INSTALLER_URL = 'https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.json'
 CATALOG_URL = 'github:Sylinko/Everywhere'
 
@@ -612,7 +612,7 @@ provides=('everywhere')
 conflicts=('everywhere')
 depends=('python' 'glibc' 'gcc-libs' 'zlib' 'openssl' 'icu' 'fontconfig'
          'libx11' 'libice' 'libsm' 'libxext' 'libxcb' 'libxrandr' 'libxrender'
-         'libxi' 'libxcursor' 'wayland' 'libxkbcommon' 'glib2' 'at-spi2-core' 'xdg-utils')
+         'libxi' 'libxcursor' 'wayland' 'libxkbcommon' 'glib2' 'at-spi2-core' 'libsecret' 'xdg-utils')
 options=('!strip' '!debug')
 package() {
     install -d "$pkgdir/opt/Everywhere" "$pkgdir/usr/bin"

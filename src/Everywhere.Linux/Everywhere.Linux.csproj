@@ -19,6 +19,7 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Wayland" />
     <PackageReference Include="GirCore.GObject-2.0" />
+    <PackageReference Include="GirCore.Secret-1" />
     <PackageReference Include="OfficeCLI" />
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
