@@ -111,7 +111,7 @@ SDK feature band. This can affect other projects using the same .NET installatio
 other contributors' environments. See [.NET workload sets](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-workload-sets).
 
 Avoid running an unversioned `dotnet workload update` when you need to retain that pairing: it can select a newer set.
-The [macOS release workflow](../.github/workflows/macos-release.yml) selects Xcode 27.2
+The [macOS packaging action](../.github/actions/package-macos/action.yml) selects Xcode 27.2
 on GitHub's `xcode-27` runner image and installs workload set 11.0.100. That runner image
 is currently a public preview; its default Xcode is not necessarily 27.2.
 Update these together when changing the release toolchain, rather than adding a shared workload pin to `global.json`.

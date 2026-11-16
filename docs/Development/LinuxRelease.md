@@ -1,10 +1,21 @@
 # Linux releases and AUR
 
-`linux-release.yml` builds x64 from version tags (`vX.Y.Z` or
-`vX.Y.Z-canary.<numeric qualifiers>`). It uploads DEB, RPM and self-contained
-tar.zst assets to a draft release. Wait for the x64 build, then publish the
-release as stable or prerelease. The manual build input retries an existing tag.
-ARM64 release builds and packaging checks are disabled pending native acceptance.
+Push a version tag (`vX.Y.Z` or `vX.Y.Z-canary.<numeric qualifiers>`) to start
+the [desktop release workflow](../../.github/workflows/release.yml). Its matrix
+builds Windows x64, macOS x64 and ARM64, and Linux x64 in parallel. If a build,
+signing or packaging step fails, unfinished builds are cancelled and the release
+job does not run. Linux ARM64 remains disabled pending native desktop acceptance.
+
+The release job checks all seven files: the Windows installer and ZIP, both macOS
+PKGs, and the Linux DEB, RPM and self-contained tar.zst. It creates a draft with
+generated notes for a canary or a blank body for a stable release. If the release
+already exists, it only uploads assets; retries preserve the body and publication
+state. Review the draft and publish it when ready.
+
+To rebuild just the Linux packages, set `tag` to the existing release tag and run
+`gh workflow run release.yml --ref main -f tag="$tag"` in your shell.
+This checks and uploads only the three Linux files; it does not rebuild or replace other platforms' packages.
+It can also create a draft if the tag has no release yet.
 
 RPM packages use `~canary` versions so stable versions sort after previews.
 The RPM runtime dependencies have been validated on Fedora 44; other RPM

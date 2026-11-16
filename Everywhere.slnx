@@ -11,11 +11,9 @@
   </Folder>
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/close-stale-issues.yml" />
-    <File Path=".github/workflows/linux-release.yml" />
     <File Path=".github/workflows/llm-integration.yml" />
-    <File Path=".github/workflows/macos-release.yml" />
+    <File Path=".github/workflows/release.yml" />
     <File Path=".github/workflows/sync-i18n.yml" />
-    <File Path=".github/workflows/windows-release.yml" />
   </Folder>
   <Folder Name="/3rd/">
     <Project Path="3rd/ClassicDiagnostics.Avalonia/src/ClassicDiagnostics.Avalonia.csproj" />

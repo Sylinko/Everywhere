@@ -1,50 +1,45 @@
-﻿name: (macOS) Build and Release
-
-on:
-  push:
-    tags:
-      - 'v*.*.*'
-
-jobs:
-  build-mac:
-    runs-on: xcode-27
-    strategy:
-      matrix:
-        include:
-          - runtime: osx-x64
-            asset_name: macOS-x64
-          - runtime: osx-arm64
-            asset_name: macOS-arm64
-
-    steps:
+name: Package macOS
+description: Build, sign, notarize and collect the installer for the selected runtime.
+inputs:
+  sentry-dsn:
+    description: Sentry DSN embedded in the application.
+    required: true
+  client-id:
+    description: Account client ID embedded in the application.
+    required: true
+  certificate-base64:
+    description: Signing certificate in PKCS12 format.
+    required: true
+  certificate-password:
+    description: Password for the signing certificate.
+    required: true
+  code-sign-key:
+    description: Application signing identity.
+    required: true
+  package-signing-key:
+    description: Installer signing identity.
+    required: true
+  apple-id:
+    description: Notarization account.
+    required: true
+  apple-team-id:
+    description: Developer team for notarization.
+    required: true
+  apple-password:
+    description: App-specific notarization password.
+    required: true
+runs:
+  using: composite
+  steps:
     - uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: '27.2'
 
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-        submodules: true
-        lfs: true
-
-    - name: Setup Node
-      uses: actions/setup-node@v6
-      with:
-        node-version: '24'
-
-    - name: Resolve version
-      run: node scripts/resolve-release-tag.mjs "$GITHUB_REF_NAME"
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        global-json-file: global.json
-
     - name: Import Code Signing Certificate
       env:
-        P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
-        P12_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        P12_BASE64: ${{ inputs.certificate-base64 }}
+        P12_PASSWORD: ${{ inputs.certificate-password }}
+      shell: bash
       run: |
         # Create a temporary keychain
         KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
@@ -69,28 +64,28 @@ jobs:
         security list-keychain -d user -s $KEYCHAIN_PATH
 
     - name: Install macOS workload
+      shell: bash
       run: dotnet workload install macos --version 11.0.100
 
     - name: Restore
+      shell: bash
       run: |
         dotnet restore Everywhere.Mac.slnx \
-          -r ${{ matrix.runtime }} \
-          /p:RuntimeIdentifier=${{ matrix.runtime }}
+          -r "$RUNTIME" \
+          /p:RuntimeIdentifier="$RUNTIME"
 
     - name: Publish
       env:
-        CODE_SIGN_KEY: ${{ secrets.CODE_SIGN_KEY }}
-        PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
-        SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        CLIENT_ID: ${{ secrets.CLIENT_ID }}
-        AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
-        CLOUD_BASE_URL: ${{ vars.CLOUD_BASE_URL }}
-        ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
+        CODE_SIGN_KEY: ${{ inputs.code-sign-key }}
+        PACKAGE_SIGNING_KEY: ${{ inputs.package-signing-key }}
+        SENTRY_DSN: ${{ inputs.sentry-dsn }}
+        CLIENT_ID: ${{ inputs.client-id }}
+      shell: bash
       run: |
         dotnet publish src/Everywhere.Mac/Everywhere.Mac.csproj \
           -c Release \
-          -r ${{ matrix.runtime }} \
-          /p:RuntimeIdentifier=${{ matrix.runtime }} \
+          -r "$RUNTIME" \
+          /p:RuntimeIdentifier="$RUNTIME" \
           /p:CodesignKey="$CODE_SIGN_KEY" \
           /p:PackageSigningKey="$PACKAGE_SIGNING_KEY" \
           /p:Version="$VERSION_PREFIX" \
@@ -106,20 +101,21 @@ jobs:
 
     - name: Notarize App
       env:
-        APPLE_ID: ${{ secrets.APPLE_ID }}
-        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        APPLE_PWD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        APPLE_ID: ${{ inputs.apple-id }}
+        APPLE_TEAM_ID: ${{ inputs.apple-team-id }}
+        APPLE_PWD: ${{ inputs.apple-password }}
+      shell: bash
       run: |
         # Find the generated PKG file in the publish output directory
         PKG_PATH=$(find ./publish -name "Everywhere-*.pkg" | head -n 1)
-        
+
         if [ -z "$PKG_PATH" ]; then
           echo "Error: .pkg file not found in ./publish!"
           exit 1
         fi
 
         echo "Found package: $PKG_PATH"
-        
+
         echo "Notarizing..."
         xcrun notarytool submit "$PKG_PATH" \
           --apple-id "$APPLE_ID" \
@@ -129,17 +125,7 @@ jobs:
 
         echo "Stapling..."
         xcrun stapler staple "$PKG_PATH"
-        
-        # Move to a known location for upload
-        mkdir -p ./release_assets
-        mv "$PKG_PATH" ./release_assets/Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.pkg
 
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v3
-      with:
-        draft: true
-        make_latest: false
-        prerelease: ${{ env.PRERELEASE }}
-        generate_release_notes: ${{ env.PRERELEASE }}
-        tag_name: ${{ env.RELEASE_TAG }}
-        files: ./release_assets/*.pkg
+        # Move to a known location for upload
+        mkdir -p ./release-assets
+        mv "$PKG_PATH" "release-assets/Everywhere-macOS-${RUNTIME#osx-}-$RELEASE_TAG.pkg"

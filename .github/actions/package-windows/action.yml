@@ -1,42 +1,24 @@
-﻿name: (Windows) Build and Release
-
-on:
-  push:
-    tags:
-      - 'v*.*.*'
-
-jobs:
-  build-and-release:
-    runs-on: windows-latest
-    env:
-      # Windows builds need no workloads; skip resolving the macOS workload-set pin in global.json.
-      MSBuildEnableWorkloadResolver: 'false'
-
-    steps:
-    - name: Enable long paths in git
-      run: git config --global core.longpaths true
-
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-        submodules: true
-        lfs: true
-
-    - name: Setup Node
-      uses: actions/setup-node@v6
-      with:
-        node-version: '24'
-
-    - name: Resolve version
-      shell: pwsh
-      run: node scripts/resolve-release-tag.mjs "$env:GITHUB_REF_NAME"
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        global-json-file: global.json
-
+name: Package Windows
+description: Build, sign and collect the x64 installer and portable ZIP.
+inputs:
+  sentry-dsn:
+    description: Sentry DSN embedded in the application.
+    required: true
+  client-id:
+    description: Account client ID embedded in the application.
+    required: true
+  certum-username:
+    description: SimplySign account.
+    required: true
+  certum-otp-token:
+    description: SimplySign one-time password seed.
+    required: true
+  certum-fingerprint:
+    description: Signing certificate fingerprint.
+    required: true
+runs:
+  using: composite
+  steps:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v3
 
@@ -89,7 +71,7 @@ jobs:
         Write-Host "Installing SimplySignDesktop from $absMsiPath..."
         # Use /qn for completely silent installation (no UI) and ALLUSERS=1 to force machine-wide install
         $process = Start-Process msiexec -ArgumentList "/i `"$absMsiPath`" /qn /norestart ALLUSERS=1 /l*v `"$logPath`"" -Wait -PassThru
-        
+
         if ($process.ExitCode -ne 0) {
             Write-Host "SimplySignDesktop installation failed with exit code $($process.ExitCode)"
             if (Test-Path $logPath) {
@@ -118,11 +100,8 @@ jobs:
     - name: Publish Everywhere.Windows
       shell: pwsh
       env:
-        SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        CLIENT_ID: ${{ secrets.CLIENT_ID }}
-        AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
-        CLOUD_BASE_URL: ${{ vars.CLOUD_BASE_URL }}
-        ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
+        SENTRY_DSN: ${{ inputs.sentry-dsn }}
+        CLIENT_ID: ${{ inputs.client-id }}
       run: |
         dotnet publish src/Everywhere.Windows/Everywhere.Windows.csproj `
           -c Release `
@@ -140,27 +119,17 @@ jobs:
     - name: Login, Compile, and Sign
       shell: pwsh
       env:
-        SIGN_USERNAME: ${{ secrets.CERTUM_USERNAME }}
-        SIGN_OTP_TOKEN: ${{ secrets.CERTUM_OTP_TOKEN }}
-        SIGN_FINGERPRINT: ${{ secrets.CERTUM_FINGERPRINT }}
+        SIGN_USERNAME: ${{ inputs.certum-username }}
+        SIGN_OTP_TOKEN: ${{ inputs.certum-otp-token }}
+        SIGN_FINGERPRINT: ${{ inputs.certum-fingerprint }}
       run: |
         python -m pip install --upgrade pip
         pip install pyotp
         python -u tools/sign_and_pack.py ./publish tools/installer.iss
 
-    - name: Create release zip
+    - name: Collect signed Windows assets
       shell: pwsh
       run: |
-        Compress-Archive -Path ./publish/* -DestinationPath ./Everywhere-Windows-x64-v$env:VERSION.zip
-
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v3
-      with:
-        draft: true
-        make_latest: false
-        prerelease: ${{ env.PRERELEASE }}
-        generate_release_notes: ${{ env.PRERELEASE }}
-        tag_name: ${{ env.RELEASE_TAG }}
-        files: |
-          ./Everywhere-Windows-x64-v${{env.VERSION}}.zip
-          ./Everywhere-Windows-x64-Setup-v${{env.VERSION}}.exe
+        New-Item -ItemType Directory -Path release-assets -Force | Out-Null
+        Compress-Archive -Path ./publish/* -DestinationPath "release-assets/Everywhere-Windows-x64-$env:RELEASE_TAG.zip"
+        Move-Item -LiteralPath "Everywhere-Windows-x64-Setup-$env:RELEASE_TAG.exe" -Destination release-assets

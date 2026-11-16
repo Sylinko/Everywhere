@@ -1,0 +1,147 @@
+name: Build release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to rebuild Linux packages only (including v)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  build:
+    name: Package ${{ matrix.runtime }}
+    strategy:
+      fail-fast: true
+      matrix:
+        # Linux ARM64 stays out until native desktop acceptance.
+        runtime: ${{ fromJSON(inputs.tag && '["linux-x64"]' || '["win-x64","osx-x64","osx-arm64","linux-x64"]') }}
+    runs-on: ${{ matrix.runtime == 'win-x64' && 'windows-latest' || matrix.runtime == 'linux-x64' && 'ubuntu-24.04' || 'xcode-27' }}
+    env:
+      RUNTIME: ${{ matrix.runtime }}
+      SOURCE_DIR: ${{ inputs.tag && 'source' || '.' }}
+      AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
+      CLOUD_BASE_URL: ${{ vars.CLOUD_BASE_URL }}
+      ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
+    steps:
+      - name: Prepare Windows build
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          git config --global core.longpaths true
+          # Windows does not need the macOS workload set pinned in global.json.
+          "MSBuildEnableWorkloadResolver=false" >> $env:GITHUB_ENV
+
+      - name: Load packaging actions for an older tag
+        if: inputs.tag
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions
+          persist-credentials: false
+
+      - name: Checkout tagged source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.sha }}
+          path: ${{ env.SOURCE_DIR }}
+          fetch-depth: 0
+          submodules: true
+          lfs: true
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Resolve version
+        working-directory: ${{ env.SOURCE_DIR }}
+        shell: bash
+        run: node scripts/resolve-release-tag.mjs "$RELEASE_TAG"
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: ${{ env.SOURCE_DIR }}/global.json
+
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/package-windows
+        with:
+          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          certum-username: ${{ secrets.CERTUM_USERNAME }}
+          certum-otp-token: ${{ secrets.CERTUM_OTP_TOKEN }}
+          certum-fingerprint: ${{ secrets.CERTUM_FINGERPRINT }}
+
+      - name: Package macOS
+        if: runner.os == 'macOS'
+        uses: ./.github/actions/package-macos
+        with:
+          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          certificate-base64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          code-sign-key: ${{ secrets.CODE_SIGN_KEY }}
+          package-signing-key: ${{ secrets.PACKAGE_SIGNING_KEY }}
+          apple-id: ${{ secrets.APPLE_ID }}
+          apple-team-id: ${{ secrets.APPLE_TEAM_ID }}
+          apple-password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+
+      - name: Package Linux
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/package-linux
+        with:
+          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          source-directory: ${{ env.SOURCE_DIR }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.runtime }}
+          path: ${{ env.SOURCE_DIR }}/release-assets/
+          if-no-files-found: error
+          overwrite: true
+          compression-level: 0
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Resolve version
+        run: node scripts/resolve-release-tag.mjs "$RELEASE_TAG"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: release-assets
+      - name: Attach packages to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/github_release.py ${{ inputs.tag && '--linux-only' || '' }}
+
+  notify-aur:
+    needs: release
+    uses: ./.github/workflows/aur-publish.yml
+    with:
+      tag: ${{ inputs.tag || github.ref_name }}
+    secrets:
+      EVERYWHERE_AUR_DISPATCH_TOKEN: ${{ secrets.EVERYWHERE_AUR_DISPATCH_TOKEN }}

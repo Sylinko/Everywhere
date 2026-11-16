@@ -1,0 +1,77 @@
+name: Package Linux
+description: Build and collect the Linux x64 DEB, RPM and self-contained archive.
+inputs:
+  sentry-dsn:
+    description: Sentry DSN embedded in the application.
+    required: true
+  client-id:
+    description: Account client ID embedded in the application.
+    required: true
+  source-directory:
+    description: Directory containing the tagged source.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Restore
+      working-directory: ${{ inputs.source-directory }}
+      shell: bash
+      run: |
+        dotnet restore Everywhere.Linux.slnx \
+          -r linux-x64
+
+    - name: Install packaging and NativeAOT dependencies
+      working-directory: ${{ inputs.source-directory }}
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang zlib1g-dev dpkg-dev rpm zstd desktop-file-utils
+
+    - name: Publish
+      env:
+        SENTRY_DSN: ${{ inputs.sentry-dsn }}
+        CLIENT_ID: ${{ inputs.client-id }}
+      working-directory: ${{ inputs.source-directory }}
+      shell: bash
+      run: |
+        dotnet publish src/Everywhere.Linux/Everywhere.Linux.csproj \
+          -c Release \
+          -r linux-x64 \
+          -o ./publish \
+          -p:Version="$VERSION_PREFIX" \
+          -p:SemanticVersion="$SEMANTIC_VERSION" \
+          /p:SentryDsn="$SENTRY_DSN" \
+          /p:ClientId="$CLIENT_ID" \
+          /p:AIGatewayBaseUrl="$AI_GATEWAY_BASE_URL" \
+          /p:CloudBaseUrl="$CLOUD_BASE_URL" \
+          /p:AccountBaseUrl="$ACCOUNT_BASE_URL" \
+          --self-contained true \
+          --no-restore
+
+    - name: Build Deb Package
+      working-directory: ${{ inputs.source-directory }}
+      shell: bash
+      run: |
+        bash src/Everywhere.Linux/packaging_deb.sh linux-x64 "$VERSION" ./publish
+
+    - name: Create Archive
+      working-directory: ${{ inputs.source-directory }}
+      shell: bash
+      run: |
+        tar -I 'zstd -19 -T0' -cf Everywhere-Linux-x64-v${VERSION}.tar.zst -C ./publish .
+
+    - name: Build RPM Package
+      working-directory: ${{ inputs.source-directory }}
+      shell: bash
+      run: |
+        bash src/Everywhere.Linux/packaging_rpm.sh linux-x64 "$VERSION" ./publish
+
+    - name: Validate package metadata
+      working-directory: ${{ inputs.source-directory }}
+      shell: bash
+      run: |
+        dpkg-deb --info "Everywhere-Linux-x64-v${VERSION}.deb"
+        rpm -qpi "Everywhere-Linux-x64-v${VERSION}.rpm"
+        test -s "Everywhere-Linux-x64-v${VERSION}.tar.zst"
+        mkdir -p release-assets
+        mv Everywhere-Linux-x64-"${RELEASE_TAG}".{deb,rpm,tar.zst} release-assets/

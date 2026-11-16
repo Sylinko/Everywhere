@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Read release state, including drafts omitted by the release-by-tag endpoint."""
+"""Attach desktop packages without rewriting an existing release."""
 
+import argparse
 import json
 import os
+from pathlib import Path
 import subprocess
 
 
@@ -35,16 +37,39 @@ def find_release(repository, tag):
     )
 
 
-def main():
-    release = find_release(os.environ["GITHUB_REPOSITORY"], os.environ["RELEASE_TAG"])
-    draft = release["draft"] if release else True
-    prerelease = release["prerelease"] if release else os.environ["PRERELEASE"] == "true"
-    with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-        output.write(
-            f"exists={str(release is not None).lower()}\n"
-            f"draft={str(draft).lower()}\nprerelease={str(prerelease).lower()}\n"
-        )
+def attach_packages(repository, tag, directory, *, prerelease, linux_only):
+    assets = [directory / f"Everywhere-Linux-x64-{tag}.{ext}" for ext in ("deb", "rpm", "tar.zst")]
+    if not linux_only:
+        assets.extend([
+            directory / f"Everywhere-Windows-x64-Setup-{tag}.exe",
+            directory / f"Everywhere-Windows-x64-{tag}.zip",
+            directory / f"Everywhere-macOS-x64-{tag}.pkg",
+            directory / f"Everywhere-macOS-arm64-{tag}.pkg",
+        ])
+
+    # An artifact upload can succeed even when it contains only part of a platform's output.
+    for asset in assets:
+        if not asset.is_file() or asset.stat().st_size == 0:
+            raise ValueError(f"Missing or empty release asset: {asset.name}")
+
+    if find_release(repository, tag) is None:
+        # Notes belong to the draft's creation, never to a build retry.
+        command = ["gh", "release", "create", tag, "--verify-tag", "--draft", "--latest=false", "--title", tag]
+        if prerelease:
+            command.extend(["--prerelease", "--generate-notes"])
+        else:
+            command.extend(["--notes", ""])
+    else:
+        command = ["gh", "release", "upload", tag, "--clobber"]
+
+    subprocess.run([*command, "--repo", repository, *assets], check=True)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--linux-only", action="store_true", help="Attach only the three Linux packages.")
+    args = parser.parse_args()
+    attach_packages(
+        os.environ["GITHUB_REPOSITORY"], os.environ["RELEASE_TAG"], Path("release-assets"),
+        prerelease=os.environ["PRERELEASE"] == "true", linux_only=args.linux_only,
+    )

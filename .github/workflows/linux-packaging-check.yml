@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - '.github/workflows/linux-*.yml'
+      - '.github/workflows/release.yml'
+      - '.github/actions/package-linux/**'
       - '.github/workflows/aur-publish.yml'
       - 'scripts/notify-aur.py'
       - 'scripts/github_release.py'
@@ -14,6 +16,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/linux-*.yml'
+      - '.github/workflows/release.yml'
+      - '.github/actions/package-linux/**'
       - '.github/workflows/aur-publish.yml'
       - 'scripts/notify-aur.py'
       - 'scripts/github_release.py'
