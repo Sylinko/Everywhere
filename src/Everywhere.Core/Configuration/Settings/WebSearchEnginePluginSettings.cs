@@ -22,6 +22,7 @@ public enum WebSearchEngineProviderId
     Brave,
     Google,
     Jina,
+    Keenable,
     SearXNG,
     Serply,
     Tavily,
@@ -439,6 +440,25 @@ public sealed partial class SearXNGWebSearchEngineProvider : ThirdPartyWebSearch
             EnsureUri(string.IsNullOrEmpty(EndPoint) ? DefaultEndPoint : EndPoint));
 }
 
+public sealed class KeenableWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : OptionalApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.Keenable,
+    new DirectLocaleKey("Keenable"),
+    "avares://Everywhere.Core/Assets/Icons/keenable-color.svg",
+    "https://docs.keenable.ai",
+    "https://api.keenable.ai/v1/search",
+    apiKeys)
+{
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory)
+    {
+        return new KeenableConnector(
+            Configuration.ApiKey.GetKey(ApiKey), // can be null, then the keyless endpoint is used
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
+    }
+}
+
 public sealed class SerplyWebSearchEngineProvider(
     ObservableCollection<ApiKey> apiKeys
 ) : ApiKeyWebSearchEngineProvider(
@@ -536,6 +556,7 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
             MakeKeyValuePair(new BraveWebSearchEngineProvider(ApiKeys)),
             MakeKeyValuePair(new GoogleWebSearchEngineProvider(ApiKeys)),
             MakeKeyValuePair(new JinaWebSearchEngineProvider(ApiKeys)),
+            MakeKeyValuePair(new KeenableWebSearchEngineProvider(ApiKeys)),
             MakeKeyValuePair(new SearXNGWebSearchEngineProvider()),
             MakeKeyValuePair(new SerplyWebSearchEngineProvider(ApiKeys)),
             MakeKeyValuePair(new TavilyWebSearchEngineProvider(ApiKeys)),
