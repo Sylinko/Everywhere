@@ -26,8 +26,7 @@ partial class ChatContextManager
             {
                 var now = DateTimeOffset.UtcNow;
                 var metadata = new ChatMetadata(saved.ChatId, now, now, null);
-                var data = new ChatData(metadata, [], new ChatMessageNode(Guid.CreateVersion7().SetVersion(0), new RootChatMessage()));
-                var root = CreateRoot(data);
+                var root = CreateRoot(new ChatData(metadata));
                 root.Input.Restore(saved.Snapshot);
                 _newChatDraft = root;
             },

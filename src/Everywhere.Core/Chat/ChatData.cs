@@ -55,11 +55,9 @@ public sealed partial class ChatData : ObservableObject, IDisposable
     [IgnoreMember] private bool _isDisposed;
 
     /// <summary>
-    /// Constructor for MessagePack deserialization and for creating conversation data with existing nodes.
+    /// Rebuilds the runtime tree from existing nodes without marking them for insertion.
+    /// Used when loading stored topology or deserializing a conversation.
     /// </summary>
-    /// <param name="metadata"></param>
-    /// <param name="messageNodes"></param>
-    /// <param name="rootNode"></param>
     [SerializationConstructor]
     public ChatData(ChatMetadata metadata, ICollection<ChatMessageNode> messageNodes, ChatMessageNode rootNode)
     {
@@ -83,18 +81,25 @@ public sealed partial class ChatData : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Creates new conversation data. A new Guid v7 ID is assigned.
+    /// Creates a new conversation with a UUIDv7 identity.
     /// </summary>
-    public ChatData()
+    public ChatData() : this(new ChatMetadata(Guid.CreateVersion7(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null))
     {
-        Metadata = new ChatMetadata(Guid.CreateVersion7(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null);
+    }
+
+    /// <summary>
+    /// Creates a new message tree for the supplied conversation identity. Its root is pending
+    /// insertion with the first message; the root alone does not count as chat history.
+    /// </summary>
+    public ChatData(ChatMetadata metadata)
+    {
+        Metadata = metadata;
         RootNode = new ChatMessageNode(Guid.CreateVersion7().SetVersion(0), new RootChatMessage())
         {
             Data = this
         };
         _selectedNodes = [RootNode];
         PersistenceDirtyState.Mark(RootNode, ChatNodeChangeKind.All);
-        UpdateBranchAfter(0, RootNode);
     }
 
     /// <summary>

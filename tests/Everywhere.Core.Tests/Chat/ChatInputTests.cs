@@ -183,7 +183,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
     }
 
     [AvaloniaTest]
-    public async Task Input_WhenRestarted_RestoresNewChatAndExistingEditWithoutChangingHistory()
+    public async Task Input_WhenRestarted_RestoresExistingEditAndSavesDraftOnFirstSend()
     {
         using var files = ChatTestDatabase.Create();
         var storage = new ChatTurnStorage(files.Factory);
@@ -209,9 +209,11 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
 
         await using var restored = CreateManager(storage);
         await restored.InitializeAsync(CancellationToken.None);
-        Assert.That(restored.Current.Data.Metadata.Id, Is.EqualTo(newChatId));
-        Assert.That(restored.Current.Input.Draft.Text, Is.EqualTo("new unsent question"));
-        Assert.That(restored.Current.Data.HasHistory, Is.False);
+        var draft = restored.Current;
+        var text = draft.Input.Draft.Text ?? throw new AssertionException("Missing restored draft text.");
+        Assert.That(draft.Data.Metadata.Id, Is.EqualTo(newChatId));
+        Assert.That(text, Is.EqualTo("new unsent question"));
+        Assert.That(draft.Data.HasHistory, Is.False);
         var existingContext = await restored.LoadChatContextAsync(metadata) ?? throw new AssertionException("Missing saved chat.");
         Assert.That(existingContext.Input.Edit?.NodeId, Is.EqualTo(nodeId));
         Assert.That(existingContext.Input.ActiveDraft.Text, Is.EqualTo("partially edited question"));
@@ -221,6 +223,16 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(await db.Chats.CountAsync(), Is.EqualTo(1));
         Assert.That((await db.Chats.AsNoTracking().SingleAsync()).UpdatedAt, Is.EqualTo(modified));
         Assert.That(await db.SyncPending.CountAsync(), Is.Zero);
+
+        // The restored input has a chat ID, but its first message still needs a new graph root.
+        await draft.DispatchAsync(() => draft.Data.Add(new UserChatMessage(text, [])));
+        await restored.FlushPendingSavesAsync();
+
+        var saved = await storage.GetChatContextAsync(draft.Data.Metadata, CancellationToken.None);
+        await using var reopened = new RootChatContext(saved, storage);
+        var turn = saved.SelectedTurns.Single();
+        await reopened.EnsureTurnLoadedAsync(turn, CancellationToken.None);
+        Assert.That(((UserChatMessage)turn.UserNode.Message).Content, Is.EqualTo(text));
     }
 
     private static ChatWindowViewModel CreateComposer(

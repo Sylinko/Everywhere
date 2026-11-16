@@ -1196,7 +1196,7 @@ public sealed partial class ChatContextManager :
 
             var data = metadata.IsPersisted ?
                 await _chatContextStorage.GetChatContextAsync(metadata, cancellationToken).ConfigureAwait(false) :
-                new ChatData(metadata, [], new ChatMessageNode(Guid.NewGuid().SetVersion(0), new RootChatMessage()));
+                new ChatData(metadata);
             try
             {
                 var input = await _chatContextStorage.ReadInputAsync(metadata.Id, cancellationToken).ConfigureAwait(false);
