@@ -100,8 +100,32 @@ public partial class ChatUsageDetails
         set => SetProperty(ref field, value);
     }
 
+    /// <summary>
+    /// Output tokens from calls with a measurable stream. Stored separately from usage so a
+    /// buffered reply, or a chat saved before sampling was introduced, cannot inflate the rate.
+    /// </summary>
+    [Key(7)]
+    public long SampledOutputTokenCount
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
+    /// <summary>
+    /// Sum of the first-to-last output intervals, in seconds, for those same calls.
+    /// </summary>
+    [Key(8)]
+    public double SampledOutputSeconds
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
+    /// <summary>
+    /// Estimated output tokens per second, or null if no call had a measurable output interval.
+    /// </summary>
     [IgnoreMember]
-    public double TokensPerSecond => TotalGenerationSeconds > 0d ? OutputTokenCount / TotalGenerationSeconds : 0d;
+    public double? TokensPerSecond => SampledOutputSeconds > 0 ? SampledOutputTokenCount / SampledOutputSeconds : null;
 
     /// <summary>
     /// Gets the proportion of input tokens served from cache, or <see langword="null"/> when it is unavailable.
@@ -138,11 +162,27 @@ public partial class ChatUsageDetails
     }
 
     /// <summary>
-    /// Accumulates the maximum token counts from another <see cref="ChatUsageDetails"/> instance. Used to aggregate usage across multiple calls.
+    /// Finishes timing one invocation. Generation time includes the tail until completion;
+    /// speed uses only the interval between effective outputs, excluding trailing usage events.
     /// </summary>
-    /// <param name="other"></param>
-    /// <param name="generationSeconds"></param>
-    public void Accumulate(ChatUsageDetails other, double generationSeconds)
+    internal void RecordGenerationTiming(TimeSpan firstOutputToCompletion, TimeSpan firstToLastOutput)
+    {
+        TotalGenerationSeconds = firstOutputToCompletion.TotalSeconds;
+
+        // A single buffered output has a zero interval. Very short bursts mostly measure delivery.
+        if (OutputTokenCount == 0 || firstToLastOutput < TimeSpan.FromMilliseconds(100))
+        {
+            return;
+        }
+
+        SampledOutputTokenCount = OutputTokenCount;
+        SampledOutputSeconds = firstToLastOutput.TotalSeconds;
+    }
+
+    /// <summary>
+    /// Adds the usage of a finished invocation. Only sampled calls contribute to the speed estimate.
+    /// </summary>
+    public void Accumulate(ChatUsageDetails other)
     {
         InputTokenCount += other.InputTokenCount;
         CachedInputTokenCount += other.CachedInputTokenCount;
@@ -150,7 +190,9 @@ public partial class ChatUsageDetails
         ReasoningTokenCount += other.ReasoningTokenCount;
         TotalTokenCount += other.TotalTokenCount;
 
-        TotalGenerationSeconds += generationSeconds;
+        TotalGenerationSeconds += other.TotalGenerationSeconds;
+        SampledOutputTokenCount += other.SampledOutputTokenCount;
+        SampledOutputSeconds += other.SampledOutputSeconds;
         HasUsage |= other.HasUsage;
         HasCachedInputTokenCount |= other.HasCachedInputTokenCount;
     }

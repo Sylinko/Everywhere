@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using Everywhere.AI;
 using Everywhere.Common;
 using Everywhere.Statistics;
@@ -181,15 +182,16 @@ public sealed partial class ChatService
         Guid chatContextId,
         Guid? messageNodeId,
         StatisticsModelInvocationPurpose purpose,
-        Func<ChatUsageDetails, double, Task>? accumulateUsageAsync
+        Func<ChatUsageDetails, Task>? accumulateUsageAsync
     ) : IAsyncDisposable
     {
         public Guid AttemptInvocationId { get; private set; }
 
         public ChatUsageDetails AttemptUsage { get; private set; } = new();
 
-        private DateTimeOffset _startedAt;
-        private DateTimeOffset? _firstTokenAt;
+        private readonly Stopwatch _attemptTimer = new();
+        private TimeSpan? _firstOutputElapsed;
+        private TimeSpan _lastOutputElapsed;
         private bool _isStarted;
 
         public async Task HandleAsync(ChatRequestUpdate update, bool hasGeneratedOutput, CancellationToken cancellationToken)
@@ -199,8 +201,8 @@ public sealed partial class ChatService
                 case ChatRequestUpdate.AttemptStarted started:
                 {
                     AttemptUsage = new ChatUsageDetails();
-                    _firstTokenAt = null;
-                    _startedAt = DateTimeOffset.UtcNow;
+                    _firstOutputElapsed = null;
+                    _attemptTimer.Restart();
                     AttemptInvocationId = Guid.CreateVersion7();
                     started.Activity?.SetTag("everywhere.request.invocation_id", AttemptInvocationId);
 
@@ -212,7 +214,7 @@ public sealed partial class ChatService
                             messageNodeId,
                             purpose,
                             mixin.Configuration.ModelId,
-                            _startedAt),
+                            DateTimeOffset.UtcNow),
                         cancellationToken);
                     _isStarted = true;
                     break;
@@ -220,12 +222,14 @@ public sealed partial class ChatService
                 case ChatRequestUpdate.Content content:
                 {
                     AttemptUsage.Update(content.Value);
-                    if (_firstTokenAt is null && hasGeneratedOutput)
+                    if (hasGeneratedOutput)
                     {
-                        _firstTokenAt = DateTimeOffset.UtcNow;
-                        owner._timeToFirstTokenHistogram.Record(
-                            (_firstTokenAt.Value - _startedAt).TotalSeconds,
-                            GetModelTag(mixin.Configuration.ModelId));
+                        _lastOutputElapsed = _attemptTimer.Elapsed;
+                        if (_firstOutputElapsed is null)
+                        {
+                            _firstOutputElapsed = _lastOutputElapsed;
+                            owner._timeToFirstTokenHistogram.Record(_lastOutputElapsed.TotalSeconds, GetModelTag(mixin.Configuration.ModelId));
+                        }
                     }
                     break;
                 }
@@ -243,19 +247,22 @@ public sealed partial class ChatService
             _isStarted = false;
 
             var end = DateTimeOffset.UtcNow;
-            var seconds = _firstTokenAt is { } first ? Math.Max(0, (end - first).TotalSeconds) : 0;
-            var invocationUsage = new ChatUsageDetails();
-            invocationUsage.Accumulate(AttemptUsage, seconds);
+            _attemptTimer.Stop();
+            if (_firstOutputElapsed is { } first)
+            {
+                AttemptUsage.RecordGenerationTiming(_attemptTimer.Elapsed - first, _lastOutputElapsed - first);
+            }
+
             if (accumulateUsageAsync is not null)
             {
-                await accumulateUsageAsync(AttemptUsage, seconds);
+                await accumulateUsageAsync(AttemptUsage);
             }
             owner.RecordChatUsageMetrics(AttemptUsage, mixin.Configuration.ModelId);
             owner._chatRequestsCounter.Add(1, GetModelTag(mixin.Configuration.ModelId));
 
             await owner._statisticsRecorder.CompleteModelInvocationAsync(
                 AttemptInvocationId,
-                invocationUsage,
+                AttemptUsage,
                 end,
                 isSuccessful,
                 isCanceled,

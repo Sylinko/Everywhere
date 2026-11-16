@@ -898,7 +898,7 @@ public sealed partial class ChatService : IChatService
             chatData.Metadata.Id,
             assistantChatMessage.Owner?.Id,
             purpose,
-            (usage, seconds) => chatContext.DispatchAsync(() => assistantChatMessage.UsageDetails.Accumulate(usage, seconds)));
+            usage => chatContext.DispatchAsync(() => assistantChatMessage.UsageDetails.Accumulate(usage)));
         var retryActivity = default(IBusyActivity);
 
         try

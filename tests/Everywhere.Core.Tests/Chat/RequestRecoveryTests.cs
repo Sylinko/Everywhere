@@ -73,6 +73,7 @@ public sealed class RequestRecoveryTests
             Assert.That(sdkParents, Is.EqualTo(new[] { attempts[0].Id, attempts[0].Id }));
             Assert.That(attempts[0].GetTagItem("gen_ai.usage.total_tokens"), Is.EqualTo(12L));
             Assert.That(message.UsageDetails.TotalTokenCount, Is.EqualTo(12));
+            Assert.That(message.UsageDetails.TokensPerSecond, Is.Null);
             Assert.That(Activity.Current, Is.SameAs(parent));
         });
         await recorder.Received(1).CompleteModelInvocationAsync(Arg.Any<Guid>(),
@@ -86,7 +87,10 @@ public sealed class RequestRecoveryTests
             metadataReceived.SetResult();
             await allowOutput.Task;
             using (var transport = new Activity("transport next read").Start()) sdkParents.Add(transport.ParentId);
-            yield return new StreamingChatMessageContent(AuthorRole.Assistant, "hello")
+            yield return new StreamingChatMessageContent(AuthorRole.Assistant, "hello");
+            // A buffered reply followed by a delayed usage trailer is still only one output.
+            await Task.Delay(150, CancellationToken.None);
+            yield return new StreamingChatMessageContent(AuthorRole.Assistant, null)
                 { Metadata = new Dictionary<string, object?> { ["Usage"] = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 2, TotalTokenCount = 12 } } };
         }
     }
@@ -203,6 +207,8 @@ public sealed class RequestRecoveryTests
         Assert.Multiple(() =>
         {
             Assert.That(message.UsageDetails.TotalTokenCount, Is.EqualTo(300));
+            Assert.That(message.UsageDetails.OutputTokenCount, Is.EqualTo(30));
+            Assert.That(message.UsageDetails.SampledOutputTokenCount, Is.EqualTo(20));
             Assert.That(attempts, Has.Count.EqualTo(2));
             Assert.That(attempts[0].Status, Is.EqualTo(ActivityStatusCode.Error));
             Assert.That(attempts[0].GetTagItem("error.type"), Is.EqualTo(typeof(HandledChatException.NetworkError).FullName));
@@ -219,10 +225,17 @@ public sealed class RequestRecoveryTests
         static async IAsyncEnumerable<StreamingChatMessageContent> Attempt(int number)
         {
             await Task.Yield();
-            yield return new StreamingChatMessageContent(AuthorRole.Assistant, number == 1 ? "discard me" : "recovered")
-            { Metadata = new Dictionary<string, object?>
-                { ["checkpoint"] = number == 1 ? "provisional" : "original", ["Usage"] = new UsageDetails { TotalTokenCount = number * 100 } } };
+            yield return new StreamingChatMessageContent(AuthorRole.Assistant, number == 1 ? "discard me" : "re")
+            {
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["checkpoint"] = number == 1 ? "provisional" : "original",
+                    ["Usage"] = new UsageDetails { OutputTokenCount = number * 10, TotalTokenCount = number * 100 }
+                }
+            };
             if (number == 1) throw new HttpRequestException("broken connection", new System.Net.Sockets.SocketException(10054));
+            await Task.Delay(150, CancellationToken.None);
+            yield return new StreamingChatMessageContent(AuthorRole.Assistant, "covered");
         }
     }
 

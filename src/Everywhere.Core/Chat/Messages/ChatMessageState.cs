@@ -87,6 +87,6 @@ public readonly record struct ChatUsageState(
     long InputTokenCount,
     long OutputTokenCount,
     long TotalTokenCount,
-    double TokensPerSecond,
+    double? TokensPerSecond,
     double? CachedInputHitRate
 );
