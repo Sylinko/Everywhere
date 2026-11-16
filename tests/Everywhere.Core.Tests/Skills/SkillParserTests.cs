@@ -206,4 +206,33 @@ public class SkillParserTests
             Assert.That(result.Metadata.ContainsKey("metadata.links"), Is.False);
         });
     }
+
+    [Test]
+    public void Parse_ReadsFoldedMultilineDescription()
+    {
+        var result = SkillParser.Parse(
+            @"C:\skills\everywhere\SKILL.md",
+            "everywhere",
+            """
+            ---
+            name: everywhere
+            description: >-
+              First sentence for Everywhere.
+              Second sentence for progressive disclosure.
+            license: Apache-2.0
+            ---
+
+            # Everywhere
+            """);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.FrontmatterName, Is.EqualTo("everywhere"));
+            Assert.That(
+                result.FrontmatterDescription,
+                Is.EqualTo("First sentence for Everywhere. Second sentence for progressive disclosure."));
+            Assert.That(result.Metadata["license"], Is.EqualTo("Apache-2.0"));
+            Assert.That(result.Diagnostics, Is.Empty);
+        });
+    }
 }

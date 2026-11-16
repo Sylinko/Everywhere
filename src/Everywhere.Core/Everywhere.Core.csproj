@@ -119,7 +119,17 @@
   <ItemGroup>
     <!-- Keep skill paths intact so EmbeddedSkillProvider can enumerate them without relying on platform-specific resource names. -->
     <EmbeddedResource Include="Assets\Skills\**" LogicalName="skills/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)"/>
+    <EmbeddedResource Include="..\..\3rd\skills\skills\everywhere\**">
+      <Link>Assets\Skills\everywhere\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <LogicalName>skills/everywhere/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
+
+  <Target Name="_ValidateEmbeddedSkills" BeforeTargets="CoreCompile">
+    <Error
+      Condition="!Exists('..\..\3rd\skills\skills\everywhere\SKILL.md')"
+      Text="The built-in Everywhere skill submodule was not found at '..\..\3rd\skills\skills\everywhere\SKILL.md'. Run 'git submodule update --init --recursive'."/>
+  </Target>
 
   <ItemGroup>
     <Content Include="Assets\Terminal\shellIntegration.ps1">
