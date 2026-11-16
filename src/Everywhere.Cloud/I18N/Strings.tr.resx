@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>Ücretsiz bulut arama hakkınızı tükettiniz, bulut arama kredilerinizden düşülecektir.</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>Bu derlemede hesapla oturum açma hizmeti yapılandırılmamış.</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>Everywhere oturum açma geri çağrısı kaydedilemedi. Lütfen tekrar deneyin.</value>
+    </data>
 </root>

@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>무료 클라우드 검색 횟수를 모두 사용했습니다. 클라우드 검색은 크레딧이 차감됩니다.</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>현재 빌드에서는 계정 로그인 서비스가 아직 구성되지 않았습니다.</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>Everywhere 로그인 콜백을 등록할 수 없습니다. 다시 시도해 주세요.</value>
+    </data>
 </root>

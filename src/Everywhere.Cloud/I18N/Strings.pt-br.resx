@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>Você esgotou suas buscas gratuitas na nuvem. Novas buscas na nuvem serão descontadas dos seus créditos.</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>O serviço de login da conta ainda não foi configurado nesta versão.</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>Não foi possível registrar o retorno de login do Everywhere. Tente novamente.</value>
+    </data>
 </root>

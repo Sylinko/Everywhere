@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>Vous avez épuisé vos recherches cloud gratuites, les recherches cloud seront déduites de vos crédits.</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>Le service de connexion au compte n’est pas configuré pour cette version.</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>Impossible d’enregistrer le rappel de connexion Everywhere. Veuillez réessayer.</value>
+    </data>
 </root>

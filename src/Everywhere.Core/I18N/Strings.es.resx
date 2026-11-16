@@ -5000,4 +5000,20 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>La solicitud supera el límite de entrada del servicio.</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>Actualizar Everywhere</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>Descargar desde el sitio web oficial</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>El sistema actual no admite actualizaciones desde la aplicación.
+Copia el comando siguiente y ejecútalo en el terminal para actualizar.</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>O bien, desde </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>Esta clave API sigue utilizándose en las siguientes configuraciones: {0}. Cámbiala primero en esas configuraciones y luego elimínala.</value>
+    </data>
 </root>

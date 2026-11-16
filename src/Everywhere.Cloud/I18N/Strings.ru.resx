@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>Вы исчерпали бесплатные поисковые запросы в облаке, дальнейшие поиски будут списываться с кредитов.</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>В этой сборке ещё не настроен сервис входа в аккаунт.</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>Не удалось зарегистрировать обратный вызов для входа в Everywhere. Попробуйте ещё раз.</value>
+    </data>
 </root>

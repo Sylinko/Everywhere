@@ -5000,4 +5000,20 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>La requête dépasse la limite de saisie du service.</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>Mettre à jour Everywhere</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>Télécharger depuis le site officiel</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>La mise à jour depuis l’application n’est pas prise en charge sur le système actuel.
+Copiez la commande ci-dessous et exécutez-la dans un terminal pour effectuer la mise à jour.</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>Ou bien, depuis </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>Cette clé API est toujours utilisée par les configurations suivantes : {0}. Remplacez-la dans ces configurations avant de la supprimer.</value>
+    </data>
 </root>

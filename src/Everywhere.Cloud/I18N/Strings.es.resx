@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>Has agotado tus búsquedas web gratuitas, las búsquedas descontarán créditos.</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>Esta compilación aún no tiene configurado el servicio de inicio de sesión de cuentas.</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>No se pudo registrar la devolución de llamada de inicio de sesión de Everywhere. Inténtalo de nuevo.</value>
+    </data>
 </root>
