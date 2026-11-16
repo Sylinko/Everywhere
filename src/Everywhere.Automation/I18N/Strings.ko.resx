@@ -13,4 +13,19 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <data name="VisualContext_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>이 접근성 요소는 더 이상 사용할 수 없습니다.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>접근성 공급자 쿼리에 실패했습니다.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_RuntimeUnavailable" xml:space="preserve">
+        <value>접근성 런타임에 현재 이 쿼리를 안전하게 수행할 여유가 없습니다.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Timeout" xml:space="preserve">
+        <value>접근성 공급자 쿼리 시간이 초과되었습니다.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Unsupported" xml:space="preserve">
+        <value>접근성 공급자가 요청된 쿼리를 지원하지 않습니다.</value>
+    </data>
 </root>

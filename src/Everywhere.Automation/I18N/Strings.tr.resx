@@ -13,4 +13,19 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <data name="VisualContext_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>Bu erişilebilirlik öğesi artık kullanılamıyor.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>Erişilebilirlik sağlayıcısı sorgusu başarısız oldu.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_RuntimeUnavailable" xml:space="preserve">
+        <value>Erişilebilirlik çalışma zamanı şu anda bu sorguyu güvenli bir şekilde yürütecek kapasitede değil.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Timeout" xml:space="preserve">
+        <value>Erişilebilirlik sağlayıcısı sorgusu zaman aşımına uğradı.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Unsupported" xml:space="preserve">
+        <value>Erişilebilirlik sağlayıcısı istenen sorguyu desteklemiyor.</value>
+    </data>
 </root>

@@ -13,4 +13,19 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <data name="VisualContext_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>Dieses Barrierefreiheitselement ist nicht mehr verfügbar.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>Die Abfrage beim Anbieter des Barrierefreiheitsdienstes ist fehlgeschlagen.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_RuntimeUnavailable" xml:space="preserve">
+        <value>Die Laufzeitumgebung für Barrierefreiheit verfügt derzeit nicht über genügend Kapazität, um diese Abfrage sicher auszuführen.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Timeout" xml:space="preserve">
+        <value>Die Abfrage beim Anbieter des Barrierefreiheitsdienstes hat das Zeitlimit überschritten.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Unsupported" xml:space="preserve">
+        <value>Der Anbieter des Barrierefreiheitsdienstes unterstützt die angeforderte Abfrage nicht.</value>
+    </data>
 </root>

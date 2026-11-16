@@ -13,4 +13,19 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <data name="VisualContext_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>此無障礙元素已無法使用。</value>
+    </data>
+    <data name="VisualContext_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>無障礙服務提供者查詢失敗。</value>
+    </data>
+    <data name="VisualContext_QueryFailure_RuntimeUnavailable" xml:space="preserve">
+        <value>無障礙執行環境目前無法安全地執行此查詢。</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Timeout" xml:space="preserve">
+        <value>無障礙服務提供者查詢逾時。</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Unsupported" xml:space="preserve">
+        <value>無障礙服務提供者不支援此查詢。</value>
+    </data>
 </root>
