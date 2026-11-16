@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Avalonia.Threading;
 using Everywhere.Common;
 
 namespace Everywhere.Mac.Common;
@@ -20,21 +20,23 @@ public sealed partial class MacUpdateHandler : IPlatformUpdateHandler
         return "pkg";
     }
 
-    public Task ExecuteUpdateAsync(string assetPath, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task ExecuteUpdateAsync(string assetPath, CancellationToken cancellationToken)
     {
         if (!assetPath.EndsWith(".pkg", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("Expected a .pkg file for macOS update.");
         }
 
-        var psi = new ProcessStartInfo("open")
-        {
-            ArgumentList = { assetPath }
-        };
-        Process.Start(psi);
-        Environment.Exit(0);
+        var workspace = NSWorkspace.SharedWorkspace;
+        using var installerUrl = workspace.UrlForApplication("com.apple.installer") ??
+            throw new InvalidOperationException("Could not locate the macOS Installer application.");
+        using var packageUrl = NSUrl.FromFilename(assetPath);
+        using var configuration = NSWorkspaceOpenConfiguration.Create();
 
-        return Task.CompletedTask;
+        // Wait for Installer to accept the package before requesting a normal app shutdown.
+        using var installer = await workspace.OpenUrlsAsync([packageUrl], installerUrl, configuration);
+        await Dispatcher.UIThread.InvokeAsync(() => NSApplication.SharedApplication.Terminate(null));
     }
 
     public bool TryParseUpdatePackageVersion(string fileName, out SemanticVersion? version)
