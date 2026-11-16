@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>無料のクラウド検索回数を使い切りました。クラウド検索はクレジットが減少します。</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>このビルドではアカウントログインサービスが設定されていません。</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>Everywhereのログインコールバックを登録できませんでした。もう一度お試しください。</value>
+    </data>
 </root>

@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>Hai esaurito le ricerche web gratuite, le ricerche future ridurranno i crediti.</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>Questa build non ha ancora configurato il servizio di accesso agli account.</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>Impossibile registrare il callback di accesso di Everywhere. Riprova.</value>
+    </data>
 </root>

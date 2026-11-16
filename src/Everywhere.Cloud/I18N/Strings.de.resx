@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>Du hast deine kostenlosen Cloud-Suchanfragen aufgebraucht. Cloud-Suchen werden Credits abziehen.</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>Der Kontenanmeldedienst ist für diesen Build noch nicht konfiguriert.</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>Der Everywhere-Anmelde-Callback konnte nicht registriert werden. Bitte versuchen Sie es erneut.</value>
+    </data>
 </root>

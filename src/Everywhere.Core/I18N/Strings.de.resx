@@ -5000,4 +5000,20 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>Die Anfrage überschreitet die Eingabegrenze des Dienstes.</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>Everywhere aktualisieren</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>Von der offiziellen Website herunterladen</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>Dieses System unterstützt keine Updates innerhalb der Anwendung.
+Kopiere den Befehl unten und führe ihn im Terminal aus, um das Update durchzuführen.</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>Oder lade es herunter unter </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>Dieser API-Schlüssel wird noch von folgenden Konfigurationen verwendet: {0}. Ändere zuerst den Schlüssel in diesen Konfigurationen und lösche ihn anschließend.</value>
+    </data>
 </root>

@@ -49,4 +49,10 @@
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
         <value>你已用尽免費雲搜索次數，雲搜索將會扣減積分。</value>
     </data>
+    <data name="OAuthCloudClient_AccountNotConfigured" xml:space="preserve">
+        <value>目前版本尚未設定帳戶登入服務。</value>
+    </data>
+    <data name="OAuthCloudClient_CallbackRegistrationFailed" xml:space="preserve">
+        <value>無法註冊 Everywhere 登入回呼，請重試。</value>
+    </data>
 </root>

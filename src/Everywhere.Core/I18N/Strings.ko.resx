@@ -5000,4 +5000,20 @@
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>요청이 서비스의 입력 한도를 초과했습니다.</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>Everywhere 업데이트</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>공식 웹사이트에서 다운로드</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>현재 시스템에서는 앱 내 업데이트를 지원하지 않습니다.
+아래 명령을 복사해 터미널에서 실행하면 업데이트할 수 있습니다.</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>또는 </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>이 API 키는 다음 구성에서 사용 중입니다: {0}. 해당 구성에서 먼저 키를 변경한 다음 삭제하세요.</value>
+    </data>
 </root>

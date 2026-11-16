@@ -5000,4 +5000,20 @@
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>Запрос превышает ограничение сервиса на размер входных данных.</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>Обновить Everywhere</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>Скачать с официального сайта</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>Обновление из приложения не поддерживается в текущей системе.
+Скопируйте команду ниже и выполните её в терминале, чтобы обновить приложение.</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>Или скачайте с </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>Этот API-ключ используется в следующих конфигурациях: {0}. Сначала замените ключ в этих конфигурациях, а затем удалите его.</value>
+    </data>
 </root>

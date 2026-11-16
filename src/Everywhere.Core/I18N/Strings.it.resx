@@ -5000,4 +5000,20 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>La richiesta supera il limite di input del servizio.</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>Aggiorna Everywhere</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>Scarica dal sito ufficiale</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>Il sistema attuale non supporta gli aggiornamenti dall'app.
+Copia il comando qui sotto ed eseguilo nel terminale per aggiornare.</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>Oppure, da </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>Questa chiave API è ancora utilizzata dalle seguenti configurazioni: {0}. Sostituiscila prima in queste configurazioni, poi elimina la chiave.</value>
+    </data>
 </root>

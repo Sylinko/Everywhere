@@ -5000,4 +5000,20 @@
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>リクエストがサービスの入力上限を超えています。</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>Everywhereを更新</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>公式サイトからダウンロード</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>現在のシステムではアプリ内更新に対応していません。
+以下のコマンドをコピーして、ターミナルで実行すると更新できます。</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>または、</value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>このAPIキーは次の設定で使用中です：{0}。削除する前に、これらの設定でキーを変更してください。</value>
+    </data>
 </root>

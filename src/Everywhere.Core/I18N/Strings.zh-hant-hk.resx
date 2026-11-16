@@ -5000,4 +5000,20 @@
     <data name="HandledChatException_RequestInputTooLarge" xml:space="preserve">
         <value>要求超出服務的輸入限制。</value>
     </data>
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+        <value>更新 Everywhere</value>
+    </data>
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+        <value>官方網站下載</value>
+    </data>
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
+        <value>目前的系統不支援在應用程式內更新。
+請複製以下指令，並在終端機中執行以更新。</value>
+    </data>
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+        <value>或者，從 </value>
+    </data>
+    <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
+        <value>以下設定仍在使用此 API 金鑰：{0}。請先在這些設定中更換金鑰，然後再刪除。</value>
+    </data>
 </root>
