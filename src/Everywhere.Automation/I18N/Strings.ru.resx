@@ -13,4 +13,19 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <data name="VisualContext_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>Этот элемент специальных возможностей больше недоступен.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>Не удалось выполнить запрос к поставщику средств специальных возможностей.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_RuntimeUnavailable" xml:space="preserve">
+        <value>Среда выполнения специальных возможностей сейчас не может безопасно выполнить этот запрос.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Timeout" xml:space="preserve">
+        <value>Время ожидания ответа поставщика средств специальных возможностей истекло.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Unsupported" xml:space="preserve">
+        <value>Поставщик средств специальных возможностей не поддерживает этот запрос.</value>
+    </data>
 </root>

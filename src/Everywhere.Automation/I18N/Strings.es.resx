@@ -13,4 +13,19 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <data name="VisualContext_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>El elemento de accesibilidad ya no está disponible.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>No se pudo consultar el proveedor del servicio de accesibilidad.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_RuntimeUnavailable" xml:space="preserve">
+        <value>El entorno de ejecución de accesibilidad no dispone actualmente de capacidad suficiente para ejecutar esta consulta de forma segura.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Timeout" xml:space="preserve">
+        <value>Se agotó el tiempo de espera al consultar el proveedor del servicio de accesibilidad.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Unsupported" xml:space="preserve">
+        <value>El proveedor del servicio de accesibilidad no admite la consulta solicitada.</value>
+    </data>
 </root>
