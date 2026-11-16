@@ -96,8 +96,12 @@
   <Folder Name="/tools/">
     <File Path="tools/build_vcproj.ps1" />
     <File Path="tools/installer.iss" />
-    <File Path="tools/sync_i18n.py" />
     <File Path="tools/visual_tree_debugger.html" />
+  </Folder>
+  <Folder Name="/tools/i18n/">
+    <File Path="tools/i18n/catalog.py" />
+    <File Path="tools/i18n/sync.py" />
+    <File Path="tools/i18n/validate.py" />
   </Folder>
   <Project Path="src/Everywhere.Abstractions/Everywhere.Abstractions.csproj" />
   <Project Path="src/Everywhere.Automation/Everywhere.Automation.csproj" />

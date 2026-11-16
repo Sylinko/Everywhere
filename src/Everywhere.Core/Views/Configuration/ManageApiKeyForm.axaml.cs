@@ -75,7 +75,7 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
             if (SecretKey is not { Length: > 0 } secretKey) return;
 
             await App.Clipboard.SetTextAsync(secretKey);
-            ToastManager.Success(LocaleKey.Common_Copied.I18N());
+            ToastManager.Success(Abstractions.I18N.LocaleKey.Common_Copied.I18N());
         }
     }
 

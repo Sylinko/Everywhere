@@ -3,9 +3,7 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
 
-
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src"
+from catalog import ROOT, SOURCE_NAME, expected_locales, locale_files, project_directories
 
 
 def read_keys(path: Path) -> list[str]:
@@ -22,12 +20,15 @@ def main() -> int:
     owners: dict[str, Path] = {}
     duplicates: dict[str, list[Path]] = defaultdict(list)
 
-    i18n_dirs = sorted(path for path in SRC.glob("*/I18N") if (path / "Strings.zh-hans.resx").exists())
-    if not i18n_dirs:
-        errors.append("No project-local I18N directories found.")
+    i18n_dirs = project_directories()
+    locales = expected_locales()
 
     for i18n_dir in i18n_dirs:
-        source = i18n_dir / "Strings.zh-hans.resx"
+        for name in sorted(locales - locale_files(i18n_dir)):
+            errors.append(f"Missing locale file: {(i18n_dir / name).relative_to(ROOT)}")
+        source = i18n_dir / SOURCE_NAME
+        if not source.is_file():
+            continue
         source_keys = read_keys(source)
         source_key_set = set(source_keys)
 

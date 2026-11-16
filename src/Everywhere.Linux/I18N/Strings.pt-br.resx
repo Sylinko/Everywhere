@@ -13,17 +13,17 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Linux_ShortcutListener_Register_FailedToGrabHotkey" xml:space="preserve">
-        <value>Não foi possível registrar o atalho. Essa combinação de teclas já pode estar em uso.</value>
+    <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
+        <value>Permite executar scripts Bash, possibilitando interação direta com o sistema. No entanto, isso também apresenta riscos, podendo resultar na exclusão acidental de arquivos ou em falhas no sistema.</value>
     </data>
-    <data name="Linux_BuiltInChatPlugin_FdFind_Header" xml:space="preserve">
-        <value>fd-find</value>
+    <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
+        <value>Bash Shell</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_Description" xml:space="preserve">
         <value>Use o fd-find (uma ferramenta de busca de arquivos local de alto desempenho) para procurar arquivos no computador. É necessário instalar esta ferramenta para utilizá-la.</value>
     </data>
-    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header" xml:space="preserve">
-        <value>Buscar Arquivos</value>
+    <data name="Linux_BuiltInChatPlugin_FdFind_Header" xml:space="preserve">
+        <value>fd-find</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Description" xml:space="preserve">
         <value>Use o fd-find no Linux para buscar arquivos ou diretórios.</value>
@@ -31,10 +31,10 @@
     <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_DetailMessage" xml:space="preserve">
         <value>{0} Arquivos Encontrados</value>
     </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
-        <value>Permite executar scripts Bash, possibilitando interação direta com o sistema. No entanto, isso também apresenta riscos, podendo resultar na exclusão acidental de arquivos ou em falhas no sistema.</value>
+    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header" xml:space="preserve">
+        <value>Buscar Arquivos</value>
     </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
-        <value>Bash Shell</value>
+    <data name="Linux_ShortcutListener_Register_FailedToGrabHotkey" xml:space="preserve">
+        <value>Não foi possível registrar o atalho. Essa combinação de teclas já pode estar em uso.</value>
     </data>
 </root>

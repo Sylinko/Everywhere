@@ -13,20 +13,26 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="ModelPricingUnit_UsdPerMToken" xml:space="preserve">
-        <value>{0} USD per Million Token</value>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>Copied</value>
+    </data>
+    <data name="Common_ShortMonthDayPattern" xml:space="preserve">
+        <value>MMM d</value>
     </data>
     <data name="ModelPricingUnit_MCreditPerMToken" xml:space="preserve">
         <value>Every 1M Token {0}M Credits</value>
     </data>
-    <data name="ModelPricing_NotGreaterThanTierDescription" xml:space="preserve">
-        <value>When token count ≤ {1}, {0}</value>
+    <data name="ModelPricingUnit_UsdPerMToken" xml:space="preserve">
+        <value>{0} USD per Million Token</value>
     </data>
     <data name="ModelPricing_BetweenTiersDescription" xml:space="preserve">
         <value>When {1} &lt; Token Count ≤ {2}, {0}</value>
     </data>
     <data name="ModelPricing_GreaterThanTierDescription" xml:space="preserve">
         <value>When Token Count &gt; {1}, {0}</value>
+    </data>
+    <data name="ModelPricing_NotGreaterThanTierDescription" xml:space="preserve">
+        <value>When token count ≤ {1}, {0}</value>
     </data>
     <data name="UpdateChannel_Canary" xml:space="preserve">
         <value>Canary</value>
@@ -36,11 +42,5 @@
     </data>
     <data name="UpdateChannel_Unknown" xml:space="preserve">
         <value>Current Channel</value>
-    </data>
-    <data name="Common_Copied" xml:space="preserve">
-        <value>Copied</value>
-    </data>
-    <data name="Common_ShortMonthDayPattern" xml:space="preserve">
-        <value>MMM d</value>
     </data>
 </root>

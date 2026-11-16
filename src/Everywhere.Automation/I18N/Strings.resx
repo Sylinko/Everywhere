@@ -16,16 +16,16 @@
     <data name="VisualContext_QueryFailure_ElementUnavailable" xml:space="preserve">
         <value>The accessibility element is no longer available.</value>
     </data>
-    <data name="VisualContext_QueryFailure_Unsupported" xml:space="preserve">
-        <value>The accessibility provider does not support the requested query.</value>
-    </data>
-    <data name="VisualContext_QueryFailure_Timeout" xml:space="preserve">
-        <value>The accessibility provider query timed out.</value>
-    </data>
     <data name="VisualContext_QueryFailure_ProviderFailure" xml:space="preserve">
         <value>The accessibility provider query failed.</value>
     </data>
     <data name="VisualContext_QueryFailure_RuntimeUnavailable" xml:space="preserve">
         <value>The accessibility runtime currently has no safe capacity for this query.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Timeout" xml:space="preserve">
+        <value>The accessibility provider query timed out.</value>
+    </data>
+    <data name="VisualContext_QueryFailure_Unsupported" xml:space="preserve">
+        <value>The accessibility provider does not support the requested query.</value>
     </data>
 </root>

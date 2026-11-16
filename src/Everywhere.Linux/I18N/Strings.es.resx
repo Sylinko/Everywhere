@@ -13,17 +13,17 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Linux_ShortcutListener_Register_FailedToGrabHotkey" xml:space="preserve">
-        <value>No se pudo registrar la tecla de acceso rápido. Esa combinación de teclas puede estar en uso.</value>
+    <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
+        <value>Proporciona la capacidad de ejecutar scripts bash, permitiendo la interacción directa con el sistema. Sin embargo, esto también conlleva riesgos, como la posible eliminación accidental de archivos o fallos del sistema.</value>
     </data>
-    <data name="Linux_BuiltInChatPlugin_FdFind_Header" xml:space="preserve">
-        <value>fd-find</value>
+    <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
+        <value>Bash Shell</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_Description" xml:space="preserve">
         <value>Busca archivos en tu equipo usando fd-find (una herramienta de búsqueda de archivos local de alto rendimiento). Esta herramienta requiere que fd-find esté instalado para poder usarla.</value>
     </data>
-    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header" xml:space="preserve">
-        <value>Buscar archivos</value>
+    <data name="Linux_BuiltInChatPlugin_FdFind_Header" xml:space="preserve">
+        <value>fd-find</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Description" xml:space="preserve">
         <value>Buscar archivos o directorios en Linux usando fd-find.</value>
@@ -31,10 +31,10 @@
     <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_DetailMessage" xml:space="preserve">
         <value>Encontrados {0} archivos</value>
     </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
-        <value>Proporciona la capacidad de ejecutar scripts bash, permitiendo la interacción directa con el sistema. Sin embargo, esto también conlleva riesgos, como la posible eliminación accidental de archivos o fallos del sistema.</value>
+    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header" xml:space="preserve">
+        <value>Buscar archivos</value>
     </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
-        <value>Bash Shell</value>
+    <data name="Linux_ShortcutListener_Register_FailedToGrabHotkey" xml:space="preserve">
+        <value>No se pudo registrar la tecla de acceso rápido. Esa combinación de teclas puede estar en uso.</value>
     </data>
 </root>

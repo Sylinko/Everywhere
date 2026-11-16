@@ -112,7 +112,7 @@ public sealed class CopiedButtonBehavior : Behavior<Button>
             {
                 _contentOverride = button.SetValue(
                     ContentControl.ContentProperty,
-                    LocaleKey.Common_Copied.I18N(),
+                    Abstractions.I18N.LocaleKey.Common_Copied.I18N(),
                     BindingPriority.Animation);
             }
 

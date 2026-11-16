@@ -38,7 +38,7 @@ public sealed record PromptPlaceholderReferenceItem(
         try
         {
             await App.Clipboard.SetTextAsync(PlaceholderText);
-            ToastManager.Success(LocaleKey.Common_Copied.I18N());
+            ToastManager.Success(Abstractions.I18N.LocaleKey.Common_Copied.I18N());
         }
         catch (Exception ex)
         {
