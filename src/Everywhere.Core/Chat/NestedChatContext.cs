@@ -1,4 +1,5 @@
 ﻿using Everywhere.Chat.Plugins;
+using Everywhere.Harness;
 
 namespace Everywhere.Chat;
 

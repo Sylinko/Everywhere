@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Everywhere.Common;
+using Everywhere.Harness;
 using MessagePack;
 
 namespace Everywhere.Chat;

@@ -4,6 +4,7 @@ using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Common;
 using Everywhere.AI;
+using Everywhere.Harness;
 
 namespace Everywhere.Views;
 

@@ -7,12 +7,13 @@ using Everywhere.Chat.Links;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
-using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
 using Everywhere.Database;
+using Everywhere.Harness;
+using Everywhere.Harness.Mcp;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
@@ -25,6 +26,7 @@ using Everywhere.Storage;
 using Everywhere.Views;
 using Everywhere.Views.Pages;
 using Everywhere.Web;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -154,7 +156,7 @@ public static class ServiceExtensions
                 .AddDbContextFactory<ChatV2DbContext>((provider, options) =>
                 {
                     var dbPath = RuntimeConstants.GetDatabasePath("chat-v2.db");
-                    options.UseSqlite(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                    options.UseSqlite(new SqliteConnectionStringBuilder
                     {
                         DataSource = dbPath,
                         ForeignKeys = true,

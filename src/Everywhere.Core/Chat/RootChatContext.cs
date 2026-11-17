@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
+using Everywhere.Harness;
 using Everywhere.Utilities;
 using Serilog;
 

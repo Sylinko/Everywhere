@@ -33,7 +33,7 @@ public static partial class ModelProviderSchemaExtensions
                 ModelProviderSchema.OpenAI => "https://api.openai.com/v1",
                 ModelProviderSchema.OpenAIResponses => "https://api.openai.com/v1",
                 ModelProviderSchema.Anthropic => "https://api.anthropic.com",
-                ModelProviderSchema.Google => "https://generativelanguage.googleapis.com/v1beta",
+                ModelProviderSchema.Google => "https://generativelanguage.googleapis.com/v1",
                 ModelProviderSchema.Ollama => "http://localhost:11434",
                 ModelProviderSchema.Mistral => "https://api.mistral.ai/v1",
                 _ => throw new ArgumentOutOfRangeException(nameof(schema), schema, null)
@@ -53,7 +53,7 @@ public static partial class ModelProviderSchemaExtensions
         /// api.openai.com/v2 -> api.openai.com/v2 (No url scheme, process as normal)
         /// api.openai.com/v1/chat -> api.openai.com/v1/chat (No url scheme, process as normal)
         ///
-        /// For Gemini: append /v1beta
+        /// For Gemini: select the stable v1 base, including stored v1beta endpoints.
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
@@ -68,6 +68,16 @@ public static partial class ModelProviderSchemaExtensions
             if (endpoint.EndsWith('#'))
             {
                 return endpoint[..^1].Trim().TrimEnd('/');
+            }
+
+            if (schema == ModelProviderSchema.Google && Uri.TryCreate(endpoint, UriKind.Absolute, out var google))
+            {
+                var builder = new UriBuilder(google);
+                var path = builder.Path.TrimEnd('/');
+                if (path.EndsWith("/interactions", StringComparison.Ordinal)) path = path[..^"/interactions".Length];
+                if (path.EndsWith("/v1beta", StringComparison.Ordinal)) path = path[..^"/v1beta".Length];
+                builder.Path = path.EndsWith("/v1", StringComparison.Ordinal) ? path : path + "/v1";
+                return builder.Uri.AbsoluteUri;
             }
 
             // 1. Get prefix, version (v1, v2, v3, v1beta, etc.), and suffix (if any)
@@ -93,7 +103,7 @@ public static partial class ModelProviderSchemaExtensions
                 ModelProviderSchema.OpenAI => $"{prefix}/v1",
                 ModelProviderSchema.OpenAIResponses => $"{prefix}/v1",
                 ModelProviderSchema.Anthropic => prefix,
-                ModelProviderSchema.Google => $"{prefix}/v1beta",
+                ModelProviderSchema.Google => $"{prefix}/v1",
                 ModelProviderSchema.Mistral => $"{prefix}/v1",
                 _ => prefix
             };
@@ -115,12 +125,25 @@ public static partial class ModelProviderSchemaExtensions
                 ModelProviderSchema.OpenAI => $"{prefix}/chat/completions",
                 ModelProviderSchema.OpenAIResponses => $"{prefix}/responses",
                 ModelProviderSchema.Anthropic => $"{prefix}/v1/messages",
-                ModelProviderSchema.Google => $"{prefix}/models",
+                ModelProviderSchema.Google when Uri.TryCreate(prefix, UriKind.Absolute, out var google) =>
+                    GetGeminiInteractionsUri(google).AbsoluteUri,
+                ModelProviderSchema.Google => $"{prefix}/interactions",
                 ModelProviderSchema.Ollama => $"{prefix}/api/chat",
                 ModelProviderSchema.Mistral => $"{prefix}/chat/completions",
                 _ => throw new ArgumentOutOfRangeException(nameof(schema), schema, null)
             };
         }
+    }
+
+    /// <summary>
+    /// Resolves the Interactions resource from a normalized provider base. Keep the
+    /// reverse-proxy path and query intact; an explicitly supplied resource is already complete.
+    /// </summary>
+    public static Uri GetGeminiInteractionsUri(Uri endpoint)
+    {
+        var path = endpoint.AbsolutePath.TrimEnd('/');
+        if (path.EndsWith("/interactions", StringComparison.Ordinal)) return endpoint;
+        return new UriBuilder(endpoint) { Path = path + "/interactions" }.Uri;
     }
 
     /// <summary>

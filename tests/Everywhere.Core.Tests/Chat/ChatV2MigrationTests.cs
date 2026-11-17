@@ -16,6 +16,7 @@ using Everywhere.I18N;
 using Lucide.Avalonia;
 using System.Text;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
+using Everywhere.Harness;
 using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Utilities;
@@ -64,12 +65,12 @@ public abstract partial class ChatContext(
     /// <summary>
     /// Gets the latest measured context usage for this conversation.
     /// </summary>
-    public ContextUsageState ContextUsage { get; } = new();
+    public Harness.ContextUsageState ContextUsage { get; } = new();
 
     /// <summary>
     /// Gets this conversation's compaction state.
     /// </summary>
-    public ContextCompactionState ContextCompaction { get; } = new();
+    public Harness.ContextCompactionState ContextCompaction { get; } = new();
 
     /// <summary>
     /// Gets the current generation, whose lifetime is shorter than the context's lifetime.

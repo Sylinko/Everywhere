@@ -3,6 +3,7 @@ using System.Net;
 using System.Security.Authentication;
 using System.Text.Json;
 using Everywhere.Common;
+using Everywhere.Harness;
 using Microsoft.Extensions.Logging.Abstractions;
 using OllamaSharp.Models.Exceptions;
 

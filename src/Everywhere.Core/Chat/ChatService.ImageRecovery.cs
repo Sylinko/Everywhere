@@ -1,4 +1,5 @@
 ﻿using Everywhere.Common;
+using Everywhere.Harness;
 using Meai = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;

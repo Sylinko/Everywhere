@@ -2,8 +2,8 @@
 using System.Reflection;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
-using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Harness;
+using Everywhere.Harness.Mcp;
 using Lucide.Avalonia;
 using Microsoft.Extensions.AI;
 

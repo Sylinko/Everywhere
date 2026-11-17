@@ -12,6 +12,8 @@ using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Interop;
 using Everywhere.Utilities;
+using ContextCompactionState = Everywhere.Harness.ContextCompactionState;
+using ContextUsageState = Everywhere.Harness.ContextUsageState;
 
 namespace Everywhere.Views;
 
