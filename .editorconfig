@@ -6,6 +6,7 @@ indent_style = space
 indent_size = 4
 
 # Microsoft .NET properties
+csharp_indent_labels = no_change
 csharp_new_line_before_members_in_object_initializers = false
 csharp_preferred_modifier_order = public, new, protected, internal, file, private, async, abstract, virtual, sealed, required, override, extern, unsafe, volatile, readonly, static:none
 csharp_style_prefer_utf8_string_literals = true:suggestion
@@ -179,8 +180,6 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggest
 # ReSharper properties
 resharper_align_multiline_binary_expressions_chain = false
 resharper_apply_auto_detected_rules = false
-resharper_autodetect_indent_settings = true
-resharper_blank_lines_after_block_statements = 0
 resharper_blank_lines_around_property = 0
 resharper_braces_for_for = required
 resharper_braces_for_foreach = required
@@ -190,27 +189,33 @@ resharper_cpp_brace_style = next_line
 resharper_cpp_empty_block_style = together
 resharper_cpp_insert_final_newline = true
 resharper_cpp_int_align_comments = true
+resharper_cpp_max_line_length = 160
 resharper_csharp_allow_comment_after_lbrace = true
 resharper_csharp_blank_lines_around_field = 0
+resharper_csharp_insert_final_newline = true
 resharper_csharp_max_line_length = 150
-resharper_csharp_remove_blank_lines_near_braces_in_code = false
 resharper_csharp_remove_blank_lines_near_braces_in_declarations = false
 resharper_csharp_wrap_after_declaration_lpar = true
 resharper_csharp_wrap_after_invocation_lpar = true
 resharper_csharp_wrap_arguments_style = chop_if_long
-resharper_csharp_wrap_before_ternary_opsigns = false
+resharper_csharp_wrap_before_declaration_rpar = true
 resharper_csharp_wrap_parameters_style = chop_if_long
 resharper_event_handler_pattern_long = Handle$object$$event$
 resharper_event_handler_pattern_short = Handle$event$
 resharper_formatter_off_tag = @formatter:off
 resharper_formatter_on_tag = @formatter:on
 resharper_formatter_tags_enabled = true
+resharper_fsharp_insert_final_newline = false
+resharper_fsharp_max_line_length = 160
+resharper_html_insert_final_newline = false
+resharper_html_max_line_length = 160
 resharper_indent_switch_labels = true
 resharper_instance_members_qualify_declared_in = base_class
 resharper_keep_existing_attribute_arrangement = true
 resharper_keep_existing_declaration_block_arrangement = true
 resharper_keep_existing_embedded_block_arrangement = true
 resharper_max_attribute_length_for_same_line = 88
+resharper_modifiers_order = public new protected internal file private async abstract virtual sealed required override extern unsafe volatile readonly static
 resharper_new_line_before_while = true
 resharper_parentheses_redundancy_style = remove
 resharper_place_accessorholder_attribute_on_same_line = false
@@ -219,6 +224,11 @@ resharper_place_expr_method_on_single_line = true
 resharper_place_expr_property_on_single_line = true
 resharper_place_record_field_attribute_on_same_line = true
 resharper_place_simple_anonymousmethod_on_single_line = false
+resharper_prefer_roslyn_rules_for_parentheses_clarity = true
+resharper_resx_insert_final_newline = false
+resharper_resx_max_line_length = 160
+resharper_shaderlab_insert_final_newline = false
+resharper_shaderlab_max_line_length = 160
 resharper_show_autodetect_configure_formatting_tip = false
 resharper_space_after_ptr_in_data_member = false
 resharper_space_after_ptr_in_method = false
@@ -230,12 +240,22 @@ resharper_space_before_ptr_in_method = true
 resharper_space_before_ref_in_abstract_decl = true
 resharper_space_before_ref_in_data_member = true
 resharper_space_before_ref_in_method = true
+resharper_T4_insert_final_newline = false
+resharper_t4_max_line_length = 160
 resharper_trailing_comma_in_multiline_lists = true
 resharper_use_indent_from_vs = false
+resharper_vb_insert_final_newline = false
+resharper_vb_max_line_length = 160
+resharper_wrap_after_lambda_and_anonymous_function_declaration_lpar = true
 resharper_wrap_before_binary_pattern_op = false
 resharper_wrap_before_primary_constructor_declaration_rpar = true
+resharper_wrap_chained_method_calls = chop_if_long
 resharper_wrap_object_and_collection_initializer_style = chop_always
+resharper_xmldoc_insert_final_newline = false
+resharper_xmldoc_max_line_length = 160
 resharper_xml_indent_size = 2
+resharper_xml_insert_final_newline = false
+resharper_xml_max_line_length = 160
 resharper_xml_space_before_self_closing = false
 resharper_xml_tab_width = 2
 
@@ -273,6 +293,7 @@ resharper_suggest_var_or_type_simple_types_highlighting = hint
 resharper_switch_expression_handles_some_known_enum_values_with_exception_in_default_highlighting = none
 resharper_switch_statement_handles_some_known_enum_values_with_default_highlighting = none
 resharper_unused_auto_property_accessor_global_highlighting = hint
+resharper_unused_parameter_in_partial_method_highlighting = none
 resharper_use_collection_expression_highlighting = hint
 resharper_web_config_module_not_resolved_highlighting = warning
 resharper_web_config_type_not_resolved_highlighting = warning
@@ -280,56 +301,80 @@ resharper_web_config_wrong_module_highlighting = warning
 resharper_xaml_style_class_not_found_highlighting = none
 
 [*.proto]
-indent_style = space
 indent_size = 2
 
 [*.{appxmanifest,asax,ascx,aspx,blockshader,build,c,c++,c++m,cc,ccm,cginc,compute,cp,cpp,cppm,cs,cshtml,cu,cuh,cxx,cxxm,dtd,fs,fsi,fsscript,fsx,fx,fxh,h,h++,hh,hlsl,hlsli,hlslinc,hp,hpp,hxx,icc,inc,inl,ino,ipp,ixx,master,ml,mli,mpp,mq4,mq5,mqh,mxx,nuspec,paml,razor,resw,resx,shader,shaderFoundry,skin,tcc,tpp,urtshader,usf,ush,uxml,vb,xamlx,xoml,xsd}]
-indent_style = space
-indent_size = 4
 tab_width = 4
 
 [*.{axaml,html,xaml,xml,yml}]
-indent_style = space
 indent_size = 2
 tab_width = 2
 
-[*.tsv]
-indent_style = tab
-
 [{*.ant,*.appxmanifest,*.axml,*.cscfg,*.csdef,*.disco,*.dotsettings,*.filelayout,*.fxml,*.jhm,*.jnlp,*.jrxml,*.manifest,*.myapp,*.nuspec,*.rng,*.stylecop,*.svcmap,*.tld,*.wadcfgx,*.webref,*.wsdl,*.xml,*.xsd,*.xsl,*.xslt,*.xul,StyleCop.Cache}]
-indent_style = space
 indent_size = 2
+indent_style = space
 
 [{*.yaml,*.yml}]
-indent_style = space
 indent_size = 2
+indent_style = space
 
 [*.config]
-indent_style = space
 indent_size = 2
+indent_style = space
 
 [*.resx]
-indent_style = space
 indent_size = 2
+indent_style = space
 
 [{*.overridetasks,*.targets,*.tasks}]
-indent_style = space
 indent_size = 2
+indent_style = space
 
 [*.props]
-indent_style = space
 indent_size = 2
+indent_style = space
 
 [{*.androidproj,*.ccproj,*.csproj}]
+indent_size = 2
+indent_style = space
+
+[*.{appxmanifest,axaml,build,dtd,nuspec,paml,uxml,xaml,xamlx,xoml,xsd,md}]
+indent_size = 2
+tab_width = 2
+
+[{*.har,*.jsb2,*.jsb3,*.json,*.jsonc,*.postman_collection,*.postman_environment,.babelrc,.eslintrc,.prettierrc,.stylelintrc,.ws-context,jest.config}]
+indent_size = 2
+
+[{*.bash,*.sh,*.zsh}]
+indent_size = 2
+indent_style = space
+
+[*.svg]
+indent_size = 2
+indent_style = space
+
+[*.slnx]
+indent_size = 2
+indent_style = space
+
+[{*.entitlements,Entitlements.plist,entitlements.plist}]
+indent_size = 2
+indent_style = space
+
+[*.plist]
+indent_size = 2
+indent_style = space
+
+[*.{asax,ascx,aspx,blockshader,c,c++,c++m,cc,ccm,cginc,compute,cp,cpp,cppm,cs,cshtml,cu,cuh,cxx,cxxm,fs,fsi,fsscript,fsx,fx,fxh,h,h++,hh,hlsl,hlsli,hlslinc,hp,hpp,hxx,icc,inc,inl,ino,ipp,ispc,isph,ixx,master,ml,mli,mpp,mq4,mq5,mqh,mxx,pssl,pssli,razor,resw,resx,shader,shaderFoundry,skin,tcc,tpp,urtshader,usf,ush,vb}]
+tab_width = 4
+indent_style = space
+indent_size = 4
+
+[{*.har,*.jsb2,*.jsb3,*.json,*.jsonc,*.postman_collection,*.postman_collection.json,*.postman_environment,*.postman_environment.json,.babelrc,.eslintrc,.prettierrc,.stylelintrc,.ws-context,jest.config}]
 indent_style = space
 indent_size = 2
 
-[*.{asax,ascx,aspx,blockshader,c,c++,c++m,cc,ccm,cginc,compute,cp,cpp,cppm,cs,cshtml,cu,cuh,cxx,cxxm,fs,fsi,fsscript,fsx,fx,fxh,h,h++,hh,hlsl,hlsli,hlslinc,hp,hpp,hxx,icc,inc,inl,ino,ipp,ixx,master,ml,mli,mpp,mq4,mq5,mqh,mxx,razor,resw,resx,shader,shaderFoundry,skin,tcc,tpp,urtshader,usf,ush,vb}]
-indent_style = space
-indent_size = 4
-tab_width = 4
-
-[*.{appxmanifest,axaml,build,dtd,nuspec,paml,uxml,xaml,xamlx,xoml,xsd,md}]
+[*.{appxmanifest,axaml,dtd,nuspec,paml,uxml,xaml,xamlx,xoml,xsd}]
 indent_style = space
 indent_size = 2
 tab_width = 2
