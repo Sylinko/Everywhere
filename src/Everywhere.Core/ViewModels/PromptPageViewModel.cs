@@ -1,6 +1,5 @@
 using Avalonia.Controls.Notifications;
 using Avalonia.Input.Platform;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -26,7 +25,6 @@ public sealed partial class PromptPageViewModel(
     IServiceProvider serviceProvider
 ) : BusyViewModelBase
 {
-    private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
     private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Shared;
 
     /// <summary>
@@ -90,24 +88,11 @@ public sealed partial class PromptPageViewModel(
 
     private bool _hasLoadedPrompts;
     private Guid? _pendingRoutePromptId;
-    private DispatcherTimer? _previewRefreshTimer;
 
     /// <inheritdoc />
     protected internal override async Task ViewLoaded(CancellationToken cancellationToken)
     {
         await ExecuteBusyTaskAsync(LoadPromptsAsync, ToastExceptionHandler, cancellationToken);
-
-        if (!cancellationToken.IsCancellationRequested)
-        {
-            StartPreviewRefreshTimer();
-        }
-    }
-
-    /// <inheritdoc />
-    protected internal override Task ViewUnloaded()
-    {
-        StopPreviewRefreshTimer();
-        return base.ViewUnloaded();
     }
 
     /// <inheritdoc />
@@ -362,27 +347,6 @@ public sealed partial class PromptPageViewModel(
         _selectedPromptReferences.Reset(settings.FindAssistantsUsingPrompt(promptItem.Id));
     }
 
-    /// <summary>
-    /// Refreshes only the rendered preview so time-sensitive placeholders such as <c>{Time}</c>
-    /// stay current without reloading references or static template diagnostics every tick.
-    /// </summary>
-    private void RefreshRenderedPreview()
-    {
-        if (SelectedPromptItem is not { } promptItem)
-        {
-            return;
-        }
-
-        var segments = PromptTemplateRenderer.RenderSegments(
-            promptItem.Template,
-            PlaceholderSource,
-            CreatePromptContext());
-
-        ApplyRenderedPreview(
-            string.Concat(segments.Select(static segment => segment.Text)),
-            segments);
-    }
-
     private void ApplyRenderedPreview(
         string renderedText,
         IReadOnlyList<PromptTemplateRenderSegment> segments)
@@ -395,38 +359,6 @@ public sealed partial class PromptPageViewModel(
     {
         RenderedPreview = string.Empty;
         RenderedPreviewSegments = [];
-    }
-
-    private void StartPreviewRefreshTimer()
-    {
-        if (_previewRefreshTimer is not null)
-        {
-            return;
-        }
-
-        _previewRefreshTimer = new DispatcherTimer
-        {
-            Interval = PreviewRefreshInterval
-        };
-        _previewRefreshTimer.Tick += HandlePreviewRefreshTimerTick;
-        _previewRefreshTimer.Start();
-    }
-
-    private void StopPreviewRefreshTimer()
-    {
-        if (_previewRefreshTimer is null)
-        {
-            return;
-        }
-
-        _previewRefreshTimer.Tick -= HandlePreviewRefreshTimerTick;
-        _previewRefreshTimer.Stop();
-        _previewRefreshTimer = null;
-    }
-
-    private void HandlePreviewRefreshTimerTick(object? sender, EventArgs e)
-    {
-        RefreshRenderedPreview();
     }
 
     protected override void OnIsBusyChanged()

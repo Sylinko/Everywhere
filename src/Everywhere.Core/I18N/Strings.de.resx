@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- German (Deutsch) -->
 <root>
     <resheader name="resmimetype">
@@ -3352,9 +3352,6 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
         <value>Diese Eingabeaufforderung enthält weder {DefaultSystemPrompt} noch {SkillsPrompt}, daher kann der Assistent möglicherweise die Fähigkeiten nicht korrekt nutzen.</value>
     </data>
-    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
-        <value>{Time} auf die Sekunde genau kann die Cache-Trefferquote verringern und die Nutzungskosten erhöhen. Verwenden Sie, wenn möglich, {Date}.</value>
-    </data>
     <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
         <value>Unbekannter Platzhalter: {0}.</value>
     </data>
@@ -3396,9 +3393,6 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     </data>
     <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
         <value>Systemsprache</value>
-    </data>
-    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
-        <value>Aktuelle Uhrzeit</value>
     </data>
     <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
         <value>Arbeitsverzeichnis</value>

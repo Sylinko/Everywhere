@@ -421,7 +421,7 @@ public sealed class MistralChatClient : IChatClient
             payload["reasoning_effort"] = ReasoningEffort.Trim();
         }
 
-        if (options is { Tools: { Count: > 0 } tools, ToolMode: not NoneChatToolMode })
+        if (options is { Tools: { Count: > 0 } tools })
         {
             var toolArr = new JsonArray();
             foreach (var tool in tools)
@@ -445,6 +445,7 @@ public sealed class MistralChatClient : IChatClient
                 payload["tools"] = toolArr;
                 payload["tool_choice"] = options.ToolMode switch
                 {
+                    NoneChatToolMode => JsonValue.Create("none"),
                     RequiredChatToolMode { RequiredFunctionName: { } requiredName } => new JsonObject
                     {
                         ["type"] = "function",

@@ -1,10 +1,8 @@
 ﻿using System.Diagnostics;
-using Everywhere.AI;
-using Everywhere.Common;
 using Everywhere.Harness;
 using Everywhere.Statistics;
 using Lucide.Avalonia;
-using Meai = Microsoft.Extensions.AI;
+using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -23,8 +21,8 @@ public sealed partial class ChatService
     /// </summary>
     private async Task<AssembledResponse> ReadResponseAsync(
         ModelSession session,
-        IReadOnlyList<Meai.ChatMessage> history,
-        Meai.ChatOptions options,
+        IReadOnlyList<MEAI.ChatMessage> history,
+        MEAI.ChatOptions options,
         Guid chatContextId,
         Guid? messageNodeId,
         StatisticsModelInvocationPurpose purpose,
@@ -72,7 +70,7 @@ public sealed partial class ChatService
                             await approvalReviewer.TrySubmitAsync(content.Value, assembler.FunctionCalls, cancellationToken))
                         {
                             await statistics.CompleteAsync();
-                            return new AssembledResponse(string.Empty, [], new Meai.ChatMessage(Meai.ChatRole.Assistant, []));
+                            return new AssembledResponse(string.Empty, [], new MEAI.ChatMessage(MEAI.ChatRole.Assistant, []));
                         }
 
                         break;
@@ -112,7 +110,7 @@ public sealed partial class ChatService
 
         // Commit only the accepted attempt. Reasoning metadata must survive subsequent review
         // requests, including provider signatures and protected continuation data.
-        var assistantContents = new List<Meai.AIContent>();
+        var assistantContents = new List<MEAI.AIContent>();
         foreach (var segment in assembler.Blocks)
         {
             if (segment.IsReasoning)
@@ -124,23 +122,24 @@ public sealed partial class ChatService
             }
             else if (segment.Text is { Length: > 0 } answerText)
             {
-                assistantContents.Add(new Meai.TextContent(answerText.ToString()));
+                assistantContents.Add(new MEAI.TextContent(answerText.ToString()));
             }
         }
 
         foreach (var call in assembler.FunctionCalls)
         {
-            assistantContents.Add(new Meai.FunctionCallContent(call.CallId, call.Name, call.Arguments)
+            var properties = call.AdditionalProperties is { Count: > 0 } existing
+                ? new MEAI.AdditionalPropertiesDictionary(existing)
+                : new MEAI.AdditionalPropertiesDictionary();
+            properties[ReasoningMetadata.DialectKey] = session.Dialect;
+            assistantContents.Add(new MEAI.FunctionCallContent(call.CallId, call.Name, call.Arguments)
             {
                 Exception = call.Exception,
-                AdditionalProperties = new Meai.AdditionalPropertiesDictionary
-                {
-                    [ReasoningMetadata.DialectKey] = session.Dialect
-                }
+                AdditionalProperties = properties
             });
         }
 
-        var responseMessage = new Meai.ChatMessage(Meai.ChatRole.Assistant, assistantContents);
+        var responseMessage = new MEAI.ChatMessage(MEAI.ChatRole.Assistant, assistantContents);
         return new AssembledResponse(assembler.GetAnswerText(), assembler.FunctionCalls, responseMessage);
     }
 
@@ -247,9 +246,9 @@ public sealed partial class ChatService
         public async ValueTask DisposeAsync() => await FinishAsync(false, false, "ConsumerAbandoned");
     }
 
-    private static bool HasGeneratedOutput(Meai.ChatResponseUpdate update) =>
+    private static bool HasGeneratedOutput(MEAI.ChatResponseUpdate update) =>
         update.Contents.AsValueEnumerable().Any(static item =>
-            item is Meai.TextContent { Text.Length: > 0 } or Meai.TextReasoningContent { Text.Length: > 0 } or Meai.DataContent { Data.IsEmpty: false });
+            item is MEAI.TextContent { Text.Length: > 0 } or MEAI.TextReasoningContent { Text.Length: > 0 } or MEAI.DataContent { Data.IsEmpty: false });
 
     private static IBusyActivity UpdateRequestRetry(
         ChatData data,
@@ -282,6 +281,6 @@ public sealed partial class ChatService
 
     private readonly record struct AssembledResponse(
         string Text,
-        IReadOnlyList<Meai.FunctionCallContent> FunctionCalls,
-        Meai.ChatMessage Message);
+        IReadOnlyList<MEAI.FunctionCallContent> FunctionCalls,
+        MEAI.ChatMessage Message);
 }

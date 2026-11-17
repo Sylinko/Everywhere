@@ -23,7 +23,7 @@ using Everywhere.Views;
 using Lucide.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Meai = Microsoft.Extensions.AI;
+using MEAI = Microsoft.Extensions.AI;
 using PromptTemplateRenderer = Everywhere.AI.Prompts.PromptTemplateRenderer;
 
 namespace Everywhere.Chat;
@@ -170,7 +170,7 @@ public sealed partial class ChatService : IChatService
     /// <inheritdoc />
     public Task<bool> EditAsync(ChatContext chatContext, ChatMessageNode oldNode, UserChatMessage newMessage)
     {
-        if (oldNode.Message.Role != Meai.ChatRole.User)
+        if (oldNode.Message.Role != MEAI.ChatRole.User)
         {
             throw new InvalidOperationException("Only user messages can be edited.");
         }
@@ -224,7 +224,7 @@ public sealed partial class ChatService : IChatService
 
     public void Retry(ChatContext chatContext, ChatMessageNode node)
     {
-        if (node.Message.Role != Meai.ChatRole.Assistant)
+        if (node.Message.Role != MEAI.ChatRole.Assistant)
         {
             throw new InvalidOperationException("Only assistant messages can be retried.");
         }
@@ -268,7 +268,7 @@ public sealed partial class ChatService : IChatService
 
     public void Continue(ChatContext chatContext, ChatMessageNode node)
     {
-        if (node.Message.Role != Meai.ChatRole.Assistant)
+        if (node.Message.Role != MEAI.ChatRole.Assistant)
         {
             throw new InvalidOperationException("Only assistant messages can be continued.");
         }
@@ -682,13 +682,31 @@ public sealed partial class ChatService : IChatService
                         chatContext,
                         generationContext,
                         selection.Messages,
-                        history => GetStreamingChatMessageContentsAsync(
-                            generationContext,
-                            chatContext,
-                            history,
-                            assistantChatMessage,
-                            purpose,
-                            cancellationToken),
+                        async history =>
+                        {
+                            var currentTools = session.Configuration.SupportsToolCall &&
+                                generationContext.PluginScope?.Declarations is { Count: > 0 } declarations
+                                    ? declarations
+                                    : null;
+                            var resolvedPrefix = await chatContext.DispatchAsync(() => chatContext.PrefixState.Apply(
+                                history,
+                                currentTools,
+                                new ContextPrefixIdentity(
+                                    session.Dialect,
+                                    session.Configuration.ModelId,
+                                    session.Configuration.SupportsToolCall,
+                                    selection.ActiveSummaryNodeId,
+                                    selection.WindowStartNodeId),
+                                DateTimeOffset.UtcNow));
+                            return await GetStreamingChatMessageContentsAsync(
+                                generationContext,
+                                chatContext,
+                                resolvedPrefix.History,
+                                resolvedPrefix.Tools,
+                                assistantChatMessage,
+                                purpose,
+                                cancellationToken);
+                        },
                         cancellationToken);
                 }
                 catch (Exception ex) when (!hasAttemptedContextLengthRecovery && IsContextLengthExceeded(ex, session))
@@ -842,13 +860,13 @@ public sealed partial class ChatService : IChatService
     private async Task<ModelInvocationResult> GetStreamingChatMessageContentsAsync(
         GenerationContext generationContext,
         ChatContext chatContext,
-        IList<Meai.ChatMessage> chatHistory,
+        IList<MEAI.ChatMessage> chatHistory,
+        IList<MEAI.AITool>? toolDeclarations,
         AssistantChatMessage assistantChatMessage,
         StatisticsModelInvocationPurpose purpose,
         CancellationToken cancellationToken)
     {
         var session = generationContext.Session;
-        var scope = generationContext.PluginScope;
         var chatData = chatContext.Data;
         var callingToolsActivity = default(IDisposable);
         var span = default(AssistantChatMessageSpan);
@@ -883,12 +901,9 @@ public sealed partial class ChatService : IChatService
                 }
             });
 
-        var declarations = session.Configuration.SupportsToolCall && scope?.Declarations is { Count: > 0 } decls
-            ? (IList<Meai.AITool>)[.. decls]
-            : null;
         var chatOptions = session.CreateChatOptions(
-            tools: declarations,
-            toolMode: declarations is not null ? Meai.ChatToolMode.Auto : null);
+            tools: toolDeclarations,
+            toolMode: toolDeclarations is { Count: > 0 } ? MEAI.ChatToolMode.Auto : null);
 
         await using var statistics = new RequestStatistics(
             this,
@@ -921,7 +936,7 @@ public sealed partial class ChatService : IChatService
                     case ChatRequestUpdate.AttemptFailed failed:
                     {
                         var isImageLimitFailure = IsImageRecoveryFailure(failed.Failure.Exception) &&
-                            chatHistory.Any(static message => message.Contents.Any(static item => item is Meai.DataContent or Meai.UriContent));
+                            chatHistory.Any(static message => message.Contents.Any(static item => item is MEAI.DataContent or MEAI.UriContent));
                         if (failed.RetryDelay is not null || isImageLimitFailure)
                         {
                             await chatContext.DispatchAsync(() =>
@@ -951,10 +966,10 @@ public sealed partial class ChatService : IChatService
                     case ChatRequestUpdate.Content content:
                     {
                         var streamingContent = content.Value;
-                        var images = new Dictionary<Meai.DataContent, FileAttachment>(ReferenceEqualityComparer.Instance);
+                        var images = new Dictionary<MEAI.DataContent, FileAttachment>(ReferenceEqualityComparer.Instance);
                         foreach (var item in streamingContent.Contents)
                         {
-                            if (item is not Meai.DataContent dataContent ||
+                            if (item is not MEAI.DataContent dataContent ||
                                 dataContent.Data.IsEmpty ||
                                 string.IsNullOrEmpty(dataContent.MediaType) ||
                                 !FileUtilities.IsOfCategory(dataContent.MediaType, FileTypeCategory.Image) ||
@@ -980,7 +995,7 @@ public sealed partial class ChatService : IChatService
                             foreach (var item in streamingContent.Contents)
                             {
                                 assembler.AppendItem(item);
-                                if (item is Meai.DataContent dataItem && images.TryGetValue(dataItem, out var attachment))
+                                if (item is MEAI.DataContent dataItem && images.TryGetValue(dataItem, out var attachment))
                                 {
                                     assembler.EndBlock();
                                     var imageSpan = OpenSpan<AssistantChatMessageImageSpan>();
@@ -1036,7 +1051,7 @@ public sealed partial class ChatService : IChatService
 
     private async Task<(ToolResultRecord Record, Exception? Error)> InvokeFunctionAsync(
         ModelSession session,
-        Meai.FunctionCallContent content,
+        MEAI.FunctionCallContent content,
         FunctionCallContext context,
         ChatPluginDisplayBlock? displayBlock,
         CancellationToken cancellationToken)
@@ -1262,11 +1277,11 @@ public sealed partial class ChatService : IChatService
             activity?.SetTag("user_message.length", userMessage.Length);
             activity?.SetTag("system_language", language);
 
-            var chatHistory = new List<Meai.ChatMessage>
+            var chatHistory = new List<MEAI.ChatMessage>
             {
-                new(Meai.ChatRole.System, DefaultPrompts.TitleGeneratorSystemPrompt),
+                new(MEAI.ChatRole.System, DefaultPrompts.TitleGeneratorSystemPrompt),
                 new(
-                    Meai.ChatRole.User,
+                    MEAI.ChatRole.User,
                     ScopedPromptRenderer.RenderPrompt(
                         DefaultPrompts.TitleGeneratorUserPrompt,
                         key => key switch
@@ -1330,7 +1345,7 @@ public sealed partial class ChatService : IChatService
 
     private async Task RecordToolInvocationAsync(
         ChatData chatData,
-        Meai.FunctionCallContent content,
+        MEAI.FunctionCallContent content,
         ChatPlugin? plugin,
         StatisticsToolInvocationStatus status,
         CancellationToken cancellationToken)
@@ -1400,7 +1415,7 @@ public sealed partial class ChatService : IChatService
     }
 
     private sealed record ModelInvocationResult(
-        IReadOnlyList<Meai.FunctionCallContent> FunctionCalls,
+        IReadOnlyList<MEAI.FunctionCallContent> FunctionCalls,
         ChatUsageDetails Usage,
         Guid InvocationId
     );

@@ -14,7 +14,6 @@ public enum PromptDiagnosticCode
     MissingDefaultSystemPrompt,
     MissingSkillsPrompt,
     MissingDate,
-    TimeMayReduceCacheHitRate,
     UnresolvedReference,
     RecursivePlaceholder
 }

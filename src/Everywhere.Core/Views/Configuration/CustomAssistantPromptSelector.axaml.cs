@@ -1,8 +1,8 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -23,14 +23,13 @@ namespace Everywhere.Views;
 /// </summary>
 /// <remarks>
 /// The selector owns the prompt list and resolves <see cref="SelectedId"/> through
-/// <see cref="IPromptService"/>. Its timer refreshes dynamic values such as <c>{Time}</c>;
-/// template lookup only runs when the selected prompt changes.
+/// <see cref="IPromptService"/>; preview updates run when the selected prompt or assistant
+/// tool-calling status changes.
 /// </remarks>
 [TemplatePart(Name = ComboBoxPartName, Type = typeof(ComboBox), IsRequired = true)]
 public sealed partial class CustomAssistantPromptSelector(CustomAssistant customAssistant, IServiceProvider serviceProvider) : TemplatedControl
 {
     private const string ComboBoxPartName = "PART_ComboBox";
-    private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
     private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Shared;
 
     public static readonly StyledProperty<Guid> SelectedIdProperty =
@@ -73,7 +72,6 @@ public sealed partial class CustomAssistantPromptSelector(CustomAssistant custom
     private readonly BindableList<Item> _items = [];
 
     private ComboBox? _comboBox;
-    private DispatcherTimer? _previewRefreshTimer;
     private CancellationTokenSource? _refreshCancellationTokenSource;
     private CancellationTokenSource? _loadCancellationTokenSource;
     private string _template = string.Empty;
@@ -97,14 +95,14 @@ public sealed partial class CustomAssistantPromptSelector(CustomAssistant custom
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        customAssistant.PropertyChanged += HandleCustomAssistantPropertyChanged;
         QueueRefreshPrompts();
         QueueLoadTemplate();
-        StartPreviewRefreshTimer();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        StopPreviewRefreshTimer();
+        customAssistant.PropertyChanged -= HandleCustomAssistantPropertyChanged;
         CancelRefreshPrompts();
         CancelLoadTemplate();
         base.OnDetachedFromVisualTree(e);
@@ -233,36 +231,12 @@ public sealed partial class CustomAssistantPromptSelector(CustomAssistant custom
         RenderedPreviewSegments = PromptTemplateRenderer.RenderSegments(_template, PlaceholderSource, CreatePromptContext());
     }
 
-    private void StartPreviewRefreshTimer()
+    private void HandleCustomAssistantPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_previewRefreshTimer is not null)
+        if (e.PropertyName is nameof(CustomAssistant.ToolCallStatus))
         {
-            return;
+            RefreshRenderedPreview();
         }
-
-        _previewRefreshTimer = new DispatcherTimer
-        {
-            Interval = PreviewRefreshInterval
-        };
-        _previewRefreshTimer.Tick += HandlePreviewRefreshTimerTick;
-        _previewRefreshTimer.Start();
-    }
-
-    private void StopPreviewRefreshTimer()
-    {
-        if (_previewRefreshTimer is null)
-        {
-            return;
-        }
-
-        _previewRefreshTimer.Tick -= HandlePreviewRefreshTimerTick;
-        _previewRefreshTimer.Stop();
-        _previewRefreshTimer = null;
-    }
-
-    private void HandlePreviewRefreshTimerTick(object? sender, EventArgs e)
-    {
-        RefreshRenderedPreview();
     }
 
     private PromptPlaceholderContext CreatePromptContext() =>

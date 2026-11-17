@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Portuguese (Brazil) -->
 <root>
     <resheader name="resmimetype">
@@ -3352,9 +3352,6 @@ Se continuar, a outra cópia encerrará o modo de serviço.</value>
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
         <value>Este prompt não contém {DefaultSystemPrompt} nem {SkillsPrompt}, portanto o assistente pode não conseguir usar as habilidades corretamente.</value>
     </data>
-    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
-        <value>{Time} com precisão até segundos pode reduzir a taxa de acerto do cache, aumentando o custo de uso. Se não for necessário, use {Date}.</value>
-    </data>
     <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
         <value>Placeholder desconhecido: {0}.</value>
     </data>
@@ -3396,9 +3393,6 @@ Se continuar, a outra cópia encerrará o modo de serviço.</value>
     </data>
     <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
         <value>Idioma do sistema</value>
-    </data>
-    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
-        <value>Hora atual</value>
     </data>
     <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
         <value>Diretório de trabalho</value>

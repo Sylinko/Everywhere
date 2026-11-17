@@ -3350,9 +3350,6 @@
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
         <value>此提示词既没有包含 {DefaultSystemPrompt}，也没有包含 {SkillsPrompt}，因此助手可能无法正确使用技能。</value>
     </data>
-    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
-        <value>{Time} 精确到秒，可能会降低缓存命中率，提高使用成本。如非必要，请使用 {Date}。</value>
-    </data>
     <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
         <value>未知占位符：{0}。</value>
     </data>
@@ -3394,9 +3391,6 @@
     </data>
     <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
         <value>系统语言</value>
-    </data>
-    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
-        <value>当前时间</value>
     </data>
     <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
         <value>工作目录</value>

@@ -2,7 +2,7 @@ using System.Text;
 using Everywhere.Harness;
 using Everywhere.Statistics;
 using Lucide.Avalonia;
-using Meai = Microsoft.Extensions.AI;
+using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -196,7 +196,7 @@ partial class ChatService
     }
 
     private sealed record ToolInvocation(
-        Meai.FunctionCallContent Call,
+        MEAI.FunctionCallContent Call,
         FunctionCallChatMessage Message,
         ToolBinding? Binding,
         IReadOnlyList<string>? Suggestions

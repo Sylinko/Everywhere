@@ -8,7 +8,7 @@ using Everywhere.Common;
 using Everywhere.Harness;
 using Everywhere.Statistics;
 using Microsoft.Extensions.Logging;
-using Meai = Microsoft.Extensions.AI;
+using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -196,8 +196,8 @@ partial class ChatService
         private readonly FunctionCallContext _context;
         private readonly ModelSession _session;
         private readonly ReviewTools _tools;
-        private readonly Dictionary<string, Meai.AIFunction> _executables;
-        private readonly List<Meai.AITool> _declarations;
+        private readonly Dictionary<string, MEAI.AIFunction> _executables;
+        private readonly List<MEAI.AITool> _declarations;
 
         /// <summary>
         /// The first executed submission is the terminal result of this review.
@@ -215,14 +215,14 @@ partial class ChatService
             _context = context;
             _session = session;
             _tools = new ReviewTools(fileSystemPlugin, context.ChatContext.WorkingDirectory);
-            _executables = new Dictionary<string, Meai.AIFunction>(StringComparer.Ordinal);
+            _executables = new Dictionary<string, MEAI.AIFunction>(StringComparer.Ordinal);
             _declarations = [];
 
             if (canReadFiles)
             {
-                AddTool(Meai.AIFunctionFactory.Create(
+                AddTool(MEAI.AIFunctionFactory.Create(
                     _tools.ReadAsync,
-                    new Meai.AIFunctionFactoryOptions
+                    new MEAI.AIFunctionFactoryOptions
                     {
                         Name = "read_file",
                         ExcludeResultSchema = true,
@@ -230,19 +230,19 @@ partial class ChatService
                     }));
             }
 
-            AddTool(Meai.AIFunctionFactory.Create(
+            AddTool(MEAI.AIFunctionFactory.Create(
                 ReviewTools.SubmitApproval,
-                new Meai.AIFunctionFactoryOptions
+                new MEAI.AIFunctionFactoryOptions
                 {
                     Name = "submit_approval",
                     ExcludeResultSchema = true,
                     MarshalResult = static (result, _, _) => ValueTask.FromResult(result)
                 }));
 
-            void AddTool(Meai.AIFunction function)
+            void AddTool(MEAI.AIFunction function)
             {
                 _executables[function.Name] = function;
-                _declarations.Add(Meai.AIFunctionFactory.CreateDeclaration(
+                _declarations.Add(MEAI.AIFunctionFactory.CreateDeclaration(
                     function.Name,
                     function.Description,
                     function.JsonSchema,
@@ -309,15 +309,15 @@ partial class ChatService
         /// </summary>
         public async Task<ToolApprovalResult> ReviewAsync(string input, CancellationToken cancellationToken)
         {
-            var history = new List<Meai.ChatMessage>
+            var history = new List<MEAI.ChatMessage>
             {
-                new(Meai.ChatRole.System, SystemPrompt),
-                new(Meai.ChatRole.User, input)
+                new(MEAI.ChatRole.System, SystemPrompt),
+                new(MEAI.ChatRole.User, input)
             };
 
             var corrections = 0;
             var ownerNode = _context.GenerationContext.CurrentAssistantNode;
-            var options = _session.CreateChatOptions(tools: _declarations, toolMode: Meai.ChatToolMode.Auto);
+            var options = _session.CreateChatOptions(tools: _declarations, toolMode: MEAI.ChatToolMode.Auto);
 
             while (true)
             {
@@ -346,13 +346,13 @@ partial class ChatService
                             "The approval assistant did not submit a decision after two reminders.");
                     }
 
-                    history.Add(new Meai.ChatMessage(Meai.ChatRole.User, Correction));
+                    history.Add(new MEAI.ChatMessage(MEAI.ChatRole.User, Correction));
                     continue;
                 }
 
                 _tools.BeginResponse();
                 var ids = new HashSet<string>(StringComparer.Ordinal);
-                var toolResults = new List<Meai.AIContent>(calls.Length);
+                var toolResults = new List<MEAI.AIContent>(calls.Length);
                 foreach (var call in calls)
                 {
                     if (string.IsNullOrEmpty(call.CallId) || !ids.Add(call.CallId))
@@ -386,10 +386,10 @@ partial class ChatService
                     }
 
                     if (result is ToolApprovalResult currentDecision) return currentDecision;
-                    toolResults.Add(new Meai.FunctionResultContent(call.CallId, result));
+                    toolResults.Add(new MEAI.FunctionResultContent(call.CallId, result));
                 }
 
-                history.Add(new Meai.ChatMessage(Meai.ChatRole.Tool, toolResults));
+                history.Add(new MEAI.ChatMessage(MEAI.ChatRole.Tool, toolResults));
             }
         }
 
@@ -397,11 +397,11 @@ partial class ChatService
         /// Executes only explicitly SDK-completed submissions during streaming.
         /// </summary>
         public async Task<bool> TrySubmitAsync(
-            Meai.ChatResponseUpdate update,
-            IReadOnlyList<Meai.FunctionCallContent> assembledCalls,
+            MEAI.ChatResponseUpdate update,
+            IReadOnlyList<MEAI.FunctionCallContent> assembledCalls,
             CancellationToken cancellationToken)
         {
-            foreach (var call in update.Contents.OfType<Meai.FunctionCallContent>())
+            foreach (var call in update.Contents.OfType<MEAI.FunctionCallContent>())
             {
                 if (call.InformationalOnly || call.Name != "submit_approval") continue;
                 if (string.IsNullOrEmpty(call.CallId))
@@ -457,7 +457,7 @@ partial class ChatService
             return false;
         }
 
-        private async ValueTask<object?> InvokeReviewToolAsync(Meai.FunctionCallContent call, CancellationToken cancellationToken)
+        private async ValueTask<object?> InvokeReviewToolAsync(MEAI.FunctionCallContent call, CancellationToken cancellationToken)
         {
             if (call.Exception is { } parseError) throw parseError;
             if (!_executables.TryGetValue(call.Name, out var function))
@@ -465,7 +465,7 @@ partial class ChatService
                 throw new InvalidOperationException($"Unknown approval tool '{call.Name}'.");
             }
 
-            return await function.InvokeAsync(new Meai.AIFunctionArguments(call.Arguments), cancellationToken);
+            return await function.InvokeAsync(new MEAI.AIFunctionArguments(call.Arguments), cancellationToken);
         }
 
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]

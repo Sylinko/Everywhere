@@ -1,5 +1,4 @@
 using Avalonia.Controls.Notifications;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -31,7 +30,6 @@ public sealed partial class PromptEditorViewModel(
     ILogger<PromptEditorViewModel> logger
 ) : BusyViewModelBase
 {
-    private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
     private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Shared;
 
     public IReadOnlyBindableList<PromptDiagnosticItem> Diagnostics => _diagnostics;
@@ -115,7 +113,6 @@ public sealed partial class PromptEditorViewModel(
     public partial IReadOnlyList<PromptTemplateRenderSegment> RenderedPreviewSegments { get; private set; } = [];
 
     private readonly BindableList<PromptDiagnosticItem> _diagnostics = [];
-    private DispatcherTimer? _previewRefreshTimer;
     private bool _isLoadingRecipe;
     private string? _originalName;
     private string _originalTemplate = string.Empty;
@@ -123,20 +120,6 @@ public sealed partial class PromptEditorViewModel(
     private byte[]? _originalMetadataPayload;
     private PromptRecipeSnapshot? _recipeSnapshot;
     private string _cancelRoute = MainViewNavigateMessage.PromptPageRoute;
-
-    /// <inheritdoc />
-    protected internal override Task ViewLoaded(CancellationToken cancellationToken)
-    {
-        StartPreviewRefreshTimer();
-        return base.ViewLoaded(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    protected internal override Task ViewUnloaded()
-    {
-        StopPreviewRefreshTimer();
-        return base.ViewUnloaded();
-    }
 
     /// <summary>
     /// Opens the editor for a new recipe-backed prompt.
@@ -522,10 +505,6 @@ public sealed partial class PromptEditorViewModel(
     /// <summary>
     /// Re-renders preview and diagnostics for the current editor buffer.
     /// </summary>
-    /// <remarks>
-    /// Template edits call this immediately. The timer calls it again so time-sensitive placeholders
-    /// such as <c>{Time}</c> keep moving even when the text itself is unchanged.
-    /// </remarks>
     private void RefreshEditorOutput()
     {
         var renderResult = PromptTemplateRenderer.RenderWithDiagnostics(
@@ -539,38 +518,6 @@ public sealed partial class PromptEditorViewModel(
                 .AsValueEnumerable()
                 .Select(static diagnostic => new PromptDiagnosticItem(diagnostic))
                 .ToArray());
-    }
-
-    private void StartPreviewRefreshTimer()
-    {
-        if (_previewRefreshTimer is not null)
-        {
-            return;
-        }
-
-        _previewRefreshTimer = new DispatcherTimer
-        {
-            Interval = PreviewRefreshInterval
-        };
-        _previewRefreshTimer.Tick += HandlePreviewRefreshTimerTick;
-        _previewRefreshTimer.Start();
-    }
-
-    private void StopPreviewRefreshTimer()
-    {
-        if (_previewRefreshTimer is null)
-        {
-            return;
-        }
-
-        _previewRefreshTimer.Tick -= HandlePreviewRefreshTimerTick;
-        _previewRefreshTimer.Stop();
-        _previewRefreshTimer = null;
-    }
-
-    private void HandlePreviewRefreshTimerTick(object? sender, EventArgs e)
-    {
-        RefreshEditorOutput();
     }
 
     private PromptPlaceholderContext CreatePromptContext() =>

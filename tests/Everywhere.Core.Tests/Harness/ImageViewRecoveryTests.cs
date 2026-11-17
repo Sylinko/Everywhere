@@ -29,7 +29,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SkiaSharp;
-using Meai = Microsoft.Extensions.AI;
+using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Core.Tests.Harness;
 
@@ -91,12 +91,12 @@ public sealed class ImageViewRecoveryTests
         var user = data.Append(shared, new UserChatMessage("Look at the old image again and compare the large one", []));
         var assistant = data.Append(user, new AssistantChatMessage { IsBusy = true });
 
-        var requests = new List<Meai.ChatMessage[]>();
+        var requests = new List<MEAI.ChatMessage[]>();
         var wasOffloadSavedBeforeRetry = false;
-        var client = Substitute.For<Meai.IChatClient>();
+        var client = Substitute.For<MEAI.IChatClient>();
         client.GetStreamingResponseAsync(
-                Arg.Any<IEnumerable<Meai.ChatMessage>>(), Arg.Any<Meai.ChatOptions>(), Arg.Any<CancellationToken>())
-            .Returns(call => RespondAsync(call.ArgAt<IEnumerable<Meai.ChatMessage>>(0).ToArray()));
+                Arg.Any<IEnumerable<MEAI.ChatMessage>>(), Arg.Any<MEAI.ChatOptions>(), Arg.Any<CancellationToken>())
+            .Returns(call => RespondAsync(call.ArgAt<IEnumerable<MEAI.ChatMessage>>(0).ToArray()));
         var configuration = new AdvancedAssistantConfiguration
         {
             ModelId = "image-test",
@@ -131,11 +131,11 @@ public sealed class ImageViewRecoveryTests
             Assert.That(imageCounts, Is.EqualTo(expectedCounts));
             Assert.That(ImagesIn(requests[2])[0].Data.ToArray(), Is.EqualTo(original));
             Assert.That(ImagesIn(requests[2])[0].MediaType, Is.EqualTo("image/jpeg"));
-            Assert.That(requests[2].SelectMany(message => message.Contents).OfType<Meai.TextContent>().Select(item => item.Text),
+            Assert.That(requests[2].SelectMany(message => message.Contents).OfType<MEAI.TextContent>().Select(item => item.Text),
                 Has.Some.Contains("Image omitted to fit the request").And.Contains("old-view"));
             if (shouldRejectLatestBatch)
             {
-                Assert.That(requests[^1].SelectMany(message => message.Contents).OfType<Meai.TextContent>().Select(item => item.Text),
+                Assert.That(requests[^1].SelectMany(message => message.Contents).OfType<MEAI.TextContent>().Select(item => item.Text),
                     Has.Some.Contains("Image omitted to fit the request").And.Contains("new-view"));
             }
         }
@@ -186,7 +186,7 @@ public sealed class ImageViewRecoveryTests
             Assert.That(ImagesIn(alternativeHistory)[0].Data.ToArray(), Is.EqualTo(original));
         }
 
-        async IAsyncEnumerable<Meai.ChatResponseUpdate> RespondAsync(Meai.ChatMessage[] history)
+        async IAsyncEnumerable<MEAI.ChatResponseUpdate> RespondAsync(MEAI.ChatMessage[] history)
         {
             requests.Add(history);
             switch (requests.Count)
@@ -194,10 +194,10 @@ public sealed class ImageViewRecoveryTests
                 case 1:
                 {
                     var arguments = new Dictionary<string, object?> { ["paths"] = new[] { jpegPath, string.Empty, largePath } };
-                    yield return new Meai.ChatResponseUpdate
+                    yield return new MEAI.ChatResponseUpdate
                     {
-                        Role = Meai.ChatRole.Assistant,
-                        Contents = [new Meai.FunctionCallContent("new-view", "view_image", arguments)]
+                        Role = MEAI.ChatRole.Assistant,
+                        Contents = [new MEAI.FunctionCallContent("new-view", "view_image", arguments)]
                     };
                     yield break;
                 }
@@ -228,7 +228,7 @@ public sealed class ImageViewRecoveryTests
             }
 
             var reply = shouldRejectLatestBatch ? "I need to view fewer images at a time." : "Comparison completed.";
-            yield return new Meai.ChatResponseUpdate(Meai.ChatRole.Assistant, reply);
+            yield return new MEAI.ChatResponseUpdate(MEAI.ChatRole.Assistant, reply);
         }
     }
 
@@ -264,9 +264,9 @@ public sealed class ImageViewRecoveryTests
         Assert.That(prepared.Bytes, Is.EqualTo(File.ReadAllBytes(file.Path)));
     }
 
-    private static Meai.DataContent[] ImagesIn(IEnumerable<Meai.ChatMessage> history)
+    private static MEAI.DataContent[] ImagesIn(IEnumerable<MEAI.ChatMessage> history)
     {
-        return history.SelectMany(message => message.Contents).OfType<Meai.DataContent>().ToArray();
+        return history.SelectMany(message => message.Contents).OfType<MEAI.DataContent>().ToArray();
     }
 
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_blobBasePath")]
@@ -311,10 +311,10 @@ public sealed class ImageViewRecoveryTests
         }
     }
 
-    private sealed class TestSession(AssistantConfiguration configuration, Meai.IChatClient client)
+    private sealed class TestSession(AssistantConfiguration configuration, MEAI.IChatClient client)
         : ModelSession(configuration, new ModelConnection(ModelProviderSchema.OpenAI, "https://test.invalid", null, new HttpClient(), null, 0))
     {
-        public override Meai.IChatClient ChatClient => client;
+        public override MEAI.IChatClient ChatClient => client;
         public override string Dialect => "openai";
     }
 

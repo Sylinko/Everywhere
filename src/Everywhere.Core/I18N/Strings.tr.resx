@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Turkish (Turkey) -->
 <root>
     <resheader name="resmimetype">
@@ -3352,9 +3352,6 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
         <value>Bu ipucu ne {DefaultSystemPrompt} ne de {SkillsPrompt} içeriyor, bu nedenle asistan becerileri doğru şekilde kullanamayabilir.</value>
     </data>
-    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
-        <value>{Time} saniye hassasiyetinde, önbellek hit oranını azaltabilir ve maliyeti artırabilir. Gerekmedikçe {Date} kullanın.</value>
-    </data>
     <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
         <value>Bilinmeyen yer tutucu: {0}.</value>
     </data>
@@ -3396,9 +3393,6 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     </data>
     <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
         <value>Sistem dili</value>
-    </data>
-    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
-        <value>Geçerli saat</value>
     </data>
     <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
         <value>Çalışma dizini</value>
