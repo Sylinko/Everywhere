@@ -7,10 +7,12 @@ using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Everywhere.I18N;
 using Lucide.Avalonia;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using NSubstitute;
 
 namespace Everywhere.Core.Tests.Chat;
@@ -18,13 +20,13 @@ namespace Everywhere.Core.Tests.Chat;
 public sealed class GenerationApprovalTests
 {
     [Test]
-    public void GenerationContext_WhenCompressionAdvancesTail_KeepsWritableAssistantAndExecutionBranch()
+    public async Task GenerationContext_WhenCompressionAdvancesTail_KeepsWritableAssistantAndExecutionBranch()
     {
-        using var mixin = CreateMixin();
+        using var session = CreateSession();
         using var data = new ChatData();
         data.Add(new UserChatMessage("request", []));
         var assistant = data.Add(new AssistantChatMessage());
-        var generation = CreateGeneration(mixin, data);
+        await using var generation = CreateGeneration(session, data);
         var compression = generation.Append(new ContextCompressionChatMessage(data.RootNode.Id, "model", ContextCompressionTrigger.Automatic, null, null));
         Assert.That(generation.CurrentAssistantNode, Is.SameAs(assistant));
         Assert.That(generation.AppendTailNode, Is.SameAs(compression));
@@ -43,11 +45,12 @@ public sealed class GenerationApprovalTests
     [Test]
     public async Task BuildApprovalInput_WithAttachmentsAndStructuredArguments_PreservesExplicitContract()
     {
-        using var mixin = CreateMixin();
+        using var session = CreateSession();
         using var data = new ChatData();
         await using var runtime = new RootChatContext(data, null);
         data.Add(new UserChatMessage("Run the task", [new TextAttachment(new DirectLocaleKey("source"), "task content 中文")]));
-        await using var invocation = CreateInvocation(runtime, CreateGeneration(mixin, data), (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
+        await using var generation = CreateGeneration(session, data);
+        await using var invocation = CreateInvocation(runtime, generation, (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
         var arguments = invocation.FunctionCallContent.Arguments ?? throw new AssertionException("Missing arguments.");
         arguments["enabled"] = true;
         arguments["limit"] = 12;
@@ -86,16 +89,17 @@ public sealed class GenerationApprovalTests
     [Test]
     public async Task RequestConsentAsync_AfterImmediateChange_PreservesEnteredModeAndChangesNextInvocation()
     {
-        using var mixin = CreateMixin();
+        using var session = CreateSession();
         using var data = new ChatData();
         await using var runtime = new RootChatContext(data, null);
-        var generation = CreateGeneration(mixin, data);
+        await using var generation = CreateGeneration(session, data);
         var reviews = 0;
         Task<ToolApprovalResult> ReviewAsync(FunctionCallContext _, ToolApprovalScope? scope, CancellationToken token)
         {
             reviews++;
             return Task.FromResult(ToolApprovalResult.Deny("not authorized"));
         }
+
         await using var first = CreateInvocation(runtime, generation, ReviewAsync);
         generation.ApprovalState.Mode = ToolApprovalMode.FullAccess;
         await using var next = CreateInvocation(runtime, generation, ReviewAsync);
@@ -114,10 +118,11 @@ public sealed class GenerationApprovalTests
     [Test]
     public async Task RequestConsentAsync_WithRememberedScope_DoesNotInvokeReviewer()
     {
-        using var mixin = CreateMixin();
+        using var session = CreateSession();
         using var data = new ChatData();
         await using var runtime = new RootChatContext(data, null);
-        await using var invocation = CreateInvocation(runtime, CreateGeneration(mixin, data), (_, _, _) =>
+        await using var generation = CreateGeneration(session, data);
+        await using var invocation = CreateInvocation(runtime, generation, (_, _, _) =>
             throw new AssertionException("Remembered consent must bypass review."));
         runtime.ToolBypassApprovalRulesets[ToolSettingsKey.ForPermission(invocation.ChatPlugin, invocation.ChatFunction, "path")] = true;
         var decision = await invocation.RequestConsentAsync("path", new DirectLocaleKey("test"));
@@ -127,10 +132,10 @@ public sealed class GenerationApprovalTests
     [Test]
     public async Task GenerationContext_WithChild_SharesEnvironmentButNotGeneration()
     {
-        using var mixin = CreateMixin();
+        using var session = CreateSession();
         using var data = new ChatData();
         await using var runtime = new RootChatContext(data, null);
-        var generation = CreateGeneration(mixin, data);
+        await using var generation = CreateGeneration(session, data);
         typeof(ChatContext).GetProperty(nameof(ChatContext.GenerationContext))?.SetValue(runtime, generation);
         var child = runtime.CreateNested("test child");
         generation.ApprovalState.Mode = ToolApprovalMode.FullAccess;
@@ -148,33 +153,63 @@ public sealed class GenerationApprovalTests
     [Test]
     public async Task EnterFunctionCallContext_WhenSuppressed_RestoresAmbientValue()
     {
-        using var mixin = CreateMixin();
+        using var session = CreateSession();
         using var data = new ChatData();
         await using var runtime = new RootChatContext(data, null);
-        var generation = CreateGeneration(mixin, data);
+        await using var generation = CreateGeneration(session, data);
         await using var first = CreateInvocation(runtime, generation, (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
         using (generation.EnterFunctionCallContext(first))
         {
             using (generation.SuppressFunctionCallContext()) Assert.That(generation.FunctionCallContext.Value, Is.Null);
             Assert.That(generation.FunctionCallContext.Value, Is.SameAs(first));
         }
+
         Assert.That(generation.FunctionCallContext.Value, Is.Null);
     }
 
-    private static KernelMixin CreateMixin() => Substitute.For<KernelMixin>(new AdvancedAssistantConfiguration(),
-        new ModelConnection(ModelProviderSchema.OpenAI, "https://example.invalid", null, new HttpClient(), null));
+    private static ModelSession CreateSession()
+    {
+        var session = Substitute.For<ModelSession>(
+            new AdvancedAssistantConfiguration(),
+            new ModelConnection(ModelProviderSchema.OpenAI, "https://example.invalid", null, new HttpClient(), null));
+        session.Dialect.Returns("openai");
+        session.ChatClient.Returns(Substitute.For<IChatClient>());
+        return session;
+    }
 
-    private static GenerationContext CreateGeneration(KernelMixin mixin, ChatData data) => new(new Kernel(), mixin, Substitute.For<IPromptRenderer>(),
-        "constraints", Modalities.Text, 80, -1, new GenerationApprovalState(ToolApprovalMode.Auto), true, data.SelectedNodes[^1]);
+    private static GenerationContext CreateGeneration(ModelSession session, ChatData data) =>
+        new(
+            new ServiceCollection().BuildServiceProvider(),
+            session,
+            null,
+            Substitute.For<IPromptRenderer>(),
+            "constraints",
+            Modalities.Text,
+            80,
+            -1,
+            new GenerationApprovalState(ToolApprovalMode.Auto),
+            true,
+            data.SelectedNodes[^1]);
 
-    private static FunctionCallContext CreateInvocation(ChatContext context, GenerationContext generation,
+    private static FunctionCallContext CreateInvocation(
+        ChatContext context,
+        GenerationContext generation,
         Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> review)
     {
-        var plugin = new FileSystemPlugin(new Settings(Substitute.For<IServiceProvider>()), new FileHandlerContextFactory([]),
+        var plugin = new FileSystemPlugin(
+            new Settings(Substitute.For<IServiceProvider>()),
+            new FileHandlerContextFactory([]),
             Substitute.For<ILogger<FileSystemPlugin>>());
         var function = plugin.GetChatFunctions().First();
-        var call = new FunctionCallContent(function.KernelFunction.Name, id: Guid.NewGuid().ToString(), arguments: new KernelArguments());
-        return new FunctionCallContext(generation.Kernel, context, plugin, function,
-            new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")), call, new ObservableToolRulesets(), generation, review);
+        var call = new FunctionCallContent(Guid.NewGuid().ToString(), function.Function.Name, new Dictionary<string, object?>());
+        return new FunctionCallContext(
+            generation.Services,
+            context,
+            new ToolBinding(plugin, function, new()),
+            new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")),
+            call,
+            new ObservableToolRulesets(),
+            generation,
+            review);
     }
 }

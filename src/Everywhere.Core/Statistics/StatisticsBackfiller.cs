@@ -8,7 +8,6 @@ using Everywhere.Statistics.Database;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.Statistics;
 
@@ -200,8 +199,8 @@ public sealed class StatisticsBackfiller(
                     var id = CreateBackfillToolInvocationId(assistantRow.Id, spanIndex, messageIndex, index, call.Id);
                     if (await statisticsDb.ToolInvocationEvents.AnyAsync(x => x.Id == id)) continue;
 
-                    var result = toolMessage.Results.AsValueEnumerable().FirstOrDefault(x => x.CallId == call.Id);
-                    var isError = IsBackfilledToolError(toolMessage, result);
+                    // Exceptions were never serialized; this is the durable tool error indicator.
+                    var isError = toolMessage.ErrorMessageKey is not null;
                     statisticsDb.ToolInvocationEvents.Add(
                         new ToolInvocationEventEntity
                         {
@@ -217,11 +216,6 @@ public sealed class StatisticsBackfiller(
                         });
                 }
             }
-        }
-
-        static bool IsBackfilledToolError(FunctionCallChatMessage message, FunctionResultContent? result)
-        {
-            return message.ErrorMessageKey is not null || result?.InnerContent is Exception;
         }
     }
 

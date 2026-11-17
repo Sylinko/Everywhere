@@ -1,7 +1,5 @@
-﻿using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -43,14 +41,14 @@ public sealed partial class UniFuncsConnector(string apiKey, HttpClient httpClie
         [JsonPropertyName("data")]
         public Data? Data { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults()
+        public IEnumerable<WebSearchResult> ToResults()
         {
             if (Code != 0)
             {
                 throw new HttpRequestException($"UniFuncs API returned error ({Code}): {Message}");
             }
 
-            return Data?.WebPages?.Select(x => new TextSearchResult(x.Summary ?? x.Snippet)
+            return Data?.WebPages?.Select(x => new WebSearchResult(x.Summary ?? x.Snippet)
             {
                 Name = x.Name,
                 Link = x.Url,

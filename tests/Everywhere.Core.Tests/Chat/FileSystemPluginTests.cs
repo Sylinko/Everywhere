@@ -629,7 +629,7 @@ public class FileSystemPluginTests
     [Test]
     public void Constructor_RegistersPatchAndPathTools_WithoutLegacyTextTools()
     {
-        var names = CreatePlugin().GetChatFunctions().Select(static function => function.KernelFunction.Name).ToArray();
+        var names = CreatePlugin().GetChatFunctions().Select(static function => function.Function.Name).ToArray();
 
         Assert.Multiple(() =>
         {
@@ -683,12 +683,6 @@ public class FileSystemPluginTests
     private static string ResolveFinalPath(string path)
     {
         var result = PathUtilities.ResolvePath(path, PathResolutionMode.FollowFinalComponent);
-        return result.ResolvedPath ?? throw new AssertionException($"Could not resolve test path '{path}'.");
-    }
-
-    private static string ResolveFinalPath(string path, PathResolutionMode mode)
-    {
-        var result = PathUtilities.ResolvePath(path, mode);
         return result.ResolvedPath ?? throw new AssertionException($"Could not resolve test path '{path}'.");
     }
 

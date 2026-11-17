@@ -21,11 +21,6 @@
     <Project Path="3rd/Motion.Avalonia/src/Motion.Avalonia/Motion.Avalonia.csproj" />
     <Project Path="3rd/shad-ui/src/ShadUI/ShadUI.csproj" />
   </Folder>
-  <Folder Name="/3rd/SemanticKernel/">
-    <File Path="3rd/semantic-kernel-patch/README.md" />
-    <Project Path="3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
-    <Project Path="3rd/semantic-kernel-patch/Connectors.MistralAI/Connectors.MistralAI.csproj" />
-  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
@@ -55,7 +50,6 @@
     <Project Path="patches/Everywhere.Patches.Avalonia.Win32/Everywhere.Patches.Avalonia.Win32.csproj" />
     <Project Path="patches/Everywhere.Patches.AvaloniaEdit/Everywhere.Patches.AvaloniaEdit.csproj" />
     <Project Path="patches/Everywhere.Patches.Contracts/Everywhere.Patches.Contracts.csproj" />
-    <Project Path="patches/Everywhere.Patches.SemanticKernel/Everywhere.Patches.SemanticKernel.csproj" />
     <Project Path="patches/Everywhere.Patches.OllamaSharp/Everywhere.Patches.OllamaSharp.csproj" />
     <Project Path="patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI.csproj" />
     <Project Path="patches/Everywhere.Patches.Anthropic/Everywhere.Patches.Anthropic.csproj" />
@@ -75,7 +69,6 @@
     <Project Path="tests/Everywhere.Automation.Tests/Everywhere.Automation.Tests.csproj" />
     <Project Path="tests/Everywhere.AvaloniaDesignerHost/Everywhere.AvaloniaDesignerHost.csproj" />
     <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
-    <Project Path="tests/Everywhere.Patches.SemanticKernel.Tests/Everywhere.Patches.SemanticKernel.Tests.csproj" />
     <Project Path="tests/Everywhere.ProcessIsolation.Tests/Everywhere.ProcessIsolation.Tests.csproj" />
     <Project Path="tests/Everywhere.Terminal.TestApp/Everywhere.Terminal.TestApp.csproj" />
     <Project Path="tests/Everywhere.Terminal.Tests/Everywhere.Terminal.Tests.csproj" />

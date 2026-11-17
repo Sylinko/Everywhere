@@ -1,6 +1,6 @@
 using System.Text;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.Extensions.AI;
+using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
 namespace Everywhere.AI.Tests;
 
@@ -15,12 +15,21 @@ public sealed class SdkStreamLifecycleTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new
         {
-            statusCode = 200, body = FirstEvents(provider), headers = new Dictionary<string, string[]> { ["Content-Type"] = [ContentType(provider)] }
+            statusCode = 200,
+            body = FirstEvents(provider),
+            headers = new Dictionary<string, string[]> { ["Content-Type"] = [ContentType(provider)] }
         });
         using var client = server.CreateClient();
-        var updates = await SdkStreamingTests.CollectAsync(provider.CreateService(client));
-        Assert.That(string.Concat(updates.Select(update => update.Content)), Is.EqualTo("partial"));
-        Assert.That(updates.Select(update => update.Metadata?.GetValueOrDefault("FinishReason")?.ToString()).Where(reason => !string.IsNullOrEmpty(reason)), Is.Empty);
+        var updates = new List<ChatResponseUpdate>();
+        async Task ReadAsync()
+        {
+            await foreach (var update in provider.CreateClient(client).GetStreamingResponseAsync(History())) updates.Add(update);
+        }
+
+        if (provider == Provider.Gemini) await Assert.ThrowsAsync<EndOfStreamException>(ReadAsync);
+        else await ReadAsync();
+        Assert.That(string.Concat(updates.Select(static update => update.Text)), Is.EqualTo("partial"));
+        Assert.That(updates.Select(static update => update.FinishReason?.Value).Where(static reason => !string.IsNullOrEmpty(reason)), Is.Empty);
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(1));
     }
 
@@ -34,7 +43,7 @@ public sealed class SdkStreamLifecycleTests
         var text = new StringBuilder();
         var exception = await SdkStreamingTests.CatchAsync(async () =>
         {
-            await foreach (var update in provider.CreateService(client).GetStreamingChatMessageContentsAsync(History())) text.Append(update.Content);
+            await foreach (var update in provider.CreateClient(client).GetStreamingResponseAsync(History())) text.Append(update.Text);
         });
         Assert.That(text.ToString(), Is.EqualTo("partial"));
         Assert.That(exception, Is.Not.InstanceOf<OperationCanceledException>());
@@ -50,7 +59,7 @@ public sealed class SdkStreamLifecycleTests
         var gate = new ResponseGateHandler();
         using var client = server.CreateClient(gate);
         using var cancellation = new CancellationTokenSource();
-        var enumerator = provider.CreateService(client).GetStreamingChatMessageContentsAsync(History(), cancellationToken: cancellation.Token).GetAsyncEnumerator();
+        var enumerator = provider.CreateClient(client).GetStreamingResponseAsync(History(), cancellationToken: cancellation.Token).GetAsyncEnumerator(cancellation.Token);
         HttpResponseMessage? response = null;
         try
         {
@@ -77,7 +86,7 @@ public sealed class SdkStreamLifecycleTests
         var gate = new ResponseGateHandler();
         using var client = server.CreateClient(gate);
         using var cancellation = new CancellationTokenSource();
-        var enumerator = provider.CreateService(client).GetStreamingChatMessageContentsAsync(History(), cancellationToken: cancellation.Token).GetAsyncEnumerator();
+        var enumerator = provider.CreateClient(client).GetStreamingResponseAsync(History(), cancellationToken: cancellation.Token).GetAsyncEnumerator(cancellation.Token);
         HttpResponseMessage? response = null;
         Task<bool>? pending = null;
         try
@@ -100,28 +109,28 @@ public sealed class SdkStreamLifecycleTests
                 try { await pending.WaitAsync(TimeSpan.FromSeconds(3)); }
                 catch (Exception exception) when (exception is OperationCanceledException or IOException or ObjectDisposedException or HttpRequestException) { }
             }
+
             await enumerator.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(3));
         }
     }
 
-    private static async Task ReadPartialTextAsync(IAsyncEnumerator<StreamingChatMessageContent> enumerator)
+    private static async Task ReadPartialTextAsync(IAsyncEnumerator<ChatResponseUpdate> enumerator)
     {
         for (var index = 0; index < 10; index++)
         {
             Assert.That(await enumerator.MoveNextAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5)), Is.True);
-            if (enumerator.Current.Content is not { Length: > 0 } text) continue;
+            if (enumerator.Current.Text is not { Length: > 0 } text) continue;
             Assert.That(text, Is.EqualTo("partial"));
             return;
         }
+
         Assert.Fail("The SDK did not emit the scripted text prefix.");
     }
 
-    private static ChatHistory History() => new([new ChatMessageContent(AuthorRole.User, "hello")]);
+    private static IReadOnlyList<ChatMessage> History() => [new ChatMessage(ChatRole.User, "hello")];
 
     private static Task RespondWithOpenBodyAsync(MockServerSession server, Provider provider, bool shouldDropConnection)
     {
-        // A valid prefix is one HTTP chunk; deliberately omit the zero-length terminal
-        // chunk. The server either closes the socket or holds it until the client closes.
         var prefix = FirstEvents(provider);
         var wire = "HTTP/1.1 200 OK\r\nContent-Type: " + ContentType(provider) + "\r\nTransfer-Encoding: chunked\r\n\r\n" +
             Encoding.UTF8.GetByteCount(prefix).ToString("X") + "\r\n" + prefix + "\r\n";
@@ -130,14 +139,12 @@ public sealed class SdkStreamLifecycleTests
 
     private static string ContentType(Provider provider) => provider == Provider.Ollama ? "application/x-ndjson" : "text/event-stream";
 
-    // Independently written synthetic prefixes, deliberately without terminal evidence.
-    // They establish parser state before socket faults; no fixture asserts API policy.
     private static string FirstEvents(Provider provider) => provider switch
     {
         Provider.OpenAI or Provider.Mistral => "data: {\"id\":\"chatcmpl-test\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test-model\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"partial\"},\"finish_reason\":null}]}\n\n",
         Provider.OpenAIResponses => "event: response.created\ndata: {\"type\":\"response.created\",\"sequence_number\":0,\"response\":{\"id\":\"resp-test\",\"object\":\"response\",\"created_at\":1,\"status\":\"in_progress\",\"model\":\"test-model\",\"output\":[]}}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":1,\"item_id\":\"msg-test\",\"output_index\":0,\"content_index\":0,\"delta\":\"partial\"}\n\n",
         Provider.Anthropic => "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg-test\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"test-model\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"output_tokens\":0}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"partial\"}}\n\n",
-        Provider.Gemini => "data: {\"candidates\":[{\"index\":0,\"content\":{\"role\":\"model\",\"parts\":[{\"text\":\"partial\"}]}}],\"modelVersion\":\"test-model\"}\n\n",
+        Provider.Gemini => "data: {\"event_type\":\"step.start\",\"index\":0,\"step\":{\"type\":\"model_output\",\"content\":[{\"type\":\"text\",\"text\":\"partial\"}]}}\n\n",
         Provider.Ollama => "{\"model\":\"test-model\",\"message\":{\"role\":\"assistant\",\"content\":\"partial\"},\"done\":false}\n",
         _ => throw new ArgumentOutOfRangeException(nameof(provider))
     };

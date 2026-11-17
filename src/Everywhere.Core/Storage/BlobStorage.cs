@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using System.Security.Cryptography;
 using Everywhere.Common;
-using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Utilities;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +15,25 @@ public class BlobStorage(IDbContextFactory<ChatV2DbContext> dbFactory) : IBlobSt
     public const long MaximumCopiedBlobSizeInBytes = 25L * 1024 * 1024;
 
     private readonly string _blobBasePath = RuntimeConstants.EnsureWritableDataFolderPath("blob");
+
+    /// <summary>
+    /// Resolves the managed snapshot without reading an external file registered for
+    /// the same hash. Network-supplied paths are never candidates for tool images.
+    /// </summary>
+    public static string? ResolveSnapshotPath(BlobEntity blob, string mimeType)
+    {
+        var root = RuntimeConstants.EnsureWritableDataFolderPath("blob");
+        if (PathUtilities.IsResolvedPathInsideDirectory(blob.LocalPath, root) && File.Exists(blob.LocalPath)) return blob.LocalPath;
+        if (blob.Sha256.Length != 64 || !blob.Sha256.All(char.IsAsciiHexDigit)) return null;
+        var snapshot = GetSnapshotPath(root, blob.CreatedAt, blob.Sha256, FileUtilities.GetExtensionByMimeType(mimeType));
+        return File.Exists(snapshot) ? snapshot : null;
+    }
+
+    private static string GetSnapshotPath(string root, DateTimeOffset createdAt, string hash, string? extension)
+    {
+        var filename = string.IsNullOrWhiteSpace(extension) ? hash : $"{hash}.{extension.TrimStart('.')}";
+        return Path.Combine(root, createdAt.ToString("yyyyMMdd", CultureInfo.InvariantCulture), filename);
+    }
 
     public Task<BlobEntity> StorageBlobAsync(
         Stream content,
@@ -84,13 +102,10 @@ public class BlobStorage(IDbContextFactory<ChatV2DbContext> dbFactory) : IBlobSt
         async Task<string> CopyBlobAsync(DateTimeOffset createdAt)
         {
             // Organize blobs by date to avoid having too many files in one directory
-            var datePath = createdAt.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-            var blobDirectory = Path.Combine(_blobBasePath, datePath);
-            Directory.CreateDirectory(blobDirectory);
-
             extension ??= FileUtilities.GetExtensionByMimeType(mimeType);
-            var fileName = extension.IsNullOrWhiteSpace() ? sha256String : $"{sha256String}.{extension.TrimStart('.')}";
-            var path = Path.Combine(blobDirectory, fileName);
+            var path = GetSnapshotPath(_blobBasePath, createdAt, sha256String, extension);
+            var blobDirectory = Path.GetDirectoryName(path) ?? throw new IOException("Missing blob directory.");
+            Directory.CreateDirectory(blobDirectory);
             if (path.Length > 1024)
             {
                 throw new PathTooLongException($"Blob local path is too long: {path}");

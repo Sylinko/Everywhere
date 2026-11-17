@@ -1,5 +1,5 @@
 ﻿using Everywhere.Common;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Meai = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -9,20 +9,22 @@ partial class ChatService
         ChatContext chatContext,
         GenerationContext generation,
         IReadOnlyList<ChatMessage> messages,
-        Func<ChatHistory, Task<T>> request,
+        Func<IList<Meai.ChatMessage>, Task<T>> request,
         CancellationToken cancellationToken)
     {
         var offloaded = await ChatHistoryBuilder.ReadImageOffloadsAsync(chatContext, generation.GetPath(), cancellationToken);
         while (true)
         {
-            var input = await ChatHistoryBuilder.BuildModelInputAsync(
+            var input = await ChatHistoryBuilder.CaptureModelInputAsync(
                 generation.PromptRenderer,
                 generation.SystemPrompt,
                 messages,
                 generation.InputModalities,
                 offloaded,
                 cancellationToken,
-                chatContext);
+                chatContext,
+                generation.Session.Dialect,
+                generation.Session.SupportsToolResultBlocks);
             try
             {
                 return await request(input.History);

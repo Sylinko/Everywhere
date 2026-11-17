@@ -7,8 +7,7 @@ using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Common;
 using Everywhere.Statistics;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Meai = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -20,22 +19,22 @@ partial class ChatService
         CancellationToken cancellationToken)
     {
         var generationContext = context.GenerationContext;
-        KernelMixin? selectedMixin = null;
-        var mixin = generationContext.KernelMixin;
+        ModelSession? selectedSession = null;
+        var session = generationContext.Session;
         try
         {
             if (!_settings.SystemAssistant.ToolApproval.AutoSelect)
             {
-                mixin = selectedMixin = _kernelMixinFactory.Create(_settings.SystemAssistant.ToolApproval);
+                session = selectedSession = _modelSessionFactory.Create(_settings.SystemAssistant.ToolApproval);
             }
 
-            if (!mixin.Configuration.SupportsToolCall)
+            if (!session.Configuration.SupportsToolCall)
             {
                 return ToolApprovalResult.Fail(ToolApprovalFailure.AssistantUnavailable, "The configured approval assistant does not support tools.");
             }
 
             var filePlugin = _chatPluginManager.BuiltInPlugins.AsValueEnumerable().OfType<FileSystemPlugin>().First();
-            var reviewer = new ToolApprovalReviewer(this, context, mixin, filePlugin, _settings.SystemAssistant.AllowApprovalFileReads);
+            var reviewer = new ToolApprovalReviewer(this, context, session, filePlugin, _settings.SystemAssistant.AllowApprovalFileReads);
             var input = await BuildApprovalInputAsync(context, scope, cancellationToken);
             return await reviewer.ReviewAsync(input, cancellationToken);
         }
@@ -45,7 +44,7 @@ partial class ChatService
         }
         catch (Exception ex)
         {
-            if (IsContextLengthExceeded(ex, mixin))
+            if (IsContextLengthExceeded(ex, session))
             {
                 return ToolApprovalResult.Fail(
                     ToolApprovalFailure.ContextLimitExceeded,
@@ -53,7 +52,7 @@ partial class ChatService
             }
 
             _logger.LogError(ex, "Automatic approval failed for invocation {InvocationId}", context.InvocationId);
-            var handled = ChatExceptionNormalizer.GetFinalFailure(ChatExceptionNormalizer.Handle(ex, mixin));
+            var handled = ChatExceptionNormalizer.GetFinalFailure(ChatExceptionNormalizer.Handle(ex, session));
             var failure = handled
                 is HandledChatException.InvalidResponse
                 or HandledChatException.GenerationLimitExceeded
@@ -68,7 +67,7 @@ partial class ChatService
         }
         finally
         {
-            selectedMixin?.Dispose();
+            selectedSession?.Dispose();
         }
     }
 
@@ -82,7 +81,7 @@ partial class ChatService
             context.ChatContext,
             generation.GetPath(),
             generation.MaxContextRounds,
-            generation.KernelMixin.Configuration.ContextLimit,
+            generation.Session.Configuration.ContextLimit,
             cancellationToken);
         var messages = historySelection.Messages;
         var history = new List<ToolApprovalHistoryEntry>();
@@ -129,9 +128,11 @@ partial class ChatService
                         history.Add(
                             new ToolApprovalHistoryEntry
                             {
-                                Role = "fact", Attachment = fact
+                                Role = "fact",
+                                Attachment = fact
                             });
                     }
+
                     break;
                 }
                 case ContextCompressionChatMessage { HasSummary: true } summary:
@@ -160,12 +161,13 @@ partial class ChatService
                                 Arguments = call.Arguments
                             });
                     }
+
                     break;
                 }
             }
         }
 
-        var function = context.ChatFunction.KernelFunction;
+        var function = context.Binding.Declaration;
         var input = new ToolApprovalInput
         {
             Environment = new ToolApprovalEnvironment(context.ChatContext.WorkingDirectory),
@@ -174,20 +176,10 @@ partial class ChatService
             PendingAction = new ToolApprovalAction
             {
                 PluginKey = context.ChatPlugin.Key,
-                ToolName = context.FunctionCallContent.FunctionName,
+                ToolName = context.FunctionCallContent.Name,
                 Description = function.Description,
-                Parameters = function.Metadata.Parameters
-                    .AsValueEnumerable()
-                    .Select(parameter => new ToolApprovalParameter(
-                        parameter.Name,
-                        parameter.Description,
-                        parameter.IsRequired,
-                        parameter.Schema?.RootElement,
-                        parameter.DefaultValue is null ?
-                            null :
-                            JsonSerializer.SerializeToElement(parameter.DefaultValue, ToolApprovalInputJsonSerializerContext.ForPrompt.Object)))
-                    .ToArray(),
-                Arguments = context.FunctionCallContent.Arguments
+                Parameters = function.JsonSchema,
+                Arguments = context.FunctionCallContent.Arguments?.AsReadOnly()
             },
             ConsentScope = scope
         };
@@ -197,18 +189,65 @@ partial class ChatService
     /// <summary>
     /// Runs one bounded approval conversation with only file reads and a decision tool.
     /// </summary>
-    private sealed class ToolApprovalReviewer(
-        ChatService owner,
-        FunctionCallContext context,
-        KernelMixin mixin,
-        FileSystemPlugin fileSystemPlugin,
-        bool canReadFiles
-    )
+    private sealed class ToolApprovalReviewer
     {
-        private readonly ReviewTools _tools = new(fileSystemPlugin, context.ChatContext.WorkingDirectory);
+        private readonly ChatService _owner;
+        private readonly FunctionCallContext _context;
+        private readonly ModelSession _session;
+        private readonly ReviewTools _tools;
+        private readonly Dictionary<string, Meai.AIFunction> _executables;
+        private readonly List<Meai.AITool> _declarations;
 
-        /// <summary>The first executed submission is the terminal result of this review.</summary>
+        /// <summary>
+        /// The first executed submission is the terminal result of this review.
+        /// </summary>
         private ToolApprovalResult? _decision;
+
+        public ToolApprovalReviewer(
+            ChatService owner,
+            FunctionCallContext context,
+            ModelSession session,
+            FileSystemPlugin fileSystemPlugin,
+            bool canReadFiles)
+        {
+            _owner = owner;
+            _context = context;
+            _session = session;
+            _tools = new ReviewTools(fileSystemPlugin, context.ChatContext.WorkingDirectory);
+            _executables = new Dictionary<string, Meai.AIFunction>(StringComparer.Ordinal);
+            _declarations = [];
+
+            if (canReadFiles)
+            {
+                AddTool(Meai.AIFunctionFactory.Create(
+                    _tools.ReadAsync,
+                    new Meai.AIFunctionFactoryOptions
+                    {
+                        Name = "read_file",
+                        ExcludeResultSchema = true,
+                        MarshalResult = static (result, _, _) => ValueTask.FromResult(result)
+                    }));
+            }
+
+            AddTool(Meai.AIFunctionFactory.Create(
+                ReviewTools.SubmitApproval,
+                new Meai.AIFunctionFactoryOptions
+                {
+                    Name = "submit_approval",
+                    ExcludeResultSchema = true,
+                    MarshalResult = static (result, _, _) => ValueTask.FromResult(result)
+                }));
+
+            void AddTool(Meai.AIFunction function)
+            {
+                _executables[function.Name] = function;
+                _declarations.Add(Meai.AIFunctionFactory.CreateDeclaration(
+                    function.Name,
+                    function.Description,
+                    function.JsonSchema,
+                    function.ReturnJsonSchema));
+            }
+        }
 
         private const string SystemPrompt =
             """
@@ -269,35 +308,28 @@ partial class ChatService
         /// </summary>
         public async Task<ToolApprovalResult> ReviewAsync(string input, CancellationToken cancellationToken)
         {
-            var history = new ChatHistory();
-            history.AddSystemMessage(SystemPrompt);
-            history.AddUserMessage(input);
-
-            var kernel = new Kernel();
-            var availableTools = KernelPluginFactory.CreateFromObject(_tools, "approval");
-            var reviewPlugin = KernelPluginFactory.CreateFromFunctions(
-                "approval",
-                availableTools.Where(function => canReadFiles || function.Name != "read_file"));
-            kernel.Plugins.Add(reviewPlugin);
-
-            // Keep wire names flat, matching ChatService's tool snapshots and history conversion.
-            foreach (var function in reviewPlugin) function.Metadata.PluginName = null;
+            var history = new List<Meai.ChatMessage>
+            {
+                new(Meai.ChatRole.System, SystemPrompt),
+                new(Meai.ChatRole.User, input)
+            };
 
             var corrections = 0;
-            var ownerNode = context.GenerationContext.CurrentAssistantNode;
+            var ownerNode = _context.GenerationContext.CurrentAssistantNode;
+            var options = _session.CreateChatOptions(tools: _declarations, toolMode: Meai.ChatToolMode.Auto);
+
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var assembled = await owner.ReadResponseAsync(
-                    mixin,
+                var assembled = await _owner.ReadResponseAsync(
+                    _session,
                     history,
-                    mixin.GetPromptExecutionSettings(FunctionChoiceBehavior.Auto(autoInvoke: false)),
-                    kernel,
-                    context.ChatContext.Data.Metadata.Id,
-                    ownerNode?.Id ?? context.FunctionCallChatMessage.Owner?.Id,
+                    options,
+                    _context.ChatContext.Data.Metadata.Id,
+                    ownerNode?.Id ?? _context.FunctionCallChatMessage.Owner?.Id,
                     StatisticsModelInvocationPurpose.ToolApproval,
-                    context.ChatContext,
-                    ownerNode?.Message ?? context.FunctionCallChatMessage,
+                    _context.ChatContext,
+                    ownerNode?.Message ?? _context.FunctionCallChatMessage,
                     cancellationToken,
                     this);
                 if (_decision is { } submittedDecision) return submittedDecision;
@@ -313,24 +345,26 @@ partial class ChatService
                             "The approval assistant did not submit a decision after two reminders.");
                     }
 
-                    history.AddUserMessage(Correction);
+                    history.Add(new Meai.ChatMessage(Meai.ChatRole.User, Correction));
                     continue;
                 }
 
                 _tools.BeginResponse();
                 var ids = new HashSet<string>(StringComparer.Ordinal);
+                var toolResults = new List<Meai.AIContent>(calls.Length);
                 foreach (var call in calls)
                 {
-                    if (string.IsNullOrEmpty(call.Id) || !ids.Add(call.Id))
+                    if (string.IsNullOrEmpty(call.CallId) || !ids.Add(call.CallId))
                     {
                         return ToolApprovalResult.Fail(
                             ToolApprovalFailure.InvalidResponse,
                             "The approval assistant returned missing or duplicate tool-call IDs.");
                     }
-                    FunctionResultContent result;
+
+                    object? result;
                     try
                     {
-                        result = await call.InvokeAsync(kernel, cancellationToken);
+                        result = await InvokeReviewToolAsync(call, cancellationToken);
                     }
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                     {
@@ -350,23 +384,26 @@ partial class ChatService
                             "The approval assistant attempted a fifth file-read batch.");
                     }
 
-                    if (result.Result is ToolApprovalResult currentDecision) return currentDecision;
-                    history.Add(result.ToChatMessage());
+                    if (result is ToolApprovalResult currentDecision) return currentDecision;
+                    toolResults.Add(new Meai.FunctionResultContent(call.CallId, result));
                 }
+
+                history.Add(new Meai.ChatMessage(Meai.ChatRole.Tool, toolResults));
             }
         }
 
-        /// <summary>Executes only explicitly SDK-completed submissions during streaming.</summary>
+        /// <summary>
+        /// Executes only explicitly SDK-completed submissions during streaming.
+        /// </summary>
         public async Task<bool> TrySubmitAsync(
-            StreamingChatMessageContent content,
-            FunctionCallContentBuilder calls,
-            Kernel kernel,
+            Meai.ChatResponseUpdate update,
+            IReadOnlyList<Meai.FunctionCallContent> assembledCalls,
             CancellationToken cancellationToken)
         {
-            foreach (var update in content.Items.OfType<StreamingFunctionCallUpdateContent>())
+            foreach (var call in update.Contents.OfType<Meai.FunctionCallContent>())
             {
-                if (update.InnerContent is not Microsoft.Extensions.AI.FunctionCallContent { Name: "submit_approval" }) continue;
-                if (string.IsNullOrEmpty(update.CallId))
+                if (call.InformationalOnly || call.Name != "submit_approval") continue;
+                if (string.IsNullOrEmpty(call.CallId))
                 {
                     _decision = ToolApprovalResult.Fail(ToolApprovalFailure.InvalidResponse, "The approval submission has no tool-call ID.");
                     return true;
@@ -376,9 +413,9 @@ partial class ChatService
                 var ids = new HashSet<string>(StringComparer.Ordinal);
                 try
                 {
-                    foreach (var call in calls.Build())
+                    foreach (var pendingCall in assembledCalls)
                     {
-                        if (string.IsNullOrEmpty(call.Id) || !ids.Add(call.Id))
+                        if (string.IsNullOrEmpty(pendingCall.CallId) || !ids.Add(pendingCall.CallId))
                         {
                             _decision = ToolApprovalResult.Fail(
                                 ToolApprovalFailure.InvalidResponse,
@@ -386,7 +423,7 @@ partial class ChatService
                             return true;
                         }
 
-                        var result = await call.InvokeAsync(kernel, cancellationToken);
+                        var result = await InvokeReviewToolAsync(pendingCall, cancellationToken);
                         if (_tools.IsReadLimitExceeded)
                         {
                             _decision = ToolApprovalResult.Fail(
@@ -395,45 +432,51 @@ partial class ChatService
                             return true;
                         }
 
-                        if (result.Result is not ToolApprovalResult decision) continue;
+                        if (result is not ToolApprovalResult decision) continue;
                         _decision = decision;
                         return true;
                     }
 
                     _decision = ToolApprovalResult.Fail(ToolApprovalFailure.InvalidResponse, "The approval submission returned no decision.");
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     _decision = ToolApprovalResult.Fail(
                         ToolApprovalFailure.InvalidResponse,
                         $"The approval submission failed ({ex.GetType().Name}).");
                 }
+
                 return true;
             }
+
             return false;
+        }
+
+        private async ValueTask<object?> InvokeReviewToolAsync(Meai.FunctionCallContent call, CancellationToken cancellationToken)
+        {
+            if (call.Exception is { } parseError) throw parseError;
+            if (!_executables.TryGetValue(call.Name, out var function))
+            {
+                throw new InvalidOperationException($"Unknown approval tool '{call.Name}'.");
+            }
+
+            return await function.InvokeAsync(new Meai.AIFunctionArguments(call.Arguments), cancellationToken);
         }
 
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
         private sealed class ReviewTools(FileSystemPlugin plugin, string directory)
         {
-            /// <summary>
-            /// Whether the current response requested at least one file read.
-            /// </summary>
-            /// <summary>
-            /// Whether the reviewer has attempted a fifth file-read batch.
-            /// </summary>
             public bool IsReadLimitExceeded => _readBatches >= 5;
 
             private int _readBatches;
             private bool _hasReadRequests;
 
-            /// <summary>
-            /// Starts a response without resetting the review's cumulative read budget.
-            /// </summary>
             public void BeginResponse() => _hasReadRequests = false;
 
-            [KernelFunction("read_file")]
             [Description(
                 "Read file content needed to assess the pending operation. " +
                 "Supports local paths, file:// URIs, and source-qualified skill:// resources. " +
@@ -457,8 +500,6 @@ partial class ChatService
                 CancellationToken cancellationToken = default)
             {
                 ArgumentException.ThrowIfNullOrWhiteSpace(path);
-                // Dispatch is sequential. All reads in this response share one budget entry,
-                // regardless of where the decision call appears in the provider's call order.
                 if (!_hasReadRequests)
                 {
                     _hasReadRequests = true;
@@ -480,12 +521,10 @@ partial class ChatService
                 }
                 catch (Exception ex)
                 {
-                    // Ordinary read failures are evidence; binding errors never enter this method.
                     return $"File read failed: {ex.Message.SafeSubstring(0, 1024)}";
                 }
             }
 
-            [KernelFunction("submit_approval")]
             [Description(
                 "Submit the final decision for the exact pending operation and consent scope. " +
                 "The decision ends this review; it does not modify the operation.")]

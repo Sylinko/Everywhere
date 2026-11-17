@@ -2,6 +2,8 @@
 using Everywhere.AI;
 using Everywhere.Collections;
 using Everywhere.Common;
+using Everywhere.Harness;
+using Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -90,16 +92,15 @@ public interface IChatPluginScope
     IReadOnlyList<ChatPlugin> Plugins { get; }
 
     /// <summary>
-    /// Tries to get the plugin and function by function name. Returns similar function names if not found.
+    /// Gets the declaration-only catalog in model order. No invocation or approval state leaves the host.
     /// </summary>
-    /// <param name="functionName"></param>
-    /// <param name="plugin"></param>
-    /// <param name="function"></param>
-    /// <param name="similarFunctionNames"></param>
-    /// <returns></returns>
-    bool TryGetPluginAndFunction(
+    IReadOnlyList<AIFunctionDeclaration> Declarations { get; }
+
+    /// <summary>
+    /// Resolves the advertised name to its captured invocation target, or suggests available names.
+    /// </summary>
+    bool TryGetBinding(
         string functionName,
-        [NotNullWhen(true)] out ChatPlugin? plugin,
-        [NotNullWhen(true)] out ChatFunction? function,
+        [NotNullWhen(true)] out ToolBinding? binding,
         [NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames);
 }

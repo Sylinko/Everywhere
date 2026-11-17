@@ -1,7 +1,6 @@
 ﻿using System.Net.Sockets;
 using System.Security.Authentication;
 using Everywhere.Common;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.Extensions;
 
@@ -18,7 +17,6 @@ public static class ExceptionExtensions
         switch (e)
         {
             case HttpRequestException:
-            case HttpOperationException:
             case HttpIOException:
             case SocketException:
             case AuthenticationException:

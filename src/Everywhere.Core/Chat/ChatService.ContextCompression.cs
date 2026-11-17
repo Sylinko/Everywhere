@@ -3,8 +3,7 @@ using Everywhere.AI.Prompts;
 using Everywhere.Common;
 using Everywhere.Statistics;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Meai = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -17,11 +16,10 @@ partial class ChatService
         CompressionBoundary boundary,
         CancellationToken cancellationToken)
     {
-        // Select from one branch snapshot before adding the attempt's timeline row.
         var nodes = generationContext.GetPath();
         var boundaryIndex = ResolveCompressionBoundary(nodes, boundary);
         var coveredThroughNodeId = boundaryIndex >= 0 ? nodes[boundaryIndex].Id : Guid.Empty;
-        var configuration = generationContext.KernelMixin.Configuration;
+        var configuration = generationContext.Session.Configuration;
         var usageBefore = chatContext.ContextUsage.Snapshot;
         var compressionMessage = new ContextCompressionChatMessage(
             coveredThroughNodeId,
@@ -42,9 +40,6 @@ partial class ChatService
                     LocaleKey.ContextCompression_Error_NoHistory);
             }
 
-            // A preceding compaction can append its row after the current assistant placeholder.
-            // Keep those checkpoints available without pulling the current user turn into the
-            // source. The history builder ignores checkpoints whose anchor is outside this prefix.
             var sourceNodes = nodes
                 .AsValueEnumerable()
                 .Take(boundaryIndex + 1)
@@ -88,7 +83,7 @@ partial class ChatService
                 }
                 catch (Exception ex)
                 {
-                    var handledException = ChatExceptionNormalizer.Handle(ex, generationContext.KernelMixin, new ChatRequestFailureContext(cancellationToken));
+                    var handledException = ChatExceptionNormalizer.Handle(ex, generationContext.Session, new ChatRequestFailureContext(cancellationToken));
                     if (ChatExceptionNormalizer.GetFinalFailure(handledException) is not HandledChatException.InvalidRequest.ContextLengthExceeded ||
                         !TryTrimOldestConversationUnit(messages))
                     {
@@ -116,7 +111,7 @@ partial class ChatService
         }
         catch (Exception ex)
         {
-            ex = ChatExceptionNormalizer.Handle(ex, generationContext.KernelMixin, new ChatRequestFailureContext(cancellationToken));
+            ex = ChatExceptionNormalizer.Handle(ex, generationContext.Session, new ChatRequestFailureContext(cancellationToken));
             await chatContext.DispatchAsync(() => compressionMessage.Fail(ex.GetFriendlyMessage(), DateTimeOffset.UtcNow));
             _logger.LogError(ex, "Failed to compact chat context");
             return new CompressionResult(false, ex);
@@ -129,9 +124,6 @@ partial class ChatService
             var compressionIndex = messages.FindLastIndex(static message => message is ContextCompressionChatMessage { HasSummary: true });
             if (compressionIndex > 0)
             {
-                // Retained user messages are intentionally placed before the prior summary. They are
-                // useful verbatim context, but are the first optional history to drop when the
-                // compression request itself exceeds the provider limit.
                 messages.RemoveAt(0);
                 return true;
             }
@@ -139,7 +131,7 @@ partial class ChatService
             var startIndex = compressionIndex + 1;
             var firstUserIndex = messages.FindIndex(
                 startIndex,
-                static message => message.Role.Label == AuthorRole.User.Label && message is not ContextCompressionChatMessage);
+                static message => message.Role == Meai.ChatRole.User && message is not ContextCompressionChatMessage);
             if (firstUserIndex < 0)
             {
                 if (messages.Count - startIndex > 1)
@@ -162,7 +154,7 @@ partial class ChatService
 
             var nextUserIndex = messages.FindIndex(
                 firstUserIndex + 1,
-                static message => message.Role.Label == AuthorRole.User.Label && message is not ContextCompressionChatMessage);
+                static message => message.Role == Meai.ChatRole.User && message is not ContextCompressionChatMessage);
             if (nextUserIndex < 0)
             {
                 if (compressionIndex < 0) return false;
@@ -207,7 +199,7 @@ partial class ChatService
 
         return summary;
 
-        Task<AssembledResponse> RequestSummaryAsync(ChatHistory history)
+        Task<AssembledResponse> RequestSummaryAsync(IList<Meai.ChatMessage> history)
         {
             if (history.Count <= 1)
             {
@@ -216,12 +208,11 @@ partial class ChatService
                     LocaleKey.ContextCompression_Error_NoHistory);
             }
 
-            history.AddUserMessage(DefaultPrompts.ContextCompressionPrompt);
+            history.Add(new Meai.ChatMessage(Meai.ChatRole.User, DefaultPrompts.ContextCompressionPrompt));
             return ReadResponseAsync(
-                generationContext.KernelMixin,
-                history,
-                generationContext.KernelMixin.GetPromptExecutionSettings(FunctionChoiceBehavior.None()),
-                generationContext.Kernel,
+                generationContext.Session,
+                [.. history],
+                generationContext.Session.CreateChatOptions(toolMode: Meai.ChatToolMode.None),
                 chatData.Metadata.Id,
                 compressionNode.Id,
                 StatisticsModelInvocationPurpose.ContextCompression,

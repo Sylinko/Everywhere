@@ -1,11 +1,9 @@
 ﻿using System.ClientModel;
 using System.Net;
-using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Text.Json;
 using Everywhere.Common;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
 using OllamaSharp.Models.Exceptions;
 
 namespace Everywhere.AI.Tests;
@@ -19,11 +17,17 @@ public sealed class ExceptionClassificationTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new
         {
-            statusCode = fixture.Status, body = new { type = "STRING", @string = fixture.WireBody, charset = "UTF-8" },
-            headers = new Dictionary<string, string[]> { ["Content-Type"] = [(fixture.ContentType ?? "application/json") + "; charset=utf-8"], ["Retry-After"] = ["2"], ["request-id"] = [fixture.Id] }
+            statusCode = fixture.Status,
+            body = new { type = "STRING", @string = fixture.WireBody, charset = "UTF-8" },
+            headers = new Dictionary<string, string[]>
+            {
+                ["Content-Type"] = [(fixture.ContentType ?? "application/json") + "; charset=utf-8"],
+                ["Retry-After"] = ["2"],
+                ["request-id"] = [fixture.Id]
+            }
         });
         using var client = server.CreateClient();
-        var original = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateService(client)));
+        var original = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateClient(client)));
         var handled = Normalize(original);
         using (Assert.EnterMultipleScope())
         {
@@ -52,7 +56,7 @@ public sealed class ExceptionClassificationTests
     [Test]
     public void Handle_WhenWrappedJsonFails_UsesInnerCauseWithoutReplacingOriginal()
     {
-        var original = new KernelException("Unexpected response from model", new JsonException("wrong response shape"));
+        var original = new InvalidOperationException("Unexpected response from model", new JsonException("wrong response shape"));
         var handled = Normalize(original);
         Assert.That(handled, Is.InstanceOf<HandledChatException.InvalidResponse.MalformedJson>());
         Assert.That(handled.InnerException, Is.SameAs(original));
@@ -114,15 +118,17 @@ public sealed class ExceptionClassificationTests
     [Test]
     public void Handle_WhenErrorBodyEchoesRequest_DoesNotClassifyEchoedParameters()
     {
-        var handled = Normalize(new HttpOperationException(HttpStatusCode.ServiceUnavailable,
-            "{\"error\":{\"message\":\"upstream failed\"},\"request\":{\"prompt\":\"invalid api key\",\"temperature\":1}}", "service failed", null));
+        var handled = Normalize(CreateHttpFailure(
+            HttpStatusCode.ServiceUnavailable,
+            "{\"error\":{\"message\":\"upstream failed\"},\"request\":{\"prompt\":\"invalid api key\",\"temperature\":1}}",
+            "service failed"));
         Assert.That(handled, Is.InstanceOf<HandledChatException.ServiceUnavailable>());
     }
 
     [Test]
     public void Handle_WhenEvidenceBodyIsTooLarge_BoundsDiagnosticCopy()
     {
-        var handled = Normalize(new HttpOperationException(HttpStatusCode.ServiceUnavailable, new string('x', 100000), "service failed", null));
+        var handled = Normalize(CreateHttpFailure(HttpStatusCode.ServiceUnavailable, new string('x', 100000), "service failed"));
         Assert.That(handled.Diagnostics?.Evidence.ResponseBody?.Length, Is.EqualTo(ChatExceptionEvidenceExtractor.MaximumBodyLength));
         Assert.That(handled.Recovery, Is.InstanceOf<ChatExceptionRecovery.Retry>());
     }
@@ -139,7 +145,7 @@ public sealed class ExceptionClassificationTests
     [TestCase("NaN")]
     public void Handle_WhenRetryHeaderIsInvalid_IgnoresItWithoutMaskingFailure(string value)
     {
-        var original = new HttpOperationException(HttpStatusCode.ServiceUnavailable, "upstream unavailable", "failed", null);
+        var original = CreateHttpFailure(HttpStatusCode.ServiceUnavailable, "upstream unavailable", "failed");
         original.Data["Everywhere.Http.Retry-After"] = value;
         var handled = Normalize(original);
         Assert.That(handled.Diagnostics?.Evidence.RetryAfter, Is.Null);
@@ -179,12 +185,11 @@ public sealed class ExceptionClassificationTests
         int statusCode,
         bool isInputLimit)
     {
-        // Synthetic regression input: a populated param must not hide a recoverable image limit.
         var body = JsonSerializer.Serialize(new
         {
             error = new { code, param = parameter, message = "Too many images in request: 31 > 30" }
         });
-        var handled = Normalize(new HttpOperationException((HttpStatusCode)statusCode, body, "Request failed", null));
+        var handled = Normalize(CreateHttpFailure((HttpStatusCode)statusCode, body, "Request failed"));
         Assert.That(handled is HandledChatException.InvalidRequest.RequestInputTooLarge, Is.EqualTo(isInputLimit));
     }
 
@@ -196,19 +201,18 @@ public sealed class ExceptionClassificationTests
         {
             error = new { code, param = parameter, message = "The parameter is not supported by this model." }
         });
-        var handled = Normalize(new HttpOperationException(HttpStatusCode.BadRequest, body, "Request failed", null));
+        var handled = Normalize(CreateHttpFailure(HttpStatusCode.BadRequest, body, "Request failed"));
         Assert.That(handled, Is.TypeOf(expectedType));
     }
 
     [Test]
     public void Handle_WhenParameterErrorReportsContextLimit_UsesContextClassification()
     {
-        // The generic parameter-code fallback must reuse message diagnosis beyond image limits.
         var body = JsonSerializer.Serialize(new
         {
             error = new { code = "invalid_parameter", param = "messages", message = "Maximum context length exceeded" }
         });
-        var handled = Normalize(new HttpOperationException(HttpStatusCode.BadRequest, body, "Request failed", null));
+        var handled = Normalize(CreateHttpFailure(HttpStatusCode.BadRequest, body, "Request failed"));
         using (Assert.EnterMultipleScope())
         {
             Assert.That(handled, Is.TypeOf<HandledChatException.InvalidRequest.ContextLengthExceeded>());
@@ -228,10 +232,12 @@ public sealed class ExceptionClassificationTests
     [Test]
     public void Handle_WhenOfficialGatewayWrapsUpstream_UsesUpstreamAndRetainsGatewayStatus()
     {
-        using var mixin = CreateOfficialMixin();
-        var original = new HttpOperationException(HttpStatusCode.BadGateway,
-            "{\"success\":false,\"error\":{\"code\":\"upstream_error\",\"upstream\":{\"status\":503,\"body\":{\"error\":{\"message\":\"Invalid API key provided\"}}}}}", "upstream_error", null);
-        var handled = (HandledChatException)ChatExceptionNormalizer.Handle(original, mixin);
+        using var session = CreateOfficialSession();
+        var original = CreateHttpFailure(
+            HttpStatusCode.BadGateway,
+            "{\"success\":false,\"error\":{\"code\":\"upstream_error\",\"upstream\":{\"status\":503,\"body\":{\"error\":{\"message\":\"Invalid API key provided\"}}}}}",
+            "upstream_error");
+        var handled = (HandledChatException)ChatExceptionNormalizer.Handle(original, session);
         Assert.That(handled, Is.InstanceOf<HandledChatException.AuthenticationFailure.InvalidApiKey>());
         Assert.That(handled.Diagnostics?.Evidence.StatusCode, Is.EqualTo(HttpStatusCode.ServiceUnavailable));
         Assert.That(handled.Diagnostics?.Evidence.GatewayStatusCode, Is.EqualTo(HttpStatusCode.BadGateway));
@@ -241,15 +247,17 @@ public sealed class ExceptionClassificationTests
     [Test]
     public void Handle_WhenOfficialCodeIsKnown_PreservesConnectionSemanticsAndFriendlyKey()
     {
-        using var mixin = CreateOfficialMixin();
-        var original = new HttpOperationException(HttpStatusCode.ServiceUnavailable,
-            "{\"success\":false,\"error\":{\"code\":\"billing_insufficient_credits\",\"message\":\"raw diagnostic marker\"}}", "gateway failed", null);
-        var handled = (HandledChatException)ChatExceptionNormalizer.Handle(original, mixin);
+        using var session = CreateOfficialSession();
+        var original = CreateHttpFailure(
+            HttpStatusCode.ServiceUnavailable,
+            "{\"success\":false,\"error\":{\"code\":\"billing_insufficient_credits\",\"message\":\"raw diagnostic marker\"}}",
+            "gateway failed");
+        var handled = (HandledChatException)ChatExceptionNormalizer.Handle(original, session);
         Assert.That(handled, Is.InstanceOf<HandledChatException.QuotaExceeded>());
         Assert.That(handled.Diagnostics?.Source, Is.EqualTo("connection"));
         Assert.That(handled.Diagnostics?.Evidence.ErrorMessage, Is.EqualTo("raw diagnostic marker"));
         Assert.That(handled.FriendlyMessageKey, Is.SameAs(handled.Diagnostics?.Evidence.FriendlyMessageKey));
-        Assert.That(ChatExceptionNormalizer.Handle(handled, mixin), Is.SameAs(handled));
+        Assert.That(ChatExceptionNormalizer.Handle(handled, session), Is.SameAs(handled));
     }
 
     [TestCaseSource(nameof(ObservedMessages))]
@@ -269,16 +277,25 @@ public sealed class ExceptionClassificationTests
         foreach (var fixture in fixtures) yield return new TestCaseData(fixture).SetName($"Observed_{fixture.ShortId}");
     }
 
-    private static KernelMixin CreateOfficialMixin()
+    private static HttpRequestException CreateHttpFailure(HttpStatusCode status, string body, string message)
     {
-        // Release builds intentionally omit the private deployment's gateway URL.
-        // Bind the real connection adapter without changing build constants or sending HTTP.
-        var method = typeof(KernelMixinFactory).GetMethod("EnrichOfficialExceptionEvidence", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+        var ex = new HttpRequestException(message, null, status);
+        ex.Data["Everywhere.Http.StatusCode"] = (int)status;
+        ex.Data["Everywhere.Http.ResponseBody"] = body;
+        return ex;
+    }
+
+    private static ModelSession CreateOfficialSession()
+    {
+        var method = typeof(ModelSessionFactory).GetMethod("EnrichOfficialExceptionEvidence", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             ?? throw new MissingMethodException("Official evidence adapter is missing.");
         var enrich = method.CreateDelegate<Action<ChatExceptionEvidence>>();
         var connection = new ModelConnection(ModelProviderSchema.OpenAI, "https://test.invalid/v1", "test-key", new HttpClient(), enrich);
-        return new OpenAIKernelMixin(new AdvancedAssistantConfiguration { Schema = ModelProviderSchema.OpenAI, ModelId = "test-model" },
-            new OpenAIOptions(), connection, NullLoggerFactory.Instance);
+        return new OpenAIModelSession(
+            new AdvancedAssistantConfiguration { Schema = ModelProviderSchema.OpenAI, ModelId = "test-model" },
+            new OpenAIOptions(),
+            connection,
+            NullLoggerFactory.Instance);
     }
 
     private static Type ResolveExpectedType(string name) =>
@@ -287,5 +304,4 @@ public sealed class ExceptionClassificationTests
 
     private static HandledChatException Normalize(Exception original, ChatRequestFailureContext context = default) =>
         (HandledChatException)ChatExceptionNormalizer.Handle(original, null, context);
-
 }

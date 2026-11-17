@@ -1,7 +1,6 @@
 using System.ClientModel;
 using System.Text.Json;
 using Anthropic.Exceptions;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.AI.Tests;
 
@@ -33,11 +32,18 @@ public sealed class SdkErrorTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new
         {
-            statusCode = fixture.Status, body = new { type = "STRING", @string = fixture.WireBody, charset = "UTF-8" },
-            headers = new Dictionary<string, string[]> { ["Content-Type"] = [(fixture.ContentType ?? "application/json") + "; charset=utf-8"], ["Retry-After"] = ["1"], ["x-request-id"] = [fixture.Id], ["request-id"] = [fixture.Id] }
+            statusCode = fixture.Status,
+            body = new { type = "STRING", @string = fixture.WireBody, charset = "UTF-8" },
+            headers = new Dictionary<string, string[]>
+            {
+                ["Content-Type"] = [(fixture.ContentType ?? "application/json") + "; charset=utf-8"],
+                ["Retry-After"] = ["1"],
+                ["x-request-id"] = [fixture.Id],
+                ["request-id"] = [fixture.Id]
+            }
         });
         using var client = server.CreateClient();
-        var exception = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateService(client)));
+        var exception = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateClient(client)));
         var evidence = ExtractEvidence(exception);
         using (Assert.EnterMultipleScope())
         {
@@ -58,8 +64,6 @@ public sealed class SdkErrorTests
             Assert.That(exception.Data["Everywhere.Http.Retry-After"], Is.EqualTo("1"));
             Assert.That(exception.Data["Everywhere.Http.x-request-id"], Is.EqualTo(fixture.Id));
         }
-        // Anthropic retains selected headers through its static donor; the production
-        // normalization tests also verify them at the common evidence entry point.
     }
 
     [TestCase(Provider.OpenAI)]
@@ -70,11 +74,12 @@ public sealed class SdkErrorTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new
         {
-            statusCode = 503, body = "{\"error\":{\"type\":\"api_error\",\"message\":\"temporarily unavailable\"}}",
+            statusCode = 503,
+            body = "{\"error\":{\"type\":\"api_error\",\"message\":\"temporarily unavailable\"}}",
             headers = new Dictionary<string, string[]> { ["Content-Type"] = ["application/json"], ["Retry-After-Ms"] = ["1"] }
         });
         using var client = server.CreateClient();
-        var exception = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateService(client, maxRetries: 1)));
+        var exception = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateClient(client, maxRetries: 1)));
         Assert.That(ExtractEvidence(exception).Status, Is.EqualTo(503));
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(2));
     }
@@ -90,16 +95,17 @@ public sealed class SdkErrorTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new
         {
-            statusCode = status, body = "{\"error\":{\"type\":\"api_error\",\"message\":\"try again\"}}",
+            statusCode = status,
+            body = "{\"error\":{\"type\":\"api_error\",\"message\":\"try again\"}}",
             headers = new Dictionary<string, string[]> { ["Retry-After-Ms"] = ["1"] }
         }, times: 2);
         await server.CompleteAsync(provider, new { text = "recovered", streaming = true }, times: 1);
         using var client = server.CreateClient();
-        var updates = await SdkStreamingTests.CollectAsync(provider.CreateService(client, maxRetries: 2));
-        Assert.That(string.Concat(updates.Select(update => update.Content)), Is.EqualTo("recovered"));
+        var updates = await SdkStreamingTests.CollectAsync(provider.CreateClient(client, maxRetries: 2));
+        Assert.That(string.Concat(updates.Select(static update => update.Text)), Is.EqualTo("recovered"));
         var requests = await server.RequestsAsync();
         Assert.That(requests, Has.Length.EqualTo(3));
-        Assert.That(requests.Select(request => request.GetProperty("body").GetRawText()), Is.All.EqualTo(requests[0].GetProperty("body").GetRawText()));
+        Assert.That(requests.Select(static request => request.GetProperty("body").GetRawText()), Is.All.EqualTo(requests[0].GetProperty("body").GetRawText()));
     }
 
     [TestCase(Provider.Gemini)]
@@ -115,8 +121,8 @@ public sealed class SdkErrorTests
         using var firstClient = first.CreateClient();
         using var secondClient = second.CreateClient();
         var exceptions = await Task.WhenAll(
-            SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateService(firstClient))),
-            SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateService(secondClient))));
+            SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateClient(firstClient))),
+            SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateClient(secondClient))));
         Assert.That(ExtractEvidence(exceptions[0]), Is.EqualTo((429, "first failure")));
         Assert.That(ExtractEvidence(exceptions[1]), Is.EqualTo((503, "second failure")));
         Assert.That(exceptions[0].Data["Everywhere.Http.x-request-id"], Is.EqualTo("first"));
@@ -127,7 +133,6 @@ public sealed class SdkErrorTests
     {
         ClientResultException failure => (failure.Status, failure.GetRawResponse()?.Content.ToString() ?? string.Empty),
         AnthropicApiException failure => ((int)failure.StatusCode, failure.ResponseBody),
-        HttpOperationException failure => ((int?)failure.StatusCode ?? 0, failure.ResponseContent ?? string.Empty),
         HttpRequestException failure => ((int?)failure.StatusCode ?? 0, failure.Data["Everywhere.Http.ResponseBody"] as string ?? string.Empty),
         _ when exception.Data["Everywhere.Http.StatusCode"] is int status => (status, exception.Data["Everywhere.Http.ResponseBody"] as string ?? string.Empty),
         _ => throw new AssertionException($"Unexpected SDK exception type: {exception}")

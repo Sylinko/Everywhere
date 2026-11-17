@@ -1,6 +1,6 @@
 using Anthropic.Models.Messages;
 using Everywhere.Common;
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 using OpenAI.Responses;
 
 namespace Everywhere.AI;
@@ -11,28 +11,28 @@ public static partial class ChatExceptionNormalizer
     /// Classifies explicit unsuccessful termination evidence. Missing or unfamiliar finish
     /// fields alone remain compatible; an explicit failed/incomplete status does not.
     /// </summary>
-    public static HandledChatException? FromCompletion(StreamingChatMessageContent content, KernelMixin mixin)
+    public static HandledChatException? FromCompletion(ChatResponseUpdate update, ModelSession session)
     {
-        var reason = content.Metadata?.GetValueOrDefault("FinishReason")?.ToString();
-        var providerReason = content.InnerContent switch
+        var reason = update.FinishReason?.Value;
+        var providerReason = update.RawRepresentation switch
         {
             RawMessageStreamEvent { Value: RawMessageDeltaEvent delta } => delta.Delta.StopReason?.Raw(),
             RawMessageDeltaEvent delta => delta.Delta.StopReason?.Raw(),
             StreamingResponseIncompleteUpdate incomplete => incomplete.Response.IncompleteStatusDetails?.Reason.ToString(),
             _ => null
         };
-        var hasExplicitFailure = content.InnerContent is StreamingResponseIncompleteUpdate or StreamingResponseFailedUpdate;
+        var hasExplicitFailure = update.RawRepresentation is StreamingResponseIncompleteUpdate or StreamingResponseFailedUpdate;
         var value = (providerReason ?? reason)?.Trim().ToLowerInvariant();
         if (value is null && !hasExplicitFailure) return null;
 
         var original = new InvalidOperationException($"Generation terminated with reason '{providerReason ?? reason ?? "unspecified"}'.");
         var evidence = new ChatExceptionEvidence(original) { FinishReason = reason, ProviderFinishReason = providerReason };
-        return ClassifyCompletion(evidence, mixin, value, hasExplicitFailure);
+        return ClassifyCompletion(evidence, session, value, hasExplicitFailure);
     }
 
     private static HandledChatException? ClassifyCompletion(
         ChatExceptionEvidence evidence,
-        KernelMixin? mixin,
+        ModelSession? session,
         string? value,
         bool hasExplicitFailure)
     {
@@ -62,11 +62,11 @@ public static partial class ChatExceptionNormalizer
                 new HandledChatException.InvalidRequest.InvalidThoughtSignature(original),
             "no_image" =>
                 new HandledChatException.InvalidResponse.EmptyResponse(original),
-            "other" or "image_other" when mixin?.Configuration.Schema == ModelProviderSchema.Google =>
+            "other" or "image_other" when session?.Configuration.Schema == ModelProviderSchema.Google =>
                 new HandledChatException.InvalidResponse.Incomplete(original),
-            "aborted" =>
+            "aborted" or "incomplete" =>
                 new HandledChatException.InvalidResponse.Incomplete(original),
-            "error" when mixin?.Configuration.Schema == ModelProviderSchema.Mistral =>
+            "error" when session?.Configuration.Schema == ModelProviderSchema.Mistral =>
                 new HandledChatException.InvalidResponse.Incomplete(original),
             _ => hasExplicitFailure ?
                 new HandledChatException.InvalidResponse.Incomplete(original) :
@@ -76,7 +76,7 @@ public static partial class ChatExceptionNormalizer
         if (error is null) return null;
         error.Diagnostics = new ChatExceptionDiagnostics(evidence, "generation-termination", "completion")
         {
-            ModelId = mixin?.Configuration.ModelId
+            ModelId = session?.Configuration.ModelId
         };
         return error;
     }

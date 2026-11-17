@@ -24,6 +24,29 @@ public sealed class MetadataDictionaryMessagePackFormatter : IMessagePackFormatt
 
     private static readonly Dictionary<int, Type> CodeTypes = TypeCodes.ToDictionary(kv => kv.Value, kv => kv.Key);
 
+    /// <summary>
+    /// Detaches typed properties at the tool boundary so unsupported values fail immediately rather than during persistence.
+    /// </summary>
+    public static Dictionary<string, object?>? CaptureProperties(IReadOnlyDictionary<string, object?>? source)
+    {
+        if (source is not { Count: > 0 }) return null;
+
+        var captured = new Dictionary<string, object?>(source.Count);
+        foreach (var (key, value) in source)
+        {
+            captured[key] = value switch
+            {
+                null => null,
+                JsonElement json when json.ValueKind != JsonValueKind.Undefined => json.Clone(),
+                byte[] bytes => bytes.ToArray(),
+                string or int or long or float or double or bool => value,
+                _ => JsonSerializer.SerializeToElement(value, value.GetType())
+            };
+        }
+
+        return captured;
+    }
+
     public static void Serialize(
         ref MessagePackWriter writer,
         IReadOnlyDictionary<string, object?>? value,
@@ -70,18 +93,22 @@ public sealed class MetadataDictionaryMessagePackFormatter : IMessagePackFormatt
                 continue;
             }
 
-            reader.ReadArrayHeader();
-            var typeCode = reader.ReadInt32();
-            if (typeCode == 0 || !CodeTypes.TryGetValue(typeCode, out var targetType))
+            if (reader.ReadArrayHeader() != 2)
             {
-                throw new MessagePackSerializationException($"Unsupported dictionary value type code: {typeCode}");
+                throw new MessagePackSerializationException("A typed metadata entry needs a code and a value.");
             }
 
-            var val = MessagePackSerializer.Deserialize(targetType, ref reader, options);
-            dictionary[key] = val;
+            var typeCode = reader.ReadInt32();
+            if (!CodeTypes.TryGetValue(typeCode, out var targetType))
+            {
+                reader.Skip();
+                continue;
+            }
+
+            dictionary[key] = MessagePackSerializer.Deserialize(targetType, ref reader, options);
         }
 
-        return dictionary;
+        return dictionary.Count == 0 ? null : dictionary;
     }
 
     private static void SerializeEntry(
@@ -100,7 +127,11 @@ public sealed class MetadataDictionaryMessagePackFormatter : IMessagePackFormatt
         var type = value.GetType();
         if (!TypeCodes.TryGetValue(type, out var typeCode))
         {
-            throw new MessagePackSerializationException($"Unsupported dictionary value type: {type.FullName}");
+            var json = JsonSerializer.SerializeToElement(value, type);
+            writer.WriteArrayHeader(2);
+            writer.Write(8);
+            MessagePackSerializer.Serialize(ref writer, json, options);
+            return;
         }
 
         writer.WriteArrayHeader(2);

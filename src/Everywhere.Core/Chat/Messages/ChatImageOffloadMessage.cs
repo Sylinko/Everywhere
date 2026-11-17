@@ -1,5 +1,5 @@
 ﻿using MessagePack;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -26,7 +26,7 @@ public sealed partial class ChatImageOffloadMessage(
     public override ChatMessageKind Kind => ChatMessageKind.ImageOffload;
 
     /// <inheritdoc />
-    public override AuthorRole Role => new("action");
+    public override ChatRole Role => new("action");
 
     /// <inheritdoc />
     public override bool IsHidden => true;

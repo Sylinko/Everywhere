@@ -1,7 +1,5 @@
-﻿using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -46,7 +44,7 @@ public sealed partial class JinaConnector(string apiKey, HttpClient httpClient, 
         [JsonPropertyName("data")]
         public IReadOnlyList<Item>? Data { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults() => Data?.Select(x => new TextSearchResult(x.Description)
+        public IEnumerable<WebSearchResult> ToResults() => Data?.Select(x => new WebSearchResult(x.Description)
         {
             Name = x.Title,
             Link = x.Url,

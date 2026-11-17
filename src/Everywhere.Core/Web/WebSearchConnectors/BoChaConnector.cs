@@ -1,7 +1,5 @@
-﻿using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -47,7 +45,7 @@ public sealed partial class BochaConnector(string apiKey, HttpClient httpClient,
         [JsonPropertyName("data")]
         public Data? Data { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults() => Data?.WebPages?.Value?.Select(x => new TextSearchResult(x.Summary ?? x.Snippet)
+        public IEnumerable<WebSearchResult> ToResults() => Data?.WebPages?.Value?.Select(x => new WebSearchResult(x.Summary ?? x.Snippet)
         {
             Name = x.Name,
             Link = x.Url,

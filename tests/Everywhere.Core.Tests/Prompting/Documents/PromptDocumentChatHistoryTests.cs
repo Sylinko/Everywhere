@@ -1,11 +1,11 @@
 using Everywhere.AI;
 using Everywhere.Chat;
+using Everywhere.Harness;
 using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
 using Lucide.Avalonia;
 using MessagePack;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.Extensions.AI;
 using NSubstitute;
 
 namespace Everywhere.Core.Tests.Prompting.Documents;
@@ -24,10 +24,10 @@ public sealed class PromptDocumentChatHistoryTests
                 new PromptText(required).WithPriority(10),
                 new PromptText(optional).WithPriority(0))
         ];
-        var call = new FunctionCallContent("read_file", "file_system", "call-1", null);
-        var persistedResult = new FunctionResultContent(call, document);
+        var call = new ToolCallRecord("read_file", "file_system", "call-1", null);
+        var persistedResult = new ToolResultRecord(call.FunctionName, call.PluginName, call.Id, document);
         var bytes = MessagePackSerializer.Serialize(persistedResult);
-        var result = MessagePackSerializer.Deserialize<FunctionResultContent>(bytes);
+        var result = MessagePackSerializer.Deserialize<ToolResultRecord>(bytes);
         var functionMessage = new FunctionCallChatMessage(LucideIconKind.File, null);
         functionMessage.AddCall(call);
         functionMessage.AddResult(result);
@@ -42,8 +42,8 @@ public sealed class PromptDocumentChatHistoryTests
             Modalities.Text);
 
         var modelResult = history
-            .Single(static message => message.Role == AuthorRole.Tool)
-            .Items
+            .Single(static message => message.Role == ChatRole.Tool)
+            .Contents
             .OfType<FunctionResultContent>()
             .Single();
         var restoredDocument = result.Result as PromptDocument;
@@ -66,10 +66,10 @@ public sealed class PromptDocumentChatHistoryTests
             TokenHelper.EstimateTokenCount(required),
             new PromptText(required).WithPriority(10),
             new PromptText(optional).WithPriority(0));
-        var call = new FunctionCallContent("read_file", "file_system", "call-1", null);
-        var persistedResult = new FunctionResultContent(call, node);
+        var call = new ToolCallRecord("read_file", "file_system", "call-1", null);
+        var persistedResult = new ToolResultRecord(call.FunctionName, call.PluginName, call.Id, node);
         var bytes = MessagePackSerializer.Serialize(persistedResult);
-        var result = MessagePackSerializer.Deserialize<FunctionResultContent>(bytes);
+        var result = MessagePackSerializer.Deserialize<ToolResultRecord>(bytes);
         var functionMessage = new FunctionCallChatMessage(LucideIconKind.File, null);
         functionMessage.AddCall(call);
         functionMessage.AddResult(result);
@@ -84,8 +84,8 @@ public sealed class PromptDocumentChatHistoryTests
             Modalities.Text);
 
         var modelResult = history
-            .Single(static message => message.Role == AuthorRole.Tool)
-            .Items
+            .Single(static message => message.Role == ChatRole.Tool)
+            .Contents
             .OfType<FunctionResultContent>()
             .Single();
 

@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Encodings.Web;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.Chat.Permissions;
 
@@ -34,7 +33,7 @@ public sealed record ToolApprovalHistoryEntry
     public string? Content { get; init; }
     public ToolApprovalAttachmentFact? Attachment { get; init; }
     public string? Tool { get; init; }
-    public KernelArguments? Arguments { get; init; }
+    public IReadOnlyDictionary<string, object?>? Arguments { get; init; }
 }
 
 /// <summary>Provides existing textual attachment information without opening or ingesting attachments.</summary>
@@ -54,12 +53,9 @@ public sealed record ToolApprovalAction
     public required string PluginKey { get; init; }
     public required string ToolName { get; init; }
     public string? Description { get; init; }
-    public required IReadOnlyList<ToolApprovalParameter> Parameters { get; init; }
-    public KernelArguments? Arguments { get; init; }
+    public required JsonElement Parameters { get; init; }
+    public IReadOnlyDictionary<string, object?>? Arguments { get; init; }
 }
-
-/// <summary>Describes one parameter of the pending function.</summary>
-public sealed record ToolApprovalParameter(string Name, string? Description, bool IsRequired, JsonElement? Schema, JsonElement? DefaultValue);
 
 /// <summary>Provides the concrete shell selected before command consent.</summary>
 public sealed record ToolApprovalShellScope(string ShellPath, string ShellType, string Command, string Description);

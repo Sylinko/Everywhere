@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Using Include="NUnit.Framework"/>
+    <None Update="Fixtures/Harness/*.msgpack" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
 
   <ItemGroup>

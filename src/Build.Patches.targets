@@ -46,12 +46,6 @@
                       PatchTargets="AvaloniaEdit"
                       GlobalPropertiesToRemove="RuntimeIdentifier" />
 
-    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.SemanticKernel\Everywhere.Patches.SemanticKernel.csproj"
-                      ReferenceOutputAssembly="false"
-                      OutputItemType="PatchAssembly"
-                      PatchTargets="Microsoft.SemanticKernel.Abstractions"
-                      GlobalPropertiesToRemove="RuntimeIdentifier" />
-
     <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.OllamaSharp\Everywhere.Patches.OllamaSharp.csproj"
                       ReferenceOutputAssembly="false"
                       OutputItemType="PatchAssembly"

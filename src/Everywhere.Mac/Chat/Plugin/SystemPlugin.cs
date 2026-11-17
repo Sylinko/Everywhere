@@ -9,7 +9,7 @@ using Everywhere.Extensions;
 using Everywhere.Prompting;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
 
 namespace Everywhere.Mac.Chat.Plugin;
 
@@ -80,12 +80,12 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
 
-    [KernelFunction("manage_reminders")]
+    [ChatFunction("manage_reminders")]
     [Description("Manage reminders: create, list, update, delete, or complete.")]
     [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Header)]
     private async Task<string> ManageRemindersAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("Action: Create, List, Update, Delete, Complete")] SystemAction action,
         [Description("Title (required for create)")] string? title,
         [Description("Notes (optional)")] string? notes,
@@ -228,13 +228,13 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             : remindersResult;
     }
 
-    [KernelFunction("manage_calendar")]
+    [ChatFunction("manage_calendar")]
     [Description(
         "Manage calendar events: create, list, or delete. When listing, you can specify a date range to filter events. Default is the next 2 weeks. Maximum range is 31 days.")]
     [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Header)]
     private async Task<string> ManageCalendarAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("Action: Create, List, Delete")] SystemAction action,
         [Description("Title (required for create)")] string? title,
         [Description("Start date and time (required for create, optional for list)")] DateTime? startDate,
@@ -420,11 +420,11 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             : calendarResult;
     }
 
-    [KernelFunction("send_email")]
+    [ChatFunction("send_email")]
     [Description("Compose a new email in the Mail app.")]
     [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Header)]
     private async Task<string> SendEmailAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("The recipient email address")] string recipient,
         [Description("The subject of the email")] string subject,
         [Description("The content of the email")] string content,
@@ -458,11 +458,11 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             cancellationToken);
     }
 
-    [KernelFunction("open_maps")]
+    [ChatFunction("open_maps")]
     [Description("Open Apple Maps and search for a location.")]
     [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Header)]
     private async Task<string> OpenMapsAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("The location or query to search for")] string query,
         CancellationToken cancellationToken)
     {
@@ -485,12 +485,12 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             cancellationToken);
     }
 
-    [KernelFunction("manage_notes")]
+    [ChatFunction("manage_notes")]
     [Description("Manage notes: create, list, or delete.")]
     [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Header)]
     private async Task<string> ManageNotesAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("Action: Create, List, Delete")] SystemAction action,
         [Description("Title (required for create)")] string? title,
         [Description("Content (required for create)")] string? content,
@@ -612,11 +612,11 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             : notesResult;
     }
 
-    [KernelFunction("open_url")]
+    [ChatFunction("open_url")]
     [Description("Open a URL in the default browser.")]
     [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Header)]
     private async Task<string> OpenUrlAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("The http or https URL to open")] string url,
         CancellationToken cancellationToken)
     {
@@ -638,12 +638,12 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         return await RunAppleScriptAsync($"open location \"{url}\"", cancellationToken);
     }
 
-    [KernelFunction("execute_applescript")]
+    [ChatFunction("execute_applescript")]
     [Description("Execute raw AppleScript. Use this only when other specific functions are not applicable.")]
     [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_Header)]
     private async Task<string> ExecuteAppleScriptAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("A concise description for user, explaining what you are doing")] string description,
         [Description("The AppleScript code")] string script,
         CancellationToken cancellationToken)

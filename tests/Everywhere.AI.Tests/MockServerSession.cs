@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -63,8 +62,42 @@ public sealed class MockServerSession : IAsyncDisposable
 
     public Task FailTransportAsync(object error) => RegisterAsync("httpError", error);
 
-    public Task CompleteAsync(Provider provider, object completion, object? chaos = null, int? times = null) =>
-        RegisterAsync("httpLlmResponse", new { provider = provider == Provider.OpenAIResponses ? "OPENAI_RESPONSES" : provider.ToString().ToUpperInvariant(), model = "test-model", completion, chaos }, times);
+    public Task CompleteAsync(Provider provider, object completion, object? chaos = null, int? times = null)
+    {
+        if (provider != Provider.Gemini)
+            return RegisterAsync("httpLlmResponse", new { provider = provider == Provider.OpenAIResponses ? "OPENAI_RESPONSES" : provider.ToString().ToUpperInvariant(), model = "test-model", completion, chaos }, times);
+
+        // MockServer 8's GEMINI action speaks generateContent, not Interactions.
+        var fixture = JsonSerializer.SerializeToElement(completion);
+        var frames = new List<object>();
+        var index = 0;
+        if (fixture.TryGetProperty("text", out var text))
+            AddStep(new { type = "model_output", content = new[] { new { type = "text", text } } });
+        if (fixture.TryGetProperty("toolCalls", out var calls))
+        {
+            foreach (var call in calls.EnumerateArray())
+                AddStep(new { type = "function_call", id = call.GetProperty("id"), name = call.GetProperty("name"),
+                    arguments = JsonSerializer.Deserialize<JsonElement>(call.GetProperty("arguments").GetString()!) });
+        }
+        var status = fixture.TryGetProperty("stopReason", out var reason) ? reason.GetString() switch
+        {
+            "length" => "incomplete", "tool_calls" => "requires_action", _ => "completed"
+        } : "completed";
+        var usage = fixture.TryGetProperty("usage", out var tokens) ? new
+        {
+            total_input_tokens = tokens.GetProperty("inputTokens"), total_output_tokens = tokens.GetProperty("outputTokens")
+        } : null;
+        frames.Add(new { event_type = "interaction.completed", interaction = new { id = "int-test", status, usage } });
+        var body = string.Concat(frames.Select(frame => "data: " + JsonSerializer.Serialize(frame, SerializerOptions) + "\n\n"));
+        return RespondAsync(new { statusCode = 200, headers = new Dictionary<string, string[]> { ["Content-Type"] = ["text/event-stream"] }, body }, times);
+
+        void AddStep(object step)
+        {
+            frames.Add(new { event_type = "step.start", index, step });
+            frames.Add(new { event_type = "step.stop", index });
+            index++;
+        }
+    }
 
     private async Task RegisterAsync(string action, object value, int? times = null)
     {

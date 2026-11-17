@@ -7,9 +7,8 @@ using Everywhere.Views;
 using Everywhere.Core.I18N;
 using Everywhere.I18N;
 using MessagePack;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
 using NSubstitute;
+using Meai = Microsoft.Extensions.AI;
 using UsageDetails = Microsoft.Extensions.AI.UsageDetails;
 
 namespace Everywhere.Core.Tests.Chat;
@@ -41,7 +40,7 @@ public sealed class ContextCompressionTests
             Modalities.Text,
             0);
 
-        var contents = history.Select(message => message.Content).ToArray();
+        var contents = history.Select(message => message.Text).ToArray();
         Assert.Multiple(() =>
         {
             Assert.That(contents, Has.None.Contains("obsolete request"));
@@ -73,7 +72,7 @@ public sealed class ContextCompressionTests
             Modalities.Text,
             200_000);
 
-        var contents = history.Select(message => message.Content).ToArray();
+        var contents = history.Select(message => message.Text).ToArray();
         Assert.Multiple(() =>
         {
             Assert.That(contents, Has.Some.EqualTo("original request"));
@@ -105,7 +104,7 @@ public sealed class ContextCompressionTests
             Modalities.Text,
             0);
 
-        var contents = history.Select(message => message.Content).ToArray();
+        var contents = history.Select(message => message.Text).ToArray();
         Assert.Multiple(() =>
         {
             Assert.That(contents, Has.Some.Contains("compressed history"));
@@ -411,18 +410,19 @@ public sealed class ContextCompressionTests
     {
         var usage = new ChatUsageDetails();
         usage.Update(
-            new ChatMessageContent(
-                AuthorRole.Assistant,
-                string.Empty,
-                metadata: new Dictionary<string, object?>
-                {
-                    ["Usage"] = new UsageDetails
+            new Meai.ChatResponseUpdate
+            {
+                Role = Meai.ChatRole.Assistant,
+                Contents =
+                [
+                    new Meai.UsageContent(new UsageDetails
                     {
                         InputTokenCount = totalTokenCount,
                         OutputTokenCount = 0,
                         TotalTokenCount = totalTokenCount
-                    }
-                }));
+                    })
+                ]
+            });
         return usage;
     }
 

@@ -8,11 +8,11 @@ using Avalonia.Threading;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Core.Tests.Statistics;
+using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Storage;
 using Everywhere.Views;
 using Lucide.Avalonia;
-using Microsoft.SemanticKernel;
 using NSubstitute;
 
 namespace Everywhere.Core.Tests.Chat;
@@ -1303,13 +1303,38 @@ public class ChatPresentationTests
 
         for (var i = 0; i < callCount; i++)
         {
-            message.AddCall(new FunctionCallContent(
-                functionName: title,
-                pluginName: null,
-                id: i.ToString(),
-                arguments: new KernelArguments()));
+            message.AddCall(new ToolCallRecord(
+                FunctionName: title,
+                PluginName: null,
+                Id: i.ToString(),
+                Arguments: new Dictionary<string, object?>()));
         }
 
         return message;
+    }
+
+    [AvaloniaTest]
+    public async Task OpaqueReasoningSpan_WithoutVisibleText_DoesNotCreateBlankReasoningActivityRow()
+    {
+        var assistant = new AssistantChatMessage { IsBusy = false, FinishedAt = DateTimeOffset.UtcNow };
+        assistant.AddSpan(new AssistantChatMessageReasoningSpan
+        {
+            FinishedAt = DateTimeOffset.UtcNow,
+            Metadata = MetadataDictionary.FromDictionary(new Dictionary<string, object?>
+            {
+                [ReasoningMetadata.DialectKey] = "anthropic",
+                [ReasoningMetadata.ProtectedDataKey] = "opaque-signature"
+            })
+        });
+        assistant.AddSpan(FinishedText("Visible answer"));
+        await using var context = Context(new UserChatMessage("Question", []), assistant);
+        await context.Presentation.PrepareInitialWindowAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.Presentation.Rows.OfType<ReasoningActivityItemPresentationRow>(), Is.Empty);
+            Assert.That(context.Presentation.Rows.OfType<ProcessSummaryPresentationRow>(), Is.Empty);
+            Assert.That(context.Presentation.Rows.OfType<AssistantTextOutputPresentationRow>(), Has.Exactly(1).Items);
+        });
     }
 }

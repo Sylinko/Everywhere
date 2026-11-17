@@ -1,8 +1,6 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -50,14 +48,14 @@ public sealed partial class AnySearchConnector(string? apiKey, HttpClient httpCl
         [JsonPropertyName("data")]
         public Data? Data { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults()
+        public IEnumerable<WebSearchResult> ToResults()
         {
             if (Data is null)
             {
                 throw new InvalidDataException($"AnySearch Web Search API returned an empty result. Message: {Message}");
             }
 
-            return Data?.Results?.Select(x => new TextSearchResult(x.Content ?? "")
+            return Data?.Results?.Select(x => new WebSearchResult(x.Content ?? "")
             {
                 Name = x.Title,
                 Link = x.Url,

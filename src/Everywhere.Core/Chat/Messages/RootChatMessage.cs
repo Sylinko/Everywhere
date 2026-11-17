@@ -1,5 +1,5 @@
 ﻿using MessagePack;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -9,7 +9,7 @@ public sealed partial class RootChatMessage : ChatMessage
     /// <inheritdoc />
     public override ChatMessageKind Kind => ChatMessageKind.Root;
 
-    public override AuthorRole Role => AuthorRole.System;
+    public override ChatRole Role => ChatRole.System;
 
     public override bool IsHidden => true;
 

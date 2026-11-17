@@ -4,9 +4,8 @@ using System.Runtime.InteropServices;
 using DynamicData;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
-using Everywhere.I18N;
 using Lucide.Avalonia;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
 
 namespace Everywhere.Linux.Chat.Plugins;
 
@@ -74,11 +73,11 @@ public sealed class FdFindPlugin : BuiltInChatPlugin
         }
     }
 
-    [KernelFunction("search_files")]
+    [ChatFunction("search_files")]
     [Description("Search for files and directories in a specified path using fd-find. Highly efficient for large file systems.")]
     [DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header)]
     private async Task<string> SearchFilesAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("The root directory to start searching from.")] string path,
         [Description("Regex search pattern to match file and directory names.")] string filePattern = ".*",
         [Description("Maximum number of results to return. Max is 1000.")] int maxCount = 100,

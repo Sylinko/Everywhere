@@ -1,5 +1,5 @@
 ﻿using MessagePack;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -9,7 +9,7 @@ public partial class UserChatMessage : ChatMessage, IHaveChatAttachments, IHaveV
     /// <inheritdoc />
     public override ChatMessageKind Kind => ChatMessageKind.User;
 
-    public override AuthorRole Role => AuthorRole.User;
+    public override ChatRole Role => ChatRole.User;
 
     /// <summary>
     /// The user's text before strategy rendering and attachment projection.

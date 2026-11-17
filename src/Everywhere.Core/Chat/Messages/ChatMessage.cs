@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using MessagePack;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -28,7 +28,7 @@ public abstract partial class ChatMessage
 
     [IgnoreMember]
     [JsonIgnore]
-    public abstract AuthorRole Role { get; }
+    public abstract ChatRole Role { get; }
 
     /// <summary>
     /// Gets the node that owns this message's mutable state. Never serialized or UI-owned.

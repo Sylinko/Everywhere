@@ -3,7 +3,6 @@
     <MicrosoftPackageVersion>11.0.0</MicrosoftPackageVersion>
     <MEAIVersion>11.0.0</MEAIVersion>
     <EntityFrameworkVersion>11.0.0</EntityFrameworkVersion>
-    <SemanticKernelVersion>1.75.0</SemanticKernelVersion>
     <OpenTelemetryVersion>1.21.0</OpenTelemetryVersion>
     <SentryVersion>6.13.0</SentryVersion>
     <AvaloniaVersion>12.1.6</AvaloniaVersion>
@@ -64,8 +63,6 @@
     <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.31.1" />
     <PackageVersion Include="Microsoft.ML.Tokenizers" Version="$(TikTokenVersion)" />
     <PackageVersion Include="Microsoft.ML.Tokenizers.Data.O200kBase" Version="$(TikTokenVersion)" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="$(SemanticKernelVersion)" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="$(SemanticKernelVersion)" />
     <PackageVersion Include="ModelContextProtocol" Version="2.4.0" />
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.4.0" />
     <PackageVersion Include="OllamaSharp" Version="5.5.2" />

@@ -1,10 +1,13 @@
 using Everywhere.Common;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
 namespace Everywhere.AI.Tests;
 
-/// <summary>Exercises the production request executor and mixins through real HTTP and SDK streams.</summary>
+/// <summary>
+/// Exercises the production request executor and sessions through real HTTP and SDK streams.
+/// </summary>
 [Category("LlmIntegration")]
 public sealed class RequestExecutionTests
 {
@@ -19,17 +22,16 @@ public sealed class RequestExecutionTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new { statusCode = 503, body = "temporarily unavailable" }, times: 2);
         await server.CompleteAsync(provider, new { text = "recovered", streaming = true }, times: 1);
-        using var mixin = CreateMixin(provider, server.CreateClient(), 2);
-        var history = new ChatHistory();
-        history.AddUserMessage("fixed request");
+        using var session = CreateSession(provider, server.CreateClient(), 2);
+        var history = new List<ChatMessage> { new(ChatRole.User, "fixed request") };
         var events = new List<ChatRequestUpdate>();
-        await foreach (var update in mixin.StreamRequestAsync(history, mixin.GetPromptExecutionSettings())) events.Add(update);
+        await foreach (var update in session.StreamRequestAsync(history, session.CreateChatOptions())) events.Add(update);
         var requests = await server.RequestsAsync();
         Assert.Multiple(() =>
         {
             Assert.That(requests, Has.Length.EqualTo(3));
-            Assert.That(requests.Select(request => request.GetProperty("body").GetRawText()), Is.All.EqualTo(requests[0].GetProperty("body").GetRawText()));
-            Assert.That(events.OfType<ChatRequestUpdate.AttemptStarted>().Select(start => start.AttemptNumber), Is.EqualTo(new[] { 1, 2, 3 }));
+            Assert.That(requests.Select(static request => request.GetProperty("body").GetRawText()), Is.All.EqualTo(requests[0].GetProperty("body").GetRawText()));
+            Assert.That(events.OfType<ChatRequestUpdate.AttemptStarted>().Select(static start => start.AttemptNumber), Is.EqualTo(new[] { 1, 2, 3 }));
             Assert.That(events.OfType<ChatRequestUpdate.AttemptFailed>().ToArray(), Has.Length.EqualTo(2));
             Assert.That(events.Last(), Is.TypeOf<ChatRequestUpdate.Content>());
             Assert.That(history, Has.Count.EqualTo(1));
@@ -46,11 +48,11 @@ public sealed class RequestExecutionTests
     {
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new { statusCode = 503, body = "temporarily unavailable" });
-        using var mixin = CreateMixin(provider, server.CreateClient(), 0);
+        using var session = CreateSession(provider, server.CreateClient(), 0);
         var updates = new List<ChatRequestUpdate>();
         var error = await Assert.ThrowsAsync<ChatRequestException>(async () =>
         {
-            await foreach (var update in mixin.StreamRequestAsync([new(Microsoft.SemanticKernel.ChatCompletion.AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) updates.Add(update);
+            await foreach (var update in session.StreamRequestAsync([new ChatMessage(ChatRole.User, "hello")], session.CreateChatOptions())) updates.Add(update);
         });
         Assert.Multiple(() =>
         {
@@ -72,11 +74,11 @@ public sealed class RequestExecutionTests
     {
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new { statusCode = 503, body = "temporarily unavailable" });
-        using var mixin = CreateMixin(provider, server.CreateClient(), -1);
+        using var session = CreateSession(provider, server.CreateClient(), -1);
         using var cancellation = new CancellationTokenSource();
         await Assert.CatchAsync<OperationCanceledException>(async () =>
         {
-            await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings(), cancellationToken: cancellation.Token))
+            await foreach (var update in session.StreamRequestAsync([new ChatMessage(ChatRole.User, "hello")], session.CreateChatOptions(), cancellationToken: cancellation.Token))
                 if (update is ChatRequestUpdate.AttemptFailed) cancellation.Cancel();
         });
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(1));
@@ -92,8 +94,8 @@ public sealed class RequestExecutionTests
     {
         await using var server = await MockServerSession.ConnectAsync();
         await server.CompleteAsync(provider, new { text = "hello", streaming = true });
-        using var mixin = CreateMixin(provider, server.CreateClient(), 5);
-        await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings()))
+        using var session = CreateSession(provider, server.CreateClient(), 5);
+        await foreach (var update in session.StreamRequestAsync([new ChatMessage(ChatRole.User, "hello")], session.CreateChatOptions()))
             if (update is ChatRequestUpdate.Content) break;
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(1));
     }
@@ -108,15 +110,15 @@ public sealed class RequestExecutionTests
     {
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new { statusCode = 503, body = "temporarily unavailable" });
-        using var mixin = CreateMixin(provider, server.CreateClient(), 1);
+        using var session = CreateSession(provider, server.CreateClient(), 1);
         var error = await Assert.ThrowsAsync<ChatRequestException>(async () =>
         {
-            await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) { }
+            await foreach (var _ in session.StreamRequestAsync([new ChatMessage(ChatRole.User, "hello")], session.CreateChatOptions())) { }
         });
         Assert.Multiple(() =>
         {
             Assert.That(error?.TotalFailureCount, Is.EqualTo(2));
-            Assert.That(error?.Failures.Select(failure => failure.AttemptNumber), Is.EqualTo(new[] { 1, 2 }));
+            Assert.That(error?.Failures.Select(static failure => failure.AttemptNumber), Is.EqualTo(new[] { 1, 2 }));
             Assert.That(error?.FinalFailure, Is.InstanceOf<HandledChatException.ServiceUnavailable>());
         });
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(2));
@@ -137,10 +139,10 @@ public sealed class RequestExecutionTests
             body = "{\"error\":{\"code\":\"context_length_exceeded\",\"message\":\"maximum context length exceeded\"}}",
             headers = new Dictionary<string, string[]> { ["Content-Type"] = ["application/json"] }
         });
-        using var mixin = CreateMixin(provider, server.CreateClient(), -1);
+        using var session = CreateSession(provider, server.CreateClient(), -1);
         var error = await Assert.ThrowsAsync<ChatRequestException>(async () =>
         {
-            await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) { }
+            await foreach (var _ in session.StreamRequestAsync([new ChatMessage(ChatRole.User, "hello")], session.CreateChatOptions())) { }
         });
         Assert.That(error?.FinalFailure, Is.InstanceOf<HandledChatException.InvalidRequest.ContextLengthExceeded>());
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(1));
@@ -150,20 +152,21 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.Anthropic, "max_tokens")]
     [TestCase(Provider.Gemini, "length")]
     [TestCase(Provider.Mistral, "length")]
-    public async Task StreamRequest_WhenOutputLimitIsExplicit_FailsWithoutTransportReplay(Provider provider, string stopReason)
+    public async Task StreamRequest_WhenOutputTruncated_FailsWithoutTransportReplay(Provider provider, string stopReason)
     {
         await using var server = await MockServerSession.ConnectAsync();
         await server.CompleteAsync(provider, new { text = "partial", streaming = true, stopReason });
-        using var mixin = CreateMixin(provider, server.CreateClient(), 5);
+        using var session = CreateSession(provider, server.CreateClient(), 5);
         var error = await Assert.ThrowsAsync<ChatRequestException>(async () =>
         {
-            await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) { }
+            await foreach (var _ in session.StreamRequestAsync([new ChatMessage(ChatRole.User, "hello")], session.CreateChatOptions())) { }
         });
-        Assert.That(error?.FinalFailure, Is.InstanceOf<HandledChatException.GenerationLimitExceeded>());
+        Assert.That(error?.FinalFailure, Is.InstanceOf(provider == Provider.Gemini
+            ? typeof(HandledChatException.InvalidResponse.Incomplete) : typeof(HandledChatException.GenerationLimitExceeded)));
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(1));
     }
 
-    private static KernelMixin CreateMixin(Provider provider, HttpClient client, int maxRetries)
+    private static ModelSession CreateSession(Provider provider, HttpClient client, int maxRetries)
     {
         var schema = provider switch
         {
@@ -178,12 +181,12 @@ public sealed class RequestExecutionTests
         var connection = new ModelConnection(schema, client.BaseAddress?.AbsoluteUri ?? throw new InvalidOperationException("Endpoint missing"), "test-key", client, null, maxRetries);
         return provider switch
         {
-            Provider.OpenAI => new OpenAIKernelMixin(configuration, new OpenAIOptions(), connection, NullLoggerFactory.Instance),
-            Provider.OpenAIResponses => new OpenAIResponsesKernelMixin(configuration, new OpenAIResponsesOptions(), connection, NullLoggerFactory.Instance),
-            Provider.Anthropic => new AnthropicKernelMixin(configuration, new AnthropicOptions(), connection),
-            Provider.Gemini => new GoogleKernelMixin(configuration, new GoogleOptions(), connection, NullLoggerFactory.Instance),
-            Provider.Mistral => new MistralKernelMixin(configuration, new MistralOptions(), connection, NullLoggerFactory.Instance),
-            _ => new OllamaKernelMixin(configuration, connection)
+            Provider.OpenAI => new OpenAIModelSession(configuration, new OpenAIOptions(), connection, NullLoggerFactory.Instance),
+            Provider.OpenAIResponses => new OpenAIResponsesModelSession(configuration, new OpenAIResponsesOptions(), connection, NullLoggerFactory.Instance),
+            Provider.Anthropic => new AnthropicModelSession(configuration, new AnthropicOptions(), connection),
+            Provider.Gemini => new GeminiModelSession(configuration, new GoogleOptions(), connection with { Endpoint = schema.NormalizeEndpoint(connection.Endpoint)! }),
+            Provider.Mistral => new MistralModelSession(configuration, new MistralOptions(), connection),
+            _ => new OllamaModelSession(configuration, connection)
         };
     }
 }

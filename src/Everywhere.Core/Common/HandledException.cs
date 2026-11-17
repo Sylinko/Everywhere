@@ -4,7 +4,6 @@ using System.Security;
 using System.Text.Json;
 using Everywhere.Cloud;
 using MessagePack;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.Common;
 
@@ -473,10 +472,6 @@ public class HandledSystemException : HandledException
         if (evidence.StatusCode is { } status)
         {
             return new HandledHttpException(exception, status, isExpectedOverride ?? false);
-        }
-        if (exception is HttpOperationException operation)
-        {
-            return new HandledHttpException(exception, operation.StatusCode, isExpectedOverride ?? false);
         }
         return null;
     }

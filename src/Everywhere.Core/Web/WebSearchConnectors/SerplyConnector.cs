@@ -1,6 +1,5 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -38,9 +37,9 @@ public sealed partial class SerplyConnector(string apiKey, HttpClient httpClient
         [JsonPropertyName("results")]
         public IReadOnlyList<Result>? Results { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults() => Results?
+        public IEnumerable<WebSearchResult> ToResults() => Results?
             .Where(x => !string.IsNullOrEmpty(x.Link))
-            .Select(x => new TextSearchResult(x.Description ?? "")
+            .Select(x => new WebSearchResult(x.Description ?? "")
             {
                 Name = x.Title,
                 Link = x.Link,

@@ -10,7 +10,7 @@ namespace Everywhere.AI;
 public static partial class ChatExceptionNormalizer
 {
     /// <summary>Collects common, SDK and connection evidence once; already-handled exceptions retain identity.</summary>
-    public static Exception Handle(Exception exception, KernelMixin? kernelMixin, ChatRequestFailureContext context = default)
+    public static Exception Handle(Exception exception, ModelSession? session, ChatRequestFailureContext context = default)
     {
         if (exception is HandledException)
         {
@@ -19,35 +19,35 @@ public static partial class ChatExceptionNormalizer
 
         if (exception is AggregateException aggregate)
         {
-            return new AggregateException(aggregate.Segregate().Select(cause => Handle(cause, kernelMixin, context)));
+            return new AggregateException(aggregate.Segregate().Select(cause => Handle(cause, session, context)));
         }
 
         var evidence = new ChatExceptionEvidence(exception);
         ChatExceptionEvidenceExtractor.ExtractCommon(evidence, context);
-        if (kernelMixin is null)
+        if (session is null)
         {
             ChatExceptionEvidenceExtractor.ExtractSdkEvidence(evidence);
         }
         else
         {
-            kernelMixin.ExtractExceptionEvidence(evidence);
-            kernelMixin.EnrichConnectionExceptionEvidence(evidence);
+            session.ExtractExceptionEvidence(evidence);
+            session.EnrichConnectionExceptionEvidence(evidence);
         }
 
-        var error = NormalizeKnownException(evidence, kernelMixin) ?? ClassifyResponse(evidence);
-        if (error.Diagnostics is { } diagnostics) diagnostics.ModelId = kernelMixin?.Configuration.ModelId;
+        var error = NormalizeKnownException(evidence, session) ?? ClassifyResponse(evidence);
+        if (error.Diagnostics is { } diagnostics) diagnostics.ModelId = session?.Configuration.ModelId;
         return error;
     }
 
     /// <summary>Normalizes an explicit streaming service code through the response rules.</summary>
-    public static HandledChatException FromErrorCode(Exception exception, string code, KernelMixin? kernelMixin = null)
+    public static HandledChatException FromErrorCode(Exception exception, string code, ModelSession? session = null)
     {
         var evidence = new ChatExceptionEvidence(exception);
         ChatExceptionEvidenceExtractor.ExtractCommon(evidence, default);
         evidence.ErrorCode = code;
-        kernelMixin?.EnrichConnectionExceptionEvidence(evidence);
-        var error = NormalizeKnownException(evidence, kernelMixin) ?? ClassifyResponse(evidence);
-        if (error.Diagnostics is { } diagnostics) diagnostics.ModelId = kernelMixin?.Configuration.ModelId;
+        session?.EnrichConnectionExceptionEvidence(evidence);
+        var error = NormalizeKnownException(evidence, session) ?? ClassifyResponse(evidence);
+        if (error.Diagnostics is { } diagnostics) diagnostics.ModelId = session?.Configuration.ModelId;
         return error;
     }
 
@@ -59,13 +59,13 @@ public static partial class ChatExceptionNormalizer
         _ => null
     };
 
-    /// <summary>Recognizes SDK-specific concrete causes when no mixin is available.</summary>
+    /// <summary>Recognizes SDK-specific concrete causes when no session is available.</summary>
     public static HandledChatException? NormalizeKnownSdkException(ChatExceptionEvidence evidence) =>
         NetworkExceptionEvidence.EnumerateCauses(evidence.OriginalException).Any(cause => cause is ModelDoesNotSupportToolsException) ?
             new HandledChatException.UnsupportedCapability.Tools(evidence.OriginalException, evidence.FriendlyMessageKey) :
             null;
 
-    private static HandledChatException? NormalizeKnownException(ChatExceptionEvidence evidence, KernelMixin? kernelMixin)
+    private static HandledChatException? NormalizeKnownException(ChatExceptionEvidence evidence, ModelSession? session)
     {
         var original = evidence.OriginalException;
         var message = evidence.FriendlyMessageKey;
@@ -91,7 +91,7 @@ public static partial class ChatExceptionNormalizer
             }
 
             evidence.ProviderFinishReason = finishReason;
-            if (ClassifyCompletion(evidence, kernelMixin, finishReason.Trim().ToLowerInvariant(), false) is { } completionError)
+            if (ClassifyCompletion(evidence, session, finishReason.Trim().ToLowerInvariant(), false) is { } completionError)
             {
                 return completionError;
             }
@@ -127,7 +127,7 @@ public static partial class ChatExceptionNormalizer
             return Result(new HandledChatException.NetworkError(original, message, evidence.RetryAfter), evidence, "transport-failure", "transport");
         }
 
-        var sdkError = kernelMixin is null ? NormalizeKnownSdkException(evidence) : kernelMixin.NormalizeKnownException(evidence);
+        var sdkError = session is null ? NormalizeKnownSdkException(evidence) : session.NormalizeKnownException(evidence);
         if (sdkError is not null)
         {
             return Result(sdkError, evidence, "sdk-exception", "sdk");

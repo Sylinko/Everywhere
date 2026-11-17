@@ -116,7 +116,7 @@ public static class ToolSettingsKey
     public static string ForPlugin(string pluginKey) => $"p:{Escape(pluginKey)}";
 
     public static string ForFunction(ChatPlugin plugin, ChatFunction function) =>
-        ForFunction(plugin.Key, function.KernelFunction.Name);
+        ForFunction(plugin.Key, function.Name);
 
     public static string ForFunction(string pluginKey, string functionName) =>
         $"f:{Escape(pluginKey)}/{Escape(functionName)}";

@@ -1,6 +1,5 @@
 ﻿using MessagePack;
 using Microsoft.Extensions.AI;
-using Microsoft.SemanticKernel;
 using OpenAI.Chat;
 
 namespace Everywhere.Chat;
@@ -138,24 +137,30 @@ public partial class ChatUsageDetails
         : null;
 
     /// <summary>
-    /// Updates the usage details from the given <see cref="StreamingKernelContent"/>. Used in streaming scenarios.
+    /// Updates the usage details from a streaming <see cref="ChatResponseUpdate"/>.
     /// </summary>
-    /// <param name="streamingKernelContent"></param>
-    public void Update(StreamingKernelContent streamingKernelContent)
+    public void Update(ChatResponseUpdate update)
     {
-        if (streamingKernelContent.Metadata?.TryGetValue("Usage", out var usage) is true && usage is not null)
+        foreach (var content in update.Contents)
         {
-            Update(usage);
+            if (content is UsageContent usageContent)
+            {
+                Update(usageContent);
+            }
+        }
+
+        if (update.AdditionalProperties?.TryGetValue("Usage", out var extraUsage) is true && extraUsage is not null)
+        {
+            Update(extraUsage);
         }
     }
 
     /// <summary>
-    /// Updates the usage details from the given <see cref="KernelContent"/>. Used in non-streaming scenarios.
+    /// Updates the usage details from a non-streaming <see cref="ChatResponse"/>.
     /// </summary>
-    /// <param name="kernelContent"></param>
-    public void Update(KernelContent kernelContent)
+    public void Update(ChatResponse response)
     {
-        if (kernelContent.Metadata?.TryGetValue("Usage", out var usage) is true && usage is not null)
+        if (response.Usage is { } usage)
         {
             Update(usage);
         }

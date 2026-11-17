@@ -3,7 +3,7 @@ using Riok.Mapperly.Abstractions;
 namespace Everywhere.AI;
 
 /// <summary>
-/// Creates data-only copies used by a KernelMixin for its complete lifetime.
+/// Creates data-only copies used by a <see cref="ModelSession"/> for its complete lifetime.
 /// Generated mappings keep snapshot membership aligned with the configuration types.
 /// </summary>
 [Mapper(UseDeepCloning = true, RequiredMappingStrategy = RequiredMappingStrategy.Both)]

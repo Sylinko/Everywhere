@@ -1,7 +1,5 @@
-﻿using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -40,14 +38,14 @@ public sealed partial class TavilyConnector(string apiKey, HttpClient httpClient
         [JsonPropertyName("results")]
         public IReadOnlyList<Result>? Results { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults()
+        public IEnumerable<WebSearchResult> ToResults()
         {
             if (Detail is not null)
             {
                 throw new InvalidDataException($"Tavily Web Search API returned an empty result. Error: {Detail?.Error}");
             }
 
-            return Results?.Select(x => new TextSearchResult(x.Content ?? "")
+            return Results?.Select(x => new WebSearchResult(x.Content ?? "")
             {
                 Name = x.Title,
                 Link = x.Url,

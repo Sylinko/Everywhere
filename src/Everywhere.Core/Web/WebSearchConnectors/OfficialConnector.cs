@@ -1,12 +1,10 @@
-﻿using System.ComponentModel;
-using System.Net.Http.Json;
+using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -111,9 +109,9 @@ public sealed partial class OfficialConnector(
 
     public sealed class Response : ApiPayload<IReadOnlyList<WebSearchResult>>, IWebSearchResponse
     {
-        public IEnumerable<TextSearchResult> ToResults()
+        public IEnumerable<Web.WebSearchResult> ToResults()
         {
-            return EnsureData().Select(x => new TextSearchResult(x.Content ?? "")
+            return EnsureData().Select(x => new Web.WebSearchResult(x.Content ?? "")
             {
                 Name = x.Title,
                 Link = x.Url,
