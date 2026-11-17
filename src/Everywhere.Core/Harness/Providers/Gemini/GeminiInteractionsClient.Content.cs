@@ -49,9 +49,9 @@ partial class GeminiInteractionsClient
         };
         var type = mediaType switch
         {
-            var mime when mime.StartsWith("image/", StringComparison.OrdinalIgnoreCase) => "image",
-            var mime when mime.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) => "audio",
-            var mime when mime.StartsWith("video/", StringComparison.OrdinalIgnoreCase) => "video",
+            _ when mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) => "image",
+            _ when mediaType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) => "audio",
+            _ when mediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase) => "video",
             "application/pdf" => "document",
             _ => throw new NotSupportedException($"Unsupported Gemini media type: {mediaType}.")
         };
@@ -73,14 +73,9 @@ partial class GeminiInteractionsClient
         options ??= new ChatOptions();
         var config = new JsonObject();
 
-        if (ThinkingLevel is { Length: > 0 } level)
+        if (ThinkingLevel is { Length: > 0 })
         {
-            config["thinking_level"] = level.ToLowerInvariant();
-        }
-
-        if (ThinkingBudget is { } budget)
-        {
-            config["thinking_budget"] = budget;
+            config["thinking_level"] = ThinkingLevel.ToLowerInvariant();
         }
 
         if (IncludeThoughts is { } shouldInclude)
@@ -94,8 +89,7 @@ partial class GeminiInteractionsClient
         var topP = options.TopP ?? TopP;
         if (topP is { } p) config["top_p"] = p;
 
-        var topK = options.TopK ?? TopK;
-        if (topK is { } k) config["top_k"] = k;
+        if (options.TopK is { } k) config["top_k"] = k;
 
         if (options.FrequencyPenalty is { } freq) config["frequency_penalty"] = freq;
         if (options.PresencePenalty is { } pres) config["presence_penalty"] = pres;
@@ -103,8 +97,7 @@ partial class GeminiInteractionsClient
 
         if (options.StopSequences is { Count: > 0 } stops)
         {
-            var sequences = new JsonArray();
-            foreach (var stop in stops) sequences.Add(stop);
+            JsonArray sequences = [.. stops];
             config["stop_sequences"] = sequences;
         }
 
@@ -144,13 +137,14 @@ partial class GeminiInteractionsClient
                     throw new NotSupportedException($"Unsupported Gemini tool declaration: {tool.GetType().Name}.");
                 }
 
-                tools.Add(new JsonObject
-                {
-                    ["type"] = "function",
-                    ["name"] = declaration.Name,
-                    ["description"] = declaration.Description,
-                    ["parameters"] = JsonObject.Create(declaration.JsonSchema)
-                });
+                tools.Add(
+                    new JsonObject
+                    {
+                        ["type"] = "function",
+                        ["name"] = declaration.Name,
+                        ["description"] = declaration.Description,
+                        ["parameters"] = JsonObject.Create(declaration.JsonSchema)
+                    });
             }
 
             payload["tools"] = tools;
@@ -179,12 +173,12 @@ partial class GeminiInteractionsClient
 
     private static ChatFinishReason? GetFinishReason(JsonElement interaction)
     {
-        return interaction.GetProperty("status").GetString() switch
+        return TryGetString(interaction, "status") switch
         {
             "completed" => ChatFinishReason.Stop,
             "requires_action" => ChatFinishReason.ToolCalls,
             "incomplete" => new ChatFinishReason("incomplete"),
-            "failed" or "cancelled" => new ChatFinishReason("aborted"),
+            "failed" or "cancelled" or "canceled" => new ChatFinishReason("aborted"),
             "requires_continuation" => new ChatFinishReason("pause_turn"),
             var status => throw new JsonException($"Expected a terminal Gemini interaction, received {status}.")
         };
@@ -192,29 +186,32 @@ partial class GeminiInteractionsClient
 
     private static UsageDetails? ReadUsage(JsonElement interaction)
     {
-        if (!interaction.TryGetProperty("usage", out var usage)) return null;
-        var output = Count("total_output_tokens");
-        var thoughts = Count("total_thought_tokens");
+        if (!interaction.TryGetProperty("usage", out var usage) || usage.ValueKind != JsonValueKind.Object) return null;
+        var output = GetCount("total_output_tokens");
+        var thoughts = GetCount("total_thought_tokens");
         return new UsageDetails
         {
-            InputTokenCount = Count("total_input_tokens"),
+            InputTokenCount = GetCount("total_input_tokens"),
             OutputTokenCount = output.HasValue || thoughts.HasValue ? output.GetValueOrDefault() + thoughts.GetValueOrDefault() : null,
             ReasoningTokenCount = thoughts,
-            TotalTokenCount = Count("total_tokens"),
-            CachedInputTokenCount = Count("total_cached_tokens")
+            TotalTokenCount = GetCount("total_tokens"),
+            CachedInputTokenCount = GetCount("total_cached_tokens")
         };
 
-        long? Count(string key) => usage.TryGetProperty(key, out var value) ? value.GetInt64() : null;
+        long? GetCount(string key)
+        {
+            return usage.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.Number ? value.GetInt64() : null;
+        }
     }
 
     private static List<AIContent> ProjectStep(JsonElement step)
     {
         var contents = new List<AIContent>();
-        switch (step.GetProperty("type").GetString())
+        switch (TryGetString(step, "type"))
         {
             case "model_output":
             {
-                if (step.TryGetProperty("content", out var blocks))
+                if (step.TryGetProperty("content", out var blocks) && blocks.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var block in blocks.EnumerateArray())
                     {
@@ -225,14 +222,14 @@ partial class GeminiInteractionsClient
             }
             case "thought":
             {
-                var signature = step.TryGetProperty("signature", out var value) ? value.GetString() : null;
-                if (step.TryGetProperty("summary", out var summary))
+                var signature = TryGetString(step, "signature");
+                if (step.TryGetProperty("summary", out var summary) && summary.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var block in summary.EnumerateArray())
                     {
-                        if (block.GetProperty("type").GetString() == "text")
+                        if (TryGetString(block, "type") == "text")
                         {
-                            contents.Add(new TextReasoningContent(block.GetProperty("text").GetString()));
+                            contents.Add(new TextReasoningContent(TryGetString(block, "text")));
                         }
                     }
                 }
@@ -247,21 +244,22 @@ partial class GeminiInteractionsClient
             }
             case "function_call":
             {
-                contents.Add(ParseCall(
-                    step.GetProperty("id").GetString(),
-                    step.GetProperty("name").GetString(),
-                    step.GetProperty("arguments")));
+                var callId = TryGetString(step, "id") ?? TryGetString(step, "call_id");
+                var name = TryGetString(step, "name");
+                var arguments = step.TryGetProperty("arguments", out var argsElement) ? argsElement : default;
+                contents.Add(ParseCall(callId, name, arguments));
                 break;
             }
             case "google_search_call" or "google_search_result":
             {
-                contents.Add(new TextReasoningContent(null)
-                {
-                    AdditionalProperties = new AdditionalPropertiesDictionary
+                contents.Add(
+                    new TextReasoningContent(null)
                     {
-                        [ReasoningMetadata.GeminiStepKey] = step.Clone()
-                    }
-                });
+                        AdditionalProperties = new AdditionalPropertiesDictionary
+                        {
+                            [ReasoningMetadata.GeminiStepKey] = step.Clone()
+                        }
+                    });
                 break;
             }
         }
@@ -271,18 +269,22 @@ partial class GeminiInteractionsClient
 
     private static FunctionCallContent ParseCall(string? id, string? name, JsonElement arguments)
     {
-        if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(name))
+        if (string.IsNullOrEmpty(name))
         {
-            throw new JsonException("A Gemini function call requires an ID and name.");
+            throw new JsonException("A Gemini function call requires a name.");
         }
 
+        var resolvedId = string.IsNullOrEmpty(id) ? $"call_{Guid.NewGuid():N}" : id;
         var values = new Dictionary<string, object?>(StringComparer.Ordinal);
-        foreach (var property in arguments.EnumerateObject())
+        if (arguments.ValueKind == JsonValueKind.Object)
         {
-            values.Add(property.Name, property.Value.Clone());
+            foreach (var property in arguments.EnumerateObject())
+            {
+                values.Add(property.Name, property.Value.Clone());
+            }
         }
 
-        return new FunctionCallContent(id, name, values)
+        return new FunctionCallContent(resolvedId, name, values)
         {
             AdditionalProperties = new AdditionalPropertiesDictionary
             {
@@ -293,22 +295,29 @@ partial class GeminiInteractionsClient
 
     private static AIContent DecodeContent(JsonElement block)
     {
-        if (block.GetProperty("type").GetString() == "text")
+        if (TryGetString(block, "type") == "text")
         {
-            return new TextContent(block.GetProperty("text").GetString());
+            return new TextContent(TryGetString(block, "text"));
         }
 
-        var mime = block.GetProperty("mime_type").GetString() ?? throw new JsonException("Missing Gemini media type.");
-        if (block.TryGetProperty("data", out var data))
+        var mime = TryGetString(block, "mime_type") ?? throw new JsonException("Missing Gemini media type.");
+        if (block.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.String)
         {
             return new DataContent(data.GetBytesFromBase64(), mime);
         }
 
-        if (block.TryGetProperty("uri", out var uri))
+        if (TryGetString(block, "uri") is { } uri)
         {
-            return new UriContent(new Uri(uri.GetString() ?? throw new JsonException("Missing media URI.")), mime);
+            return new UriContent(new Uri(uri), mime);
         }
 
         throw new JsonException("Missing Gemini media data or URI.");
     }
+
+    private static string? TryGetString(JsonElement element, string propertyName) =>
+        element.ValueKind == JsonValueKind.Object &&
+        element.TryGetProperty(propertyName, out var prop) &&
+        prop.ValueKind == JsonValueKind.String
+            ? prop.GetString()
+            : null;
 }

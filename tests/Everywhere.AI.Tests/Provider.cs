@@ -18,6 +18,7 @@ public enum Provider
     OpenAIResponses,
     Anthropic,
     Gemini,
+    GeminiInteractions,
     Mistral,
     Ollama
 }
@@ -43,12 +44,21 @@ public static class ProviderExtensions
             Timeout = client.Timeout,
             MaxRetries = maxRetries
         }).AsIChatClient("test-model", 1024),
-        Provider.Gemini => new GeminiModelSession(
+        Provider.Gemini => new GoogleModelSession(
             new AdvancedAssistantConfiguration { Schema = ModelProviderSchema.Google, ModelId = "test-model" },
             new GoogleOptions(),
             new ModelConnection(
                 ModelProviderSchema.Google,
                 ModelProviderSchema.Google.NormalizeEndpoint(client.BaseAddress?.AbsoluteUri) ?? throw new InvalidOperationException("Missing test endpoint."),
+                "test-key",
+                client,
+                null)).ChatClient,
+        Provider.GeminiInteractions => new GoogleInteractionsModelSession(
+            new AdvancedAssistantConfiguration { Schema = ModelProviderSchema.GoogleInteractions, ModelId = "test-model" },
+            new GoogleInteractionsOptions(),
+            new ModelConnection(
+                ModelProviderSchema.GoogleInteractions,
+                ModelProviderSchema.GoogleInteractions.NormalizeEndpoint(client.BaseAddress?.AbsoluteUri) ?? throw new InvalidOperationException("Missing test endpoint."),
                 "test-key",
                 client,
                 null)).ChatClient,

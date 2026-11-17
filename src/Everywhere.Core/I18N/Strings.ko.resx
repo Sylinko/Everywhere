@@ -190,6 +190,12 @@
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_GoogleInteractionsOptions_Description" xml:space="preserve">
+        <value>Google Gemini Interactions API의 매개변수를 구성합니다.</value>
+    </data>
+    <data name="Assistant_GoogleInteractionsOptions_Header" xml:space="preserve">
+        <value>Google Interactions 설정</value>
+    </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
         <value>Google Gemini API의 매개변수를 구성합니다.</value>
     </data>
@@ -2386,6 +2392,18 @@
     <data name="FriendlyExceptionMessage_Win32" xml:space="preserve">
         <value>Windows 시스템 오류. {0}</value>
     </data>
+    <data name="GoogleInteractionsOptions_IncludeThoughts_Description" xml:space="preserve">
+        <value>사용 가능한 경우 Gemini의 생각 요약을 반환합니다.</value>
+    </data>
+    <data name="GoogleInteractionsOptions_IncludeThoughts_Header" xml:space="preserve">
+        <value>생각 포함</value>
+    </data>
+    <data name="GoogleInteractionsOptions_ThinkingLevel_Description" xml:space="preserve">
+        <value>Gemini 3 모델의 생각 깊이로, minimal, low, medium 또는 high를 선택할 수 있습니다. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
+    </data>
+    <data name="GoogleInteractionsOptions_ThinkingLevel_Header" xml:space="preserve">
+        <value>생각 수준</value>
+    </data>
     <data name="GoogleOptions_IncludeThoughts_Description" xml:space="preserve">
         <value>사용 가능한 경우 Gemini의 생각 요약을 반환합니다.</value>
     </data>
@@ -3077,7 +3095,10 @@
         <value>DeepSeek</value>
     </data>
     <data name="ModelProviderSchema_Google" xml:space="preserve">
-        <value>Google</value>
+        <value>Google (Generate Content)</value>
+    </data>
+    <data name="ModelProviderSchema_GoogleInteractions" xml:space="preserve">
+        <value>Google (Interactions API)</value>
     </data>
     <data name="ModelProviderSchema_Mistral" xml:space="preserve">
         <value>Mistral</value>

@@ -35,6 +35,7 @@ public sealed class ModelSessionFactory(
                 ModelProviderSchema.OpenAIResponses => AssistantSnapshotMapper.Copy(assistant.OpenAIResponsesOptions),
                 ModelProviderSchema.Anthropic => AssistantSnapshotMapper.Copy(assistant.AnthropicOptions),
                 ModelProviderSchema.Google => AssistantSnapshotMapper.Copy(assistant.GoogleOptions),
+                ModelProviderSchema.GoogleInteractions => AssistantSnapshotMapper.Copy(assistant.GoogleInteractionsOptions),
                 ModelProviderSchema.Mistral => AssistantSnapshotMapper.Copy(assistant.MistralOptions),
                 _ => null
             };
@@ -69,7 +70,11 @@ public sealed class ModelSessionFactory(
                     configuration,
                     options,
                     connection),
-                (ModelProviderSchema.Google, GoogleOptions options) => new GeminiModelSession(
+                (ModelProviderSchema.Google, GoogleOptions options) => new GoogleModelSession(
+                    configuration,
+                    options,
+                    connection),
+                (ModelProviderSchema.GoogleInteractions, GoogleInteractionsOptions options) => new GoogleInteractionsModelSession(
                     configuration,
                     options,
                     connection),

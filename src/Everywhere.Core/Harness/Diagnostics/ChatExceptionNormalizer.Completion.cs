@@ -63,7 +63,7 @@ public static partial class ChatExceptionNormalizer
                 new HandledChatException.InvalidRequest.InvalidThoughtSignature(original),
             "no_image" =>
                 new HandledChatException.InvalidResponse.EmptyResponse(original),
-            "other" or "image_other" when session?.Configuration.Schema == ModelProviderSchema.Google =>
+            "other" or "image_other" when session?.Configuration.Schema is ModelProviderSchema.Google or ModelProviderSchema.GoogleInteractions =>
                 new HandledChatException.InvalidResponse.Incomplete(original),
             "aborted" or "incomplete" =>
                 new HandledChatException.InvalidResponse.Incomplete(original),

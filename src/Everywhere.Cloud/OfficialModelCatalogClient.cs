@@ -138,6 +138,7 @@ internal sealed partial class OfficialModelCatalogClient(IHttpClientFactory http
             "openai-responses" => ModelProviderSchema.OpenAIResponses,
             "anthropic" => ModelProviderSchema.Anthropic,
             "google" => ModelProviderSchema.Google,
+            "google-interactions" => ModelProviderSchema.GoogleInteractions,
             "mistral" => ModelProviderSchema.Mistral,
             _ => OfficialModelDefinition.InferLegacySchemaFromModelId(modelId)
         };

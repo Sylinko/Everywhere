@@ -18,12 +18,13 @@ public sealed class GeminiInteractionsClientTests
     private static readonly Uri Endpoint = new("https://fixture.invalid/v1/interactions");
 
     [TestCase("https://example.invalid", "https://example.invalid/v1/interactions")]
-    [TestCase("https://example.invalid/v1beta/", "https://example.invalid/v1/interactions")]
-    [TestCase("https://example.invalid/proxy/v1beta/interactions?q=test", "https://example.invalid/proxy/v1/interactions?q=test")]
+    [TestCase("https://example.invalid/v1/interactions", "https://example.invalid/v1/interactions")]
+    [TestCase("https://example.invalid/v1beta/", "https://example.invalid/v1beta/interactions")]
+    [TestCase("https://example.invalid/proxy/v1/interactions?q=test", "https://example.invalid/proxy/v1/interactions?q=test")]
     [TestCase("https://example.invalid/custom/interactions#", "https://example.invalid/custom/interactions")]
     public void PreviewEndpoint_WithStoredOrCustomBase_ResolvesOneInteractionsResource(string stored, string expected)
     {
-        Assert.That(ModelProviderSchema.Google.PreviewEndpoint(stored), Is.EqualTo(expected));
+        Assert.That(ModelProviderSchema.GoogleInteractions.PreviewEndpoint(stored), Is.EqualTo(expected));
     }
 
     [Test]
@@ -34,10 +35,10 @@ public sealed class GeminiInteractionsClientTests
             """{"event_type":"step.stop","index":0}""",
             """{"event_type":"interaction.completed","interaction":{"id":"image","status":"completed"}}"""
         ]);
-        using var session = new GeminiModelSession(
+        using var session = new GoogleInteractionsModelSession(
             new AdvancedAssistantConfiguration { ModelId = "fixture" },
-            new GoogleOptions(),
-            new ModelConnection(ModelProviderSchema.Google, "https://fixture.invalid/v1", "synthetic-key", new HttpClient(wire, false), null));
+            new GoogleInteractionsOptions(),
+            new ModelConnection(ModelProviderSchema.GoogleInteractions, "https://fixture.invalid/v1", "synthetic-key", new HttpClient(wire, false), null));
         var updates = await session.ChatClient.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, "Show the image.")]).ToListAsync();
         var image = updates.SelectMany(static update => update.Contents).OfType<DataContent>().Single();
         Assert.That(image.MediaType, Is.EqualTo("image/png"));
@@ -45,26 +46,24 @@ public sealed class GeminiInteractionsClientTests
     }
 
     [Test]
-    public async Task GoogleOptions_WhenSamplingAndThinkingConfigured_SendsGenerationConfig()
+    public async Task GoogleInteractionsOptions_WhenSamplingAndThinkingConfigured_SendsGenerationConfig()
     {
         using var wire = new WireHandler([
             """{"event_type":"step.start","index":0,"step":{"type":"model_output","content":[{"type":"text","text":"ok"}]}}""",
             """{"event_type":"step.stop","index":0}""",
             """{"event_type":"interaction.completed","interaction":{"id":"cfg","status":"completed"}}"""
         ]);
-        var options = new GoogleOptions
+        var options = new GoogleInteractionsOptions
         {
             Temperature = "0.4",
             TopP = "0.85",
-            TopK = "32",
-            ThinkingBudget = "4096",
             ReasoningEffort = "high",
             IncludeThoughts = true
         };
-        using var session = new GeminiModelSession(
+        using var session = new GoogleInteractionsModelSession(
             new AdvancedAssistantConfiguration { ModelId = "gemini-2.5-pro" },
             options,
-            new ModelConnection(ModelProviderSchema.Google, "https://fixture.invalid/v1", "synthetic-key", new HttpClient(wire, false), null));
+            new ModelConnection(ModelProviderSchema.GoogleInteractions, "https://fixture.invalid/v1", "synthetic-key", new HttpClient(wire, false), null));
         await session.ChatClient.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, "hello")]).ToListAsync();
 
         var genConfig = wire.Requests.Single().GetProperty("generation_config");
@@ -72,8 +71,8 @@ public sealed class GeminiInteractionsClientTests
         {
             Assert.That(genConfig.GetProperty("temperature").GetSingle(), Is.EqualTo(0.4f).Within(0.001f));
             Assert.That(genConfig.GetProperty("top_p").GetSingle(), Is.EqualTo(0.85f).Within(0.001f));
-            Assert.That(genConfig.GetProperty("top_k").GetInt32(), Is.EqualTo(32));
-            Assert.That(genConfig.GetProperty("thinking_budget").GetInt32(), Is.EqualTo(4096));
+            Assert.That(genConfig.TryGetProperty("top_k", out _), Is.False);
+            Assert.That(genConfig.TryGetProperty("thinking_budget", out _), Is.False);
             Assert.That(genConfig.GetProperty("thinking_level").GetString(), Is.EqualTo("high"));
             Assert.That(genConfig.GetProperty("thinking_summaries").GetString(), Is.EqualTo("auto"));
         }
@@ -231,6 +230,50 @@ public sealed class GeminiInteractionsClientTests
         });
         Assert.That(updates.SelectMany(static update => update.Contents).OfType<TextContent>().Single().Text, Is.EqualTo("Checking."));
         Assert.That(updates.SelectMany(static update => update.Contents).OfType<FunctionCallContent>(), Is.Empty);
+    }
+
+    [Test]
+    public async Task CheckConnectivity_WhenStatelessServerOmitsInteractionIdAndSendsDoneFrame_Succeeds()
+    {
+        const string sse =
+            "data: {\"event_type\":\"interaction.created\",\"interaction\":{\"model\":\"gemini-2.5-flash\",\"status\":\"in_progress\"}}\n\n" +
+            "data: {\"event_type\":\"step.start\",\"index\":0,\"step\":{\"type\":\"model_output\"}}\n\n" +
+            "data: {\"event_type\":\"step.delta\",\"index\":0,\"delta\":{\"type\":\"text\",\"text\":\"OK\"}}\n\n" +
+            "data: {\"event_type\":\"step.stop\",\"index\":0}\n\n" +
+            "data: {\"event_type\":\"step.start\",\"index\":1,\"step\":{\"type\":\"function_call\",\"name\":\"ping\"}}\n\n" +
+            "data: {\"event_type\":\"step.stop\",\"index\":1}\n\n" +
+            "data: {\"event_type\":\"interaction.completed\",\"interaction\":{\"status\":\"requires_action\",\"usage\":{\"total_input_tokens\":5,\"total_output_tokens\":2,\"total_thought_tokens\":null}}}\n\n" +
+            "event: done\ndata: [DONE]\n\n";
+        using var handler = new RawSseHandler(sse);
+        using var session = new GoogleInteractionsModelSession(
+            new AdvancedAssistantConfiguration { Schema = ModelProviderSchema.GoogleInteractions, ModelId = "gemini-2.5-flash" },
+            new GoogleInteractionsOptions(),
+            new ModelConnection(ModelProviderSchema.GoogleInteractions, "https://fixture.invalid/v1", "synthetic-key", new HttpClient(handler, false), null));
+
+        await session.CheckConnectivityAsync();
+
+        var updates = await session.ChatClient.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, "hi")]).ToListAsync();
+        var text = string.Concat(updates.Select(static u => u.Text));
+        var call = updates.SelectMany(static u => u.Contents).OfType<FunctionCallContent>().Single();
+        var usage = updates.SelectMany(static u => u.Contents).OfType<UsageContent>().Single().Details;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(text, Is.EqualTo("OK"));
+            Assert.That(call.Name, Is.EqualTo("ping"));
+            Assert.That(call.CallId, Is.Not.Empty);
+            Assert.That(call.Arguments, Is.Empty);
+            Assert.That(usage.InputTokenCount, Is.EqualTo(5));
+            Assert.That(usage.OutputTokenCount, Is.EqualTo(2));
+        }
+    }
+
+    private sealed class RawSseHandler(string sse) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(sse, Encoding.UTF8, "text/event-stream")
+            });
     }
 
     private sealed class WireHandler(string[]? streamFrames = null) : HttpMessageHandler

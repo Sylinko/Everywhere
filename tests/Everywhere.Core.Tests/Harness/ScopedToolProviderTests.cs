@@ -18,6 +18,7 @@ public sealed class ScopedToolProviderTests
     [TestCase(ModelProviderSchema.OpenAIResponses)]
     [TestCase(ModelProviderSchema.Anthropic)]
     [TestCase(ModelProviderSchema.Google)]
+    [TestCase(ModelProviderSchema.GoogleInteractions)]
     [TestCase(ModelProviderSchema.Mistral)]
     [TestCase(ModelProviderSchema.Ollama)]
     public async Task StreamRequest_WhenToolHasScopedName_SendsItsDeclarationToTheProvider(ModelProviderSchema provider)
@@ -38,6 +39,11 @@ public sealed class ScopedToolProviderTests
         await Assert.ThatAsync(async () => await request.ToListAsync(), Throws.TypeOf<ChatRequestException>());
         Assert.That(handler.Request, Is.Not.Null);
         var tool = handler.Request!.Value.GetProperty("tools").EnumerateArray().Single();
+        if (provider == ModelProviderSchema.Google)
+        {
+            tool = tool.GetProperty("functionDeclarations").EnumerateArray().Single();
+        }
+
         var function = tool.TryGetProperty("function", out var nested) ? nested : tool;
         Assert.That(function.GetProperty("name").GetString(), Is.EqualTo("lookup_file_1"));
         var input = function.GetProperty(provider == ModelProviderSchema.Anthropic ? "input_schema" : "parameters");
@@ -51,7 +57,8 @@ public sealed class ScopedToolProviderTests
             ModelProviderSchema.OpenAI => new OpenAIModelSession(configuration, new OpenAIOptions(), connection, NullLoggerFactory.Instance),
             ModelProviderSchema.OpenAIResponses => new OpenAIResponsesModelSession(configuration, new OpenAIResponsesOptions(), connection, NullLoggerFactory.Instance),
             ModelProviderSchema.Anthropic => new AnthropicModelSession(configuration, new AnthropicOptions(), connection),
-            ModelProviderSchema.Google => new GeminiModelSession(configuration, new GoogleOptions(), connection),
+            ModelProviderSchema.Google => new GoogleModelSession(configuration, new GoogleOptions(), connection),
+            ModelProviderSchema.GoogleInteractions => new GoogleInteractionsModelSession(configuration, new GoogleInteractionsOptions(), connection),
             ModelProviderSchema.Mistral => new MistralModelSession(configuration, new MistralOptions(), connection),
             ModelProviderSchema.Ollama => new OllamaModelSession(configuration, connection),
             _ => throw new ArgumentOutOfRangeException(nameof(configuration))

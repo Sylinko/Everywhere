@@ -23,6 +23,7 @@ public sealed partial record OfficialModelDefinition(
         {
             "openai" => ModelProviderSchema.OpenAIResponses,
             "google" => ModelProviderSchema.Google,
+            "google-interactions" => ModelProviderSchema.GoogleInteractions,
             "anthropic" or "minimax" => ModelProviderSchema.Anthropic,
             "mistral" => ModelProviderSchema.Mistral,
             _ => ModelProviderSchema.OpenAI

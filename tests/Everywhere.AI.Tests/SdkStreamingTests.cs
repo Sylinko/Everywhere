@@ -13,6 +13,7 @@ public sealed class SdkStreamingTests
     [TestCase(Provider.OpenAIResponses)]
     [TestCase(Provider.Anthropic)]
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task Stream_WhenCompleted_PreservesTextAndSendsStreamingRequest(Provider provider)
@@ -25,13 +26,14 @@ public sealed class SdkStreamingTests
         var requests = await server.RequestsAsync();
         Assert.That(requests, Has.Length.EqualTo(1));
         var wireRequest = requests[0].GetRawText();
-        Assert.That(wireRequest, Does.Contain(provider == Provider.Gemini ? "/v1/interactions" : "stream"));
+        Assert.That(wireRequest, Does.Contain(provider == Provider.GeminiInteractions ? "/interactions" : "stream"));
     }
 
     [TestCase(Provider.OpenAI)]
     [TestCase(Provider.OpenAIResponses)]
     [TestCase(Provider.Anthropic)]
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task Stream_WhenToolCalled_PreservesFunctionAndArguments(Provider provider)
@@ -60,6 +62,7 @@ public sealed class SdkStreamingTests
     }
 
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     public async Task Stream_WhenConnectionDrops_PreservesTransportFailure(Provider provider)
     {
@@ -72,6 +75,7 @@ public sealed class SdkStreamingTests
     }
 
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task Stream_WhenCanceledDuringErrorBody_ThrowsCancellation(Provider provider)

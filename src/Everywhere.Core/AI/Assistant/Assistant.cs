@@ -83,6 +83,13 @@ public abstract partial class Assistant : ObservableValidator
     public GoogleOptions GoogleOptions { get; } = new();
 
     [DynamicLocaleKey(
+        LocaleKey.Assistant_GoogleInteractionsOptions_Header,
+        LocaleKey.Assistant_GoogleInteractionsOptions_Description)]
+    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = int.MaxValue, Modifier = nameof(BindSchemaOptionsVisibility))]
+    [SettingsItems(IsExpanded = false)]
+    public GoogleInteractionsOptions GoogleInteractionsOptions { get; } = new();
+
+    [DynamicLocaleKey(
         LocaleKey.Assistant_MistralOptions_Header,
         LocaleKey.Assistant_MistralOptions_Description)]
     [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = int.MaxValue, Modifier = nameof(BindSchemaOptionsVisibility))]
@@ -113,6 +120,7 @@ public abstract partial class Assistant : ObservableValidator
         ModelProviderSchema.OpenAIResponses => OpenAIResponsesOptions,
         ModelProviderSchema.Anthropic => AnthropicOptions,
         ModelProviderSchema.Google => GoogleOptions,
+        ModelProviderSchema.GoogleInteractions => GoogleInteractionsOptions,
         ModelProviderSchema.Mistral => MistralOptions,
         _ => null
     };

@@ -59,7 +59,7 @@ public sealed class SdkErrorTests
             Assert.That(rawResponse.Headers.TryGetValue("x-request-id", out var requestId), Is.True);
             Assert.That(requestId, Is.EqualTo(fixture.Id));
         }
-        else if (provider is Provider.Gemini or Provider.Mistral or Provider.Ollama)
+        else if (provider is Provider.Gemini or Provider.GeminiInteractions or Provider.Mistral or Provider.Ollama)
         {
             Assert.That(exception.Data["Everywhere.Http.Retry-After"], Is.EqualTo("1"));
             Assert.That(exception.Data["Everywhere.Http.x-request-id"], Is.EqualTo(fixture.Id));
@@ -109,6 +109,7 @@ public sealed class SdkErrorTests
     }
 
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     [TestCase(Provider.Anthropic)]

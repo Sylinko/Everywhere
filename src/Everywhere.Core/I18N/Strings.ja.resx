@@ -190,6 +190,12 @@
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_GoogleInteractionsOptions_Description" xml:space="preserve">
+        <value>Google Gemini Interactions API のパラメータを設定します。</value>
+    </data>
+    <data name="Assistant_GoogleInteractionsOptions_Header" xml:space="preserve">
+        <value>Google Interactions 設定</value>
+    </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
         <value>Google Gemini API のパラメータを設定します。</value>
     </data>
@@ -2386,6 +2392,18 @@
     <data name="FriendlyExceptionMessage_Win32" xml:space="preserve">
         <value>Windowsシステムエラー。{0}</value>
     </data>
+    <data name="GoogleInteractionsOptions_IncludeThoughts_Description" xml:space="preserve">
+        <value>利用可能な場合、Gemini の思考要約を返します。</value>
+    </data>
+    <data name="GoogleInteractionsOptions_IncludeThoughts_Header" xml:space="preserve">
+        <value>思考を含める</value>
+    </data>
+    <data name="GoogleInteractionsOptions_ThinkingLevel_Description" xml:space="preserve">
+        <value>Gemini 3 モデルの思考の深さ。例：minimal、low、medium または high。 low|medium|high のように、複数の値を | で区切って入力します。チャットでは入力した順序で切り替えられます。</value>
+    </data>
+    <data name="GoogleInteractionsOptions_ThinkingLevel_Header" xml:space="preserve">
+        <value>思考レベル</value>
+    </data>
     <data name="GoogleOptions_IncludeThoughts_Description" xml:space="preserve">
         <value>利用可能な場合、Gemini の思考要約を返します。</value>
     </data>
@@ -3077,7 +3095,10 @@
         <value>DeepSeek</value>
     </data>
     <data name="ModelProviderSchema_Google" xml:space="preserve">
-        <value>Google</value>
+        <value>Google (Generate Content)</value>
+    </data>
+    <data name="ModelProviderSchema_GoogleInteractions" xml:space="preserve">
+        <value>Google (Interactions API)</value>
     </data>
     <data name="ModelProviderSchema_Mistral" xml:space="preserve">
         <value>Mistral</value>

@@ -16,6 +16,7 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.OpenAIResponses)]
     [TestCase(Provider.Anthropic)]
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task StreamRequest_WhenTwoFailuresThenSuccess_ReplaysSameInputWithExactlyThreeSends(Provider provider)
@@ -43,6 +44,7 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.OpenAIResponses)]
     [TestCase(Provider.Anthropic)]
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task StreamRequest_WhenRetriesDisabled_HasOneSendAndTerminalDiagnostics(Provider provider)
@@ -69,6 +71,7 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.OpenAIResponses)]
     [TestCase(Provider.Anthropic)]
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task StreamRequest_WhenCanceledDuringBackoff_DoesNotSendAgain(Provider provider)
@@ -89,6 +92,7 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.OpenAIResponses)]
     [TestCase(Provider.Anthropic)]
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task StreamRequest_WhenConsumerLeavesAfterContent_DisposesWithoutAnotherAttempt(Provider provider)
@@ -105,6 +109,7 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.OpenAIResponses)]
     [TestCase(Provider.Anthropic)]
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task StreamRequest_WhenRetryBudgetIsOne_PreservesBothFailuresAndStopsAtTwoSends(Provider provider)
@@ -129,6 +134,7 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.OpenAIResponses)]
     [TestCase(Provider.Anthropic)]
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task StreamRequest_WhenGatewayReportsContextOverflowWith503_DoesNotRetryUnchangedInput(Provider provider)
@@ -152,6 +158,7 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.OpenAI, "length")]
     [TestCase(Provider.Anthropic, "max_tokens")]
     [TestCase(Provider.Gemini, "length")]
+    [TestCase(Provider.GeminiInteractions, "length")]
     [TestCase(Provider.Mistral, "length")]
     public async Task StreamRequest_WhenOutputTruncated_FailsWithoutTransportReplay(Provider provider, string stopReason)
     {
@@ -162,7 +169,7 @@ public sealed class RequestExecutionTests
         {
             await foreach (var _ in session.StreamRequestAsync([new ChatMessage(ChatRole.User, "hello")], session.CreateChatOptions())) { }
         });
-        Assert.That(error?.FinalFailure, Is.InstanceOf(provider == Provider.Gemini
+        Assert.That(error?.FinalFailure, Is.InstanceOf(provider == Provider.GeminiInteractions
             ? typeof(HandledChatException.InvalidResponse.Incomplete) : typeof(HandledChatException.GenerationLimitExceeded)));
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(1));
     }
@@ -174,6 +181,7 @@ public sealed class RequestExecutionTests
             Provider.OpenAIResponses => ModelProviderSchema.OpenAIResponses,
             Provider.Anthropic => ModelProviderSchema.Anthropic,
             Provider.Gemini => ModelProviderSchema.Google,
+            Provider.GeminiInteractions => ModelProviderSchema.GoogleInteractions,
             Provider.Mistral => ModelProviderSchema.Mistral,
             Provider.Ollama => ModelProviderSchema.Ollama,
             _ => ModelProviderSchema.OpenAI
@@ -185,7 +193,8 @@ public sealed class RequestExecutionTests
             Provider.OpenAI => new OpenAIModelSession(configuration, new OpenAIOptions(), connection, NullLoggerFactory.Instance),
             Provider.OpenAIResponses => new OpenAIResponsesModelSession(configuration, new OpenAIResponsesOptions(), connection, NullLoggerFactory.Instance),
             Provider.Anthropic => new AnthropicModelSession(configuration, new AnthropicOptions(), connection),
-            Provider.Gemini => new GeminiModelSession(configuration, new GoogleOptions(), connection with { Endpoint = schema.NormalizeEndpoint(connection.Endpoint)! }),
+            Provider.Gemini => new GoogleModelSession(configuration, new GoogleOptions(), connection with { Endpoint = schema.NormalizeEndpoint(connection.Endpoint)! }),
+            Provider.GeminiInteractions => new GoogleInteractionsModelSession(configuration, new GoogleInteractionsOptions(), connection with { Endpoint = schema.NormalizeEndpoint(connection.Endpoint)! }),
             Provider.Mistral => new MistralModelSession(configuration, new MistralOptions(), connection),
             _ => new OllamaModelSession(configuration, connection)
         };

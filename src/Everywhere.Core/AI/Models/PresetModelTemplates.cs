@@ -277,10 +277,10 @@ public static class PresetModelTemplates
             Id = "google",
             DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_Google),
             OfficialWebsiteUrl = "https://gemini.google.com",
-            Endpoint = "https://generativelanguage.googleapis.com/v1beta",
+            Endpoint = "https://generativelanguage.googleapis.com/v1",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/google-color.svg",
             LightIconUrl = "avares://Everywhere.Core/Assets/Icons/google-color.svg",
-            Schema = ModelProviderSchema.Google,
+            Schema = ModelProviderSchema.GoogleInteractions,
             ModelDefinitions =
             [
                 new ModelDefinitionTemplate

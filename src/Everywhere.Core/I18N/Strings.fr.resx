@@ -190,6 +190,12 @@
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_GoogleInteractionsOptions_Description" xml:space="preserve">
+        <value>Configurer les paramètres de l'API Google Gemini Interactions.</value>
+    </data>
+    <data name="Assistant_GoogleInteractionsOptions_Header" xml:space="preserve">
+        <value>Paramètres Google Interactions</value>
+    </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
         <value>Configurer les paramètres de l'API Google Gemini.</value>
     </data>
@@ -2386,6 +2392,18 @@
     <data name="FriendlyExceptionMessage_Win32" xml:space="preserve">
         <value>Erreur du système Windows. {0}</value>
     </data>
+    <data name="GoogleInteractionsOptions_IncludeThoughts_Description" xml:space="preserve">
+        <value>Retourner un résumé des réflexions de Gemini lorsqu'il est disponible.</value>
+    </data>
+    <data name="GoogleInteractionsOptions_IncludeThoughts_Header" xml:space="preserve">
+        <value>Inclure les Réflexions</value>
+    </data>
+    <data name="GoogleInteractionsOptions_ThinkingLevel_Description" xml:space="preserve">
+        <value>Profondeur de réflexion du modèle Gemini 3, par exemple minimal, faible, moyen ou élevé. Séparez les valeurs par |, par exemple low|medium|high. Vous pouvez les sélectionner dans le chat dans cet ordre.</value>
+    </data>
+    <data name="GoogleInteractionsOptions_ThinkingLevel_Header" xml:space="preserve">
+        <value>Niveau de Réflexion</value>
+    </data>
     <data name="GoogleOptions_IncludeThoughts_Description" xml:space="preserve">
         <value>Retourner un résumé des réflexions de Gemini lorsqu'il est disponible.</value>
     </data>
@@ -3077,7 +3095,10 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
         <value>DeepSeek</value>
     </data>
     <data name="ModelProviderSchema_Google" xml:space="preserve">
-        <value>Google</value>
+        <value>Google (Generate Content)</value>
+    </data>
+    <data name="ModelProviderSchema_GoogleInteractions" xml:space="preserve">
+        <value>Google (Interactions API)</value>
     </data>
     <data name="ModelProviderSchema_Mistral" xml:space="preserve">
         <value>Mistral</value>

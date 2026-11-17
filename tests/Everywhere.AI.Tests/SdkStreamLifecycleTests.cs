@@ -26,7 +26,7 @@ public sealed class SdkStreamLifecycleTests
             await foreach (var update in provider.CreateClient(client).GetStreamingResponseAsync(History())) updates.Add(update);
         }
 
-        if (provider == Provider.Gemini) await Assert.ThrowsAsync<EndOfStreamException>(ReadAsync);
+        if (provider is Provider.Gemini or Provider.GeminiInteractions) await Assert.ThrowsAsync<EndOfStreamException>(ReadAsync);
         else await ReadAsync();
         Assert.That(string.Concat(updates.Select(static update => update.Text)), Is.EqualTo("partial"));
         Assert.That(updates.Select(static update => update.FinishReason?.Value).Where(static reason => !string.IsNullOrEmpty(reason)), Is.Empty);
@@ -144,7 +144,8 @@ public sealed class SdkStreamLifecycleTests
         Provider.OpenAI or Provider.Mistral => "data: {\"id\":\"chatcmpl-test\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test-model\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"partial\"},\"finish_reason\":null}]}\n\n",
         Provider.OpenAIResponses => "event: response.created\ndata: {\"type\":\"response.created\",\"sequence_number\":0,\"response\":{\"id\":\"resp-test\",\"object\":\"response\",\"created_at\":1,\"status\":\"in_progress\",\"model\":\"test-model\",\"output\":[]}}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":1,\"item_id\":\"msg-test\",\"output_index\":0,\"content_index\":0,\"delta\":\"partial\"}\n\n",
         Provider.Anthropic => "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg-test\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"test-model\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"output_tokens\":0}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"partial\"}}\n\n",
-        Provider.Gemini => "data: {\"event_type\":\"step.start\",\"index\":0,\"step\":{\"type\":\"model_output\",\"content\":[{\"type\":\"text\",\"text\":\"partial\"}]}}\n\n",
+        Provider.Gemini => "data: {\"candidates\":[{\"content\":{\"role\":\"model\",\"parts\":[{\"text\":\"partial\"}]}}]}\n\n",
+        Provider.GeminiInteractions => "data: {\"event_type\":\"step.start\",\"index\":0,\"step\":{\"type\":\"model_output\",\"content\":[{\"type\":\"text\",\"text\":\"partial\"}]}}\n\n",
         Provider.Ollama => "{\"model\":\"test-model\",\"message\":{\"role\":\"assistant\",\"content\":\"partial\"},\"done\":false}\n",
         _ => throw new ArgumentOutOfRangeException(nameof(provider))
     };

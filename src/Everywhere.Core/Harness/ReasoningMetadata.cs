@@ -11,5 +11,6 @@ public static class ReasoningMetadata
     public const string ItemIdKey = "itemId";
     public const string IsRedactedKey = "redacted";
     public const string GeminiStepKey = "gemini.step";
+    public const string ThoughtSignatureKey = "thoughtSignature";
     public const string BlockBoundaryKey = "harness.endBlock";
 }
