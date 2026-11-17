@@ -130,6 +130,33 @@ public class AssistantConfigurationTests
         }
     }
 
+    [Test]
+    public void Assistant_WhenGoogleSchemasSelected_UsesDedicatedOptionsAndPresetUsesV1Interactions()
+    {
+        var assistant = new CustomAssistant
+        {
+            Configuration = new AdvancedAssistantConfiguration
+            {
+                Schema = ModelProviderSchema.Google,
+                ModelId = "gemini-2.5-pro"
+            }
+        };
+
+        var legacyOptions = assistant.EffectiveSchemaOptions;
+        assistant.Configuration.Schema = ModelProviderSchema.GoogleInteractions;
+        var interactionsOptions = assistant.EffectiveSchemaOptions;
+        var googlePreset = PresetModelTemplates.Providers.Single(static provider => provider.Id == "google");
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(legacyOptions, Is.SameAs(assistant.GoogleOptions));
+            Assert.That(interactionsOptions, Is.SameAs(assistant.GoogleInteractionsOptions));
+            Assert.That(interactionsOptions, Is.Not.SameAs(legacyOptions));
+            Assert.That(googlePreset.Schema, Is.EqualTo(ModelProviderSchema.GoogleInteractions));
+            Assert.That(googlePreset.Endpoint, Is.EqualTo("https://generativelanguage.googleapis.com/v1"));
+        }
+    }
+
     private static CustomAssistant CreatePreset() => new()
     {
         Name = "Assistant name",

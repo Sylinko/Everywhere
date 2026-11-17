@@ -1,3 +1,6 @@
+using System.Net;
+using System.Reflection;
+using System.Text;
 using Everywhere.AI;
 using Everywhere.Cloud;
 using NSubstitute;
@@ -254,6 +257,80 @@ public class OfficialModelDefinitionTests
                     today),
                 Is.Not.EqualTo(key));
         }
+    }
+
+    [Test]
+    public async Task CatalogClient_WhenGoogleAndGoogleInteractionsReturned_MapsBothSchemas()
+    {
+        const string json = """
+        {
+          "success": true,
+          "data": [
+            {
+              "id": "google/gemini-2.5-pro",
+              "name": "Gemini 2.5 Pro",
+              "icon": "google",
+              "description": null,
+              "toolCall": true,
+              "knowledge": null,
+              "releaseDate": null,
+              "deprecationDate": null,
+              "modalities": { "input": [ "text" ], "output": [ "text" ] },
+              "specializations": null,
+              "limit": { "context": 1048576, "input": 1048576, "output": 65536 },
+              "pricing": [],
+              "quotaLimited": false,
+              "schema": "google"
+            },
+            {
+              "id": "google/gemini-3.5-flash",
+              "name": "Gemini 3.5 Flash",
+              "icon": "google",
+              "description": null,
+              "toolCall": true,
+              "knowledge": null,
+              "releaseDate": null,
+              "deprecationDate": null,
+              "modalities": { "input": [ "text" ], "output": [ "text" ] },
+              "specializations": null,
+              "limit": { "context": 1048576, "input": 1048576, "output": 65536 },
+              "pricing": [],
+              "quotaLimited": false,
+              "schema": "google-interactions"
+            }
+          ]
+        }
+        """;
+        var httpFactory = Substitute.For<IHttpClientFactory>();
+        httpFactory.CreateClient(Arg.Any<string>()).Returns(_ =>
+            new HttpClient(new CatalogResponseHandler(json)) { BaseAddress = new Uri("https://cloud.invalid") });
+
+        var clientType = typeof(OfficialModelProvider).Assembly.GetType("Everywhere.Cloud.OfficialModelCatalogClient", throwOnError: true)!;
+        var client = (ModelCatalogHttpClient<OfficialModelDefinition[]>)Activator.CreateInstance(
+            clientType,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            null,
+            [httpFactory],
+            null)!;
+
+        var fetched = await client.FetchAsync();
+        var modified = (ModelCatalogFetchResult<OfficialModelDefinition[]>.Modified)fetched;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(OfficialModelDefinition.InferLegacySchemaFromModelId("google/gemini-2.5-pro"), Is.EqualTo(ModelProviderSchema.Google));
+            Assert.That(modified.Catalog.Single(static m => m.Model.ModelId == "google/gemini-2.5-pro").Schema, Is.EqualTo(ModelProviderSchema.Google));
+            Assert.That(modified.Catalog.Single(static m => m.Model.ModelId == "google/gemini-3.5-flash").Schema, Is.EqualTo(ModelProviderSchema.GoogleInteractions));
+        }
+    }
+
+    private sealed class CatalogResponseHandler(string json) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            });
     }
 
     private static CustomAssistant CreateAssistant(string modelId, DateOnly? deprecationDate = null) =>

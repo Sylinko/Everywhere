@@ -190,6 +190,12 @@
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_GoogleInteractionsOptions_Description" xml:space="preserve">
+        <value>Parameter für die Google Gemini Interactions API konfigurieren.</value>
+    </data>
+    <data name="Assistant_GoogleInteractionsOptions_Header" xml:space="preserve">
+        <value>Google Interactions Einstellungen</value>
+    </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
         <value>Parameter für die Google Gemini API konfigurieren.</value>
     </data>
@@ -2386,6 +2392,18 @@
     <data name="FriendlyExceptionMessage_Win32" xml:space="preserve">
         <value>Windows-Systemfehler. {0}</value>
     </data>
+    <data name="GoogleInteractionsOptions_IncludeThoughts_Description" xml:space="preserve">
+        <value>Gibt, wenn verfügbar, eine Zusammenfassung der Gedanken von Gemini zurück.</value>
+    </data>
+    <data name="GoogleInteractionsOptions_IncludeThoughts_Header" xml:space="preserve">
+        <value>Gedanken Einschließen</value>
+    </data>
+    <data name="GoogleInteractionsOptions_ThinkingLevel_Description" xml:space="preserve">
+        <value>Denktiefe des Gemini 3 Modells, z. B. minimal, niedrig, mittel oder hoch. Mehrere Werte mit | trennen, z. B. low|medium|high. Im Chat kann in der eingegebenen Reihenfolge gewechselt werden.</value>
+    </data>
+    <data name="GoogleInteractionsOptions_ThinkingLevel_Header" xml:space="preserve">
+        <value>Denken Niveau</value>
+    </data>
     <data name="GoogleOptions_IncludeThoughts_Description" xml:space="preserve">
         <value>Gibt, wenn verfügbar, eine Zusammenfassung der Gedanken von Gemini zurück.</value>
     </data>
@@ -3077,7 +3095,10 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
         <value>DeepSeek</value>
     </data>
     <data name="ModelProviderSchema_Google" xml:space="preserve">
-        <value>Google</value>
+        <value>Google (Generate Content)</value>
+    </data>
+    <data name="ModelProviderSchema_GoogleInteractions" xml:space="preserve">
+        <value>Google (Interactions API)</value>
     </data>
     <data name="ModelProviderSchema_Mistral" xml:space="preserve">
         <value>Mistral</value>

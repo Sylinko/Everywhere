@@ -14,7 +14,8 @@ public sealed partial class GeminiInteractionsClient(
     HttpClient http,
     Uri interactionsUri,
     string model,
-    string? apiKey)
+    string? apiKey
+)
     : IChatClient
 {
     public const string DialectName = "gemini-interactions";
@@ -23,15 +24,11 @@ public sealed partial class GeminiInteractionsClient(
 
     public string? ThinkingLevel { get; init; }
 
-    public int? ThinkingBudget { get; init; }
-
     public bool? IncludeThoughts { get; init; }
 
     public float? Temperature { get; init; }
 
     public float? TopP { get; init; }
-
-    public int? TopK { get; init; }
 
     /// <inheritdoc />
     public object? GetService(Type serviceType, object? serviceKey = null)
@@ -56,20 +53,23 @@ public sealed partial class GeminiInteractionsClient(
         var interaction = document.RootElement;
         var result = new ChatResponse();
         var stepIndex = 0;
-        foreach (var step in interaction.GetProperty("steps").EnumerateArray())
+        if (interaction.TryGetProperty("steps", out var steps) && steps.ValueKind == JsonValueKind.Array)
         {
-            if (step.GetProperty("type").GetString() == "user_input") continue;
-            var captured = step.Clone();
-            var message = new ChatMessage(ChatRole.Assistant, ProjectStep(captured))
+            foreach (var step in steps.EnumerateArray())
             {
-                MessageId = (stepIndex++).ToString(CultureInfo.InvariantCulture),
-                RawRepresentation = captured
-            };
-            result.Messages.Add(message);
+                if (step.TryGetProperty("type", out var stepType) && stepType.GetString() == "user_input") continue;
+                var captured = step.Clone();
+                var message = new ChatMessage(ChatRole.Assistant, ProjectStep(captured))
+                {
+                    MessageId = (stepIndex++).ToString(CultureInfo.InvariantCulture),
+                    RawRepresentation = captured
+                };
+                result.Messages.Add(message);
+            }
         }
 
-        result.ResponseId = interaction.GetProperty("id").GetString();
-        result.ModelId = interaction.TryGetProperty("model", out var modelId) ? modelId.GetString() : model;
+        result.ResponseId = TryGetString(interaction, "id");
+        result.ModelId = TryGetString(interaction, "model") ?? model;
         result.FinishReason = GetFinishReason(interaction);
         result.Usage = ReadUsage(interaction);
         return result;
@@ -87,7 +87,13 @@ public sealed partial class GeminiInteractionsClient(
         var decoder = new GeminiStreamDecoder();
         await foreach (var item in SseParser.Create(body).EnumerateAsync(cancellationToken))
         {
-            using var document = JsonDocument.Parse(item.Data);
+            var data = item.Data.Trim();
+            if (data.Length == 0 || data == "[DONE]" || string.Equals(item.EventType, "done", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            using var document = JsonDocument.Parse(data);
             foreach (var update in decoder.Read(document.RootElement))
             {
                 yield return update;
@@ -135,10 +141,11 @@ public sealed partial class GeminiInteractionsClient(
             }
 
             JsonArray? content = null;
-            var hasNativeGeminiSignature = isAssistant && message.Contents.Any(static part =>
-                (part is TextReasoningContent { ProtectedData.Length: > 0 } && IsCompatibleDialect(part.AdditionalProperties)) ||
-                (part.AdditionalProperties?.TryGetValue(ReasoningMetadata.DialectKey, out var d) is true &&
-                 string.Equals(d as string, DialectName, StringComparison.Ordinal)));
+            var hasNativeGeminiSignature = isAssistant && message.Contents.AsValueEnumerable()
+                .Any(static part =>
+                    part is TextReasoningContent { ProtectedData.Length: > 0 } && IsCompatibleDialect(part.AdditionalProperties) ||
+                    part.AdditionalProperties?.TryGetValue(ReasoningMetadata.DialectKey, out var d) is true &&
+                    string.Equals(d as string, DialectName, StringComparison.Ordinal));
 
             foreach (var part in message.Contents)
             {
@@ -181,8 +188,8 @@ public sealed partial class GeminiInteractionsClient(
                         content = null;
 
                         var isGeminiOrigin = hasNativeGeminiSignature ||
-                            (call.AdditionalProperties?.TryGetValue(ReasoningMetadata.DialectKey, out var callDialect) is true &&
-                             string.Equals(callDialect as string, DialectName, StringComparison.Ordinal));
+                            call.AdditionalProperties?.TryGetValue(ReasoningMetadata.DialectKey, out var callDialect) is true &&
+                            string.Equals(callDialect as string, DialectName, StringComparison.Ordinal);
 
                         if (!isGeminiOrigin)
                         {
@@ -196,23 +203,25 @@ public sealed partial class GeminiInteractionsClient(
                                 ["id"] = call.CallId,
                                 ["arguments"] = JsonSerializer.SerializeToNode(call.Arguments) ?? new JsonObject()
                             };
-                            input.Add(new JsonObject
-                            {
-                                ["type"] = "model_output",
-                                ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = callEvidence.ToJsonString() })
-                            });
+                            input.Add(
+                                new JsonObject
+                                {
+                                    ["type"] = "model_output",
+                                    ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = callEvidence.ToJsonString() })
+                                });
                             break;
                         }
 
                         portableCalls.Remove(call.CallId);
                         callNames[call.CallId] = call.Name;
-                        input.Add(new JsonObject
-                        {
-                            ["type"] = "function_call",
-                            ["id"] = call.CallId,
-                            ["name"] = call.Name,
-                            ["arguments"] = JsonSerializer.SerializeToNode(call.Arguments) ?? new JsonObject()
-                        });
+                        input.Add(
+                            new JsonObject
+                            {
+                                ["type"] = "function_call",
+                                ["id"] = call.CallId,
+                                ["name"] = call.Name,
+                                ["arguments"] = JsonSerializer.SerializeToNode(call.Arguments) ?? new JsonObject()
+                            });
                         break;
                     }
                     case FunctionResultContent result:
@@ -259,11 +268,12 @@ public sealed partial class GeminiInteractionsClient(
                         if (content is null)
                         {
                             content = [];
-                            input.Add(new JsonObject
-                            {
-                                ["type"] = isAssistant ? "model_output" : "user_input",
-                                ["content"] = content
-                            });
+                            input.Add(
+                                new JsonObject
+                                {
+                                    ["type"] = isAssistant ? "model_output" : "user_input",
+                                    ["content"] = content
+                                });
                         }
 
                         content.Add(EncodeContent(part));
@@ -304,11 +314,12 @@ public sealed partial class GeminiInteractionsClient(
         if (result.Result is not IReadOnlyList<AIContent> blocks)
         {
             evidence["result"] = EncodeResult(result.Result);
-            input.Add(new JsonObject
-            {
-                ["type"] = "user_input",
-                ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = evidence.ToJsonString() })
-            });
+            input.Add(
+                new JsonObject
+                {
+                    ["type"] = "user_input",
+                    ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = evidence.ToJsonString() })
+                });
             return;
         }
 

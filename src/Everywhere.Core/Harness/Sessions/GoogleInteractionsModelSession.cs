@@ -7,9 +7,9 @@ using Microsoft.Extensions.AI;
 namespace Everywhere.Harness;
 
 /// <summary>
-/// <see cref="ModelSession"/> implementation for Google Gemini models via the stateless Interactions v1 API.
+/// <see cref="ModelSession"/> implementation for Google Gemini models via the stateless Interactions API.
 /// </summary>
-public sealed class GeminiModelSession : ModelSession
+public sealed class GoogleInteractionsModelSession : ModelSession
 {
     /// <inheritdoc />
     public override IChatClient ChatClient { get; }
@@ -21,19 +21,20 @@ public sealed class GeminiModelSession : ModelSession
     public override bool SupportsToolResultBlocks => true;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GeminiModelSession"/> class.
+    /// Initializes a new instance of the <see cref="GoogleInteractionsModelSession"/> class.
     /// </summary>
-    public GeminiModelSession(
+    public GoogleInteractionsModelSession(
         AssistantConfiguration configuration,
-        GoogleOptions options,
-        ModelConnection connection) : base(configuration, connection)
+        GoogleInteractionsOptions options,
+        ModelConnection connection
+    ) : base(configuration, connection)
     {
         if (configuration.ModelId is not { Length: > 0 } model)
         {
             throw new ArgumentException("Missing Gemini model.", nameof(configuration));
         }
 
-        var endpoint = ModelProviderSchemaExtensions.GetGeminiInteractionsUri(new Uri(connection.Endpoint));
+        var endpoint = ModelProviderSchemaExtensions.GetGeminiInteractionsUri(new Uri(connection.Endpoint, UriKind.Absolute));
         ChatClient = new GeminiInteractionsClient(
             connection.HttpClient,
             endpoint,
@@ -41,11 +42,9 @@ public sealed class GeminiModelSession : ModelSession
             connection.ApiKey)
         {
             ThinkingLevel = options.ResolveReasoningEffort(configuration),
-            ThinkingBudget = int.TryParse(options.ThinkingBudget, NumberStyles.Integer, CultureInfo.InvariantCulture, out var budget) ? budget : null,
             IncludeThoughts = options.IncludeThoughts,
             Temperature = float.TryParse(options.Temperature, NumberStyles.Float, CultureInfo.InvariantCulture, out var temperature) ? temperature : null,
-            TopP = float.TryParse(options.TopP, NumberStyles.Float, CultureInfo.InvariantCulture, out var topP) ? topP : null,
-            TopK = int.TryParse(options.TopK, NumberStyles.Integer, CultureInfo.InvariantCulture, out var topK) ? topK : null
+            TopP = float.TryParse(options.TopP, NumberStyles.Float, CultureInfo.InvariantCulture, out var topP) ? topP : null
         };
     }
 

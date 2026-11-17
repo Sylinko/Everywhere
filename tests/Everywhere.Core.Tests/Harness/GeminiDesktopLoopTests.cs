@@ -170,8 +170,8 @@ public sealed class GeminiDesktopLoopTests
         http.CreateClient(Arg.Any<string>()).Returns(_ => new HttpClient(wire, false));
         var configuration = new AdvancedAssistantConfiguration
         {
-            Schema = ModelProviderSchema.Google,
-            Endpoint = "https://fixture.invalid/v1beta",
+            Schema = ModelProviderSchema.GoogleInteractions,
+            Endpoint = "https://fixture.invalid/v1",
             ModelId = "gemini-test",
             ApiKey = key,
             SupportsToolCall = true,

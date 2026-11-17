@@ -64,7 +64,7 @@ public sealed class MockServerSession : IAsyncDisposable
 
     public Task CompleteAsync(Provider provider, object completion, object? chaos = null, int? times = null)
     {
-        if (provider != Provider.Gemini)
+        if (provider != Provider.GeminiInteractions)
             return RegisterAsync("httpLlmResponse", new { provider = provider == Provider.OpenAIResponses ? "OPENAI_RESPONSES" : provider.ToString().ToUpperInvariant(), model = "test-model", completion, chaos }, times);
 
         // MockServer 8's GEMINI action speaks generateContent, not Interactions.

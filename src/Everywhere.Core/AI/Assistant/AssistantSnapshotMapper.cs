@@ -50,5 +50,6 @@ public static partial class AssistantSnapshotMapper
     public static partial OpenAIResponsesOptions Copy(OpenAIResponsesOptions source);
     public static partial AnthropicOptions Copy(AnthropicOptions source);
     public static partial GoogleOptions Copy(GoogleOptions source);
+    public static partial GoogleInteractionsOptions Copy(GoogleInteractionsOptions source);
     public static partial MistralOptions Copy(MistralOptions source);
 }

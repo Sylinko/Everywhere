@@ -1,6 +1,7 @@
 ﻿using System.Security;
 using Everywhere.AI;
 using Everywhere.Chat;
+using Everywhere.Harness.Providers.Gemini;
 using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
 using Serilog;
@@ -799,14 +800,25 @@ public static partial class ChatHistoryBuilder
         var callDialect = call.Metadata is not null && call.Metadata.TryGetValue(ReasoningMetadata.DialectKey, out var rawDialect) ?
             rawDialect as string :
             spanDialect;
+        var thoughtSignature = call.Metadata is not null &&
+            call.Metadata.TryGetValue(ReasoningMetadata.ThoughtSignatureKey, out var rawSignature) ?
+            rawSignature as string :
+            null;
+        if (string.IsNullOrEmpty(callDialect) && !string.IsNullOrEmpty(thoughtSignature))
+        {
+            // Legacy chat-v2 Gemini tool calls stored thoughtSignature without a dialect tag.
+            callDialect = GeminiGenerateContentClient.DialectName;
+        }
 
         MEAI.AdditionalPropertiesDictionary? additional = null;
         if (!string.IsNullOrEmpty(callDialect))
         {
-            additional = new MEAI.AdditionalPropertiesDictionary
-            {
-                [ReasoningMetadata.DialectKey] = callDialect
-            };
+            (additional ??= [])[ReasoningMetadata.DialectKey] = callDialect;
+        }
+
+        if (!string.IsNullOrEmpty(thoughtSignature))
+        {
+            (additional ??= [])[ReasoningMetadata.ThoughtSignatureKey] = thoughtSignature;
         }
 
         return new MEAI.FunctionCallContent(callId, call.FunctionName, arguments)

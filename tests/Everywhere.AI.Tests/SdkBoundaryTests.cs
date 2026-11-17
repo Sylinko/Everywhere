@@ -33,6 +33,7 @@ public sealed class SdkBoundaryTests
     [TestCase(Provider.Anthropic, "max_tokens")]
     [TestCase(Provider.Mistral, "length")]
     [TestCase(Provider.Gemini, "length")]
+    [TestCase(Provider.GeminiInteractions, "length")]
     public async Task Stream_WhenOutputTruncated_PreservesProviderTerminationEvidence(Provider provider, string stopReason)
     {
         await using var server = await MockServerSession.ConnectAsync();
@@ -40,7 +41,7 @@ public sealed class SdkBoundaryTests
         using var client = server.CreateClient();
         var updates = await SdkStreamingTests.CollectAsync(provider.CreateClient(client));
         var reasons = updates.Select(static update => update.FinishReason?.Value).Where(static reason => reason is not null).ToArray();
-        Assert.That(reasons, Does.Contain(provider == Provider.Gemini ? "incomplete" : "length"));
+        Assert.That(reasons, Does.Contain(provider == Provider.GeminiInteractions ? "incomplete" : "length"));
         Assert.That(string.Concat(updates.Select(static update => update.Text)), Is.EqualTo("partial"));
     }
 
@@ -74,6 +75,7 @@ public sealed class SdkBoundaryTests
     }
 
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     [TestCase(Provider.Anthropic)]
@@ -103,6 +105,7 @@ public sealed class SdkBoundaryTests
     }
 
     [TestCase(Provider.Gemini)]
+    [TestCase(Provider.GeminiInteractions)]
     [TestCase(Provider.Mistral)]
     [TestCase(Provider.Ollama)]
     public async Task Stream_WhenErrorBodyIsInterrupted_DisposesResponseAndPreservesReadFailure(Provider provider)

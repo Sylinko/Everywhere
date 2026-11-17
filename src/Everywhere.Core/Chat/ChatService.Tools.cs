@@ -43,6 +43,16 @@ partial class ChatService
             {
                 IsBusy = true
             };
+            var callMetadata = new Dictionary<string, object?>
+            {
+                [ReasoningMetadata.DialectKey] = session.Dialect
+            };
+            if (call.AdditionalProperties?.TryGetValue(ReasoningMetadata.ThoughtSignatureKey, out var rawSignature) is true &&
+                rawSignature is string { Length: > 0 } signature)
+            {
+                callMetadata[ReasoningMetadata.ThoughtSignatureKey] = signature;
+            }
+
             message.AddCall(
                 new ToolCallRecord(
                     call.Name,
@@ -50,10 +60,7 @@ partial class ChatService
                     call.CallId,
                     call.Arguments is null ? null : new Dictionary<string, object?>(call.Arguments))
                 {
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        [ReasoningMetadata.DialectKey] = session.Dialect
-                    }
+                    Metadata = callMetadata
                 });
             span.Add(message);
             batch.Add(new ToolInvocation(call, message, binding, suggestions));

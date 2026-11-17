@@ -20,18 +20,21 @@ partial class GeminiInteractionsClient
 
         public IReadOnlyList<ChatResponseUpdate> Read(JsonElement frame)
         {
-            var kind = frame.GetProperty("event_type").GetString();
+            var kind = TryGetString(frame, "event_type");
             var update = new ChatResponseUpdate { Role = ChatRole.Assistant, ResponseId = _responseId, ModelId = _model };
             switch (kind)
             {
                 case "interaction.created":
                 {
-                    var created = frame.GetProperty("interaction");
-                    _responseId = created.GetProperty("id").GetString();
-                    _model = created.TryGetProperty("model", out var model) ? model.GetString() : null;
+                    if (frame.TryGetProperty("interaction", out var created) && created.ValueKind == JsonValueKind.Object)
+                    {
+                        _responseId = TryGetString(created, "id") ?? _responseId;
+                        _model = TryGetString(created, "model") ?? _model;
+                    }
+
                     return [];
                 }
-                case "interaction.status_update":
+                case "interaction.status_update" or "interaction.updated" or "done":
                 {
                     return [];
                 }
@@ -39,9 +42,10 @@ partial class GeminiInteractionsClient
                 {
                     var index = frame.GetProperty("index").GetInt32();
                     if (!_seen.Add(index)) throw new JsonException($"Duplicate Gemini step {index}.");
+
                     var initial = frame.GetProperty("step");
                     _active.Add(index, new StepDraft(initial));
-                    var stepType = initial.GetProperty("type").GetString();
+                    var stepType = TryGetString(initial, "type");
                     if (stepType == "function_call")
                     {
                         update.MessageId = index.ToString(CultureInfo.InvariantCulture);
@@ -50,13 +54,14 @@ partial class GeminiInteractionsClient
                     }
 
                     if (stepType != "model_output" && !(stepType == "thought" &&
-                        (initial.TryGetProperty("summary", out _) || initial.TryGetProperty("signature", out _))))
+                            (initial.TryGetProperty("summary", out _) || initial.TryGetProperty("signature", out _))))
                     {
                         return [];
                     }
 
                     update.Contents = ProjectStep(initial);
                     if (update.Contents.Count == 0) return [];
+
                     update.MessageId = index.ToString(CultureInfo.InvariantCulture);
                     return [update];
                 }
@@ -70,6 +75,7 @@ partial class GeminiInteractionsClient
 
                     update.MessageId = deltaIndex.ToString(CultureInfo.InvariantCulture);
                     if (draft.Append(frame.GetProperty("delta")) is not { } content) return [];
+
                     update.Contents.Add(content);
                     return [update];
                 }
@@ -83,7 +89,7 @@ partial class GeminiInteractionsClient
 
                     var step = completed.Seal();
                     update.MessageId = stopIndex.ToString(CultureInfo.InvariantCulture);
-                    var stepType = step.GetProperty("type").GetString();
+                    var stepType = TryGetString(step, "type");
                     if (stepType is "function_call" or "google_search_call" or "google_search_result")
                     {
                         update.Contents = ProjectStep(step);
@@ -124,8 +130,10 @@ partial class GeminiInteractionsClient
                 case "interaction.completed":
                 {
                     if (_active.Count > 0) throw new JsonException("Gemini completed with open steps.");
-                    var terminal = frame.GetProperty("interaction");
-                    update.ResponseId = terminal.GetProperty("id").GetString();
+                    var terminal = frame.TryGetProperty("interaction", out var interaction) && interaction.ValueKind == JsonValueKind.Object
+                        ? interaction
+                        : frame;
+                    update.ResponseId = TryGetString(terminal, "id") ?? _responseId;
                     update.FinishReason = GetFinishReason(terminal);
                     if (ReadUsage(terminal) is { } usage)
                     {
@@ -138,8 +146,8 @@ partial class GeminiInteractionsClient
                 case "error":
                 {
                     throw new InvalidDataException(
-                        frame.TryGetProperty("error", out var error) && error.TryGetProperty("message", out var message)
-                            ? message.GetString()
+                        frame.TryGetProperty("error", out var error) && TryGetString(error, "message") is { } message
+                            ? message
                             : "Gemini interaction stream failed.");
                 }
                 default:
@@ -159,23 +167,43 @@ partial class GeminiInteractionsClient
 
         public AIContent? Append(JsonElement delta)
         {
-            var type = delta.GetProperty("type").GetString();
+            var type = TryGetString(delta, "type");
             switch (type)
             {
                 case "thought_signature":
                 {
-                    var signature = delta.GetProperty("signature").GetString();
+                    var signature = TryGetString(delta, "signature");
                     _step["signature"] = signature;
                     return new TextReasoningContent(null) { ProtectedData = signature };
                 }
                 case "arguments_delta":
                 {
-                    (_arguments ??= new StringBuilder()).Append(delta.GetProperty("arguments").GetString());
+                    if (TryGetString(delta, "arguments") is { Length: > 0 } argChunk)
+                    {
+                        (_arguments ??= new StringBuilder()).Append(argChunk);
+                    }
+
                     return null;
                 }
                 case "thought_summary":
                 {
-                    return AppendContent(delta.GetProperty("content"), "summary");
+                    if (delta.TryGetProperty("content", out var summaryContent) && summaryContent.ValueKind == JsonValueKind.Object)
+                    {
+                        return AppendContent(summaryContent, "summary");
+                    }
+
+                    if (TryGetString(delta, "text") is { } flatSummary)
+                    {
+                        using var synthesized = JsonDocument.Parse(
+                            new JsonObject
+                            {
+                                ["type"] = "text",
+                                ["text"] = flatSummary
+                            }.ToJsonString());
+                        return AppendContent(synthesized.RootElement, "summary");
+                    }
+
+                    return null;
                 }
                 case "text" or "image" or "audio" or "video" or "document":
                 {
@@ -214,7 +242,10 @@ partial class GeminiInteractionsClient
             FlushText();
             if (_arguments is not null)
             {
-                _step["arguments"] = JsonNode.Parse(_arguments.ToString())?.AsObject()
+                var rawArgs = _arguments.ToString();
+                _step["arguments"] = string.IsNullOrWhiteSpace(rawArgs)
+                    ? new JsonObject()
+                    : JsonNode.Parse(rawArgs)?.AsObject()
                     ?? throw new JsonException("Missing function arguments.");
             }
 

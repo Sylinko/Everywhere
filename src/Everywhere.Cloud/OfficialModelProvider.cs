@@ -22,7 +22,7 @@ public sealed partial class OfficialModelProvider :
 
     public event EventHandler? CatalogChanged;
 
-    protected override int CacheVersion => 2;
+    protected override int CacheVersion => 3;
 
     protected override bool CanRefresh =>
         _cloudClient.LoginStatus == CloudClientLoginStatus.LoggedIn &&

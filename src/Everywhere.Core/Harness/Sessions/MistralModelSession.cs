@@ -25,12 +25,9 @@ public sealed class MistralModelSession : ModelSession
         ModelConnection connection
     ) : base(configuration, connection)
     {
-        var baseEndpoint = new Uri(Endpoint.EndsWith('/') ? Endpoint : Endpoint + "/", UriKind.Absolute);
-        var completionsUri = new Uri(baseEndpoint, "chat/completions");
-
         ChatClient = new MistralChatClient(
             connection.HttpClient,
-            completionsUri,
+            new Uri(Endpoint, UriKind.Absolute),
             Configuration.ModelId ?? string.Empty,
             ApiKey)
         {
