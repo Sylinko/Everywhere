@@ -1,15 +1,15 @@
 ﻿using System.Security;
 using Everywhere.AI;
+using Everywhere.Harness;
 using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
 using Serilog;
+using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
 /// <summary>
-/// Builds ChatHistory (SK) from ChatMessages (Everywhere).
+/// Builds MEAI <see cref="MEAI.ChatMessage"/> sequences from durable <see cref="ChatMessage"/> histories.
 /// </summary>
 public static partial class ChatHistoryBuilder
 {
@@ -20,7 +20,7 @@ public static partial class ChatHistoryBuilder
     private const double RetainedUserMessageContextRatio = 0.1d;
     private const string RetainedUserMessageOmissionMarker = "[... older content omitted from retained user message ...]";
 
-    public static async ValueTask<ChatHistory> BuildChatHistoryAsync(
+    public static async ValueTask<IList<MEAI.ChatMessage>> BuildChatHistoryAsync(
         IPromptRenderer promptRenderer,
         string systemPrompt,
         IReadOnlyList<ChatMessage> chatMessages,
@@ -37,7 +37,7 @@ public static partial class ChatHistoryBuilder
             cancellationToken);
     }
 
-    public static async ValueTask<ChatHistory> BuildChatHistoryAsync(
+    public static async ValueTask<IList<MEAI.ChatMessage>> BuildChatHistoryAsync(
         IPromptRenderer promptRenderer,
         string systemPrompt,
         IReadOnlyList<ChatMessageNode> chatNodes,
@@ -67,7 +67,7 @@ public static partial class ChatHistoryBuilder
     /// Captures provider input in the owning execution domain, then reads only captured attachment
     /// paths. Detached message consumers may omit the context when they own their input exclusively.
     /// </summary>
-    public static async ValueTask<ChatHistory> BuildSelectedChatHistoryAsync(
+    public static async ValueTask<IList<MEAI.ChatMessage>> BuildSelectedChatHistoryAsync(
         IPromptRenderer promptRenderer,
         string systemPrompt,
         IReadOnlyList<ChatMessage> selectedMessages,
@@ -95,14 +95,44 @@ public static partial class ChatHistoryBuilder
         CancellationToken cancellationToken,
         ChatContext? context = null)
     {
+        return await CaptureModelInputAsync(
+            promptRenderer,
+            systemPrompt,
+            selectedMessages,
+            supportedModalities,
+            offloadedImages,
+            cancellationToken,
+            context);
+    }
+
+    /// <summary>
+    /// Captures provider-ready MEAI messages and image occurrences directly from durable conversation spans,
+    /// scoping cryptographic reasoning continuation metadata to matching dialects.
+    /// </summary>
+    public static async ValueTask<ChatModelInput> CaptureModelInputAsync(
+        IPromptRenderer promptRenderer,
+        string systemPrompt,
+        IReadOnlyList<ChatMessage> selectedMessages,
+        Modalities supportedModalities,
+        IReadOnlySet<ChatImageOccurrence>? offloadedImages,
+        CancellationToken cancellationToken,
+        ChatContext? context = null,
+        string? targetDialect = null,
+        bool supportsToolResultBlocks = false)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         var (chatHistory, pendingImages) = context is null ? Capture() : await context.DispatchAsync(Capture).ConfigureAwait(false);
 
         var sent = new List<ChatImageOccurrence>(pendingImages.Count);
-        foreach (var pending in pendingImages)
+        foreach (var media in pendingImages)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var index = pending.Target.IndexOf(pending.Placeholder);
+            if (media is not PendingImage pending)
+            {
+                sent.Add(media.Occurrence);
+                continue;
+            }
+
             try
             {
                 var prepared = pending.Image;
@@ -132,39 +162,112 @@ public static partial class ChatHistoryBuilder
                         originalWidth = image.OriginalWidth;
                         originalHeight = image.OriginalHeight;
                     }
+
                     prepared = prepared with { MimeType = mimeType, Width = image.Width, Height = image.Height };
                 }
 
-                pending.Target[index] = new TextContent(DescribeImage(prepared, originalWidth, originalHeight, "Image follows."));
-                pending.Target.Insert(index + 1, new ImageContent(bytes, mimeType) { Metadata = pending.Metadata });
+                pending.Provide(DescribeImage(prepared, originalWidth, originalHeight, "Image follows."), bytes, mimeType);
                 sent.Add(pending.Occurrence);
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
             {
-                pending.Target[index] = new TextContent(
-                    DescribeImage(
-                        pending.Image,
-                        pending.OriginalWidth,
-                        pending.OriginalHeight,
-                        $"Image not provided: {error.Message}"));
+                pending.Omit(DescribeImage(pending.Image, pending.OriginalWidth, pending.OriginalHeight, "Image not available."));
                 Log.ForContext(typeof(ChatHistoryBuilder)).Debug(error, "Could not prepare contextual image {Path}", pending.Image.Path);
             }
         }
 
         return new ChatModelInput(chatHistory, sent);
 
-        (ChatHistory History, List<PendingImage> Images) Capture()
+        (List<MEAI.ChatMessage> History, List<PendingMedia> Images) Capture()
         {
-            var history = new ChatHistory();
-            history.AddSystemMessage(systemPrompt);
-            var images = new List<PendingImage>();
+            var history = new List<MEAI.ChatMessage>
+            {
+                new(MEAI.ChatRole.System, systemPrompt)
+            };
+            var images = new List<PendingMedia>();
             foreach (var message in selectedMessages)
             {
-                history.AddRange(CaptureChatMessageContents(promptRenderer, message, supportedModalities.SupportsImage, offloadedImages, images));
+                history.AddRange(
+                    CaptureChatMessageContents(
+                        promptRenderer,
+                        message,
+                        supportedModalities.SupportsImage,
+                        offloadedImages,
+                        images,
+                        targetDialect,
+                        supportsToolResultBlocks));
             }
 
             return (history, images);
         }
+    }
+
+    /// <summary>
+    /// Reconstructs a <see cref="MEAI.TextReasoningContent"/> from span text and persisted <see cref="ReasoningMetadata"/>.
+    /// </summary>
+    internal static MEAI.TextReasoningContent? CreateReasoningContent(
+        string? text,
+        MetadataDictionary metadata,
+        string? targetDialect = null)
+    {
+        var spanDialect = metadata.TryGetValue(ReasoningMetadata.DialectKey, out var rawDialect) ? rawDialect as string : null;
+        var protectedData = metadata.TryGetValue(ReasoningMetadata.ProtectedDataKey, out var rawProtected) ? rawProtected as string : null;
+        if (protectedData is null && metadata.TryGetValue("ProtectedData", out var legacyProtected) &&
+            legacyProtected is string { Length: > 0 } legacyValue)
+        {
+            // Backward compatibility for Anthropic reasoning spans persisted before dialect-scoped metadata.
+            protectedData = legacyValue;
+            spanDialect ??= AnthropicModelSession.DialectName;
+        }
+
+        var isRedacted = metadata.TryGetValue(ReasoningMetadata.IsRedactedKey, out var rawRedacted) && rawRedacted is true;
+        var itemId = metadata.TryGetValue(ReasoningMetadata.ItemIdKey, out var rawItemId) ? rawItemId as string : null;
+        var geminiStep = metadata.TryGetValue(ReasoningMetadata.GeminiStepKey, out var rawGeminiStep) ? rawGeminiStep : null;
+
+        if (targetDialect is null || string.Equals(spanDialect, targetDialect, StringComparison.Ordinal))
+        {
+            if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(protectedData) && !isRedacted && geminiStep is null)
+            {
+                return null;
+            }
+
+            MEAI.AdditionalPropertiesDictionary? additional = null;
+            if (!string.IsNullOrEmpty(spanDialect))
+            {
+                (additional ??= [])[ReasoningMetadata.DialectKey] = spanDialect;
+            }
+
+            if (!string.IsNullOrEmpty(itemId))
+            {
+                (additional ??= [])["reasoningItemId"] = itemId;
+            }
+
+            if (isRedacted)
+            {
+                (additional ??= [])[ReasoningMetadata.IsRedactedKey] = true;
+            }
+
+            if (geminiStep is not null)
+            {
+                (additional ??= [])[ReasoningMetadata.GeminiStepKey] = geminiStep;
+            }
+
+            return new MEAI.TextReasoningContent(text)
+            {
+                ProtectedData = protectedData,
+                AdditionalProperties = additional
+            };
+        }
+
+        // Plain-text reasoning dialects can receive readable summaries without foreign cryptographic tokens.
+        if (targetDialect is OpenAIModelSession.DialectName or "mistral" or OllamaModelSession.DialectName &&
+            !isRedacted &&
+            !string.IsNullOrEmpty(text))
+        {
+            return new MEAI.TextReasoningContent(text);
+        }
+
+        return null;
     }
 
     public static IReadOnlyList<ChatMessage> SelectContextMessages(
@@ -309,6 +412,7 @@ public static partial class ChatHistoryBuilder
             {
                 retainedMessages.Add(new UserChatMessage(retainedContent, []));
             }
+
             break;
         }
 
@@ -327,7 +431,7 @@ public static partial class ChatHistoryBuilder
 
         for (var i = chatMessages.Count - 1; i >= minimumIndex; i--)
         {
-            if (chatMessages[i].Role != AuthorRole.User)
+            if (chatMessages[i].Role != MEAI.ChatRole.User)
             {
                 continue;
             }
@@ -342,18 +446,20 @@ public static partial class ChatHistoryBuilder
         return minimumIndex;
     }
 
-    private static IEnumerable<ChatMessageContent> CaptureChatMessageContents(
+    private static IEnumerable<MEAI.ChatMessage> CaptureChatMessageContents(
         IPromptRenderer promptRenderer,
         ChatMessage chatMessage,
         bool canSendImages,
         IReadOnlySet<ChatImageOccurrence>? offloadedImages,
-        List<PendingImage> pendingImages)
+        List<PendingMedia> pendingImages,
+        string? targetDialect,
+        bool supportsToolResultBlocks)
     {
         switch (chatMessage)
         {
             case AssistantChatMessage assistantChatMessage:
             {
-                var items = new ChatMessageContentItemCollection();
+                var items = new List<MEAI.AIContent>();
                 var spans = assistantChatMessage.Items;
                 var nodeId = assistantChatMessage.Owner?.Id ?? Guid.Empty;
                 for (var spanIndex = 0; spanIndex < spans.Count; spanIndex++)
@@ -363,20 +469,49 @@ public static partial class ChatHistoryBuilder
                     {
                         case AssistantChatMessageTextSpan { Content: { Length: > 0 } content }:
                         {
-                            items.Add(new TextContent(content, metadata: span.Metadata));
+                            items.Add(new MEAI.TextContent(content));
+                            break;
+                        }
+                        case AssistantChatMessageReasoningSpan reasoningSpan:
+                        {
+                            if (CreateReasoningContent(reasoningSpan.ReasoningOutput, reasoningSpan.Metadata, targetDialect) is { } reasoning)
+                            {
+                                items.Add(reasoning);
+                            }
+
+                            break;
+                        }
+                        case AssistantChatMessageImageSpan { ImageOutput: { } imageOutput }:
+                        {
+                            AddImage(items, imageOutput, new ChatImageOccurrence(nodeId, spanIndex, 0));
+                            break;
+                        }
+                        case AssistantChatMessageVisualContextResetSpan resetSpan:
+                        {
+                            if (items.Count > 0)
+                            {
+                                yield return new MEAI.ChatMessage(MEAI.ChatRole.Assistant, items);
+                                items = [];
+                            }
+
+                            yield return new MEAI.ChatMessage(resetSpan.Message.Role, resetSpan.Message.Content);
                             break;
                         }
                         case AssistantChatMessageFunctionCallSpan { Items: { Count: > 0 } functionCalls }:
                         {
-                            // 1. Add all function calls as content items.
-                            items.AddRange(functionCalls.SelectMany(function => function.Calls).Select(CaptureFunctionCall));
+                            var spanDialect = span.Metadata.TryGetValue(ReasoningMetadata.DialectKey, out var rawSpanDialect) ?
+                                rawSpanDialect as string :
+                                null;
+                            foreach (var call in functionCalls.SelectMany(static function => function.Calls))
+                            {
+                                items.Add(CaptureFunctionCall(call, spanDialect));
+                            }
 
-                            // 2. Yield the assistant message with function call items first
-                            yield return new ChatMessageContent(AuthorRole.Assistant, items, metadata: assistantChatMessage.Metadata);
+                            yield return new MEAI.ChatMessage(MEAI.ChatRole.Assistant, items);
                             items = [];
 
-                            var resultItems = new ChatMessageContentItemCollection();
-                            var imageItems = new ChatMessageContentItemCollection();
+                            var resultItems = new List<MEAI.AIContent>();
+                            var imageItems = new List<MEAI.AIContent>();
                             var imageIndex = 0;
                             foreach (var functionCall in functionCalls)
                             {
@@ -399,26 +534,24 @@ public static partial class ChatHistoryBuilder
                                         // attachment may be read again after asynchronous file loading begins.
                                         var capturedResult = modelResult switch
                                         {
+                                            ToolContentResult rich => ProjectToolContent(
+                                                rich,
+                                                resultContent,
+                                                imageItems,
+                                                nodeId,
+                                                spanIndex,
+                                                ref imageIndex),
                                             PromptNode promptNode => promptNode.ToString(),
                                             FileAttachment file => DescribeFile(file),
                                             _ => modelResult,
                                         };
-                                        resultItems.Add(
-                                            new FunctionResultContent(
-                                                resultContent.FunctionName,
-                                                resultContent.PluginName,
-                                                resultContent.CallId,
-                                                capturedResult)
-                                            {
-                                                Metadata = resultContent.Metadata?.ToDictionary(),
-                                                InnerContent = resultContent.InnerContent
-                                            });
+                                        resultItems.Add(new MEAI.FunctionResultContent(callId, capturedResult));
                                     }
                                     else
                                     {
                                         resultItems.Add(
-                                            new FunctionResultContent(
-                                                call,
+                                            new MEAI.FunctionResultContent(
+                                                callId,
                                                 $"Error: No result found for function call ID '{callId}'. " +
                                                 "This may caused by an error during function execution or user cancellation."));
                                     }
@@ -457,38 +590,17 @@ public static partial class ChatHistoryBuilder
                                 }
                             }
 
-                            yield return new ChatMessageContent(AuthorRole.Tool, resultItems);
+                            yield return new MEAI.ChatMessage(MEAI.ChatRole.Tool, resultItems);
 
                             // Some connectors accept only text in tool results. Keep the tool
                             // cycle intact, then supply its image blocks in a user message.
                             if (imageItems.Count > 0)
                             {
-                                imageItems.Insert(0, new TextContent("<ExtraToolCallResultAttachments>"));
-                                imageItems.Add(new TextContent("</ExtraToolCallResultAttachments>"));
-                                yield return new ChatMessageContent(AuthorRole.User, imageItems);
+                                imageItems.Insert(0, new MEAI.TextContent("<ExtraToolCallResultAttachments>"));
+                                imageItems.Add(new MEAI.TextContent("</ExtraToolCallResultAttachments>"));
+                                yield return new MEAI.ChatMessage(MEAI.ChatRole.User, imageItems);
                             }
 
-                            break;
-                        }
-                        case AssistantChatMessageVisualContextResetSpan resetSpan:
-                        {
-                            if (items.Count > 0)
-                            {
-                                yield return new ChatMessageContent(AuthorRole.Assistant, items, metadata: assistantChatMessage.Metadata);
-                                items = [];
-                            }
-
-                            yield return new ChatMessageContent(resetSpan.Message.Role, resetSpan.Message.Content);
-                            break;
-                        }
-                        case AssistantChatMessageReasoningSpan { ReasoningOutput: { Length: > 0 } reasoningOutput }:
-                        {
-                            items.Add(new ReasoningContent(reasoningOutput) { Metadata = span.Metadata });
-                            break;
-                        }
-                        case AssistantChatMessageImageSpan { ImageOutput: { } imageOutput }:
-                        {
-                            AddImage(items, imageOutput, new ChatImageOccurrence(nodeId, spanIndex, 0), metadata: span.Metadata);
                             break;
                         }
                     }
@@ -496,13 +608,14 @@ public static partial class ChatHistoryBuilder
 
                 if (items.Count > 0)
                 {
-                    yield return new ChatMessageContent(AuthorRole.Assistant, items, metadata: assistantChatMessage.Metadata);
+                    yield return new MEAI.ChatMessage(MEAI.ChatRole.Assistant, items);
                 }
+
                 break;
             }
             case UserChatMessage userChatMessage:
             {
-                var items = new ChatMessageContentItemCollection();
+                var items = new List<MEAI.AIContent>();
                 foreach (var chatAttachment in userChatMessage.Attachments.AsValueEnumerable().ToArray())
                 {
                     CaptureAttachment(chatAttachment, items);
@@ -510,43 +623,122 @@ public static partial class ChatHistoryBuilder
 
                 if (userChatMessage is UserStrategyChatMessage { Strategy.Body: { Length: > 0 } strategyBody } userStrategyMessage)
                 {
-                    // If UserMessage template is provided, render the content with the template.
                     var renderedContent = promptRenderer.RenderStrategyUserPrompt(
                         strategyBody,
                         userChatMessage.Content,
                         userStrategyMessage.PreprocessorResult);
-                    items.Add(new TextContent(renderedContent));
+                    items.Add(new MEAI.TextContent(renderedContent));
                 }
-                else
+                else if (userChatMessage.Content.Length > 0)
                 {
-                    if (userChatMessage.Content.Length > 0)
-                    {
-                        items.Add(new TextContent(userChatMessage.Content));
-                    }
+                    items.Add(new MEAI.TextContent(userChatMessage.Content));
                 }
 
-                yield return new ChatMessageContent(AuthorRole.User, items);
+                yield return new MEAI.ChatMessage(MEAI.ChatRole.User, items);
                 break;
             }
             case ContextCompressionChatMessage { HasSummary: true } compression:
             {
-                yield return new ChatMessageContent(AuthorRole.User, compression.ToString());
+                yield return new MEAI.ChatMessage(MEAI.ChatRole.User, compression.ToString());
                 break;
             }
-            case { Role.Label: "system" or "user" or "developer" or "tool" } when chatMessage.ToString() is { Length: > 0 } content:
+            case { Role.Value: "system" or "user" or "developer" or "tool" } when chatMessage.ToString() is { Length: > 0 } content:
             {
-                yield return new ChatMessageContent(chatMessage.Role, content);
+                yield return new MEAI.ChatMessage(chatMessage.Role, content);
                 break;
             }
         }
 
+        object ProjectToolContent(
+            ToolContentResult rich,
+            ToolResultRecord record,
+            List<MEAI.AIContent> imageItems,
+            Guid nodeId,
+            int spanIndex,
+            ref int imageIndex)
+        {
+            var parts = new ModelToolContent(rich.Blocks.Length, rich.IsError is true);
+            foreach (var block in rich.Blocks)
+            {
+                switch (block)
+                {
+                    case ToolContentBlock.Text text:
+                        parts.Add(new MEAI.TextContent(text.Value));
+                        break;
+                    case ToolContentBlock.Json json:
+                        parts.Add(new MEAI.TextContent(json.Value.GetRawText()));
+                        break;
+                    case ToolContentBlock.Uri uri:
+                        if (supportsToolResultBlocks &&
+                            canSendImages &&
+                            uri.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true &&
+                            Uri.TryCreate(uri.Address, UriKind.Absolute, out var address) &&
+                            address.Scheme == Uri.UriSchemeHttps)
+                        {
+                            var occurrence = new ChatImageOccurrence(nodeId, spanIndex, imageIndex++);
+                            if (offloadedImages?.Contains(occurrence) != true)
+                            {
+                                parts.Add(new MEAI.UriContent(address, uri.MediaType));
+                                pendingImages.Add(new RemoteImage(occurrence));
+                                break;
+                            }
+                        }
+
+                        parts.Add(new MEAI.TextContent(uri.Address));
+                        break;
+                    case ToolContentBlock.File file when (uint)file.Index < (uint)record.Files.Length:
+                        var attachment = record.Files[file.Index].Attachment;
+                        if (!attachment.IsImage)
+                        {
+                            parts.Add(new MEAI.TextContent($"Tool attachment: {attachment.MimeType}"));
+                            break;
+                        }
+
+                        var position = new ChatImageOccurrence(nodeId, spanIndex, imageIndex++);
+                        if (string.IsNullOrEmpty(attachment.FilePath))
+                        {
+                            parts.Add(new MEAI.TextContent("Tool image unavailable on this device."));
+                            break;
+                        }
+
+                        if (!supportsToolResultBlocks)
+                        {
+                            parts.Add(new MEAI.TextContent("See the accompanying tool image."));
+                            AddImage(imageItems, attachment, position, record.CallId);
+                            break;
+                        }
+
+                        var index = parts.Count;
+                        parts.Add(new MEAI.TextContent("Tool image omitted."));
+                        if (canSendImages && offloadedImages?.Contains(position) != true)
+                        {
+                            var image = new ImageReference(attachment.FilePath, attachment.MimeType, true, null, null, record.CallId, null);
+                            pendingImages.Add(
+                                new PendingImage(
+                                    image,
+                                    position,
+                                    null,
+                                    null,
+                                    (_, bytes, mime) => parts[index] = new MEAI.DataContent(bytes, mime),
+                                    _ => parts[index] = new MEAI.TextContent("Tool image unavailable.")));
+                        }
+
+                        break;
+                }
+            }
+
+            if (rich.StructuredContent is { } structured) parts.Add(new MEAI.TextContent(structured.GetRawText()));
+            if (supportsToolResultBlocks && (parts.Count > 0 || parts.IsError)) return parts;
+            if (rich.IsError is true) parts.Add(new MEAI.TextContent("The tool reported an error."));
+            return string.Join("\n", parts.OfType<MEAI.TextContent>().Select(static part => part.Text));
+        }
+
         void AddImage(
-            ChatMessageContentItemCollection target,
+            List<MEAI.AIContent> target,
             FileAttachment file,
             ChatImageOccurrence occurrence,
             string? callId = null,
-            ViewImageItem.Success? view = null,
-            MetadataDictionary? metadata = null)
+            ViewImageItem.Success? view = null)
         {
             var image = new ImageReference(
                 file.FilePath,
@@ -561,47 +753,69 @@ public static partial class ChatHistoryBuilder
             if (!canSendImages)
             {
                 target.Add(
-                    new TextContent(
-                        DescribeImage(image, originalWidth, originalHeight, "Image not provided: this model does not accept image input."),
-                        metadata: metadata));
+                    new MEAI.TextContent(
+                        DescribeImage(
+                            image,
+                            originalWidth,
+                            originalHeight,
+                            "Image not provided: this model does not accept image input.")));
                 return;
             }
 
             if (offloadedImages?.Contains(occurrence) == true)
             {
                 target.Add(
-                    new TextContent(
+                    new MEAI.TextContent(
                         DescribeImage(
                             image,
                             originalWidth,
                             originalHeight,
-                            "Image omitted to fit the request. If needed, use view_image on the path, with fewer images or a smaller crop."),
-                        metadata: metadata));
+                            "Image omitted to fit the request. If needed, use view_image on the path, with fewer images or a smaller crop.")));
                 return;
             }
 
-            var placeholder = new TextContent(string.Empty);
+            var placeholder = new MEAI.TextContent(string.Empty);
             target.Add(placeholder);
-            pendingImages.Add(new PendingImage(target, placeholder, image, occurrence, originalWidth, originalHeight, metadata));
+            pendingImages.Add(new PendingImage(image, occurrence, originalWidth, originalHeight, Provide, Omit));
+
+            void Provide(string description, byte[] bytes, string mimeType)
+            {
+                var index = target.IndexOf(placeholder);
+                target[index] = new MEAI.TextContent(description);
+                target.Insert(index + 1, new MEAI.DataContent(bytes, mimeType));
+            }
+
+            void Omit(string description)
+            {
+                target[target.IndexOf(placeholder)] = new MEAI.TextContent(description);
+            }
         }
     }
 
-    private static FunctionCallContent CaptureFunctionCall(FunctionCallContent call)
+    private static MEAI.FunctionCallContent CaptureFunctionCall(ToolCallRecord call, string? spanDialect)
     {
-        return new FunctionCallContent(
-            call.FunctionName,
-            call.PluginName,
-            call.Id,
-            call.Arguments is null ? null : new KernelArguments(call.Arguments))
+        var callId = call.Id ?? string.Empty;
+        var arguments = call.Arguments is null ? null : new Dictionary<string, object?>(call.Arguments);
+        var callDialect = call.Metadata is not null && call.Metadata.TryGetValue(ReasoningMetadata.DialectKey, out var rawDialect) ?
+            rawDialect as string :
+            spanDialect;
+
+        MEAI.AdditionalPropertiesDictionary? additional = null;
+        if (!string.IsNullOrEmpty(callDialect))
         {
-            Metadata = call.Metadata?.ToDictionary(),
-            InnerContent = call.InnerContent,
+            additional = new MEAI.AdditionalPropertiesDictionary
+            {
+                [ReasoningMetadata.DialectKey] = callDialect
+            };
+        }
+
+        return new MEAI.FunctionCallContent(callId, call.FunctionName, arguments)
+        {
+            AdditionalProperties = additional
         };
     }
 
-    private static void CaptureAttachment(
-        ChatAttachment chatAttachment,
-        ChatMessageContentItemCollection contents)
+    private static void CaptureAttachment(ChatAttachment chatAttachment, List<MEAI.AIContent> contents)
     {
         switch (chatAttachment)
         {
@@ -609,7 +823,7 @@ public static partial class ChatHistoryBuilder
             {
                 var incompleteAttribute = textSelection.IsTextIncomplete ? " incomplete=\"true\"" : string.Empty;
                 contents.Add(
-                    new TextContent(
+                    new MEAI.TextContent(
                         $"""
                          <Attachment type="text-selection"{incompleteAttribute}>
                          <Text>
@@ -625,7 +839,7 @@ public static partial class ChatHistoryBuilder
             case VisualElementAttachment visualElement:
             {
                 contents.Add(
-                    new TextContent(
+                    new MEAI.TextContent(
                         $"""
                          <Attachment type="visual-element">
                          {visualElement.Content?.ToString() ?? "omitted due to duplicate"}
@@ -636,7 +850,7 @@ public static partial class ChatHistoryBuilder
             case TextAttachment text:
             {
                 contents.Add(
-                    new TextContent(
+                    new MEAI.TextContent(
                         $"""
                          <Attachment type="text">
                          {text}
@@ -646,7 +860,7 @@ public static partial class ChatHistoryBuilder
             }
             case FileAttachment file:
             {
-                contents.Add(new TextContent(DescribeFile(file)));
+                contents.Add(new MEAI.TextContent(DescribeFile(file)));
                 break;
             }
         }
@@ -684,16 +898,19 @@ public static partial class ChatHistoryBuilder
         string? SourcePath
     );
 
+    private abstract record PendingMedia(ChatImageOccurrence Occurrence);
+
+    private sealed record RemoteImage(ChatImageOccurrence Occurrence) : PendingMedia(Occurrence);
+
     // The placeholder connects the captured position with its disk read without revisiting live messages.
     private sealed record PendingImage(
-        ChatMessageContentItemCollection Target,
-        TextContent Placeholder,
         ImageReference Image,
         ChatImageOccurrence Occurrence,
         int? OriginalWidth,
         int? OriginalHeight,
-        MetadataDictionary? Metadata
-    );
+        Action<string, byte[], string> Provide,
+        Action<string> Omit
+    ) : PendingMedia(Occurrence);
 }
 
-public sealed record ChatModelInput(ChatHistory History, IReadOnlyList<ChatImageOccurrence> SentImages);
+public sealed record ChatModelInput(IList<MEAI.ChatMessage> History, IReadOnlyList<ChatImageOccurrence> SentImages);

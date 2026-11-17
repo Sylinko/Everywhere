@@ -9,12 +9,12 @@ using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Collections;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Statistics;
 using Lucide.Avalonia;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
 using NSubstitute;
 using MEAI = Microsoft.Extensions.AI;
 
@@ -33,7 +33,7 @@ public sealed class ToolApprovalReviewerTests
 
     [TestCase("allow", true)]
     [TestCase("deny", false)]
-    public async Task ReviewAsync_ThroughChatClientAdapter_AdvertisesFlatNamesAndCompletesReadThenDecision(string decision, bool isAllowed)
+    public async Task ReviewAsync_ThroughChatClient_AdvertisesFlatNamesAndCompletesReadThenDecision(string decision, bool isAllowed)
     {
         var reviewer = CreateReviewer();
         var reasoning = new MEAI.TextReasoningContent("scope checked") { ProtectedData = "signature" };
@@ -245,7 +245,7 @@ public sealed class ToolApprovalReviewerTests
         public IEnumerable<MEAI.FunctionResultContent> ToolResults => Requests[^1].SelectMany(message => message.Contents).OfType<MEAI.FunctionResultContent>();
 
         private readonly MEAI.IChatClient _client = Substitute.For<MEAI.IChatClient>();
-        private readonly KernelMixin _mixin;
+        private readonly GenerationContext _generation;
         private readonly ChatService _owner;
         private readonly FunctionCallContext _context;
 
@@ -254,18 +254,25 @@ public sealed class ToolApprovalReviewerTests
             _client.GetService(Arg.Any<Type>(), Arg.Any<object?>()).Returns((object?)null);
             _client.GetResponseAsync(Arg.Any<IEnumerable<MEAI.ChatMessage>>(), Arg.Any<MEAI.ChatOptions>(), Arg.Any<CancellationToken>())
                 .Returns(_ => Task.FromException<MEAI.ChatResponse>(new AssertionException("Approval must use the streaming API.")));
-            var completion = _client.AsChatCompletionService();
-            _mixin = Substitute.For<KernelMixin>(new AdvancedAssistantConfiguration { SupportsToolCall = true },
-                new ModelConnection(ModelProviderSchema.OpenAI, "https://example.invalid", null, new HttpClient(), null, maxRetries));
-            _mixin.ChatCompletionService.Returns(completion);
-            _mixin.GetPromptExecutionSettings(Arg.Any<FunctionChoiceBehavior>()).Returns(call =>
-                new PromptExecutionSettings { FunctionChoiceBehavior = call.ArgAt<FunctionChoiceBehavior>(0) });
+
+            var session = Substitute.For<ModelSession>(
+                new AdvancedAssistantConfiguration { SupportsToolCall = true },
+                new ModelConnection(ModelProviderSchema.Anthropic, "https://example.invalid", null, new HttpClient(), null, maxRetries));
+            session.ChatClient.Returns(_client);
+            session.Dialect.Returns(AnthropicModelSession.DialectName);
+            session.CreateChatOptions(Arg.Any<IList<MEAI.AITool>?>(), Arg.Any<MEAI.ChatToolMode?>()).Returns(call =>
+                new MEAI.ChatOptions
+                {
+                    Tools = call.ArgAt<IList<MEAI.AITool>?>(0),
+                    ToolMode = call.ArgAt<MEAI.ChatToolMode?>(1)
+                });
+
             var settings = new Settings(Substitute.For<IServiceProvider>());
             settings.SystemAssistant.AllowApprovalFileReads = canReadFiles;
             var plugin = new FileSystemPlugin(settings, new FileHandlerContextFactory([Handler]), Substitute.For<ILogger<FileSystemPlugin>>());
             var manager = Substitute.For<IChatPluginManager>();
             manager.BuiltInPlugins.Returns(new BindableList<BuiltInChatPlugin> { plugin });
-            // Use the production constructor, substituting only services outside the review path.
+
             var constructor = typeof(ChatService).GetConstructors().Single();
             _owner = (ChatService)constructor.Invoke(constructor.GetParameters().Select(parameter => parameter.ParameterType switch
             {
@@ -275,14 +282,30 @@ public sealed class ToolApprovalReviewerTests
                 var type when type == typeof(ILogger<ChatService>) => Substitute.For<ILogger<ChatService>>(),
                 _ => null
             }).ToArray());
+
             var chatContext = new RootChatContext(new ChatData(), null);
-            var generation = new GenerationContext(new Kernel(), _mixin, Substitute.For<IPromptRenderer>(), "constraints",
-                Modalities.Text, 80, -1, new GenerationApprovalState(ToolApprovalMode.Auto), true, chatContext.Data.RootNode);
+            _generation = new GenerationContext(
+                new ServiceCollection().BuildServiceProvider(),
+                session,
+                null,
+                Substitute.For<IPromptRenderer>(),
+                "constraints",
+                Modalities.Text,
+                80,
+                -1,
+                new GenerationApprovalState(ToolApprovalMode.Auto),
+                true,
+                chatContext.Data.RootNode);
             var function = plugin.GetChatFunctions().First();
-            _context = new FunctionCallContext(generation.Kernel, chatContext, plugin, function,
+            _context = new FunctionCallContext(
+                _generation.Services,
+                chatContext,
+                new ToolBinding(plugin, function, new()),
                 new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")),
-                new FunctionCallContent(function.KernelFunction.Name, id: Guid.NewGuid().ToString(), arguments: new KernelArguments()),
-                new ObservableToolRulesets(), generation, InvokeReviewAsync);
+                new MEAI.FunctionCallContent(Guid.NewGuid().ToString(), function.Function.Name, new Dictionary<string, object?>()),
+                new ObservableToolRulesets(),
+                _generation,
+                InvokeReviewAsync);
         }
 
         public Task<ToolApprovalResult> ReviewAsync(params MEAI.ChatMessage[] responses) =>
@@ -296,7 +319,7 @@ public sealed class ToolApprovalReviewerTests
                 {
                     Requests.Add(call.ArgAt<IEnumerable<MEAI.ChatMessage>>(0).ToArray());
                     var options = call.ArgAt<MEAI.ChatOptions>(1);
-                    AdvertisedNames.Add(options.Tools?.OfType<MEAI.AIFunction>().Select(function => function.Name).ToArray() ?? []);
+                    AdvertisedNames.Add(options.Tools?.OfType<MEAI.AIFunctionDeclaration>().Select(function => function.Name).ToArray() ?? []);
                     return StreamAsync(pending.Dequeue());
                 });
             return InvokeReviewAsync(_context, null, CancellationToken.None);
@@ -313,6 +336,7 @@ public sealed class ToolApprovalReviewerTests
                     yield return new MEAI.ChatResponseUpdate { Role = message.Role, Contents = [content] };
                 }
             }
+
             var failure = StreamFailures.Count > 0 ? StreamFailures.Dequeue() : StreamFailure;
             if (failure is not null) throw failure;
             yield return new MEAI.ChatResponseUpdate
@@ -336,7 +360,7 @@ public sealed class ToolApprovalReviewerTests
             _context.DisposeAsync().AsTask().GetAwaiter().GetResult();
             _context.ChatContext.Root.DisposeAsync().AsTask().GetAwaiter().GetResult();
             _context.ChatContext.Data.Dispose();
-            _mixin.Dispose();
+            _generation.DisposeAsync().AsTask().GetAwaiter().GetResult();
             _client.Dispose();
         }
     }

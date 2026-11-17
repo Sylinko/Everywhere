@@ -12,7 +12,7 @@ using Everywhere.Configuration;
 using Everywhere.Prompting.Documents;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -54,13 +54,13 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
 
     // parts of algorithms for file searching are inspired by VS Code's implementation:
     // https://github.com/microsoft/vscode/tree/dc1de9b2cf2defca5e4fcfa120a7cf348e57b55b/extensions/copilot/src/extension/tools/node/findFilesTool.tsx
-    [KernelFunction("search_files")]
+    [ChatFunction("search_files")]
     [Description("Search for files and directories in a path matching a regex. Common build and hidden folders are ignored.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Header, LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> SearchFilesAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] ChatContext chatContext,
         string path,
         [Description("Regex search pattern to match file and directory names")] string filePattern = ".*",
         int skip = 0,
@@ -131,15 +131,15 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         return output;
     }
 
-    [KernelFunction("get_file_info")]
+    [ChatFunction("get_file_info")]
     [Description("Get information about a file or directory at the specified path.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> GetFileInformationAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] ChatContext chatContext,
         string path,
         CancellationToken cancellationToken = default)
     {
@@ -152,15 +152,15 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         return $"{FileRecord.Header}{Environment.NewLine}{record}";
     }
 
-    [KernelFunction("search_file_content")]
+    [ChatFunction("search_file_content")]
     [Description("Search text in one file or all matching files below a directory. Supports regex and literal patterns.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> SearchFileContentAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] ChatContext chatContext,
         [Description("File or directory path to search")] string path,
         [Description("Text or regex pattern to search for within the file")] string pattern,
         [Description("Whether the pattern is a regular expression")] bool isRegex = true,
@@ -233,7 +233,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         return await BuildSearchOutputAsync(userInterface.DisplaySink, matches, pattern, maxResults, limitHit);
     }
 
-    [KernelFunction("read_file")]
+    [ChatFunction("read_file")]
     [Description(
         """
         Read a local path, file:// URI, or a skill:// resource in bounded chunks.
@@ -244,8 +244,8 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> ReadFileAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] ChatContext chatContext,
         [Description(
             """
             Path or URI of the file.
@@ -284,7 +284,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         return BuildReadOutput(context.Path, result);
     }
 
-    [KernelFunction("transfer_path")]
+    [ChatFunction("transfer_path")]
     [Description(
         "Copies or moves a local file or directory to a new path. Moving to a new name renames it. " +
         "The destination must not already exist.")]
@@ -293,9 +293,9 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileTransferRenderer))]
     private async Task TransferPathAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IStorageProvider storageProvider,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IStorageProvider storageProvider,
+        [FromChatServices] ChatContext chatContext,
         [Description("The existing local file or directory to copy or move.")] string source,
         [Description("The destination path, including the final file or directory name.")] string destination,
         [Description("The operation to perform: copy or move.")] FileTransferOperation operation,
@@ -416,13 +416,13 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         }
     }
 
-    [KernelFunction("delete_paths")]
+    [ChatFunction("delete_paths")]
     [Description("Delete explicitly listed local files or directories. Non-empty directories require recursive=true.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_Header, LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_Description)]
     private async Task<string> DeletePathsAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IStorageProvider storageProvider,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IStorageProvider storageProvider,
+        [FromChatServices] ChatContext chatContext,
         [Description("Explicit local file or directory paths to delete.")] IReadOnlyList<string> paths,
         [Description("Whether non-empty directories may be deleted recursively.")] bool recursive = false,
         CancellationToken cancellationToken = default)
@@ -552,16 +552,16 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         return target;
     }
 
-    [KernelFunction("create_directory")]
+    [ChatFunction("create_directory")]
     [Description("Creates a new local directory.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task CreateDirectoryAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IStorageProvider storageProvider,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IStorageProvider storageProvider,
+        [FromChatServices] ChatContext chatContext,
         string path,
         CancellationToken cancellationToken = default)
     {
@@ -595,7 +595,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         Directory.CreateDirectory(path);
     }
 
-    [KernelFunction("apply_patch")]
+    [ChatFunction("apply_patch")]
     [Description(
         """
         Apply local text-file changes using this EXACT protocol:
@@ -697,9 +697,9 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Description)]
     private async Task<PromptNode> ApplyPatchAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IStorageProvider storageProvider,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IStorageProvider storageProvider,
+        [FromChatServices] ChatContext chatContext,
         [Description("The complete patch document, including the *** Begin Patch and *** End Patch markers.")]
         string? patch,
         CancellationToken cancellationToken = default)
@@ -1609,8 +1609,8 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     /// </summary>
     private sealed class FileRenderer : IFriendlyFunctionCallContentRenderer
     {
-        public ChatPluginDisplayBlock? Render(KernelArguments arguments) =>
-            arguments.TryGetValue("path", out var value) && value is string path ?
+        public ChatPluginDisplayBlock? Render(IReadOnlyDictionary<string, object?> arguments) =>
+            arguments.TryGetString("path", out var path) ?
                 new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(path)) :
                 null;
     }
@@ -1620,10 +1620,10 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     /// </summary>
     private sealed class FileTransferRenderer : IFriendlyFunctionCallContentRenderer
     {
-        public ChatPluginDisplayBlock? Render(KernelArguments arguments)
+        public ChatPluginDisplayBlock? Render(IReadOnlyDictionary<string, object?> arguments)
         {
-            if (!arguments.TryGetValue("source", out var sourceValue) || sourceValue is not string source ||
-                !arguments.TryGetValue("destination", out var destinationValue) || destinationValue is not string destination ||
+            if (!arguments.TryGetString("source", out var source) ||
+                !arguments.TryGetString("destination", out var destination) ||
                 !arguments.TryGetValue("operation", out var operationValue) ||
                 !Enum.TryParse<FileTransferOperation>(operationValue?.ToString(), ignoreCase: true, out var operation))
             {

@@ -108,9 +108,13 @@ public static class ChatDataExporter
 
                                     foreach (var result in functionCall.Results
                                                  .AsValueEnumerable()
-                                                 .Select(static result => result.Result is ChatFunctionResult structuredResult ?
-                                                     structuredResult.Value?.ToString() :
-                                                     result.Result?.ToString())
+                                                 .Select(static result => result.Result switch
+                                                 {
+                                                     Harness.ToolContentResult rich => rich.GetPublicText(result.Files),
+                                                     ChatFunctionResult structured => structured.Value?.ToString(),
+                                                     System.Text.Json.JsonElement json => json.GetRawText(),
+                                                     _ => result.Result?.ToString()
+                                                 })
                                                  .Where(r => !r.IsNullOrEmpty()))
                                     {
                                         markdownBuilder

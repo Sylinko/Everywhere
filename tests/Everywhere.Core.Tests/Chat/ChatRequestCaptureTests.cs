@@ -1,9 +1,9 @@
 ﻿using Everywhere.AI;
 using Everywhere.Chat;
+using Everywhere.Harness;
 using Everywhere.I18N;
 using Lucide.Avalonia;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.Extensions.AI;
 using NSubstitute;
 
 namespace Everywhere.Core.Tests.Chat;
@@ -19,24 +19,23 @@ public sealed class ChatRequestCaptureTests
             await File.WriteAllBytesAsync(path, [1, 2, 3]);
             var file = new FileAttachment(new DirectLocaleKey("image"), path, "test-image", "image/png", "from clipboard");
             var user = new UserChatMessage("Compare my image and the file from earlier.", [file]);
-            var legacyCall = new FunctionCallContent("read_file", id: "old-read");
             var legacyTool = new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("read_file"));
-            legacyTool.AddCall(legacyCall);
-            legacyTool.AddResult(new FunctionResultContent(legacyCall, file));
+            legacyTool.AddCall(new ToolCallRecord("read_file", null, "old-read", null));
+            legacyTool.AddResult(new ToolResultRecord("read_file", null, "old-read", file));
             using var assistant = new AssistantChatMessage();
             assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(legacyTool));
 
             // The legacy read_file result used to re-inject bytes whenever this chat was resumed.
             var history = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
                 Substitute.For<IPromptRenderer>(), "system", [assistant, user], Modalities.Text | Modalities.Image);
-            var result = history.Single(message => message.Role == AuthorRole.Tool).Items.OfType<FunctionResultContent>().Single();
+            var result = history.Single(message => message.Role == ChatRole.Tool).Contents.OfType<FunctionResultContent>().Single();
             using (Assert.EnterMultipleScope())
             {
-                Assert.That(history.SelectMany(message => message.Items).OfType<BinaryContent>(), Is.Empty);
-                Assert.That(result.Result, Does.Contain(path).And.Contain("mimeType=\"image/png\""));
-                Assert.That(history[^1].Items.OfType<TextContent>().First().Text,
+                Assert.That(history.SelectMany(message => message.Contents).OfType<DataContent>(), Is.Empty);
+                Assert.That(result.Result?.ToString(), Does.Contain(path).And.Contain("mimeType=\"image/png\""));
+                Assert.That(history[^1].Contents.OfType<TextContent>().First().Text,
                     Does.Contain(path).And.Contain("description=\"from clipboard\""));
-                Assert.That(history[^1].Items.OfType<TextContent>().Last().Text, Is.EqualTo(user.Content));
+                Assert.That(history[^1].Contents.OfType<TextContent>().Last().Text, Is.EqualTo(user.Content));
             }
         }
         finally
@@ -48,10 +47,9 @@ public sealed class ChatRequestCaptureTests
     [Test]
     public async Task BuildSelectedHistory_WhenToolArgumentsChange_DoesNotRetainMutableCallContainers()
     {
-        var arguments = new KernelArguments { ["path"] = "before.txt" };
-        var call = new FunctionCallContent("read", "files", "call-1", arguments);
-        var metadata = new Dictionary<string, object?> { ["source"] = "before" };
-        var result = new FunctionResultContent(call, "result") { Metadata = metadata };
+        var arguments = new Dictionary<string, object?> { ["path"] = "before.txt" };
+        var call = new ToolCallRecord("read", "files", "call-1", arguments);
+        var result = new ToolResultRecord("read", "files", "call-1", "result");
         using var assistant = new AssistantChatMessage();
         var function = new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("read"));
         function.AddCall(call);
@@ -63,15 +61,11 @@ public sealed class ChatRequestCaptureTests
         await using var runtime = new RootChatContext(data, null);
         var history = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
             Substitute.For<IPromptRenderer>(), "system", [assistant], Modalities.Text, context: runtime);
-        await runtime.DispatchAsync(() =>
-        {
-            arguments["path"] = "after.txt";
-            metadata["source"] = "after";
-        });
-        var capturedCall = history.Single(message => message.Role == AuthorRole.Assistant).Items.OfType<FunctionCallContent>().Single();
-        var capturedResult = history.Single(message => message.Role == AuthorRole.Tool).Items.OfType<FunctionResultContent>().Single();
+        await runtime.DispatchAsync(() => arguments["path"] = "after.txt");
+        var capturedCall = history.Single(message => message.Role == ChatRole.Assistant).Contents.OfType<FunctionCallContent>().Single();
+        var capturedResult = history.Single(message => message.Role == ChatRole.Tool).Contents.OfType<FunctionResultContent>().Single();
         Assert.That(capturedCall.Arguments?["path"], Is.EqualTo("before.txt"));
-        Assert.That(capturedResult.Metadata?["source"], Is.EqualTo("before"));
+        Assert.That(capturedResult.CallId, Is.EqualTo("call-1"));
     }
 
     [Test]

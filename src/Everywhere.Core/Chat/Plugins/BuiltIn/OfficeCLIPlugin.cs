@@ -5,7 +5,7 @@ using Everywhere.Chat.Permissions;
 using Everywhere.Prompting.Documents;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -36,7 +36,7 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
         _functionsSource.Add(new BuiltInChatFunction(ExecuteAsync, ChatFunctionPermissions.FileAccess, isDefaultBypassApproval: true));
     }
 
-    [KernelFunction("officecli")]
+    [ChatFunction("officecli")]
     [Description(
         """
         AI-friendly CLI for .docx, .xlsx, .pptx. Single binary, no dependencies, no Office installation needed.
@@ -45,7 +45,7 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
         """)]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_OfficeCLI_Header, LocaleKey.Empty)]
     private async Task<PromptNode> ExecuteAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IChatPluginUserInterface userInterface,
         string commandLine,
         CancellationToken cancellationToken)
     {

@@ -807,7 +807,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 .OfType<AssistantChatMessageFunctionCallSpan>()
                 .SelectMany(span => span.Items)
                 .Cast<object>()
-                .Concat(activeSpans.OfType<AssistantChatMessageReasoningSpan>())
+                .Concat(activeSpans.OfType<AssistantChatMessageReasoningSpan>().Where(static span => span.HasOutputContent))
                 .Concat(activities)
                 .ToHashSet(ReferenceEqualityComparer.Instance);
             foreach (var removed in _activityRows.Keys.AsValueEnumerable().Where(source => !activeActivities.Contains(source)).ToArray())
@@ -994,7 +994,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 {
                     switch (span)
                     {
-                        case AssistantChatMessageReasoningSpan reasoning:
+                        case AssistantChatMessageReasoningSpan { HasOutputContent: true } reasoning:
                         {
                             var row = GetReasoningRow(assistant, reasoning);
                             row.Refresh();

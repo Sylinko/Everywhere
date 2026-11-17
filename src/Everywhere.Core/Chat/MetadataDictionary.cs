@@ -3,7 +3,7 @@
 namespace Everywhere.Chat;
 
 /// <summary>
-/// Represents a dictionary for metadata storage.
+/// Represents an immutable dictionary for message and span metadata storage.
 /// </summary>
 public readonly record struct MetadataDictionary : IReadOnlyDictionary<string, object?>
 {
@@ -44,6 +44,14 @@ public readonly record struct MetadataDictionary : IReadOnlyDictionary<string, o
     public MetadataDictionary SetItem(string key, object? value)
     {
         return new MetadataDictionary(Dictionary.SetItem(key, value));
+    }
+
+    /// <summary>
+    /// Returns the dictionary with the specified key removed, or the same dictionary when absent.
+    /// </summary>
+    public MetadataDictionary Remove(string key)
+    {
+        return new MetadataDictionary(Dictionary.Remove(key));
     }
 
     IEnumerator<KeyValuePair<string, object?>> IEnumerable<KeyValuePair<string, object?>>.GetEnumerator()

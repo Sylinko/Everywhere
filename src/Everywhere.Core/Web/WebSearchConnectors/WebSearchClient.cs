@@ -1,12 +1,10 @@
-﻿using System.Net.Http.Json;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
 public interface IWebSearchResponse
 {
-    IEnumerable<TextSearchResult> ToResults();
+    IEnumerable<WebSearchResult> ToResults();
 }
 
 public abstract class WebSearchClient<TResponse>(HttpClient httpClient, Range validCountRange)
@@ -18,7 +16,7 @@ public abstract class WebSearchClient<TResponse>(HttpClient httpClient, Range va
 
     protected virtual Exception? TransformSearchException(Exception exception) => null;
 
-    public async Task<IEnumerable<TextSearchResult>> SearchAsync(
+    public async Task<IEnumerable<WebSearchResult>> SearchAsync(
         string query,
         int count,
         CancellationToken cancellationToken = default)

@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.Common;
 
@@ -83,27 +82,25 @@ public sealed partial class HandledFunctionInvokingException : HandledSystemExce
         HandledFunctionInvokingExceptionType.InvalidResult => new FormattedDynamicLocaleKey(
             new DynamicLocaleKey(LocaleKey.HandledFunctionInvokingException_InvalidResult),
             new DirectLocaleKey(name)),
-        _ => null, // HandledSystemException will use its own Unknown key
+        _ => null,
     };
 
     public static Exception Handle(Exception exception)
     {
-        if (exception is KernelException kernelException)
+        if (exception is ArgumentException argumentException &&
+            MissingArgumentRegex().Match(argumentException.Message) is { Success: true } match)
         {
-            if (MissingArgumentRegex().Match(kernelException.Message) is { Success: true } match)
-            {
-                var paramName = match.Groups[1].Value;
-                return new HandledFunctionInvokingException(
-                    HandledFunctionInvokingExceptionType.ArgumentMissing,
-                    paramName,
-                    exception);
-            }
+            var paramName = match.Groups[1].Value;
+            return new HandledFunctionInvokingException(
+                HandledFunctionInvokingExceptionType.ArgumentMissing,
+                paramName,
+                exception);
         }
 
         return Handle(exception, true);
     }
 
-    // Match `Missing argument for function parameter 'paramName'`
-    [GeneratedRegex(@"Missing argument for function parameter '(.+?)'", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    // Matches MEAI AIFunctionFactory: "The arguments dictionary is missing a value for the required parameter 'paramName'."
+    [GeneratedRegex(@"missing a value for the required parameter '(.+?)'", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex MissingArgumentRegex();
 }

@@ -210,7 +210,7 @@ public static class ServiceExtensions
                 .AddSingleton<AssistantCatalogSynchronizer>()
                 .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<AssistantCatalogSynchronizer>())
                 .AddSingleton<AssistantSpecializationResolver>()
-                .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
+                .AddSingleton<IModelSessionFactory, ModelSessionFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
                 .AddSingleton<SkillSource>()
                 .AddSingleton<IVirtualSkillProvider, EmbeddedSkillProvider>()

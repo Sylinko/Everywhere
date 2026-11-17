@@ -1,22 +1,27 @@
-﻿using System.Reflection;
+﻿using System.Collections.ObjectModel;
+using System.Reflection;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.Mcp;
+using Everywhere.Harness;
 using Lucide.Avalonia;
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat.Plugins;
 
+/// <summary>
+/// Represents a tool function descriptor with localized presentation and approval metadata.
+/// </summary>
 public abstract class ChatFunction
 {
-    public virtual IDynamicLocaleKey HeaderKey => new DirectLocaleKey(KernelFunction.Name);
+    public virtual IDynamicLocaleKey HeaderKey => new DirectLocaleKey(Function.Name);
 
-    public virtual IDynamicLocaleKey DescriptionKey => new DirectLocaleKey(KernelFunction.Description);
+    public virtual IDynamicLocaleKey DescriptionKey => new DirectLocaleKey(Function.Description);
 
     public LucideIconKind? Icon { get; init; }
 
     /// <summary>
-    /// The permissions required by this function.
+    /// Gets the permissions required by this function.
     /// </summary>
     public virtual ChatFunctionPermissions Permissions => ChatFunctionPermissions.AllAccess;
 
@@ -37,20 +42,34 @@ public abstract class ChatFunction
     public bool IsVisible { get; protected init; } = true;
 
     /// <summary>
+    /// Opts into running alongside adjacent opted-in invocations, including other calls to this tool.
+    /// </summary>
+    public bool SupportsParallelInvoke { get; init; }
+
+    /// <summary>
     /// Gets the input modalities a model must support for this function to be available.
     /// </summary>
     public Modalities RequiredModalities { get; init; } = Modalities.None;
 
-    public abstract KernelFunction KernelFunction { get; }
+    /// <summary>
+    /// Gets the native MEAI <see cref="AIFunction"/> backing this descriptor.
+    /// </summary>
+    public abstract AIFunction Function { get; }
+
+    /// <summary>
+    /// Gets the canonical function name within its owning plugin.
+    /// </summary>
+    public string Name => Function.Name;
 
     /// <summary>
     /// Converts the function call content to a user-friendly format for UI display.
     /// </summary>
-    /// <param name="content"></param>
-    /// <returns></returns>
     public virtual ChatPluginDisplayBlock? GetFriendlyCallContent(FunctionCallContent content) => null;
 }
 
+/// <summary>
+/// Wraps a native C# method or <see cref="AIFunction"/> as an Everywhere built-in tool.
+/// </summary>
 public sealed class BuiltInChatFunction : ChatFunction
 {
     public override IDynamicLocaleKey HeaderKey { get; }
@@ -59,18 +78,33 @@ public sealed class BuiltInChatFunction : ChatFunction
 
     public override ChatFunctionPermissions Permissions { get; }
 
-    public override KernelFunction KernelFunction { get; }
+    public override AIFunction Function { get; }
 
     /// <summary>
-    /// An optional predicate that can be used to inspect the function call content before prompting the user for permission consent.
-    /// This will be called only if the function call requires user consent and does not bypass approval.
-    /// If the predicate returns false, the function call will be **rejected** without prompting the user.
-    /// If the predicate returns true, the function call will be **approved** without prompting the user.
-    /// If the predicate is null or returns null, the user will be prompted for consent without additional checks (default behavior).
+    /// Gets an optional predicate used to inspect the call before prompting the user for permission consent.
     /// </summary>
     public Func<FunctionCallContent, bool?>? OnPermissionConsent { get; init; }
 
     private readonly IFriendlyFunctionCallContentRenderer? _renderer;
+
+    /// <summary>
+    /// Registers an existing MEAI <see cref="AIFunction"/> with localized presentation and approval policy.
+    /// </summary>
+    public BuiltInChatFunction(
+        AIFunction function,
+        ChatFunctionPermissions permissions,
+        IDynamicLocaleKey? headerKey = null,
+        IDynamicLocaleKey? descriptionKey = null)
+    {
+        Function = function;
+        Permissions = permissions;
+        IsDefaultBypassApproval = permissions <= ChatFunctionPermissions.BypassApproval;
+        HeaderKey = headerKey ?? new DirectLocaleKey(function.Name);
+        if (descriptionKey is not null)
+        {
+            DescriptionKey = descriptionKey;
+        }
+    }
 
     public BuiltInChatFunction(
         Delegate method,
@@ -81,12 +115,17 @@ public sealed class BuiltInChatFunction : ChatFunction
         bool canBypassApproval = true,
         bool isExperimental = false,
         bool isVisible = true,
+        bool supportsParallelInvoke = false,
+        Modalities requiredModalities = Modalities.None,
         Func<FunctionCallContent, bool?>? onPermissionConsent = null,
         string? functionName = null,
         string? description = null,
         IDynamicLocaleKey? headerKey = null,
         IDynamicLocaleKey? descriptionKey = null)
     {
+        var attributeFunctionName = method.Method.GetCustomAttribute<ChatFunctionAttribute>(false)?.Name;
+        var resolvedFunctionName = !functionName.IsNullOrWhiteSpace() ? functionName : attributeFunctionName;
+
         if (headerKey is not null)
         {
             HeaderKey = headerKey;
@@ -99,13 +138,9 @@ public sealed class BuiltInChatFunction : ChatFunction
                 DescriptionKey = new DynamicLocaleKey(attribute.DescriptionKey);
             }
         }
-        else if (!functionName.IsNullOrWhiteSpace())
+        else if (!resolvedFunctionName.IsNullOrWhiteSpace())
         {
-            HeaderKey = new DirectLocaleKey(functionName);
-        }
-        else if (method.Method.GetCustomAttributes<KernelFunctionAttribute>(false).FirstOrDefault() is { Name: { Length: > 0 } name })
-        {
-            HeaderKey = new DirectLocaleKey(name);
+            HeaderKey = new DirectLocaleKey(resolvedFunctionName);
         }
         else
         {
@@ -124,17 +159,11 @@ public sealed class BuiltInChatFunction : ChatFunction
         CanBypassApproval = canBypassApproval;
         IsExperimental = isExperimental;
         IsVisible = isVisible;
+        SupportsParallelInvoke = supportsParallelInvoke;
+        RequiredModalities = requiredModalities;
         OnPermissionConsent = onPermissionConsent;
 
-        KernelFunction = functionName.IsNullOrWhiteSpace() && description is null ?
-            KernelFunctionFactory.CreateFromMethod(method) :
-            KernelFunctionFactory.CreateFromMethod(
-                method,
-                new KernelFunctionFromMethodOptions
-                {
-                    FunctionName = functionName,
-                    Description = description
-                });
+        Function = CreateNativeFunction(method, resolvedFunctionName, description);
 
         if (method.Method.GetCustomAttributes<FriendlyFunctionCallContentRendererAttribute>(false).FirstOrDefault() is
             { RendererType: { } rendererType })
@@ -152,30 +181,83 @@ public sealed class BuiltInChatFunction : ChatFunction
     public override ChatPluginDisplayBlock? GetFriendlyCallContent(FunctionCallContent content)
     {
         if (content.Arguments is not { Count: > 0 } arguments) return base.GetFriendlyCallContent(content);
-        return _renderer?.Render(arguments) ?? base.GetFriendlyCallContent(content);
+        var readOnlyArguments = arguments as IReadOnlyDictionary<string, object?> ?? new ReadOnlyDictionary<string, object?>(arguments);
+        return _renderer?.Render(readOnlyArguments) ?? base.GetFriendlyCallContent(content);
+    }
+
+    /// <summary>
+    /// Creates an <see cref="AIFunction"/> using Everywhere's service-injection and raw-result marshaling conventions.
+    /// </summary>
+    public static AIFunction CreateNativeFunction(Delegate method, string? name = null, string? description = null)
+    {
+        var resolvedName = !name.IsNullOrWhiteSpace()
+            ? name
+            : method.Method.GetCustomAttribute<ChatFunctionAttribute>(false)?.Name;
+
+        return AIFunctionFactory.Create(
+            method,
+            new AIFunctionFactoryOptions
+            {
+                Name = resolvedName,
+                Description = description,
+                ExcludeResultSchema = true,
+                ConfigureParameterBinding = ConfigureServiceParameterBinding,
+                MarshalResult = static (value, _, _) => ValueTask.FromResult(value)
+            });
+    }
+
+    private static AIFunctionFactoryOptions.ParameterBindingOptions ConfigureServiceParameterBinding(ParameterInfo parameter)
+    {
+        if (!parameter.IsDefined(typeof(FromChatServicesAttribute), inherit: false))
+        {
+            return default;
+        }
+
+        return new AIFunctionFactoryOptions.ParameterBindingOptions
+        {
+            ExcludeFromSchema = true,
+            BindParameter = static (param, arguments) =>
+            {
+                var services = arguments.Services
+                    ?? throw new InvalidOperationException($"Services are required to bind parameter '{param.Name}'.");
+                var service = services.GetService(param.ParameterType);
+                if (service is null && !param.HasDefaultValue)
+                {
+                    throw new InvalidOperationException($"No service for type '{param.ParameterType}' has been registered.");
+                }
+
+                return service ?? param.DefaultValue;
+            }
+        };
     }
 }
 
+/// <summary>
+/// Wraps a remote MCP tool as a <see cref="ChatFunction"/>.
+/// </summary>
 public class McpChatFunction : ChatFunction
 {
     public override ChatFunctionPermissions Permissions => ChatFunctionPermissions.MCP;
 
-    public override KernelFunction KernelFunction => _kernelFunction;
+    public override ManagedMcpClientTool Function => _tool;
 
-    public string OriginalName { get; private set; }
+    public string OriginalName => _tool.ProtocolTool.Name;
 
-    private KernelFunction _kernelFunction;
+    private ManagedMcpClientTool _tool;
 
     public McpChatFunction(ManagedMcpClientTool tool)
     {
-        OriginalName = tool.ProtocolTool.Name;
-        _kernelFunction = tool.AsKernelFunction();
+        _tool = tool;
         CanBypassApproval = true;
     }
 
     public void Update(ManagedMcpClientTool tool)
     {
-        OriginalName = tool.ProtocolTool.Name;
-        _kernelFunction = tool.AsKernelFunction();
+        _tool = tool;
     }
+
+    /// <summary>
+    /// Captures the current tool without mutating the live settings UI descriptor on later discovery.
+    /// </summary>
+    public McpChatFunction Snapshot() => (McpChatFunction)MemberwiseClone();
 }

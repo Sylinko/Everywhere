@@ -1,6 +1,6 @@
 ﻿using Lucide.Avalonia;
 using MessagePack;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -14,7 +14,7 @@ public sealed partial class UserActionChatMessage : ChatMessage
     public override ChatMessageKind Kind => ChatMessageKind.UserAction;
 
     [IgnoreMember]
-    public override AuthorRole Role => new("user");
+    public override ChatRole Role => new("user");
 
     [Key(0)]
     public LucideIconKind Icon

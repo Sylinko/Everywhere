@@ -4,6 +4,7 @@ using Everywhere.Chat;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Database;
+using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Statistics;
 using Everywhere.Storage;
@@ -11,7 +12,6 @@ using Lucide.Avalonia;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.Core.Tests.Statistics;
 
@@ -55,9 +55,8 @@ public sealed class StatisticsBackfillerTests
         {
             FinishedAt = now.AddMilliseconds(25)
         };
-        var call = new FunctionCallContent("get_file_content_1", null, "call-1");
-        toolMessage.AddCall(call);
-        toolMessage.AddResult(new FunctionResultContent(call, "ok"));
+        toolMessage.AddCall(new ToolCallRecord("get_file_content_1", null, "call-1", null));
+        toolMessage.AddResult(new ToolResultRecord("get_file_content_1", null, "call-1", "ok"));
         var assistantMessage = new AssistantChatMessage
         {
             FinishedAt = now.AddMilliseconds(30)

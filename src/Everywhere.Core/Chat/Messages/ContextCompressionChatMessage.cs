@@ -1,7 +1,6 @@
-﻿using System.ComponentModel;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using MessagePack;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -108,7 +107,7 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
 
 
     [IgnoreMember]
-    public override AuthorRole Role => new("action");
+    public override ChatRole Role => new("action");
 
     /// <summary>
     /// Gets a value indicating whether this message contains a provider-facing summary.

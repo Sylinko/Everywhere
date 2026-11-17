@@ -1,6 +1,6 @@
 using System.Text;
 using Microsoft.Extensions.AI;
-using Microsoft.SemanticKernel;
+using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
 namespace Everywhere.AI.Tests;
 
@@ -21,28 +21,27 @@ public sealed class SdkBoundaryTests
         else
             await server.CompleteAsync(provider, new { text = "hello", streaming = true, usage = new { inputTokens = 12, outputTokens = 8 } });
         using var client = server.CreateClient();
-        var updates = await SdkStreamingTests.CollectAsync(provider.CreateService(client));
-        var terminal = updates.Last(update => update.Metadata?.ContainsKey("Usage") == true);
-        Assert.That(updates.Select(update => update.Metadata?.GetValueOrDefault("FinishReason")?.ToString()), Does.Contain("stop"));
-        var usage = terminal.Metadata?["Usage"] as UsageContent;
-        Assert.That(usage?.Details.InputTokenCount, Is.EqualTo(12));
-        Assert.That(usage?.Details.OutputTokenCount, Is.EqualTo(8));
-        Assert.That(string.Concat(updates.Select(update => update.Content)), Is.EqualTo("hello"));
+        var updates = await SdkStreamingTests.CollectAsync(provider.CreateClient(client));
+        var usage = updates.SelectMany(static update => update.Contents).OfType<UsageContent>().Last();
+        Assert.That(updates.Select(static update => update.FinishReason?.Value), Does.Contain("stop"));
+        Assert.That(usage.Details.InputTokenCount, Is.EqualTo(12));
+        Assert.That(usage.Details.OutputTokenCount, Is.EqualTo(8));
+        Assert.That(string.Concat(updates.Select(static update => update.Text)), Is.EqualTo("hello"));
     }
 
     [TestCase(Provider.OpenAI, "length")]
     [TestCase(Provider.Anthropic, "max_tokens")]
     [TestCase(Provider.Mistral, "length")]
     [TestCase(Provider.Gemini, "length")]
-    public async Task Stream_WhenOutputLimitReached_PreservesLengthFinishReason(Provider provider, string stopReason)
+    public async Task Stream_WhenOutputTruncated_PreservesProviderTerminationEvidence(Provider provider, string stopReason)
     {
         await using var server = await MockServerSession.ConnectAsync();
         await server.CompleteAsync(provider, new { text = "partial", streaming = true, stopReason });
         using var client = server.CreateClient();
-        var updates = await SdkStreamingTests.CollectAsync(provider.CreateService(client));
-        var reasons = updates.Select(update => update.Metadata?.GetValueOrDefault("FinishReason")?.ToString()).Where(reason => reason is not null).ToArray();
-        Assert.That(reasons, Does.Contain(provider == Provider.Gemini ? "MAX_TOKENS" : "length"));
-        Assert.That(string.Concat(updates.Select(update => update.Content)), Is.EqualTo("partial"));
+        var updates = await SdkStreamingTests.CollectAsync(provider.CreateClient(client));
+        var reasons = updates.Select(static update => update.FinishReason?.Value).Where(static reason => reason is not null).ToArray();
+        Assert.That(reasons, Does.Contain(provider == Provider.Gemini ? "incomplete" : "length"));
+        Assert.That(string.Concat(updates.Select(static update => update.Text)), Is.EqualTo("partial"));
     }
 
     [TestCase("max_output_tokens", "length")]
@@ -53,9 +52,9 @@ public sealed class SdkBoundaryTests
         var transcript = "event: response.incomplete\ndata: {\"type\":\"response.incomplete\",\"sequence_number\":1,\"response\":{\"id\":\"resp-test\",\"object\":\"response\",\"created_at\":1,\"status\":\"incomplete\",\"model\":\"test-model\",\"output\":[],\"incomplete_details\":{\"reason\":\"" + reason + "\"},\"usage\":{\"input_tokens\":12,\"output_tokens\":8,\"total_tokens\":20}}}\n\n";
         await RespondAsync(server, transcript);
         using var client = server.CreateClient();
-        var updates = await SdkStreamingTests.CollectAsync(Provider.OpenAIResponses.CreateService(client));
-        Assert.That(updates.Select(update => update.Metadata?.GetValueOrDefault("FinishReason")?.ToString()), Does.Contain(expectedReason));
-        var usage = updates.Select(update => update.Metadata?.GetValueOrDefault("Usage")).OfType<UsageContent>().Single();
+        var updates = await SdkStreamingTests.CollectAsync(Provider.OpenAIResponses.CreateClient(client));
+        Assert.That(updates.Select(static update => update.FinishReason?.Value), Does.Contain(expectedReason));
+        var usage = updates.SelectMany(static update => update.Contents).OfType<UsageContent>().Single();
         Assert.That(usage.Details.OutputTokenCount, Is.EqualTo(8));
     }
 
@@ -83,7 +82,8 @@ public sealed class SdkBoundaryTests
         await using var server = await MockServerSession.ConnectAsync();
         await server.RespondAsync(new
         {
-            statusCode = 429, body = "{\"error\":{\"type\":\"rate_limit_error\",\"message\":\"slow down\"}}",
+            statusCode = 429,
+            body = "{\"error\":{\"type\":\"rate_limit_error\",\"message\":\"slow down\"}}",
             headers = new Dictionary<string, string[]>
             {
                 ["Retry-After"] = ["2"], ["Retry-After-Ms"] = ["250"], ["request-id"] = ["request-first"],
@@ -92,7 +92,7 @@ public sealed class SdkBoundaryTests
         });
         var gate = new ResponseGateHandler();
         using var client = server.CreateClient(gate);
-        var exception = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateService(client)));
+        var exception = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateClient(client)));
         await gate.ContentDisposed.WaitAsync(TimeSpan.FromSeconds(3));
         Assert.That(exception.Data["Everywhere.Http.Retry-After"], Is.EqualTo("2"));
         Assert.That(exception.Data["Everywhere.Http.Retry-After-Ms"], Is.EqualTo("250"));
@@ -115,14 +115,15 @@ public sealed class SdkBoundaryTests
         });
         var gate = new ResponseGateHandler();
         using var client = server.CreateClient(gate);
-        var exception = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateService(client)));
+        var exception = await SdkStreamingTests.CatchAsync(() => SdkStreamingTests.CollectAsync(provider.CreateClient(client)));
         await gate.ContentDisposed.WaitAsync(TimeSpan.FromSeconds(3));
-        Assert.That(exception, Is.Not.InstanceOf<HttpOperationException>());
         Assert.That(exception, Is.InstanceOf<HttpRequestException>().Or.InstanceOf<IOException>());
     }
 
     private static Task RespondAsync(MockServerSession server, string body) => server.RespondAsync(new
     {
-        statusCode = 200, headers = new Dictionary<string, string[]> { ["Content-Type"] = ["text/event-stream; charset=utf-8"] }, body
+        statusCode = 200,
+        headers = new Dictionary<string, string[]> { ["Content-Type"] = ["text/event-stream; charset=utf-8"] },
+        body
     });
 }

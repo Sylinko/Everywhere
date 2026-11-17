@@ -5,16 +5,18 @@ using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Everywhere.AI;
 using Everywhere.Chat;
-using UsageDetails = Microsoft.Extensions.AI.UsageDetails;
+using Everywhere.Chat.Permissions;
 using Everywhere.Common;
+using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Statistics;
 using Everywhere.Views;
 using MessagePack;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
 using NSubstitute;
+using Meai = Microsoft.Extensions.AI;
+using UsageDetails = Microsoft.Extensions.AI.UsageDetails;
 
 namespace Everywhere.Core.Tests.Chat;
 
@@ -27,7 +29,7 @@ public sealed class RequestRecoveryTests
         var attempts = new List<Activity>();
         using var activityListener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == typeof(KernelMixin).FullName,
+            ShouldListenTo = source => source.Name == typeof(ModelSession).FullName,
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = activity => attempts.Add(activity)
         };
@@ -49,17 +51,17 @@ public sealed class RequestRecoveryTests
         await using var runtime = new RootChatContext(data, null);
         var message = new AssistantChatMessage { IsBusy = true };
         data.Add(new UserChatMessage("hello", []));
-        data.Add(message);
+        var assistantNode = data.Add(message);
         var metadataReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var allowOutput = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var sdkParents = new List<string?>();
-        var service = Substitute.For<IChatCompletionService>();
-        service.GetStreamingChatMessageContentsAsync(Arg.Any<ChatHistory>(), Arg.Any<PromptExecutionSettings>(), Arg.Any<Kernel>(), Arg.Any<CancellationToken>())
+        var client = Substitute.For<Meai.IChatClient>();
+        client.GetStreamingResponseAsync(Arg.Any<IEnumerable<Meai.ChatMessage>>(), Arg.Any<Meai.ChatOptions>(), Arg.Any<CancellationToken>())
             .Returns(_ => Stream());
-        using var mixin = new TestMixin(service, 0);
+        await using var generation = CreateGeneration(new TestSession(client, 0), assistantNode);
         var request = typeof(ChatService).GetMethod("GetStreamingChatMessageContentsAsync", BindingFlags.NonPublic | BindingFlags.Instance)
             ?? throw new MissingMethodException();
-        var task = request.Invoke(chatService, [new Kernel(), mixin, runtime, new ChatHistory(), message,
+        var task = request.Invoke(chatService, [generation, runtime, new List<Meai.ChatMessage>(), message,
             StatisticsModelInvocationPurpose.ChatResponse, CancellationToken.None]) as Task ?? throw new InvalidOperationException();
         await metadataReceived.Task;
         try { Assert.That(firstOutputMeasurements, Is.Empty); }
@@ -79,26 +81,27 @@ public sealed class RequestRecoveryTests
         await recorder.Received(1).CompleteModelInvocationAsync(Arg.Any<Guid>(),
             Arg.Is<ChatUsageDetails>(usage => usage.TotalTokenCount == 12), Arg.Any<DateTimeOffset>(), true, false, null, Arg.Any<CancellationToken>());
 
-        async IAsyncEnumerable<StreamingChatMessageContent> Stream()
+        async IAsyncEnumerable<Meai.ChatResponseUpdate> Stream()
         {
             await Task.Yield();
             using (var transport = new Activity("transport first read").Start()) sdkParents.Add(transport.ParentId);
-            yield return new StreamingChatMessageContent(AuthorRole.Assistant, null);
+            yield return new Meai.ChatResponseUpdate { Role = Meai.ChatRole.Assistant };
             metadataReceived.SetResult();
             await allowOutput.Task;
             using (var transport = new Activity("transport next read").Start()) sdkParents.Add(transport.ParentId);
-            yield return new StreamingChatMessageContent(AuthorRole.Assistant, "hello");
-            // A buffered reply followed by a delayed usage trailer is still only one output.
+            yield return new Meai.ChatResponseUpdate(Meai.ChatRole.Assistant, "hello");
             await Task.Delay(150, CancellationToken.None);
-            yield return new StreamingChatMessageContent(AuthorRole.Assistant, null)
-                { Metadata = new Dictionary<string, object?> { ["Usage"] = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 2, TotalTokenCount = 12 } } };
+            yield return new Meai.ChatResponseUpdate
+            {
+                Role = Meai.ChatRole.Assistant,
+                Contents = [new Meai.UsageContent(new UsageDetails { InputTokenCount = 10, OutputTokenCount = 2, TotalTokenCount = 12 })]
+            };
         }
     }
 
     [AvaloniaTest]
     public async Task StreamConsumer_WhenConnectionFailsBeforeOutput_ShowsRetriesAndPreservesCommittedSpans()
     {
-        // Exercise both a new response and a later request with already committed output.
         foreach (var hasCommittedOutput in new[] { false, true })
         {
             var recorder = Substitute.For<IStatisticsRecorder>();
@@ -109,17 +112,17 @@ public sealed class RequestRecoveryTests
             var committed = new AssistantChatMessageTextSpan("committed");
             if (hasCommittedOutput) message.AddSpan(committed);
             data.Add(new UserChatMessage("hello", []));
-            data.Add(message);
+            var assistantNode = data.Add(message);
             await runtime.Presentation.PrepareInitialWindowAsync();
-            var service = Substitute.For<IChatCompletionService>();
+            var client = Substitute.For<Meai.IChatClient>();
             var sendCount = 0;
             var retryRows = new List<BusyActivityItemPresentationRow>();
-            service.GetStreamingChatMessageContentsAsync(Arg.Any<ChatHistory>(), Arg.Any<PromptExecutionSettings>(), Arg.Any<Kernel>(), Arg.Any<CancellationToken>())
+            client.GetStreamingResponseAsync(Arg.Any<IEnumerable<Meai.ChatMessage>>(), Arg.Any<Meai.ChatOptions>(), Arg.Any<CancellationToken>())
                 .Returns(_ => Attempt(++sendCount));
-            using var mixin = new TestMixin(service, 2);
+            await using var generation = CreateGeneration(new TestSession(client, 2), assistantNode);
             var request = typeof(ChatService).GetMethod("GetStreamingChatMessageContentsAsync", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?? throw new MissingMethodException();
-            var task = request.Invoke(chatService, [new Kernel(), mixin, runtime, new ChatHistory([new(AuthorRole.User, "fixed")]), message,
+            var task = request.Invoke(chatService, [generation, runtime, new List<Meai.ChatMessage> { new(Meai.ChatRole.User, "fixed") }, message,
                 StatisticsModelInvocationPurpose.ChatResponse, CancellationToken.None]) as Task ?? throw new InvalidOperationException();
             await task;
             Dispatcher.UIThread.RunJobs();
@@ -137,7 +140,7 @@ public sealed class RequestRecoveryTests
             await recorder.Received(3).CompleteModelInvocationAsync(Arg.Any<Guid>(), Arg.Any<ChatUsageDetails>(), Arg.Any<DateTimeOffset>(),
                 Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
 
-            async IAsyncEnumerable<StreamingChatMessageContent> Attempt(int number)
+            async IAsyncEnumerable<Meai.ChatResponseUpdate> Attempt(int number)
             {
                 await Task.Yield();
                 if (number > 1)
@@ -147,9 +150,10 @@ public sealed class RequestRecoveryTests
                         .SelectMany(group => group.Items).OfType<BusyActivityItemPresentationRow>().Single());
                     Assert.That(runtime.Presentation.Rows.OfType<PendingAssistantPresentationRow>(), Is.Empty);
                 }
+
                 if (number <= 2)
                     throw new HttpRequestException("Proxy connection refused", new System.Net.Sockets.SocketException(10061));
-                yield return new StreamingChatMessageContent(AuthorRole.Assistant, "recovered");
+                yield return new Meai.ChatResponseUpdate(Meai.ChatRole.Assistant, "recovered");
             }
         }
     }
@@ -160,7 +164,7 @@ public sealed class RequestRecoveryTests
         var attempts = new List<Activity>();
         using var listener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == typeof(KernelMixin).FullName,
+            ShouldListenTo = source => source.Name == typeof(ModelSession).FullName,
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = activity => attempts.Add(activity)
         };
@@ -172,24 +176,23 @@ public sealed class RequestRecoveryTests
         var message = new AssistantChatMessage { IsBusy = true };
         message.AddSpan(new AssistantChatMessageTextSpan("committed"));
         var tool = new FunctionCallChatMessage(Lucide.Avalonia.LucideIconKind.Hammer, new DirectLocaleKey("tool"));
-        var call = new FunctionCallContent("read_file", id: "completed-call");
-        tool.AddCall(call);
-        tool.AddResult(new FunctionResultContent(call, "previous result"));
+        tool.AddCall(new ToolCallRecord("read_file", null, "completed-call", null));
+        tool.AddResult(new ToolResultRecord("read_file", null, "completed-call", "previous result"));
         var tools = new AssistantChatMessageFunctionCallSpan();
         tools.Add(tool);
         message.AddSpan(tools);
         message.Metadata = message.Metadata.SetItem("checkpoint", "original");
         data.Add(new UserChatMessage("hello", []));
-        data.Add(message);
+        var assistantNode = data.Add(message);
         await runtime.Presentation.PrepareInitialWindowAsync();
-        var service = Substitute.For<IChatCompletionService>();
+        var client = Substitute.For<Meai.IChatClient>();
         var sendCount = 0;
-        service.GetStreamingChatMessageContentsAsync(Arg.Any<ChatHistory>(), Arg.Any<PromptExecutionSettings>(), Arg.Any<Kernel>(), Arg.Any<CancellationToken>())
+        client.GetStreamingResponseAsync(Arg.Any<IEnumerable<Meai.ChatMessage>>(), Arg.Any<Meai.ChatOptions>(), Arg.Any<CancellationToken>())
             .Returns(_ => Attempt(++sendCount));
-        using var mixin = new TestMixin(service, 1);
+        await using var generation = CreateGeneration(new TestSession(client, 1), assistantNode);
         var request = typeof(ChatService).GetMethod("GetStreamingChatMessageContentsAsync", BindingFlags.NonPublic | BindingFlags.Instance)
             ?? throw new MissingMethodException();
-        var task = request.Invoke(chatService, [new Kernel(), mixin, runtime, new ChatHistory([new(AuthorRole.User, "fixed")]), message,
+        var task = request.Invoke(chatService, [generation, runtime, new List<Meai.ChatMessage> { new(Meai.ChatRole.User, "fixed") }, message,
             StatisticsModelInvocationPurpose.ChatResponse, CancellationToken.None]) as Task ?? throw new InvalidOperationException();
         await task;
         Dispatcher.UIThread.RunJobs();
@@ -222,20 +225,21 @@ public sealed class RequestRecoveryTests
         await recorder.Received(2).CompleteModelInvocationAsync(Arg.Any<Guid>(), Arg.Any<ChatUsageDetails>(), Arg.Any<DateTimeOffset>(),
             Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
 
-        static async IAsyncEnumerable<StreamingChatMessageContent> Attempt(int number)
+        static async IAsyncEnumerable<Meai.ChatResponseUpdate> Attempt(int number)
         {
             await Task.Yield();
-            yield return new StreamingChatMessageContent(AuthorRole.Assistant, number == 1 ? "discard me" : "re")
+            yield return new Meai.ChatResponseUpdate
             {
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["checkpoint"] = number == 1 ? "provisional" : "original",
-                    ["Usage"] = new UsageDetails { OutputTokenCount = number * 10, TotalTokenCount = number * 100 }
-                }
+                Role = Meai.ChatRole.Assistant,
+                Contents =
+                [
+                    new Meai.TextContent(number == 1 ? "discard me" : "re"),
+                    new Meai.UsageContent(new UsageDetails { OutputTokenCount = number * 10, TotalTokenCount = number * 100 })
+                ]
             };
             if (number == 1) throw new HttpRequestException("broken connection", new System.Net.Sockets.SocketException(10054));
             await Task.Delay(150, CancellationToken.None);
-            yield return new StreamingChatMessageContent(AuthorRole.Assistant, "covered");
+            yield return new Meai.ChatResponseUpdate(Meai.ChatRole.Assistant, "covered");
         }
     }
 
@@ -302,21 +306,21 @@ public sealed class RequestRecoveryTests
         var attempts = new List<Activity>();
         using var listener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == typeof(KernelMixin).FullName,
+            ShouldListenTo = source => source.Name == typeof(ModelSession).FullName,
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = activity => attempts.Add(activity)
         };
         ActivitySource.AddActivityListener(listener);
         var cleanupActivity = default(Activity);
-        var service = Substitute.For<IChatCompletionService>();
+        var client = Substitute.For<Meai.IChatClient>();
         var calls = 0;
-        service.GetStreamingChatMessageContentsAsync(Arg.Any<ChatHistory>(), Arg.Any<PromptExecutionSettings>(), Arg.Any<Kernel?>(), Arg.Any<CancellationToken>())
+        client.GetStreamingResponseAsync(Arg.Any<IEnumerable<Meai.ChatMessage>>(), Arg.Any<Meai.ChatOptions>(), Arg.Any<CancellationToken>())
             .Returns(_ => { calls++; return Stream(); });
-        using var mixin = new TestMixin(service, 5);
+        using var session = new TestSession(client, 5);
         var original = new IOException("consumer storage failure");
         try
         {
-            await foreach (var update in mixin.StreamRequestAsync([], new PromptExecutionSettings()))
+            await foreach (var update in session.StreamRequestAsync([]))
                 if (update is ChatRequestUpdate.Content) throw original;
             Assert.Fail("Expected consumer error");
         }
@@ -329,12 +333,12 @@ public sealed class RequestRecoveryTests
             Assert.That(Activity.Current, Is.SameAs(parent));
         });
 
-        async IAsyncEnumerable<StreamingChatMessageContent> Stream()
+        async IAsyncEnumerable<Meai.ChatResponseUpdate> Stream()
         {
             try
             {
                 await Task.Yield();
-                yield return new StreamingChatMessageContent(AuthorRole.Assistant, "hello");
+                yield return new Meai.ChatResponseUpdate(Meai.ChatRole.Assistant, "hello");
             }
             finally
             {
@@ -367,10 +371,22 @@ public sealed class RequestRecoveryTests
         });
     }
 
+    private static GenerationContext CreateGeneration(ModelSession session, ChatMessageNode node) =>
+        new(
+            new ServiceCollection().BuildServiceProvider(),
+            session,
+            null,
+            Substitute.For<IPromptRenderer>(),
+            string.Empty,
+            Modalities.Text,
+            80,
+            -1,
+            new GenerationApprovalState(ToolApprovalMode.FullAccess),
+            true,
+            node);
+
     private static ChatService CreateService(IStatisticsRecorder recorder)
     {
-        // The normal constructor receives only the collaborators this streaming consumer uses.
-        // Unused generation/plugin collaborators stay null; no production test hooks are needed.
         var constructor = typeof(ChatService).GetConstructors().Single();
         var args = constructor.GetParameters().Select(parameter => parameter.ParameterType == typeof(IStatisticsRecorder)
             ? (object)recorder : parameter.ParameterType == typeof(Microsoft.Extensions.Logging.ILogger<ChatService>)
@@ -378,11 +394,11 @@ public sealed class RequestRecoveryTests
         return (ChatService)constructor.Invoke(args);
     }
 
-    private sealed class TestMixin(IChatCompletionService service, int retries)
-        : KernelMixin(new AdvancedAssistantConfiguration { ModelId = "test-model" },
+    private sealed class TestSession(Meai.IChatClient client, int retries)
+        : ModelSession(new AdvancedAssistantConfiguration { ModelId = "test-model" },
             new ModelConnection(ModelProviderSchema.OpenAI, "https://test.invalid", "", new HttpClient(), null, retries))
     {
-        public override IChatCompletionService ChatCompletionService => service;
-        public override bool IsPersistentMessageMetadataKey(string key) => true;
+        public override Meai.IChatClient ChatClient => client;
+        public override string Dialect => "openai";
     }
 }

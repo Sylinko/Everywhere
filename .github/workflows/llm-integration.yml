@@ -6,8 +6,6 @@ on:
 #    paths:
 #      - 'tests/Everywhere.AI.Tests/**'
 #      - 'tests/Directory.Packages.props'
-#      - '3rd/semantic-kernel-patch/**'
-#      - '3rd/semantic-kernel'
 #      - 'patches/**'
 #      - 'src/Build.Patches.targets'
 #      - 'Directory.*.props'
@@ -25,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Initialize production dependency sources
-        run: git submodule update --init --depth 1 3rd/semantic-kernel 3rd/shad-ui 3rd/Motion.Avalonia 3rd/skills
+        run: git submodule update --init --depth 1 3rd/shad-ui 3rd/Motion.Avalonia 3rd/skills
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json

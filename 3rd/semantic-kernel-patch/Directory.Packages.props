@@ -1,6 +1,0 @@
-<Project>
-  <Import Project="../../Directory.Packages.props" />
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-</Project>

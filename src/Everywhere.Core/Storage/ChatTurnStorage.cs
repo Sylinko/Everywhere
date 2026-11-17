@@ -81,7 +81,6 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
             join blob in db.Blobs on reference.BlobSha256 equals blob.Sha256
             where reference.ChatContextId == chatId && ((IEnumerable<Guid>)nodeIds).Contains(reference.ChatNodeId)
             select blob).AsNoTracking().Distinct().ToDictionaryAsync(blob => blob.Sha256, cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
 
         var messages = new Dictionary<Guid, ChatMessage>(rows.Length);
         try
@@ -99,6 +98,8 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
                 }
             }
 
+            await BindToolFilesAsync(db, messages.Values, cancellationToken, blobs);
+            await transaction.CommitAsync(cancellationToken);
             return messages;
         }
         catch
@@ -109,6 +110,34 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
             }
 
             throw;
+        }
+    }
+
+    // Frozen v2 nodes arrive as opaque bodies. Bind only materialized manifests, by
+    // content identity, even when this device has no NodeBlobs row for the new node yet.
+    private static async Task BindToolFilesAsync(
+        ChatV2DbContext db,
+        IEnumerable<ChatMessage> messages,
+        CancellationToken cancellationToken,
+        Dictionary<string, BlobEntity>? knownBlobs = null)
+    {
+        var files = messages.SelectMany(ChatMessageResources.GetToolFiles).ToArray();
+        if (files.Length == 0) return;
+        var blobs = knownBlobs ?? new Dictionary<string, BlobEntity>();
+        var missing = files.Select(file => file.Sha256).Where(hash => !blobs.ContainsKey(hash)).Distinct().ToArray();
+        if (missing.Length > 0)
+        {
+            var available = await db.Blobs.AsNoTracking().Where(blob => missing.Contains(blob.Sha256)).ToListAsync(cancellationToken);
+            foreach (var blob in available)
+            {
+                blobs.Add(blob.Sha256, blob);
+            }
+        }
+        foreach (var file in files)
+        {
+            file.Attachment.FilePath = blobs.TryGetValue(file.Sha256, out var blob)
+                ? BlobStorage.ResolveSnapshotPath(blob, file.MimeType) ?? string.Empty
+                : string.Empty;
         }
     }
 

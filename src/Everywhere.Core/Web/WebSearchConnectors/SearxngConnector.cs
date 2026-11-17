@@ -1,6 +1,5 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -33,7 +32,7 @@ public sealed partial class SearxngConnector(HttpClient httpClient, Uri uri)
         [JsonPropertyName("results")]
         public IReadOnlyList<Result>? Results { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults() => Results?.Select(x => new TextSearchResult(x.Content)
+        public IEnumerable<WebSearchResult> ToResults() => Results?.Select(x => new WebSearchResult(x.Content)
         {
             Name = x.PublishedDate1?.ToString("G") ?? x.PublishedDate2?.ToString("G") switch
             {

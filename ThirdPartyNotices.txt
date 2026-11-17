@@ -400,26 +400,6 @@ License:   MIT
 
 --------------------------------------------------------------------------------
 
-Semantic Kernel - Abstractions
-
-Id:        Microsoft.SemanticKernel.Abstractions
-Version:   1.75.0
-Project:   https://aka.ms/semantic-kernel
-Copyright: © Microsoft Corporation. All rights reserved.
-License:   MIT
-
---------------------------------------------------------------------------------
-
-Semantic Kernel Core
-
-Id:        Microsoft.SemanticKernel.Core
-Version:   1.75.0
-Project:   https://aka.ms/semantic-kernel
-Copyright: © Microsoft Corporation. All rights reserved.
-License:   MIT
-
---------------------------------------------------------------------------------
-
 Microsoft.Windows.Console.ConPTY
 
 Id:        Microsoft.Windows.Console.ConPTY

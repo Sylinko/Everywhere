@@ -1,7 +1,5 @@
-﻿using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -40,7 +38,7 @@ public sealed partial class BraveConnector(string apiKey, HttpClient httpClient,
         [JsonPropertyName("web")]
         public Web? Web { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults()
+        public IEnumerable<Everywhere.Web.WebSearchResult> ToResults()
         {
             if (Error is not null)
             {
@@ -48,7 +46,7 @@ public sealed partial class BraveConnector(string apiKey, HttpClient httpClient,
                     $"Brave Web Search API returned error (Id: {Error.Id}, Status: {Error.Status}, Code: {Error.Code}): {Error.Detail}");
             }
 
-            return Web?.SearchResults?.Select(x => new TextSearchResult(x.Description ?? "")
+            return Web?.SearchResults?.Select(x => new Everywhere.Web.WebSearchResult(x.Description ?? "")
             {
                 Name = x.Title,
                 Link = x.Url,

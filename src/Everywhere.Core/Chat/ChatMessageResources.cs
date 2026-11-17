@@ -13,14 +13,7 @@ public static class ChatMessageResources
     /// </summary>
     public static IEnumerable<ChatData> GetChildData(ChatMessage message)
     {
-        var calls = message switch
-        {
-            FunctionCallChatMessage call => [call],
-            AssistantChatMessage assistant => assistant.Items.OfType<AssistantChatMessageFunctionCallSpan>().SelectMany(span => span.Items),
-            _ => [],
-        };
-
-        foreach (var call in calls)
+        foreach (var call in GetToolMessages(message))
         {
             foreach (var childData in GetChildData(call.DisplayBlocks))
             {
@@ -52,6 +45,38 @@ public static class ChatMessageResources
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Gets path-free tool manifests, including those in embedded child chats.
+    /// </summary>
+    public static IEnumerable<Harness.ToolResultFile> GetToolFiles(ChatMessage message)
+    {
+        foreach (var call in GetToolMessages(message))
+        {
+            foreach (var file in call.Results.SelectMany(result => result.Files))
+            {
+                yield return file;
+            }
+        }
+
+        foreach (var child in GetChildData(message))
+        {
+            foreach (var file in child.GetAllNodes().SelectMany(node => GetToolFiles(node.Message)))
+            {
+                yield return file;
+            }
+        }
+    }
+
+    private static IEnumerable<FunctionCallChatMessage> GetToolMessages(ChatMessage message)
+    {
+        return message switch
+        {
+            FunctionCallChatMessage call => [call],
+            AssistantChatMessage assistant => assistant.Items.OfType<AssistantChatMessageFunctionCallSpan>().SelectMany(span => span.Items),
+            _ => []
+        };
     }
 
     private static IEnumerable<ChatData> GetChildData(IEnumerable<ChatPluginDisplayBlock> blocks)

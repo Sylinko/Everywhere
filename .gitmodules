@@ -1,9 +1,6 @@
 [submodule "3rd/shad-ui"]
 	path = 3rd/shad-ui
 	url = https://github.com/Sylinko/shad-ui
-[submodule "3rd/semantic-kernel"]
-	path = 3rd/semantic-kernel
-	url = https://github.com/microsoft/semantic-kernel
 [submodule "3rd/ClassicDiagnostics.Avalonia"]
 	path = 3rd/ClassicDiagnostics.Avalonia
 	url = https://github.com/Sylinko/ClassicDiagnostics.Avalonia

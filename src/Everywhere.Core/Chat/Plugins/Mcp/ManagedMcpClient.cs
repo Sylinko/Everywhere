@@ -10,7 +10,6 @@ using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
@@ -239,7 +238,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
 
         try
         {
-            return await CallToolCoreAsync(client, toolName, arguments, cancellationToken: cancellationToken);
+            return await client.CallToolAsync(toolName, arguments, cancellationToken: cancellationToken);
         }
         catch (Exception ex) when (!cancellationToken.IsCancellationRequested && IsSessionExpired())
         {
@@ -247,37 +246,8 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
 
             _isSessionExpired = true;
             client = await EnsureConnectedAsync(cancellationToken);
-            return await CallToolCoreAsync(client, toolName, arguments, cancellationToken: cancellationToken);
+            return await client.CallToolAsync(toolName, arguments, cancellationToken: cancellationToken);
         }
-    }
-
-    private async static ValueTask<object?> CallToolCoreAsync(
-        McpClient client,
-        string toolName,
-        IReadOnlyDictionary<string, object?> arguments,
-        CancellationToken cancellationToken)
-    {
-        var result = await client.CallToolAsync(toolName, arguments, null, null, cancellationToken).ConfigureAwait(false);
-
-        // We want to translate the result content into AIContent, using AIContent as the exchange types, so
-        // that downstream IChatClients can specialize handling based on the content (e.g. sending image content
-        // back to the AI service as a multi-modal tool response). However, when there is additional information
-        // carried by the CallToolResult outside of its ContentBlocks, just returning AIContent from those ContentBlocks
-        // would lose that information. So, we only do the translation if there is no additional information to preserve.
-        if (result.IsError is not true &&
-            result.StructuredContent is null &&
-            result.Meta is not { Count: > 0 })
-        {
-            switch (result.Content.Count)
-            {
-                case 1 when result.Content[0].ToAIContent() is { } aiContent:
-                    return aiContent;
-                case > 1 when result.Content.Select(c => c.ToAIContent()).ToArray() is { } aiContents && aiContents.All(static c => c is not null):
-                    return aiContents;
-            }
-        }
-
-        return JsonSerializer.SerializeToElement(result, CallToolResultJsonSerializerContext.Default.CallToolResult);
     }
 
     /// <summary>
@@ -542,7 +512,4 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
 
     [JsonSerializable(typeof(IEnumerable<SerializableTool>))]
     private sealed partial class SerializableToolJsonSerializerContext : JsonSerializerContext;
-
-    [JsonSerializable(typeof(CallToolResult))]
-    private sealed partial class CallToolResultJsonSerializerContext : JsonSerializerContext;
 }

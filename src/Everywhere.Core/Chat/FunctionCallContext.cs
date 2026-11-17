@@ -1,6 +1,7 @@
 ﻿using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
+using Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -8,20 +9,20 @@ namespace Everywhere.Chat;
 /// Represents the ambient state of one concrete tool invocation.
 /// </summary>
 /// <remarks>
-/// A <see cref="FunctionCallChatMessage"/> may aggregate multiple calls to the same function. This
-/// context intentionally belongs to one <see cref="FunctionCallContent"/> instead of that aggregate
-/// message, allowing its AsyncLocal value and activity preview to remain unambiguous when calls are
-/// executed concurrently in the future.
+/// Each live call owns its message, ambient services, and activity preview. Older
+/// messages can contain several same-name calls; they remain readable as recorded.
 /// </remarks>
 public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginDisplaySink, IAsyncDisposable
 {
-    public Kernel Kernel { get; }
+    public IServiceProvider Services { get; }
 
     public ChatContext ChatContext { get; }
 
-    public ChatPlugin ChatPlugin { get; }
+    public ToolBinding Binding { get; }
 
-    public ChatFunction ChatFunction { get; }
+    public ChatPlugin ChatPlugin => Binding.Plugin;
+
+    public ChatFunction ChatFunction => Binding.Function;
 
     public FunctionCallChatMessage FunctionCallChatMessage { get; }
 
@@ -35,7 +36,8 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     public ToolApprovalMode ApprovalMode { get; }
 
     /// <summary>
-    /// Gets whether a required consent was denied during this invocation.</summary>
+    /// Gets whether a required consent was denied during this invocation.
+    /// </summary>
     public bool HasApprovalDenied { get; private set; }
 
     /// <summary>
@@ -61,43 +63,6 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     public bool BypassesApproval => ApprovalMode == ToolApprovalMode.FullAccess ||
         ToolBypassApprovalPolicy.BypassesApproval(ToolBypassApprovalRulesets, ChatPlugin, ChatFunction);
 
-    private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
-    private readonly Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> _reviewAsync;
-
-    /// <summary>
-    /// Creates the invocation and registers its presentation slot inside the root execution domain.
-    /// The caller awaits disposal before completing the enclosing tool operation.
-    /// </summary>
-    public FunctionCallContext(
-        Kernel kernel,
-        ChatContext chatContext,
-        ChatPlugin chatPlugin,
-        ChatFunction chatFunction,
-        FunctionCallChatMessage functionCallChatMessage,
-        FunctionCallContent functionCallContent,
-        ObservableToolRulesets toolBypassApprovalRulesets,
-        GenerationContext generationContext,
-        Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> reviewAsync)
-    {
-        if (functionCallContent.Id.IsNullOrEmpty())
-        {
-            throw new ArgumentException("A function call context requires a non-empty tool-call ID.", nameof(functionCallContent));
-        }
-
-        Kernel = kernel;
-        ChatContext = chatContext;
-        ChatPlugin = chatPlugin;
-        ChatFunction = chatFunction;
-        FunctionCallChatMessage = functionCallChatMessage;
-        FunctionCallContent = functionCallContent;
-        GenerationContext = generationContext;
-        ApprovalMode = generationContext.ApprovalMode;
-        _reviewAsync = reviewAsync;
-        InvocationId = functionCallContent.Id;
-        ToolBypassApprovalRulesets = toolBypassApprovalRulesets;
-        _activityPresentationSlot = functionCallChatMessage.RegisterActivityPresentation(InvocationId);
-    }
-
     public string PermissionKey => ToolSettingsKey.ForFunction(ChatPlugin, ChatFunction);
 
     public bool IsPermissionGranted
@@ -115,6 +80,41 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
             ChatContext.ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isSessionGranted);
             return isSessionGranted;
         }
+    }
+
+    private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
+    private readonly Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> _reviewAsync;
+
+    /// <summary>
+    /// Creates the invocation and registers its presentation slot inside the root execution domain.
+    /// The caller awaits disposal before completing the enclosing tool operation.
+    /// </summary>
+    public FunctionCallContext(
+        IServiceProvider services,
+        ChatContext chatContext,
+        ToolBinding binding,
+        FunctionCallChatMessage functionCallChatMessage,
+        FunctionCallContent functionCallContent,
+        ObservableToolRulesets toolBypassApprovalRulesets,
+        GenerationContext generationContext,
+        Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> reviewAsync)
+    {
+        if (functionCallContent.CallId.IsNullOrEmpty())
+        {
+            throw new ArgumentException("A function call context requires a non-empty tool-call ID.", nameof(functionCallContent));
+        }
+
+        Services = services;
+        ChatContext = chatContext;
+        Binding = binding;
+        FunctionCallChatMessage = functionCallChatMessage;
+        FunctionCallContent = functionCallContent;
+        GenerationContext = generationContext;
+        ApprovalMode = generationContext.ApprovalMode;
+        _reviewAsync = reviewAsync;
+        InvocationId = functionCallContent.CallId;
+        ToolBypassApprovalRulesets = toolBypassApprovalRulesets;
+        _activityPresentationSlot = functionCallChatMessage.RegisterActivityPresentation(InvocationId);
     }
 
     #region IChatPluginUserInterface implementation
@@ -192,7 +192,9 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
 
     #endregion
 
-    /// <summary>Reviews this invocation's required consent without entering human-input wait state.</summary>
+    /// <summary>
+    /// Reviews this invocation's required consent without entering human-input wait state.
+    /// </summary>
     public async Task<ToolApprovalResult> ReviewApprovalAsync(ToolApprovalScope? scope, CancellationToken cancellationToken)
     {
         var previousPreview = await ChatContext.DispatchAsync(() =>
@@ -224,11 +226,6 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     /// <summary>
     /// Runs an interaction inside this invocation's transient user-input wait state.
     /// </summary>
-    /// <remarks>
-    /// The slot uses an atomic counter rather than a Boolean so overlapping interactions cannot
-    /// clear each other's state. The <see langword="finally"/> block also guarantees that
-    /// cancellation and broker exceptions restore the aggregate activity state.
-    /// </remarks>
     public async Task<T> WaitForUserInputAsync<T>(Func<Task<T>> interaction)
     {
         await ChatContext.DispatchAsync(_activityPresentationSlot.EnterUserInputWait);

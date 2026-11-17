@@ -1,7 +1,7 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json.Serialization;
 using MessagePack;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -11,7 +11,7 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
     /// <inheritdoc />
     public override ChatMessageKind Kind => ChatMessageKind.Assistant;
 
-    public override AuthorRole Role => AuthorRole.Assistant;
+    public override ChatRole Role => ChatRole.Assistant;
 
     [Key(0)]
 #pragma warning disable CA1822

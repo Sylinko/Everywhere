@@ -1,11 +1,10 @@
 ﻿using System.Diagnostics;
-using System.Text;
 using Everywhere.AI;
 using Everywhere.Common;
+using Everywhere.Harness;
 using Everywhere.Statistics;
 using Lucide.Avalonia;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Meai = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -20,13 +19,12 @@ public sealed partial class ChatService
     }
 
     /// <summary>
-    /// Assembles non-visible responses with the same attempt statistics and reset rules.
+    /// Assembles non-visible responses (topic generation, context compression, tool approval) with the same attempt statistics and reset rules.
     /// </summary>
     private async Task<AssembledResponse> ReadResponseAsync(
-        KernelMixin mixin,
-        ChatHistory history,
-        PromptExecutionSettings settings,
-        Kernel? kernel,
+        ModelSession session,
+        IReadOnlyList<Meai.ChatMessage> history,
+        Meai.ChatOptions options,
         Guid chatContextId,
         Guid? messageNodeId,
         StatisticsModelInvocationPurpose purpose,
@@ -35,15 +33,12 @@ public sealed partial class ChatService
         CancellationToken cancellationToken,
         ToolApprovalReviewer? approvalReviewer = null)
     {
-        var text = new StringBuilder();
-        var metadata = new Dictionary<string, object?>();
-        var segments = new List<(bool IsReasoning, StringBuilder Text, Dictionary<string, object?> Metadata)>();
-        var calls = new FunctionCallContentBuilder();
+        var assembler = new ResponseAssembler(session.Dialect);
         // Auxiliary requests retain their own invocation purpose and usage in statistics. They do
         // not accumulate into the visible answer's usage or token rate, even when it owns the node.
         await using var statistics = new RequestStatistics(
             this,
-            mixin,
+            session,
             chatContextId,
             messageNodeId,
             purpose,
@@ -52,9 +47,9 @@ public sealed partial class ChatService
         var retryActivity = default(IBusyActivity);
         try
         {
-            await foreach (var update in mixin.StreamRequestAsync(history, settings, kernel, cancellationToken: cancellationToken))
+            await foreach (var update in session.StreamRequestAsync(history, options, cancellationToken: cancellationToken))
             {
-                var hasToolOutput = update is ChatRequestUpdate.Content toolContent && calls.Append(toolContent.Value);
+                var hasToolOutput = update is ChatRequestUpdate.Content toolContent && session.HasToolCallUpdate(toolContent.Value);
                 var hasGeneratedOutput = update is ChatRequestUpdate.Content output && (HasGeneratedOutput(output.Value) || hasToolOutput);
                 await statistics.HandleAsync(update, hasGeneratedOutput, cancellationToken);
                 if (hasGeneratedOutput)
@@ -63,62 +58,43 @@ public sealed partial class ChatService
                     {
                         await context.DispatchAsync(() => retryActivity?.Dispose());
                     }
+
                     retryActivity = null;
                 }
+
                 switch (update)
                 {
                     case ChatRequestUpdate.Content content:
                     {
-                        if (content.Value.Metadata is not null)
-                        {
-                            foreach (var (key, value) in content.Value.Metadata) metadata[key] = value;
-                        }
-                        foreach (var item in content.Value.Items)
-                        {
-                            switch (item)
-                            {
-                                case StreamingReasoningContent reasoning:
-                                    AppendSegment(reasoning.Text, true, reasoning.Metadata);
-                                    break;
-                                case StreamingTextContent textContent:
-                                    text.Append(textContent.Text);
-                                    AppendSegment(textContent.Text, false, textContent.Metadata);
-                                    break;
-                                case StreamingChatMessageContent chatContent:
-                                    text.Append(chatContent.Content);
-                                    AppendSegment(chatContent.Content, false, chatContent.Metadata);
-                                    break;
-                            }
-                        }
+                        assembler.AppendUpdate(content.Value);
                         // Only SDK-completed calls can end a review before stream exhaustion.
-                        // Argument fragments that merely parse as JSON are not completion evidence.
-                        if (approvalReviewer is not null && kernel is not null &&
-                            await approvalReviewer.TrySubmitAsync(content.Value, calls, kernel, cancellationToken))
+                        if (approvalReviewer is not null &&
+                            await approvalReviewer.TrySubmitAsync(content.Value, assembler.FunctionCalls, cancellationToken))
                         {
                             await statistics.CompleteAsync();
-                            return new AssembledResponse(string.Empty, [], new ChatMessageContent(AuthorRole.Assistant, (string?)null));
+                            return new AssembledResponse(string.Empty, [], new Meai.ChatMessage(Meai.ChatRole.Assistant, []));
                         }
+
                         break;
                     }
                     case ChatRequestUpdate.AttemptFailed { RetryDelay: not null } failed:
                     {
-                        text.Clear();
-                        metadata.Clear();
-                        segments.Clear();
-                        calls = new FunctionCallContentBuilder();
+                        assembler.Reset();
                         if (context is not null && message is not null)
                         {
                             retryActivity = await context.DispatchAsync(() => UpdateRequestRetry(
                                 context.Data,
                                 message,
-                                mixin.RequestMaxRetries,
+                                session.RequestMaxRetries,
                                 retryActivity,
                                 failed));
                         }
+
                         break;
                     }
                 }
             }
+
             await statistics.CompleteAsync();
         }
         catch (OperationCanceledException ex) when (IsCallerCancellation(ex, cancellationToken))
@@ -136,49 +112,41 @@ public sealed partial class ChatService
 
         // Commit only the accepted attempt. Reasoning metadata must survive subsequent review
         // requests, including provider signatures and protected continuation data.
-        var response = new ChatMessageContent(AuthorRole.Assistant, (string?)null) { Metadata = metadata };
-        foreach (var segment in segments)
+        var assistantContents = new List<Meai.AIContent>();
+        foreach (var segment in assembler.Blocks)
         {
-            response.Items.Add(
-                segment.IsReasoning ?
-                    new ReasoningContent(segment.Text.ToString()) { Metadata = segment.Metadata } :
-                    new TextContent(segment.Text.ToString()) { Metadata = segment.Metadata });
-        }
-
-        var functionCalls = calls.Build();
-        if (functionCalls.Count != calls.Count)
-        {
-            throw new HandledChatException.InvalidResponse(new InvalidOperationException("The response stream contained incomplete tool calls."));
-        }
-
-        foreach (var call in functionCalls) response.Items.Add(call);
-        return new AssembledResponse(text.ToString(), functionCalls, response);
-
-        void AppendSegment(string? value, bool isReasoning, IReadOnlyDictionary<string, object?>? itemMetadata)
-        {
-            if (segments.Count == 0 || segments[^1].IsReasoning != isReasoning)
+            if (segment.IsReasoning)
             {
-                segments.Add((isReasoning, new StringBuilder(), new Dictionary<string, object?>()));
-            }
-
-            var segment = segments[^1];
-            segment.Text.Append(value);
-
-            if (itemMetadata is not null)
-            {
-                foreach (var (key, itemValue) in itemMetadata)
+                if (ChatHistoryBuilder.CreateReasoningContent(segment.Text?.ToString(), segment.Metadata, session.Dialect) is { } reasoning)
                 {
-                    segment.Metadata[key] = itemValue;
+                    assistantContents.Add(reasoning);
                 }
             }
+            else if (segment.Text is { Length: > 0 } answerText)
+            {
+                assistantContents.Add(new Meai.TextContent(answerText.ToString()));
+            }
         }
+
+        foreach (var call in assembler.FunctionCalls)
+        {
+            assistantContents.Add(new Meai.FunctionCallContent(call.CallId, call.Name, call.Arguments)
+            {
+                Exception = call.Exception,
+                AdditionalProperties = new Meai.AdditionalPropertiesDictionary
+                {
+                    [ReasoningMetadata.DialectKey] = session.Dialect
+                }
+            });
+        }
+
+        var responseMessage = new Meai.ChatMessage(Meai.ChatRole.Assistant, assistantContents);
+        return new AssembledResponse(assembler.GetAnswerText(), assembler.FunctionCalls, responseMessage);
     }
 
-    // Request consumers own statistics, independently of the transport retry catch boundary.
-    // A single scope is shared by visible streaming and assembled-response consumers.
     private sealed class RequestStatistics(
         ChatService owner,
-        KernelMixin mixin,
+        ModelSession session,
         Guid chatContextId,
         Guid? messageNodeId,
         StatisticsModelInvocationPurpose purpose,
@@ -213,7 +181,7 @@ public sealed partial class ChatService
                             chatContextId,
                             messageNodeId,
                             purpose,
-                            mixin.Configuration.ModelId,
+                            session.Configuration.ModelId,
                             DateTimeOffset.UtcNow),
                         cancellationToken);
                     _isStarted = true;
@@ -228,9 +196,10 @@ public sealed partial class ChatService
                         if (_firstOutputElapsed is null)
                         {
                             _firstOutputElapsed = _lastOutputElapsed;
-                            owner._timeToFirstTokenHistogram.Record(_lastOutputElapsed.TotalSeconds, GetModelTag(mixin.Configuration.ModelId));
+                            owner._timeToFirstTokenHistogram.Record(_lastOutputElapsed.TotalSeconds, GetModelTag(session.Configuration.ModelId));
                         }
                     }
+
                     break;
                 }
                 case ChatRequestUpdate.AttemptFailed failed:
@@ -257,8 +226,9 @@ public sealed partial class ChatService
             {
                 await accumulateUsageAsync(AttemptUsage);
             }
-            owner.RecordChatUsageMetrics(AttemptUsage, mixin.Configuration.ModelId);
-            owner._chatRequestsCounter.Add(1, GetModelTag(mixin.Configuration.ModelId));
+
+            owner.RecordChatUsageMetrics(AttemptUsage, session.Configuration.ModelId);
+            owner._chatRequestsCounter.Add(1, GetModelTag(session.Configuration.ModelId));
 
             await owner._statisticsRecorder.CompleteModelInvocationAsync(
                 AttemptInvocationId,
@@ -277,10 +247,9 @@ public sealed partial class ChatService
         public async ValueTask DisposeAsync() => await FinishAsync(false, false, "ConsumerAbandoned");
     }
 
-    private static bool HasGeneratedOutput(StreamingChatMessageContent content) =>
-        content.Items.AsValueEnumerable().Any(item => item is
-            StreamingTextContent { Text.Length: > 0 } or StreamingChatMessageContent { Content.Length: > 0 } or
-            StreamingReasoningContent { Text.Length: > 0 } || item.InnerContent is BinaryContent { Data: not null });
+    private static bool HasGeneratedOutput(Meai.ChatResponseUpdate update) =>
+        update.Contents.AsValueEnumerable().Any(static item =>
+            item is Meai.TextContent { Text.Length: > 0 } or Meai.TextReasoningContent { Text.Length: > 0 } or Meai.DataContent { Data.IsEmpty: false });
 
     private static IBusyActivity UpdateRequestRetry(
         ChatData data,
@@ -311,5 +280,8 @@ public sealed partial class ChatService
         return activity;
     }
 
-    private readonly record struct AssembledResponse(string Text, IReadOnlyList<FunctionCallContent> FunctionCalls, ChatMessageContent Message);
+    private readonly record struct AssembledResponse(
+        string Text,
+        IReadOnlyList<Meai.FunctionCallContent> FunctionCalls,
+        Meai.ChatMessage Message);
 }

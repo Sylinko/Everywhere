@@ -7,10 +7,10 @@ using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Everywhere.Statistics;
 using Everywhere.Storage;
 using Lucide.Avalonia;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -56,21 +56,22 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                     ChatFunctionPermissions.None));
             list.Add(
                 new BuiltInChatFunction(
-                    ManageTodo,
+                    ManageTodoAsync,
                     ChatFunctionPermissions.None));
             list.Add(
                 new BuiltInChatFunction(
                     AskUserQuestionAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(ViewImageAsync, ChatFunctionPermissions.FileRead, LucideIconKind.Image)
-                {
-                    RequiredModalities = Modalities.Image
-                });
+                new BuiltInChatFunction(
+                    ViewImageAsync,
+                    ChatFunctionPermissions.FileRead,
+                    LucideIconKind.Image,
+                    requiredModalities: Modalities.Image));
         });
     }
 
-    [KernelFunction("run_subagent")]
+    [ChatFunction("run_subagent")]
     [Description(
         """
         Launch a new agent to handle complex tasks autonomously, which is good for complex tasks that require decision-making and planning.
@@ -80,10 +81,10 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         """)]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_RunSubagent_Header, LocaleKey.BuiltInChatPlugin_Essential_RunSubagent_Description)]
     private async Task<string> RunSubagentAsync(
-        [FromKernelServices] IChatService chatService,
-        [FromKernelServices] Assistant assistant,
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatService chatService,
+        [FromChatServices] Assistant assistant,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] ChatContext chatContext,
         [Description("A detailed description of the task for the agent to perform, inject into system prompt")]
         string prompt,
         [Description("A concise title for the agent's task")] string title,
@@ -167,14 +168,12 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         return generationResult?.Output ?? string.Empty;
     }
 
-    [KernelFunction("manage_todo")]
+    [ChatFunction("manage_todo")]
     [Description("Manage a temporary todo list for complex or multi-step tasks.")]
-    [DynamicLocaleKey(
-        LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Header,
-        LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Description)]
-    private static async Task<string> ManageTodo(
-        [FromKernelServices] ChatContext chatContext,
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Header, LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Description)]
+    private static async Task<string> ManageTodoAsync(
+        [FromChatServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description(
             """
             Use reset to replace the complete list, update to change existing items by ID, read to inspect the list, and clear to remove all items.
@@ -275,7 +274,9 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                                 error = new HandledFunctionInvokingException(
                                     HandledFunctionInvokingExceptionType.ArgumentError,
                                     nameof(items),
-                                    new ArgumentException($"Todo item ID {item.Id} does not exist and cannot be added by update action.", nameof(items)));
+                                    new ArgumentException(
+                                        $"Todo item ID {item.Id} does not exist and cannot be added by update action.",
+                                        nameof(items)));
                                 return;
                             }
                         }
@@ -366,7 +367,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         }
     }
 
-    [KernelFunction("ask_user_question")]
+    [ChatFunction("ask_user_question")]
     [Description(
         "Use this tool to ask the user a small number of clarifying questions before proceeding. " +
         "Provide the questions array with concise headers and prompts. " +
@@ -375,7 +376,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_Essential_AskUserQuestion_Header,
         LocaleKey.BuiltInChatPlugin_Essential_AskUserQuestion_Description)]
     private async static Task<IReadOnlyDictionary<string, ChatPluginQuestionAnswer>> AskUserQuestionAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IChatPluginUserInterface userInterface,
         [Description("The questions to present to the user. Each question is shown as a separate page.")]
         IReadOnlyList<ChatPluginQuestion> questions,
         CancellationToken cancellationToken)
@@ -412,7 +413,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         return result;
     }
 
-    [KernelFunction("view_image")]
+    [ChatFunction("view_image")]
     [Description(
         """
         View still images from local files, including image attachments. Pass up to 8 paths in the order you want to compare them.
@@ -420,7 +421,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         """)]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ViewImage_Header, LocaleKey.BuiltInChatPlugin_Essential_ViewImage_Description)]
     private async Task<ViewImageFunctionResult> ViewImageAsync(
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] ChatContext chatContext,
         [Description("Local paths or file:// URIs. Relative paths resolve against the working directory.")]
         string[] paths,
         CancellationToken cancellationToken)

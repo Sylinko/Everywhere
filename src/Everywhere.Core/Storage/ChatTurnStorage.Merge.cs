@@ -329,6 +329,7 @@ partial class ChatTurnStorage
             ChatMetadataMapper.ApplyFields(chat, fields);
             await db.SaveChangesAsync(cancellationToken);
             var nodes = await ReadTopologyAsync(db, chatId, cancellationToken);
+            await BindToolFilesAsync(db, messages.Values, cancellationToken);
             ValidateTopology(nodes);
             await SaveHeadAsync(db, accountId, chatId, head, shouldDiscardSubmission, cancellationToken);
             await transaction.CommitAsync(cancellationToken);

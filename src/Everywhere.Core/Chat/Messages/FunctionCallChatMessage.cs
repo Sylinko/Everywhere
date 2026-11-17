@@ -5,8 +5,8 @@ using System.Text.Json.Serialization;
 using Everywhere.Chat.Plugins;
 using Lucide.Avalonia;
 using MessagePack;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Everywhere.Harness;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -20,7 +20,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public override ChatMessageKind Kind => ChatMessageKind.FunctionCall;
 
     [IgnoreMember]
-    public override AuthorRole Role => AuthorRole.Tool;
+    public override ChatRole Role => ChatRole.Tool;
 
     [Key(1)]
     public LucideIconKind Icon
@@ -57,10 +57,10 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public override DateTimeOffset CreatedAt { get; }
 
     [Key(6)]
-    public ImmutableArray<FunctionCallContent> Calls => _calls;
+    public ImmutableArray<ToolCallRecord> Calls => _calls;
 
     [Key(7)]
-    public ImmutableArray<FunctionResultContent> Results => _results;
+    public ImmutableArray<ToolResultRecord> Results => _results;
 
     [Key(8)]
     public DateTimeOffset FinishedAt
@@ -131,18 +131,29 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// Attachments associated with this action message. Used to provide additional context of a tool call result.
     /// </summary>
     [IgnoreMember]
-    public IEnumerable<ChatAttachment> Attachments => Results.SelectMany(static result => result.Result switch
+    public IEnumerable<ChatAttachment> Attachments => Results.SelectMany(GetAttachments);
+
+    private static IEnumerable<ChatAttachment> GetAttachments(ToolResultRecord result)
     {
-        ChatAttachment attachment => [attachment],
-        ChatFunctionResult structuredResult => structuredResult.Attachments,
-        _ => []
-    });
+        if (result.Result is ChatAttachment attachment) yield return attachment;
+        if (result.Result is ChatFunctionResult structured)
+        {
+            foreach (var item in structured.Attachments)
+            {
+                yield return item;
+            }
+        }
+        foreach (var file in result.Files)
+        {
+            yield return file.Attachment;
+        }
+    }
 
     [IgnoreMember] private readonly ChatPluginDisplaySink _displaySink = new();
     [IgnoreMember] private readonly ConcurrentDictionary<string, ActivityPresentationSlot> _activityPresentationSlots = new();
 
-    [IgnoreMember] private ImmutableArray<FunctionCallContent> _calls = [];
-    [IgnoreMember] private ImmutableArray<FunctionResultContent> _results = [];
+    [IgnoreMember] private ImmutableArray<ToolCallRecord> _calls = [];
+    [IgnoreMember] private ImmutableArray<ToolResultRecord> _results = [];
     [IgnoreMember] private long _activityPreviewRevision;
 
     [SerializationConstructor]
@@ -152,8 +163,8 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         string? content,
         IDynamicLocaleKey? errorMessageKey,
         DateTimeOffset createdAt,
-        ImmutableArray<FunctionCallContent> calls,
-        ImmutableArray<FunctionResultContent> results,
+        ImmutableArray<ToolCallRecord> calls,
+        ImmutableArray<ToolResultRecord> results,
         DateTimeOffset finishedAt,
         IDynamicLocaleKey? headerKey,
         IEnumerable<ChatPluginDisplayBlock>? displayBlocks
@@ -229,7 +240,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// Keeping the mutation here makes in-progress tool calls visible to persistence before
     /// the enclosing function-call message finishes.
     /// </summary>
-    public void AddCall(FunctionCallContent call)
+    public void AddCall(ToolCallRecord call)
     {
         ImmutableInterlocked.InterlockedExchange(ref _calls, _calls.Add(call));
         NotifyChanged();
@@ -238,7 +249,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// <summary>
     /// Adds a function result and notifies owners that the serialized result list changed.
     /// </summary>
-    public void AddResult(FunctionResultContent result)
+    public void AddResult(ToolResultRecord result)
     {
         ImmutableInterlocked.InterlockedExchange(ref _results, _results.Add(result));
         NotifyChanged();

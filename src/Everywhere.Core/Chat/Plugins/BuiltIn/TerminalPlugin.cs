@@ -10,7 +10,7 @@ using Everywhere.Prompting;
 using Everywhere.Terminal;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
 using Porta.Pty;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
@@ -82,13 +82,13 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         return ValueTask.FromResult<IReadOnlyList<ChatFunction>>([runtimeFunction]);
     }
 
-    [KernelFunction("execute_in_terminal")]
+    [ChatFunction("execute_in_terminal")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Header,
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Description)]
     private async Task<string> ExecuteInTerminalAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] ChatContext chatContext,
         [Description("A concise description for user, explaining what are you doing")] string description,
         [Description("Single or multi-line shell command")] string command,
         CancellationToken cancellationToken)

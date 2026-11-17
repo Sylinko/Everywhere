@@ -1,6 +1,7 @@
 ﻿using Everywhere.Chat;
 using MessagePack;
 using MessagePack.Formatters;
+using Everywhere.Harness;
 
 namespace Everywhere.Serialization;
 
@@ -26,7 +27,8 @@ public sealed record ChatPayloadCapture(byte[] Payload, Guid? SummaryThroughNode
     }
 
     [ExcludeFormatterFromSourceGeneratedResolver]
-    private sealed class CaptureResolver(IFormatterResolver fallback) : IFormatterResolver, IMessagePackFormatter<FileAttachment?>
+    private sealed class CaptureResolver(IFormatterResolver fallback) : IFormatterResolver,
+        IMessagePackFormatter<FileAttachment?>, IMessagePackFormatter<ToolResultFile?>
     {
         public List<FileAttachment> Files { get; } = [];
 
@@ -46,6 +48,18 @@ public sealed record ChatPayloadCapture(byte[] Payload, Guid? SummaryThroughNode
             var file = new FileAttachment(value.HeaderKey, value.FilePath, value.Sha256, value.MimeType, value.Description);
             fallback.GetFormatterWithVerify<FileAttachment>().Serialize(ref writer, file, options);
             Files.Add(file);
+        }
+
+        void IMessagePackFormatter<ToolResultFile?>.Serialize(ref MessagePackWriter writer, ToolResultFile? value, MessagePackSerializerOptions options)
+        {
+            if (value is null) throw new MessagePackSerializationException("A manifest cannot contain a null file.");
+            fallback.GetFormatterWithVerify<ToolResultFile>().Serialize(ref writer, value, options);
+            Files.Add(new FileAttachment(value.Attachment.HeaderKey, value.Attachment.FilePath, value.Sha256, value.MimeType));
+        }
+
+        ToolResultFile IMessagePackFormatter<ToolResultFile?>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return fallback.GetFormatterWithVerify<ToolResultFile>().Deserialize(ref reader, options);
         }
 
         FileAttachment IMessagePackFormatter<FileAttachment?>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)

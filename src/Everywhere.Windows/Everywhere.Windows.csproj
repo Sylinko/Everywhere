@@ -88,9 +88,6 @@
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Abstractions"/>
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Relational"/>
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Sqlite"/>
-    <TrimmerRootAssembly Include="Microsoft.SemanticKernel.Abstractions"/>
-    <TrimmerRootAssembly Include="Microsoft.SemanticKernel.Connectors.Google"/>
-    <TrimmerRootAssembly Include="Microsoft.SemanticKernel.Core"/>
     <TrimmerRootAssembly Include="ModelContextProtocol"/>
     <TrimmerRootAssembly Include="ModelContextProtocol.Core"/>
     <TrimmerRootAssembly Include="OllamaSharp"/>

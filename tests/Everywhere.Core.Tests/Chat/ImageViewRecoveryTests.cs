@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Reactive.Disposables;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using Avalonia.Headless.NUnit;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
@@ -15,6 +14,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Core.I18N;
 using Everywhere.Core.Tests.Statistics;
+using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
@@ -26,10 +26,9 @@ using Everywhere.Storage;
 using Lucide.Avalonia;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
 using NSubstitute;
 using SkiaSharp;
+using Meai = Microsoft.Extensions.AI;
 
 namespace Everywhere.Core.Tests.Chat;
 
@@ -70,8 +69,7 @@ public sealed class ImageViewRecoveryTests
         await using var manager = new ChatContextManager(settings, storage, NullLogger<ChatContextManager>.Instance);
         var root = manager.Current;
         var data = root.Data;
-        // A saved user attachment already registers these bytes under the external path.
-        // The tool must save a separate snapshot without changing that registration.
+
         var attachment = await FileAttachment.CreateAsync(jpegPath, "image/jpeg");
         var first = data.Add(new UserChatMessage("Inspect the older image", [attachment]));
         await manager.FlushPendingChatAsync(root, CancellationToken.None);
@@ -79,10 +77,9 @@ public sealed class ImageViewRecoveryTests
         using var olderStream = new MemoryStream(olderImage.Bytes, writable: false);
         var olderBlob = await blobStorage.StorageBlobAsync(olderStream, olderImage.MimeType);
         var olderPreview = new FileAttachment(attachment.HeaderKey, olderBlob.LocalPath, olderBlob.Sha256, olderImage.MimeType);
-        var olderCall = new FunctionCallContent("view_image", id: "old-view");
         var earlierTool = new FunctionCallChatMessage(LucideIconKind.Image, new DirectLocaleKey("View images"));
-        earlierTool.AddCall(olderCall);
-        earlierTool.AddResult(new FunctionResultContent(olderCall, new ViewImageFunctionResult(
+        earlierTool.AddCall(new ToolCallRecord("view_image", "essential", "old-view", null));
+        earlierTool.AddResult(new ToolResultRecord("view_image", "essential", "old-view", new ViewImageFunctionResult(
         [
             ViewImageItem.FromPreparedImage(jpegPath, olderPreview, olderImage)
         ])));
@@ -93,12 +90,12 @@ public sealed class ImageViewRecoveryTests
         var user = data.Append(shared, new UserChatMessage("Look at the old image again and compare the large one", []));
         var assistant = data.Append(user, new AssistantChatMessage { IsBusy = true });
 
-        var requests = new List<ChatHistory>();
+        var requests = new List<Meai.ChatMessage[]>();
         var wasOffloadSavedBeforeRetry = false;
-        var completion = Substitute.For<IChatCompletionService>();
-        completion.GetStreamingChatMessageContentsAsync(
-                Arg.Any<ChatHistory>(), Arg.Any<PromptExecutionSettings>(), Arg.Any<Kernel>(), Arg.Any<CancellationToken>())
-            .Returns(call => RespondAsync(call.Arg<ChatHistory>()));
+        var client = Substitute.For<Meai.IChatClient>();
+        client.GetStreamingResponseAsync(
+                Arg.Any<IEnumerable<Meai.ChatMessage>>(), Arg.Any<Meai.ChatOptions>(), Arg.Any<CancellationToken>())
+            .Returns(call => RespondAsync(call.ArgAt<IEnumerable<Meai.ChatMessage>>(0).ToArray()));
         var configuration = new AdvancedAssistantConfiguration
         {
             ModelId = "image-test",
@@ -106,8 +103,8 @@ public sealed class ImageViewRecoveryTests
             InputModalities = Modalities.Text | Modalities.Image
         };
         var assistantSettings = new CustomAssistant { Configuration = configuration };
-        var factory = Substitute.For<IKernelMixinFactory>();
-        factory.Create(Arg.Any<Assistant>()).Returns(_ => new TestMixin(configuration, completion));
+        var factory = Substitute.For<IModelSessionFactory>();
+        factory.Create(Arg.Any<Assistant>()).Returns(_ => new TestSession(configuration, client));
         using var visual = new ChatVisualService(new UnusedHostConnectionSource());
         var chatService = new ChatService(
             manager, pluginManager, factory, specializations, blobStorage, settings, Substitute.For<IPromptService>(),
@@ -131,16 +128,17 @@ public sealed class ImageViewRecoveryTests
         {
             Assert.That(wasOffloadSavedBeforeRetry, Is.True);
             Assert.That(imageCounts, Is.EqualTo(expectedCounts));
-            Assert.That(ImagesIn(requests[2])[0].Data?.ToArray(), Is.EqualTo(original));
-            Assert.That(ImagesIn(requests[2])[0].MimeType, Is.EqualTo("image/jpeg"));
-            Assert.That(requests[2].SelectMany(message => message.Items).OfType<TextContent>().Select(item => item.Text),
+            Assert.That(ImagesIn(requests[2])[0].Data.ToArray(), Is.EqualTo(original));
+            Assert.That(ImagesIn(requests[2])[0].MediaType, Is.EqualTo("image/jpeg"));
+            Assert.That(requests[2].SelectMany(message => message.Contents).OfType<Meai.TextContent>().Select(item => item.Text),
                 Has.Some.Contains("Image omitted to fit the request").And.Contains("old-view"));
             if (shouldRejectLatestBatch)
             {
-                Assert.That(requests[^1].SelectMany(message => message.Items).OfType<TextContent>().Select(item => item.Text),
+                Assert.That(requests[^1].SelectMany(message => message.Contents).OfType<Meai.TextContent>().Select(item => item.Text),
                     Has.Some.Contains("Image omitted to fit the request").And.Contains("new-view"));
             }
         }
+
         await manager.FlushPendingChatAsync(root, CancellationToken.None);
         await File.WriteAllTextAsync(jpegPath, "The source file changed after the image was viewed.");
         await using var reopened = await storage.LoadContextAsync(data.Metadata.Id);
@@ -149,7 +147,6 @@ public sealed class ImageViewRecoveryTests
             await reopened.EnsureTurnLoadedAsync(turn);
         }
 
-        // Reopening must exercise the real payload serializer for both nested union cases.
         var loaded = (AssistantChatMessage)(reopened.Data.FindNode(assistant.Id)?.Message ?? throw new AssertionException("Missing response."));
         var loadedCall = loaded.Spans.OfType<AssistantChatMessageFunctionCallSpan>().Single().Items.Single();
         var viewed = loadedCall.Results.Single().Result as ViewImageFunctionResult ?? throw new AssertionException("Missing image result.");
@@ -185,20 +182,22 @@ public sealed class ImageViewRecoveryTests
         {
             Assert.That(ImagesIn(reopenedHistory), Has.Length.EqualTo(expectedCounts[^1]));
             Assert.That(ImagesIn(alternativeHistory), Has.Length.EqualTo(1));
-            Assert.That(ImagesIn(alternativeHistory)[0].Data?.ToArray(), Is.EqualTo(original));
+            Assert.That(ImagesIn(alternativeHistory)[0].Data.ToArray(), Is.EqualTo(original));
         }
 
-        async IAsyncEnumerable<StreamingChatMessageContent> RespondAsync(ChatHistory history)
+        async IAsyncEnumerable<Meai.ChatResponseUpdate> RespondAsync(Meai.ChatMessage[] history)
         {
             requests.Add(history);
             switch (requests.Count)
             {
                 case 1:
                 {
-                    var request = new StreamingChatMessageContent(AuthorRole.Assistant, null);
-                    var arguments = JsonSerializer.Serialize(new { paths = new[] { jpegPath, string.Empty, largePath } });
-                    request.Items.Add(new StreamingFunctionCallUpdateContent("new-view", "view_image", arguments));
-                    yield return request;
+                    var arguments = new Dictionary<string, object?> { ["paths"] = new[] { jpegPath, string.Empty, largePath } };
+                    yield return new Meai.ChatResponseUpdate
+                    {
+                        Role = Meai.ChatRole.Assistant,
+                        Contents = [new Meai.FunctionCallContent("new-view", "view_image", arguments)]
+                    };
                     yield break;
                 }
                 case 2:
@@ -228,7 +227,7 @@ public sealed class ImageViewRecoveryTests
             }
 
             var reply = shouldRejectLatestBatch ? "I need to view fewer images at a time." : "Comparison completed.";
-            yield return new StreamingChatMessageContent(AuthorRole.Assistant, reply);
+            yield return new Meai.ChatResponseUpdate(Meai.ChatRole.Assistant, reply);
         }
     }
 
@@ -247,7 +246,7 @@ public sealed class ImageViewRecoveryTests
         await using var root = new RootChatContext(new ChatData(), null);
         var scope = await manager.CreateScopeAsync(
             new AdvancedAssistantConfiguration { InputModalities = Modalities.Text }, root, root.Data.RootNode, null, CancellationToken.None);
-        var functions = scope.Plugins.Single().GetChatFunctions().Select(function => function.KernelFunction.Name).ToArray();
+        var functions = scope.Plugins.Single().GetChatFunctions().Select(function => function.Function.Name).ToArray();
         using (Assert.EnterMultipleScope())
         {
             Assert.That(functions, Does.Contain("manage_todo"));
@@ -264,9 +263,9 @@ public sealed class ImageViewRecoveryTests
         Assert.That(prepared.Bytes, Is.EqualTo(File.ReadAllBytes(file.Path)));
     }
 
-    private static ImageContent[] ImagesIn(ChatHistory history)
+    private static Meai.DataContent[] ImagesIn(IEnumerable<Meai.ChatMessage> history)
     {
-        return history.SelectMany(message => message.Items).OfType<ImageContent>().ToArray();
+        return history.SelectMany(message => message.Contents).OfType<Meai.DataContent>().ToArray();
     }
 
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_blobBasePath")]
@@ -311,13 +310,14 @@ public sealed class ImageViewRecoveryTests
         }
     }
 
-    private sealed class TestMixin(AssistantConfiguration configuration, IChatCompletionService service)
-        : KernelMixin(configuration, new ModelConnection(ModelProviderSchema.OpenAI, "https://test.invalid", null, new HttpClient(), null, 0))
+    private sealed class TestSession(AssistantConfiguration configuration, Meai.IChatClient client)
+        : ModelSession(configuration, new ModelConnection(ModelProviderSchema.OpenAI, "https://test.invalid", null, new HttpClient(), null, 0))
     {
-        public override IChatCompletionService ChatCompletionService => service;
+        public override Meai.IChatClient ChatClient => client;
+        public override string Dialect => "openai";
     }
 
-    private sealed class UnusedHostConnectionSource : IHostConnectionSource
+    internal sealed class UnusedHostConnectionSource : IHostConnectionSource
     {
         public ValueTask<RpcConnection> GetConnectionAsync(ProcessRole role, CancellationToken cancellationToken)
         {

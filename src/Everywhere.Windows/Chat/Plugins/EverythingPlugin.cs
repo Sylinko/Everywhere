@@ -3,7 +3,6 @@ using System.Text;
 using DynamicData;
 using EverythingNet.Core;
 using EverythingNet.Interfaces;
-using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
@@ -14,7 +13,7 @@ using Everywhere.Prompting;
 using Everywhere.Utilities;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
 
 namespace Everywhere.Windows.Chat.Plugins;
 
@@ -114,13 +113,13 @@ public sealed partial class EverythingPlugin : BuiltInChatPlugin
         while (!EverythingState.IsReady() && maxAttempts-- > 0);
     }
 
-    [KernelFunction("search_files")]
+    [ChatFunction("search_files")]
     [Description("Search files using Everything search engine.")]
     [DynamicLocaleKey(
         LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Header,
         LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Description)]
     private async Task<string> SearchFilesAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("Standard search pattern in Everything search engine.")] string searchPattern,
         [Description("Maximum number of results to return. Default is 50 and will be limited to 1000.")]
         int maxResults = 50,

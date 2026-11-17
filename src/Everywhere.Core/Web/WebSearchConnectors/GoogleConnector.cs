@@ -1,9 +1,8 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using System.Web;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -46,7 +45,7 @@ public sealed partial class GoogleConnector(string apiKey, string searchEngineId
         [JsonPropertyName("searchInformation")]
         public SearchInformation? SearchInformation { get; set; }
 
-        public IEnumerable<TextSearchResult> ToResults() => Items?.Select(item => new TextSearchResult(item.Snippet ?? string.Empty)
+        public IEnumerable<WebSearchResult> ToResults() => Items?.Select(item => new WebSearchResult(item.Snippet ?? string.Empty)
         {
             Name = item.Title,
             Link = item.Link,

@@ -15,7 +15,7 @@ namespace Everywhere.ViewModels;
 
 public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
 {
-    private readonly IKernelMixinFactory _kernelMixinFactory;
+    private readonly IModelSessionFactory _modelSessionFactory;
     private readonly Settings _settings;
 
     public ObservableCollection<CustomAssistant> CustomAssistants => _settings.Model.CustomAssistants;
@@ -23,9 +23,9 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
     [ObservableProperty]
     public partial CustomAssistant? SelectedCustomAssistant { get; set; }
 
-    public CustomAssistantPageViewModel(IKernelMixinFactory kernelMixinFactory, Settings settings)
+    public CustomAssistantPageViewModel(IModelSessionFactory modelSessionFactory, Settings settings)
     {
-        _kernelMixinFactory = kernelMixinFactory;
+        _modelSessionFactory = modelSessionFactory;
         _settings = settings;
         SelectedCustomAssistant = settings.Model.SelectedCustomAssistant ?? settings.Model.CustomAssistants.FirstOrDefault();
     }
@@ -139,11 +139,11 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
         if (SelectedCustomAssistant is not { } customAssistant) return;
         if (!customAssistant.Configuration.Validate()) return;
 
-        KernelMixin? kernelMixin = null;
+        ModelSession? session = null;
         try
         {
-            kernelMixin = _kernelMixinFactory.Create(customAssistant);
-            await kernelMixin.CheckConnectivityAsync(cancellationToken);
+            session = _modelSessionFactory.Create(customAssistant);
+            await session.CheckConnectivityAsync(cancellationToken);
             ToastHost
                 .CreateToast(LocaleKey.CustomAssistantPageViewModel_CheckConnectivity_SuccessToast_Title.I18N())
                 .DismissOnClick()
@@ -151,7 +151,7 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
         }
         catch (Exception ex)
         {
-            ex = ChatExceptionNormalizer.Handle(ex, kernelMixin);
+            ex = ChatExceptionNormalizer.Handle(ex, session);
             Log.Logger.ForContext<CustomAssistantPageViewModel>().Error(
                 ex,
                 "Failed to check connectivity key for endpoint {ProviderId} and model {ModelId}",
@@ -165,7 +165,7 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
         }
         finally
         {
-            kernelMixin?.Dispose();
+            session?.Dispose();
         }
     }
 

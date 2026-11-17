@@ -8,13 +8,14 @@ using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Harness;
+using AIFunctionDeclaration = Microsoft.Extensions.AI.AIFunctionDeclaration;
 using Everywhere.Interop;
 using Everywhere.Utilities;
 using FuzzySharp;
 using Lucide.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using ShadUI;
 
 namespace Everywhere.Chat.Plugins;
@@ -453,33 +454,45 @@ public class ChatPluginManager : IChatPluginManager
         }
     }
 
-    private class ChatPluginScope(List<ChatPluginSnapshot> pluginSnapshots) : IChatPluginScope
+    private sealed class ChatPluginScope : IChatPluginScope
     {
-        public IReadOnlyList<ChatPlugin> Plugins => pluginSnapshots;
+        public IReadOnlyList<ChatPlugin> Plugins { get; }
+        public IReadOnlyList<AIFunctionDeclaration> Declarations { get; }
+        private readonly Dictionary<string, ToolBinding> _bindings;
 
-        public bool TryGetPluginAndFunction(
-            string functionName,
-            [NotNullWhen(true)] out ChatPlugin? plugin,
-            [NotNullWhen(true)] out ChatFunction? function,
-            [NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames)
+        public ChatPluginScope(List<ChatPluginSnapshot> plugins)
         {
-            foreach (var pluginSnapshot in pluginSnapshots)
+            Plugins = plugins;
+            var count = plugins.Sum(plugin => plugin.FunctionCount);
+            var declarations = new List<AIFunctionDeclaration>(count);
+            _bindings = new Dictionary<string, ToolBinding>(count, StringComparer.Ordinal);
+            foreach (var plugin in plugins)
             {
-                if (pluginSnapshot.TryGetChatFunction(functionName, out function))
+                foreach (var binding in plugin.Bindings)
                 {
-                    plugin = pluginSnapshot;
-                    similarFunctionNames = null;
-                    return true;
+                    _bindings.Add(binding.Declaration.Name, binding);
+                    declarations.Add(binding.Declaration);
                 }
             }
 
-            plugin = null;
-            function = null;
+            Declarations = declarations;
+        }
+
+        public bool TryGetBinding(
+            string functionName,
+            [NotNullWhen(true)] out ToolBinding? binding,
+            [NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames)
+        {
+            if (_bindings.TryGetValue(functionName, out binding))
+            {
+                similarFunctionNames = null;
+                return true;
+            }
             similarFunctionNames =
             [
                 .. Process.ExtractTop(
                         functionName,
-                        pluginSnapshots.SelectMany(static plugin => plugin.GetScopedFunctionNames()),
+                        _bindings.Keys,
                         limit: 5)
                     .Where(r => r.Score >= 60)
                     .Select(r => r.Value),
@@ -607,13 +620,13 @@ public class ChatPluginManager : IChatPluginManager
         public override IDynamicLocaleKey DescriptionKey => _originalChatPlugin.DescriptionKey;
         public override LucideIconKind? Icon => _originalChatPlugin.Icon;
         public override string? BeautifulIcon => _originalChatPlugin.BeautifulIcon;
-        public override int FunctionCount => _actualFunctions.Length;
+        public override int FunctionCount => Bindings.Length;
         public override IReadOnlyBindableList<ChatFunction> Functions => throw new NotSupportedException();
         public override bool IsMcp => _originalChatPlugin.IsMcp;
 
+        public ToolBinding[] Bindings { get; }
         private readonly ChatPlugin _originalChatPlugin;
         private readonly ChatFunction[] _actualFunctions;
-        private readonly KernelFunction[] _kernelFunctions;
 
         public ChatPluginSnapshot(
             ChatPlugin originalChatPlugin,
@@ -623,42 +636,12 @@ public class ChatPluginManager : IChatPluginManager
         ) : base(pluginNameDeduplicator.Deduplicate(originalChatPlugin.Name))
         {
             _originalChatPlugin = originalChatPlugin;
-            _actualFunctions = [.. actualFunctions];
-            _kernelFunctions = _actualFunctions.AsValueEnumerable().Select(CloneWithUniqueName).ToArray();
-
-            KernelFunction CloneWithUniqueName(ChatFunction function)
-            {
-                var name = functionNameDeduplicator.Deduplicate(function.KernelFunction.Name);
-                // Keep tool names flat to avoid sending redundant plugin names to the model.
-                var kernelFunction = function.KernelFunction.Clone();
-                kernelFunction.Metadata.Name = name;
-                return kernelFunction;
-            }
+            Bindings = actualFunctions
+                .Select(function => new ToolBinding(originalChatPlugin, function, functionNameDeduplicator))
+                .ToArray();
+            _actualFunctions = Bindings.Select(binding => binding.Function).ToArray();
         }
-
-        public bool TryGetChatFunction(string name, [NotNullWhen(true)] out ChatFunction? function)
-        {
-            for (var i = 0; i < _kernelFunctions.Length; i++)
-            {
-                if (_kernelFunctions[i].Name != name) continue;
-                function = _actualFunctions[i];
-                return true;
-            }
-
-            function = null;
-            return false;
-        }
-
-        public override bool TryGetFunction(string name, [NotNullWhen(true)] out KernelFunction? function)
-        {
-            function = _kernelFunctions.AsValueEnumerable().FirstOrDefault(f => f.Name == name);
-            return function is not null;
-        }
-
-        public override IEnumerator<KernelFunction> GetEnumerator() => _kernelFunctions.AsEnumerable().GetEnumerator();
 
         public override IReadOnlyList<ChatFunction> GetChatFunctions() => _actualFunctions;
-
-        public IEnumerable<string> GetScopedFunctionNames() => _kernelFunctions.Select(static function => function.Name);
     }
 }

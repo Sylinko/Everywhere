@@ -1,5 +1,5 @@
 ﻿using MessagePack;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
 
@@ -13,7 +13,7 @@ public sealed partial class VisualContextResetChatMessage : ChatMessage
     public override ChatMessageKind Kind => ChatMessageKind.VisualContextReset;
 
     /// <inheritdoc />
-    public override AuthorRole Role => new("user");
+    public override ChatRole Role => new("user");
 
     /// <inheritdoc />
     public override bool IsHidden => true;

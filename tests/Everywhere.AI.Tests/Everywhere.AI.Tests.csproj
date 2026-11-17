@@ -2,17 +2,15 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Everywhere.Core/Everywhere.Core.csproj" />
     <PackageReference Include="Anthropic" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.SemanticKernel.Abstractions" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="OllamaSharp" />
     <Using Include="NUnit.Framework" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
-    <ProjectReference Include="../../3rd/semantic-kernel-patch/Connectors.MistralAI/Connectors.MistralAI.csproj" />
     <None Update="Fixtures/**/*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <Import Project="../../src/Build.Patches.targets" />

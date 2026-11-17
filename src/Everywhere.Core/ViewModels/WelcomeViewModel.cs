@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.Cloud;
-using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -201,7 +200,7 @@ public sealed record ShowConfettiEffectMessage;
 public sealed partial class WelcomeViewModelAssistantStep(WelcomeViewModel viewModel, IServiceProvider serviceProvider)
     : WelcomeViewModelStep(viewModel)
 {
-    private readonly IKernelMixinFactory _kernelMixinFactory = serviceProvider.GetRequiredService<IKernelMixinFactory>();
+    private readonly IModelSessionFactory _modelSessionFactory = serviceProvider.GetRequiredService<IModelSessionFactory>();
     private readonly ILogger<WelcomeViewModelAssistantStep> _logger = serviceProvider.GetRequiredService<ILogger<WelcomeViewModelAssistantStep>>();
 
     [RelayCommand]
@@ -219,17 +218,17 @@ public sealed partial class WelcomeViewModelAssistantStep(WelcomeViewModel viewM
         return ExecuteBusyTaskAsync(
             async cancellationToken =>
             {
-                KernelMixin? kernelMixin = null;
+                ModelSession? session = null;
                 try
                 {
-                    kernelMixin = _kernelMixinFactory.Create(ViewModel.Assistant);
-                    await kernelMixin.CheckConnectivityAsync(cancellationToken);
+                    session = _modelSessionFactory.Create(ViewModel.Assistant);
+                    await session.CheckConnectivityAsync(cancellationToken);
                     StrongReferenceMessenger.Default.Send(new ShowConfettiEffectMessage());
                     ViewModel.IsConnectivityChecked = true;
                 }
                 catch (Exception ex)
                 {
-                    ex = ChatExceptionNormalizer.Handle(ex, kernelMixin);
+                    ex = ChatExceptionNormalizer.Handle(ex, session);
                     _logger.LogError(ex, "Failed to validate assistant connectivity");
                     ToastHost
                         .CreateToast(LocaleKey.WelcomeViewModel_ValidateApiKey_FailedToast_Title.I18N())
@@ -239,7 +238,7 @@ public sealed partial class WelcomeViewModelAssistantStep(WelcomeViewModel viewM
                 }
                 finally
                 {
-                    kernelMixin?.Dispose();
+                    session?.Dispose();
                 }
             },
             cancellationToken: CancellationTokenSource.Token);

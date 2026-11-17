@@ -9,7 +9,7 @@ using Everywhere.Prompting.Documents;
 using Everywhere.Web;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -46,7 +46,8 @@ public sealed class WebPlugin : BuiltInChatPlugin
                 new BuiltInChatFunction(
                     SearchAsync,
                     ChatFunctionPermissions.NetworkAccess,
-                    onPermissionConsent: _ => true)); // always allow
+                    supportsParallelInvoke: true,
+                    onPermissionConsent: _ => true));
             list.Add(
                 new BuiltInChatFunction(
                     ExtractAsync,
@@ -79,14 +80,14 @@ public sealed class WebPlugin : BuiltInChatPlugin
     /// This method is marked as "unsafe." The usage of JavaScriptEncoder.UnsafeRelaxedJsonEscaping may introduce security risks.
     /// Only use this method if you are aware of the potential risks and have validated the input to prevent security vulnerabilities.
     /// </remarks>
-    [KernelFunction("web_search")]
+    [ChatFunction("web_search")]
     [Description(
         "Searches the public web for real-time information. Returns a JSON array of web pages. " +
         "STRICTLY confined to internet content; DO NOT use to search local files or personal data. " +
         "Results may be inaccurate.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebSearch_Header, LocaleKey.BuiltInChatPlugin_Web_WebSearch_Description)]
     private async Task<PromptNode> SearchAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("Search query")] string query,
         [Description("Number of results. Default is 10.")] int count = 10,
         CancellationToken cancellationToken = default)
@@ -118,11 +119,11 @@ public sealed class WebPlugin : BuiltInChatPlugin
                 .ToArray());
     }
 
-    [KernelFunction("web_extract")]
+    [ChatFunction("web_extract")]
     [Description("Fetch and extract the main content from a web page. This tool is useful for summarizing or analyzing the content of a webpage.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebExtract_Header, LocaleKey.BuiltInChatPlugin_Web_WebExtract_Description)]
     private async Task<string> ExtractAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IChatPluginUserInterface userInterface,
         [Description("An array of URLs to fetch content from. Maximum 10.")] IReadOnlyList<string> urls,
         CancellationToken cancellationToken = default)
     {

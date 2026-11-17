@@ -4,7 +4,6 @@ using System.Net;
 using System.Text.Json;
 using Anthropic.Exceptions;
 using Everywhere.Common;
-using Microsoft.SemanticKernel;
 using OllamaSharp.Models.Exceptions;
 
 namespace Everywhere.AI;
@@ -23,39 +22,37 @@ public static class ChatExceptionEvidenceExtractor
         foreach (var exception in NetworkExceptionEvidence.EnumerateCauses(evidence.OriginalException))
         {
             ExtractHeaders(evidence, name => exception.Data["Everywhere.Http." + name]?.ToString());
+
             if (exception.Data["Everywhere.Http.StatusCode"] is int status and >= 100 and <= 599)
+            {
                 evidence.StatusCode ??= (HttpStatusCode)status;
+            }
 
             if (exception.Data["Everywhere.Http.ResponseBody"] is string body)
+            {
                 ExtractResponseBody(evidence, body);
+            }
 
             network.Include(exception);
             evidence.StatusCode ??= network.StatusCode;
 
-            switch (exception)
+            if (exception is OperationCanceledException)
             {
-                case HttpOperationException operation:
-                    evidence.StatusCode ??= operation.StatusCode;
-                    ExtractResponseBody(evidence, operation.ResponseContent);
-                    break;
-                case OperationCanceledException:
-                    if (context.TimeoutPhase != ChatRequestTimeoutPhase.None)
-                    {
-                        evidence.TimeoutPhase = context.TimeoutPhase;
-                    }
-                    else if (evidence.OriginalException is OperationCanceledException && context.CallerCancellationToken.IsCancellationRequested)
-                    {
-                        evidence.IsCallerCancellation = true;
-                    }
-                    break;
+                if (context.TimeoutPhase != ChatRequestTimeoutPhase.None)
+                {
+                    evidence.TimeoutPhase = context.TimeoutPhase;
+                }
+                else if (evidence.OriginalException is OperationCanceledException && context.CallerCancellationToken.IsCancellationRequested)
+                {
+                    evidence.IsCallerCancellation = true;
+                }
             }
         }
 
         evidence.Network = network;
         if (network.HasTimeoutCause)
         {
-            evidence.TimeoutPhase = context.TimeoutPhase == ChatRequestTimeoutPhase.None ?
-                ChatRequestTimeoutPhase.Unknown : context.TimeoutPhase;
+            evidence.TimeoutPhase = context.TimeoutPhase == ChatRequestTimeoutPhase.None ? ChatRequestTimeoutPhase.Unknown : context.TimeoutPhase;
         }
 
         // An SDK deadline with an inner TimeoutException is not ordinary caller cancellation.

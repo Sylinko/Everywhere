@@ -88,7 +88,7 @@ public class ToolPatternRulesets : Dictionary<string, ToolFunctionPatternRuleset
         {
             foreach (var (functionPattern, enabled) in OrderBySpecificity(functions))
             {
-                if (IsMatch(functionPattern, function.KernelFunction.Name))
+                if (IsMatch(functionPattern, function.Name))
                 {
                     result = enabled;
                 }

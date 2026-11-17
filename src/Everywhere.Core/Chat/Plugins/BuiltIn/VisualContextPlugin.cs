@@ -13,7 +13,7 @@ using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Statistics;
 using Everywhere.Storage;
 using Lucide.Avalonia;
-using Microsoft.SemanticKernel;
+using Everywhere.Harness;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -70,14 +70,14 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         });
     }
 
-    [KernelFunction("list_windows")]
+    [ChatFunction("list_windows")]
     [Description("List current top-level windows and return integer visual element IDs for later query, capture, or action calls.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_ListWindows_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_ListWindows_Description)]
     private async Task<VisualTextFunctionResult> ListWindowsAsync(
-        [FromKernelServices] ChatContext chatContext,
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         CancellationToken cancellationToken = default)
     {
         var (id, response) = await _visualService.ListWindowsAsync(chatContext.VisualState, cancellationToken: cancellationToken);
@@ -101,13 +101,13 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         return new VisualTextFunctionResult(visualContextId, response.Content);
     }
 
-    [KernelFunction("capture_visual_element")]
+    [ChatFunction("capture_visual_element")]
     [Description("Captures a screenshot of the specified visual element by Id. Use when XML content is inaccessible or element is image-like.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description)]
     private async Task<VisualAttachmentFunctionResult?> CaptureVisualElementAsync(
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] ChatContext chatContext,
         [Description("Visual element ID in visual-context")] int target,
         CancellationToken cancellationToken = default)
     {
@@ -142,7 +142,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                 blob.MimeType));
     }
 
-    [KernelFunction("query_visual")]
+    [ChatFunction("query_visual")]
     [Description(
         """
         Read a bounded, best-effort region of the live visual tree. Use this like read_file for on-screen UI, then follow returned integer IDs with narrower queries.
@@ -156,9 +156,9 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Description)]
     private async Task<VisualTextFunctionResult> QueryVisual(
-        [FromKernelServices] ChatContext chatContext,
-        [FromKernelServices] Assistant assistant,
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromChatServices] ChatContext chatContext,
+        [FromChatServices] Assistant assistant,
+        [FromChatServices] IChatPluginDisplaySink displaySink,
         [Description("Visual element ID in visual-context")] int target,
         [Description("Comma-separated traversal directions: all, parent, child, previous, next, siblings, none")]
         string directions = "all",
@@ -204,7 +204,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         return new VisualTextFunctionResult(visualContextId, result.Content);
     }
 
-    [KernelFunction("read_visual_text")]
+    [ChatFunction("read_visual_text")]
     [Description(
         """
         Read one bounded page of textual content from an integer visual element ID returned by visual context. Use this when textLength shows an incomplete preview or the preview is insufficient; use query_visual for structure and navigation.
@@ -216,7 +216,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_VisualContext_ReadVisualText_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_ReadVisualText_Description)]
     private async Task<VisualTextFunctionResult> ReadVisualTextAsync(
-        [FromKernelServices] ChatContext chatContext,
+        [FromChatServices] ChatContext chatContext,
         [Description("Integer visual element ID returned by visual context")] int target,
         [Description(
             "UTF-16 offset; pass the preceding next value, use zero for the first page, or use a negative value to read from the current end")]
@@ -238,15 +238,15 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     }
 
     // TODO: maybe we need Click/Scroll as raw mouse actions, rename current Click to Invoke with parameter so that Sliders etc. may be supported. Maybe SetText can be also be substituted with Invoke. A more detailed prompt should be also done
-    [KernelFunction("execute_visual_actions")]
+    [ChatFunction("execute_visual_actions")]
     [Description(
         "Executes UI automation actions as a queue. Supports clicking elements, setting text, sending shortcuts, and waiting.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description)]
     private async Task<VisualTextFunctionResult> ExecuteVisualActionsAsync(
-        [FromKernelServices] ChatContext chatContext,
-        [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] ChatContext chatContext,
+        [FromChatServices] IChatPluginUserInterface userInterface,
         [Description("Since user can only see abstract actions and target IDs, concisely summarize what are you doing")]
         string description,
         IReadOnlyList<VisualElementAction> actions,
