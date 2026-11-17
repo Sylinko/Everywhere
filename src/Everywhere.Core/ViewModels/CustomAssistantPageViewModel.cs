@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Lucide.Avalonia;
 using Serilog;
 using ShadUI;

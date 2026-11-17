@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.Cloud;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

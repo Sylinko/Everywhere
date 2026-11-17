@@ -1,4 +1,5 @@
 using Everywhere.Common;
+using Everywhere.Harness;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;

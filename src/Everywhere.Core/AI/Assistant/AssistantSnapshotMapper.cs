@@ -1,3 +1,4 @@
+using Everywhere.Harness;
 using Riok.Mapperly.Abstractions;
 
 namespace Everywhere.AI;

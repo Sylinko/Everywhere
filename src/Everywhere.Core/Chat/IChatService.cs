@@ -1,4 +1,5 @@
 ﻿using Everywhere.AI;
+using Everywhere.Harness;
 using Everywhere.Statistics;
 
 namespace Everywhere.Chat;

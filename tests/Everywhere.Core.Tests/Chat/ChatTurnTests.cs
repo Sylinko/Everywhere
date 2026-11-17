@@ -1,6 +1,7 @@
 ﻿using Avalonia.Headless.NUnit;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
+using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Serialization;
 using Lucide.Avalonia;

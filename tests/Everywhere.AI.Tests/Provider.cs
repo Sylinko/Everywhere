@@ -2,6 +2,7 @@ using System.ClientModel;
 using System.ClientModel.Primitives;
 using Anthropic;
 using Anthropic.Core;
+using Everywhere.Harness;
 using Everywhere.Harness.Providers.Mistral;
 using Microsoft.Extensions.AI;
 using OllamaSharp;

@@ -5,6 +5,7 @@ using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Common;
+using Everywhere.Harness;
 using Everywhere.Statistics;
 using Microsoft.Extensions.Logging;
 using Meai = Microsoft.Extensions.AI;

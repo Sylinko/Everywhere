@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
+using Everywhere.Harness;
 using Everywhere.Views;
 using Lucide.Avalonia;
 using ShadUI;

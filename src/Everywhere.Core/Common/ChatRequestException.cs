@@ -1,4 +1,5 @@
 using Everywhere.AI;
+using Everywhere.Harness;
 
 namespace Everywhere.Common;
 
