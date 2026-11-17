@@ -1,6 +1,6 @@
 ﻿using Everywhere.Common;
 using Everywhere.Harness;
-using Meai = Microsoft.Extensions.AI;
+using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -10,7 +10,7 @@ partial class ChatService
         ChatContext chatContext,
         GenerationContext generation,
         IReadOnlyList<ChatMessage> messages,
-        Func<IList<Meai.ChatMessage>, Task<T>> request,
+        Func<IList<MEAI.ChatMessage>, Task<T>> request,
         CancellationToken cancellationToken)
     {
         var offloaded = await ChatHistoryBuilder.ReadImageOffloadsAsync(chatContext, generation.GetPath(), cancellationToken);

@@ -55,26 +55,23 @@ public sealed class PromptTemplateParserTests
     }
 
     [Test]
-    public void Analyze_DateTimePlaceholders_ReportFreshnessAndCacheHints()
+    public void Analyze_DatePlaceholder_ReportsMissingDateHintAndRejectsRemovedTimePlaceholder()
     {
-        var withoutDateOrTime = PromptTemplateAnalyzer.Analyze("Custom behavior");
-        var timeWithoutDate = PromptTemplateAnalyzer.Analyze("{Time}\nCustom behavior");
+        var withoutDate = PromptTemplateAnalyzer.Analyze("Custom behavior");
+        var withRemovedTime = PromptTemplateAnalyzer.Analyze("{Time}\nCustom behavior");
         var withDate = PromptTemplateAnalyzer.Analyze("{Date}\nCustom behavior");
 
         Assert.Multiple(() =>
         {
             Assert.That(
-                withoutDateOrTime.Diagnostics.Single(static diagnostic => diagnostic.Code == PromptDiagnosticCode.MissingDate).Severity,
+                withoutDate.Diagnostics.Single(static diagnostic => diagnostic.Code == PromptDiagnosticCode.MissingDate).Severity,
                 Is.EqualTo(PromptDiagnosticSeverity.Info));
             Assert.That(
-                timeWithoutDate.Diagnostics.Single(static diagnostic => diagnostic.Code == PromptDiagnosticCode.TimeMayReduceCacheHitRate).Severity,
-                Is.EqualTo(PromptDiagnosticSeverity.Warning));
+                withRemovedTime.Diagnostics.Select(static diagnostic => diagnostic.Code),
+                Does.Contain(PromptDiagnosticCode.UnknownPlaceholder));
             Assert.That(
                 withDate.Diagnostics.Select(static diagnostic => diagnostic.Code),
                 Does.Not.Contain(PromptDiagnosticCode.MissingDate));
-            Assert.That(
-                withDate.Diagnostics.Select(static diagnostic => diagnostic.Code),
-                Does.Not.Contain(PromptDiagnosticCode.TimeMayReduceCacheHitRate));
         });
     }
 

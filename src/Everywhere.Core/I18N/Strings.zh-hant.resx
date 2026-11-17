@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Traditional Chinese (繁體中文) -->
 <root>
     <resheader name="resmimetype">
@@ -3352,9 +3352,6 @@
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
         <value>此提示詞既沒有包含 {DefaultSystemPrompt}，也沒有包含 {SkillsPrompt}，因此助手可能無法正確使用技能。</value>
     </data>
-    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
-        <value>{Time} 精確到秒，可能會降低快取命中率，提高使用成本。如非必要，請使用 {Date}。</value>
-    </data>
     <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
         <value>未知佔位符：{0}。</value>
     </data>
@@ -3396,9 +3393,6 @@
     </data>
     <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
         <value>系統語言</value>
-    </data>
-    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
-        <value>當前時間</value>
     </data>
     <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
         <value>工作目錄</value>

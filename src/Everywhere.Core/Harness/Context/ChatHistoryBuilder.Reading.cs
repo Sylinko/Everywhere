@@ -118,7 +118,8 @@ partial class ChatHistoryBuilder
         }
 
         messages.AddRange(suffix.Skip(startIndex).Select(node => node.Message));
-        return new ChatHistorySelection(messages, startIndex > 0);
+        var windowStartNodeId = startIndex < suffix.Length ? suffix[startIndex].Id : (Guid?)null;
+        return new ChatHistorySelection(messages, startIndex > 0, summaryNode?.Id, windowStartNodeId);
     }
 
     internal static async Task<HashSet<ChatImageOccurrence>> ReadImageOffloadsAsync(
@@ -151,4 +152,9 @@ partial class ChatHistoryBuilder
 /// <summary>
 /// The selected summary, retained user text and raw suffix, plus whether the round limit omitted input.
 /// </summary>
-public sealed record ChatHistorySelection(IReadOnlyList<ChatMessage> Messages, bool WasHistoryTrimmed);
+public sealed record ChatHistorySelection(
+    IReadOnlyList<ChatMessage> Messages,
+    bool WasHistoryTrimmed,
+    Guid? ActiveSummaryNodeId,
+    Guid? WindowStartNodeId
+);

@@ -463,18 +463,21 @@ public class ChatPluginManager : IChatPluginManager
         public ChatPluginScope(List<ChatPluginSnapshot> plugins)
         {
             Plugins = plugins;
-            var count = plugins.Sum(plugin => plugin.FunctionCount);
-            var declarations = new List<AIFunctionDeclaration>(count);
+
+            var count = plugins.AsValueEnumerable().Sum(plugin => plugin.FunctionCount);
             _bindings = new Dictionary<string, ToolBinding>(count, StringComparer.Ordinal);
+            var declarations = new AIFunctionDeclaration[count];
+            var index = 0;
             foreach (var plugin in plugins)
             {
                 foreach (var binding in plugin.Bindings)
                 {
                     _bindings.Add(binding.Declaration.Name, binding);
-                    declarations.Add(binding.Declaration);
+                    declarations[index++] = binding.Declaration;
                 }
             }
 
+            Array.Sort(declarations, static (left, right) => StringComparer.Ordinal.Compare(left.Name, right.Name));
             Declarations = declarations;
         }
 
@@ -490,10 +493,7 @@ public class ChatPluginManager : IChatPluginManager
             }
             similarFunctionNames =
             [
-                .. Process.ExtractTop(
-                        functionName,
-                        _bindings.Keys,
-                        limit: 5)
+                .. Process.ExtractTop(functionName, _bindings.Keys, limit: 5)
                     .Where(r => r.Score >= 60)
                     .Select(r => r.Value),
             ];

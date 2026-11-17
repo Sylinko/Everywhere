@@ -115,7 +115,6 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
     public const string DefaultSystemPromptName = "DefaultSystemPrompt";
     public const string SkillsPromptName = "SkillsPrompt";
     public const string DateName = "Date";
-    public const string TimeName = "Time";
     public const string OSName = "OS";
     public const string SystemLanguageName = "SystemLanguage";
     public const string WorkingDirectoryName = "WorkingDirectory";
@@ -148,7 +147,6 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
             DefaultSystemPromptName => DefaultPrompts.DefaultSystemPrompt,
             SkillsPromptName => context.SkillsPromptResolver?.Invoke() ?? string.Empty,
             DateName => DateTime.Now.ToString("D"),
-            TimeName => DateTime.Now.ToString("F"),
             OSName => Environment.OSVersion.ToString(),
             SystemLanguageName => LocaleManager.CurrentLocale.ToEnglishName(),
             WorkingDirectoryName => context.WorkingDirectoryResolver?.Invoke() ?? RuntimeConstants.WritableFolderPath,
@@ -163,11 +161,8 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
         var hasDefaultSystemPrompt = Contains(context.Placeholders, DefaultSystemPromptName);
         var hasSkillsPrompt = Contains(context.Placeholders, SkillsPromptName);
         var hasDate = ContainsEffective(context.Placeholders, hasDefaultSystemPrompt, DateName);
-        var timeToken = First(context.Placeholders, TimeName);
-        var hasTime = timeToken is not null ||
-            ContainsEffective(context.Placeholders, hasDefaultSystemPrompt, TimeName);
 
-        if (!hasDate && !hasTime)
+        if (!hasDate)
         {
             diagnostics.Add(
                 new PromptDiagnostic(
@@ -175,17 +170,6 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
                     PromptDiagnosticSeverity.Info,
                     new DynamicLocaleKey(LocaleKey.PromptDiagnostic_MissingDate),
                     ActionId: "insert-date"));
-        }
-
-        if (!hasDate && hasTime)
-        {
-            diagnostics.Add(
-                new PromptDiagnostic(
-                    PromptDiagnosticCode.TimeMayReduceCacheHitRate,
-                    PromptDiagnosticSeverity.Warning,
-                    new DynamicLocaleKey(LocaleKey.PromptDiagnostic_TimeMayReduceCacheHitRate),
-                    timeToken?.Span,
-                    "replace-time-with-date"));
         }
 
         if (hasDefaultSystemPrompt || hasSkillsPrompt)
@@ -211,19 +195,6 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
         Contains(placeholders, name) ||
         hasDefaultSystemPrompt && Contains(DefaultSystemPromptPlaceholders, name);
 
-    private static PromptPlaceholderToken? First(IReadOnlyList<PromptPlaceholderToken> placeholders, string name)
-    {
-        foreach (var placeholder in placeholders)
-        {
-            if (StringComparer.Ordinal.Equals(placeholder.Name, name))
-            {
-                return placeholder;
-            }
-        }
-
-        return null;
-    }
-
     private static PlaceholderDescriptor CreateDescriptor(SystemPromptPlaceholder placeholder) =>
         placeholder switch
         {
@@ -233,8 +204,6 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
                 new PlaceholderDescriptor(SkillsPromptName, LocaleKey.PromptEditor_Placeholder_SkillsPrompt_Description),
             SystemPromptPlaceholder.Date =>
                 new PlaceholderDescriptor(DateName, LocaleKey.PromptEditor_Placeholder_Date_Description),
-            SystemPromptPlaceholder.Time =>
-                new PlaceholderDescriptor(TimeName, LocaleKey.PromptEditor_Placeholder_Time_Description),
             SystemPromptPlaceholder.OS =>
                 new PlaceholderDescriptor(OSName, LocaleKey.PromptEditor_Placeholder_OS_Description),
             SystemPromptPlaceholder.SystemLanguage =>
@@ -251,7 +220,6 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
         DefaultSystemPrompt,
         SkillsPrompt,
         Date,
-        Time,
         OS,
         SystemLanguage,
         WorkingDirectory

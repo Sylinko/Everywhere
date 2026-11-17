@@ -1,10 +1,9 @@
-﻿using Everywhere.AI;
-using Everywhere.AI.Prompts;
+﻿using Everywhere.AI.Prompts;
 using Everywhere.Common;
 using Everywhere.Harness;
 using Everywhere.Statistics;
 using Microsoft.Extensions.Logging;
-using Meai = Microsoft.Extensions.AI;
+using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
 
@@ -70,6 +69,8 @@ partial class ChatService
                         chatContext,
                         generationContext,
                         messages,
+                        selection.ActiveSummaryNodeId,
+                        selection.WindowStartNodeId,
                         compressionNode,
                         cancellationToken);
                     break;
@@ -132,7 +133,7 @@ partial class ChatService
             var startIndex = compressionIndex + 1;
             var firstUserIndex = messages.FindIndex(
                 startIndex,
-                static message => message.Role == Meai.ChatRole.User && message is not ContextCompressionChatMessage);
+                static message => message.Role == MEAI.ChatRole.User && message is not ContextCompressionChatMessage);
             if (firstUserIndex < 0)
             {
                 if (messages.Count - startIndex > 1)
@@ -155,7 +156,7 @@ partial class ChatService
 
             var nextUserIndex = messages.FindIndex(
                 firstUserIndex + 1,
-                static message => message.Role == Meai.ChatRole.User && message is not ContextCompressionChatMessage);
+                static message => message.Role == MEAI.ChatRole.User && message is not ContextCompressionChatMessage);
             if (nextUserIndex < 0)
             {
                 if (compressionIndex < 0) return false;
@@ -173,6 +174,8 @@ partial class ChatService
         ChatContext chatContext,
         GenerationContext generationContext,
         IReadOnlyList<ChatMessage> messages,
+        Guid? activeSummaryNodeId,
+        Guid? windowStartNodeId,
         ChatMessageNode compressionNode,
         CancellationToken cancellationToken)
     {
@@ -200,7 +203,7 @@ partial class ChatService
 
         return summary;
 
-        Task<AssembledResponse> RequestSummaryAsync(IList<Meai.ChatMessage> history)
+        async Task<AssembledResponse> RequestSummaryAsync(IList<MEAI.ChatMessage> history)
         {
             if (history.Count <= 1)
             {
@@ -209,17 +212,69 @@ partial class ChatService
                     LocaleKey.ContextCompression_Error_NoHistory);
             }
 
-            history.Add(new Meai.ChatMessage(Meai.ChatRole.User, DefaultPrompts.ContextCompressionPrompt));
-            return ReadResponseAsync(
+            var configuration = generationContext.Session.Configuration;
+            var projected = await chatContext.DispatchAsync(() => chatContext.PrefixState.ProjectReadOnly(
+                history,
+                new ContextPrefixIdentity(
+                    generationContext.Session.Dialect,
+                    configuration.ModelId,
+                    configuration.SupportsToolCall,
+                    activeSummaryNodeId,
+                    windowStartNodeId),
+                DateTimeOffset.UtcNow));
+
+            var requestHistory = projected is not null
+                ? [.. projected.History]
+                : new List<MEAI.ChatMessage>(history);
+            requestHistory.Add(new MEAI.ChatMessage(MEAI.ChatRole.User, DefaultPrompts.ContextCompressionPrompt));
+
+            var options = generationContext.Session.CreateChatOptions(
+                tools: projected?.Tools,
+                toolMode: MEAI.ChatToolMode.None);
+
+            var assembled = await ReadResponseAsync(
                 generationContext.Session,
-                [.. history],
-                generationContext.Session.CreateChatOptions(toolMode: Meai.ChatToolMode.None),
+                requestHistory,
+                options,
                 chatData.Metadata.Id,
                 compressionNode.Id,
                 StatisticsModelInvocationPurpose.ContextCompression,
                 chatContext,
                 compressionNode.Message,
                 cancellationToken);
+            if (assembled.FunctionCalls.Count == 0)
+            {
+                return assembled;
+            }
+
+            // Allow one corrective retry per unexpected tool-call batch while keeping the cached prefix intact.
+            requestHistory.Add(assembled.Message);
+            requestHistory.Add(BuildToolCallRejectionMessage(assembled.FunctionCalls));
+
+            return await ReadResponseAsync(
+                generationContext.Session,
+                requestHistory,
+                options,
+                chatData.Metadata.Id,
+                compressionNode.Id,
+                StatisticsModelInvocationPurpose.ContextCompression,
+                chatContext,
+                compressionNode.Message,
+                cancellationToken);
+        }
+
+        static MEAI.ChatMessage BuildToolCallRejectionMessage(IReadOnlyList<MEAI.FunctionCallContent> functionCalls)
+        {
+            var contents = new List<MEAI.AIContent>(functionCalls.Count);
+            foreach (var call in functionCalls)
+            {
+                contents.Add(
+                    new MEAI.FunctionResultContent(
+                        call.CallId,
+                        "Error: Tool calls are disabled during context compression. Do not call any tools; reply only with the checkpoint summary."));
+            }
+
+            return new MEAI.ChatMessage(MEAI.ChatRole.Tool, contents);
         }
     }
 

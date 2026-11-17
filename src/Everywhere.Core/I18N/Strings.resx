@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- English -->
 <root>
     <resheader name="resmimetype">
@@ -3352,9 +3352,6 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
         <value>This prompt does not include {DefaultSystemPrompt} or {SkillsPrompt}, so the assistant may not be able to use skills correctly.</value>
     </data>
-    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
-        <value>{Time} includes second-level precision and may reduce cache hit rate. Use {Date} instead unless exact time is needed.</value>
-    </data>
     <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
         <value>Unknown placeholder: {0}.</value>
     </data>
@@ -3396,9 +3393,6 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
         <value>System language</value>
-    </data>
-    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
-        <value>Current time</value>
     </data>
     <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
         <value>Working directory</value>

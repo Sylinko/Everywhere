@@ -65,12 +65,17 @@ public abstract partial class ChatContext(
     /// <summary>
     /// Gets the latest measured context usage for this conversation.
     /// </summary>
-    public Harness.ContextUsageState ContextUsage { get; } = new();
+    public ContextUsageState ContextUsage { get; } = new();
 
     /// <summary>
     /// Gets this conversation's compaction state.
     /// </summary>
-    public Harness.ContextCompactionState ContextCompaction { get; } = new();
+    public ContextCompactionState ContextCompaction { get; } = new();
+
+    /// <summary>
+    /// Gets this conversation's in-memory prompt prefix state used to keep provider KV caches stable across turns.
+    /// </summary>
+    public ContextPrefixState PrefixState { get; } = new();
 
     /// <summary>
     /// Gets the current generation, whose lifetime is shorter than the context's lifetime.
