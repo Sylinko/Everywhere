@@ -27,6 +27,7 @@
   <Project Path="src/Everywhere.ProcessIsolation.SourceGenerator/Everywhere.ProcessIsolation.SourceGenerator.csproj" />
   <Project Path="src/Everywhere.Prompting/Everywhere.Prompting.csproj" />
   <Project Path="src/Everywhere.Terminal/Everywhere.Terminal.csproj" />
+  <Project Path="src/Everywhere.Versioning/Everywhere.Versioning.csproj" />
   <Project Path="src/Everywhere.Watchdog/Everywhere.Watchdog.csproj" />
   <Project Path="src/Everywhere.Windows/Everywhere.Windows.csproj" />
   <Project Path="src/Everywhere.Windows.Interop/Everywhere.Windows.Interop.csproj" />
