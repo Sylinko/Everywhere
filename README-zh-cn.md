@@ -124,7 +124,7 @@
 
 ## 参与贡献
 
-欢迎提交问题反馈、翻译校对、文档改进和 Pull Request。开发前请阅读[贡献指南](CONTRIBUTING.md)与[本地构建指南](docs/build.md)。
+欢迎提交问题反馈、翻译校对、文档改进和 Pull Request。开发前请阅读[贡献指南](.github/CONTRIBUTING.md)与[本地构建指南](docs/build.md)。
 
 [![.NET 11][.NET 11]][.NET-url] [![Avalonia][Avalonia]][Avalonia-url]
 
@@ -159,11 +159,11 @@
 <details>
 <summary>星标历史</summary>
 
-<a href="https://star-history.dera.page/#Sylinko/Everywhere&type=date">
+<a href="https://www.star-history.com/?type=date&repos=Sylinko%2FEverywhere">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&legend=top-left" />
  </picture>
 </a>
 

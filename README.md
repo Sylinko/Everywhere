@@ -201,7 +201,7 @@
 
 ## 🤝 Contributing
 
-We love open source and welcome your brilliant ideas and code contributions (Pull Requests)! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for code styling guidelines and local compilation instructions.
+We love open source and welcome your brilliant ideas and code contributions (Pull Requests)! Please see [CONTRIBUTING.md](.github/CONTRIBUTING.md) for code styling guidelines and local compilation instructions.
 
 Check our [Build Guide](docs/build.md) for detailed instructions on how to set up the development environment and build the project locally.
 
@@ -232,11 +232,11 @@ Thanks [pasical](https://github.com/pasical) for the banner kawaii logo design.
 
 <br/>
 
-<a href="https://star-history.dera.page/#Sylinko/Everywhere&type=date">
+<a href="https://www.star-history.com/?type=date&repos=Sylinko%2FEverywhere">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&legend=top-left" />
  </picture>
 </a>
 
