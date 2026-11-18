@@ -7,8 +7,9 @@ param(
     [ValidateSet('Auto', 'Existing', 'Wslc', 'Docker')][string]$Runtime = 'Auto',
     [string]$MockServerUrl = $env:EVERYWHERE_MOCKSERVER_URL,
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
-    [string]$Filter = 'TestCategory=LlmIntegration',
-    [string]$ResultsDirectory
+    [string]$Filter,
+    [string]$ResultsDirectory,
+    [string]$FixturesPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -21,6 +22,17 @@ $taskExecutable = $null
 $hasOwnedContainer = $false
 $taskPreviousUrl = $env:EVERYWHERE_MOCKSERVER_URL
 $taskPreviousRequired = $env:EVERYWHERE_REQUIRE_MOCKSERVER
+$taskPreviousFixtures = $env:EVERYWHERE_LLM_FIXTURES
+if ($FixturesPath) {
+    $FixturesPath = (Resolve-Path -LiteralPath $FixturesPath -ErrorAction Stop).Path
+    $expectedRevision = (Get-Content -LiteralPath (Join-Path $taskRoot 'tests/Everywhere.AI.Tests/Fixtures/captured.rev') -Raw).Trim()
+    $revision = & git -C $FixturesPath rev-parse HEAD
+    if ($LASTEXITCODE -ne 0 -or $revision -ne $expectedRevision) {
+        throw "LLM fixtures at '$FixturesPath' must be checked out at $expectedRevision (found: $revision)."
+    }
+    if (-not $Filter) { $Filter = 'TestCategory=LlmCaptured' }
+}
+elseif (-not $Filter) { $Filter = 'TestCategory=LlmIntegration' }
 if (-not $ResultsDirectory) { $ResultsDirectory = Join-Path $taskRoot "artifacts/llm-tests/$taskRunId" }
 $ResultsDirectory = [IO.Path]::GetFullPath($ResultsDirectory)
 $taskResultName = "llm-$taskRunId.trx"
@@ -67,6 +79,7 @@ try {
 
     $env:EVERYWHERE_MOCKSERVER_URL = $MockServerUrl
     $env:EVERYWHERE_REQUIRE_MOCKSERVER = '1'
+    $env:EVERYWHERE_LLM_FIXTURES = $FixturesPath
     Write-Host "Running SDK integration tests against $MockServerUrl."
     & dotnet test (Join-Path $taskRoot 'tests/Everywhere.AI.Tests/Everywhere.AI.Tests.csproj') `
         --configuration $Configuration --filter $Filter --logger "trx;LogFileName=$taskResultName" --results-directory $ResultsDirectory --nologo -p:ManagePackageVersionsCentrally=true `
@@ -91,6 +104,7 @@ catch {
 finally {
     $env:EVERYWHERE_MOCKSERVER_URL = $taskPreviousUrl
     $env:EVERYWHERE_REQUIRE_MOCKSERVER = $taskPreviousRequired
+    $env:EVERYWHERE_LLM_FIXTURES = $taskPreviousFixtures
     if ($hasOwnedContainer) {
         & $taskExecutable stop $taskContainer 2>&1 | Out-Host
         & $taskExecutable rm $taskContainer 2>&1 | Out-Host

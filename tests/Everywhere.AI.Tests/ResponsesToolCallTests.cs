@@ -76,8 +76,8 @@ public sealed class ResponsesToolCallTests
 
         var requests = await server.RequestsAsync();
         Assert.That(requests, Has.Length.EqualTo(2));
-        using var request = ReadRequestBody(requests[1]);
-        var input = request.RootElement.GetProperty("input").EnumerateArray().ToArray();
+        var request = MockServerSession.ReadRequestBody(requests[1]);
+        var input = request.GetProperty("input").EnumerateArray().ToArray();
         var wireCalls = input.Where(item => item.GetProperty("type").GetString() == "function_call").ToArray();
         var wireResults = input.Where(item => item.GetProperty("type").GetString() == "function_call_output").ToArray();
         Assert.That(wireCalls, Has.Length.EqualTo(expectedCount));
@@ -88,7 +88,7 @@ public sealed class ResponsesToolCallTests
             Assert.That(wireResults[index].GetProperty("call_id").GetString(), Is.EqualTo(calls[index].CallId));
             Assert.That(wireResults[index].GetProperty("output").GetString(), Is.EqualTo($"result-{index}"));
         }
-        Assert.That(request.RootElement.TryGetProperty("previous_response_id", out _), Is.False);
+        Assert.That(request.TryGetProperty("previous_response_id", out _), Is.False);
         return calls;
     }
 
@@ -125,13 +125,5 @@ public sealed class ResponsesToolCallTests
             else item.Remove("call_id");
             if (arguments is not null && item["status"]?.GetValue<string>() == "completed") item["arguments"] = arguments;
         }
-    }
-
-    private static JsonDocument ReadRequestBody(JsonElement request)
-    {
-        var body = request.GetProperty("body");
-        var json = body.ValueKind == JsonValueKind.String ? body.GetString() :
-            body.TryGetProperty("json", out var jsonBody) ? jsonBody.GetRawText() : body.GetProperty("string").GetString();
-        return JsonDocument.Parse(json ?? throw new InvalidDataException("Missing recorded request body."));
     }
 }

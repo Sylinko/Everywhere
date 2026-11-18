@@ -4,7 +4,6 @@ using System.Security.Authentication;
 using System.Text.Json;
 using Everywhere.Common;
 using Everywhere.Harness;
-using Microsoft.Extensions.Logging.Abstractions;
 using OllamaSharp.Models.Exceptions;
 
 namespace Everywhere.AI.Tests;
@@ -288,15 +287,8 @@ public sealed class ExceptionClassificationTests
 
     private static ModelSession CreateOfficialSession()
     {
-        var method = typeof(ModelSessionFactory).GetMethod("EnrichOfficialExceptionEvidence", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-            ?? throw new MissingMethodException("Official evidence adapter is missing.");
-        var enrich = method.CreateDelegate<Action<ChatExceptionEvidence>>();
-        var connection = new ModelConnection(ModelProviderSchema.OpenAI, "https://test.invalid/v1", "test-key", new HttpClient(), enrich);
-        return new OpenAIModelSession(
-            new AdvancedAssistantConfiguration { Schema = ModelProviderSchema.OpenAI, ModelId = "test-model" },
-            new OpenAIOptions(),
-            connection,
-            NullLoggerFactory.Instance);
+        var client = new HttpClient { BaseAddress = new Uri("https://test.invalid/v1") };
+        return ProviderExtensions.CreateOpenAISession(client, "test-model", isOfficial: true);
     }
 
     private static Type ResolveExpectedType(string name) =>

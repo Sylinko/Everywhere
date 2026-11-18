@@ -5,6 +5,7 @@ using Anthropic.Core;
 using Everywhere.Harness;
 using Everywhere.Harness.Providers.Mistral;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging.Abstractions;
 using OllamaSharp;
 using OpenAI;
 using OpenAI.Chat;
@@ -25,6 +26,26 @@ public enum Provider
 
 public static class ProviderExtensions
 {
+    // Exercise the same evidence adapter as official sessions without a deployed gateway or credentials.
+    internal static ModelSession CreateOpenAISession(HttpClient client, string modelId, bool isOfficial)
+    {
+        Action<ChatExceptionEvidence>? enrich = null;
+        if (isOfficial)
+        {
+            var method = typeof(ModelSessionFactory).GetMethod("EnrichOfficialExceptionEvidence", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+                ?? throw new MissingMethodException("Official evidence adapter is missing.");
+            enrich = method.CreateDelegate<Action<ChatExceptionEvidence>>();
+        }
+
+        var endpoint = client.BaseAddress?.AbsoluteUri ?? throw new InvalidOperationException("Missing test endpoint.");
+        var connection = new ModelConnection(ModelProviderSchema.OpenAI, endpoint, isOfficial ? null : "test-key", client, enrich, 1);
+        return new OpenAIModelSession(
+            new AdvancedAssistantConfiguration { Schema = ModelProviderSchema.OpenAI, ModelId = modelId },
+            new OpenAIOptions(),
+            connection,
+            NullLoggerFactory.Instance);
+    }
+
     // Raw SDK tests choose their own budgets. Production sessions disable SDK transient
     // retries because StreamRequestAsync owns the application budget.
     public static IChatClient CreateClient(this Provider provider, HttpClient client, int maxRetries = 0) => provider switch

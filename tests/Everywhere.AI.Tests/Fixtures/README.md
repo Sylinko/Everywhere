@@ -1,5 +1,36 @@
 # SDK wire fixtures
 
+## Replay captured provider traffic
+
+From the repository root, pass an existing [Sylinko/llm-fixtures](https://github.com/Sylinko/llm-fixtures)
+checkout to the normal integration runner:
+
+```powershell
+./tools/test_llm.ps1 -FixturesPath 'D:\Source\Sylinko\everywhere-ai-gateway\test\fixtures\captured'
+```
+
+The runner checks its HEAD against `captured.rev` and runs the `LlmCaptured` category.
+Without this option it runs the existing `LlmIntegration` suite and needs no captures.
+The fixtures are not an Everywhere submodule. CI fetches the pinned revision only for replay;
+relevant PRs run the captures, and manual runs can include them alongside the SDK suite.
+
+The first batch exercises three contracts using the 2026-11-18 captures:
+
+- DeepSeek V4 Pro's HTTP 400 context overflow selects context recovery without a retry.
+  The second case wraps the same body in the official gateway's HTTP 502 error envelope
+  and checks that both statuses survive normalization. The original oversized input was omitted.
+- Gemini Interactions accepts the oversized output-limit probe. Despite its `error-` filename,
+  the SSE ends normally with 2 input tokens and 10 output tokens.
+- Gemini's signed two-turn tool exchange retains the thought signature, call ID, arguments,
+  and tool result on the actual outbound second request, then consumes the captured final answer.
+
+When updating `captured.rev`, review the selected raw exchanges and expectations together.
+Use `response.status`, the relevant response headers and the decoded `response.rawBody`.
+Do not infer errors from filenames, forward cookies or compression headers, or use the
+gateway's `analysis` snapshot as the expected Everywhere output.
+
+## Built-in fixtures
+
 Error files contain arrays of typed `ErrorFixture` entries. `body` contains JSON;
 `rawBody` preserves empty, plain text, HTML, or malformed payloads. The same entry
 can name multiple compatible clients without duplicating payload data. Tests assert

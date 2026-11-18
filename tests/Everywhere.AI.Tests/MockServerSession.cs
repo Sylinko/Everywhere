@@ -118,6 +118,20 @@ public sealed class MockServerSession : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<JsonElement[]>() ?? [];
     }
 
+    internal static JsonElement ReadRequestBody(JsonElement request)
+    {
+        var body = request.GetProperty("body");
+        // MockServer returns JSON directly or wraps it as a typed JSON/string body.
+        if (body.ValueKind == JsonValueKind.Object)
+        {
+            if (body.TryGetProperty("json", out var json)) return json;
+            if (!body.TryGetProperty("string", out var wrapped)) return body;
+            body = wrapped;
+        }
+
+        return JsonElement.Parse(body.GetString() ?? throw new InvalidDataException("Missing recorded request body."));
+    }
+
     public async ValueTask DisposeAsync()
     {
         try
