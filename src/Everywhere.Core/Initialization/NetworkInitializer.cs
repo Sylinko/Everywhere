@@ -146,9 +146,7 @@ public static class NetworkExtension
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             request.Headers.Remove("User-Agent");
-            request.Headers.Add(
-                "User-Agent",
-                $"Chrome/142.0.0.0 Safari/537.36 Everywhere/{App.Version}");
+            request.Headers.Add("User-Agent", $"Chrome/142.0.0.0 Safari/537.36 Everywhere/{App.Version}");
 
             return base.SendAsync(request, cancellationToken);
         }

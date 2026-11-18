@@ -83,17 +83,18 @@ public static class ServiceExtension
     }
 
     /// <summary>
-    /// Force override the User-Agent before send
+    /// Force override the User-Agent and X-Client-Version headers before send
     /// </summary>
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     private sealed class UserAgentHandler : DelegatingHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            var version = $"{App.Version}";
             request.Headers.Remove("User-Agent");
-            request.Headers.Add(
-                "User-Agent",
-                $"Everywhere/{App.Version}");
+            request.Headers.Add("User-Agent", $"Everywhere/{version}");
+            request.Headers.Remove("X-Client-Version");
+            request.Headers.Add("X-Client-Version", version);
 
             return base.SendAsync(request, cancellationToken);
         }
