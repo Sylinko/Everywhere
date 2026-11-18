@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Harness;
@@ -76,7 +77,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     {
         Loader = loader;
         Reference = new ResilientReference<RootChatContext>(this, isActive: false);
-        WorkingDirectory = RuntimeConstants.EnsureWritableDataFolderPath("plugins", data.Metadata.DateCreated.ToString("yyyy-MM-dd"));
+        WorkingDirectory = EnsureWorkingDirectory(data.Metadata);
         SharedUserInterfaceBroker = new ChatPluginUserInterfaceBroker(SetHasNotification);
         BackgroundJobs = new ChatBackgroundJobManager(this);
         foreach (var node in data.GetAllNodes().Where(node => node.IsMessageLoaded))
@@ -89,6 +90,20 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     {
         using var scope = _lifetimeLock.EnterScope();
         return _foregroundOperations.ContainsKey(context);
+    }
+
+    /// <summary>
+    /// Gets or creates this chat's persistent workspace using its UTC creation date and the last 12 hexadecimal ID characters.
+    /// </summary>
+    /// <remarks>
+    /// The path is stable across restarts and time zones. The shortened ID accepts a small collision risk within each date;
+    /// it is a directory name, not a replacement for the full chat ID. Historical shared workspaces are not moved here.
+    /// </remarks>
+    private static string EnsureWorkingDirectory(ChatMetadata metadata)
+    {
+        var date = metadata.DateCreated.UtcDateTime.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+        var directoryName = metadata.Id.ToString("N")[^12..];
+        return RuntimeConstants.EnsureWritableDataFolderPath("workspaces", date, directoryName);
     }
 
     internal bool TryStartOperation(
