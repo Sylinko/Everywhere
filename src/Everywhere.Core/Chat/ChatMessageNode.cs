@@ -83,6 +83,19 @@ public sealed partial class ChatMessageNode : IDisposable
     [IgnoreMember]
     public ChatTurn? Turn { get; internal set; }
 
+    /// <summary>
+    /// Gets whether this node explicitly starts its owning <see cref="Turn"/>.
+    /// Mid-turn steered user inputs and background job notifications belong to the parent turn and return <see langword="false"/>.
+    /// </summary>
+    [IgnoreMember]
+    public bool IsTurnStart => ReferenceEquals(Turn?.UserNode, this);
+
+    /// <summary>
+    /// Gets the turn identity persisted in lightweight topology storage before turn graphs are built.
+    /// </summary>
+    [IgnoreMember]
+    internal Guid? PersistedTurnId { get; }
+
     [IgnoreMember]
     public int ChoiceCount => Children.Count;
 
@@ -130,10 +143,16 @@ public sealed partial class ChatMessageNode : IDisposable
     /// <summary>
     /// Creates a lightweight node from persisted topology without materializing a message body.
     /// </summary>
-    public ChatMessageNode(Guid id, ChatMessageKind messageKind, DateTimeOffset createdAt, DateTimeOffset updatedAt)
+    public ChatMessageNode(
+        Guid id,
+        ChatMessageKind messageKind,
+        Guid? persistedTurnId,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt)
     {
         Id = id;
         MessageKind = messageKind;
+        PersistedTurnId = persistedTurnId;
         CreatedAt = createdAt;
         DateModified = updatedAt;
     }

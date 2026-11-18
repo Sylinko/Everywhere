@@ -81,7 +81,7 @@ public sealed partial class ChatSyncTransferTests
             await new ChatSyncStateStore(db).EnrollAsync("A", 1);
         }
         using var data = new ChatData();
-        data.Add(new UserChatMessage("retained copy", []));
+        data.StartTurn(new UserChatMessage("retained copy", []));
         await storage.SaveDataAsync(data);
         var id = data.Metadata.Id;
         var cleared = new ChatSyncHead(id.ToString("D"), 5, ChatSyncLifecycle.Active, 1, ChatSyncAvailability.Cleared, 0);
@@ -128,9 +128,9 @@ public sealed partial class ChatSyncTransferTests
     {
         var bytes = await File.ReadAllBytesAsync(Path.Combine(TestContext.CurrentContext.TestDirectory, "Fixtures/Harness/v2-signed-tool.msgpack"));
         using var data = new ChatData();
-        data.Add(new UserChatMessage("question", []));
+        data.StartTurn(new UserChatMessage("question", []));
         var assistant = (AssistantChatMessage)MessagePackSerializer.Deserialize<ChatMessage>(bytes);
-        var node = data.Add(assistant);
+        var node = data.Append(assistant);
         assistant.AddSpan(new AssistantChatMessageTextSpan("continued"));
 
         var factory = Substitute.For<IDbContextFactory<ChatV2DbContext>>();

@@ -46,7 +46,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         await manager.FlushPendingSavesAsync();
         Assert.That(syncRequested.Task.IsCompleted, Is.False, "Draft titles must not request independent field synchronization.");
 
-        await root.ApplyAsync(() => root.Data.Add(new UserChatMessage("first message", [])));
+        await root.ApplyAsync(() => root.Data.StartTurn(new UserChatMessage("first message", [])));
         await manager.FlushPendingSavesAsync();
         Assert.That(metadata.IsPersisted, Is.True);
         await syncRequested.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -66,11 +66,11 @@ partial class ChatContextManagerIncrementalLoadingTests
         var storage = new ChatTurnStorage(files.Factory);
         await using var manager = CreateManager(storage);
         var first = manager.CreateChat(isTemporary: true);
-        var user = await first.DispatchAsync(() => first.Data.Add(new UserChatMessage("original", [])));
+        var user = await first.DispatchAsync(() => first.Data.StartTurn(new UserChatMessage("original", [])));
         var branch = await first.DispatchAsync(() => first.Data.CreateBranchOn(user, new UserChatMessage("edited", [])));
         await manager.FlushPendingSavesAsync();
         var second = manager.CreateChat(isTemporary: true);
-        await second.DispatchAsync(() => second.Data.Add(new UserChatMessage("another lookup", [])));
+        await second.DispatchAsync(() => second.Data.StartTurn(new UserChatMessage("another lookup", [])));
         await manager.SetPinnedAsync(first.Data.Metadata, true);
         await manager.FlushPendingSavesAsync();
         await PumpDispatcherAsync();
@@ -120,7 +120,7 @@ partial class ChatContextManagerIncrementalLoadingTests
             var root = manager.CreateChat(isTemporary: true);
             await root.DispatchAsync(() =>
             {
-                root.Data.Add(new UserChatMessage("message", []));
+                root.Data.StartTurn(new UserChatMessage("message", []));
                 root.Data.Metadata.Rename("needle chat");
             });
             await manager.FlushPendingSavesAsync();
@@ -150,7 +150,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         await using var manager = CreateManager(storage);
         var root = manager.CreateChat(isTemporary: true);
         var message = new UserChatMessage("before", []);
-        await root.DispatchAsync(() => root.Data.Add(message));
+        await root.DispatchAsync(() => root.Data.StartTurn(message));
         await manager.FlushPendingSavesAsync();
         storage.ContextSaver = _ => Task.FromException(new IOException("disk unavailable"));
         await Assert.ThrowsAsync<IOException>(() => manager.PersistChatAsync(root.Data.Metadata));

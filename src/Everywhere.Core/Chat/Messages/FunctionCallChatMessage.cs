@@ -1,11 +1,13 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json.Serialization;
 using Everywhere.Chat.Plugins;
+using Everywhere.Harness;
+using Everywhere.I18N;
 using Lucide.Avalonia;
 using MessagePack;
-using Everywhere.Harness;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace Everywhere.Chat;
@@ -118,7 +120,23 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
                 latest = snapshot;
             }
 
-            return latest?.Preview;
+            if (latest?.Preview is { } livePreview)
+            {
+                return livePreview;
+            }
+
+            if (_completedActivityPreview is { } completed)
+            {
+                return completed;
+            }
+
+            if (!IsBusy && _displaySink.Count > 0)
+            {
+                _completedActivityPreview = DeriveFallbackActivityPreview(_displaySink);
+                return _completedActivityPreview;
+            }
+
+            return null;
         }
     }
 
@@ -151,6 +169,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 
     [IgnoreMember] private readonly ChatPluginDisplaySink _displaySink = new();
     [IgnoreMember] private readonly ConcurrentDictionary<string, ActivityPresentationSlot> _activityPresentationSlots = new();
+    [IgnoreMember] private ChatPluginActivityPreview? _completedActivityPreview;
 
     [IgnoreMember] private ImmutableArray<ToolCallRecord> _calls = [];
     [IgnoreMember] private ImmutableArray<ToolResultRecord> _results = [];
@@ -281,9 +300,105 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     internal void UnregisterActivityPresentation(string invocationId, ActivityPresentationSlot slot)
     {
         if (!_activityPresentationSlots.TryGetValue(invocationId, out var registered) || !ReferenceEquals(registered, slot)) return;
+        if (slot.Snapshot.Preview is { } lastPreview)
+        {
+            _completedActivityPreview = lastPreview;
+        }
         if (!_activityPresentationSlots.TryRemove(invocationId, out _)) return;
         NotifyActivityPreviewChanged();
         if (slot.IsWaitingForUserInput) NotifyUserInputWaitChanged();
+    }
+
+    private static ChatPluginActivityPreview? DeriveFallbackActivityPreview(IEnumerable<ChatPluginDisplayBlock> blocks)
+    {
+        foreach (var block in blocks)
+        {
+            switch (block)
+            {
+                case ChatPluginFileReferencesDisplayBlock { References.Count: > 0 } refs:
+                    return new ChatPluginFileReferencesActivityPreview(refs.References);
+                case ChatPluginFileDifferenceDisplayBlock { FilePath.Length: > 0 } diff:
+                    return new ChatPluginFileReferencesActivityPreview([new ChatPluginFileReference(diff.FilePath)]);
+                case ChatPluginTerminalDisplayBlock { Command.Length: > 0 } terminal:
+                    return new ChatPluginCommandActivityPreview(terminal.Command);
+                case ChatPluginUrlsDisplayBlock { Urls.Count: > 0 } urls:
+                {
+                    var uris = new List<Uri>(urls.Urls.Count);
+                    foreach (var url in urls.Urls)
+                    {
+                        if (Uri.TryCreate(url.Url, UriKind.Absolute, out var uri))
+                        {
+                            uris.Add(uri);
+                        }
+                    }
+
+                    if (uris.Count > 0)
+                    {
+                        return new ChatPluginUrlsActivityPreview(uris);
+                    }
+
+                    return new ChatPluginTextActivityPreview(urls.Urls[0].DisplayNameKey);
+                }
+                case ChatPluginSubagentDisplayBlock subagent:
+                    return new ChatPluginSubagentActivityPreview(subagent.ChatData);
+                case ChatPluginCodeBlockDisplayBlock { Code.Length: > 0 } code:
+                {
+                    var line = NormalizeSingleLine(code.Code, 160);
+                    if (line.Length > 0)
+                    {
+                        return new ChatPluginTextActivityPreview(new DirectLocaleKey(line));
+                    }
+                    break;
+                }
+                case ChatPluginContainerDisplayBlock container:
+                {
+                    var nested = DeriveFallbackActivityPreview(container.Children);
+                    if (nested is not null)
+                    {
+                        return nested;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static string NormalizeSingleLine(string text, int maxLength)
+    {
+        var builder = new StringBuilder(Math.Min(text.Length, maxLength));
+        var isPendingSpace = false;
+        foreach (var ch in text)
+        {
+            if (char.IsWhiteSpace(ch))
+            {
+                if (builder.Length > 0)
+                {
+                    isPendingSpace = true;
+                }
+                continue;
+            }
+
+            if (isPendingSpace)
+            {
+                if (builder.Length + 1 >= maxLength)
+                {
+                    break;
+                }
+
+                builder.Append(' ');
+                isPendingSpace = false;
+            }
+
+            builder.Append(ch);
+            if (builder.Length >= maxLength)
+            {
+                break;
+            }
+        }
+
+        return builder.ToString();
     }
 
     private long NextActivityPreviewRevision() => ++_activityPreviewRevision;

@@ -26,6 +26,11 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
 
     internal ChatPluginUserInterfaceBroker SharedUserInterfaceBroker { get; }
 
+    /// <summary>
+    /// Gets the background job manager tracking detached tools owned by this root session.
+    /// </summary>
+    public ChatBackgroundJobManager BackgroundJobs { get; }
+
     // The manager indexes this same reference. Only accepted work promotes it; views and
     // pending saves retain the context through their own ordinary strong references.
     internal ResilientReference<RootChatContext> Reference { get; }
@@ -36,6 +41,15 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         {
             using var scope = _lifetimeLock.EnterScope();
             return _operations.Count != 0;
+        }
+    }
+
+    internal bool CanAcceptWork
+    {
+        get
+        {
+            using var scope = _lifetimeLock.EnterScope();
+            return !(_isStopping || Data.Metadata.IsArchived || _disposeTask is not null || Data.IsDisposed);
         }
     }
 
@@ -64,6 +78,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         Reference = new ResilientReference<RootChatContext>(this, isActive: false);
         WorkingDirectory = RuntimeConstants.EnsureWritableDataFolderPath("plugins", data.Metadata.DateCreated.ToString("yyyy-MM-dd"));
         SharedUserInterfaceBroker = new ChatPluginUserInterfaceBroker(SetHasNotification);
+        BackgroundJobs = new ChatBackgroundJobManager(this);
         foreach (var node in data.GetAllNodes().Where(node => node.IsMessageLoaded))
         {
             AttachNestedContexts(node.Message);
@@ -330,6 +345,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
             }
 
             await DispatchAsync(context.NotifyOperationChanged).ConfigureAwait(false);
+            context.NotifyForegroundOperationCompleted();
         }
     }
 
@@ -345,6 +361,12 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
         {
             operation.RequestCancellation();
         }
+    }
+
+    internal CancellationTokenSource CreateBackgroundCancellationTokenSource()
+    {
+        using var scope = _lifetimeLock.EnterScope();
+        return CancellationTokenSource.CreateLinkedTokenSource(_lifetimeCancellation.Token);
     }
 
     /// <summary>
@@ -484,6 +506,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
             }
 
             _children.Clear();
+            BackgroundJobs.Dispose();
             SharedUserInterfaceBroker.Dispose();
             Data.Dispose();
             ReleaseResources();

@@ -17,7 +17,7 @@ public sealed class ChatTextSearchViewModelTests
         await using var context = new RootChatContext(new ChatData(), null);
         var assistant = new AssistantChatMessage();
         assistant.AddSpan(new AssistantChatMessageTextSpan("Hel**lo**"));
-        context.Data.Add(assistant);
+        context.Data.Append(assistant);
         var manager = CreateManager(context);
         using var viewModel = new ChatTextSearchViewModel(manager) { Query = "Hello" };
 
@@ -36,7 +36,7 @@ public sealed class ChatTextSearchViewModelTests
     public async Task QueryChange_WhileBackgroundMatchIsPending_DoesNotExposePreviousNavigation()
     {
         await using var context = new RootChatContext(new ChatData(), null);
-        context.Data.Add(new UserChatMessage("alpha beta", []));
+        context.Data.StartTurn(new UserChatMessage("alpha beta", []));
         var manager = CreateManager(context);
         using var viewModel = new ChatTextSearchViewModel(manager) { Query = "alpha" };
         viewModel.OpenSearchCommand.Execute(null);
@@ -64,7 +64,7 @@ public sealed class ChatTextSearchViewModelTests
         var assistant = new AssistantChatMessage();
         var span = new AssistantChatMessageTextSpan("offscreen text");
         assistant.AddSpan(span);
-        context.Data.Add(assistant);
+        context.Data.Append(assistant);
         await context.Presentation.PrepareInitialWindowAsync();
         var row = context.Presentation.Rows.OfType<AssistantTextOutputPresentationRow>().Single();
         var manager = CreateManager(context);
@@ -96,11 +96,11 @@ public sealed class ChatTextSearchViewModelTests
         ChatMessageNode? earliestNode = null;
         for (var index = 0; index < ChatPresentation.TurnBatchSize + 3; index++)
         {
-            context.Data.Add(new UserChatMessage(index == 0 ? "needle in old history" : $"Question {index}", []));
+            context.Data.StartTurn(new UserChatMessage(index == 0 ? "needle in old history" : $"Question {index}", []));
             earliestNode ??= context.Data.SelectedNodes[^1];
             var assistant = new AssistantChatMessage { IsBusy = false, FinishedAt = DateTimeOffset.UtcNow };
             assistant.AddSpan(new AssistantChatMessageTextSpan($"Answer {index}") { FinishedAt = DateTimeOffset.UtcNow });
-            context.Data.Add(assistant);
+            context.Data.Append(assistant);
         }
 
         await context.Presentation.PrepareInitialWindowAsync();
@@ -126,7 +126,7 @@ public sealed class ChatTextSearchViewModelTests
     {
         await using var context = new RootChatContext(new ChatData(), null);
         var assistant = new AssistantChatMessage { IsBusy = true };
-        context.Data.Add(assistant);
+        context.Data.Append(assistant);
         var manager = CreateManager(context);
         using var viewModel = new ChatTextSearchViewModel(manager) { Query = "new output" };
         viewModel.OpenSearchCommand.Execute(null);
@@ -150,7 +150,7 @@ public sealed class ChatTextSearchViewModelTests
     public async Task NextResult_WhenSelectingMatch_RequestsNavigationBeforePublishingChangedMatch(string text, int expectedIndex)
     {
         await using var context = new RootChatContext(new ChatData(), null);
-        context.Data.Add(new UserChatMessage(text, []));
+        context.Data.StartTurn(new UserChatMessage(text, []));
         var manager = CreateManager(context);
         using var viewModel = new ChatTextSearchViewModel(manager) { Query = "needle" };
         viewModel.OpenSearchCommand.Execute(null);
@@ -177,7 +177,7 @@ public sealed class ChatTextSearchViewModelTests
     public async Task Search_WhenQueryStarts_RequestsNavigationBeforeResultsAndNotAgainOnPublication()
     {
         await using var context = new RootChatContext(new ChatData(), null);
-        context.Data.Add(new UserChatMessage("alpha beta", []));
+        context.Data.StartTurn(new UserChatMessage("alpha beta", []));
         using var viewModel = new ChatTextSearchViewModel(CreateManager(context)) { Query = "alpha" };
         var navigationRequests = 0;
         viewModel.NavigationRequested += (_, _) => navigationRequests++;
@@ -202,7 +202,7 @@ public sealed class ChatTextSearchViewModelTests
         var assistant = new AssistantChatMessage();
         var span = new AssistantChatMessageTextSpan("needle");
         assistant.AddSpan(span);
-        context.Data.Add(assistant);
+        context.Data.Append(assistant);
         using var viewModel = new ChatTextSearchViewModel(CreateManager(context)) { Query = "needle" };
         viewModel.OpenSearchCommand.Execute(null);
         await WaitForSearchAsync(viewModel);
@@ -233,7 +233,7 @@ public sealed class ChatTextSearchViewModelTests
     public async Task Search_WhenSyncReplacesUserMessage_ReadsCurrentBodyFromTheSameNode()
     {
         await using var context = new RootChatContext(new ChatData(), null);
-        var node = context.Data.Add(new UserChatMessage("alpha", []));
+        var node = context.Data.StartTurn(new UserChatMessage("alpha", []));
         using var viewModel = new ChatTextSearchViewModel(CreateManager(context));
         viewModel.Query = "alpha";
         viewModel.OpenSearchCommand.Execute(null);

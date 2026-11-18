@@ -14,7 +14,7 @@ public sealed class ChatPayloadCaptureTests
     {
         var child = new ChatData();
         var file = new FileAttachment(new DirectLocaleKey("nested"), "before.txt", "nested-file", "text/plain");
-        var user = child.Add(new UserChatMessage("child", [file]));
+        var user = child.StartTurn(new UserChatMessage("child", [file]));
         var alternative = child.CreateBranchOn(user, new UserChatMessage("alternative", []));
         child.SelectChild(child.RootNode, user);
         using var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("tool"));

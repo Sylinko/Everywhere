@@ -33,6 +33,17 @@ public sealed class ChatTurn(ChatMessageNode userNode)
     public IReadOnlyList<ChatBusyActivity> Activities => Volatile.Read(ref _activities);
 
     /// <summary>
+    /// Gets the number of detached background jobs still running for this turn.
+    /// A turn does not settle into its completed summary while background jobs remain active.
+    /// </summary>
+    public int ActiveBackgroundJobCount => Volatile.Read(ref _activeBackgroundJobCount);
+
+    /// <summary>
+    /// Gets whether at least one detached background job owned by this turn is still active.
+    /// </summary>
+    public bool HasActiveBackgroundJobs => ActiveBackgroundJobCount > 0;
+
+    /// <summary>
     /// Signals that a later snapshot is needed. Raised on the mutation thread.
     /// </summary>
     public event EventHandler? Invalidated;
@@ -42,6 +53,7 @@ public sealed class ChatTurn(ChatMessageNode userNode)
     private readonly List<ChatMessageNode> _nodes = [];
     private IReadOnlyList<ChatMessageNode> _selectedNodes = [userNode];
     private long _revision;
+    private int _activeBackgroundJobCount;
     private IReadOnlyList<ChatBusyActivity> _activities = [];
 
     public void AddNode(ChatMessageNode node)
@@ -74,6 +86,22 @@ public sealed class ChatTurn(ChatMessageNode userNode)
         if (activity.RemoveAfterCompletion)
         {
             Volatile.Write(ref _activities, _activities.AsValueEnumerable().Where(candidate => !ReferenceEquals(candidate, activity)).ToArray());
+        }
+
+        Invalidate();
+    }
+
+    internal void IncrementActiveBackgroundJobs()
+    {
+        Interlocked.Increment(ref _activeBackgroundJobCount);
+        Invalidate();
+    }
+
+    internal void DecrementActiveBackgroundJobs()
+    {
+        if (Interlocked.Decrement(ref _activeBackgroundJobCount) < 0)
+        {
+            Interlocked.Exchange(ref _activeBackgroundJobCount, 0);
         }
 
         Invalidate();

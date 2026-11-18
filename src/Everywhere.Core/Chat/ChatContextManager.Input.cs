@@ -1,4 +1,5 @@
 ﻿using Avalonia.Threading;
+using Everywhere.AI;
 using Everywhere.Common;
 using Everywhere.Storage;
 
@@ -27,25 +28,55 @@ partial class ChatContextManager
                 var now = DateTimeOffset.UtcNow;
                 var metadata = new ChatMetadata(saved.ChatId, now, now, null);
                 var root = CreateRoot(new ChatData(metadata));
-                root.Input.Restore(saved.Snapshot);
+                RestoreLocalInput(root, saved.Snapshot);
                 _newChatDraft = root;
             },
             DispatcherPriority.Normal,
             cancellationToken);
     }
 
+    private void RestoreLocalInput(RootChatContext root, ChatInputSnapshot snapshot)
+    {
+        root.Input.Restore(snapshot);
+        root.PendingInputs.Restore(
+            snapshot.PendingInputs,
+            ResolveCustomAssistant,
+            pauseDrain: !root.IsTurnActive);
+    }
+
+    private CustomAssistant? ResolveCustomAssistant(Guid id) =>
+        _settings.Model.CustomAssistants.AsValueEnumerable().FirstOrDefault(candidate => candidate.Id == id);
+
     private void HandleInputChanged(object? sender, EventArgs e)
     {
-        if (_isClosing || sender is not ChatInputState input || FindRoot(input.ChatId) is not { } root || !_metadataMap.ContainsKey(input.ChatId))
+        if (sender is ChatInputState input)
+        {
+            Dispatcher.UIThread.PostOnDemand(() => EnqueueInputSave(input.ChatId));
+        }
+    }
+
+    private void HandlePendingInputsChanged(object? sender, EventArgs e)
+    {
+        if (sender is ChatPendingInputQueue queue)
+        {
+            Dispatcher.UIThread.PostOnDemand(() => EnqueueInputSave(queue.ChatId));
+        }
+    }
+
+    private void EnqueueInputSave(Guid chatId)
+    {
+        if (_isClosing || FindRoot(chatId) is not { Data.IsDisposed: false } root || !_metadataMap.ContainsKey(chatId))
         {
             return;
         }
 
-        var write = root.Data.Metadata.IsTemporary ? new ChatInputWrite(null, []) : ChatInputWrite.Capture(input);
+        var write = root.Data.Metadata.IsTemporary ?
+            new ChatInputWrite(null, []) :
+            ChatInputWrite.Capture(root.Input, root.PendingInputs);
         write = write with { IsNewChatDraft = ReferenceEquals(root, _newChatDraft) };
         lock (_pendingInputs)
         {
-            _pendingInputs[input.ChatId] = new PendingInput(root, write);
+            _pendingInputs[chatId] = new PendingInput(root, write);
         }
 
         _saveDebounceExecutor.Trigger();

@@ -411,7 +411,9 @@ partial class ChatTurnStorage
 
             foreach (var child in children[parent.Id])
             {
-                if (child.TurnId != (child.MessageKind.IsTurnStart() ? child.Id : parent.TurnId))
+                var isValidTurn = child.TurnId == parent.TurnId ||
+                    (ChatData.CanStartTurn(child.MessageKind) && child.TurnId == child.Id);
+                if (!isValidTurn)
                 {
                     throw new InvalidDataException("Turn membership disagrees with parentage.");
                 }

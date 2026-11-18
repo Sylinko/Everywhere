@@ -17,6 +17,42 @@ public interface IChatService
     Task<bool> SendMessageAsync(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant);
 
     /// <summary>
+    /// Submits a user message directly or, when <paramref name="chatContext"/> is busy, enqueues it into
+    /// <see cref="ChatContext.PendingInputs"/> using <paramref name="deliveryMode"/> (<see cref="ChatInputDeliveryMode.Queue"/> or <see cref="ChatInputDeliveryMode.Steer"/>).
+    /// Returns false only if admission is rejected when idle and cannot be enqueued.
+    /// </summary>
+    Task<bool> SubmitMessageAsync(
+        ChatContext chatContext,
+        UserChatMessage message,
+        CustomAssistant? customAssistant,
+        ChatInputDeliveryMode deliveryMode);
+
+    /// <summary>
+    /// Starts processing any queued user messages or pending background job wake notifications on <paramref name="chatContext"/> when idle.
+    /// </summary>
+    bool ResumePendingInputs(ChatContext chatContext);
+
+    /// <summary>
+    /// Gets whether <paramref name="chatContext"/> has paused pending inputs or an interrupted/unanswered turn that can be resumed.
+    /// </summary>
+    bool CanResume(ChatContext chatContext);
+
+    /// <summary>
+    /// Resumes an interrupted/unanswered turn or paused pending queue on <paramref name="chatContext"/>.
+    /// </summary>
+    void Resume(ChatContext chatContext);
+
+    /// <summary>
+    /// Deletes a pending queued user input and disposes any ephemeral visual attachments it held.
+    /// </summary>
+    bool RemovePendingInput(ChatContext chatContext, Guid itemId);
+
+    /// <summary>
+    /// Clears all pending user inputs in <paramref name="chatContext"/> and disposes their ephemeral attachments.
+    /// </summary>
+    void ClearPendingInputs(ChatContext chatContext);
+
+    /// <summary>
     /// Creates an edited branch and completes after its user message enters the graph, without
     /// waiting for generation. Returns false when admission is rejected. The composer retains
     /// its input on rejection or initialization failure. This method is UI-thread-only.

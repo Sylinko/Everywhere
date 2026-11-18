@@ -18,10 +18,10 @@ public sealed class ChatTurnPreviewTests
         using var database = ChatTestDatabase.Create();
         var storage = new ChatTurnStorage(database.Factory);
         using var source = new ChatData();
-        source.Add(new UserChatMessage("question", []));
+        source.StartTurn(new UserChatMessage("question", []));
         var assistant = new AssistantChatMessage();
         assistant.AddSpan(new AssistantChatMessageTextSpan("original"));
-        var original = source.Add(assistant);
+        var original = source.Append(assistant);
         await storage.SaveDataAsync(source);
         await using var context = await storage.LoadContextAsync(source.Metadata.Id);
         using var index = new ChatTurnNavigationIndex(context);

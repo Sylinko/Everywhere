@@ -177,7 +177,9 @@ public sealed class ChatV2StoreInitializer(
             var siblings = children[parent.Id].OrderBy(node => GetLegacyOrderKey(node.Id)).ThenBy(node => node.Id).ToArray();
             foreach (var child in siblings)
             {
-                child.TurnId = child.MessageKind.IsTurnStart() ? child.Id : parent.TurnId;
+                // Historical V1 conversations only had turn-starting user nodes.
+                var startsTurn = child.MessageKind is ChatMessageKind.User or ChatMessageKind.UserStrategy or ChatMessageKind.UserAction;
+                child.TurnId = startsTurn ? child.Id : parent.TurnId;
                 pending.Push(child);
             }
 

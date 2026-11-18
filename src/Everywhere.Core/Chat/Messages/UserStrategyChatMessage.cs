@@ -30,8 +30,9 @@ public sealed partial class UserStrategyChatMessage : UserChatMessage
         IReadOnlyList<ChatAttachment> attachments,
         DateTimeOffset createdAt,
         Strategy strategy,
-        PreprocessorResult preprocessorResult
-    ) : base(content, attachments, createdAt)
+        PreprocessorResult preprocessorResult,
+        ChatInputDeliveryMode? deliveryMode = null
+    ) : base(content, attachments, createdAt, deliveryMode)
     {
         Strategy = strategy;
         PreprocessorResult = preprocessorResult;
@@ -40,6 +41,6 @@ public sealed partial class UserStrategyChatMessage : UserChatMessage
     /// <inheritdoc />
     public override ChatUserStrategyState Capture()
     {
-        return new ChatUserStrategyState(Content, Attachments, Strategy.NameKey);
+        return new ChatUserStrategyState(Content, Attachments, Strategy.NameKey, DeliveryMode);
     }
 }

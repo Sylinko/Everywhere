@@ -38,6 +38,14 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         Clear
     }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    private enum BackgroundJobAction
+    {
+        List,
+        Output,
+        Stop
+    }
+
     public EssentialPlugin(
         Settings settings,
         AssistantSpecializationResolver assistantSpecializationResolver,
@@ -53,11 +61,20 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
             list.Add(
                 new BuiltInChatFunction(
                     RunSubagentAsync,
-                    ChatFunctionPermissions.None));
+                    ChatFunctionPermissions.None,
+                    supportsBackgrounding: true));
             list.Add(
                 new BuiltInChatFunction(
                     ManageTodoAsync,
                     ChatFunctionPermissions.None));
+            list.Add(
+                new BuiltInChatFunction(
+                    ManageBackgroundJobsAsync,
+                    ChatFunctionPermissions.None,
+                    icon: LucideIconKind.Layers,
+                    isDefaultEnabled: true,
+                    isVisible: false,
+                    supportsParallelInvoke: true));
             list.Add(
                 new BuiltInChatFunction(
                     AskUserQuestionAsync,
@@ -96,9 +113,9 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         var (nestedContext, userNode, assistantNode) = await chatContext.DispatchAsync(() =>
         {
             var child = chatContext.CreateNested(title);
-            var user = child.Data.Add(new UserChatMessage(prompt, []));
+            var user = child.Data.StartTurn(new UserChatMessage(prompt, []));
             var assistantMessage = new AssistantChatMessage();
-            return (child, user, child.Data.Add(assistantMessage));
+            return (child, user, child.Data.Append(assistantMessage));
         });
         var forkedChatContext = nestedContext.Data;
 
@@ -130,7 +147,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         // The subagent has its own ChatData and FunctionCallContext. Do not let the parent
         // tool's ambient invocation context leak into nested kernel-service resolution while the
         // child generation is waiting for model output or user consent.
-        using var parentFunctionCallContextScope = chatContext.GenerationContext?.SuppressFunctionCallContext();
+        using var parentFunctionCallContextScope = FunctionCallContext.SuppressCurrent(chatContext.GenerationContext);
         var generationResult = default(ChatGenerationResult);
         try
         {
@@ -464,5 +481,108 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         }
 
         return new ViewImageFunctionResult(items);
+    }
+
+    [ChatFunction("manage_background_jobs")]
+    [Description(
+        """
+        List, inspect live output from, or stop background jobs started during this chat session.
+        Use list to inspect active and completed background jobs; use output with jobId to read live output; use stop with jobId to cancel a running job.
+        """)]
+    [DynamicLocaleKey(
+        LocaleKey.BuiltInChatPlugin_Essential_ManageBackgroundJobs_Header,
+        LocaleKey.BuiltInChatPlugin_Essential_ManageBackgroundJobs_Description)]
+    private static string ManageBackgroundJobsAsync(
+        [FromChatServices] ChatContext chatContext,
+        [Description("Action to perform: list, output, or stop.")]
+        BackgroundJobAction action,
+        [Description("Target background job ID (required for output and stop actions).")]
+        string? jobId = null)
+    {
+        var manager = chatContext.Root.BackgroundJobs;
+        switch (action)
+        {
+            case BackgroundJobAction.List:
+            {
+                var jobs = manager.ListJobs();
+                if (jobs.Count == 0)
+                {
+                    return "No background jobs have been started in this session.";
+                }
+
+                var builder = new StringBuilder();
+                foreach (var job in jobs)
+                {
+                    var status = !job.IsCompleted ? "running" : job.IsSuccess ? "completed" : "failed";
+                    builder
+                        .Append(job.JobId)
+                        .Append(" | ")
+                        .Append(status)
+                        .Append(" | ")
+                        .Append(job.ToolName)
+                        .Append(" | ")
+                        .AppendLine(job.Label);
+                }
+
+                return builder.TrimEnd().ToString();
+            }
+            case BackgroundJobAction.Output:
+            {
+                if (string.IsNullOrWhiteSpace(jobId))
+                {
+                    throw new HandledFunctionInvokingException(
+                        HandledFunctionInvokingExceptionType.ArgumentMissing,
+                        nameof(jobId),
+                        new ArgumentException("jobId is required for output action.", nameof(jobId)));
+                }
+
+                if (!manager.TryGetJob(jobId.Trim(), out var job))
+                {
+                    return $"Background job '{jobId}' was not found.";
+                }
+
+                var status = !job.IsCompleted ? "running" : job.IsSuccess ? "completed" : "failed";
+                var liveOutput = job.ReadLiveOutput();
+                var builder = new StringBuilder();
+                builder.AppendLine($"Job: {job.JobId} ({job.ToolName}) [{status}] - {job.Label}");
+                if (!string.IsNullOrWhiteSpace(liveOutput))
+                {
+                    builder.AppendLine(liveOutput);
+                }
+                else if (!job.IsCompleted)
+                {
+                    builder.AppendLine("(no output yet)");
+                }
+
+                return builder.TrimEnd().ToString();
+            }
+            case BackgroundJobAction.Stop:
+            {
+                if (string.IsNullOrWhiteSpace(jobId))
+                {
+                    throw new HandledFunctionInvokingException(
+                        HandledFunctionInvokingExceptionType.ArgumentMissing,
+                        nameof(jobId),
+                        new ArgumentException("jobId is required for stop action.", nameof(jobId)));
+                }
+
+                var normalizedId = jobId.Trim();
+                if (!manager.TryGetJob(normalizedId, out var job))
+                {
+                    return $"Background job '{jobId}' was not found.";
+                }
+
+                return manager.TryStopJob(normalizedId) ?
+                    $"Stop requested for background job '{job.JobId}' ({job.Label})." :
+                    $"Background job '{job.JobId}' is already completed.";
+            }
+            default:
+            {
+                throw new HandledFunctionInvokingException(
+                    HandledFunctionInvokingExceptionType.ArgumentError,
+                    nameof(action),
+                    new ArgumentOutOfRangeException(nameof(action), action, "Invalid background job action."));
+            }
+        }
     }
 }

@@ -50,8 +50,8 @@ public sealed class RequestRecoveryTests
         using var data = new ChatData();
         await using var runtime = new RootChatContext(data, null);
         var message = new AssistantChatMessage { IsBusy = true };
-        data.Add(new UserChatMessage("hello", []));
-        var assistantNode = data.Add(message);
+        data.StartTurn(new UserChatMessage("hello", []));
+        var assistantNode = data.Append(message);
         var metadataReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var allowOutput = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var sdkParents = new List<string?>();
@@ -111,8 +111,8 @@ public sealed class RequestRecoveryTests
             var message = new AssistantChatMessage { IsBusy = true };
             var committed = new AssistantChatMessageTextSpan("committed");
             if (hasCommittedOutput) message.AddSpan(committed);
-            data.Add(new UserChatMessage("hello", []));
-            var assistantNode = data.Add(message);
+            data.StartTurn(new UserChatMessage("hello", []));
+            var assistantNode = data.Append(message);
             await runtime.Presentation.PrepareInitialWindowAsync();
             var client = Substitute.For<MEAI.IChatClient>();
             var sendCount = 0;
@@ -182,8 +182,8 @@ public sealed class RequestRecoveryTests
         tools.Add(tool);
         message.AddSpan(tools);
         message.Metadata = message.Metadata.SetItem("checkpoint", "original");
-        data.Add(new UserChatMessage("hello", []));
-        var assistantNode = data.Add(message);
+        data.StartTurn(new UserChatMessage("hello", []));
+        var assistantNode = data.Append(message);
         await runtime.Presentation.PrepareInitialWindowAsync();
         var client = Substitute.For<MEAI.IChatClient>();
         var sendCount = 0;
@@ -249,8 +249,8 @@ public sealed class RequestRecoveryTests
         var original = new AssistantChatMessage { IsCanceled = true };
         var restored = MessagePackSerializer.Deserialize<AssistantChatMessage>(MessagePackSerializer.Serialize(original));
         using var data = new ChatData();
-        data.Add(new UserChatMessage("hello", []));
-        data.Add(restored);
+        data.StartTurn(new UserChatMessage("hello", []));
+        data.Append(restored);
         await using var runtime = new RootChatContext(data, null);
         await runtime.Presentation.PrepareInitialWindowAsync();
         Assert.Multiple(() =>

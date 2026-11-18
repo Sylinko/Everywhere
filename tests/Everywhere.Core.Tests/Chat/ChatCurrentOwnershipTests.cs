@@ -29,7 +29,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         {
             started.SetResult();
             await release.Task;
-            await root.DispatchAsync(() => root.Data.Add(new UserChatMessage("accepted message", [])));
+            await root.DispatchAsync(() => root.Data.StartTurn(new UserChatMessage("accepted message", [])));
             token.ThrowIfCancellationRequested();
         }, cancellation.Token);
         try
@@ -123,7 +123,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         storage.Contexts[other.Id] = Data(other, new UserChatMessage("selected", []));
         await using var manager = CreateManager(storage);
         var previous = manager.Current;
-        await previous.ApplyAsync(() => previous.Data.Add(new UserChatMessage("deleted", [])));
+        await previous.ApplyAsync(() => previous.Data.StartTurn(new UserChatMessage("deleted", [])));
         await previous.Presentation.PrepareInitialWindowAsync();
         using var history = manager.BeginLoadSession();
         await history.LoadMoreAsync(10);

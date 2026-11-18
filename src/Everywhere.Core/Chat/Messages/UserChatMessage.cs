@@ -42,6 +42,12 @@ public partial class UserChatMessage : ChatMessage, IHaveChatAttachments, IHaveV
     [Key(3)]
     public override DateTimeOffset CreatedAt { get; }
 
+    /// <summary>
+    /// Gets or sets how this message was delivered while a generation was active, or <see langword="null"/> for normal idle turns.
+    /// </summary>
+    [Key(6)]
+    public ChatInputDeliveryMode? DeliveryMode { get; set; }
+
     public override string ToString() => Content;
 
     /// <inheritdoc/>
@@ -53,13 +59,18 @@ public partial class UserChatMessage : ChatMessage, IHaveChatAttachments, IHaveV
     }
 
     [SerializationConstructor]
-    protected UserChatMessage(string content, IReadOnlyList<ChatAttachment> attachments, DateTimeOffset createdAt)
+    protected UserChatMessage(
+        string content,
+        IReadOnlyList<ChatAttachment> attachments,
+        DateTimeOffset createdAt,
+        ChatInputDeliveryMode? deliveryMode = null)
     {
         Content = content;
         Attachments = attachments;
         CreatedAt = createdAt;
+        DeliveryMode = deliveryMode;
     }
 
     /// <inheritdoc />
-    public override ChatUserState Capture() => new(Content, Attachments);
+    public override ChatUserState Capture() => new(Content, Attachments, DeliveryMode);
 }

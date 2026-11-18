@@ -24,7 +24,7 @@ public sealed class ChatPluginTextActivityPreview(IDynamicLocaleKey textKey) : C
 /// </summary>
 public sealed class ChatPluginCommandActivityPreview(string command) : ChatPluginActivityPreview
 {
-    public string Command { get; } = command;
+    public string Command { get; } = string.Join(' ', command.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 }
 
 /// <summary>

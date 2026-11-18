@@ -214,7 +214,7 @@ public sealed class ContextCompressionTests
         await using var runtime = new RootChatContext(data, null);
         var failure = CreateRunningCompression(ContextCompressionTrigger.ContextLengthRecovery);
         failure.Fail(new DirectLocaleKey("failed"), DateTimeOffset.UtcNow);
-        data.Add(failure);
+        data.Append(failure);
 
         var trigger = await ResolvePendingAutomaticCompressionTrigger(runtime);
 
@@ -228,7 +228,7 @@ public sealed class ContextCompressionTests
         await using var runtime = new RootChatContext(data, null);
         var failure = CreateRunningCompression(ContextCompressionTrigger.Manual);
         failure.Fail(new DirectLocaleKey("failed"), DateTimeOffset.UtcNow);
-        data.Add(failure);
+        data.Append(failure);
 
         Assert.That(await ResolvePendingAutomaticCompressionTrigger(runtime), Is.Null);
 
@@ -251,12 +251,12 @@ public sealed class ContextCompressionTests
     public void ResolveCompressionBoundary_WhenBeforeCurrentUser_LeavesNewUserInSuffix()
     {
         using var data = new ChatData();
-        data.Add(new UserChatMessage("old request", []));
+        data.StartTurn(new UserChatMessage("old request", []));
         var oldAssistant = Assistant("old response");
-        data.Add(oldAssistant);
-        var userNode = data.Add(new UserChatMessage("new request", []));
+        data.Append(oldAssistant);
+        var userNode = data.StartTurn(new UserChatMessage("new request", []));
         var pendingAssistant = new AssistantChatMessage { IsBusy = true };
-        data.Add(pendingAssistant);
+        data.Append(pendingAssistant);
 
         var boundary = ResolveCompressionBoundary(data, CompressionBoundary.Before(userNode));
         var oldAssistantNode = data.SelectedNodes.Single(node => ReferenceEquals(node.Message, oldAssistant));
@@ -396,9 +396,9 @@ public sealed class ContextCompressionTests
 
         var chatService = CreateChatService();
         using var data = new ChatData();
-        var userNode = data.Add(new UserChatMessage("First request", []));
-        var assistantNode = data.Add(Assistant("First reply"));
-        var compressionNode = data.Add(CreateRunningCompression(ContextCompressionTrigger.Automatic));
+        var userNode = data.StartTurn(new UserChatMessage("First request", []));
+        var assistantNode = data.Append(Assistant("First reply"));
+        var compressionNode = data.Append(CreateRunningCompression(ContextCompressionTrigger.Automatic));
         await using var runtime = new RootChatContext(data, null);
 
         var windowStartNodeId = userNode.Id;
@@ -475,9 +475,9 @@ public sealed class ContextCompressionTests
 
         var chatService = CreateChatService();
         using var data = new ChatData();
-        var userNode = data.Add(new UserChatMessage("First request", []));
-        var assistantNode = data.Add(Assistant("First reply"));
-        var compressionNode = data.Add(CreateRunningCompression(ContextCompressionTrigger.Automatic));
+        var userNode = data.StartTurn(new UserChatMessage("First request", []));
+        var assistantNode = data.Append(Assistant("First reply"));
+        var compressionNode = data.Append(CreateRunningCompression(ContextCompressionTrigger.Automatic));
         await using var runtime = new RootChatContext(data, null);
 
         using var session = new TestCompressionSession(client, "openai", "gpt-5", supportsToolCall: true);
@@ -522,10 +522,10 @@ public sealed class ContextCompressionTests
 
         var chatService = CreateChatService();
         using var data = new ChatData();
-        var trimmedUserNode = data.Add(new UserChatMessage("Oldest request", []));
-        var survivingUserNode = data.Add(new UserChatMessage("Surviving request", []));
-        var survivingAssistantNode = data.Add(Assistant("Surviving reply"));
-        var compressionNode = data.Add(CreateRunningCompression(ContextCompressionTrigger.Automatic));
+        var trimmedUserNode = data.StartTurn(new UserChatMessage("Oldest request", []));
+        var survivingUserNode = data.StartTurn(new UserChatMessage("Surviving request", []));
+        var survivingAssistantNode = data.Append(Assistant("Surviving reply"));
+        var compressionNode = data.Append(CreateRunningCompression(ContextCompressionTrigger.Automatic));
         await using var runtime = new RootChatContext(data, null);
 
         var toolSchema = JsonSerializer.Deserialize<JsonElement>("""{"type":"object"}""");
@@ -570,9 +570,9 @@ public sealed class ContextCompressionTests
         var serialized = MessagePackSerializer.Serialize<ChatMessage>(running);
         var restartOrphan = MessagePackSerializer.Deserialize<ChatMessage>(serialized);
 
-        data.Add(running);
+        data.Append(running);
         running.Complete("summary", false, DateTimeOffset.UtcNow);
-        data.Add(restartOrphan);
+        data.Append(restartOrphan);
         await using var runtime = new RootChatContext(data, null);
         await runtime.Presentation.PrepareInitialWindowAsync();
 

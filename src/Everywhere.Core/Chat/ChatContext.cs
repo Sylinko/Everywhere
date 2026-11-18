@@ -16,21 +16,30 @@ namespace Everywhere.Chat;
 /// Owns the runtime of one conversation. Data and serialization have independent identities;
 /// nested contexts borrow their root's lifetime and shared environment.
 /// </summary>
-public abstract partial class ChatContext(
-    ChatData data,
-    ToolPatternRulesets? toolPatternRulesets,
-    GenerationApprovalState? inheritedApprovalState
-) : ObservableObject
+public abstract partial class ChatContext : ObservableObject
 {
+    protected ChatContext(
+        ChatData data,
+        ToolPatternRulesets? toolPatternRulesets,
+        GenerationApprovalState? inheritedApprovalState)
+    {
+        Data = data;
+        Input = new ChatInputState(data.Metadata.Id);
+        PendingInputs = new ChatPendingInputQueue(data.Metadata.Id);
+        ToolPatternRulesets = toolPatternRulesets;
+        InheritedApprovalState = inheritedApprovalState;
+        Data.BranchChanged += HandleDataBranchChanged;
+    }
+
     /// <summary>
     /// Gets the canonical conversation data. Constructing a runtime never clones its nodes.
     /// </summary>
-    public ChatData Data { get; } = data;
+    public ChatData Data { get; }
 
     /// <summary>
     /// Gets this conversation's UI-owned, local-only composer state.
     /// </summary>
-    public ChatInputState Input { get; } = new(data.Metadata.Id);
+    public ChatInputState Input { get; }
 
     /// <summary>
     /// Gets the root owning this context's execution domain and shared resources.
@@ -50,7 +59,7 @@ public abstract partial class ChatContext(
     /// <summary>
     /// Gets this context's tool restrictions, independently of its parent's generation.
     /// </summary>
-    public ToolPatternRulesets? ToolPatternRulesets { get; } = toolPatternRulesets;
+    public ToolPatternRulesets? ToolPatternRulesets { get; }
 
     /// <summary>
     /// Gets the shared interaction broker. Nested contexts never dispose it.
@@ -78,6 +87,11 @@ public abstract partial class ChatContext(
     public ContextPrefixState PrefixState { get; } = new();
 
     /// <summary>
+    /// Gets the FIFO queue holding pending user inputs (queued or steered) and completed background job wake notifications.
+    /// </summary>
+    public ChatPendingInputQueue PendingInputs { get; }
+
+    /// <summary>
     /// Gets the current generation, whose lifetime is shorter than the context's lifetime.
     /// </summary>
     [ObservableProperty]
@@ -86,12 +100,23 @@ public abstract partial class ChatContext(
     /// <summary>
     /// Gets the approval state inherited from the generation that created this nested context.
     /// </summary>
-    public GenerationApprovalState? InheritedApprovalState { get; } = inheritedApprovalState;
+    public GenerationApprovalState? InheritedApprovalState { get; }
 
     /// <summary>
     /// Gets whether this conversation currently owns an active foreground operation.
     /// </summary>
     public bool IsBusy => Root.HasOperation(this);
+
+    /// <summary>
+    /// Gets whether the latest turn on the selected branch still has running background jobs.
+    /// </summary>
+    public bool HasActiveBackgroundJobsForCurrentTurn =>
+        Data.SelectedTurns.LastOrDefault()?.HasActiveBackgroundJobs == true;
+
+    /// <summary>
+    /// Gets whether the active turn is still running either in the foreground or via detached background jobs.
+    /// </summary>
+    public bool IsTurnActive => IsBusy || HasActiveBackgroundJobsForCurrentTurn;
 
     /// <summary>
     /// Gets the stable UI-thread-owned projection. Runtime work never creates it implicitly.
@@ -160,10 +185,20 @@ public abstract partial class ChatContext(
     }
 
     /// <summary>
+    /// Raised outside the root lifetime lock after an active foreground operation finishes cleanup.
+    /// </summary>
+    internal event Action<ChatContext>? ForegroundOperationCompleted;
+
+    /// <summary>
     /// Requests cancellation of this conversation's current foreground operation.
+    /// Auto-draining of remaining queued user messages is paused so pending inputs stay editable.
     /// The context remains available after that operation has finished its cleanup.
     /// </summary>
-    public void Cancel() => Root.CancelOperation(this);
+    public void Cancel()
+    {
+        PendingInputs.PauseDrain();
+        Root.CancelOperation(this);
+    }
 
     /// <summary>
     /// Registers background work that can outlive a foreground response, such as title generation.
@@ -195,7 +230,8 @@ public abstract partial class ChatContext(
                     new ToolFunctionPatternRulesets
                     {
                         { "run_subagent", false },
-                        { "ask_user_question", false }
+                        { "ask_user_question", false },
+                        { "manage_background_jobs", false }
                     }
                 }
             });
@@ -214,8 +250,19 @@ public abstract partial class ChatContext(
     internal void NotifyOperationChanged()
     {
         OnPropertyChanged(nameof(IsBusy));
+        NotifyTurnStateChanged();
         SetMetadataState(ChatContextMetadataStates.Busy, IsBusy);
     }
+
+    internal void NotifyTurnStateChanged()
+    {
+        OnPropertyChanged(nameof(HasActiveBackgroundJobsForCurrentTurn));
+        OnPropertyChanged(nameof(IsTurnActive));
+    }
+
+    private void HandleDataBranchChanged(object? sender, EventArgs e) => NotifyTurnStateChanged();
+
+    internal void NotifyForegroundOperationCompleted() => ForegroundOperationCompleted?.Invoke(this);
 
     internal void SetMetadataState(ChatContextMetadataStates state, bool isEnabled)
     {
@@ -281,11 +328,18 @@ public abstract partial class ChatContext(
 
     internal void ReleaseResources()
     {
+        Data.BranchChanged -= HandleDataBranchChanged;
         VisualState.Dispose();
+        foreach (var item in PendingInputs.ReleaseAll())
+        {
+            foreach (var disposable in item.Message.Attachments.OfType<IDisposable>()) disposable.Dispose();
+        }
+
         // Data is already disposed, so no new projection can be requested. Only the UI callback
         // accesses the field; shutdown never waits for UI cleanup or takes a projection lock.
         Dispatcher.UIThread.PostOnDemand(() =>
         {
+            PendingInputs.Dispose();
             Input.Dispose();
             DisposeHelper.DisposeToDefault(ref _presentation);
         });

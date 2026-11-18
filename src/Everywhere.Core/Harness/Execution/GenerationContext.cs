@@ -3,6 +3,7 @@ using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Harness;
 
@@ -25,7 +26,8 @@ public sealed class GenerationContext(
     int maxContextRounds,
     GenerationApprovalState approvalState,
     bool isConversationTurn,
-    ChatMessageNode appendTailNode
+    ChatMessageNode appendTailNode,
+    Assistant? assistant = null
 ) : IAsyncDisposable
 {
     /// <summary>
@@ -101,6 +103,19 @@ public sealed class GenerationContext(
     public AsyncLocal<FunctionCallContext?> FunctionCallContext { get; } = new();
 
     /// <summary>
+    /// Gets the resolved assistant configuration that started this generation, if known.
+    /// </summary>
+    public Assistant? Assistant { get; } = assistant ?? services.GetService<Assistant>();
+
+    /// <summary>
+    /// Gets whether the foreground generation owning this context has released its lease.
+    /// </summary>
+    public bool IsDisposed => Volatile.Read(ref _isDisposed) != 0;
+
+    private int _isDisposed;
+    private int _activeHolders = 1;
+
+    /// <summary>
     /// Appends an execution-owned node without consulting the displayed branch.
     /// </summary>
     public ChatMessageNode Append(ChatMessage message)
@@ -112,6 +127,14 @@ public sealed class GenerationContext(
         }
 
         return AppendTailNode;
+    }
+
+    /// <summary>
+    /// Advances <see cref="AppendTailNode"/> after helper pipeline stages (such as visual attachment analysis) append child nodes.
+    /// </summary>
+    public void AdvanceAppendTailNode(ChatMessageNode node)
+    {
+        AppendTailNode = node;
     }
 
     /// <summary>
@@ -128,8 +151,13 @@ public sealed class GenerationContext(
     public IDisposable EnterFunctionCallContext(FunctionCallContext context)
     {
         var previous = FunctionCallContext.Value;
+        var previousCurrent = Harness.FunctionCallContext.EnterCurrent(context);
         FunctionCallContext.Value = context;
-        return Disposable.Create(() => FunctionCallContext.Value = previous);
+        return Disposable.Create(() =>
+        {
+            FunctionCallContext.Value = previous;
+            previousCurrent.Dispose();
+        });
     }
 
     /// <summary>
@@ -138,13 +166,45 @@ public sealed class GenerationContext(
     public IDisposable SuppressFunctionCallContext()
     {
         var previous = FunctionCallContext.Value;
+        var suppressedCurrent = Harness.FunctionCallContext.SuppressCurrent();
         FunctionCallContext.Value = null;
-        return Disposable.Create(() => FunctionCallContext.Value = previous);
+        return Disposable.Create(() =>
+        {
+            FunctionCallContext.Value = previous;
+            suppressedCurrent.Dispose();
+        });
     }
 
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    internal bool TryRetainBackgroundHold()
     {
+        while (true)
+        {
+            var current = Volatile.Read(ref _activeHolders);
+            if (current <= 0)
+            {
+                return false;
+            }
+
+            if (Interlocked.CompareExchange(ref _activeHolders, current + 1, current) == current)
+            {
+                return true;
+            }
+        }
+    }
+
+    internal ValueTask ReleaseBackgroundHoldAsync() => ReleaseHoldAsync();
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _isDisposed, 1) != 0) return ValueTask.CompletedTask;
+        return ReleaseHoldAsync();
+    }
+
+    private async ValueTask ReleaseHoldAsync()
+    {
+        if (Interlocked.Decrement(ref _activeHolders) != 0) return;
+
         if (Services is IAsyncDisposable asyncDisposable)
         {
             await asyncDisposable.DisposeAsync();

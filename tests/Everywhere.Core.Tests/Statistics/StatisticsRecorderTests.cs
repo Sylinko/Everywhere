@@ -21,7 +21,7 @@ public sealed class StatisticsRecorderTests
         var chatContext = new ChatData();
         chatContext.Metadata.Topic = "Statistics plan";
         var userMessage = new UserChatMessage("please implement this", []);
-        chatContext.Add(userMessage);
+        chatContext.StartTurn(userMessage);
         var userNode = chatContext.SelectedNodes.Last(x => ReferenceEquals(x.Message, userMessage));
 
         var sendTurnId = await recorder.RecordTurnAsync(chatContext, userNode, StatisticsTurnKind.Send);
@@ -140,7 +140,7 @@ public sealed class StatisticsRecorderTests
             settings,
             NullLogger<StatisticsRecorder>.Instance);
         var chatContext = new ChatData();
-        chatContext.Add(new UserChatMessage("do not count me", []));
+        chatContext.StartTurn(new UserChatMessage("do not count me", []));
 
         var topicId = await recorder.RecordTopicAsync(chatContext);
         var turnId = await recorder.RecordTurnAsync(chatContext, chatContext.SelectedNodes.Last(), StatisticsTurnKind.Send);

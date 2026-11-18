@@ -320,31 +320,29 @@ public static partial class ChatHistoryBuilder
         var compressionIndex = FindLastSuccessfulCompressionIndex(chatNodes, out var anchorIndex);
         if (compressionIndex < 0)
         {
-            var messages = chatNodes
+            var filteredNodes = chatNodes
                 .AsValueEnumerable()
-                .Select(static node => node.Message)
-                .Where(static message => message is not (ContextCompressionChatMessage or RootChatMessage or ChatImageOffloadMessage))
+                .Where(static node => node.Message is not (ContextCompressionChatMessage or RootChatMessage or ChatImageOffloadMessage))
                 .ToArray();
-            var startIndex = ResolveStartIndex(messages, maxContextRounds, 0);
+            var startIndex = ResolveStartIndex(filteredNodes, maxContextRounds, 0);
             wasHistoryTrimmed = startIndex > 0;
-            return messages.AsValueEnumerable().Skip(startIndex).ToArray();
+            return filteredNodes.AsValueEnumerable().Skip(startIndex).Select(static node => node.Message).ToArray();
         }
 
-        var suffix = chatNodes
+        var suffixNodes = chatNodes
             .AsValueEnumerable()
             .Skip(anchorIndex + 1)
-            .Select(static node => node.Message)
-            .Where(static message => message is not (ContextCompressionChatMessage or RootChatMessage or ChatImageOffloadMessage))
+            .Where(static node => node.Message is not (ContextCompressionChatMessage or RootChatMessage or ChatImageOffloadMessage))
             .ToArray();
-        var suffixStartIndex = ResolveStartIndex(suffix, maxContextRounds, 0);
+        var suffixStartIndex = ResolveStartIndex(suffixNodes, maxContextRounds, 0);
         wasHistoryTrimmed = suffixStartIndex > 0;
         var retainedUserMessages = SelectRetainedUserMessages(chatNodes, anchorIndex, declaredContextLimit);
         List<ChatMessage> result =
         [
-            with(retainedUserMessages.Count + suffix.Length - suffixStartIndex + 1),
+            with(retainedUserMessages.Count + suffixNodes.Length - suffixStartIndex + 1),
             .. retainedUserMessages,
             chatNodes[compressionIndex].Message,
-            .. suffix.Skip(suffixStartIndex),
+            .. suffixNodes.Skip(suffixStartIndex).Select(static node => node.Message),
         ];
         return result;
     }
@@ -421,18 +419,18 @@ public static partial class ChatHistoryBuilder
         return retainedMessages;
     }
 
-    private static int ResolveStartIndex(IReadOnlyList<ChatMessage> chatMessages, int maxContextRounds, int minimumIndex)
+    private static int ResolveStartIndex(IReadOnlyList<ChatMessageNode> chatNodes, int maxContextRounds, int minimumIndex)
     {
-        if (chatMessages.Count == 0 || maxContextRounds <= -1)
+        if (chatNodes.Count == 0 || maxContextRounds <= -1)
         {
             return minimumIndex;
         }
 
         var matchedUserRounds = 0;
 
-        for (var i = chatMessages.Count - 1; i >= minimumIndex; i--)
+        for (var i = chatNodes.Count - 1; i >= minimumIndex; i--)
         {
-            if (chatMessages[i].Role != MEAI.ChatRole.User)
+            if (!IsTurnStartNode(chatNodes[i]))
             {
                 continue;
             }
@@ -446,6 +444,42 @@ public static partial class ChatHistoryBuilder
 
         return minimumIndex;
     }
+
+    private static int ResolveStartIndex(IReadOnlyList<ChatMessage> chatMessages, int maxContextRounds, int minimumIndex)
+    {
+        if (chatMessages.Count == 0 || maxContextRounds <= -1)
+        {
+            return minimumIndex;
+        }
+
+        var matchedUserRounds = 0;
+
+        for (var i = chatMessages.Count - 1; i >= minimumIndex; i--)
+        {
+            var message = chatMessages[i];
+            var isTurnStart = message.Owner is { } owner ?
+                IsTurnStartNode(owner) :
+                IsTurnStartMessage(message);
+            if (!isTurnStart)
+            {
+                continue;
+            }
+
+            matchedUserRounds++;
+            if (matchedUserRounds - 1 == maxContextRounds)
+            {
+                return i;
+            }
+        }
+
+        return minimumIndex;
+    }
+
+    private static bool IsTurnStartNode(ChatMessageNode node) =>
+        node.Turn is not null ? node.IsTurnStart : IsTurnStartMessage(node.Message);
+
+    private static bool IsTurnStartMessage(ChatMessage message) =>
+        message is UserChatMessage { DeliveryMode: not ChatInputDeliveryMode.Steer } or UserActionChatMessage;
 
     private static IEnumerable<MEAI.ChatMessage> CaptureChatMessageContents(
         IPromptRenderer promptRenderer,

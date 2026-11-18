@@ -18,18 +18,5 @@ public enum ChatMessageKind
     Compression = 7,
     VisualContextReset = 8,
     ImageOffload = 9,
-}
-
-/// <summary>
-/// Classifies message kinds without loading their bodies.
-/// </summary>
-public static class ChatMessageKinds
-{
-    /// <summary>
-    /// Gets whether this kind starts a native user turn.
-    /// </summary>
-    public static bool IsTurnStart(this ChatMessageKind kind)
-    {
-        return kind is ChatMessageKind.User or ChatMessageKind.UserStrategy or ChatMessageKind.UserAction;
-    }
+    BackgroundJobNotification = 10,
 }

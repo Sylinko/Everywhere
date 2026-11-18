@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Everywhere.Chat;
 using Everywhere.Cloud;
 using Everywhere.Database;
 using MessagePack;
@@ -72,11 +73,43 @@ partial class ChatTurnStorage
             return;
         }
 
+        var requiresGeneration3 = false;
+        if (isRepublish)
+        {
+            requiresGeneration3 = await db.Nodes
+                .Where(row => row.ChatContextId == chatId)
+                .AnyAsync(
+                    row => row.MessageKind >= ChatMessageKind.BackgroundJobNotification ||
+                        (row.MessageKind == ChatMessageKind.User ||
+                            row.MessageKind == ChatMessageKind.UserStrategy ||
+                            row.MessageKind == ChatMessageKind.UserAction) && row.TurnId != row.Id,
+                    cancellationToken);
+        }
+        else if (action != ChatSyncAction.Delete && (head.Revision == 0 || lifecycle is null))
+        {
+            var nodeIds = pending
+                .Where(row => row.Kind == ChatSyncRecordKind.Node)
+                .Select(row => Guid.ParseExact(row.Key, "D"))
+                .ToArray();
+            if (nodeIds.Length > 0)
+            {
+                requiresGeneration3 = await db.Nodes
+                    .Where(row => row.ChatContextId == chatId && ((IEnumerable<Guid>)nodeIds).Contains(row.Id))
+                    .AnyAsync(
+                        row => row.MessageKind >= ChatMessageKind.BackgroundJobNotification ||
+                            (row.MessageKind == ChatMessageKind.User ||
+                                row.MessageKind == ChatMessageKind.UserStrategy ||
+                                row.MessageKind == ChatMessageKind.UserAction) && row.TurnId != row.Id,
+                        cancellationToken);
+            }
+        }
+
+        var requiredDataGeneration = requiresGeneration3 ? 3 : isRepublish ? 2 : 1;
         var header = new ChatSyncUploadHeader(
             Guid.NewGuid().ToString("D"),
             chatId.ToString("D"),
             head.Revision,
-            isRepublish ? 2 : 1,
+            requiredDataGeneration,
             action,
             head.LifecycleRevision,
             isRepublish && chat?.ArchivedAt is not null);

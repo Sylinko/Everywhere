@@ -12,7 +12,16 @@ public abstract record ChatMessageState;
 /// <summary>
 /// User text and attachment membership captured for rendering.
 /// </summary>
-public record ChatUserState(string Content, IReadOnlyList<ChatAttachment> Attachments) : ChatMessageState;
+public record ChatUserState(
+    string Content,
+    IReadOnlyList<ChatAttachment> Attachments,
+    ChatInputDeliveryMode? DeliveryMode = null
+) : ChatMessageState
+{
+    public bool IsSteered => DeliveryMode == ChatInputDeliveryMode.Steer;
+
+    public bool IsQueued => DeliveryMode == ChatInputDeliveryMode.Queue;
+}
 
 /// <summary>
 /// A strategy invocation retains the strategy label alongside the user text.
@@ -20,8 +29,32 @@ public record ChatUserState(string Content, IReadOnlyList<ChatAttachment> Attach
 public sealed record ChatUserStrategyState(
     string Content,
     IReadOnlyList<ChatAttachment> Attachments,
-    IDynamicLocaleKey StrategyNameKey
-) : ChatUserState(Content, Attachments);
+    IDynamicLocaleKey StrategyNameKey,
+    ChatInputDeliveryMode? DeliveryMode = null
+) : ChatUserState(Content, Attachments, DeliveryMode);
+
+/// <summary>
+/// A completed background job notification rendered as an expandable timeline divider.
+/// </summary>
+public sealed record ChatBackgroundJobNotificationState(
+    string JobId,
+    string ToolName,
+    string Label,
+    bool IsSuccess,
+    string Output,
+    string? ErrorMessage
+) : ChatMessageState
+{
+    public bool HasDetails => !string.IsNullOrWhiteSpace(Output) || !string.IsNullOrWhiteSpace(ErrorMessage);
+
+    public string DisplayOutput => !IsSuccess && !string.IsNullOrWhiteSpace(ErrorMessage) ?
+        $"{ErrorMessage}\n{Output}".Trim() :
+        Output;
+
+    public IDynamicLocaleKey StatusKey => IsSuccess ?
+        new DynamicLocaleKey(LocaleKey.BackgroundJobNotification_Completed) :
+        new DynamicLocaleKey(LocaleKey.BackgroundJobNotification_Failed);
+}
 
 /// <summary>
 /// A user-triggered action's visible label.

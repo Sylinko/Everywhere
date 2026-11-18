@@ -58,6 +58,16 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     public partial bool AlwaysStartNewChat { get; set; }
 
     /// <summary>
+    /// Selects how messages submitted while a response is generating are delivered by default.
+    /// </summary>
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.ChatWindowSettings_BusySubmissionMode_Header,
+        LocaleKey.ChatWindowSettings_BusySubmissionMode_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior)]
+    public partial ChatInputDeliveryMode BusySubmissionMode { get; set; } = ChatInputDeliveryMode.Queue;
+
+    /// <summary>
     /// When enabled, automatically add focused element as attachment when opening chat window.
     /// </summary>
     [ObservableProperty]

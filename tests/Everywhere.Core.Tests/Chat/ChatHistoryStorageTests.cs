@@ -54,13 +54,13 @@ public sealed class ChatHistoryStorageTests
         using var old = new ChatData();
         var chatId = old.Metadata.Id;
         var user = new UserChatMessage("old", []);
-        var userNode = old.Add(user);
-        var first = old.Add(new AssistantChatMessage());
+        var userNode = old.StartTurn(user);
+        var first = old.Append(new AssistantChatMessage());
         var alternative = old.Append(userNode, new AssistantChatMessage(), shouldSelectChild: false);
         old.Metadata.DateModified = DateTimeOffset.UtcNow.AddDays(-30);
         await storage.SaveDataAsync(old);
         using var recent = new ChatData();
-        recent.Add(new UserChatMessage("recent", []));
+        recent.StartTurn(new UserChatMessage("recent", []));
         await storage.SaveDataAsync(recent);
         var oldDate = old.Metadata.DateModified;
         old.SelectChild(userNode, alternative);

@@ -76,7 +76,7 @@ public sealed class GeminiDesktopLoopTests
         await WithDesktopAsync(wire, nextContext == "anonymous" ? Guid.Empty : slot, null, async (chat, assistant, manager, storage) =>
         {
             var root = manager.Current;
-            var user = root.Data.Add(new UserChatMessage("Add this todo.", []));
+            var user = root.Data.StartTurn(new UserChatMessage("Add this todo.", []));
             var node = root.Data.Append(user, new AssistantChatMessage { IsBusy = true });
             await root.ExecuteAsync(async token =>
             {
@@ -239,7 +239,7 @@ public sealed class GeminiDesktopLoopTests
                     : ConsentDecision.Deny();
                 consent.Command.Execute(decision);
             };
-            var user = root.Data.Add(new UserChatMessage("Look it up.", []));
+            var user = root.Data.StartTurn(new UserChatMessage("Look it up.", []));
             var node = root.Data.Append(user, new AssistantChatMessage { IsBusy = true });
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             await root.ExecuteAsync(async token =>
@@ -424,7 +424,7 @@ public sealed class GeminiDesktopLoopTests
         await WithDesktopAsync(wire, Guid.Empty, plugin, async (chat, assistant, manager, _) =>
         {
             var root = manager.Current;
-            var user = root.Data.Add(new UserChatMessage("Run tools.", []));
+            var user = root.Data.StartTurn(new UserChatMessage("Run tools.", []));
             var answer = new AssistantChatMessage { IsBusy = true };
             var node = root.Data.Append(user, answer);
             await root.ExecuteAsync(async token =>
@@ -453,7 +453,7 @@ public sealed class GeminiDesktopLoopTests
         await WithDesktopAsync(wire, Guid.Empty, plugin, async (chat, assistant, manager, _) =>
         {
             var root = manager.Current;
-            var user = root.Data.Add(new UserChatMessage("Run tools.", []));
+            var user = root.Data.StartTurn(new UserChatMessage("Run tools.", []));
             var answer = new AssistantChatMessage { IsBusy = true };
             var node = root.Data.Append(user, answer);
             using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -507,7 +507,7 @@ public sealed class GeminiDesktopLoopTests
         public BatchPlugin(bool shouldWaitForCancellation = false) : base("batch")
         {
             _shouldWaitForCancellation = shouldWaitForCancellation;
-            _functionsSource.Add(new BuiltInChatFunction(ReadAsync, ChatFunctionPermissions.None) { SupportsParallelInvoke = true });
+            _functionsSource.Add(new BuiltInChatFunction(ReadAsync, ChatFunctionPermissions.None, supportsParallelInvoke: true));
             _functionsSource.Add(new BuiltInChatFunction(Barrier, ChatFunctionPermissions.None));
         }
 

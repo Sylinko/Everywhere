@@ -14,6 +14,13 @@ namespace Everywhere.Harness;
 /// </remarks>
 public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginDisplaySink, IAsyncDisposable
 {
+    private static readonly AsyncLocal<FunctionCallContext?> SCurrent = new();
+
+    /// <summary>
+    /// Gets the ambient tool invocation in the current async execution flow, including after foreground detach.
+    /// </summary>
+    public static FunctionCallContext? Current => SCurrent.Value;
+
     public IServiceProvider Services { get; }
 
     public ChatContext ChatContext { get; }
@@ -55,6 +62,23 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     public IChatPluginDisplaySink DisplaySink => this;
 
     /// <summary>
+    /// Gets whether this tool invocation supports moving from foreground execution to background execution.
+    /// </summary>
+    public bool SupportsBackgrounding { get; }
+
+    /// <summary>
+    /// Gets whether this invocation has detached into background execution.
+    /// </summary>
+    public bool IsDetachedToBackground => Volatile.Read(ref _detachState) != 0;
+
+    /// <summary>
+    /// Gets the execution-scoped cancellation token active for this invocation (still linked after background detach).
+    /// </summary>
+    public CancellationToken ExecutionCancellationToken { get; }
+
+    internal Task BackgroundMovedTask => _backgroundMovedTcs.Task;
+
+    /// <summary>
     /// Gets whether the current function call may bypass approval.
     /// </summary>
     /// <remarks>
@@ -84,6 +108,8 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
 
     private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
     private readonly Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> _reviewAsync;
+    private readonly TaskCompletionSource _backgroundMovedTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private int _detachState;
 
     /// <summary>
     /// Creates the invocation and registers its presentation slot inside the root execution domain.
@@ -97,7 +123,9 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
         FunctionCallContent functionCallContent,
         ObservableToolRulesets toolBypassApprovalRulesets,
         GenerationContext generationContext,
-        Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> reviewAsync)
+        Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> reviewAsync,
+        bool supportsBackgrounding = false,
+        CancellationToken executionCancellationToken = default)
     {
         if (functionCallContent.CallId.IsNullOrEmpty())
         {
@@ -112,9 +140,62 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
         GenerationContext = generationContext;
         ApprovalMode = generationContext.ApprovalMode;
         _reviewAsync = reviewAsync;
+        SupportsBackgrounding = supportsBackgrounding;
+        ExecutionCancellationToken = executionCancellationToken;
         InvocationId = functionCallContent.CallId;
         ToolBypassApprovalRulesets = toolBypassApprovalRulesets;
         _activityPresentationSlot = functionCallChatMessage.RegisterActivityPresentation(InvocationId);
+    }
+
+    internal static IDisposable EnterCurrent(FunctionCallContext context)
+    {
+        var previous = SCurrent.Value;
+        SCurrent.Value = context;
+        return Disposable.Create(() => SCurrent.Value = previous);
+    }
+
+    /// <summary>
+    /// Suppresses both <see cref="Current"/> and <paramref name="generationContext"/> ambient invocation while a nested context initializes.
+    /// </summary>
+    public static IDisposable SuppressCurrent(GenerationContext? generationContext = null)
+    {
+        var previousStatic = SCurrent.Value;
+        SCurrent.Value = null;
+        if (generationContext is null)
+        {
+            return Disposable.Create(() => SCurrent.Value = previousStatic);
+        }
+
+        var previousGen = generationContext.FunctionCallContext.Value;
+        generationContext.FunctionCallContext.Value = null;
+        return Disposable.Create(() =>
+        {
+            generationContext.FunctionCallContext.Value = previousGen;
+            SCurrent.Value = previousStatic;
+        });
+    }
+
+    /// <summary>
+    /// Requests moving this invocation into background execution if <see cref="SupportsBackgrounding"/> is enabled.
+    /// </summary>
+    public bool TryRequestMoveToBackground()
+    {
+        if (!SupportsBackgrounding || Interlocked.CompareExchange(ref _detachState, 1, 0) != 0)
+        {
+            return false;
+        }
+
+        _backgroundMovedTcs.TrySetResult();
+        return true;
+    }
+
+    /// <summary>
+    /// Removes the foreground card's presentation slot after moving to background without altering shared broker approvals.
+    /// </summary>
+    internal Task DetachPresentationAsync()
+    {
+        return ChatContext.DispatchAsync(() =>
+            FunctionCallChatMessage.UnregisterActivityPresentation(InvocationId, _activityPresentationSlot));
     }
 
     #region IChatPluginUserInterface implementation
@@ -143,16 +224,17 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
 
         if (ApprovalMode == ToolApprovalMode.Auto)
         {
-            var review = await ReviewApprovalAsync(approvalScope, cancellationToken);
+            var review = await ReviewApprovalAsync(approvalScope, cancellationToken == default ? ExecutionCancellationToken : cancellationToken);
             return review.IsAllowed ? RequestConsentResult.Accept : RequestConsentResult.Deny(review.FormatReason());
         }
 
+        var effectiveToken = cancellationToken == default ? ExecutionCancellationToken : cancellationToken;
         var consentDecision = await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
             headerKey,
             content,
             rememberMasks,
             customOptions,
-            cancellationToken));
+            effectiveToken));
 
         switch (consentDecision.Kind)
         {
@@ -187,7 +269,8 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
         IReadOnlyList<ChatPluginQuestion> questions,
         CancellationToken cancellationToken = default)
     {
-        return await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleAskQuestionAsync(questions, cancellationToken));
+        var effectiveToken = cancellationToken == default ? ExecutionCancellationToken : cancellationToken;
+        return await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleAskQuestionAsync(questions, effectiveToken));
     }
 
     #endregion
@@ -197,12 +280,17 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     /// </summary>
     public async Task<ToolApprovalResult> ReviewApprovalAsync(ToolApprovalScope? scope, CancellationToken cancellationToken)
     {
-        var previousPreview = await ChatContext.DispatchAsync(() =>
+        var shouldUpdatePreview = !IsDetachedToBackground;
+        ChatPluginActivityPreview? previousPreview = null;
+        if (shouldUpdatePreview)
         {
-            var previous = _activityPresentationSlot.Preview;
-            _activityPresentationSlot.Preview = new ChatPluginTextActivityPreview(new DynamicLocaleKey(LocaleKey.ToolApproval_Reviewing));
-            return previous;
-        });
+            previousPreview = await ChatContext.DispatchAsync(() =>
+            {
+                var previous = _activityPresentationSlot.Preview;
+                _activityPresentationSlot.Preview = new ChatPluginTextActivityPreview(new DynamicLocaleKey(LocaleKey.ToolApproval_Reviewing));
+                return previous;
+            });
+        }
         try
         {
             var result = await _reviewAsync(this, scope, cancellationToken);
@@ -219,7 +307,10 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
         }
         finally
         {
-            await SetActivityPreviewAsync(previousPreview);
+            if (shouldUpdatePreview && !IsDetachedToBackground)
+            {
+                await SetActivityPreviewAsync(previousPreview);
+            }
         }
     }
 
@@ -228,14 +319,23 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     /// </summary>
     public async Task<T> WaitForUserInputAsync<T>(Func<Task<T>> interaction)
     {
-        await ChatContext.DispatchAsync(_activityPresentationSlot.EnterUserInputWait);
+        var enteredWait = false;
+        if (!IsDetachedToBackground)
+        {
+            enteredWait = true;
+            await ChatContext.DispatchAsync(_activityPresentationSlot.EnterUserInputWait);
+        }
+
         try
         {
             return await interaction();
         }
         finally
         {
-            await ChatContext.DispatchAsync(_activityPresentationSlot.ExitUserInputWait);
+            if (enteredWait)
+            {
+                await ChatContext.DispatchAsync(_activityPresentationSlot.ExitUserInputWait);
+            }
         }
     }
 
@@ -253,6 +353,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     /// <inheritdoc />
     public Task SetActivityPreviewAsync(ChatPluginActivityPreview? preview)
     {
+        if (IsDetachedToBackground) return Task.CompletedTask;
         return ChatContext.DispatchAsync(() => _activityPresentationSlot.Preview = preview);
     }
 
