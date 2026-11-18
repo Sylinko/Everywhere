@@ -9,9 +9,9 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
-using Everywhere.AttachedProperties;
 using Everywhere.Chat;
 using Everywhere.Chat.Links;
+using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Interop;
@@ -60,6 +60,7 @@ public sealed partial class ChatWindow :
     private readonly INativeHelper _nativeHelper;
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
+    private readonly IKeyValueStorage _keyValueStorage;
     private readonly ChatModelAvailabilityPresenter _modelAvailabilityPresenter;
     private readonly ChatInputNotificationPresenter _inputNotificationPresenter;
     private readonly NotificationCenter _notificationCenter;
@@ -100,6 +101,7 @@ public sealed partial class ChatWindow :
         _nativeHelper = nativeHelper;
         _settings = settings;
         _persistentState = persistentState;
+        _keyValueStorage = keyValueStorage;
         _notificationCenter = notificationCenter;
         _modelAvailabilityPresenter = new ChatModelAvailabilityPresenter(assistantCatalog, keyValueStorage);
 
@@ -172,7 +174,7 @@ public sealed partial class ChatWindow :
         _windowHelper.SetCloaked(this, true);
 
         // Setup window placement saving after initialization
-        this[SaveWindowPlacementAssist.KeyProperty] = nameof(ChatWindow);
+        WindowPlacementAssist.Attach(this, _keyValueStorage, nameof(ChatWindow));
         _isUserResized = SizeToContent != SizeToContent.WidthAndHeight;
     }
 
