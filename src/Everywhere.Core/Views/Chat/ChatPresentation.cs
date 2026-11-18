@@ -683,10 +683,12 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         private static readonly IDynamicLocaleKey GenericHeader = new DynamicLocaleKey(LocaleKey.ChatPresentation_GenericActivity);
 
         /// <summary>
-        /// Completed activity collections at or below this size are shown as direct activity rows.
-        /// Larger collections keep their aggregate container to avoid overwhelming the conversation.
+        /// Completed activity collections at or below this size are flattened when displayed inside a
+        /// folded process summary or running-to-idle transition window so they avoid nested cards.
         /// </summary>
         private const int InlineActivityLimit = 1;
+
+        private BackgroundJobWaitingPresentationRow? _backgroundJobWaitingRow;
 
         private readonly SourceList<ChatPresentationRow> _visibleRows = new();
         private readonly Dictionary<ChatMessageNode, ChatMessagePresentationRow> _messageRows = new(ReferenceEqualityComparer.Instance);
@@ -808,6 +810,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 .SelectMany(span => span.Items)
                 .Cast<object>()
                 .Concat(activeSpans.OfType<AssistantChatMessageReasoningSpan>().Where(static span => span.HasOutputContent))
+                .Concat(_nodes.Select(static node => node.Message).OfType<BackgroundJobNotificationChatMessage>())
                 .Concat(activities)
                 .ToHashSet(ReferenceEqualityComparer.Instance);
             foreach (var removed in _activityRows.Keys.AsValueEnumerable().Where(source => !activeActivities.Contains(source)).ToArray())
@@ -871,31 +874,299 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
             if (_isDisposed) return;
 
             var desired = new List<ChatPresentationRow>();
-            var assistants = new List<ChatMessageNode>();
             _summaryContents.Clear();
             var continuationTarget = Data.ContinuationTarget;
-            foreach (var node in _nodes)
-            {
-                if (node.Message.IsHidden)
-                {
-                    continue;
-                }
 
-                if (node.Message is AssistantChatMessage)
+            if (_turn is null)
+            {
+                var assistants = new List<ChatMessageNode>();
+                foreach (var node in _nodes)
                 {
-                    assistants.Add(node);
-                    continue;
+                    if (node.Message.IsHidden) continue;
+
+                    if (node.Message is AssistantChatMessage)
+                    {
+                        assistants.Add(node);
+                        continue;
+                    }
+
+                    AppendAssistantRun(assistants.ToArray(), desired, continuationTarget);
+                    assistants.Clear();
+                    desired.Add(GetMessageRow(node));
+                    desired.AddRange(_busyActivities.Where(activity => ReferenceEquals(activity.Owner, node)));
                 }
 
                 AppendAssistantRun(assistants.ToArray(), desired, continuationTarget);
-                assistants.Clear();
-                desired.Add(GetMessageRow(node));
-                desired.AddRange(_busyActivities.Where(activity => ReferenceEquals(activity.Owner, node)));
+                _projectedRows = desired;
+                ReconcileVisibleRows();
+                return;
             }
 
-            AppendAssistantRun(assistants.ToArray(), desired, continuationTarget);
+            var turnAssistants = _nodes
+                .AsValueEnumerable()
+                .Select(static node => node.Message)
+                .OfType<AssistantChatMessage>()
+                .ToArray();
+
+            var segments = new List<(List<ChatMessageNode> Nodes, ChatMessageNode? TrailingDivider)>();
+            var currentSegment = new List<ChatMessageNode>();
+            foreach (var node in _nodes)
+            {
+                if (ReferenceEquals(node, _turn.UserNode))
+                {
+                    if (!node.Message.IsHidden)
+                    {
+                        desired.Add(GetMessageRow(node));
+                        desired.AddRange(_busyActivities.Where(activity => ReferenceEquals(activity.Owner, node)));
+                    }
+                    continue;
+                }
+
+                if (node.Message.IsHidden) continue;
+
+                if (node.Message is ContextCompressionChatMessage)
+                {
+                    segments.Add((currentSegment, node));
+                    currentSegment = [];
+                    continue;
+                }
+
+                currentSegment.Add(node);
+            }
+
+            if (currentSegment.Count > 0)
+            {
+                segments.Add((currentSegment, null));
+            }
+
+            for (var index = 0; index < segments.Count; index++)
+            {
+                var (segmentNodes, trailingDivider) = segments[index];
+                if (segmentNodes.Count > 0)
+                {
+                    AppendTurnSegment(
+                        segmentNodes,
+                        desired,
+                        continuationTarget,
+                        turnAssistants,
+                        isLastSegment: index == segments.Count - 1);
+                }
+
+                if (trailingDivider is not null)
+                {
+                    desired.Add(GetMessageRow(trailingDivider));
+                }
+            }
+
             _projectedRows = desired;
             ReconcileVisibleRows();
+        }
+
+        private void AppendTurnSegment(
+            List<ChatMessageNode> segmentNodes,
+            List<ChatPresentationRow> desired,
+            ChatMessageNode? continuationTarget,
+            AssistantChatMessage[] turnAssistants,
+            bool isLastSegment)
+        {
+            var segmentAssistants = segmentNodes
+                .AsValueEnumerable()
+                .Where(static node => node.Message is AssistantChatMessage)
+                .ToArray();
+            var latestNode = segmentAssistants.LastOrDefault();
+            var latest = latestNode?.Message as AssistantChatMessage;
+            var hasActiveBackgroundJobs = _turn?.HasActiveBackgroundJobs is true;
+            var isForegroundBusy = isLastSegment && latest?.IsBusy is true;
+            var isRunning = isLastSegment && (isForegroundBusy || hasActiveBackgroundJobs);
+
+            var rows = BuildSegmentRows(
+                segmentNodes,
+                latestNode,
+                includeLatestError: isRunning,
+                keepTrailingActivityOpen: isForegroundBusy);
+
+            if (isRunning)
+            {
+                AppendRows(rows, desired, false);
+                if (latestNode is not null && latest is { Count: 0, IsBusy: true } &&
+                    ReferenceEquals(segmentNodes[^1], latestNode) &&
+                    !_busyActivities.AsValueEnumerable().Any(activity => activity.IsRunning && ReferenceEquals(activity.Owner, latestNode)))
+                {
+                    desired.Add(GetPendingRow(latestNode));
+                }
+                else if (!isForegroundBusy && hasActiveBackgroundJobs && _turn is not null)
+                {
+                    desired.Add(GetBackgroundJobWaitingRow(_turn));
+                }
+
+                if (latestNode is not null)
+                {
+                    desired.Add(GetFooterRow(latestNode, ResolveTurnBranchNode(latestNode), turnAssistants, hasActiveBackgroundJobs));
+                }
+
+                return;
+            }
+
+            if (latestNode is null || latest is null)
+            {
+                AppendCompletedProcess(segmentNodes[0], rows, desired);
+                return;
+            }
+
+            if (latest.IsCanceled)
+            {
+                AppendCompletedProcess(segmentNodes[0], rows, desired);
+                if (isLastSegment)
+                {
+                    desired.Add(GetCanceledRow(latestNode, ReferenceEquals(latestNode, continuationTarget)));
+                    desired.Add(GetFooterRow(latestNode, ResolveTurnBranchNode(latestNode), turnAssistants, hasActiveBackgroundJobs: false));
+                }
+                return;
+            }
+
+            if (latest.ErrorMessageKey is not null)
+            {
+                AppendCompletedProcess(segmentNodes[0], rows, desired);
+                if (isLastSegment)
+                {
+                    desired.Add(GetErrorRow(latestNode, ReferenceEquals(latestNode, continuationTarget)));
+                    desired.Add(GetFooterRow(latestNode, ResolveTurnBranchNode(latestNode), turnAssistants, hasActiveBackgroundJobs: false));
+                }
+                return;
+            }
+
+            var finalStart = ReferenceEquals(segmentNodes[^1], latestNode) ? FindFinalOutputStart(rows, latestNode) : -1;
+            var process = finalStart < 0 ? rows : [.. rows.AsValueEnumerable().Take(finalStart)];
+            var final = finalStart < 0 ? [] : rows.AsValueEnumerable().Skip(finalStart).ToArray();
+            AppendCompletedProcess(segmentNodes[0], process, desired);
+            AppendRows(final, desired, true);
+
+            if (!isLastSegment)
+            {
+                return;
+            }
+
+            if (final.Length == 0 && (process.Count == 0 || Data.GetCurrentChild(latestNode) is null))
+            {
+                desired.Add(GetNoResponseRow(latestNode));
+            }
+            desired.Add(GetFooterRow(latestNode, ResolveTurnBranchNode(latestNode), turnAssistants, hasActiveBackgroundJobs: false));
+        }
+
+        private ChatMessageNode ResolveTurnBranchNode(ChatMessageNode fallback) =>
+            _nodes.AsValueEnumerable().FirstOrDefault(static n => n.Message is AssistantChatMessage) ?? fallback;
+
+        private List<ChatPresentationRow> BuildSegmentRows(
+            IReadOnlyList<ChatMessageNode> segmentNodes,
+            ChatMessageNode? latestAssistantNode,
+            bool includeLatestError,
+            bool keepTrailingActivityOpen)
+        {
+            var result = new List<ChatPresentationRow>();
+            var pending = new List<ActivityItemPresentationRow>();
+
+            void Flush(bool isAwaitingContinuation)
+            {
+                if (pending.Count == 0) return;
+                var group = GetGroupRow(pending[0].Source);
+                if (group.UpdateItems(pending, isAwaitingContinuation)) ScheduleFinalPlacement(group);
+                result.Add(group);
+                pending.Clear();
+            }
+
+            void AppendBusyActivities(ChatMessageNode ownerNode, AssistantChatMessageSpan? anchorSpan)
+            {
+                foreach (var activity in _busyActivities.AsValueEnumerable())
+                {
+                    if (ReferenceEquals(activity.Owner, ownerNode) && ReferenceEquals(activity.AnchorSpan, anchorSpan))
+                    {
+                        pending.Add(activity);
+                    }
+                }
+            }
+
+            foreach (var node in segmentNodes)
+            {
+                switch (node.Message)
+                {
+                    case AssistantChatMessage assistant:
+                    {
+                        var isLatestAssistant = ReferenceEquals(node, latestAssistantNode);
+                        AppendBusyActivities(node, null);
+                        foreach (var span in assistant.Items.AsValueEnumerable().OfType<AssistantChatMessageSpan>())
+                        {
+                            switch (span)
+                            {
+                                case AssistantChatMessageReasoningSpan { HasOutputContent: true } reasoning:
+                                {
+                                    var row = GetReasoningRow(assistant, reasoning);
+                                    row.Refresh();
+                                    pending.Add(row);
+                                    break;
+                                }
+                                case AssistantChatMessageFunctionCallSpan functionSpan:
+                                {
+                                    foreach (var function in functionSpan.Items)
+                                    {
+                                        var row = GetFunctionRow(function);
+                                        row.Refresh();
+                                        pending.Add(row);
+                                    }
+                                    break;
+                                }
+                                case AssistantChatMessageTextSpan:
+                                case AssistantChatMessageImageSpan:
+                                {
+                                    Flush(isAwaitingContinuation: false);
+                                    result.Add(GetOutputRow(node, span));
+                                    break;
+                                }
+                            }
+
+                            // A temporary activity is anchored to the latest span observed when its scope
+                            // begins. Appending it after that span preserves the real chronology without
+                            // writing a placeholder into AssistantChatMessage.Spans.
+                            AppendBusyActivities(node, span);
+                        }
+
+                        var hasContinuationAfter = !isLatestAssistant;
+                        if (assistant.IsCanceled && hasContinuationAfter)
+                        {
+                            Flush(isAwaitingContinuation: false);
+                            result.Add(GetCanceledRow(node, false));
+                        }
+                        if (assistant.ErrorMessageKey is not null && (hasContinuationAfter || includeLatestError))
+                        {
+                            Flush(isAwaitingContinuation: false);
+                            result.Add(GetErrorRow(node, false));
+                        }
+                        break;
+                    }
+                    case BackgroundJobNotificationChatMessage notification:
+                    {
+                        // Background job completion events belong inline inside the active timeline card
+                        // rather than splitting surrounding tool calls and reasoning into separate cards.
+                        var row = GetBackgroundJobRow(notification);
+                        row.Refresh();
+                        pending.Add(row);
+                        AppendBusyActivities(node, null);
+                        break;
+                    }
+                    default:
+                    {
+                        Flush(isAwaitingContinuation: false);
+                        result.Add(GetMessageRow(node));
+                        var node1 = node;
+                        result.AddRange(_busyActivities.Where(activity => ReferenceEquals(activity.Owner, node1)));
+                        break;
+                    }
+                }
+            }
+
+            // Only a trailing process segment whose latest assistant invocation is actively generating
+            // remains open while awaiting model continuation.
+            Flush(keepTrailingActivityOpen);
+            return result;
         }
 
         private void AppendAssistantRun(ChatMessageNode[] assistants, List<ChatPresentationRow> desired, ChatMessageNode? continuationTarget)
@@ -905,10 +1176,11 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 return;
             }
 
+            var turnAssistants = assistants.AsValueEnumerable().Select(static node => (AssistantChatMessage)node.Message).ToArray();
             var latestNode = assistants.AsValueEnumerable().LastOrDefault();
             var latest = latestNode?.Message as AssistantChatMessage;
             var isRunning = latest?.IsBusy is true;
-            var rows = RefreshAssistantRows(assistants, includeLatestError: isRunning, keepTrailingActivityOpen: isRunning);
+            var rows = BuildSegmentRows(assistants, latestNode, includeLatestError: isRunning, keepTrailingActivityOpen: isRunning);
 
             if (isRunning)
             {
@@ -921,7 +1193,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
 
                 if (latestNode is not null)
                 {
-                    desired.Add(GetFooterRow(latestNode));
+                    desired.Add(GetFooterRow(latestNode, assistants[0], turnAssistants, hasActiveBackgroundJobs: false));
                 }
 
                 return;
@@ -937,7 +1209,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
             {
                 AppendCompletedProcess(assistants[0], rows, desired);
                 desired.Add(GetCanceledRow(latestNode, ReferenceEquals(latestNode, continuationTarget)));
-                desired.Add(GetFooterRow(latestNode));
+                desired.Add(GetFooterRow(latestNode, assistants[0], turnAssistants, hasActiveBackgroundJobs: false));
                 return;
             }
 
@@ -945,7 +1217,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
             {
                 AppendCompletedProcess(assistants[0], rows, desired);
                 desired.Add(GetErrorRow(latestNode, ReferenceEquals(latestNode, continuationTarget)));
-                desired.Add(GetFooterRow(latestNode));
+                desired.Add(GetFooterRow(latestNode, assistants[0], turnAssistants, hasActiveBackgroundJobs: false));
                 return;
             }
 
@@ -955,98 +1227,16 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
             AppendCompletedProcess(assistants[0], process, desired);
             AppendRows(final, desired, true);
 
-            if (final.Length == 0) desired.Add(GetNoResponseRow(latestNode));
-            desired.Add(GetFooterRow(latestNode));
-        }
-
-        private List<ChatPresentationRow> RefreshAssistantRows(ChatMessageNode[] assistants, bool includeLatestError, bool keepTrailingActivityOpen)
-        {
-            var result = new List<ChatPresentationRow>();
-            var pending = new List<ActivityItemPresentationRow>();
-
-            void Flush(bool isAwaitingContinuation)
+            if (final.Length == 0 && (process.Count == 0 || Data.GetCurrentChild(latestNode) is null))
             {
-                if (pending.Count == 0) return;
-                var group = GetGroupRow(pending[0].Source);
-                if (group.UpdateItems(pending, isAwaitingContinuation)) ScheduleFinalPlacement(group);
-                result.Add(group);
-                pending.Clear();
+                desired.Add(GetNoResponseRow(latestNode));
             }
-
-            void AppendBusyActivities(ChatMessageNode node, AssistantChatMessageSpan? anchorSpan)
-            {
-                foreach (var activity in _busyActivities.AsValueEnumerable())
-                {
-                    if (ReferenceEquals(activity.Owner, node) && ReferenceEquals(activity.AnchorSpan, anchorSpan))
-                    {
-                        pending.Add(activity);
-                    }
-                }
-            }
-
-            for (var assistantIndex = 0; assistantIndex < assistants.Length; assistantIndex++)
-            {
-                if (assistantIndex > 0) Flush(isAwaitingContinuation: false);
-                var node = assistants[assistantIndex];
-                var assistant = (AssistantChatMessage)node.Message;
-                AppendBusyActivities(node, null);
-                foreach (var span in assistant.Items.AsValueEnumerable().OfType<AssistantChatMessageSpan>())
-                {
-                    switch (span)
-                    {
-                        case AssistantChatMessageReasoningSpan { HasOutputContent: true } reasoning:
-                        {
-                            var row = GetReasoningRow(assistant, reasoning);
-                            row.Refresh();
-                            pending.Add(row);
-                            break;
-                        }
-                        case AssistantChatMessageFunctionCallSpan functionSpan:
-                        {
-                            foreach (var function in functionSpan.Items)
-                            {
-                                var row = GetFunctionRow(function);
-                                row.Refresh();
-                                pending.Add(row);
-                            }
-                            break;
-                        }
-                        case AssistantChatMessageTextSpan:
-                        case AssistantChatMessageImageSpan:
-                        {
-                            Flush(isAwaitingContinuation: false);
-                            result.Add(GetOutputRow(node, span));
-                            break;
-                        }
-                    }
-
-                    // A temporary activity is anchored to the latest span observed when its scope
-                    // begins. Appending it after that span preserves the real chronology without
-                    // writing a placeholder into AssistantChatMessage.Spans.
-                    AppendBusyActivities(node, span);
-                }
-
-                // Only a process segment at the absolute end of the latest assistant invocation is
-                // kept open. Earlier Groups have already been terminated by formal output or an
-                // assistant boundary and must never inherit the whole-turn busy state.
-                Flush(keepTrailingActivityOpen && assistantIndex == assistants.Length - 1);
-                if (assistant.IsCanceled && assistantIndex < assistants.Length - 1)
-                {
-                    result.Add(GetCanceledRow(node, false));
-                }
-                if (assistant.ErrorMessageKey is not null && (assistantIndex < assistants.Length - 1 || includeLatestError))
-                {
-                    result.Add(GetErrorRow(node, false));
-                }
-            }
-
-            return result;
+            desired.Add(GetFooterRow(latestNode, assistants[0], turnAssistants, hasActiveBackgroundJobs: false));
         }
 
         private void AppendCompletedProcess(ChatMessageNode firstNode, IReadOnlyList<ChatPresentationRow> rows, List<ChatPresentationRow> desired)
         {
             if (rows.Count == 0) return;
-            var items = rows.AsValueEnumerable().OfType<ActivityGroupPresentationRow>().SelectMany(group => group.Items).ToArray();
             if (!_summaryRows.TryGetValue(firstNode, out var summaryRow))
             {
                 summaryRow = new ProcessSummaryPresentationRow();
@@ -1054,13 +1244,10 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 _summaryRows.Add(firstNode, summaryRow);
             }
 
-            summaryRow.UpdateStatistics(ChatActivityStatistics.Calculate(items));
-
             // Do not replace a just-completed running card with the final process summary while its
             // glow is still fading. The delayed callback rebuilds this turn after the visual morph,
-            // at which point the normal direct-row or summary rule is applied.
-            if (rows.AsValueEnumerable().OfType<ActivityGroupPresentationRow>().Any(group => _groupsAwaitingFinalPlacement.Contains(group)) ||
-                items.Length is > 0 and <= InlineActivityLimit)
+            // at which point any completed turn with non-empty process rows collapses into its summary.
+            if (rows.AsValueEnumerable().OfType<ActivityGroupPresentationRow>().Any(group => _groupsAwaitingFinalPlacement.Contains(group)))
             {
                 AppendRows(rows, desired, false);
                 return;
@@ -1139,15 +1326,26 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         private PendingAssistantPresentationRow GetPendingRow(ChatMessageNode node) =>
             _pendingRows.GetValueOrDefault(node) ?? (_pendingRows[node] = new PendingAssistantPresentationRow());
 
-        private TurnFooterPresentationRow GetFooterRow(ChatMessageNode node)
+        private BackgroundJobWaitingPresentationRow GetBackgroundJobWaitingRow(ChatTurn turn)
         {
-            if (!_footerRows.TryGetValue(node, out var row))
+            _backgroundJobWaitingRow ??= new BackgroundJobWaitingPresentationRow(turn);
+            _backgroundJobWaitingRow.Refresh();
+            return _backgroundJobWaitingRow;
+        }
+
+        private TurnFooterPresentationRow GetFooterRow(
+            ChatMessageNode assistantNode,
+            ChatMessageNode branchNode,
+            IReadOnlyList<AssistantChatMessage> turnAssistants,
+            bool hasActiveBackgroundJobs)
+        {
+            if (!_footerRows.TryGetValue(branchNode, out var row))
             {
-                row = new TurnFooterPresentationRow(_context, node);
-                _footerRows.Add(node, row);
+                row = new TurnFooterPresentationRow(_context, assistantNode, branchNode);
+                _footerRows.Add(branchNode, row);
             }
 
-            row.Refresh();
+            row.Refresh(assistantNode, turnAssistants, hasActiveBackgroundJobs);
             return row;
         }
 
@@ -1183,18 +1381,39 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         {
             if (span is null)
             {
+                if (node.Message is BackgroundJobNotificationChatMessage notification &&
+                    _activityRows.TryGetValue(notification, out var notificationRow))
+                {
+                    return RevealRow(notificationRow);
+                }
+
                 return _messageRows.GetValueOrDefault(node);
             }
 
             if (!_outputRows.TryGetValue(span, out var row)) return null;
+            return RevealRow(row);
+        }
+
+        private ChatPresentationRow? RevealRow(ChatPresentationRow row)
+        {
             if (_visibleRows.Items.AsValueEnumerable().Any(candidate => ReferenceEquals(candidate, row))) return row;
 
-            // A failed partial output can live inside a collapsed process summary. Search navigation
-            // explicitly targets that output, so reveal the existing rows rather than manufacturing
-            // a parallel presentation path for the same span.
+            // A target output or activity item can live inside a collapsed process summary
+            // or inside an ActivityGroup container. Expand enclosing containers rather than
+            // manufacturing a parallel presentation path for the same source node or span.
+            if (row is ActivityItemPresentationRow activityItem)
+            {
+                foreach (var group in _groupRows.Values)
+                {
+                    if (!group.Items.Contains(activityItem)) continue;
+                    group.IsExpanded = true;
+                    break;
+                }
+            }
+
             foreach (var (summary, contents) in _summaryContents)
             {
-                if (!contents.Contains(row))
+                if (!ContainsTarget(contents, row))
                 {
                     continue;
                 }
@@ -1203,7 +1422,21 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 return row;
             }
 
-            return null;
+            return _visibleRows.Items.AsValueEnumerable().Any(candidate => ReferenceEquals(candidate, row)) ? row : null;
+
+            static bool ContainsTarget(List<ChatPresentationRow> contents, ChatPresentationRow target)
+            {
+                foreach (var candidate in contents)
+                {
+                    if (ReferenceEquals(candidate, target)) return true;
+                    if (candidate is ActivityGroupPresentationRow group && target is ActivityItemPresentationRow item && group.Items.Contains(item))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
 
         private AssistantOutputPresentationRow GetOutputRow(ChatMessageNode node, AssistantChatMessageSpan span)
@@ -1250,6 +1483,17 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
             return row;
         }
 
+        private ActivityItemPresentationRow GetBackgroundJobRow(BackgroundJobNotificationChatMessage notification)
+        {
+            if (!_activityRows.TryGetValue(notification, out var row))
+            {
+                row = new BackgroundJobActivityItemPresentationRow(notification);
+                _activityRows.Add(notification, row);
+            }
+
+            return row;
+        }
+
         private void ScheduleFinalPlacement(ActivityGroupPresentationRow group)
         {
             if (!_groupsAwaitingFinalPlacement.Add(group)) return;
@@ -1265,6 +1509,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                     // final-placement pass.
                     if (group.IsRunning) return;
 
+                    group.CompleteAutoCollapse();
                     RequestRefresh();
                 },
                 TimeSpan.FromMilliseconds(400)); // Leaves a just-completed running Group in place long enough for the 320 ms glow transition

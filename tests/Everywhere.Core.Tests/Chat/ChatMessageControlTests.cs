@@ -14,7 +14,7 @@ public class ChatMessageControlTests
         var outerDataContext = new object();
         var message = new UserChatMessage("Hello", []);
         await using var context = new RootChatContext(new ChatData(), null);
-        var node = context.Data.Add(message);
+        var node = context.Data.StartTurn(message);
         var row = new ChatMessagePresentationRow(context, node);
         row.Refresh();
         var messageControl = new ChatMessageControlTemplate().Build(row) as ChatMessageControl

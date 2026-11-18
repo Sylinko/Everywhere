@@ -10,21 +10,20 @@
     <Setter Property="Padding" Value="2,0"/>
     <Setter Property="Template">
       <ControlTemplate TargetType="v:KeyboardShortcutLabel">
-        <StackPanel
-          Orientation="Horizontal" Spacing="2">
-          <TextBlock
-            VerticalAlignment="Center"
-            Foreground="{TemplateBinding Foreground}"
-            Text="{TemplateBinding Text}"/>
+        <DockPanel HorizontalSpacing="12">
           <v:KeyboardShortcutPresenter
-            Classes="Compact"
+            Classes="Compact" DockPanel.Dock="Right"
             Padding="{TemplateBinding Padding}"
             VerticalAlignment="Center"
             Background="{TemplateBinding Background}"
             CornerRadius="{TemplateBinding CornerRadius}"
             Foreground="{TemplateBinding Foreground}"
             Shortcut="{TemplateBinding Shortcut}"/>
-        </StackPanel>
+          <TextBlock
+            VerticalAlignment="Center"
+            Foreground="{TemplateBinding Foreground}"
+            Text="{TemplateBinding Text}"/>
+        </DockPanel>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

@@ -51,28 +51,35 @@ public class ChatMessagePresentationRow(ChatContext context, ChatMessageNode nod
 public sealed class PendingAssistantPresentationRow : ChatPresentationRow;
 
 /// <summary>
-/// Owns the completed-turn process expansion state and its aggregate activity statistics.
+/// Displays a lightweight activity marker when a turn stays open waiting for active background tasks.
+/// </summary>
+public sealed partial class BackgroundJobWaitingPresentationRow(ChatTurn turn) : ActivityItemPresentationRow
+{
+    public override object Source => _turn;
+
+    public override DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
+
+    public override DateTimeOffset? FinishedAt => null;
+
+    public override bool IsRunning => ActiveCount > 0;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRunning))]
+    public partial int ActiveCount { get; private set; }
+
+    private readonly ChatTurn _turn = turn;
+
+    /// <inheritdoc />
+    public override void Refresh() => ActiveCount = _turn.ActiveBackgroundJobCount;
+}
+
+/// <summary>
+/// Owns the completed-turn process expansion state.
 /// </summary>
 public sealed partial class ProcessSummaryPresentationRow : ChatPresentationRow
 {
-    /// <summary>
-    /// Gets the latest whole-turn statistics snapshot. Keeping the counters under one property makes
-    /// the binding surface stable when new activity metrics are introduced.
-    /// </summary>
-    public ChatActivityStatistics Statistics => _statistics;
-
     [ObservableProperty]
     public partial bool IsExpanded { get; set; }
-
-    private ChatActivityStatistics _statistics;
-
-    /// <summary>
-    /// Replaces the aggregate snapshot when the turn projection changes.
-    /// </summary>
-    public void UpdateStatistics(ChatActivityStatistics statistics)
-    {
-        SetProperty(ref _statistics, statistics, nameof(Statistics));
-    }
 }
 
 /// <summary>
@@ -233,6 +240,34 @@ public sealed class BusyActivityItemPresentationRow(ChatBusyActivity activity) :
 }
 
 /// <summary>
+/// Projects a completed or failed background job notification as a timeline activity item.
+/// </summary>
+public sealed class BackgroundJobActivityItemPresentationRow(
+    BackgroundJobNotificationChatMessage notification
+) : ActivityItemPresentationRow
+{
+    public BackgroundJobNotificationChatMessage Notification { get; } = notification;
+
+    public ChatBackgroundJobNotificationState State => _state;
+
+    public override object Source => Notification;
+
+    public override DateTimeOffset CreatedAt => Notification.CreatedAt;
+
+    public override DateTimeOffset? FinishedAt => Notification.CreatedAt;
+
+    public override bool IsRunning => false;
+
+    private ChatBackgroundJobNotificationState _state = notification.Capture();
+
+    /// <inheritdoc />
+    public override void Refresh()
+    {
+        SetProperty(ref _state, Notification.Capture(), nameof(State));
+    }
+}
+
+/// <summary>
 /// Represents one contiguous process segment. Its items remain stable while the header tracks the
 /// latest item, allowing the running title to change without replacing the group row.
 ///
@@ -298,11 +333,6 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
     public bool IsWaitingForUserInput => IsRunning && Items.AsValueEnumerable().Any(item => item.IsWaitingForUserInput);
 
     /// <summary>
-    /// Gets the local statistics snapshot for this contiguous activity segment.
-    /// </summary>
-    public ChatActivityStatistics Statistics => _statistics;
-
-    /// <summary>
     /// Gets or sets whether the timeline is currently visible. This is presentation-only state and
     /// does not affect the outer projection because the timeline lives inside this row.
     /// </summary>
@@ -312,6 +342,7 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
         set
         {
             if (!SetProperty(ref field, value)) return;
+            if (!_isApplyingAutoExpansion) _hasUserToggledExpansion = true;
             if (!value) ResetItemExpansion();
         }
     }
@@ -321,8 +352,9 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
     private bool _hasReceivedItems;
     private bool _lastKnownIsRunning;
     private bool _isAwaitingContinuation;
+    private bool _hasUserToggledExpansion;
+    private bool _isApplyingAutoExpansion;
     private DateTimeOffset? _presentationFinishedAt;
-    private ChatActivityStatistics _statistics;
 
     /// <summary>
     /// Reconciles the current timeline items and its turn-local continuation state by reference,
@@ -354,10 +386,10 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
 
         var isRunning = IsRunning;
         // Expansion defaults are applied once. Subsequent progress, membership changes and
-        // completion must not overwrite the user's choice on this stable group.
+        // completion must not overwrite a user's explicit toggle on this stable group.
         if (!_hasReceivedItems)
         {
-            IsExpanded = isRunning;
+            SetAutoExpanded(isRunning);
         }
 
         if (isRunning)
@@ -378,6 +410,27 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
         return wasRunning && !isRunning;
     }
 
+    internal void CompleteAutoCollapse()
+    {
+        if (!IsRunning && !_hasUserToggledExpansion)
+        {
+            SetAutoExpanded(false);
+        }
+    }
+
+    private void SetAutoExpanded(bool value)
+    {
+        _isApplyingAutoExpansion = true;
+        try
+        {
+            IsExpanded = value;
+        }
+        finally
+        {
+            _isApplyingAutoExpansion = false;
+        }
+    }
+
     private void Refresh()
     {
         // Items is a stable bindable list. Its own collection notifications describe membership
@@ -388,7 +441,6 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
         OnPropertyChanged(nameof(FinishedAt));
         OnPropertyChanged(nameof(IsRunning));
         OnPropertyChanged(nameof(IsWaitingForUserInput));
-        SetProperty(ref _statistics, ChatActivityStatistics.Calculate(Items), nameof(Statistics));
     }
 
     private void ResetItemExpansion()
@@ -507,27 +559,74 @@ public sealed class NoResponsePresentationRow : ChatPresentationRow;
 /// </summary>
 public sealed class TurnFooterPresentationRow : ChatPresentationRow
 {
-    public ChatMessageNode AssistantNode { get; }
+    public ChatMessageNode AssistantNode => _assistantNode;
 
-    public AssistantChatMessage AssistantMessage => (AssistantChatMessage)AssistantNode.Message;
+    public AssistantChatMessage AssistantMessage => (AssistantChatMessage)_assistantNode.Message;
 
     public ChatAssistantState State => _state;
 
-    private ChatAssistantState _state;
-
     public ChatBranchSelection Branch { get; }
+
+    private ChatMessageNode _assistantNode;
+    private ChatAssistantState _state;
 
     internal void Refresh()
     {
-        SetProperty(ref _state, AssistantMessage.Capture(), nameof(State));
+        Refresh(_assistantNode, [], hasActiveBackgroundJobs: false);
+    }
+
+    internal void Refresh(ChatMessageNode assistantNode, IReadOnlyList<AssistantChatMessage> turnAssistants, bool hasActiveBackgroundJobs)
+    {
+        if (SetProperty(ref _assistantNode, assistantNode, nameof(AssistantNode)))
+        {
+            OnPropertyChanged(nameof(AssistantMessage));
+        }
+
+        SetProperty(ref _state, AggregateState(turnAssistants, hasActiveBackgroundJobs), nameof(State));
         Branch.Refresh();
     }
 
-    public TurnFooterPresentationRow(ChatContext context, ChatMessageNode assistantNode)
+    private ChatAssistantState AggregateState(IReadOnlyList<AssistantChatMessage> turnAssistants, bool hasActiveBackgroundJobs)
+    {
+        var final = AssistantMessage;
+        if (turnAssistants.Count <= 1)
+        {
+            var single = final.Capture();
+            if (!hasActiveBackgroundJobs) return single;
+            return single with { IsBusy = true, FinishedAt = default };
+        }
+
+        var aggregatedUsage = new ChatUsageDetails();
+        var createdAt = turnAssistants[0].CreatedAt;
+        var finishedAt = turnAssistants[0].FinishedAt;
+        var isBusy = hasActiveBackgroundJobs;
+        foreach (var assistant in turnAssistants)
+        {
+            aggregatedUsage.Accumulate(assistant.UsageDetails);
+            if (assistant.CreatedAt < createdAt) createdAt = assistant.CreatedAt;
+            if (assistant.FinishedAt > finishedAt) finishedAt = assistant.FinishedAt;
+            if (assistant.IsBusy) isBusy = true;
+        }
+
+        return new ChatAssistantState(
+            isBusy,
+            createdAt,
+            isBusy ? default : finishedAt,
+            final.ErrorMessageKey,
+            final.Error,
+            new ChatUsageState(
+                aggregatedUsage.InputTokenCount,
+                aggregatedUsage.OutputTokenCount,
+                aggregatedUsage.TotalTokenCount,
+                aggregatedUsage.TokensPerSecond,
+                aggregatedUsage.CachedInputHitRate));
+    }
+
+    public TurnFooterPresentationRow(ChatContext context, ChatMessageNode assistantNode, ChatMessageNode? branchNode = null)
     {
         Debug.Assert(assistantNode.Message is AssistantChatMessage, "TurnFooterPresentationRow must be constructed with an assistant message node.");
-        AssistantNode = assistantNode;
-        Branch = new ChatBranchSelection(context, assistantNode);
+        _assistantNode = assistantNode;
+        Branch = new ChatBranchSelection(context, branchNode ?? assistantNode);
         _state = AssistantMessage.Capture();
     }
 }
