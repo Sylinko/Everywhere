@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Avalonia.Headless.NUnit;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.I18N;
@@ -157,7 +158,7 @@ public class ToolSettingsTests
         });
     }
 
-    [Test]
+    [AvaloniaTest]
     public void DisabledPlugin_PreservesFunctionValuesAndAllowsEditing()
     {
         using var plugin = new TestPlugin("test", isDefaultEnabled: true, "first", "second");
@@ -269,7 +270,7 @@ public class ToolSettingsTests
         public TestPlugin(string name, bool isDefaultEnabled, params string[] functionNames) : base(name)
         {
             IsDefaultEnabled = isDefaultEnabled;
-            var functions = functionNames.Select(name => new BuiltInChatFunction(
+            var functions = functionNames.Select(name => new NativeChatFunction(
                     (Func<string>)(static () => string.Empty),
                     ChatFunctionPermissions.AllAccess,
                     functionName: name))

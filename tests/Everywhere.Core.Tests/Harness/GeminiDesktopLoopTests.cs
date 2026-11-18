@@ -507,8 +507,8 @@ public sealed class GeminiDesktopLoopTests
         public BatchPlugin(bool shouldWaitForCancellation = false) : base("batch")
         {
             _shouldWaitForCancellation = shouldWaitForCancellation;
-            _functionsSource.Add(new BuiltInChatFunction(ReadAsync, ChatFunctionPermissions.None, supportsParallelInvoke: true));
-            _functionsSource.Add(new BuiltInChatFunction(Barrier, ChatFunctionPermissions.None));
+            _functionsSource.Add(new NativeChatFunction(ReadAsync, ChatFunctionPermissions.None, supportsParallelInvoke: true));
+            _functionsSource.Add(new NativeChatFunction(Barrier, ChatFunctionPermissions.None));
         }
 
         [ChatFunction("read_probe")]

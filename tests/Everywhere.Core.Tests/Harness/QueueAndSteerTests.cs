@@ -1023,15 +1023,15 @@ public sealed class QueueAndSteerTests
             _onSerialTool = onSerialTool;
             _onConsentTool = onConsentTool;
 
-            _functionsSource.Add(new BuiltInChatFunction(
+            _functionsSource.Add(new NativeChatFunction(
                 RunBackgroundProbeAsync,
                 ChatFunctionPermissions.None,
                 supportsBackgrounding: true));
-            _functionsSource.Add(new BuiltInChatFunction(
+            _functionsSource.Add(new NativeChatFunction(
                 RunSerialProbe,
                 ChatFunctionPermissions.None,
                 supportsParallelInvoke: false));
-            _functionsSource.Add(new BuiltInChatFunction(
+            _functionsSource.Add(new NativeChatFunction(
                 RunConsentProbeAsync,
                 ChatFunctionPermissions.None,
                 canBypassApproval: false,

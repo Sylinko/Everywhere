@@ -554,8 +554,8 @@ public sealed class ContextPrefixStateTests
         public ProbePlugin() : base("prefix_probe")
         {
             // Intentionally register zebra before alpha to verify deterministic sorting.
-            _functionsSource.Add(new BuiltInChatFunction(ZebraProbe, ChatFunctionPermissions.None));
-            _functionsSource.Add(new BuiltInChatFunction(AlphaProbe, ChatFunctionPermissions.None));
+            _functionsSource.Add(new NativeChatFunction(ZebraProbe, ChatFunctionPermissions.None));
+            _functionsSource.Add(new NativeChatFunction(AlphaProbe, ChatFunctionPermissions.None));
         }
 
         [ChatFunction("zebra_probe")]

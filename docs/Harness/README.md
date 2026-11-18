@@ -25,7 +25,7 @@ ChatService (Agent Loop, Tool Approval, Context Compression, Image Recovery)
   - `gemini.step`: Preserves native Gemini Interactions hosted-tool steps (such as `google_search_call` and `google_search_result`) across multi-turn continuations.
   - `thoughtSignature`: Preserves call-level Gemini `generateContent` `thoughtSignature` metadata on `ToolCallRecord.Metadata` across multi-turn tool replay (and supports pre-Harness `chat-v2.db` turns).
 - **`Tools/`**:
-  - `[ChatFunction]` & `[FromChatServices]`: Native attributes used by built-in and platform plugins. `BuiltInChatFunction` builds `AIFunction` instances via `AIFunctionFactory.Create` with `ExcludeResultSchema = true` and `ConfigureParameterBinding` so service-injected parameters never leak into wire JSON Schemas.
+  - `[ChatFunction]` & `[FromChatServices]`: Native attributes used by built-in and platform plugins. `NativeChatFunction` builds `AIFunction` instances via `AIFunctionFactory.Create` with `ExcludeResultSchema = true` and `ConfigureParameterBinding` so service-injected parameters never leak into wire JSON Schemas.
   - `ToolBinding`: Exposes a non-executable `AIFunctionDeclaration` (with deduplicated wire name) to `ChatOptions.Tools`, while retaining the underlying `AIFunction` (built-in delegate or `ManagedMcpClientTool`) so tools can only run after host consent/approval.
   - `ToolCallRecord`, `ToolResultRecord`, `ToolContentResult`, `ToolResultCapture`: Persist tool calls, rich MCP content blocks, blob-backed images (`ToolResultFile`), `PromptNode` trees, and JSON values in MessagePack (`chat-v2.db`) without duplicating message bodies.
 - **`Mcp/`**: Managed Model Context Protocol client transport (`ManagedMcpClient`, `ManagedMcpClientTool`, `McpServiceExtensions`).

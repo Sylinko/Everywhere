@@ -59,16 +59,16 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         _functionsSource.Edit(list =>
         {
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     RunSubagentAsync,
                     ChatFunctionPermissions.None,
                     supportsBackgrounding: true));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ManageTodoAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ManageBackgroundJobsAsync,
                     ChatFunctionPermissions.None,
                     icon: LucideIconKind.Layers,
@@ -76,11 +76,11 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                     isVisible: false,
                     supportsParallelInvoke: true));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     AskUserQuestionAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ViewImageAsync,
                     ChatFunctionPermissions.FileRead,
                     LucideIconKind.Image,

@@ -11,6 +11,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Prompting.Documents;
 using Lucide.Avalonia;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Everywhere.Harness;
 
@@ -41,14 +42,48 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
 
         _functionsSource.Edit(list =>
         {
-            list.Add(new BuiltInChatFunction(SearchFilesAsync, ChatFunctionPermissions.FileRead));
-            list.Add(new BuiltInChatFunction(GetFileInformationAsync, ChatFunctionPermissions.FileRead));
-            list.Add(new BuiltInChatFunction(SearchFileContentAsync, ChatFunctionPermissions.FileRead));
-            list.Add(new BuiltInChatFunction(ReadFileAsync, ChatFunctionPermissions.FileRead));
-            list.Add(new BuiltInChatFunction(TransferPathAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
-            list.Add(new BuiltInChatFunction(DeletePathsAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
-            list.Add(new BuiltInChatFunction(CreateDirectoryAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
-            list.Add(new BuiltInChatFunction(ApplyPatchAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
+            list.Add(
+                new NativeChatFunction(
+                    SearchFilesAsync,
+                    ChatFunctionPermissions.FileRead,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    GetFileInformationAsync,
+                    ChatFunctionPermissions.FileRead,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    SearchFileContentAsync,
+                    ChatFunctionPermissions.FileRead,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    ReadFileAsync,
+                    ChatFunctionPermissions.FileRead,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    TransferPathAsync,
+                    ChatFunctionPermissions.FileAccess,
+                    beforeCallHook: CreateFileTransferPreview,
+                    permissionConsentHook: BypassPermissionConsentHook));
+            list.Add(
+                new NativeChatFunction(
+                    DeletePathsAsync,
+                    ChatFunctionPermissions.FileAccess,
+                    permissionConsentHook: BypassPermissionConsentHook));
+            list.Add(
+                new NativeChatFunction(
+                    CreateDirectoryAsync,
+                    ChatFunctionPermissions.FileAccess,
+                    beforeCallHook: CreateFilePreview,
+                    permissionConsentHook: BypassPermissionConsentHook));
+            list.Add(
+                new NativeChatFunction(
+                    ApplyPatchAsync,
+                    ChatFunctionPermissions.FileAccess,
+                    permissionConsentHook: BypassPermissionConsentHook));
         });
     }
 
@@ -57,7 +92,6 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     [ChatFunction("search_files")]
     [Description("Search for files and directories in a path matching a regex. Common build and hidden folders are ignored.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Header, LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> SearchFilesAsync(
         [FromChatServices] IChatPluginUserInterface userInterface,
         [FromChatServices] ChatContext chatContext,
@@ -136,7 +170,6 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> GetFileInformationAsync(
         [FromChatServices] IChatPluginUserInterface userInterface,
         [FromChatServices] ChatContext chatContext,
@@ -157,7 +190,6 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> SearchFileContentAsync(
         [FromChatServices] IChatPluginUserInterface userInterface,
         [FromChatServices] ChatContext chatContext,
@@ -254,7 +286,6 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         To see an image, use `view_image` when available.
         """)]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> ReadFileAsync(
         [FromChatServices] IChatPluginUserInterface userInterface,
         [FromChatServices] ChatContext chatContext,
@@ -303,7 +334,6 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileTransferRenderer))]
     private async Task TransferPathAsync(
         [FromChatServices] IChatPluginUserInterface userInterface,
         [FromChatServices] IStorageProvider storageProvider,
@@ -569,7 +599,6 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task CreateDirectoryAsync(
         [FromChatServices] IChatPluginUserInterface userInterface,
         [FromChatServices] IStorageProvider storageProvider,
@@ -1619,31 +1648,28 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     /// <summary>
     /// Renders the path argument as a friendly file reference in the chat UI.
     /// </summary>
-    private sealed class FileRenderer : IFriendlyFunctionCallContentRenderer
+    private static ChatPluginDisplayBlock? CreateFilePreview(FunctionCallContent content)
     {
-        public ChatPluginDisplayBlock? Render(IReadOnlyDictionary<string, object?> arguments) =>
-            arguments.TryGetString("path", out var path) ?
-                new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(path)) :
-                null;
+        return content.Arguments?.TryGetString("path", out var path) == true ?
+            new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(path)) :
+            null;
     }
 
     /// <summary>
     /// Renders both endpoints and the requested direction of a file transfer.
     /// </summary>
-    private sealed class FileTransferRenderer : IFriendlyFunctionCallContentRenderer
+    private static ChatPluginDisplayBlock? CreateFileTransferPreview(FunctionCallContent content)
     {
-        public ChatPluginDisplayBlock? Render(IReadOnlyDictionary<string, object?> arguments)
+        if (content.Arguments is not { } arguments ||
+            !arguments.TryGetString("source", out var source) ||
+            !arguments.TryGetString("destination", out var destination) ||
+            !arguments.TryGetValue("operation", out var operationValue) ||
+            !Enum.TryParse<FileTransferOperation>(operationValue?.ToString(), ignoreCase: true, out var operation))
         {
-            if (!arguments.TryGetString("source", out var source) ||
-                !arguments.TryGetString("destination", out var destination) ||
-                !arguments.TryGetValue("operation", out var operationValue) ||
-                !Enum.TryParse<FileTransferOperation>(operationValue?.ToString(), ignoreCase: true, out var operation))
-            {
-                return null;
-            }
-
-            return CreateFileTransferContent(new ChatPluginFileReference(source), new ChatPluginFileReference(destination), operation);
+            return null;
         }
+
+        return CreateFileTransferContent(new ChatPluginFileReference(source), new ChatPluginFileReference(destination), operation);
     }
 
     [LoggerMessage(LogLevel.Debug, "Searching files in path: {Path} with pattern: {SearchPattern}, skip: {Skip}, maxCount: {MaxCount}")]

@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Reflection;
+﻿using System.Reflection;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Harness;
@@ -73,15 +72,21 @@ public abstract class ChatFunction
     public string Name => Function.Name;
 
     /// <summary>
-    /// Converts the function call content to a user-friendly format for UI display.
+    /// Gets the optional callback that creates display content before approval and execution.
     /// </summary>
-    public virtual ChatPluginDisplayBlock? GetFriendlyCallContent(FunctionCallContent content) => null;
+    public virtual BeforeCallHook? BeforeCallHook => null;
+
+    /// <summary>
+    /// Gets the optional consent callback. A null result continues normal approval;
+    /// true allows the call and false denies it without requesting consent.
+    /// </summary>
+    public virtual PermissionConsentHook? PermissionConsentHook => null;
 }
 
 /// <summary>
-/// Wraps a native C# method or <see cref="AIFunction"/> as an Everywhere built-in tool.
+/// Wraps a native C# method or <see cref="AIFunction"/> as an Everywhere managed tool function.
 /// </summary>
-public sealed class BuiltInChatFunction : ChatFunction
+public sealed class NativeChatFunction : ChatFunction
 {
     public override IDynamicLocaleKey HeaderKey { get; }
 
@@ -91,17 +96,16 @@ public sealed class BuiltInChatFunction : ChatFunction
 
     public override AIFunction Function { get; }
 
-    /// <summary>
-    /// Gets an optional predicate used to inspect the call before prompting the user for permission consent.
-    /// </summary>
-    public Func<FunctionCallContent, bool?>? OnPermissionConsent { get; init; }
+    /// <inheritdoc />
+    public override BeforeCallHook? BeforeCallHook { get; }
 
-    private readonly IFriendlyFunctionCallContentRenderer? _renderer;
+    /// <inheritdoc />
+    public override PermissionConsentHook? PermissionConsentHook { get; }
 
     /// <summary>
     /// Registers an existing MEAI <see cref="AIFunction"/> with localized presentation and approval policy.
     /// </summary>
-    public BuiltInChatFunction(
+    public NativeChatFunction(
         AIFunction function,
         ChatFunctionPermissions permissions,
         IDynamicLocaleKey? headerKey = null,
@@ -117,7 +121,7 @@ public sealed class BuiltInChatFunction : ChatFunction
         }
     }
 
-    public BuiltInChatFunction(
+    public NativeChatFunction(
         Delegate method,
         ChatFunctionPermissions permissions,
         LucideIconKind? icon = null,
@@ -129,7 +133,8 @@ public sealed class BuiltInChatFunction : ChatFunction
         bool supportsParallelInvoke = false,
         bool supportsBackgrounding = false,
         Modalities requiredModalities = Modalities.None,
-        Func<FunctionCallContent, bool?>? onPermissionConsent = null,
+        BeforeCallHook? beforeCallHook = null,
+        PermissionConsentHook? permissionConsentHook = null,
         string? functionName = null,
         string? description = null,
         IDynamicLocaleKey? headerKey = null,
@@ -174,28 +179,10 @@ public sealed class BuiltInChatFunction : ChatFunction
         SupportsParallelInvoke = supportsParallelInvoke;
         SupportsBackgrounding = supportsBackgrounding;
         RequiredModalities = requiredModalities;
-        OnPermissionConsent = onPermissionConsent;
+        BeforeCallHook = beforeCallHook;
+        PermissionConsentHook = permissionConsentHook;
 
         Function = CreateNativeFunction(method, resolvedFunctionName, description);
-
-        if (method.Method.GetCustomAttributes<FriendlyFunctionCallContentRendererAttribute>(false).FirstOrDefault() is
-            { RendererType: { } rendererType })
-        {
-            if (!typeof(IFriendlyFunctionCallContentRenderer).IsAssignableFrom(rendererType))
-            {
-                throw new InvalidOperationException(
-                    $"The renderer type '{rendererType.FullName}' does not implement {nameof(IFriendlyFunctionCallContentRenderer)}.");
-            }
-
-            _renderer = Activator.CreateInstance(rendererType) as IFriendlyFunctionCallContentRenderer;
-        }
-    }
-
-    public override ChatPluginDisplayBlock? GetFriendlyCallContent(FunctionCallContent content)
-    {
-        if (content.Arguments is not { Count: > 0 } arguments) return base.GetFriendlyCallContent(content);
-        var readOnlyArguments = arguments as IReadOnlyDictionary<string, object?> ?? new ReadOnlyDictionary<string, object?>(arguments);
-        return _renderer?.Render(readOnlyArguments) ?? base.GetFriendlyCallContent(content);
     }
 
     /// <summary>
@@ -254,6 +241,9 @@ public class McpChatFunction : ChatFunction
 
     public override ManagedMcpClientTool Function => _tool;
 
+    /// <inheritdoc />
+    public override PermissionConsentHook PermissionConsentHook => PermissionConsent;
+
     public string OriginalName => _tool.ProtocolTool.Name;
 
     private ManagedMcpClientTool _tool;
@@ -273,4 +263,21 @@ public class McpChatFunction : ChatFunction
     /// Captures the current tool without mutating the live settings UI descriptor on later discovery.
     /// </summary>
     public McpChatFunction Snapshot() => (McpChatFunction)MemberwiseClone();
+
+    /// <summary>
+    /// Prepares server-specific consent using snapshot values, without retaining the live MCP plugin.
+    /// The host handles the resulting tool-group approval like any other native or remote tool.
+    /// </summary>
+    private static bool? PermissionConsent(FunctionCallContext context, PermissionConsentRequest request)
+    {
+        request.HeaderKey = new FormattedDynamicLocaleKey(LocaleKey.ChatPluginConsentRequest_MCP_Header, context.ChatFunction.HeaderKey);
+        request.CustomOptions =
+        [
+            new RequestConsentCustomOption(
+                ToolConsentOption.BypassPluginApproval,
+                new FormattedDynamicLocaleKey(LocaleKey.ChatPluginConsentRequest_MCP_BypassServerApproval_Header, context.ChatPlugin.HeaderKey),
+                null)
+        ];
+        return null;
+    }
 }

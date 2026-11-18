@@ -43,13 +43,13 @@ public sealed class WebPlugin : BuiltInChatPlugin
         _functionsSource.Edit(list =>
         {
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     SearchAsync,
                     ChatFunctionPermissions.NetworkAccess,
                     supportsParallelInvoke: true,
-                    onPermissionConsent: _ => true));
+                    permissionConsentHook: BypassPermissionConsentHook));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ExtractAsync,
                     ChatFunctionPermissions.NetworkAccess));
         });

@@ -6,6 +6,7 @@ using Everywhere.Chat.Permissions;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Everywhere.Utilities;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
@@ -142,15 +143,22 @@ public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction
         _functionsConnection.Dispose();
         GC.SuppressFinalize(this);
     }
+
+    /// <summary>
+    /// Utility hook to bypass permission consent.
+    /// Used when a function needs to handle its own permission consent logic, or when the plugin is trusted and does not require user consent.
+    /// </summary>
+    /// <param name="context">The current tool invocation.</param>
+    /// <param name="request">The proposed consent request.</param>
+    /// <returns>Approval for this invocation.</returns>
+    protected static bool? BypassPermissionConsentHook(FunctionCallContext context, PermissionConsentRequest request) => true;
 }
 
 /// <summary>
-/// Chat plugin implemented natively in Everywhere.
+/// Common implementation for in-process managed chat tools.
 /// </summary>
-public abstract class BuiltInChatPlugin(string name) : ChatPlugin<BuiltInChatFunction>(name)
+public abstract class NativeChatPlugin(string name) : ChatPlugin<NativeChatFunction>(name)
 {
-    public override sealed string Key => $"builtin.{Name}";
-
     /// <summary>
     /// Gets whether this plugin should be visible to users in the UI.
     /// </summary>
@@ -167,6 +175,14 @@ public abstract class BuiltInChatPlugin(string name) : ChatPlugin<BuiltInChatFun
             return result;
         }
     }
+}
+
+/// <summary>
+/// Chat plugin implemented natively in Everywhere.
+/// </summary>
+public abstract class BuiltInChatPlugin(string name) : NativeChatPlugin(name)
+{
+    public override sealed string Key => $"builtin.{Name}";
 }
 
 /// <summary>

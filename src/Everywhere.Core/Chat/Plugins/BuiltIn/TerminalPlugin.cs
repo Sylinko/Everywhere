@@ -38,12 +38,12 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         _logger = logger;
 
         _functionsSource.Add(
-            new BuiltInChatFunction(
+            new NativeChatFunction(
                 ExecuteInTerminalAsync,
                 permissions: ChatFunctionPermissions.ShellExecute,
                 canBypassApproval: false,
                 supportsBackgrounding: true,
-                onPermissionConsent: _ => true));
+                permissionConsentHook: BypassPermissionConsentHook));
     }
 
     public override ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(CancellationToken cancellationToken)
@@ -65,7 +65,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             _ => "Prefer ; when chaining commands on one line"
         }}";
 
-        var runtimeFunction = new BuiltInChatFunction(
+        var runtimeFunction = new NativeChatFunction(
             ExecuteInTerminalAsync,
             configuredFunction.Permissions,
             icon: configuredFunction.Icon,
@@ -75,7 +75,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             isExperimental: configuredFunction.IsExperimental,
             isVisible: configuredFunction.IsVisible,
             supportsBackgrounding: configuredFunction.SupportsBackgrounding,
-            onPermissionConsent: configuredFunction.OnPermissionConsent,
+            permissionConsentHook: configuredFunction.PermissionConsentHook,
             functionName: "execute_in_terminal",
             description: description,
             headerKey: configuredFunction.HeaderKey,

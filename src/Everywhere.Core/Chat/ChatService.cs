@@ -1843,8 +1843,7 @@ public sealed partial class ChatService : IChatService
                         consentDecision.FormatReason("Tool execution was denied by approval.")), null);
                 }
                 case ConsentDecisionKind.Custom when
-                    context.ChatPlugin.IsMcp &&
-                    consentDecision.CustomOption?.Key is ToolConsentCustomOption.BypassMcpServerApproval:
+                    consentDecision.CustomOption?.Key is ToolConsentOption.BypassPluginApproval:
                 {
                     ToolBypassApprovalPolicy.SetPluginRule(_settings.Plugin.ToolBypassApprovalRulesets, context.ChatPlugin, true);
                     break;
@@ -1927,52 +1926,18 @@ public sealed partial class ChatService : IChatService
                 return Task.FromResult(ConsentDecision.AllowOnce);
             }
 
-            FormattedDynamicLocaleKey headerKey;
-            IReadOnlyList<RequestConsentCustomOption>? customOptions = null;
-            if (context.ChatPlugin.IsMcp)
+            var request = new PermissionConsentRequest(context.ChatFunction);
+            if (context.ChatFunction.PermissionConsentHook?.Invoke(context, request) is { } isAllowed)
             {
-                headerKey = new FormattedDynamicLocaleKey(LocaleKey.ChatPluginConsentRequest_MCP_Header, context.ChatFunction.HeaderKey);
-                customOptions =
-                [
-                    new RequestConsentCustomOption(
-                        ToolConsentCustomOption.BypassMcpServerApproval,
-                        new FormattedDynamicLocaleKey(
-                            LocaleKey.ChatPluginConsentRequest_MCP_BypassServerApproval_Header,
-                            context.ChatPlugin.HeaderKey),
-                        null)
-                ];
-            }
-            else
-            {
-                if (context.ChatFunction is BuiltInChatFunction { OnPermissionConsent: { } onPermissionConsent })
-                {
-                    return onPermissionConsent(content) switch
-                    {
-                        true => Task.FromResult(ConsentDecision.AllowOnce),
-                        false => Task.FromResult(ConsentDecision.Deny()),
-                        null => Task.FromResult(ConsentDecision.AllowOnce)
-                    };
-                }
-
-                if (context.ChatFunction.Permissions == ChatFunctionPermissions.None)
-                {
-                    headerKey = new FormattedDynamicLocaleKey(LocaleKey.ChatPluginConsentRequest_CommonNone_Header, context.ChatFunction.HeaderKey);
-                }
-                else
-                {
-                    headerKey = new FormattedDynamicLocaleKey(
-                        LocaleKey.ChatPluginConsentRequest_Common_Header,
-                        context.ChatFunction.HeaderKey,
-                        new DirectLocaleKey(context.ChatFunction.Permissions.I18N(LocaleKey.Common_Comma.I18N(), true)));
-                }
+                return Task.FromResult(isAllowed ? ConsentDecision.AllowOnce : ConsentDecision.Deny());
             }
 
             if (context.ApprovalMode == ToolApprovalMode.Auto) return ReviewOuterConsentAsync();
             return context.WaitForUserInputAsync(() => context.ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
-                headerKey,
+                request.HeaderKey,
                 displayBlock,
-                RequestConsentRememberMasks.All,
-                customOptions,
+                request.RememberMasks,
+                request.CustomOptions,
                 cancellationToken));
         }
 
@@ -2158,11 +2123,6 @@ public sealed partial class ChatService : IChatService
     private static KeyValuePair<string, object?> GetModelTag(string? modelId) => new("gen_ai.request.model", modelId);
 
     #endregion
-
-    private enum ToolConsentCustomOption
-    {
-        BypassMcpServerApproval
-    }
 
     private sealed record ModelInvocationResult(
         IReadOnlyList<MEAI.FunctionCallContent> FunctionCalls,

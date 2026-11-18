@@ -177,7 +177,7 @@ partial class ChatService
                     });
 
                     using var ambient = generationContext.EnterFunctionCallContext(context);
-                    var friendly = binding.Function.GetFriendlyCallContent(call);
+                    var friendly = binding.Function.BeforeCallHook?.Invoke(call);
                     var executionTask = InvokeFunctionAsync(session, call, context, friendly, jobCts.Token);
                     if (supportsBackgrounding)
                     {

@@ -196,10 +196,10 @@ public sealed class MultiProviderHarnessTests
     }
 
     [Test]
-    public async Task BuiltInChatFunction_ExcludesServiceParametersFromSchemaAndNormalizesMissingRequiredArgument()
+    public async Task NativeChatFunction_ExcludesServiceParametersFromSchemaAndNormalizesMissingRequiredArgument()
     {
         var probe = new ProbeTools();
-        var fn = new BuiltInChatFunction(probe.Execute, ChatFunctionPermissions.None);
+        var fn = new NativeChatFunction(probe.Execute, ChatFunctionPermissions.None);
         var schema = fn.Function.JsonSchema;
 
         using (Assert.EnterMultipleScope())
