@@ -1,10 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Text.Json;
 using Everywhere.Automation.TestApp;
-using Everywhere.Chat;
 #if WINDOWS
-using Everywhere.Windows.Automation;
 using PlatformVisualElementBackend = Everywhere.Windows.Automation.WindowsVisualElementBackend;
 #elif MACOS
 using Everywhere.Mac.Automation;
@@ -18,6 +17,11 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
     public int TargetCount => _context.TargetCount;
 
     public int RetainedTurnCount => _context.RetainedTurnCount;
+
+    private static string WebViewTestAppPath { get; } = typeof(WebViewProbeSession).Assembly
+        .GetCustomAttributes<AssemblyMetadataAttribute>()
+        .FirstOrDefault(attribute => attribute.Key == nameof(WebViewTestAppPath))?.Value
+        ?? throw new InvalidOperationException("The probe assembly is missing the WebView TestApp executable path.");
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly PlatformVisualElementBackend _backend = new();
@@ -44,7 +48,7 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
             TestAppStatus status;
             if (_controller is null)
             {
-                var started = await TestAppProcessController.StartAsync(WebViewTestAppPath.Executable, "real-web", 0, options.NavigationTimeout, cancellationToken, "--url", uri.AbsoluteUri);
+                var started = await TestAppProcessController.StartAsync(WebViewTestAppPath, "real-web", 0, options.NavigationTimeout, cancellationToken, "--url", uri.AbsoluteUri);
                 _controller = started.Controller;
                 status = started.ReadyStatus;
             }
@@ -255,7 +259,7 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
     {
         if (_controller is not null) return;
         var uri = options.Addresses[0];
-        var started = await TestAppProcessController.StartAsync(WebViewTestAppPath.Executable, "real-web", 0, options.NavigationTimeout, cancellationToken, "--url", uri.AbsoluteUri);
+        var started = await TestAppProcessController.StartAsync(WebViewTestAppPath, "real-web", 0, options.NavigationTimeout, cancellationToken, "--url", uri.AbsoluteUri);
         _controller = started.Controller;
         _status = started.ReadyStatus;
         await Task.Delay(options.SettleDelay, cancellationToken);

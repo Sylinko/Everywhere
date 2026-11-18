@@ -48,8 +48,8 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
 
     private static void Emit(SourceProductionContext ctx, Compilation compilation)
     {
-        var settingsType = compilation.GetTypeByMetadataName("Everywhere.Configuration.Settings");
-        if (settingsType is null || !settingsType.Locations.Any(static location => location.IsInSource))
+        var settingsType = compilation.Assembly.GetTypeByMetadataName("Everywhere.Configuration.Settings");
+        if (settingsType is null)
         {
             return;
         }
