@@ -11,6 +11,7 @@
     <PackageReference Include="DynamicData"/>
     <PackageReference Include="MessagePack"/>
     <PackageReference Include="MessagePackAnalyzer" PrivateAssets="all"/>
+    <PackageReference Include="System.Reactive"/>
     <PackageReference Include="ZLinq"/>
   </ItemGroup>
 
