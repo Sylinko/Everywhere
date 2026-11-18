@@ -4,6 +4,7 @@ using System.IO.Pipes;
 using System.Security.Cryptography;
 using System.Text;
 using Everywhere.Common;
+using Everywhere.Initialization;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.Utilities;
@@ -26,7 +27,7 @@ public sealed partial class WatchdogManager : IWatchdogManager, IAsyncInitialize
     private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(3);
 
-    AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
 
     private AtomicBoolean IsDisposed => new(ref _isDisposed);
     private AtomicBoolean IsInitialized => new(ref _isInitialized);
@@ -518,7 +519,7 @@ public static class WatchdogServiceCollectionExtensions
     {
         services.AddSingleton<WatchdogManager>();
         services.AddSingleton<IWatchdogManager>(serviceProvider => serviceProvider.GetRequiredService<WatchdogManager>());
-        services.AddTransient<IAsyncInitializer>(serviceProvider => serviceProvider.GetRequiredService<WatchdogManager>());
+        services.AddAsyncInitializer<WatchdogManager>();
         return services;
     }
 }

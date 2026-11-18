@@ -15,6 +15,7 @@ using Everywhere.Chat.Plugins;
 using Everywhere.I18N;
 using Lucide.Avalonia;
 using System.Text;
+using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Harness;
 using Microsoft.Extensions.DependencyInjection;
@@ -812,7 +813,7 @@ public sealed class ChatV2MigrationTests
 
         public Task InitializeAsync()
         {
-            return new ChatV2StoreInitializer(Factory, LegacyPath, Logger).InitializeAsync(CancellationToken.None);
+            return ((IAsyncInitializer)new ChatV2StoreInitializer(Factory, LegacyPath, Logger)).InitializeAsync(CancellationToken.None);
         }
 
         public async Task<SqliteConnection> OpenLegacyAsync()

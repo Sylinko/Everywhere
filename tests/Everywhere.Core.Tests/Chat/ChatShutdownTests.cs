@@ -50,11 +50,12 @@ public sealed class ChatShutdownTests
             var factory = services.GetRequiredService<IDbContextFactory<ChatV2DbContext>>();
             var manager = services.GetRequiredService<ChatContextManager>();
             var store = services.GetRequiredService<PersistentKeyValueStorage>();
-            var initializers = new IAsyncInitializer[]
+            var chatStoreInitializer = new ChatV2StoreInitializer(factory, null, NullLogger<ChatV2StoreInitializer>.Instance);
+            var initializers = new (AsyncInitializerIndex Index, Func<CancellationToken, Task> InitializeAsync)[]
             {
-                manager,
-                new ChatV2StoreInitializer(factory, null, NullLogger<ChatV2StoreInitializer>.Instance),
-                store
+                (GetInitializerIndex<ChatContextManager>(), ct => ((IAsyncInitializer)manager).InitializeAsync(ct)),
+                (GetInitializerIndex<ChatV2StoreInitializer>(), ct => ((IAsyncInitializer)chatStoreInitializer).InitializeAsync(ct)),
+                (GetInitializerIndex<PersistentKeyValueStorage>(), ct => ((IAsyncInitializer)store).InitializeAsync(ct))
             };
             foreach (var initializer in initializers.OrderBy(initializer => initializer.Index))
             {
@@ -76,6 +77,8 @@ public sealed class ChatShutdownTests
             serviceField.SetValue(null, previous);
         }
     }
+
+    private static AsyncInitializerIndex GetInitializerIndex<T>() where T : IAsyncInitializer => T.Index;
 
     [AvaloniaTest]
     public async Task DisposeAsync_ThroughServiceProvider_PersistsFinalChatStatisticsAndPendingRetry()

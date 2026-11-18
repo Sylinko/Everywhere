@@ -73,8 +73,6 @@ public sealed partial class OAuthCloudClient :
     private readonly DynamicNotificationManager _notificationManager = new(new InMemoryKeyValueStorage());
     private readonly SemaphoreSlim _loginLock = new(1, 1); // Concurrency control for the UI entry point to prevent multiple login windows
     private readonly SemaphoreSlim _userDataLock = new(1, 1); // Prevent concurrent user data refreshes
-    private readonly Lock _initializeTaskGate = new();
-    private Task? _initializeTask;
 
     private static readonly CloudClientLoginStatus SignedOutStatus =
         string.IsNullOrEmpty(CloudConstants.AccountBaseUrl) || string.IsNullOrEmpty(CloudConstants.ClientId) ?
@@ -313,33 +311,29 @@ public sealed partial class OAuthCloudClient :
         _activeAuthFlow?.HandleCallback(oauth.Url);
     }
 
-    #region IAsyncInitializer Implementation
+    #region IAsyncInitializer
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 1;
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Network + 1;
 
     /// <summary>
     /// Initializes the client by attempting a silent login using stored tokens.
     /// This allows the app to restore the user's session without requiring them to log in again.
     /// </summary>
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         // Do not open the OS token vault or attempt silent login in a local-only build.
         if (SignedOutStatus == CloudClientLoginStatus.NotConfigured) return Task.CompletedTask;
 
         // Fire and forget the initialization to avoid blocking app startup.
-        lock (_initializeTaskGate)
-        {
-            _initializeTask ??= InitializeCoreAsync();
-            _initializeTask.Detach(_logger.ToExceptionHandler());
-        }
-
+        InitializeCoreAsync(cancellationToken).Detach(_logger.ToExceptionHandler());
         return Task.CompletedTask;
     }
 
-    private async Task InitializeCoreAsync()
+    private async Task InitializeCoreAsync(CancellationToken cancellationToken)
     {
-        if (!await _loginLock.WaitAsync(0)) return; // Prevent reentry for initialization
+        if (!await _loginLock.WaitAsync(0, cancellationToken)) return; // Prevent reentry for initialization
 
         try
         {
@@ -348,9 +342,10 @@ public sealed partial class OAuthCloudClient :
 #if LINUX
             // Secret Service may wait for an unavailable or locked keyring. Keep the native
             // synchronous lookup off the UI thread; resume here before updating login state.
-            await Task.Run(_session.LoadFromVault).ConfigureAwait(true);
+            await Task.Run(_session.LoadFromVault, cancellationToken).ConfigureAwait(true);
 #else
             _session.LoadFromVault();
+            cancellationToken.ThrowIfCancellationRequested();
 #endif
 
             // Try to refresh token and restore user data silently if a refresh token exists
@@ -359,7 +354,7 @@ public sealed partial class OAuthCloudClient :
                 TokenData? tokenData;
                 try
                 {
-                    tokenData = await _session.GetValidTokenDataAsync(true, CancellationToken.None);
+                    tokenData = await _session.GetValidTokenDataAsync(true, cancellationToken);
                 }
                 catch (OAuthTokenRequestException ex) when (ex.IsRefreshTokenRejected)
                 {
@@ -371,13 +366,17 @@ public sealed partial class OAuthCloudClient :
 
                 if (tokenData is not null)
                 {
-                    await CompleteLoginAsync(true, CancellationToken.None);
+                    await CompleteLoginAsync(true, cancellationToken);
                     return;
                 }
             }
 
             LoginStatus = CloudClientLoginStatus.NotLoggedIn;
             LastLoginErrorKey = null;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Application shutdown is not a login failure.
         }
         catch (Exception ex)
         {

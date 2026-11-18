@@ -210,11 +210,13 @@ public sealed class SettingsEngineTests
             .BuildServiceProvider();
 
         Assert.That(serviceProvider.GetRequiredService<Settings>(), Is.Not.Null);
-        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<SettingsEngine>());
 
-        var initializers = serviceProvider.GetServices<IAsyncInitializer>().ToList();
-        Assert.That(initializers.OfType<SettingsEngine>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Settings));
-        Assert.That(initializers.OfType<PersistentKeyValueStorage>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Database - 1));
+        var registrations = serviceProvider.GetServices<AsyncInitializerRegistration>().ToList();
+        Assert.That(registrations.Select(r => r.Index), Is.EqualTo(new[]
+        {
+            AsyncInitializerIndex.Settings,
+            AsyncInitializerIndex.Database - 1
+        }));
     }
 
     [Test]

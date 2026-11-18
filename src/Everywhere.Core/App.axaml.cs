@@ -1,19 +1,16 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.AttachedProperties;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
-using Everywhere.ProcessIsolation.Activation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.Views;
@@ -27,7 +24,7 @@ using ClassicDiagnostics.Avalonia;
 
 namespace Everywhere;
 
-public class App(IServiceProvider serviceProvider) : Application, IRecipient<ApplicationMessage>
+public sealed partial class App(IServiceProvider serviceProvider) : Application, IRecipient<ApplicationMessage>
 {
     public static string Version => RuntimeConstants.Version.ToString();
 
@@ -47,18 +44,9 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     private static ThemeManager? _themeManager;
 
     private readonly Dictionary<Type, TransientWindow> _transientWindows = new();
-    private readonly CancellationTokenSource _initializationCancellation = new();
     private readonly IKeyValueStorage _keyValueStorage = serviceProvider.GetRequiredService<IKeyValueStorage>();
     private readonly INativeHelper _nativeHelper = serviceProvider.GetRequiredService<INativeHelper>();
     private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
-
-    // Platform entry points opt in by registering their externally owned RPC listener.
-    // macOS delivers activation through native application events instead.
-    private readonly ApplicationActivationServer? _activationServer = serviceProvider.GetService<ApplicationActivationServer>();
-
-    private Task? _initializationTask;
-    private Task? _activationTask;
-    private bool _isShutdownInProgress;
 
     // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
     // arrive while the first error dialog is still open; without this guard every nested exception
@@ -97,70 +85,6 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
         WeakReferenceMessenger.Default.Register(this);
 
         InitializeMarkdown();
-    }
-
-    /// <summary>
-    /// Requests application shutdown through the active Avalonia lifetime.
-    /// </summary>
-    public void Shutdown(int exitCode = 0)
-    {
-        Dispatcher.UIThread.VerifyAccess();
-        if (!_isShutdownInProgress && ApplicationLifetime is IControlledApplicationLifetime lifetime)
-        {
-            _isShutdownInProgress = true;
-            ShutdownCoreAsync(lifetime, exitCode).Detach(NativeMessageBox.ExceptionHandler);
-        }
-    }
-
-    private async Task ShutdownCoreAsync(IControlledApplicationLifetime lifetime, int exitCode)
-    {
-        try
-        {
-            // Startup can own a dialog whose cancellation and continuations require the dispatcher.
-            // Drain startup before stopping the UI loop.
-            await _initializationCancellation.CancelAsync();
-            if (_initializationTask is { } initializationTask)
-            {
-                await initializationTask;
-            }
-
-            lifetime.Shutdown(exitCode);
-        }
-        catch
-        {
-            _isShutdownInProgress = false;
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Cancels and waits for the startup sequence before the process entry point
-    /// disposes the dependency injection container after Avalonia exits.
-    /// </summary>
-    public async Task WaitForShutdownAsync()
-    {
-        await _initializationCancellation.CancelAsync().ConfigureAwait(false);
-
-        if (_initializationTask is { } initializationTask)
-        {
-            try
-            {
-                await initializationTask.ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (_initializationCancellation.IsCancellationRequested)
-            {
-            }
-        }
-
-        if (_activationServer is not null)
-        {
-            await _activationServer.StopAsync().ConfigureAwait(false);
-        }
-
-        if (_activationTask is not null)
-        {
-            await _activationTask.ConfigureAwait(false);
-        }
     }
 
     private void HandleTransientWindowClosed(TransientWindow sender, RoutedEventArgs args)
@@ -289,127 +213,6 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
             });
     }
 
-    public override void OnFrameworkInitializationCompleted()
-    {
-        base.OnFrameworkInitializationCompleted();
-
-        switch (ApplicationLifetime)
-        {
-            case IClassicDesktopStyleApplicationLifetime desktop:
-            {
-                desktop.ShutdownRequested += (_, args) =>
-                {
-                    if (_initializationTask is not { IsCompleted: false })
-                    {
-                        return;
-                    }
-
-                    // Only unfinished startup needs the dispatcher to drain before exit.
-                    // In normal operation, let the original request complete, including OS shutdown.
-                    args.Cancel = true;
-                    Shutdown();
-                };
-                desktop.Exit += (_, _) => _initializationCancellation.Cancel();
-
-                if (!Design.IsDesignMode)
-                {
-                    // SetupWithLifetime invokes this callback before ClassicDesktopLifetime starts
-                    // its main loop. Queue startup so all continuations run under Avalonia's UI
-                    // synchronization context without requiring a nested dispatcher frame.
-                    Dispatcher.UIThread.Post(
-                        () =>
-                        {
-                            _initializationTask = InitializeAppAsync(_initializationCancellation.Token);
-                            _initializationTask.Detach(NativeMessageBox.ExceptionHandler);
-                        },
-                        DispatcherPriority.Normal);
-                }
-
-                break;
-            }
-        }
-
-        async Task InitializeAppAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                foreach (var group in serviceProvider
-                             .GetRequiredService<IEnumerable<IAsyncInitializer>>()
-                             .GroupBy(i => i.Index)
-                             .OrderBy(g => g.Key))
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    await Task.WhenAll(group.Select(i => i.InitializeAsync(cancellationToken)));
-                }
-
-                cancellationToken.ThrowIfCancellationRequested();
-                RecordAppLaunchMetric();
-                TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
-                ShowMainWindowOnNeeded();
-
-                if (_activationServer is not null)
-                {
-                    _activationTask = DispatchActivationsAsync(_activationServer, cancellationToken);
-                    _activationTask.Detach(NativeMessageBox.ExceptionHandler);
-                }
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                Log.Logger.Information("Application initialization was canceled.");
-            }
-            catch (Exception ex)
-            {
-                Log.Logger.Fatal(ex, "Failed to initialize application");
-                NativeMessageBox.Show(
-                    "Initialization Error",
-                    $"An error occurred during application initialization:\n{ex.Message}\n\nPlease check the logs for more details.",
-                    NativeMessageBoxButtons.Ok,
-                    NativeMessageBoxIcon.Error);
-
-                // Do not make startup await a shutdown that is itself draining startup.
-                Dispatcher.UIThread.Post(() => Shutdown(1));
-            }
-        }
-    }
-
-    /// <summary>
-    /// Drains background ingress only after application recipients and the chat window are initialized.
-    /// Only message delivery enters Avalonia's UI thread. Cancellable dispatcher operations keep
-    /// the worker drainable after the desktop message loop exits.
-    /// </summary>
-    private async Task DispatchActivationsAsync(ApplicationActivationServer server, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await foreach (var request in server.ReadPendingAsync(cancellationToken).ConfigureAwait(false))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                ApplicationMessage message = request switch
-                {
-                    UrlCallbackActivationRequest callback => new UrlProtocolCallbackMessage(callback.Url),
-                    ShowChatWindowActivationRequest => new ShowWindowMessage(ShowWindowMessage.ChatWindow),
-                    _ => throw new NotSupportedException($"Unsupported activation request type: {request.GetType().FullName}")
-                };
-                await Dispatcher.UIThread.InvokeAsync(
-                    () =>
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        WeakReferenceMessenger.Default.Send(message);
-                    },
-                    DispatcherPriority.Normal,
-                    cancellationToken).GetTask().ConfigureAwait(false);
-            }
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-        catch (Exception exception)
-        {
-            Log.Logger.Fatal(exception, "Application activation delivery stopped.");
-            Dispatcher.UIThread.PostOnDemand(() => Shutdown(1));
-        }
-    }
-
     /// <summary>
     /// Show the main window if it was not shown before or the version has changed.
     /// </summary>
@@ -487,24 +290,33 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
     void IRecipient<ApplicationMessage>.Receive(ApplicationMessage message)
     {
-        if (message is ShowTerminalUpdateGuidanceMessage)
-        {
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                ShowMainWindow();
-                var mainView = serviceProvider.GetRequiredService<MainView>();
-                TerminalUpdateGuidance.ShowAsync(TopLevel.GetTopLevel(mainView)).Detach();
-            });
-            return;
-        }
+        if (_lifetime.IsCancellationRequested) return;
 
-        if (message is ShowWindowMessage { Name: ShowWindowMessage.MainWindow } showWindowMessage)
+        switch (message)
         {
-            Dispatcher.UIThread.Invoke(() =>
+            case ShowTerminalUpdateGuidanceMessage:
             {
-                ShowWindow<MainView>();
-                if (showWindowMessage.Route is not null) WeakReferenceMessenger.Default.Send(new MainViewNavigateMessage(showWindowMessage.Route));
-            });
+                Dispatcher.UIThread.PostOnDemand(() =>
+                {
+                    if (_lifetime.IsCancellationRequested) return;
+
+                    ShowMainWindow();
+                    var mainView = serviceProvider.GetRequiredService<MainView>();
+                    TerminalUpdateGuidance.ShowAsync(TopLevel.GetTopLevel(mainView)).Detach();
+                });
+                break;
+            }
+            case ShowWindowMessage { Name: ShowWindowMessage.MainWindow } showWindowMessage:
+            {
+                Dispatcher.UIThread.PostOnDemand(() =>
+                {
+                    if (_lifetime.IsCancellationRequested) return;
+
+                    ShowWindow<MainView>();
+                    if (showWindowMessage.Route is not null) WeakReferenceMessenger.Default.Send(new MainViewNavigateMessage(showWindowMessage.Route));
+                });
+                break;
+            }
         }
     }
 }

@@ -7,8 +7,18 @@ namespace Everywhere.Chat;
 
 partial class ChatContextManager
 {
+    #region IAsyncInitializer
+
     /// <inheritdoc />
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings + 2;
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Settings + 2;
+
+    /// <summary>
+    /// Restores the one unsent chat after storage initialization,
+    /// before windows can publish an input binding. It does not create a history row.
+    /// </summary>
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken) => InitializeAsync(cancellationToken);
+
+    #endregion
 
     /// <summary>
     /// Restores the one unsent chat after storage initialization,

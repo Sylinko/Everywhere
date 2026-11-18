@@ -19,12 +19,15 @@ public sealed class StatisticsDbInitializer(
     ILogger<StatisticsDbInitializer> logger
 ) : IAsyncInitializer
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Database;
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Database;
 
     /// <summary>
     /// Initializes the statistics database schema.
     /// </summary>
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    async Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -35,6 +38,8 @@ public sealed class StatisticsDbInitializer(
 
         logger.LogInformation("Statistics database initialized.");
     }
+
+    #endregion
 }
 
 /// <summary>
@@ -55,41 +60,52 @@ public sealed class StatisticsBackfiller(
     private const string BackfillCompletedAtKey = "BackfillCompletedAt";
     private const string CurrentBackfillVersion = "1";
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Database + 1;
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Database + 1;
 
     /// <summary>
     /// Starts backfill in the background after database initialization.
     /// </summary>
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        Task.Run(BackfillAsync, cancellationToken).Detach(logger.ToExceptionHandler());
+        Task.Run(() => BackfillAsync(cancellationToken), cancellationToken).Detach(logger.ToExceptionHandler());
         return Task.CompletedTask;
     }
 
-    internal async Task BackfillAsync()
+    #endregion
+
+    internal async Task BackfillAsync(CancellationToken cancellationToken)
     {
         try
         {
-            await using var statisticsDb = await statisticsDbFactory.CreateDbContextAsync();
-            var version = await statisticsDb.Metadata.AsNoTracking().FirstOrDefaultAsync(x => x.Key == BackfillVersionKey);
+            await using var statisticsDb = await statisticsDbFactory.CreateDbContextAsync(cancellationToken);
+            var version = await statisticsDb.Metadata.AsNoTracking().FirstOrDefaultAsync(x => x.Key == BackfillVersionKey, cancellationToken);
             if (version?.Value == CurrentBackfillVersion) return;
 
-            await using var chatDb = await chatDbFactory.CreateDbContextAsync();
-            var chats = await chatDb.Chats.AsNoTracking().ToListAsync();
+            await using var chatDb = await chatDbFactory.CreateDbContextAsync(cancellationToken);
+            var chats = await chatDb.Chats.AsNoTracking().ToListAsync(cancellationToken);
             foreach (var chat in chats)
             {
-                await BackfillTopicAsync(statisticsDb, chat);
-                await BackfillChatNodesAsync(statisticsDb, chatDb, chat);
+                cancellationToken.ThrowIfCancellationRequested();
+                await BackfillTopicAsync(statisticsDb, chat, cancellationToken);
+                await BackfillChatNodesAsync(statisticsDb, chatDb, chat, cancellationToken);
             }
 
-            await UpsertMetadataAsync(statisticsDb, BackfillVersionKey, CurrentBackfillVersion);
-            await UpsertMetadataAsync(statisticsDb, BackfillCompletedAtKey, DateTimeOffset.UtcNow.ToString("O"));
-            await statisticsDb.SaveChangesAsync();
+            await UpsertMetadataAsync(statisticsDb, BackfillVersionKey, CurrentBackfillVersion, cancellationToken);
+            await UpsertMetadataAsync(statisticsDb, BackfillCompletedAtKey, DateTimeOffset.UtcNow.ToString("O"), cancellationToken);
+            await statisticsDb.SaveChangesAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             notificationPublisher.Push(
                 "history_backfilled",
                 new DynamicLocaleKey(LocaleKey.HomeNotification_StatisticsBackfilled),
                 canDismiss: true);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Application shutdown interrupts backfill without reporting a failure.
         }
         catch (Exception ex)
         {
@@ -97,10 +113,13 @@ public sealed class StatisticsBackfiller(
         }
     }
 
-    private async static Task BackfillTopicAsync(StatisticsDbContext statisticsDb, ChatV2Entity chat)
+    private async static Task BackfillTopicAsync(
+        StatisticsDbContext statisticsDb,
+        ChatV2Entity chat,
+        CancellationToken cancellationToken)
     {
-        var device = await EnsureDeviceAsync(statisticsDb);
-        var exists = await statisticsDb.TopicEvents.AnyAsync(x => x.DeviceId == device.Id && x.ChatContextId == chat.Id);
+        var device = await EnsureDeviceAsync(statisticsDb, cancellationToken);
+        var exists = await statisticsDb.TopicEvents.AnyAsync(x => x.DeviceId == device.Id && x.ChatContextId == chat.Id, cancellationToken);
         if (exists) return;
 
         statisticsDb.TopicEvents.Add(
@@ -114,15 +133,20 @@ public sealed class StatisticsBackfiller(
             });
     }
 
-    private async Task BackfillChatNodesAsync(StatisticsDbContext statisticsDb, ChatV2DbContext chatDb, ChatV2Entity chat)
+    private async Task BackfillChatNodesAsync(
+        StatisticsDbContext statisticsDb,
+        ChatV2DbContext chatDb,
+        ChatV2Entity chat,
+        CancellationToken cancellationToken)
     {
-        var device = await EnsureDeviceAsync(statisticsDb);
-        var rows = await chatDb.Nodes.AsNoTracking().Where(x => x.ChatContextId == chat.Id).ToListAsync();
+        var device = await EnsureDeviceAsync(statisticsDb, cancellationToken);
+        var rows = await chatDb.Nodes.AsNoTracking().Where(x => x.ChatContextId == chat.Id).ToListAsync(cancellationToken);
         var rowsById = rows.AsValueEnumerable().ToDictionary(x => x.Id);
         var toolMessages = new List<(int SpanIndex, int MessageIndex, FunctionCallChatMessage Message)>();
 
         foreach (var assistantRow in rows.Where(x => x.MessageKind == ChatMessageKind.Assistant))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             AssistantChatMessage? assistantMessage;
             try
             {
@@ -197,7 +221,7 @@ public sealed class StatisticsBackfiller(
                 {
                     var call = calls[index];
                     var id = CreateBackfillToolInvocationId(assistantRow.Id, spanIndex, messageIndex, index, call.Id);
-                    if (await statisticsDb.ToolInvocationEvents.AnyAsync(x => x.Id == id)) continue;
+                    if (await statisticsDb.ToolInvocationEvents.AnyAsync(x => x.Id == id, cancellationToken)) continue;
 
                     // Exceptions were never serialized; this is the durable tool error indicator.
                     var isError = toolMessage.ErrorMessageKey is not null;
@@ -231,10 +255,10 @@ public sealed class StatisticsBackfiller(
         return new Guid(hash[..16]);
     }
 
-    private static async Task<DeviceEntity> EnsureDeviceAsync(StatisticsDbContext statisticsDb)
+    private static async Task<DeviceEntity> EnsureDeviceAsync(StatisticsDbContext statisticsDb, CancellationToken cancellationToken)
     {
         var deviceGuid = RuntimeConstants.DeviceId.SafeSubstring(0, 36);
-        var device = await statisticsDb.Devices.FirstOrDefaultAsync(x => x.DeviceGuid == deviceGuid);
+        var device = await statisticsDb.Devices.FirstOrDefaultAsync(x => x.DeviceGuid == deviceGuid, cancellationToken);
         if (device is not null) return device;
 
         var now = DateTimeOffset.UtcNow;
@@ -246,13 +270,17 @@ public sealed class StatisticsBackfiller(
             LastSeenAt = now
         };
         statisticsDb.Devices.Add(device);
-        await statisticsDb.SaveChangesAsync();
+        await statisticsDb.SaveChangesAsync(cancellationToken);
         return device;
     }
 
-    private static async Task UpsertMetadataAsync(StatisticsDbContext statisticsDb, string key, string value)
+    private static async Task UpsertMetadataAsync(
+        StatisticsDbContext statisticsDb,
+        string key,
+        string value,
+        CancellationToken cancellationToken)
     {
-        var entity = await statisticsDb.Metadata.FirstOrDefaultAsync(x => x.Key == key);
+        var entity = await statisticsDb.Metadata.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
         if (entity is null)
         {
             statisticsDb.Metadata.Add(

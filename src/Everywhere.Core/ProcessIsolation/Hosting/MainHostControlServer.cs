@@ -14,8 +14,6 @@ namespace Everywhere.ProcessIsolation.Hosting;
 /// </summary>
 public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.MainHostControl;
-
     private readonly ILogger _logger = Log.ForContext<MainHostControlServer>();
     private readonly HostProcessCoordinator _coordinator;
     private readonly INamedPipePeerVerifier _peerVerifier;
@@ -36,11 +34,16 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
     public static MainHostControlServer Create(HostProcessCoordinator coordinator, INamedPipePeerVerifier peerVerifier) =>
         new(coordinator, peerVerifier);
 
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.MainHostControl;
+
     /// <summary>
     /// Starts accepting controller connections. Completion means the control pipe
     /// has been created and can accept requests before the first Host generation starts.
     /// </summary>
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         lock (_disposeGate)
@@ -51,6 +54,8 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
             return _started.Task.WaitAsync(cancellationToken);
         }
     }
+
+    #endregion
 
     /// <summary>
     /// Stops accepting controllers and waits for the listener to release its pipe.

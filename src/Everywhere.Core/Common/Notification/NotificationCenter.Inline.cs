@@ -32,7 +32,7 @@ partial class NotificationCenter
             .AddTo(_notificationsDisposables);
         Notifications = _notificationEntries
             .CreateView(static entry => entry.Notification)
-            .ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current)
+            .ToNotifyCollectionChanged()
             .ToReadOnlyBindableList(_notificationsDisposables);
     }
 

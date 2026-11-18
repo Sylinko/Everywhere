@@ -27,7 +27,25 @@ public sealed class SettingsEngine : IAsyncInitializer, IDisposable
     private readonly DeepObserver _observer;
     private JsonSettingsStorage? _storage;
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings;
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Settings;
+
+    /// <inheritdoc />
+    public Task InitializeAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        RunMigrations();
+
+        _storage = JsonSettingsStorage.Load(_filePath, _loggerFactory.CreateLogger<JsonSettingsStorage>());
+        PatchSettings();
+        StartObserveSettings();
+
+        return Task.CompletedTask;
+    }
+
+    #endregion
 
     /// <summary>
     /// Gets the runtime settings object used by the rest of the application.
@@ -71,18 +89,6 @@ public sealed class SettingsEngine : IAsyncInitializer, IDisposable
         _binder = new SettingsPatchBinder();
         _rootDescriptor = _binder.GetDescriptor(typeof(Settings));
         _observer = new DeepObserver(HandleSettingsChanges);
-    }
-
-    public Task InitializeAsync(CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        RunMigrations();
-
-        _storage = JsonSettingsStorage.Load(_filePath, _loggerFactory.CreateLogger<JsonSettingsStorage>());
-        PatchSettings();
-        StartObserveSettings();
-
-        return Task.CompletedTask;
     }
 
     /// <summary>

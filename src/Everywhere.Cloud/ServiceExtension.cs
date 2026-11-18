@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using Everywhere.Common;
+using Everywhere.Initialization;
 using Everywhere.ViewModels;
 using Everywhere.Views.Pages;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +14,7 @@ public static class ServiceExtension
         public IServiceCollection AddCloudClient()
         {
             services.AddSingleton<CloudNotificationSource>();
-            services.AddSingleton<IAsyncInitializer>(provider => provider.GetRequiredService<CloudNotificationSource>());
+            services.AddAsyncInitializer<CloudNotificationSource>();
             // Guests use a public transport; authenticated requests reuse the normal token pipeline below.
             services.AddHttpClient(CloudNotificationSource.AnonymousHttpClientName, client =>
                 {
@@ -33,16 +33,16 @@ public static class ServiceExtension
 
             services.AddSingleton<OAuthCloudClient>();
             services.AddSingleton<ICloudClient>(x => x.GetRequiredService<OAuthCloudClient>());
-            services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<OAuthCloudClient>());
+            services.AddAsyncInitializer<OAuthCloudClient>();
             services.AddTransient<ChatSyncPageViewModel>();
             services.AddSingleton<ChatSyncPage>();
             services.AddSingleton<ChatSyncService>();
             services.AddSingleton<IChatSyncService>(x => x.GetRequiredService<ChatSyncService>());
-            services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<ChatSyncService>());
+            services.AddAsyncInitializer<ChatSyncService>();
 
             services.AddSingleton<OfficialModelProvider>();
             services.AddSingleton<IOfficialModelProvider>(x => x.GetRequiredService<OfficialModelProvider>());
-            services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<OfficialModelProvider>());
+            services.AddAsyncInitializer<OfficialModelProvider>();
 
             AddAuthenticatedHttpClient(services, nameof(ICloudClient), CloudConstants.AIGatewayBaseUrl, TimeSpan.FromSeconds(30));
             AddAuthenticatedHttpClient(services, nameof(CloudNotificationSource), CloudConstants.CloudBaseUrl, TimeSpan.FromSeconds(15));

@@ -1,4 +1,5 @@
-﻿using Everywhere.Common;
+﻿using Avalonia.Threading;
+using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Views;
 using Microsoft.Extensions.Logging;
@@ -15,15 +16,24 @@ public sealed class ChatStoreUpgradeNoticeInitializer(
     NotificationCenter notificationCenter,
     ILogger<ChatStoreUpgradeNoticeInitializer> logger) : IAsyncInitializer
 {
-    /// <inheritdoc />
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
+    #region IAsyncInitializer
 
     /// <inheritdoc />
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+
+    /// <inheritdoc />
+    async Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         if (!await upgrade.NeedsNoticeAsync(cancellationToken)) return;
-        ShowNoticeAsync(cancellationToken).Detach(logger.ToExceptionHandler());
+
+        // The view belongs to the dispatcher, but startup must not wait for user acknowledgment.
+        await Dispatcher.UIThread.InvokeAsync(
+            () => ShowNoticeAsync(cancellationToken).Detach(logger.ToExceptionHandler()),
+            DispatcherPriority.Normal,
+            cancellationToken);
     }
+
+    #endregion
 
     private async Task ShowNoticeAsync(CancellationToken cancellationToken)
     {

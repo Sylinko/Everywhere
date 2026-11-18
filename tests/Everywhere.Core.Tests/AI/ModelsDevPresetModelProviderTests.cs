@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using Avalonia.Headless.NUnit;
 using Everywhere.AI;
+using Everywhere.Common;
 using Microsoft.Extensions.Logging.Abstractions;
 using ModelsDevPresetModelProvider = Everywhere.AI.ModelsDevPresetModelProvider;
 
@@ -79,7 +80,7 @@ public class ModelsDevPresetModelProviderTests
             using var provider = Create(handler, path);
             var validated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             provider.CatalogChanged += (_, _) => { if (provider.Catalog.IsValidated) validated.TrySetResult(); };
-            await provider.InitializeAsync(CancellationToken.None);
+            await ((IAsyncInitializer)provider).InitializeAsync(CancellationToken.None);
             await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.That(provider.Catalog.GetModels("deepseek").Single().ModelId, Is.EqualTo("new-model"));
             Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceStatus, Is.EqualTo(PresetModelSourceStatus.Unknown));
@@ -137,7 +138,7 @@ public class ModelsDevPresetModelProviderTests
         provider.CatalogChanged += (_, _) => { if (provider.Catalog.IsValidated) validated.TrySetResult(); };
         try
         {
-            var initialization = provider.InitializeAsync(CancellationToken.None);
+            var initialization = ((IAsyncInitializer)provider).InitializeAsync(CancellationToken.None);
             Assert.That(initialization.IsCompletedSuccessfully, Is.True);
             await validated.Task.WaitAsync(TimeSpan.FromSeconds(10));
             Assert.That(calls, Is.EqualTo(2));

@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using Everywhere.Collections;
 using Everywhere.Configuration;
-using ObservableCollections;
 
 namespace Everywhere.Common.Notification;
 
@@ -21,7 +20,7 @@ public sealed class DynamicNotificationManager : IDisposable
 
         Notifications = _notificationsSource
             .CreateView(kv => kv.Value)
-            .ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current)
+            .ToNotifyCollectionChanged(AvaloniaCollectionEventDispatcher.Instance)
             .ToReadOnlyBindableList(out _notificationsViewDisposable);
     }
 

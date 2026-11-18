@@ -18,7 +18,7 @@ namespace Everywhere.Cloud;
 public sealed class ChatSyncService : ObservableObject, IChatSyncService, IAsyncInitializer, IAsyncDisposable
 {
     /// <inheritdoc />
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 2;
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Network + 2;
 
     /// <inheritdoc />
     public string? AccountId => _cloudClient.LoginStatus == CloudClientLoginStatus.LoggedIn ? _cloudClient.UserProfile?.Subject : null;

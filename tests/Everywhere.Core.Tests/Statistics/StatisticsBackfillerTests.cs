@@ -1,4 +1,5 @@
-﻿using Everywhere.Core.Tests.Chat;
+﻿using System.Data.Common;
+using Everywhere.Core.Tests.Chat;
 using Avalonia.Headless.NUnit;
 using Everywhere.Chat;
 using Everywhere.Common.Notification;
@@ -7,16 +8,54 @@ using Everywhere.Database;
 using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Statistics;
+using Everywhere.Statistics.Database;
 using Everywhere.Storage;
 using Lucide.Avalonia;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 
 namespace Everywhere.Core.Tests.Statistics;
 
 public sealed class StatisticsBackfillerTests
 {
+    [Test]
+    public async Task Backfill_WhenCanceledDuringQuery_DoesNotPublishCompletion()
+    {
+        using var database = StatisticsTestDatabase.Create();
+        await using var connectionContext = await database.Factory.CreateDbContextAsync();
+        var interceptor = new PendingQueryInterceptor();
+        var options = new DbContextOptionsBuilder<StatisticsDbContext>()
+            .UseSqlite(connectionContext.Database.GetConnectionString())
+            .AddInterceptors(interceptor)
+            .Options;
+        var notifications = Substitute.For<INotificationPublisher<StatisticsBackfiller>>();
+        var backfiller = new StatisticsBackfiller(
+            Substitute.For<IDbContextFactory<ChatV2DbContext>>(),
+            new StatisticsDbContextFactory(options),
+            NullLogger<StatisticsBackfiller>.Instance,
+            notifications);
+        using var lifetime = new CancellationTokenSource();
+
+        var work = backfiller.BackfillAsync(lifetime.Token);
+        try
+        {
+            await interceptor.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            lifetime.Cancel();
+            await work.WaitAsync(TimeSpan.FromSeconds(5));
+
+            Assert.That(await connectionContext.Metadata.AnyAsync(x => x.Key == "BackfillVersion"), Is.False);
+            Assert.That(notifications.ReceivedCalls(), Is.Empty);
+        }
+        finally
+        {
+            interceptor.Release.TrySetResult();
+            await work.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
     [AvaloniaTest]
     public async Task BackfillAsync_WhenCompressionSeparatesUserAndAssistant_UsesNativeTurnMembership()
     {
@@ -34,7 +73,7 @@ public sealed class StatisticsBackfillerTests
             statisticsDatabase.Factory,
             NullLogger<StatisticsBackfiller>.Instance,
             new NotificationPublisher<StatisticsBackfiller>(notificationCenter));
-        await backfiller.BackfillAsync();
+        await backfiller.BackfillAsync(CancellationToken.None);
 
         await using var db = await statisticsDatabase.Factory.CreateDbContextAsync();
         var turn = await db.TurnEvents.SingleAsync();
@@ -91,8 +130,8 @@ public sealed class StatisticsBackfillerTests
             NullLogger<StatisticsBackfiller>.Instance,
             new NotificationPublisher<StatisticsBackfiller>(notificationCenter));
 
-        await initializer.BackfillAsync();
-        await initializer.BackfillAsync();
+        await initializer.BackfillAsync(CancellationToken.None);
+        await initializer.BackfillAsync(CancellationToken.None);
 
         await using var statsDb = await statisticsDatabase.Factory.CreateDbContextAsync();
         var tools = await statsDb.ToolInvocationEvents.AsNoTracking().ToListAsync();
@@ -106,6 +145,24 @@ public sealed class StatisticsBackfillerTests
             Assert.That(tools[0].Status, Is.EqualTo(StatisticsToolInvocationStatus.Success));
             Assert.That(await statsDb.Metadata.AnyAsync(x => x.Key == "BackfillVersion" && x.Value == "1"), Is.True);
             Assert.That(notificationCenter.Notifications, Has.Count.EqualTo(1));
+        }
+    }
+
+    private sealed class PendingQueryInterceptor : DbCommandInterceptor
+    {
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public override async ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
+            DbCommand command,
+            CommandEventData eventData,
+            InterceptionResult<DbDataReader> result,
+            CancellationToken cancellationToken = default)
+        {
+            Entered.TrySetResult();
+            await Release.Task.WaitAsync(cancellationToken);
+            return result;
         }
     }
 }

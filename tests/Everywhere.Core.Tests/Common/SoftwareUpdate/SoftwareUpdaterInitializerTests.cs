@@ -24,7 +24,7 @@ public sealed class SoftwareUpdaterInitializerTests
         using var services = new ServiceCollection().BuildServiceProvider();
         var updater = Substitute.For<ISoftwareUpdater>();
         var publisher = Substitute.For<INotificationPublisher<SoftwareUpdater>>();
-        var initializer = new SoftwareUpdaterInitializer(updater, new Settings(services),
+        IAsyncInitializer initializer = new SoftwareUpdaterInitializer(updater, new Settings(services),
             new PersistentState(new InMemoryKeyValueStorage()), publisher, services);
         await initializer.InitializeAsync(CancellationToken.None);
         var target = new SoftwareUpdateMetadata(UpdateChannel.Stable, "v99.0.0", new SemanticVersion(99), DateTimeOffset.UtcNow.AddDays(-1),
@@ -46,7 +46,7 @@ public sealed class SoftwareUpdaterInitializerTests
         var settings = new Settings(services);
         settings.Common.IsAutomaticUpdateCheckEnabled = true;
         var updater = Substitute.For<ISoftwareUpdater>();
-        var initializer = new SoftwareUpdaterInitializer(
+        IAsyncInitializer initializer = new SoftwareUpdaterInitializer(
             updater, settings, new PersistentState(new InMemoryKeyValueStorage()),
             Substitute.For<INotificationPublisher<SoftwareUpdater>>(), services);
 
@@ -68,7 +68,7 @@ public sealed class SoftwareUpdaterInitializerTests
         state.LastUpdateCheckTime = previous;
         var updater = Substitute.For<ISoftwareUpdater>();
         updater.LastCheckTime.Returns((DateTimeOffset?)null);
-        var initializer = new SoftwareUpdaterInitializer(
+        IAsyncInitializer initializer = new SoftwareUpdaterInitializer(
             updater, new Settings(services), state,
             Substitute.For<INotificationPublisher<SoftwareUpdater>>(), services);
         await initializer.InitializeAsync(CancellationToken.None);
@@ -130,7 +130,7 @@ public sealed class SoftwareUpdaterInitializerTests
         window.Show();
         try
         {
-            var initializer = new SoftwareUpdaterInitializer(
+            IAsyncInitializer initializer = new SoftwareUpdaterInitializer(
                 updater, settings, new PersistentState(new InMemoryKeyValueStorage()),
                 Substitute.For<INotificationPublisher<SoftwareUpdater>>(), services);
             await initializer.InitializeAsync(CancellationToken.None);

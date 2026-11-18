@@ -74,9 +74,13 @@ public sealed class PromptDbContext(DbContextOptions<PromptDbContext> options) :
 /// </remarks>
 public sealed class PromptDbInitializer(IDbContextFactory<PromptDbContext> dbFactory, ILogger<PromptDbInitializer> logger) : IAsyncInitializer
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Database;
+    #region IAsyncInitializer
 
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Database;
+
+    /// <inheritdoc />
+    async Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -87,6 +91,8 @@ public sealed class PromptDbInitializer(IDbContextFactory<PromptDbContext> dbFac
 
         logger.LogInformation("Prompt database initialized.");
     }
+
+    #endregion
 }
 
 /// <summary>

@@ -18,14 +18,18 @@ public sealed class AssistantCatalogSynchronizer(
     IOfficialModelProvider officialModels
 ) : IAsyncInitializer, IDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 2;
-
     private readonly HashSet<CustomAssistant> _assistants = [];
     private readonly Lock _assistantsLock = new();
     private INotifyCollectionChanged? _collection;
     private int _disposeState;
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Network + 2;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -36,6 +40,8 @@ public sealed class AssistantCatalogSynchronizer(
         SynchronizeAll();
         return Task.CompletedTask;
     }
+
+    #endregion
 
     private void BindCollection()
     {

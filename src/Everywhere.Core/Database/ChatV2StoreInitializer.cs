@@ -18,11 +18,13 @@ public sealed class ChatV2StoreInitializer(
     ILogger<ChatV2StoreInitializer> logger
 ) : IAsyncInitializer
 {
-    /// <inheritdoc />
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Database;
+    #region IAsyncInitializer
 
     /// <inheritdoc />
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Database;
+
+    /// <inheritdoc />
+    async Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         await using var destination = await dbFactory.CreateDbContextAsync(cancellationToken);
         await destination.Database.OpenConnectionAsync(cancellationToken);
@@ -62,6 +64,8 @@ public sealed class ChatV2StoreInitializer(
             cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
+
+    #endregion
 
     private async Task ImportChatsAsync(
         SqliteConnection source,

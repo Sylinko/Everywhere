@@ -24,7 +24,7 @@ public sealed partial class CloudNotificationSource(
 ) : IAsyncInitializer, IDisposable
 {
     /// <inheritdoc />
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
 
     /// <summary>
     /// Names the unauthenticated transport; guest requests must not enter token refresh.

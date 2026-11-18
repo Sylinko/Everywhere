@@ -95,8 +95,6 @@ public sealed partial class HostProcessCoordinator(
     private static readonly TimeSpan ControllerCoalescingWindow = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(5);
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.HostProcesses;
-
     /// <summary>
     /// Gets the latest queried service-mode configuration.
     /// </summary>
@@ -143,8 +141,13 @@ public sealed partial class HostProcessCoordinator(
         }
     }
 
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.HostProcesses;
+
     /// <summary>Starts the first Host generation through the application initialization pipeline.</summary>
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    async Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         Task startupTask;
         await _generationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -168,20 +171,22 @@ public sealed partial class HostProcessCoordinator(
         await RefreshServiceModeStatusAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    #endregion
+
     /// <summary>Refreshes and publishes the current service-mode configuration.</summary>
     public async Task<HostsServiceModeStatus> RefreshServiceModeStatusAsync(CancellationToken cancellationToken = default)
     {
         if (serviceModeManager is null)
         {
             var status = new HostsServiceModeStatus(HostsServiceModeConfigurationState.NotConfigured);
-            await PublishModeStatusAsync(status);
+            await PublishModeStatusAsync(status, cancellationToken);
             return status;
         }
 
         try
         {
             var status = await Task.Run(serviceModeManager.GetStatus, cancellationToken);
-            await PublishModeStatusAsync(status);
+            await PublishModeStatusAsync(status, cancellationToken);
             return status;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -194,7 +199,7 @@ public sealed partial class HostProcessCoordinator(
             var status = new HostsServiceModeStatus(
                 HostsServiceModeConfigurationState.Unavailable,
                 DiagnosticDetail: exception.Message);
-            await PublishModeStatusAsync(status);
+            await PublishModeStatusAsync(status, cancellationToken);
             return status;
         }
     }
@@ -380,8 +385,17 @@ public sealed partial class HostProcessCoordinator(
         }
     }
 
-    private async Task PublishModeStatusAsync(HostsServiceModeStatus status) =>
-        await Dispatcher.UIThread.InvokeAsync(() => ModeStatus = status);
+    private Task PublishModeStatusAsync(HostsServiceModeStatus status, CancellationToken cancellationToken)
+    {
+        return Dispatcher.UIThread.InvokeAsync(
+            () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                ModeStatus = status;
+            },
+            DispatcherPriority.Normal,
+            cancellationToken).GetTask();
+    }
 
     private bool ShouldUseServiceMode() =>
         serviceModeManager?.GetStatus().State is HostsServiceModeConfigurationState.CurrentExecutable;

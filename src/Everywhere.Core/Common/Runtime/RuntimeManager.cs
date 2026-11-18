@@ -24,14 +24,19 @@ public sealed class RuntimeManager(
 
     public bool HasRefreshed { get; private set; }
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
+    #region IAsyncInitializer
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        Task.Run(() => RefreshAsync()).Detach(logger.ToExceptionHandler());
-        return Task.CompletedTask;
+        return RefreshAsync(cancellationToken);
     }
+
+    #endregion
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {

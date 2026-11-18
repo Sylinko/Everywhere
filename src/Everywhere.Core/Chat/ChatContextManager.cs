@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Initialization;
 using Everywhere.Messages;
 using Everywhere.Storage;
 using Everywhere.Utilities;
@@ -1878,7 +1879,7 @@ public static class ChatContextManagerExtensions
     {
         services.AddSingleton<ChatContextManager>();
         services.AddSingleton<IChatContextManager>(x => x.GetRequiredService<ChatContextManager>());
-        services.AddTransient<IAsyncInitializer>(x => x.GetRequiredService<ChatContextManager>());
+        services.AddAsyncInitializer<ChatContextManager>();
         return services;
     }
 }

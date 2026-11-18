@@ -1,5 +1,6 @@
 ﻿using Avalonia.Headless.NUnit;
 using Everywhere.Chat;
+using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.I18N;
 using Everywhere.Core.Tests.Statistics;
@@ -103,7 +104,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         {
             Assert.That(await previousSession.Chats.CountAsync(), Is.EqualTo(2), "Shutdown leaves temporary cleanup to startup.");
         }
-        await new ChatV2StoreInitializer(files.Factory, null, NullLogger<ChatV2StoreInitializer>.Instance).InitializeAsync(CancellationToken.None);
+        await ((IAsyncInitializer)new ChatV2StoreInitializer(files.Factory, null, NullLogger<ChatV2StoreInitializer>.Instance)).InitializeAsync(CancellationToken.None);
         await using var db = files.Factory.CreateDbContext();
         Assert.That((await db.Chats.SingleAsync()).Id, Is.EqualTo(first.Data.Metadata.Id));
         Assert.That(await db.Nodes.CountAsync(), Is.EqualTo(3));
@@ -192,7 +193,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         await storage.SaveDataAsync(temporary);
         using var saved = Data(new UserChatMessage("keep", []));
         await storage.SaveDataAsync(saved);
-        var initializer = new ChatV2StoreInitializer(files.Factory, null, NullLogger<ChatV2StoreInitializer>.Instance);
+        IAsyncInitializer initializer = new ChatV2StoreInitializer(files.Factory, null, NullLogger<ChatV2StoreInitializer>.Instance);
         await initializer.InitializeAsync(CancellationToken.None);
         await initializer.InitializeAsync(CancellationToken.None);
         await using var db = files.Factory.CreateDbContext();

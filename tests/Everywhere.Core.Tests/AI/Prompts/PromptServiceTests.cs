@@ -1,6 +1,6 @@
-using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
+using Everywhere.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -12,9 +12,9 @@ public sealed class PromptServiceTests
     public async Task PromptDbInitializer_MigratesPromptDatabase()
     {
         using var database = PromptTestDatabase.Create();
-        var initializer = new PromptDbInitializer(database.Factory, NullLogger<PromptDbInitializer>.Instance);
+        IAsyncInitializer initializer = new PromptDbInitializer(database.Factory, NullLogger<PromptDbInitializer>.Instance);
 
-        await initializer.InitializeAsync(default);
+        await initializer.InitializeAsync(CancellationToken.None);
 
         await using var dbContext = await database.Factory.CreateDbContextAsync();
         Assert.That(await dbContext.Prompts.CountAsync(), Is.EqualTo(0));

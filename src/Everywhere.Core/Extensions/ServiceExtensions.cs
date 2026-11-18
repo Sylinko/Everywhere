@@ -14,6 +14,7 @@ using Everywhere.Configuration.Engine;
 using Everywhere.Database;
 using Everywhere.Harness;
 using Everywhere.Harness.Mcp;
+using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
@@ -59,8 +60,8 @@ public static class ServiceExtensions
                 .AddSingleton<MainHostControlServer>(sp => MainHostControlServer.Create(
                     sp.GetRequiredService<HostProcessCoordinator>(),
                     sp.GetRequiredService<INamedPipePeerVerifier>()))
-                .AddSingleton<IAsyncInitializer>(sp => sp.GetRequiredService<HostProcessCoordinator>())
-                .AddSingleton<IAsyncInitializer>(sp => sp.GetRequiredService<MainHostControlServer>());
+                .AddAsyncInitializer<HostProcessCoordinator>()
+                .AddAsyncInitializer<MainHostControlServer>();
 
         /// <summary>
         /// Registers Main's connection-restoring Input Host proxy for direct use or platform composition.
@@ -77,7 +78,7 @@ public static class ServiceExtensions
         public IServiceCollection AddSettings() =>
             services
                 .AddSingleton<Settings>()
-                .AddTransient<IAsyncInitializer, SettingsEngine>()
+                .AddAsyncInitializer<SettingsEngine>()
                 .AddTransient<SoftwareUpdateControl>()
                 .AddTransient<HostsStatusControl>()
                 .AddTransient<TextSelectionApplicationsControl>()
@@ -91,7 +92,7 @@ public static class ServiceExtensions
                 .AddSingleton<FontFamilyCatalog>()
                 .AddSingleton<PersistentKeyValueStorage>()
                 .AddSingleton<IKeyValueStorage>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
-                .AddTransient<IAsyncInitializer>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
+                .AddAsyncInitializer<PersistentKeyValueStorage>()
                 .AddSingleton<PersistentState>();
 
         public IServiceCollection AddViewsAndViewModels() =>
@@ -194,23 +195,24 @@ public static class ServiceExtensions
                 .AddSingleton(typeof(INotificationPublisher<>), typeof(NotificationPublisher<>))
                 .AddSingleton<IStatisticsRecorder, StatisticsRecorder>()
                 .AddSingleton<IStatisticsService, StatisticsService>()
-                .AddTransient<IAsyncInitializer>(provider => new ChatV2StoreInitializer(
+                .AddTransient(provider => new ChatV2StoreInitializer(
                     provider.GetRequiredService<IDbContextFactory<ChatV2DbContext>>(),
                     RuntimeConstants.GetDatabasePath("chat.db"),
                     provider.GetRequiredService<ILogger<ChatV2StoreInitializer>>()))
-                .AddTransient<IAsyncInitializer, ChatStoreUpgradeNoticeInitializer>()
-                .AddTransient<IAsyncInitializer, PromptDbInitializer>()
-                .AddTransient<IAsyncInitializer, StatisticsDbInitializer>()
-                .AddTransient<IAsyncInitializer, StatisticsBackfiller>();
+                .AddAsyncInitializer<ChatV2StoreInitializer>()
+                .AddAsyncInitializer<ChatStoreUpgradeNoticeInitializer>()
+                .AddAsyncInitializer<PromptDbInitializer>()
+                .AddAsyncInitializer<StatisticsDbInitializer>()
+                .AddAsyncInitializer<StatisticsBackfiller>();
 
         public IServiceCollection AddChatEssentials() =>
             services
                 .AddSingleton<ModelsDevPresetModelProvider>()
                 .AddSingleton<IPresetModelProvider>(x => x.GetRequiredService<ModelsDevPresetModelProvider>())
-                .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<ModelsDevPresetModelProvider>())
+                .AddAsyncInitializer<ModelsDevPresetModelProvider>()
                 .AddSingleton<AssistantCatalog>()
                 .AddSingleton<AssistantCatalogSynchronizer>()
-                .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<AssistantCatalogSynchronizer>())
+                .AddAsyncInitializer<AssistantCatalogSynchronizer>()
                 .AddSingleton<AssistantSpecializationResolver>()
                 .AddSingleton<IModelSessionFactory, ModelSessionFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
@@ -219,7 +221,7 @@ public static class ServiceExtensions
                 .AddSingleton<SkillManager>()
                 .AddSingleton<ISkillManager>(x => x.GetRequiredService<SkillManager>())
                 .AddSingleton<ISkillPromptProvider>(x => x.GetRequiredService<SkillManager>())
-                .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<SkillManager>())
+                .AddAsyncInitializer<SkillManager>()
                 .AddSingleton<FileHandler, SkillFileHandler>()
                 .AddSingleton<FileHandler, PdfFileHandler>()
                 .AddSingleton<FileHandler, TextFileHandler>()

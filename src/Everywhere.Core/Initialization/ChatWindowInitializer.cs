@@ -1,4 +1,5 @@
-﻿using Avalonia.Threading;
+﻿using System.ComponentModel;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Automation;
 using Everywhere.Common;
@@ -11,6 +12,7 @@ using Everywhere.Utilities;
 using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ShadUI;
 
 namespace Everywhere.Initialization;
 
@@ -19,17 +21,13 @@ namespace Everywhere.Initialization;
 /// </summary>
 public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
-
     private readonly IServiceProvider _serviceProvider;
     private readonly Settings _settings;
     private readonly IShortcutListener _shortcutListener;
     private readonly ChatVisualService _chatVisualService;
     private readonly ILogger<ChatWindowInitializer> _logger;
     private readonly Lock _syncLock = new();
-
-    private IDisposable? _textSelectionSubscription;
-    private ITextSelectionWatcher? _textSelectionWatcher;
+    private readonly CompositeDisposable _disposables = new();
 
     /// <summary>
     /// Initializes the chat window hotkey listener and preloads the chat window.
@@ -53,7 +51,23 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
         _logger = logger;
     }
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
+    {
+        return Dispatcher.UIThread.InvokeAsync(
+            () => InitializeWindow(cancellationToken),
+            DispatcherPriority.Normal,
+            cancellationToken).GetTask();
+    }
+
+    #endregion
+
+    private void InitializeWindow(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var chatWindow = _serviceProvider.GetRequiredService<ChatWindow>();
@@ -63,11 +77,12 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
         // Preload ChatWindow to avoid delay on first open
         chatWindow.Initialize();
 
-        _textSelectionWatcher = _serviceProvider.GetRequiredService<ITextSelectionWatcher>();
-        _textSelectionSubscription = _textSelectionWatcher.Subscribe(chatWindowViewModel);
-        _textSelectionWatcher.RestorationRejected += HandleTextSelectionRestorationRejected;
+        var watcher = _serviceProvider.GetRequiredService<ITextSelectionWatcher>();
+        _disposables.Add(watcher.Subscribe(chatWindowViewModel));
+        watcher.RestorationRejected += HandleTextSelectionRestorationRejected;
+        _disposables.Add(Disposable.Create(() => watcher.RestorationRejected -= HandleTextSelectionRestorationRejected));
         var selectionController = _serviceProvider.GetRequiredService<TextSelectionController>();
-        _textSelectionWatcher.RestoreState(selectionController.IsMonitoringRequested, _settings.TextSelection.CreateMonitoringConfiguration());
+        watcher.RestoreState(selectionController.IsMonitoringRequested, _settings.TextSelection.CreateMonitoringConfiguration());
 
         InitializeShortcut(
             _settings.Shortcut.ChatWindow,
@@ -78,26 +93,18 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
         InitializeShortcut(
             _settings.Shortcut.TakeScreenshot,
             (shortcut, ref subscription) => RegisterScreenshotShortcut(chatWindowViewModel, shortcut, ref subscription));
-
-        return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Removes settings handlers and native shortcuts without dispatching back to a closed UI loop.
+    /// </summary>
+    public void Dispose() => _disposables.Dispose();
 
     private delegate void CompositeKeyboardShortcutRegister(KeyboardShortcut shortcut, ref IDisposable? subscription);
 
-    /// <inheritdoc />
-    public void Dispose()
+    private static void HandleTextSelectionRestorationRejected(TextSelectionMonitoringControlResult result)
     {
-        DisposeHelper.DisposeToDefault(ref _textSelectionSubscription);
-
-        if (_textSelectionWatcher is not null)
-        {
-            _textSelectionWatcher.RestorationRejected -= HandleTextSelectionRestorationRejected;
-        }
-    }
-
-    private void HandleTextSelectionRestorationRejected(TextSelectionMonitoringControlResult result)
-    {
-        Dispatcher.UIThread.PostOnDemand(() => ShadUI.ToastManager.Error(
+        Dispatcher.UIThread.PostOnDemand(() => ToastManager.Error(
             LocaleKey.Common_Error.I18N(),
             result.Message?.ToString() ?? LocaleKey.ChatWindowSettings_TextSelectionMonitoring_SetupFailed.I18N()));
     }
@@ -106,7 +113,21 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
     {
         IDisposable? mainSubscription = null, alternativeSubscription = null;
 
-        shortcut.PropertyChanged += (_, args) =>
+        shortcut.PropertyChanged += HandleShortcutChanged;
+        _disposables.Add(
+            Disposable.Create(() =>
+            {
+                shortcut.PropertyChanged -= HandleShortcutChanged;
+                using (_syncLock.EnterScope())
+                {
+                    DisposeHelper.DisposeToDefault(ref mainSubscription);
+                    DisposeHelper.DisposeToDefault(ref alternativeSubscription);
+                }
+            }));
+
+        if (shortcut.IsEnabled) RegisterAll();
+
+        void HandleShortcutChanged(object? sender, PropertyChangedEventArgs args)
         {
             switch (args.PropertyName)
             {
@@ -117,7 +138,9 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
                     {
                         using (_syncLock.EnterScope())
                         {
+                            // ReSharper disable once AccessToModifiedClosure
                             DisposeHelper.DisposeToDefault(ref mainSubscription);
+                            // ReSharper disable once AccessToModifiedClosure
                             DisposeHelper.DisposeToDefault(ref alternativeSubscription);
                         }
                     }
@@ -137,13 +160,13 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
                     break;
                 }
             }
-        };
-
-        if (shortcut.IsEnabled) RegisterAll();
+        }
 
         void RegisterAll()
         {
+            // ReSharper disable once AccessToModifiedClosure
             if (shortcut.Main.IsValid) register(shortcut.Main, ref mainSubscription);
+            // ReSharper disable once AccessToModifiedClosure
             if (shortcut.Alternative.IsValid) register(shortcut.Alternative, ref alternativeSubscription);
         }
     }
