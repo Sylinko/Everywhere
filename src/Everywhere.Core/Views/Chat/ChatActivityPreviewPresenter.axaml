@@ -18,8 +18,8 @@
       <DataTemplates>
         <DataTemplate x:DataType="plugins:ChatPluginTextActivityPreview">
           <TextBlock
-            Classes="Muted"
-            FontSize="{DynamicResource FontSizeXs}"
+            Classes="Muted" VerticalAlignment="Center"
+            FontSize="{DynamicResource FontSizeS}"
             MaxLines="1"
             Text="{Binding TextKey^}"
             TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
@@ -27,16 +27,11 @@
 
         <DataTemplate x:DataType="plugins:ChatPluginCommandActivityPreview">
           <TextBlock
-            Classes="Muted"
-            FontSize="{DynamicResource FontSizeXs}"
-            MaxLines="1" TextTrimming="CharacterEllipsis"
-            TextWrapping="NoWrap">
-            <TextBlock.Text>
-              <I18N Key="{x:Static LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Preview}">
-                <Binding Path="Command"/>
-              </I18N>
-            </TextBlock.Text>
-          </TextBlock>
+            Classes="Muted" VerticalAlignment="Center"
+            FontSize="{DynamicResource FontSizeS}"
+            MaxLines="1"
+            Text="{Binding Command}"
+            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
         </DataTemplate>
 
         <DataTemplate x:DataType="plugins:ChatPluginFileReferencesActivityPreview">
@@ -44,39 +39,47 @@
             <TextBlock
               Classes="Muted" DockPanel.Dock="Left"
               VerticalAlignment="Center"
-              FontSize="{DynamicResource FontSizeXs}"
+              FontSize="{DynamicResource FontSizeS}"
               IsVisible="{Binding PrefixKey, Converter={x:Static ObjectConverters.IsNotNull}}"
               Text="{Binding PrefixKey^, FallbackValue={x:Null}}"
               TextWrapping="NoWrap"/>
             <ItemsControl
-              HorizontalAlignment="Stretch"
+              HorizontalAlignment="Stretch" ClipToBounds="False"
               ItemsSource="{Binding References}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <v:TrimmingStackPanel
-                    MinimumLeadingVisibleItems="1" Orientation="Horizontal"
-                    Spacing="4"/>
+                    ClipToBounds="False" MinimumLeadingVisibleItems="1"
+                    Orientation="Horizontal" Spacing="4"/>
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="plugins:ChatPluginFileReference">
                   <Button
-                    Classes="Ghost Compact" Margin="-5,0,5,0"
-                    Padding="5,1"
-                    Foreground="{DynamicResource MutedColor}"
-                    ToolTip.Tip="{Binding FullPath}">
+                    x:Name="PART_ReferenceButton" Classes="Ghost Compact Muted NoScale"
+                    Margin="-5,0,5,0" Padding="5,1">
                     <Interaction.Behaviors>
-                      <in:ChatFileLinkBehavior Reference="{Binding}" Icon="{Binding #ReferenceIcon}"/>
+                      <in:ChatFileLinkBehavior
+                        Icon="{Binding #ReferenceIcon}"
+                        Reference="{Binding}"/>
                     </Interaction.Behaviors>
-                    <DockPanel HorizontalSpacing="6">
+
+                    <DockPanel HorizontalSpacing="4">
                       <LucideIcon
-                        DockPanel.Dock="Left"
-                        x:Name="ReferenceIcon"
+                        x:Name="ReferenceIcon" DockPanel.Dock="Left"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource MutedColor}"
                         Size="{DynamicResource FontSizeS}"/>
                       <TextBlock
-                        FontSize="{DynamicResource FontSizeXs}"
+                        Classes="Muted" VerticalAlignment="Center"
+                        FontSize="{DynamicResource FontSizeS}"
+                        MaxLines="1"
                         Text="{Binding FullPath}"
-                        TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                        TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                        <Interaction.Behaviors>
+                          <shadui:TextTrimmedToolTipBehavior Target="{Binding #PART_ReferenceButton}"/>
+                        </Interaction.Behaviors>
+                      </TextBlock>
                     </DockPanel>
                   </Button>
                 </DataTemplate>
@@ -86,53 +89,77 @@
         </DataTemplate>
 
         <DataTemplate x:DataType="plugins:ChatPluginFileTransferActivityPreview">
-          <StackPanel
-            Margin="-5,0,5,0" Orientation="Horizontal">
+          <Grid
+            Margin="-5,0,5,0" HorizontalAlignment="Left"
+            ColumnDefinitions="Auto,Auto,*">
             <Button
-              Classes="Ghost Compact" Padding="5,1"
-              Foreground="{DynamicResource MutedColor}"
-              ToolTip.Tip="{Binding Source.FullPath}">
+              x:Name="PART_SourceButton" Classes="Ghost Compact Muted NoScale"
+              Grid.Column="0" Padding="5,1">
               <Interaction.Behaviors>
-                <in:ChatFileLinkBehavior Reference="{Binding Source}" Icon="{Binding #SourceIcon}"/>
+                <in:ChatFileLinkBehavior
+                  Icon="{Binding #SourceIcon}"
+                  Reference="{Binding Source}"/>
               </Interaction.Behaviors>
-              <DockPanel HorizontalSpacing="6">
+
+              <DockPanel HorizontalSpacing="4">
                 <LucideIcon
-                  DockPanel.Dock="Left"
-                  x:Name="SourceIcon"
+                  x:Name="SourceIcon" DockPanel.Dock="Left"
+                  VerticalAlignment="Center"
+                  Foreground="{DynamicResource MutedColor}"
                   Size="{DynamicResource FontSizeS}"/>
                 <TextBlock
-                  FontSize="{DynamicResource FontSizeXs}"
+                  Classes="Muted" VerticalAlignment="Center"
+                  FontSize="{DynamicResource FontSizeS}"
+                  MaxLines="1"
                   Text="{Binding Source.FullPath}"
-                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                  <Interaction.Behaviors>
+                    <shadui:TextTrimmedToolTipBehavior Target="{Binding #PART_SourceButton}"/>
+                  </Interaction.Behaviors>
+                </TextBlock>
               </DockPanel>
             </Button>
             <TextBlock
-              Classes="Muted" VerticalAlignment="Center"
-              FontSize="{DynamicResource FontSizeXs}"
-              Text="{Binding ActionKey^}"/>
+              Classes="Muted" Grid.Column="1"
+              VerticalAlignment="Center"
+              FontSize="{DynamicResource FontSizeS}"
+              Text="{Binding ActionKey^}"
+              TextWrapping="NoWrap"/>
             <Button
-              Classes="Ghost Compact" Padding="5,1"
-              Foreground="{DynamicResource MutedColor}"
-              ToolTip.Tip="{Binding Destination.FullPath}">
+              x:Name="PART_DestinationButton" Classes="Ghost Compact Muted NoScale"
+              Grid.Column="2" Padding="5,1"
+              HorizontalAlignment="Left">
               <Interaction.Behaviors>
-                <in:ChatFileLinkBehavior Reference="{Binding Destination}" Icon="{Binding #DestinationIcon}"/>
+                <in:ChatFileLinkBehavior
+                  Icon="{Binding #DestinationIcon}"
+                  Reference="{Binding Destination}"/>
               </Interaction.Behaviors>
-              <DockPanel HorizontalSpacing="6">
+
+              <DockPanel HorizontalSpacing="4">
                 <LucideIcon
-                  DockPanel.Dock="Left"
-                  x:Name="DestinationIcon"
+                  x:Name="DestinationIcon" DockPanel.Dock="Left"
+                  VerticalAlignment="Center"
+                  Foreground="{DynamicResource MutedColor}"
                   Size="{DynamicResource FontSizeS}"/>
                 <TextBlock
-                  FontSize="{DynamicResource FontSizeXs}"
+                  Classes="Muted" VerticalAlignment="Center"
+                  FontSize="{DynamicResource FontSizeS}"
+                  MaxLines="1"
                   Text="{Binding Destination.FullPath}"
-                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                  <Interaction.Behaviors>
+                    <shadui:TextTrimmedToolTipBehavior Target="{Binding #PART_DestinationButton}"/>
+                  </Interaction.Behaviors>
+                </TextBlock>
               </DockPanel>
             </Button>
-          </StackPanel>
+          </Grid>
         </DataTemplate>
 
         <DataTemplate x:DataType="plugins:ChatPluginUrlsActivityPreview">
-          <ItemsControl ItemsSource="{Binding Urls}">
+          <ItemsControl
+            ClipToBounds="False"
+            ItemsSource="{Binding Urls}">
             <ItemsControl.Styles>
               <Style Selector="Button.Link">
                 <Setter Property="Background" Value="{DynamicResource BorderColor30}"/>
@@ -144,28 +171,34 @@
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <v:TrimmingStackPanel
-                  MinimumLeadingVisibleItems="1" Orientation="Horizontal"
-                  Spacing="4"/>
+                  ClipToBounds="False" MinimumLeadingVisibleItems="1"
+                  Orientation="Horizontal" Spacing="4"/>
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate>
                 <Button
-                  Classes="Ghost Compact Link"
+                  x:Name="PART_UrlButton" Classes="Ghost Compact Muted Link NoScale"
                   Command="{Binding $parent[v:ChatMessageItemsControl].OpenUrlCommand}"
-                  CommandParameter="{Binding}"
-                  ToolTip.Tip="{Binding AbsoluteUri}">
+                  CommandParameter="{Binding}">
                   <DockPanel HorizontalSpacing="3">
                     <Panel
                       DockPanel.Dock="Left" Width="12"
                       Height="12">
                       <LucideIcon
+                        Foreground="{DynamicResource MutedColor}"
                         Kind="Link" Size="12"/>
                     </Panel>
                     <TextBlock
-                      FontSize="{DynamicResource FontSizeXs}"
+                      Classes="Muted" VerticalAlignment="Center"
+                      FontSize="{DynamicResource FontSizeS}"
+                      MaxLines="1"
                       Text="{Binding Converter={x:Static vc:UrlConverters.ToHost}}"
-                      TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                      TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                      <Interaction.Behaviors>
+                        <shadui:TextTrimmedToolTipBehavior Target="{Binding #PART_UrlButton}"/>
+                      </Interaction.Behaviors>
+                    </TextBlock>
                   </DockPanel>
                 </Button>
               </DataTemplate>
@@ -175,17 +208,19 @@
 
         <DataTemplate x:DataType="plugins:ChatPluginSubagentActivityPreview">
           <Button
-            Classes="Ghost Compact" HorizontalAlignment="Left"
+            Classes="Ghost Compact Muted NoScale" Padding="5,1"
+            HorizontalAlignment="Left"
             Command="{Binding $parent[v:ChatMessageItemsControl].OpenSubagentCommand}"
             CommandParameter="{Binding}"
             CornerRadius="{DynamicResource FullCornerRadius}"
             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginDisplayBlockPresenter_OpenSubagent}}">
             <TextBlock
-              MaxWidth="200"
+              Classes="Muted" MaxWidth="200"
+              VerticalAlignment="Center"
               FontSize="{DynamicResource FontSizeS}"
               MaxLines="1"
               Text="{Binding ChatData.Metadata.Topic}"
-              TextTrimming="CharacterEllipsis"/>
+              TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
           </Button>
         </DataTemplate>
       </DataTemplates>

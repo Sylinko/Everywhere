@@ -613,9 +613,6 @@
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>ターミナルで実行</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
-        <value>{0}を実行中</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
         <value>以下のスクリプトを実行します</value>
     </data>
@@ -1027,6 +1024,21 @@
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
         <value>送信</value>
     </data>
+    <data name="ChatInputArea_NewLine_ToolTip" xml:space="preserve">
+        <value>改行</value>
+    </data>
+    <data name="ChatInputArea_Queue_ToolTip" xml:space="preserve">
+        <value>キューに追加</value>
+    </data>
+    <data name="ChatInputArea_ResumeButton_ToolTip" xml:space="preserve">
+        <value>会話を続ける</value>
+    </data>
+    <data name="ChatInputArea_Steer_ToolTip" xml:space="preserve">
+        <value>今すぐ誘導</value>
+    </data>
+    <data name="ChatInputArea_Watermark_Busy" xml:space="preserve">
+        <value>メッセージを入力して補足またはキューに追加…</value>
+    </data>
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>設定</value>
     </data>
@@ -1140,6 +1152,9 @@
     </data>
     <data name="ChatMessageControl_RetryButton_Content" xml:space="preserve">
         <value>再生成</value>
+    </data>
+    <data name="ChatMessageControl_SteerBadge" xml:space="preserve">
+        <value>誘導された会話</value>
     </data>
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>「{0}」の実行を許可しますか？</value>
@@ -1285,9 +1300,6 @@
     <data name="ChatPlugin_MultiSelectHint" xml:space="preserve">
         <value>(複数選択)</value>
     </data>
-    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
-        <value>完了</value>
-    </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
         <value>完了した活動: {0} 件</value>
     </data>
@@ -1297,14 +1309,11 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>このラウンドでは応答が生成されませんでした。</value>
     </data>
-    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
-        <value>{0}回考えました</value>
+    <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
+        <value>ターンが完了しました</value>
     </data>
-    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
-        <value>{0}個のサブアシスタント</value>
-    </data>
-    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
-        <value>{0}回ツールを呼び出しました</value>
+    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
+        <value>{0} 件のバックグラウンドタスクを待機中…</value>
     </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>作業中</value>
@@ -2421,30 +2430,6 @@
     </data>
     <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
         <value>思考レベル</value>
-    </data>
-    <data name="Greetings_NotLoginTip1" xml:space="preserve">
-        <value>💡Everywhereのクラウドサービスに接続されているのは公式の純正大モデルです</value>
-    </data>
-    <data name="Greetings_NotLoginTip2" xml:space="preserve">
-        <value>💡Everywhereのクラウドサービスに登録すると、追加パッケージと無料トライアルが利用できます</value>
-    </data>
-    <data name="Greetings_Tip1" xml:space="preserve">
-        <value>💡Ctrl + 数字キーでアシスタントを素早く切り替えられます。</value>
-    </data>
-    <data name="Greetings_Tip2" xml:space="preserve">
-        <value>💡左下のアシスタントアイコンでホイールを使って素早く切り替えられます。</value>
-    </data>
-    <data name="Greetings_Tip3" xml:space="preserve">
-        <value>💡CopilotキーをEverywhereのショートカットキーに設定できます。</value>
-    </data>
-    <data name="Greetings_Tip4" xml:space="preserve">
-        <value>💡単一の視覚要素を追加しても、Everywhereは全体のコンテキストを賢く抽出します</value>
-    </data>
-    <data name="Greetings_Tip5" xml:space="preserve">
-        <value>💡Everywhereのコア開発は2人だけです。コードの貢献や貴重な意見をお待ちしています</value>
-    </data>
-    <data name="Greetings_Tip6" xml:space="preserve">
-        <value>💡「About」ページで公式コミュニティに参加して、私たちと交流しましょう~</value>
     </data>
     <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
         <value>認証に失敗しました。認証設定を確認するか、再度ログインしてください。</value>
@@ -5033,5 +5018,62 @@
     </data>
     <data name="WelcomeView_TelemetryStep_Message2" xml:space="preserve">
         <value>参加しない場合は、必要なデータのみが送信されます。ご安心ください。この選択はコア機能に影響を与えません。</value>
+    </data>
+    <data name="BackgroundJobNotification_Completed" xml:space="preserve">
+        <value>バックグラウンドジョブが完了しました</value>
+    </data>
+    <data name="BackgroundJobNotification_Failed" xml:space="preserve">
+        <value>バックグラウンドジョブが失敗しました</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageBackgroundJobs_Description" xml:space="preserve">
+        <value>このセッションで実行中のバックグラウンドジョブの一覧表示、ライブ出力の確認、または停止を行います。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageBackgroundJobs_Header" xml:space="preserve">
+        <value>バックグラウンドジョブの管理</value>
+    </data>
+    <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
+        <value>キュー（現在のターン完了後）</value>
+    </data>
+    <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
+        <value>ステア（次のステップへ割り込み）</value>
+    </data>
+    <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
+        <value>キュー</value>
+    </data>
+    <data name="ChatInputDeliveryMode_Steer" xml:space="preserve">
+        <value>ステア</value>
+    </data>
+    <data name="ChatWindowSettings_BusySubmissionMode_Description" xml:space="preserve">
+        <value>応答中に送信したメッセージを、既定でキューに入れるか現在のターンへステアするかを選択します。</value>
+    </data>
+    <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
+        <value>応答中の既定送信動作</value>
+    </data>
+    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+        <value>バックグラウンドで実行中</value>
+    </data>
+    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
+        <value>このバックグラウンドジョブを停止</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
+        <value>クリア</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_Delete_ToolTip" xml:space="preserve">
+        <value>この待機アイテムを削除</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_PausedBadge" xml:space="preserve">
+        <value>一時停止中</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ResumeButton" xml:space="preserve">
+        <value>再開</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ToggleMode_ToolTip" xml:space="preserve">
+        <value>キュー / ステアを切り替え</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_WaitingHeader" xml:space="preserve">
+        <value>待機中のメッセージ</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_Withdraw_ToolTip" xml:space="preserve">
+        <value>入力欄へ戻して編集</value>
     </data>
 </root>

@@ -1,7 +1,7 @@
 ﻿<v:ReactiveShadWindow
   x:Class="Everywhere.Views.ChatWindow" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:chat="clr-namespace:Everywhere.Chat"
+  xmlns:harness="clr-namespace:Everywhere.Harness" xmlns:in="clr-namespace:Everywhere.Interactions"
   xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:notification="clr-namespace:Everywhere.Common.Notification;assembly=Everywhere.Abstractions"
   xmlns:notifications="clr-namespace:Avalonia.Controls.Notifications;assembly=Avalonia.Controls" xmlns:p="clr-namespace:Everywhere.Chat.Plugins"
   xmlns:se="clr-namespace:Everywhere.StrategyEngine" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
@@ -587,13 +587,15 @@
                                 Header="{I18N {x:Static LocaleKey.ChatWindow_ChatHistory_ExportMarkdownMenuItem_Header}}"
                                 Icon="{LucideIconContent Upload}"/>
                               <MenuItem
+                                Command="{Binding #Self.ViewModel.ManageChatSyncCommand}"
+                                CommandParameter="{Binding}"
                                 Header="{I18N {x:Static LocaleKey.ChatWindow_ManageChatSyncMenuItem_Header}}"
-                                Command="{Binding #Self.ViewModel.ManageChatSyncCommand}" CommandParameter="{Binding}"
                                 Icon="{LucideIconContent Cloud}">
                                 <MenuItem.IsVisible>
                                   <MultiBinding Converter="{x:Static BoolConverters.And}">
                                     <Binding Path="!IsTemporary"/>
-                                    <Binding ElementName="Self" Path="ViewModel.HasSyncService"/>
+                                    <Binding
+                                      ElementName="Self" Path="ViewModel.HasSyncService"/>
                                   </MultiBinding>
                                 </MenuItem.IsVisible>
                               </MenuItem>
@@ -889,11 +891,11 @@
                 md:MarkdownTextBlock.HighlightStyles="{x:Static in:ChatTextSearchHighlightStyles.Instance}"
                 ChatContext="{Binding ChatContextManager.Current}"
                 ChatContextManager="{Binding ChatContextManager}"
-                IsReadonly="{Binding ChatContextManager.Current.Data.Metadata.IsArchived}"
                 ContinueMessageNodeCommand="{Binding ContinueMessageNodeCommand}"
                 CopyMessageNodeCommand="{Binding CopyMessageNodeCommand}"
                 EditMessageNodeCommand="{Binding EditMessageNodeCommand}"
                 EditingMessageNode="{Binding EditingMessageNode, Mode=TwoWay}"
+                IsReadonly="{Binding ChatContextManager.Current.Data.Metadata.IsArchived}"
                 IsVisible="{Binding $self.ItemCount, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=0}"
                 RetryMessageNodeCommand="{Binding RetryMessageNodeCommand}"
                 ShowStatistics="{Binding Settings.ChatWindow.ShowChatStatistics}"
@@ -1034,10 +1036,11 @@
 
           <Button
             Classes="Secondary" Grid.Row="0"
-            Margin="8" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+            Margin="8" HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
             Command="{Binding #ChatMessages.ShowSyncedBranchCommand}"
-            IsVisible="{Binding ChatContextManager.Current.Data.HasSyncedBranchUpdate}"
-            Content="{I18N {x:Static LocaleKey.ChatWindow_ViewSyncedBranchButton_Content}}"/>
+            Content="{I18N {x:Static LocaleKey.ChatWindow_ViewSyncedBranchButton_Content}}"
+            IsVisible="{Binding ChatContextManager.Current.Data.HasSyncedBranchUpdate}"/>
 
           <StackPanel
             x:Name="InputPanel" Grid.Row="1"
@@ -1343,24 +1346,180 @@
                 </DockPanel>
               </shadui:SmoothBorder>
 
+              <shadui:SmoothBorder
+                Margin="6,2" Padding="8,6"
+                Background="{DynamicResource LightCardBackgroundColor}"
+                CornerRadius="{DynamicResource XlCornerRadius}"
+                IsVisible="{Binding !!ChatContextManager.Current.Root.BackgroundJobs.ActiveJobs.Count}">
+                <StackPanel Spacing="4">
+                  <DockPanel HorizontalSpacing="6">
+                    <LucideIcon
+                      DockPanel.Dock="Left" VerticalAlignment="Center"
+                      Foreground="{DynamicResource MutedColor}"
+                      Kind="Layers"
+                      Size="{DynamicResource FontSizeM}"/>
+                    <TextBlock
+                      Classes="Caption Muted" VerticalAlignment="Center"
+                      Text="{I18N {x:Static LocaleKey.ChatWindow_BackgroundJobs_Header}}"/>
+                  </DockPanel>
+
+                  <ItemsControl ItemsSource="{Binding ChatContextManager.Current.Root.BackgroundJobs.ActiveJobs}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="harness:ChatBackgroundJob">
+                        <DockPanel
+                          Margin="0,1" HorizontalSpacing="6"
+                          LastChildFill="True">
+                          <Button
+                            Classes="Ghost Compact" DockPanel.Dock="Right"
+                            Padding="2" VerticalAlignment="Center"
+                            Command="{Binding #Self.ViewModel.StopBackgroundJobCommand}"
+                            CommandParameter="{Binding}"
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_BackgroundJobs_Stop_ToolTip}}">
+                            <LucideIcon
+                              Kind="X"
+                              Size="{DynamicResource FontSizeS}"/>
+                          </Button>
+                          <TextBlock
+                            Classes="Caption" VerticalAlignment="Center"
+                            MaxLines="1"
+                            Text="{Binding Label}"
+                            TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </shadui:SmoothBorder>
+
+              <shadui:SmoothBorder
+                Margin="6,2" Padding="8,6"
+                Background="{DynamicResource LightCardBackgroundColor}"
+                CornerRadius="{DynamicResource XlCornerRadius}"
+                IsVisible="{Binding !!ChatContextManager.Current.PendingInputs.WaitingItems.Count}">
+                <StackPanel Spacing="4">
+                  <DockPanel
+                    HorizontalSpacing="6" LastChildFill="True">
+                    <Button
+                      Classes="Ghost Compact" DockPanel.Dock="Right"
+                      Padding="6,1" VerticalAlignment="Center"
+                      Command="{Binding ClearPendingInputsCommand}"
+                      Content="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_ClearButton}}"/>
+                    <Button
+                      Classes="Primary Compact" DockPanel.Dock="Right"
+                      Padding="6,1" VerticalAlignment="Center"
+                      Command="{Binding ResumeConversationCommand}"
+                      Content="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_ResumeButton}}"
+                      IsVisible="{Binding ChatContextManager.Current.PendingInputs.IsDrainPaused}"/>
+                    <Border
+                      DockPanel.Dock="Left" Padding="5,1"
+                      VerticalAlignment="Center"
+                      Background="{DynamicResource WarningColor20}"
+                      CornerRadius="{DynamicResource FullCornerRadius}"
+                      IsVisible="{Binding ChatContextManager.Current.PendingInputs.IsDrainPaused}">
+                      <TextBlock
+                        Classes="Caption"
+                        FontSize="{DynamicResource FontSizeXs}"
+                        Foreground="{DynamicResource WarningColor60}"
+                        Text="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_PausedBadge}}"/>
+                    </Border>
+                    <TextBlock
+                      Classes="Caption Muted" VerticalAlignment="Center">
+                      <Run Text="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_WaitingHeader}}"/>
+                      <Run Text=" ("/><Run Text="{Binding ChatContextManager.Current.PendingInputs.WaitingItems.Count}"/><Run Text=")"/>
+                    </TextBlock>
+                  </DockPanel>
+
+                  <ItemsControl ItemsSource="{Binding ChatContextManager.Current.PendingInputs.WaitingItems}">
+                    <ItemsControl.Styles>
+                      <Style Selector="DockPanel.PendingInputItem:not(:pointerover) Button#PART_PendingEditButton">
+                        <Setter Property="IsVisible" Value="False"/>
+                      </Style>
+                    </ItemsControl.Styles>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="chat:ChatPendingInputItem">
+                        <DockPanel
+                          Classes="PendingInputItem" Margin="0,1"
+                          Background="Transparent" HorizontalSpacing="4"
+                          LastChildFill="True">
+                          <Button
+                            Classes="Ghost Compact" DockPanel.Dock="Right"
+                            Padding="2" VerticalAlignment="Center"
+                            Command="{Binding #Self.ViewModel.RemovePendingInputCommand}"
+                            CommandParameter="{Binding}"
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_Delete_ToolTip}}">
+                            <LucideIcon
+                              Kind="X"
+                              Size="{DynamicResource FontSizeS}"/>
+                          </Button>
+                          <Button
+                            x:Name="PART_PendingEditButton" Classes="Ghost Compact"
+                            DockPanel.Dock="Right" Padding="2"
+                            VerticalAlignment="Center"
+                            Command="{Binding #Self.ViewModel.WithdrawPendingInputCommand}"
+                            CommandParameter="{Binding}"
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_Withdraw_ToolTip}}">
+                            <LucideIcon
+                              Kind="SquarePen"
+                              Size="{DynamicResource FontSizeS}"/>
+                          </Button>
+                          <Button
+                            Classes="Outline Compact" DockPanel.Dock="Left"
+                            Margin="0,0,2,0" Padding="6,2"
+                            VerticalAlignment="Center"
+                            shadui:ButtonAssist.HoverBackground="{DynamicResource SelectionColor}"
+                            Command="{Binding #Self.ViewModel.TogglePendingInputDeliveryModeCommand}"
+                            CommandParameter="{Binding}"
+                            CornerRadius="{DynamicResource FullCornerRadius}"
+                            Cursor="Hand"
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_ToggleMode_ToolTip}}">
+                            <StackPanel
+                              Orientation="Horizontal" Spacing="4">
+                              <LucideIcon
+                                VerticalAlignment="Center"
+                                Foreground="{DynamicResource MutedColor}"
+                                Kind="ArrowLeftRight"
+                                Size="{DynamicResource FontSizeXs}"/>
+                              <Panel>
+                                <TextBlock
+                                  Classes="Caption" VerticalAlignment="Center"
+                                  FontSize="{DynamicResource FontSizeXs}"
+                                  FontWeight="Medium"
+                                  Foreground="{DynamicResource PrimaryColor}"
+                                  IsVisible="{Binding IsSteer}"
+                                  Text="{I18N {x:Static LocaleKey.ChatInputDeliveryMode_Steer}}"/>
+                                <TextBlock
+                                  Classes="Caption Muted" VerticalAlignment="Center"
+                                  FontSize="{DynamicResource FontSizeXs}"
+                                  FontWeight="Medium"
+                                  IsVisible="{Binding IsQueue}"
+                                  Text="{I18N {x:Static LocaleKey.ChatInputDeliveryMode_Queue}}"/>
+                              </Panel>
+                            </StackPanel>
+                          </Button>
+                          <TextBlock
+                            Classes="Caption" VerticalAlignment="Center"
+                            MaxLines="1"
+                            Text="{Binding PreviewText}"
+                            TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </shadui:SmoothBorder>
+
               <shadui:SmoothBorder Background="{DynamicResource LightCardBackgroundColor}">
                 <v:ChatInputArea
                   x:Name="ChatInputArea" Padding="10,10,10,0"
-                  CancelCommand="{Binding CancelCommand}"
+                  AlternateCommand="{Binding SendMessageOppositeModeCommand}"
                   ChatAttachmentItemsSource="{Binding ChatAttachments}"
                   Command="{Binding SendMessageCommand}"
-                  CompactContextCommand="{Binding CompactContextCommand}"
-                  ContextCompaction="{Binding ChatContextManager.Current.ContextCompaction}"
-                  ContextUsage="{Binding ChatContextManager.Current.ContextUsage}"
                   CustomAssistantItemsSource="{Binding Settings.Model.CustomAssistants}"
-                  IsContextUsageRingVisible="{Binding ChatContextManager.Current.Presentation.HasMessages}"
-                  IsSendButtonEnabled="{Binding !IsBusy}"
                   LeadingContent="{Binding SelectedStrategy, Mode=TwoWay}"
                   MaxLength="{Binding ChatInputAreaTextMaxLength}"
                   PlaceholderText="{Binding ChatInputAreaWatermarkKey^}"
                   RemoveAttachmentCommand="{Binding RemoveAttachmentCommand}"
                   SelectedCustomAssistant="{Binding Settings.Model.SelectedCustomAssistant, Mode=TwoWay}"
-                  ShouldClearTextOnSubmit="False"
                   Text="{Binding ChatInputAreaText, Mode=TwoWay}">
                   <v:ChatInputArea.Transitions>
                     <Transitions>
@@ -1369,6 +1528,311 @@
                         Duration="0:0:0.2"/>
                     </Transitions>
                   </v:ChatInputArea.Transitions>
+
+                  <v:ChatInputArea.TrailingContent>
+                    <StackPanel
+                      VerticalAlignment="Center" ClipToBounds="False"
+                      Orientation="Horizontal">
+                      <v:ContextUsageRing
+                        Margin="0,0,6,0" VerticalAlignment="Center"
+                        IndicatorBrush="{DynamicResource PrimaryColor}"
+                        IsIndeterminate="{Binding ChatContextManager.Current.ContextCompaction.IsRunning}"
+                        IsVisible="{Binding ChatContextManager.Current.Presentation.HasMessages}"
+                        Size="{DynamicResource FontSizeL}"
+                        StrokeThickness="2"
+                        TrackBrush="{DynamicResource BorderColor}"
+                        Value="{Binding ChatContextManager.Current.ContextUsage.Snapshot.UsageRatio}">
+                        <v:ContextUsageRing.Styles>
+                          <Style Selector="FlyoutPresenter">
+                            <Setter Property="CornerRadius" Value="{DynamicResource 2XlCornerRadius}"/>
+                            <Style.Animations>
+                              <Animation
+                                Easing="CubicEaseInOut" FillMode="None"
+                                IterationCount="1" Duration="0:0:0.15">
+                                <KeyFrame Cue="0%">
+                                  <Setter Property="Opacity" Value="0"/>
+                                  <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                                  <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+                                </KeyFrame>
+
+                                <KeyFrame Cue="100%">
+                                  <Setter Property="Opacity" Value="1"/>
+                                  <Setter Property="ScaleTransform.ScaleX" Value="1"/>
+                                  <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+                                </KeyFrame>
+                              </Animation>
+                            </Style.Animations>
+                          </Style>
+                        </v:ContextUsageRing.Styles>
+
+                        <v:ContextUsageRing.Flyout>
+                          <Flyout Placement="Top">
+                            <StackPanel
+                              Width="220" Margin="12"
+                              Spacing="8">
+                              <TextBlock
+                                FontSize="{DynamicResource FontSizeL}"
+                                FontWeight="SemiBold"
+                                Text="{I18N {x:Static LocaleKey.ChatInputArea_ContextUsage_Header}}"/>
+
+                              <TextBlock
+                                FontWeight="SemiBold"
+                                IsVisible="{Binding ChatContextManager.Current.ContextUsage.Snapshot.HasUsageRatio}">
+                                <TextBlock.Text>
+                                  <I18N Key="{x:Static LocaleKey.ChatInputArea_ContextUsage_UsedPercentage}">
+                                    <Binding Path="ChatContextManager.Current.ContextUsage.Snapshot.UsagePercentage"/>
+                                  </I18N>
+                                </TextBlock.Text>
+                              </TextBlock>
+
+                              <TextBlock IsVisible="{Binding ChatContextManager.Current.ContextUsage.Snapshot.HasUsageRatio}">
+                                <TextBlock.Text>
+                                  <I18N Key="{x:Static LocaleKey.ChatInputArea_ContextUsage_Tokens}">
+                                    <Binding
+                                      Converter="{x:Static vc:TokenCountHumanizationConverter.Shared}"
+                                      Path="ChatContextManager.Current.ContextUsage.Snapshot.TotalTokenCount"/>
+                                    <Binding
+                                      Converter="{x:Static vc:TokenCountHumanizationConverter.Shared}"
+                                      Path="ChatContextManager.Current.ContextUsage.Snapshot.ContextLimit"/>
+                                  </I18N>
+                                </TextBlock.Text>
+                              </TextBlock>
+
+                              <TextBlock IsVisible="{Binding ChatContextManager.Current.ContextUsage.Snapshot.HasUsageWithoutContextLimit}">
+                                <TextBlock.Text>
+                                  <I18N Key="{x:Static LocaleKey.ChatInputArea_ContextUsage_ReportedTokens}">
+                                    <Binding
+                                      Converter="{x:Static vc:TokenCountHumanizationConverter.Shared}"
+                                      Path="ChatContextManager.Current.ContextUsage.Snapshot.TotalTokenCount"/>
+                                  </I18N>
+                                </TextBlock.Text>
+                              </TextBlock>
+
+                              <TextBlock
+                                Classes="Caption Muted"
+                                IsVisible="{Binding ChatContextManager.Current.ContextUsage.Snapshot.HasUsage}">
+                                <TextBlock.Text>
+                                  <I18N Key="{x:Static LocaleKey.ChatInputArea_ContextUsage_CachedTokens}">
+                                    <Binding
+                                      Converter="{x:Static vc:TokenCountHumanizationConverter.Shared}"
+                                      Path="ChatContextManager.Current.ContextUsage.Snapshot.CachedInputTokenCount"/>
+                                  </I18N>
+                                </TextBlock.Text>
+                              </TextBlock>
+
+                              <TextBlock
+                                Classes="Muted"
+                                IsVisible="{Binding ChatContextManager.Current.ContextUsage.Snapshot.ShouldShowUnavailableMessage}"
+                                Text="{I18N {x:Static LocaleKey.ChatInputArea_ContextUsage_Unavailable}}"
+                                TextWrapping="Wrap"/>
+
+                              <TextBlock
+                                Classes="Caption Muted"
+                                IsVisible="{Binding ChatContextManager.Current.ContextUsage.Snapshot.Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static harness:ContextUsageKind.Estimated}}"
+                                Text="{I18N {x:Static LocaleKey.ChatInputArea_ContextUsage_Estimated}}"
+                                TextWrapping="Wrap"/>
+
+                              <TextBlock
+                                Classes="Caption Muted"
+                                IsVisible="{Binding ChatContextManager.Current.ContextUsage.Snapshot.IsCompactedAwaitingMeasurement}"
+                                Text="{I18N {x:Static LocaleKey.ChatInputArea_ContextUsage_Compacted}}"
+                                TextWrapping="Wrap"/>
+
+                              <Button
+                                Classes="Secondary Compact" Margin="-6,0,-6,-6"
+                                HorizontalAlignment="Stretch"
+                                shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
+                                shadui:ButtonAssist.ShowProgress="{Binding ChatContextManager.Current.ContextCompaction.IsRunning}"
+                                Command="{Binding CompactContextCommand}"
+                                Content="{I18N {x:Static LocaleKey.ChatInputArea_ContextUsage_CompactButton}}"
+                                CornerRadius="{DynamicResource FullCornerRadius}"/>
+                            </StackPanel>
+                          </Flyout>
+                        </v:ContextUsageRing.Flyout>
+                      </v:ContextUsageRing>
+
+                      <StackPanel
+                        VerticalAlignment="Center" ClipToBounds="False"
+                        Orientation="Horizontal">
+                        <StackPanel.Styles>
+                          <Style Selector="Panel#PART_PrimaryComposerSlot">
+                            <Setter Property="Width" Value="32"/>
+                            <Setter Property="Margin" Value="0"/>
+                          </Style>
+                          <Style Selector="Panel#PART_PrimaryComposerSlot.has-stop">
+                            <Setter Property="Margin" Value="0,0,6,0"/>
+                          </Style>
+                          <Style Selector="Panel#PART_PrimaryComposerSlot.tucked">
+                            <Setter Property="Width" Value="0"/>
+                            <Setter Property="Margin" Value="0"/>
+                          </Style>
+                          <Style Selector="Panel#PART_PrimaryComposerSlot > Button#PART_PrimaryComposerButton">
+                            <Setter Property="Opacity" Value="1"/>
+                            <Setter Property="RenderTransform" Value="translateX(0px) scale(1)"/>
+                          </Style>
+                          <Style Selector="Panel#PART_PrimaryComposerSlot.tucked > Button#PART_PrimaryComposerButton">
+                            <Setter Property="Opacity" Value="0"/>
+                            <Setter Property="RenderTransform" Value="translateX(38px) scale(0.35)"/>
+                          </Style>
+                          <Style Selector="Panel#PART_StopComposerSlot">
+                            <Setter Property="Width" Value="0"/>
+                            <Setter Property="Opacity" Value="0"/>
+                            <Setter Property="RenderTransform" Value="scale(0.6)"/>
+                            <Setter Property="IsHitTestVisible" Value="False"/>
+                          </Style>
+                          <Style Selector="Panel#PART_StopComposerSlot.visible">
+                            <Setter Property="Width" Value="32"/>
+                            <Setter Property="Opacity" Value="1"/>
+                            <Setter Property="RenderTransform" Value="scale(1)"/>
+                            <Setter Property="IsHitTestVisible" Value="True"/>
+                          </Style>
+                        </StackPanel.Styles>
+
+                        <Panel
+                          x:Name="PART_PrimaryComposerSlot"
+                          Classes.has-stop="{Binding IsBusy}"
+                          Classes.tucked="{Binding !IsPrimaryButtonVisible}"
+                          ClipToBounds="False" ZIndex="1">
+                          <Panel.Transitions>
+                            <Transitions>
+                              <DoubleTransition
+                                Easing="CubicEaseOut" Property="Width"
+                                Duration="0:0:0.22"/>
+                              <ThicknessTransition
+                                Easing="CubicEaseOut" Property="Margin"
+                                Duration="0:0:0.22"/>
+                            </Transitions>
+                          </Panel.Transitions>
+
+                          <Button
+                            x:Name="PART_PrimaryComposerButton" Classes="Primary"
+                            Width="32" Height="32"
+                            MinWidth="32" MinHeight="32"
+                            Padding="0" HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Command="{Binding PrimaryComposerActionCommand}"
+                            CornerRadius="{DynamicResource FullCornerRadius}"
+                            Focusable="False"
+                            IsEnabled="{Binding IsPrimaryButtonEnabled}"
+                            IsHitTestVisible="{Binding IsPrimaryButtonVisible}">
+                            <Button.Transitions>
+                              <Transitions>
+                                <TransformOperationsTransition
+                                  Easing="{x:Static shadui:EaseOutBack.Soft}"
+                                  Property="RenderTransform" Duration="0:0:0.28"/>
+                                <DoubleTransition
+                                  Easing="CubicEaseOut" Property="Opacity"
+                                  Duration="0:0:0.16"/>
+                              </Transitions>
+                            </Button.Transitions>
+
+                            <ToolTip.Tip>
+                              <v:LazyIndexedContentControl
+                                ContentDataBinding="{Binding #Self.DataContext}"
+                                ItemIndex="{Binding PrimaryComposerMode, Converter={x:Static vc:Int32Converters.FromEnum}}">
+                                <!--  Send  -->
+                                <DataTemplate x:DataType="vm:ChatWindowViewModel">
+                                  <StackPanel
+                                    IsVisible="{Binding PrimaryComposerMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:ChatComposerPrimaryMode.Send}}"
+                                    Spacing="4">
+                                    <v:KeyboardShortcutLabel
+                                      Shortcut="{x:Static v:ChatInputArea.SendShortcut}"
+                                      Text="{I18N {x:Static LocaleKey.ChatInputArea_SendButton_ToolTip}}"/>
+                                    <v:KeyboardShortcutLabel
+                                      Shortcut="{x:Static v:ChatInputArea.NewLineShortcut}"
+                                      Text="{I18N {x:Static LocaleKey.ChatInputArea_NewLine_ToolTip}}"/>
+                                  </StackPanel>
+                                </DataTemplate>
+
+                                <!--  Resume  -->
+                                <DataTemplate x:DataType="vm:ChatWindowViewModel">
+                                  <TextBlock Text="{I18N {x:Static LocaleKey.ChatInputArea_ResumeButton_ToolTip}}"/>
+                                </DataTemplate>
+
+                                <!--  Queue  -->
+                                <DataTemplate x:DataType="vm:ChatWindowViewModel">
+                                  <StackPanel Spacing="4">
+                                    <v:KeyboardShortcutLabel
+                                      Shortcut="{x:Static v:ChatInputArea.SendShortcut}"
+                                      Text="{I18N {x:Static LocaleKey.ChatInputArea_Queue_ToolTip}}"/>
+                                    <v:KeyboardShortcutLabel
+                                      Shortcut="{x:Static v:ChatInputArea.OppositeModeShortcut}"
+                                      Text="{I18N {x:Static LocaleKey.ChatInputArea_Steer_ToolTip}}"/>
+                                  </StackPanel>
+                                </DataTemplate>
+
+                                <!--  Steer  -->
+                                <DataTemplate x:DataType="vm:ChatWindowViewModel">
+                                  <StackPanel Spacing="4">
+                                    <v:KeyboardShortcutLabel
+                                      Shortcut="{x:Static v:ChatInputArea.SendShortcut}"
+                                      Text="{I18N {x:Static LocaleKey.ChatInputArea_Steer_ToolTip}}"/>
+                                    <v:KeyboardShortcutLabel
+                                      Shortcut="{x:Static v:ChatInputArea.OppositeModeShortcut}"
+                                      Text="{I18N {x:Static LocaleKey.ChatInputArea_Queue_ToolTip}}"/>
+                                  </StackPanel>
+                                </DataTemplate>
+                              </v:LazyIndexedContentControl>
+                            </ToolTip.Tip>
+
+                            <LucideIcon
+                              Margin="-2,0,0,-2"
+                              Classes.queue="{Binding PrimaryComposerMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:ChatComposerPrimaryMode.Queue}}"
+                              Classes.resume="{Binding PrimaryComposerMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:ChatComposerPrimaryMode.Resume}}"
+                              Foreground="{DynamicResource PrimaryForegroundColor}"
+                              Kind="Send"
+                              Size="{DynamicResource FontSizeL}">
+                              <LucideIcon.Styles>
+                                <Style Selector="LucideIcon.resume">
+                                  <Setter Property="Kind" Value="Play"/>
+                                  <Setter Property="Margin" Value="2,0,0,0"/>
+                                </Style>
+                                <Style Selector="LucideIcon.queue">
+                                  <Setter Property="Kind" Value="Clock"/>
+                                  <Setter Property="Margin" Value="0"/>
+                                </Style>
+                              </LucideIcon.Styles>
+                            </LucideIcon>
+                          </Button>
+                        </Panel>
+
+                        <Panel
+                          x:Name="PART_StopComposerSlot"
+                          Classes.visible="{Binding IsBusy}"
+                          ClipToBounds="False" ZIndex="2">
+                          <Panel.Transitions>
+                            <Transitions>
+                              <DoubleTransition
+                                Easing="CubicEaseOut" Property="Width"
+                                Duration="0:0:0.2"/>
+                              <DoubleTransition
+                                Easing="CubicEaseOut" Property="Opacity"
+                                Duration="0:0:0.16"/>
+                              <TransformOperationsTransition
+                                Easing="{x:Static shadui:EaseOutBack.Soft}"
+                                Property="RenderTransform" Duration="0:0:0.22"/>
+                            </Transitions>
+                          </Panel.Transitions>
+
+                          <Button
+                            Classes="Primary" Width="32"
+                            Height="32" MinWidth="32"
+                            MinHeight="32" Padding="0"
+                            VerticalAlignment="Center"
+                            Command="{Binding CancelCommand}"
+                            CornerRadius="{DynamicResource FullCornerRadius}"
+                            Focusable="False"
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_CancelButton_ToolTip}}">
+                            <Border
+                              Width="{DynamicResource FontSizeM}"
+                              Height="{DynamicResource FontSizeM}"
+                              Background="{DynamicResource PrimaryForegroundColor}"
+                              CornerRadius="1"/>
+                          </Button>
+                        </Panel>
+                      </StackPanel>
+                    </StackPanel>
+                  </v:ChatInputArea.TrailingContent>
 
                   <v:ChatInputArea.ToolBarContent>
                     <DockPanel

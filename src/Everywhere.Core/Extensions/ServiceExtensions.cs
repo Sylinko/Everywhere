@@ -226,7 +226,6 @@ public static class ServiceExtensions
                 .AddSingleton<FileHandler, BinaryFileHandler>()
                 .AddSingleton<FileHandlerContextFactory>()
                 .AddSingleton<IChatService, ChatService>()
-                .AddSingleton<IGreetings, Greetings>()
                 .AddSingleton<IWebBrowserHost, WebBrowserHost>()
                 .AddChatContextManager()
                 .AddManagedMcp()

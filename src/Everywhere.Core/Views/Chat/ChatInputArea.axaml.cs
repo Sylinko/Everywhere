@@ -2,7 +2,6 @@
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
-using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
@@ -12,26 +11,20 @@ using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Interop;
 using Everywhere.Utilities;
-using ContextCompactionState = Everywhere.Harness.ContextCompactionState;
-using ContextUsageState = Everywhere.Harness.ContextUsageState;
 
 namespace Everywhere.Views;
 
 [TemplatePart("PART_ChatTextEditor", typeof(ChatTextEditor), IsRequired = true)]
-[TemplatePart("PART_SendButton", typeof(Button), IsRequired = true)]
 [TemplatePart("PART_ChatAttachmentItemsControl", typeof(ChatAttachmentItemsControl), IsRequired = true)]
 [TemplatePart("PART_AttachmentScrollViewer", typeof(ScrollViewer), IsRequired = true)]
 public sealed class ChatInputArea : TemplatedControl
 {
-    /// <summary>
-    /// Projects the send-key setting into the shortcut displayed by the send button's tooltip.
-    /// </summary>
-    public static IValueConverter SendShortcutConverter { get; } = new FuncValueConverter<bool, KeyboardShortcut>(
-        shouldPressControl =>
-        {
-            var modifier = OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
-            return new KeyboardShortcut(Key.Enter, shouldPressControl ? modifier : KeyModifiers.None);
-        });
+    public static KeyboardShortcut SendShortcut { get; } = new(Key.Enter, KeyModifiers.None);
+
+    public static KeyboardShortcut NewLineShortcut { get; } = new(Key.Enter, KeyModifiers.Shift);
+
+    public static KeyboardShortcut OppositeModeShortcut { get; } =
+        new(Key.Enter, OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control);
 
     public static readonly StyledProperty<string?> TextProperty =
         AvaloniaProperty.Register<ChatInputArea, string?>(nameof(Text));
@@ -51,41 +44,20 @@ public sealed class ChatInputArea : TemplatedControl
     public static readonly StyledProperty<object?> ToolBarContentProperty =
         AvaloniaProperty.Register<ChatInputArea, object?>(nameof(ToolBarContent));
 
-    public static readonly StyledProperty<bool> PressCtrlEnterToSendProperty =
-        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(PressCtrlEnterToSend));
+    public static readonly StyledProperty<object?> TrailingContentProperty =
+        AvaloniaProperty.Register<ChatInputArea, object?>(nameof(TrailingContent));
 
     public static readonly StyledProperty<IRelayCommand<string>?> CommandProperty =
         AvaloniaProperty.Register<ChatInputArea, IRelayCommand<string>?>(nameof(Command));
 
-    public static readonly StyledProperty<IRelayCommand?> CancelCommandProperty =
-        AvaloniaProperty.Register<ChatInputArea, IRelayCommand?>(nameof(CancelCommand));
-
-    public static readonly StyledProperty<bool> IsContextUsageRingVisibleProperty =
-        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsContextUsageRingVisible));
-
-    public static readonly StyledProperty<IRelayCommand?> CompactContextCommandProperty =
-        AvaloniaProperty.Register<ChatInputArea, IRelayCommand?>(nameof(CompactContextCommand));
-
-    public static readonly StyledProperty<ContextUsageState?> ContextUsageProperty =
-        AvaloniaProperty.Register<ChatInputArea, ContextUsageState?>(nameof(ContextUsage));
-
-    public static readonly StyledProperty<ContextCompactionState?> ContextCompactionProperty =
-        AvaloniaProperty.Register<ChatInputArea, ContextCompactionState?>(nameof(ContextCompaction));
+    public static readonly StyledProperty<IRelayCommand<string>?> AlternateCommandProperty =
+        AvaloniaProperty.Register<ChatInputArea, IRelayCommand<string>?>(nameof(AlternateCommand));
 
     public static readonly StyledProperty<ICollection<ChatAttachment>?> ChatAttachmentItemsSourceProperty =
         AvaloniaProperty.Register<ChatInputArea, ICollection<ChatAttachment>?>(nameof(ChatAttachmentItemsSource));
 
     public static readonly StyledProperty<IRelayCommand<ChatAttachment>?> RemoveAttachmentCommandProperty =
         AvaloniaProperty.Register<ChatInputArea, IRelayCommand<ChatAttachment>?>(nameof(RemoveAttachmentCommand));
-
-    public static readonly StyledProperty<bool> IsSendButtonEnabledProperty =
-        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsSendButtonEnabled), true);
-
-    /// <summary>
-    /// Defines whether executing the send command immediately clears the input text.
-    /// </summary>
-    public static readonly StyledProperty<bool> ShouldClearTextOnSubmitProperty =
-        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(ShouldClearTextOnSubmit), true);
 
     public static readonly StyledProperty<object?> LeadingContentProperty =
         ChatTextEditor.LeadingContentProperty.AddOwner<ChatInputArea>();
@@ -134,13 +106,10 @@ public sealed class ChatInputArea : TemplatedControl
         set => SetValue(ToolBarContentProperty, value);
     }
 
-    /// <summary>
-    /// If true, pressing Ctrl+Enter will send the message, Enter will break the line.
-    /// </summary>
-    public bool PressCtrlEnterToSend
+    public object? TrailingContent
     {
-        get => GetValue(PressCtrlEnterToSendProperty);
-        set => SetValue(PressCtrlEnterToSendProperty, value);
+        get => GetValue(TrailingContentProperty);
+        set => SetValue(TrailingContentProperty, value);
     }
 
     /// <summary>
@@ -152,34 +121,10 @@ public sealed class ChatInputArea : TemplatedControl
         set => SetValue(CommandProperty, value);
     }
 
-    public IRelayCommand? CancelCommand
+    public IRelayCommand<string>? AlternateCommand
     {
-        get => GetValue(CancelCommandProperty);
-        set => SetValue(CancelCommandProperty, value);
-    }
-
-    public bool IsContextUsageRingVisible
-    {
-        get => GetValue(IsContextUsageRingVisibleProperty);
-        set => SetValue(IsContextUsageRingVisibleProperty, value);
-    }
-
-    public IRelayCommand? CompactContextCommand
-    {
-        get => GetValue(CompactContextCommandProperty);
-        set => SetValue(CompactContextCommandProperty, value);
-    }
-
-    public ContextUsageState? ContextUsage
-    {
-        get => GetValue(ContextUsageProperty);
-        set => SetValue(ContextUsageProperty, value);
-    }
-
-    public ContextCompactionState? ContextCompaction
-    {
-        get => GetValue(ContextCompactionProperty);
-        set => SetValue(ContextCompactionProperty, value);
+        get => GetValue(AlternateCommandProperty);
+        set => SetValue(AlternateCommandProperty, value);
     }
 
     public ICollection<ChatAttachment>? ChatAttachmentItemsSource
@@ -192,22 +137,6 @@ public sealed class ChatInputArea : TemplatedControl
     {
         get => GetValue(RemoveAttachmentCommandProperty);
         set => SetValue(RemoveAttachmentCommandProperty, value);
-    }
-
-    public bool IsSendButtonEnabled
-    {
-        get => GetValue(IsSendButtonEnabledProperty);
-        set => SetValue(IsSendButtonEnabledProperty, value);
-    }
-
-    /// <summary>
-    /// Gets or sets whether invoking the send command clears the editor immediately.
-    /// Hosts that can reject submission can clear their bound text after acceptance instead.
-    /// </summary>
-    public bool ShouldClearTextOnSubmit
-    {
-        get => GetValue(ShouldClearTextOnSubmitProperty);
-        set => SetValue(ShouldClearTextOnSubmitProperty, value);
     }
 
     public object? LeadingContent
@@ -223,11 +152,6 @@ public sealed class ChatInputArea : TemplatedControl
     }
 
     private ChatTextEditor? _chatTextEditor;
-    private IDisposable? _sendButtonClickSubscription;
-    private IDisposable? _textPresenterSizeChangedSubscription;
-    private IDisposable? _chatAttachmentItemsControlPointerMovedSubscription;
-    private IDisposable? _chatAttachmentItemsControlPointerExitedSubscription;
-    private IDisposable? _assistantSelectionButtonPointerWheelChangedSubscription;
     private IDisposable? _attachmentScrollViewerPointerWheelChangedSubscription;
     private IDisposable? _attachmentScrollViewerPointerPressedSubscription;
     private ChatAttachmentItemsControl? _chatAttachmentItemsControl;
@@ -279,33 +203,10 @@ public sealed class ChatInputArea : TemplatedControl
     {
         base.OnApplyTemplate(e);
 
-        DisposeHelper.DisposeToDefault(ref _sendButtonClickSubscription);
-        DisposeHelper.DisposeToDefault(ref _textPresenterSizeChangedSubscription);
-        DisposeHelper.DisposeToDefault(ref _chatAttachmentItemsControlPointerMovedSubscription);
-        DisposeHelper.DisposeToDefault(ref _chatAttachmentItemsControlPointerExitedSubscription);
-        DisposeHelper.DisposeToDefault(ref _assistantSelectionButtonPointerWheelChangedSubscription);
         DisposeHelper.DisposeToDefault(ref _attachmentScrollViewerPointerWheelChangedSubscription);
         DisposeHelper.DisposeToDefault(ref _attachmentScrollViewerPointerPressedSubscription);
 
         _chatTextEditor = e.NameScope.Find<ChatTextEditor>("PART_ChatTextEditor").NotNull();
-
-        // We handle the click event of the SendButton here instead of using Command binding,
-        // because we need to clear the text after sending the message.
-        var sendButton = e.NameScope.Find<Button>("PART_SendButton").NotNull();
-        _sendButtonClickSubscription = sendButton.AddDisposableHandler(
-            Button.ClickEvent,
-            (_, args) =>
-            {
-                if (Command?.CanExecute(Text) is not true) return;
-                Command.Execute(Text);
-                if (ShouldClearTextOnSubmit)
-                {
-                    Text = string.Empty;
-                }
-                args.Handled = true;
-            },
-            handledEventsToo: true);
-
         _chatAttachmentItemsControl = e.NameScope.Find<ChatAttachmentItemsControl>("PART_ChatAttachmentItemsControl").NotNull();
         var attachmentScrollViewer = e.NameScope.Find<ScrollViewer>("PART_AttachmentScrollViewer").NotNull();
         _attachmentScrollViewerPointerWheelChangedSubscription = attachmentScrollViewer.AddDisposableHandler(
@@ -371,21 +272,22 @@ public sealed class ChatInputArea : TemplatedControl
         {
             case Key.Enter:
             {
-                if (PressCtrlEnterToSend)
+                if (e.KeyModifiers == KeyModifiers.None)
                 {
-                    // Accept Ctrl+Enter, and Command+Enter on macOS where Command is the native shortcut modifier.
-                    if (!e.KeyModifiers.IsApplicationShortcutModifierOnly()) return;
+                    if (Command?.CanExecute(Text) is not true) break;
+
+                    Command.Execute(Text);
+                    e.Handled = true;
+                    break;
                 }
-                else if (e.KeyModifiers != KeyModifiers.None) return;
 
-                if (Command?.CanExecute(Text) is not true) break;
-
-                Command.Execute(Text);
-                if (ShouldClearTextOnSubmit)
+                if (e.KeyModifiers.IsApplicationShortcutModifierOnly())
                 {
-                    Text = string.Empty;
+                    if (AlternateCommand?.CanExecute(Text) is not true) break;
+
+                    AlternateCommand.Execute(Text);
+                    e.Handled = true;
                 }
-                e.Handled = true;
                 break;
             }
         }

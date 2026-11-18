@@ -5,6 +5,7 @@
     x:Key="{x:Type v:ActivityMarker}"
     TargetType="v:ActivityMarker">
     <Setter Property="HorizontalSpacing" Value="4"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     <Setter Property="Template">
       <ControlTemplate>
         <DockPanel>
@@ -17,7 +18,7 @@
             shadui:ButtonAssist.CheckedBackground="Transparent"
             shadui:ButtonAssist.CheckedForeground="{DynamicResource ForegroundColor}"
             shadui:ButtonAssist.HoverBackground="Transparent" Background="Transparent"
-            BorderThickness="0"
+            BorderThickness="0" CornerRadius="0"
             Foreground="{DynamicResource MutedColor}"
             IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
             IsHitTestVisible="{TemplateBinding IsExpandable}">
@@ -25,35 +26,23 @@
               x:Name="PART_HeaderPanel"
               HorizontalSpacing="{TemplateBinding HorizontalSpacing}">
               <ContentPresenter
-                DockPanel.Dock="Left"
+                DockPanel.Dock="Left" VerticalAlignment="Center"
                 Content="{TemplateBinding Icon}"
                 IsHitTestVisible="False"
                 IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
-              <StackPanel Spacing="{TemplateBinding VerticalSpacing}">
-                <DockPanel
-                  HorizontalAlignment="Left"
-                  HorizontalSpacing="{TemplateBinding HorizontalSpacing}">
-                  <PathIcon
-                    x:Name="PART_ChevronIcon" DockPanel.Dock="Right"
-                    Width="6" VerticalAlignment="Center"
-                    Data="{x:Static shadui:Icons.ChevronRight}"
-                    IsHitTestVisible="False" Opacity="0">
-                    <PathIcon.Transitions>
-                      <Transitions>
-                        <TransformOperationsTransition
-                          Easing="CubicEaseInOut" Property="RenderTransform"
-                          Duration="0:0:0.3"/>
-                      </Transitions>
-                    </PathIcon.Transitions>
-                  </PathIcon>
+              <DockPanel
+                HorizontalAlignment="Left" VerticalAlignment="Center">
+                <ContentPresenter
+                  DockPanel.Dock="Left" HorizontalAlignment="Left"
+                  VerticalAlignment="Center" HorizontalContentAlignment="Left"
+                  Content="{TemplateBinding Header}"/>
 
-                  <ContentPresenter
-                    HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-                    Content="{TemplateBinding Header}"/>
-                </DockPanel>
-
-                <ContentPresenter Content="{TemplateBinding SecondaryHeader}">
+                <ContentPresenter
+                  Margin="6,0,0,0" VerticalAlignment="Center"
+                  ClipToBounds="False"
+                  Content="{TemplateBinding SecondaryHeader}"
+                  FontWeight="Light" Opacity="0.7">
                   <ContentPresenter.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                       <TemplateBinding Property="IsSecondaryHeaderVisible"/>
@@ -63,7 +52,7 @@
                     </MultiBinding>
                   </ContentPresenter.IsVisible>
                 </ContentPresenter>
-              </StackPanel>
+              </DockPanel>
             </DockPanel>
           </ToggleButton>
 
@@ -94,16 +83,7 @@
       </ControlTemplate>
     </Setter>
 
-    <Style Selector="^:pointerover /template/ PathIcon#PART_ChevronIcon">
-      <Setter Property="Opacity" Value="1"/>
-    </Style>
-
     <Style Selector="^:expanded">
-      <Style Selector="^ /template/ PathIcon#PART_ChevronIcon">
-        <Setter Property="RenderTransform" Value="Rotate(90deg)"/>
-        <Setter Property="Opacity" Value="1"/>
-      </Style>
-
       <Style Selector="^ /template/ Border#ContentBorder">
         <Setter Property="Opacity" Value="1"/>
         <Setter Property="RenderTransform" Value="translateY(0)"/>

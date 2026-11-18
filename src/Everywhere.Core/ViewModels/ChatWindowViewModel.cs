@@ -18,6 +18,7 @@ using Everywhere.Cloud;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Automation;
@@ -29,12 +30,20 @@ using Microsoft.Extensions.Logging;
 
 namespace Everywhere.ViewModels;
 
-internal readonly record struct VisualElementCaptureRequest(
+public readonly record struct VisualElementCaptureRequest(
     VisualElementLocator? Locator,
     VisualElementResolution Resolution = VisualElementResolution.Direct
 )
 {
     public static VisualElementCaptureRequest Interactive => new(null);
+}
+
+public enum ChatComposerPrimaryMode
+{
+    Send,
+    Resume,
+    Queue,
+    Steer,
 }
 
 public sealed partial class ChatWindowViewModel :
@@ -64,9 +73,26 @@ public sealed partial class ChatWindowViewModel :
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNotBusy))]
+    [NotifyPropertyChangedFor(nameof(HasDraftInput))]
+    [NotifyPropertyChangedFor(nameof(CanSendDraft))]
+    [NotifyPropertyChangedFor(nameof(CanResumeConversation))]
+    [NotifyPropertyChangedFor(nameof(IsPrimaryButtonVisible))]
+    [NotifyPropertyChangedFor(nameof(IsPrimaryButtonEnabled))]
     public partial bool IsBusy { get; private set; }
 
     public bool IsNotBusy => !IsBusy;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTurnInactive))]
+    [NotifyPropertyChangedFor(nameof(CanSendMessage))]
+    [NotifyPropertyChangedFor(nameof(CanSendOppositeMode))]
+    [NotifyPropertyChangedFor(nameof(CanEdit))]
+    [NotifyPropertyChangedFor(nameof(CanResumeConversation))]
+    [NotifyPropertyChangedFor(nameof(PrimaryComposerMode))]
+    [NotifyPropertyChangedFor(nameof(IsPrimaryButtonEnabled))]
+    public partial bool IsTurnActive { get; private set; }
+
+    public bool IsTurnInactive => !IsTurnActive;
 
     [ObservableProperty]
     public partial IReadOnlyList<Strategy>? StrategiesSnapshot { get; private set; }
@@ -74,7 +100,7 @@ public sealed partial class ChatWindowViewModel :
     /// <summary>
     /// Indicates whether the file picker is currently open.
     /// </summary>
-    public bool IsPickingFiles { get; set; }
+    public bool IsPickingFiles { get; private set; }
 
     public IReadOnlyBindableList<ChatAttachment> ChatAttachments => Input.ActiveDraft.Attachments;
 
@@ -87,7 +113,35 @@ public sealed partial class ChatWindowViewModel :
     /// </summary>
     public ChatMessageNode? EditingMessageNode => Input.Edit is { } edit ? ChatContextManager.Current.Data.FindNode(edit.NodeId) : null;
 
-    public bool CanEdit => !IsBusy && EditingMessageNode is null && CanChangeDraft;
+    public bool CanEdit => !IsTurnActive && EditingMessageNode is null && CanChangeDraft;
+
+    public bool CanSendMessage => !IsBusy || EditingMessageNode is null;
+
+    public bool HasDraftInput =>
+        !string.IsNullOrWhiteSpace(ChatInputAreaText) ||
+        SelectedStrategy is not null ||
+        ChatAttachmentsSource.Count > 0;
+
+    public bool CanSendDraft => HasDraftInput && CanSendMessage && CanChangeDraft;
+
+    public bool CanSendOppositeMode => IsTurnActive && CanSendDraft;
+
+    public bool CanResumeConversation =>
+        !IsTurnActive &&
+        !HasDraftInput &&
+        EditingMessageNode is null &&
+        _chatService.CanResume(ChatContextManager.Current);
+
+    public ChatComposerPrimaryMode PrimaryComposerMode =>
+        IsTurnActive ? Settings.ChatWindow.BusySubmissionMode == ChatInputDeliveryMode.Steer
+            ? ChatComposerPrimaryMode.Steer
+            : ChatComposerPrimaryMode.Queue :
+        CanResumeConversation ? ChatComposerPrimaryMode.Resume :
+        ChatComposerPrimaryMode.Send;
+
+    public bool IsPrimaryButtonVisible => !IsBusy || CanSendDraft;
+
+    public bool IsPrimaryButtonEnabled => PrimaryComposerMode == ChatComposerPrimaryMode.Resume || CanSendDraft;
 
     public Strategy? SelectedStrategy
     {
@@ -115,20 +169,20 @@ public sealed partial class ChatWindowViewModel :
 
     public ISoftwareUpdater SoftwareUpdater { get; }
 
+    private ChatInputState Input => ChatContextManager.Current.Input;
+    private bool CanChangeDraft => !_submittingDrafts.Contains(Input.ActiveDraft);
+    private SourceList<ChatAttachment> ChatAttachmentsSource => Input.ActiveDraft.AttachmentsSource;
+
     private readonly IChatService _chatService;
     private readonly IScreenSelectionService _screenSelectionService;
     private readonly IBlobStorage _blobStorage;
     private readonly IStrategyEngine _strategyEngine;
-    private readonly IGreetings _greetings;
     private readonly ChatVisualService _visualService;
     private readonly TextSelectionToolbarService _toolbarService;
     private readonly ILogger<ChatWindowViewModel> _logger;
     private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
-    private ChatInputState Input => ChatContextManager.Current.Input;
-    private bool CanChangeDraft => !_submittingDrafts.Contains(Input.ActiveDraft);
-    private SourceList<ChatAttachment> ChatAttachmentsSource => Input.ActiveDraft.AttachmentsSource;
     private readonly SerialDisposable _inputSubscriptions = new();
-    private ChatInputState? _observedInput;
+    private readonly SerialDisposable _contextSubscriptions = new();
 
     // Protect drafts submitting or lending attachments until publication. Standalone toolbar
     // selections do not involve a draft; navigation must not redirect an actual handoff.
@@ -136,6 +190,8 @@ public sealed partial class ChatWindowViewModel :
 
     private readonly Meter _meter = new(typeof(ChatWindowViewModel).FullName.NotNull(), App.Version);
     private readonly Gauge<int> _activeChatWindowsGauge;
+
+    private ChatInputState? _observedInput;
 
     private int _textSelectionVersion;
 
@@ -148,11 +204,11 @@ public sealed partial class ChatWindowViewModel :
         IScreenSelectionService screenSelectionService,
         IBlobStorage blobStorage,
         IStrategyEngine strategyEngine,
-        IGreetings greetings,
         ChatVisualService visualService,
         TextSelectionToolbarService toolbarService,
         ILogger<ChatWindowViewModel> logger,
-        IChatSyncService? syncService = null)
+        IChatSyncService? syncService = null
+    )
     {
         Settings = settings;
         PersistentState = persistentState;
@@ -166,7 +222,6 @@ public sealed partial class ChatWindowViewModel :
         _screenSelectionService = screenSelectionService;
         _blobStorage = blobStorage;
         _strategyEngine = strategyEngine;
-        _greetings = greetings;
         _visualService = visualService;
         _toolbarService = toolbarService;
         _logger = logger;
@@ -175,6 +230,7 @@ public sealed partial class ChatWindowViewModel :
 
         ChatInputAreaWatermarkKey = _defaultWatermarkKey;
         LifetimeDisposables.Add(_inputSubscriptions);
+        LifetimeDisposables.Add(_contextSubscriptions);
         LifetimeDisposables.Add(
             ChatContextManager.WhenValueChanged(manager => manager.Current)
                 .ObserveOnAvaloniaDispatcher()
@@ -183,6 +239,7 @@ public sealed partial class ChatWindowViewModel :
                     if (context is not null)
                     {
                         ObserveInput(context.Input);
+                        ObserveContextState(context);
                     }
                 }));
 
@@ -194,10 +251,18 @@ public sealed partial class ChatWindowViewModel :
                 .Subscribe(HandleCurrentChatContextIsBusyChanged)
         );
         LifetimeDisposables.Add(
+            ChatContextManager.WhenValueChanged(x => x.Current)
+                .Select(context => context is { } runtime ? runtime.WhenValueChanged(x => x.IsTurnActive) : Observable.Return(false))
+                .Switch()
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(HandleCurrentChatContextIsTurnActiveChanged)
+        );
+        LifetimeDisposables.Add(
             Settings.Model.WhenValueChanged(x => x.SelectedCustomAssistant)
-                .Select(assistant => assistant is null ?
-                    Observable.Return(0) :
-                    assistant.WhenValueChanged(x => x.Configuration.ModelId).Select(_ => 0)
+                .Select(assistant => assistant is null
+                    ? Observable.Return(0)
+                    : assistant.WhenValueChanged(x => x.Configuration.ModelId)
+                        .Select(_ => 0)
                         .Merge(assistant.WhenValueChanged(x => x.Configuration.ContextLimit).Select(_ => 0)))
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
@@ -211,7 +276,7 @@ public sealed partial class ChatWindowViewModel :
 
         LifetimeDisposables.Add(
             ChatContextManager.WhenValueChanged(manager => manager.Current)
-                .Select(context => context is { } runtime ? runtime.Data.WhenValueChanged(data => data.HasHistory) : Observable.Return(false))
+                .Select(context => context != null ? context.Data.WhenValueChanged(data => data.HasHistory) : Observable.Return(false))
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(_ =>
@@ -219,6 +284,11 @@ public sealed partial class ChatWindowViewModel :
                     ToggleChatPinCommand.NotifyCanExecuteChanged();
                     ArchiveChatCommand.NotifyCanExecuteChanged();
                 })
+        );
+        LifetimeDisposables.Add(
+            Settings.ChatWindow.WhenValueChanged(x => x.BusySubmissionMode)
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(_ => OnPropertyChanged(nameof(PrimaryComposerMode)))
         );
 
         InitializeToolApproval();
@@ -350,6 +420,7 @@ public sealed partial class ChatWindowViewModel :
                     WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
                 }
             }
+
             using var screenshot = bitmap;
             if (bitmap is null) return;
 
@@ -503,7 +574,8 @@ public sealed partial class ChatWindowViewModel :
         ChatInputDraft draft,
         string filePath,
         string? description = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (string.IsNullOrWhiteSpace(filePath)) return false;
 
@@ -602,8 +674,34 @@ public sealed partial class ChatWindowViewModel :
         Input.ActiveDraft.RemoveAttachment(attachment);
     }
 
-    [RelayCommand(CanExecute = nameof(IsNotBusy))]
-    private async Task SendMessage(string? message)
+    [RelayCommand(CanExecute = nameof(CanSendMessage))]
+    private Task SendMessage(string? message)
+    {
+        return SubmitMessageWithModeAsync(message, Settings.ChatWindow.BusySubmissionMode);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSendOppositeMode))]
+    private Task SendMessageOppositeMode(string? message)
+    {
+        var oppositeMode = Settings.ChatWindow.BusySubmissionMode == ChatInputDeliveryMode.Steer
+            ? ChatInputDeliveryMode.Queue
+            : ChatInputDeliveryMode.Steer;
+        return SubmitMessageWithModeAsync(message, oppositeMode);
+    }
+
+    [RelayCommand(CanExecute = nameof(IsPrimaryButtonEnabled))]
+    private Task PrimaryComposerAction()
+    {
+        if (CanResumeConversation)
+        {
+            ResumeConversation();
+            return Task.CompletedTask;
+        }
+
+        return SendMessage(ChatInputAreaText);
+    }
+
+    private async Task SubmitMessageWithModeAsync(string? message, ChatInputDeliveryMode busyDeliveryMode)
     {
         message = message?.Trim() ?? string.Empty;
         if (message.Length == 0 && SelectedStrategy is null && ChatAttachmentsSource.Count == 0) return;
@@ -634,9 +732,23 @@ public sealed partial class ChatWindowViewModel :
             // Clearing earlier could persist an empty input before its message joins the graph.
             // Shutdown drains root work without waiting for this UI continuation. Exiting in
             // this gap may restore a redundant draft rather than discard accepted user input.
-            var isAccepted = editingMessageNode is not null ?
-                await _chatService.EditAsync(destinationContext, editingMessageNode, userMessage) :
-                await _chatService.SendMessageAsync(destinationContext, userMessage, Settings.Model.SelectedCustomAssistant);
+            bool isAccepted;
+            if (editingMessageNode is not null)
+            {
+                isAccepted = await _chatService.EditAsync(destinationContext, editingMessageNode, userMessage);
+            }
+            else if (destinationContext.IsTurnActive)
+            {
+                isAccepted = await _chatService.SubmitMessageAsync(
+                    destinationContext,
+                    userMessage,
+                    Settings.Model.SelectedCustomAssistant,
+                    busyDeliveryMode);
+            }
+            else
+            {
+                isAccepted = await _chatService.SendMessageAsync(destinationContext, userMessage, Settings.Model.SelectedCustomAssistant);
+            }
 
             if (!isAccepted || destinationContext.Data.IsDisposed)
             {
@@ -652,9 +764,83 @@ public sealed partial class ChatWindowViewModel :
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanResumeConversation))]
+    private void ResumeConversation()
+    {
+        _chatService.Resume(ChatContextManager.Current);
+    }
+
+    [RelayCommand]
+    private void TogglePendingInputDeliveryMode(ChatPendingInputItem item)
+    {
+        ChatContextManager.Current.PendingInputs.TryToggleDeliveryMode(item.Id, out _);
+    }
+
+    [RelayCommand]
+    private void WithdrawPendingInput(ChatPendingInputItem item)
+    {
+        var context = ChatContextManager.Current;
+        if (!context.PendingInputs.TryWithdraw(item.Id, out var withdrawn)) return;
+
+        var draft = context.Input.ActiveDraft;
+        var restoredText = withdrawn.Message.Content;
+        if (!string.IsNullOrEmpty(restoredText))
+        {
+            draft.Text = string.IsNullOrWhiteSpace(draft.Text) ? restoredText : $"{draft.Text}\n{restoredText}";
+        }
+
+        if (withdrawn.Message is UserStrategyChatMessage strategyMessage && draft.SelectedStrategy is null)
+        {
+            draft.SelectedStrategy = strategyMessage.Strategy;
+        }
+
+        if (withdrawn.Message.Attachments.Count > 0)
+        {
+            draft.AttachmentsSource.Edit(list =>
+            {
+                foreach (var attachment in withdrawn.Message.Attachments)
+                {
+                    if (!list.Contains(attachment) && list.Count < PersistentState.MaxChatAttachmentCount)
+                    {
+                        list.Add(attachment);
+                    }
+                    else if (attachment is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                }
+            });
+        }
+    }
+
+    [RelayCommand]
+    private void RemovePendingInput(ChatPendingInputItem item)
+    {
+        _chatService.RemovePendingInput(ChatContextManager.Current, item.Id);
+    }
+
+    [RelayCommand]
+    private void ClearPendingInputs()
+    {
+        _chatService.ClearPendingInputs(ChatContextManager.Current);
+    }
+
+    [RelayCommand]
+    private void ResumePendingInputs()
+    {
+        _chatService.ResumePendingInputs(ChatContextManager.Current);
+    }
+
+    [RelayCommand]
+    private static void StopBackgroundJob(ChatBackgroundJob job)
+    {
+        job.RequestStop();
+    }
+
     [RelayCommand(CanExecute = nameof(CanEdit))]
     private void EditMessageNode(ChatMessageNode userChatMessageNode)
     {
+        if (!userChatMessageNode.IsTurnStart) return;
         Input.BeginEdit(userChatMessageNode);
     }
 
@@ -666,19 +852,19 @@ public sealed partial class ChatWindowViewModel :
         Input.EndEdit();
     }
 
-    [RelayCommand(CanExecute = nameof(IsNotBusy))]
+    [RelayCommand(CanExecute = nameof(IsTurnInactive))]
     private void RetryMessageNode(ChatMessageNode chatMessageNode)
     {
         _chatService.Retry(ChatContextManager.Current, chatMessageNode);
     }
 
-    [RelayCommand(CanExecute = nameof(IsNotBusy))]
+    [RelayCommand(CanExecute = nameof(IsTurnInactive))]
     private void ContinueMessageNode(ChatMessageNode chatMessageNode)
     {
         _chatService.Continue(ChatContextManager.Current, chatMessageNode);
     }
 
-    [RelayCommand(CanExecute = nameof(IsNotBusy))]
+    [RelayCommand(CanExecute = nameof(IsTurnInactive))]
     private void CompactContext() => _chatService.CompactContext();
 
     [RelayCommand(CanExecute = nameof(IsBusy))]
@@ -797,24 +983,68 @@ public sealed partial class ChatWindowViewModel :
         IsBusy = isBusy;
     }
 
+    private void HandleCurrentChatContextIsTurnActiveChanged(bool isTurnActive)
+    {
+        IsTurnActive = isTurnActive;
+    }
+
     private void UpdateCurrentContextUsageModel()
     {
         var assistant = Settings.Model.SelectedCustomAssistant;
         ChatContextManager.Current.UpdateContextUsageModelAsync(
-            assistant?.Configuration.ModelId,
-            assistant?.Configuration.ContextLimit ?? 0).Detach(_logger.ToExceptionHandler());
+                assistant?.Configuration.ModelId,
+                assistant?.Configuration.ContextLimit ?? 0)
+            .Detach(_logger.ToExceptionHandler());
     }
 
     partial void OnIsBusyChanged(bool value)
     {
+        OnPropertyChanged(nameof(CanSendMessage));
         SendMessageCommand.NotifyCanExecuteChanged();
+        SendMessageOppositeModeCommand.NotifyCanExecuteChanged();
+        PrimaryComposerActionCommand.NotifyCanExecuteChanged();
+        ResumeConversationCommand.NotifyCanExecuteChanged();
         CompactContextCommand.NotifyCanExecuteChanged();
-        EditMessageNodeCommand.NotifyCanExecuteChanged();
         RetryMessageNodeCommand.NotifyCanExecuteChanged();
         ContinueMessageNodeCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsTurnActiveChanged(bool value)
+    {
+        SendMessageCommand.NotifyCanExecuteChanged();
+        SendMessageOppositeModeCommand.NotifyCanExecuteChanged();
+        PrimaryComposerActionCommand.NotifyCanExecuteChanged();
+        ResumeConversationCommand.NotifyCanExecuteChanged();
+        EditMessageNodeCommand.NotifyCanExecuteChanged();
+        CompactContextCommand.NotifyCanExecuteChanged();
+        RetryMessageNodeCommand.NotifyCanExecuteChanged();
+        ContinueMessageNodeCommand.NotifyCanExecuteChanged();
 
         UpdateWatermark(value, SelectedStrategy);
+    }
+
+    private void ObserveContextState(ChatContext context)
+    {
+        void HandleStateChanged() => Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            if (ReferenceEquals(ChatContextManager.Current, context))
+            {
+                NotifyComposerStateChanged();
+            }
+        });
+
+        void HandleBranchChanged(object? sender, EventArgs e) => HandleStateChanged();
+
+        context.Data.BranchChanged += HandleBranchChanged;
+        context.PendingInputs.DrainStateChanged += HandleStateChanged;
+        _contextSubscriptions.Disposable = Disposable.Create(() =>
+        {
+            context.Data.BranchChanged -= HandleBranchChanged;
+            context.PendingInputs.DrainStateChanged -= HandleStateChanged;
+        });
+
+        NotifyComposerStateChanged();
     }
 
     private void ObserveInput(ChatInputState input)
@@ -823,6 +1053,7 @@ public sealed partial class ChatWindowViewModel :
         {
             _observedInput.PropertyChanged -= HandleInputPropertyChanged;
         }
+
         _observedInput = input;
         input.PropertyChanged += HandleInputPropertyChanged;
         ObserveActiveDraft();
@@ -837,6 +1068,7 @@ public sealed partial class ChatWindowViewModel :
         else if (e.PropertyName == nameof(ChatInputState.Edit))
         {
             OnPropertyChanged(nameof(EditingMessageNode));
+            NotifyComposerStateChanged();
         }
     }
 
@@ -847,7 +1079,12 @@ public sealed partial class ChatWindowViewModel :
         draft.PropertyChanged += HandleDraftPropertyChanged;
         subscriptions.Add(Disposable.Create(() => draft.PropertyChanged -= HandleDraftPropertyChanged));
         subscriptions.Add(
-            draft.AttachmentsSource.Connect().ToCollection()
+            draft.AttachmentsSource.Connect()
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(_ => NotifyComposerStateChanged()));
+        subscriptions.Add(
+            draft.AttachmentsSource.Connect()
+                .ToCollection()
                 // Empty lists do not emit an initial change set. Initialize both projections from
                 // this draft's current snapshot, including when switching back to an empty composer.
                 .StartWith(draft.AttachmentsSource.Items)
@@ -864,15 +1101,32 @@ public sealed partial class ChatWindowViewModel :
         OnPropertyChanged(nameof(EditingMessageNode));
         OnPropertyChanged(nameof(SelectedStrategy));
         NotifyDraftCommandsChanged();
-        UpdateWatermark(IsBusy, draft.SelectedStrategy);
+        UpdateWatermark(IsTurnActive, draft.SelectedStrategy);
     }
 
     private void NotifyDraftCommandsChanged()
     {
         OnPropertyChanged(nameof(CanEdit));
+        OnPropertyChanged(nameof(CanSendMessage));
+        NotifyComposerStateChanged();
         EditMessageNodeCommand.NotifyCanExecuteChanged();
         CancelEditingCommand.NotifyCanExecuteChanged();
         RemoveAttachmentCommand.NotifyCanExecuteChanged();
+    }
+
+    private void NotifyComposerStateChanged()
+    {
+        OnPropertyChanged(nameof(HasDraftInput));
+        OnPropertyChanged(nameof(CanSendDraft));
+        OnPropertyChanged(nameof(CanSendOppositeMode));
+        OnPropertyChanged(nameof(CanResumeConversation));
+        OnPropertyChanged(nameof(PrimaryComposerMode));
+        OnPropertyChanged(nameof(IsPrimaryButtonVisible));
+        OnPropertyChanged(nameof(IsPrimaryButtonEnabled));
+        SendMessageCommand.NotifyCanExecuteChanged();
+        SendMessageOppositeModeCommand.NotifyCanExecuteChanged();
+        PrimaryComposerActionCommand.NotifyCanExecuteChanged();
+        ResumeConversationCommand.NotifyCanExecuteChanged();
     }
 
     private void HandleDraftPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -880,25 +1134,27 @@ public sealed partial class ChatWindowViewModel :
         if (e.PropertyName == nameof(ChatInputDraft.Text))
         {
             OnPropertyChanged(nameof(ChatInputAreaText));
+            NotifyComposerStateChanged();
         }
         else if (e.PropertyName == nameof(ChatInputDraft.SelectedStrategy))
         {
             OnPropertyChanged(nameof(SelectedStrategy));
-            UpdateWatermark(IsBusy, SelectedStrategy);
+            NotifyComposerStateChanged();
+            UpdateWatermark(IsTurnActive, SelectedStrategy);
         }
     }
 
-    private void UpdateWatermark(bool isBusy, Strategy? selectedStrategy)
+    private void UpdateWatermark(bool isTurnActive, Strategy? selectedStrategy)
     {
-        if (isBusy)
+        if (isTurnActive)
         {
-            ChatInputAreaWatermarkKey = _greetings.GetRandomTip();
+            ChatInputAreaWatermarkKey = new DynamicLocaleKey(LocaleKey.ChatInputArea_Watermark_Busy);
         }
         else if (selectedStrategy is not null)
         {
-            ChatInputAreaWatermarkKey = selectedStrategy.ArgumentHintKey is null ?
-                selectedStrategy.DescriptionKey :
-                new FormattedDynamicLocaleKey(
+            ChatInputAreaWatermarkKey = selectedStrategy.ArgumentHintKey is null
+                ? selectedStrategy.DescriptionKey
+                : new FormattedDynamicLocaleKey(
                     LocaleKey.ChatInputArea_PlaceholderText_StrategyArgumentHint,
                     selectedStrategy.ArgumentHintKey);
         }
@@ -1005,6 +1261,7 @@ public sealed partial class ChatWindowViewModel :
             if (!_submittingDrafts.Add(sourceDraft)) return false;
             NotifyDraftCommandsChanged();
         }
+
         try
         {
             var destination = ChatContextManager.CreateChat(Settings.TextSelection.ShouldStartToolbarChatsAsTemporary);
@@ -1020,6 +1277,7 @@ public sealed partial class ChatWindowViewModel :
                     foreach (var attachment in message.Attachments) list.Remove(attachment);
                 });
             }
+
             return true;
         }
         finally

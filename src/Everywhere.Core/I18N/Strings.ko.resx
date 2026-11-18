@@ -613,9 +613,6 @@
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>터미널에서 실행</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
-        <value>{0} 실행 중</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
         <value>다음 스크립트를 실행합니다</value>
     </data>
@@ -1027,6 +1024,21 @@
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
         <value>보내기</value>
     </data>
+    <data name="ChatInputArea_NewLine_ToolTip" xml:space="preserve">
+        <value>줄 바꿈</value>
+    </data>
+    <data name="ChatInputArea_Queue_ToolTip" xml:space="preserve">
+        <value>대기열에 추가</value>
+    </data>
+    <data name="ChatInputArea_ResumeButton_ToolTip" xml:space="preserve">
+        <value>대화 계속하기</value>
+    </data>
+    <data name="ChatInputArea_Steer_ToolTip" xml:space="preserve">
+        <value>지금 유도</value>
+    </data>
+    <data name="ChatInputArea_Watermark_Busy" xml:space="preserve">
+        <value>추가 지시나 대기열 메시지를 입력하세요…</value>
+    </data>
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>설정</value>
     </data>
@@ -1140,6 +1152,9 @@
     </data>
     <data name="ChatMessageControl_RetryButton_Content" xml:space="preserve">
         <value>다시 생성</value>
+    </data>
+    <data name="ChatMessageControl_SteerBadge" xml:space="preserve">
+        <value>안내된 대화</value>
     </data>
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>“{0}”을(를) 실행해도 괜찮나요?</value>
@@ -1285,9 +1300,6 @@
     <data name="ChatPlugin_MultiSelectHint" xml:space="preserve">
         <value>(다중 선택)</value>
     </data>
-    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
-        <value>완료</value>
-    </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
         <value>완료된 활동 {0}개</value>
     </data>
@@ -1297,14 +1309,11 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>이번 라운드에 응답이 생성되지 않았습니다.</value>
     </data>
-    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
-        <value>{0} 번 생각함</value>
+    <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
+        <value>턴 완료됨</value>
     </data>
-    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
-        <value>서브 도우미 {0} 개</value>
-    </data>
-    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
-        <value>{0} 번 도구 호출</value>
+    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
+        <value>백그라운드 작업 {0}개 완료 대기 중…</value>
     </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>작업 중</value>
@@ -2421,30 +2430,6 @@
     </data>
     <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
         <value>생각 수준</value>
-    </data>
-    <data name="Greetings_NotLoginTip1" xml:space="preserve">
-        <value>💡Everywhere 클라우드 서비스에 접속하는 것은 공식 순수 대모델입니다.</value>
-    </data>
-    <data name="Greetings_NotLoginTip2" xml:space="preserve">
-        <value>💡Everywhere 클라우드 서비스에 등록하면 추가 패키지와 무료 체험을 즐길 수 있습니다.</value>
-    </data>
-    <data name="Greetings_Tip1" xml:space="preserve">
-        <value>알고 계셨나요? Ctrl + 숫자 키를 사용하여 도우미를 빠르게 전환할 수 있습니다.</value>
-    </data>
-    <data name="Greetings_Tip2" xml:space="preserve">
-        <value>알고 계셨나요? 왼쪽 아래 도우미 아이콘에서 스크롤 휠을 사용하여 빠르게 전환할 수 있습니다.</value>
-    </data>
-    <data name="Greetings_Tip3" xml:space="preserve">
-        <value>알고 계셨나요? Copilot 키를 Everywhere 단축키로 설정할 수 있습니다.</value>
-    </data>
-    <data name="Greetings_Tip4" xml:space="preserve">
-        <value>💡단일 시각 요소 첨부만 추가해도, Everywhere는 전체 맥락을 스마트하게 추출합니다.</value>
-    </data>
-    <data name="Greetings_Tip5" xml:space="preserve">
-        <value>💡Everywhere의 핵심 개발자는 단 두 명입니다. 코드 기여나 귀중한 의견을 환영합니다.</value>
-    </data>
-    <data name="Greetings_Tip6" xml:space="preserve">
-        <value>💡정보 페이지에서 공식 커뮤니티에 참여하여 소통해 주세요~</value>
     </data>
     <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
         <value>인증에 실패했습니다. 인증 설정을 확인하거나 다시 로그인하세요.</value>
@@ -5033,5 +5018,62 @@
     </data>
     <data name="WelcomeView_TelemetryStep_Message2" xml:space="preserve">
         <value>참여하지 않으면 필요한 데이터만 전송됩니다. 이 선택은 핵심 기능에 영향을 미치지 않으니 안심하십시오.</value>
+    </data>
+    <data name="BackgroundJobNotification_Completed" xml:space="preserve">
+        <value>백그라운드 작업 완료됨</value>
+    </data>
+    <data name="BackgroundJobNotification_Failed" xml:space="preserve">
+        <value>백그라운드 작업 실패</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageBackgroundJobs_Description" xml:space="preserve">
+        <value>이 세션에서 실행 중인 백그라운드 작업을 나열하거나 실시간 출력을 확인하거나 중지합니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageBackgroundJobs_Header" xml:space="preserve">
+        <value>백그라운드 작업 관리</value>
+    </data>
+    <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
+        <value>대기열(현재 턴 완료 후)</value>
+    </data>
+    <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
+        <value>조향(다음 단계에 개입)</value>
+    </data>
+    <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
+        <value>대기</value>
+    </data>
+    <data name="ChatInputDeliveryMode_Steer" xml:space="preserve">
+        <value>조향</value>
+    </data>
+    <data name="ChatWindowSettings_BusySubmissionMode_Description" xml:space="preserve">
+        <value>어시스턴트가 응답하는 동안 보낸 메시지를 대기열에 넣을지 현재 턴을 조향할지 선택합니다.</value>
+    </data>
+    <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
+        <value>응답 중 기본 전송 방식</value>
+    </data>
+    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+        <value>백그라운드에서 실행 중</value>
+    </data>
+    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
+        <value>이 백그라운드 작업 중지</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
+        <value>비우기</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_Delete_ToolTip" xml:space="preserve">
+        <value>대기 항목 삭제</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_PausedBadge" xml:space="preserve">
+        <value>일시 중지됨</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ResumeButton" xml:space="preserve">
+        <value>재개</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ToggleMode_ToolTip" xml:space="preserve">
+        <value>대기열 / 조향 전환</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_WaitingHeader" xml:space="preserve">
+        <value>대기 중인 메시지</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_Withdraw_ToolTip" xml:space="preserve">
+        <value>입력 상자로 되돌려 수정</value>
     </data>
 </root>

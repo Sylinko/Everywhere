@@ -613,9 +613,6 @@
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Выполнить в терминале</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
-        <value>Запуск {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
         <value>Скоро будет выполнен следующий скрипт</value>
     </data>
@@ -1027,6 +1024,21 @@
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
         <value>Отправить</value>
     </data>
+    <data name="ChatInputArea_NewLine_ToolTip" xml:space="preserve">
+        <value>Новая строка</value>
+    </data>
+    <data name="ChatInputArea_Queue_ToolTip" xml:space="preserve">
+        <value>Добавить в очередь</value>
+    </data>
+    <data name="ChatInputArea_ResumeButton_ToolTip" xml:space="preserve">
+        <value>Продолжить диалог</value>
+    </data>
+    <data name="ChatInputArea_Steer_ToolTip" xml:space="preserve">
+        <value>Направить сейчас</value>
+    </data>
+    <data name="ChatInputArea_Watermark_Busy" xml:space="preserve">
+        <value>Введите сообщение для уточнения или очереди…</value>
+    </data>
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>Настройки</value>
     </data>
@@ -1140,6 +1152,9 @@
     </data>
     <data name="ChatMessageControl_RetryButton_Content" xml:space="preserve">
         <value>Перегенерировать</value>
+    </data>
+    <data name="ChatMessageControl_SteerBadge" xml:space="preserve">
+        <value>Направленный диалог</value>
     </data>
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>Разрешить «{0}» выполнять?</value>
@@ -1285,9 +1300,6 @@
     <data name="ChatPlugin_MultiSelectHint" xml:space="preserve">
         <value>(Мультивыбор)</value>
     </data>
-    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
-        <value>Завершено</value>
-    </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
         <value>Завершено {0} действий</value>
     </data>
@@ -1297,14 +1309,11 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>Ответ не был сгенерирован в этом раунде.</value>
     </data>
-    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
-        <value>Размышлений {0}</value>
+    <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
+        <value>Ход завершён</value>
     </data>
-    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
-        <value>Подпомощников {0}</value>
-    </data>
-    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
-        <value>Вызовов инструментов {0}</value>
+    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
+        <value>Ожидание фоновых задач ({0})…</value>
     </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>В процессе</value>
@@ -2421,30 +2430,6 @@
     </data>
     <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
         <value>Уровень мышления</value>
-    </data>
-    <data name="Greetings_NotLoginTip1" xml:space="preserve">
-        <value>💡 Все модели Everywhere являются официальными и высококачественными.</value>
-    </data>
-    <data name="Greetings_NotLoginTip2" xml:space="preserve">
-        <value>💡 Зарегистрируйтесь в облачном сервисе Everywhere, чтобы получить дополнительные пакеты и бесплатный пробный период.</value>
-    </data>
-    <data name="Greetings_Tip1" xml:space="preserve">
-        <value>💡вы можете быстро переключать помощника, используя Ctrl + цифру</value>
-    </data>
-    <data name="Greetings_Tip2" xml:space="preserve">
-        <value>💡вы можете быстро переключать, используя колесо прокрутки на значке помощника в левом нижнем углу</value>
-    </data>
-    <data name="Greetings_Tip3" xml:space="preserve">
-        <value>💡вы можете назначить клавишу Copilot как горячую клавишу для Everywhere</value>
-    </data>
-    <data name="Greetings_Tip4" xml:space="preserve">
-        <value>💡 Даже если вы добавите один визуальный элемент, Everywhere умно извлечет весь контекст.</value>
-    </data>
-    <data name="Greetings_Tip5" xml:space="preserve">
-        <value>💡 В команде разработки Everywhere всего два человека, мы приветствуем ваши предложения и код.</value>
-    </data>
-    <data name="Greetings_Tip6" xml:space="preserve">
-        <value>💡 Присоединяйтесь к официальному сообществу на странице 'О нас' для общения и взаимодействия~</value>
     </data>
     <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
         <value>Не удалось пройти аутентификацию. Проверьте настройки аутентификации или войдите снова.</value>
@@ -5033,5 +5018,62 @@
     </data>
     <data name="WelcomeView_TelemetryStep_Message2" xml:space="preserve">
         <value>Если вы не присоединитесь, будут отправляться только необходимые данные. Пожалуйста, будьте уверены, что этот выбор не повлияет на основные функции.</value>
+    </data>
+    <data name="BackgroundJobNotification_Completed" xml:space="preserve">
+        <value>Фоновая задача завершена</value>
+    </data>
+    <data name="BackgroundJobNotification_Failed" xml:space="preserve">
+        <value>Ошибка фоновой задачи</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageBackgroundJobs_Description" xml:space="preserve">
+        <value>Просматривайте список, живой вывод или останавливайте фоновые задачи этой сессии.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageBackgroundJobs_Header" xml:space="preserve">
+        <value>Управление фоновыми задачами</value>
+    </data>
+    <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
+        <value>Очередь (после завершения хода)</value>
+    </data>
+    <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
+        <value>Направить (вмешаться на следующем шаге)</value>
+    </data>
+    <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
+        <value>Очередь</value>
+    </data>
+    <data name="ChatInputDeliveryMode_Steer" xml:space="preserve">
+        <value>Направить</value>
+    </data>
+    <data name="ChatWindowSettings_BusySubmissionMode_Description" xml:space="preserve">
+        <value>Выберите, должны ли сообщения, отправленные во время ответа, вставать в очередь или направлять текущий ход.</value>
+    </data>
+    <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
+        <value>Отправка сообщений во время ответа</value>
+    </data>
+    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+        <value>Выполняется в фоне</value>
+    </data>
+    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
+        <value>Остановить эту фоновую задачу</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
+        <value>Очистить</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_Delete_ToolTip" xml:space="preserve">
+        <value>Удалить сообщение</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_PausedBadge" xml:space="preserve">
+        <value>Приостановлено</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ResumeButton" xml:space="preserve">
+        <value>Продолжить</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ToggleMode_ToolTip" xml:space="preserve">
+        <value>Переключить Очередь / Направить</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_WaitingHeader" xml:space="preserve">
+        <value>Ожидающие сообщения</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_Withdraw_ToolTip" xml:space="preserve">
+        <value>Вернуть в поле ввода</value>
     </data>
 </root>

@@ -218,21 +218,49 @@
               CustomAssistantItemsSource="{Binding #Self.CustomAssistants}"
               PlaceholderText="{I18N {x:Static LocaleKey.TextSelectionToolbar_ChatInputArea_PlaceholderText}}"
               SelectedCustomAssistant="{Binding #Self.SelectedCustomAssistant, Mode=TwoWay}"
-              ShouldClearTextOnSubmit="False"
               Text="{Binding #Self.FreeformChatText, Mode=TwoWay}">
-              <v:ChatInputArea.IsSendButtonEnabled>
-                <MultiBinding Converter="{x:Static BoolConverters.And}">
-                  <Binding
-                    Converter="{x:Static ObjectConverters.IsNotNull}"
-                    Path="#Self.FreeformChatCommand"/>
-                  <Binding
-                    Converter="{x:Static ObjectConverters.IsNotNull}"
-                    Path="#Self.SelectedCustomAssistant"/>
-                  <Binding
-                    Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
-                    Path="#Self.FreeformChatText"/>
-                </MultiBinding>
-              </v:ChatInputArea.IsSendButtonEnabled>
+              <v:ChatInputArea.TrailingContent>
+                <Button
+                  Classes="Primary"
+                  Width="{DynamicResource FontSize2Xl}"
+                  Height="{DynamicResource FontSize2Xl}"
+                  MinWidth="{DynamicResource FontSize2Xl}"
+                  MinHeight="{DynamicResource FontSize2Xl}"
+                  Padding="0" VerticalAlignment="Center"
+                  Command="{Binding #Self.FreeformChatCommand}"
+                  CommandParameter="{Binding #Self.FreeformChatText}"
+                  CornerRadius="{DynamicResource FullCornerRadius}"
+                  Focusable="False">
+                  <Button.IsEnabled>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <Binding
+                        Converter="{x:Static ObjectConverters.IsNotNull}"
+                        Path="#Self.FreeformChatCommand"/>
+                      <Binding
+                        Converter="{x:Static ObjectConverters.IsNotNull}"
+                        Path="#Self.SelectedCustomAssistant"/>
+                      <Binding
+                        Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
+                        Path="#Self.FreeformChatText"/>
+                    </MultiBinding>
+                  </Button.IsEnabled>
+                  <ToolTip.Tip>
+                    <StackPanel Spacing="4">
+                      <v:KeyboardShortcutLabel
+                        Shortcut="{x:Static v:ChatInputArea.SendShortcut}"
+                        Text="{I18N {x:Static LocaleKey.ChatInputArea_SendButton_ToolTip}}"/>
+                      <v:KeyboardShortcutLabel
+                        Shortcut="{x:Static v:ChatInputArea.NewLineShortcut}"
+                        Text="{I18N {x:Static LocaleKey.ChatInputArea_NewLine_ToolTip}}"/>
+                    </StackPanel>
+                  </ToolTip.Tip>
+                  <LucideIcon
+                    Margin="-1,0,0,-1"
+                    Foreground="{DynamicResource PrimaryForegroundColor}"
+                    Kind="Send"
+                    Size="{DynamicResource FontSizeM}"/>
+                </Button>
+              </v:ChatInputArea.TrailingContent>
               <v:ChatInputArea.ToolBarContent>
                 <DockPanel LastChildFill="False">
                   <DockPanel.Styles>

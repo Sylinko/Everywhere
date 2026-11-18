@@ -57,13 +57,4 @@ public sealed class ActivityMarker : Expander
         get => GetValue(HorizontalSpacingProperty);
         set => SetValue(HorizontalSpacingProperty, value);
     }
-
-    public static readonly StyledProperty<double> VerticalSpacingProperty =
-        AvaloniaProperty.Register<ActivityMarker, double>(nameof(VerticalSpacing));
-
-    public double VerticalSpacing
-    {
-        get => GetValue(VerticalSpacingProperty);
-        set => SetValue(VerticalSpacingProperty, value);
-    }
 }

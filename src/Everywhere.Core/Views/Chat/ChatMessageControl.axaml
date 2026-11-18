@@ -134,20 +134,62 @@
       <DataTemplates>
         <DataTemplate x:DataType="c:ChatUserStrategyState">
           <StackPanel
-            Classes="ChatMessage User" Margin="36,0,0,0"
-            HorizontalAlignment="Right" Background="Transparent"
-            Orientation="Vertical" Spacing="4">
+            x:Name="PART_RootPanel" Classes="ChatMessage User"
+            Margin="36,0,0,0" HorizontalAlignment="Right"
+            Background="Transparent" Orientation="Vertical"
+            Spacing="4">
             <StackPanel.Styles>
               <Style Selector="shadui|SmoothBorder.Editing">
                 <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
                 <Setter Property="Opacity" Value="0.7"/>
               </Style>
 
-              <Style Selector="Border.Editing">
-                <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
-                <Setter Property="Opacity" Value="0.7"/>
+              <Style Selector="v|ConditionalContentControl#PART_ActionsControl">
+                <Setter Property="Opacity" Value="0"/>
+              </Style>
+              <Style Selector="StackPanel#PART_RootPanel:pointerover > v|ConditionalContentControl#PART_ActionsControl">
+                <Setter Property="Opacity" Value="1"/>
               </Style>
             </StackPanel.Styles>
+
+            <StackPanel
+              HorizontalAlignment="Right"
+              IsVisible="{Binding IsSteered}"
+              Orientation="Horizontal" Spacing="4">
+              <Border
+                Padding="6,2"
+                Background="{DynamicResource PrimaryColor20}"
+                CornerRadius="{DynamicResource FullCornerRadius}">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="4">
+                  <LucideIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource PrimaryColor}"
+                    Kind="CornerDownRight"
+                    Size="{DynamicResource FontSizeXs}"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    FontSize="{DynamicResource FontSizeXs}"
+                    Foreground="{DynamicResource PrimaryColor}"
+                    Text="{I18N {x:Static LocaleKey.ChatMessageControl_SteerBadge}}"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+
+            <StackPanel
+              HorizontalAlignment="Right"
+              IsVisible="{Binding IsQueued}"
+              Orientation="Horizontal" Spacing="4">
+              <Border
+                Padding="6,1"
+                Background="{DynamicResource SecondaryCardBackgroundColor}"
+                CornerRadius="{DynamicResource FullCornerRadius}">
+                <TextBlock
+                  Classes="Caption Muted"
+                  FontSize="{DynamicResource FontSizeXs}"
+                  Text="{I18N {x:Static LocaleKey.ChatInputDeliveryMode_Queue}}"/>
+              </Border>
+            </StackPanel>
 
             <shadui:SmoothBorder
               Classes="ChatBubble" HorizontalAlignment="Right">
@@ -187,9 +229,12 @@
               </v:ConditionalContentControl>
             </shadui:SmoothBorder>
 
-            <v:ChatAttachmentItemsControl ItemsSource="{Binding Attachments}"/>
+            <v:ChatAttachmentItemsControl
+              HorizontalAlignment="Right"
+              ItemsSource="{Binding Attachments}"/>
 
             <v:ConditionalContentControl
+              x:Name="PART_ActionsControl" HorizontalAlignment="Right"
               Condition="{Binding IsReadonly, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}}"
               ContentDataBinding="{Binding Row.Branch, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageControl}}}">
               <v:ConditionalContentControl.FalseContent>
@@ -197,10 +242,19 @@
                   <v:ChatMessageOperationPanel>
                     <NumericUpDown
                       x:Name="ChoiceSelector" Margin="0,0,4,0"
-                      IsVisible="{Binding ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
                       Maximum="{Binding ChoiceCount, FallbackValue=1}"
                       Minimum="1"
-                      Value="{Binding ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
+                      Value="{Binding ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}">
+                      <NumericUpDown.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                          <Binding Path="Node.IsTurnStart"/>
+                          <Binding
+                            Converter="{x:Static vc:Int32Converters.GreaterThan}"
+                            ConverterParameter="1" FallbackValue="False"
+                            Path="ChoiceCount"/>
+                        </MultiBinding>
+                      </NumericUpDown.IsVisible>
+                    </NumericUpDown>
                     <Button
                       Classes="Ghost Minimal"
                       shadui:ButtonAssist.Icon="{LucideIconContent SquarePen}"
@@ -208,6 +262,7 @@
                       Command="{Binding $parent[v:ChatMessageItemsControl].EditMessageNodeCommand}"
                       CommandParameter="{Binding Node, Mode=OneTime}"
                       Focusable="False"
+                      IsVisible="{Binding Node.IsTurnStart}"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
                     <Button
                       Classes="Ghost Minimal"
@@ -230,15 +285,61 @@
 
         <DataTemplate DataType="c:ChatUserState">
           <StackPanel
-            Classes="ChatMessage User" Margin="36,0,0,0"
-            HorizontalAlignment="Right" Background="Transparent"
-            Orientation="Vertical" Spacing="4">
+            x:Name="PART_RootPanel" Classes="ChatMessage User"
+            Margin="36,0,0,0" HorizontalAlignment="Right"
+            Background="Transparent" Orientation="Vertical"
+            Spacing="4">
             <StackPanel.Styles>
               <Style Selector="shadui|SmoothBorder.Editing">
                 <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
                 <Setter Property="Opacity" Value="0.7"/>
               </Style>
+              <Style Selector="v|ConditionalContentControl#PART_ActionsControl">
+                <Setter Property="Opacity" Value="0"/>
+              </Style>
+              <Style Selector="StackPanel#PART_RootPanel:pointerover > v|ConditionalContentControl#PART_ActionsControl">
+                <Setter Property="Opacity" Value="1"/>
+              </Style>
             </StackPanel.Styles>
+
+            <StackPanel
+              HorizontalAlignment="Right"
+              IsVisible="{Binding IsSteered}"
+              Orientation="Horizontal" Spacing="4">
+              <Border
+                Padding="6,2"
+                Background="{DynamicResource PrimaryColor20}"
+                CornerRadius="{DynamicResource FullCornerRadius}">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="4">
+                  <LucideIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource PrimaryColor}"
+                    Kind="CornerDownRight"
+                    Size="{DynamicResource FontSizeXs}"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    FontSize="{DynamicResource FontSizeXs}"
+                    Foreground="{DynamicResource PrimaryColor}"
+                    Text="{I18N {x:Static LocaleKey.ChatMessageControl_SteerBadge}}"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+
+            <StackPanel
+              HorizontalAlignment="Right"
+              IsVisible="{Binding IsQueued}"
+              Orientation="Horizontal" Spacing="4">
+              <Border
+                Padding="6,1"
+                Background="{DynamicResource SecondaryCardBackgroundColor}"
+                CornerRadius="{DynamicResource FullCornerRadius}">
+                <TextBlock
+                  Classes="Caption Muted"
+                  FontSize="{DynamicResource FontSizeXs}"
+                  Text="{I18N {x:Static LocaleKey.ChatInputDeliveryMode_Queue}}"/>
+              </Border>
+            </StackPanel>
 
             <shadui:SmoothBorder
               Classes="ChatBubble" HorizontalAlignment="Right"
@@ -259,9 +360,12 @@
               </md:MarkdownTextBlock>
             </shadui:SmoothBorder>
 
-            <v:ChatAttachmentItemsControl ItemsSource="{Binding Attachments}"/>
+            <v:ChatAttachmentItemsControl
+              HorizontalAlignment="Right"
+              ItemsSource="{Binding Attachments}"/>
 
             <v:ConditionalContentControl
+              x:Name="PART_ActionsControl" HorizontalAlignment="Right"
               Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly}"
               ContentDataBinding="{Binding $parent[v:ChatMessageControl].Row.Branch}">
               <v:ConditionalContentControl.FalseContent>
@@ -269,10 +373,19 @@
                   <v:ChatMessageOperationPanel>
                     <NumericUpDown
                       x:Name="ChoiceSelector" Margin="0,0,4,0"
-                      IsVisible="{Binding ChoiceCount, FallbackValue={x:False}, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
                       Maximum="{Binding ChoiceCount, FallbackValue=1}"
                       Minimum="1"
-                      Value="{Binding ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
+                      Value="{Binding ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}">
+                      <NumericUpDown.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                          <Binding Path="Node.IsTurnStart"/>
+                          <Binding
+                            Converter="{x:Static vc:Int32Converters.GreaterThan}"
+                            ConverterParameter="1" FallbackValue="False"
+                            Path="ChoiceCount"/>
+                        </MultiBinding>
+                      </NumericUpDown.IsVisible>
+                    </NumericUpDown>
                     <Button
                       Classes="Ghost Minimal"
                       shadui:ButtonAssist.Icon="{LucideIconContent SquarePen}"
@@ -280,6 +393,7 @@
                       Command="{Binding $parent[v:ChatMessageItemsControl].EditMessageNodeCommand, Mode=OneTime}"
                       CommandParameter="{Binding Node, Mode=OneTime}"
                       Focusable="False"
+                      IsVisible="{Binding Node.IsTurnStart}"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
                     <Button
                       Classes="Ghost Minimal"

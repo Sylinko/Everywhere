@@ -1,10 +1,13 @@
 ﻿using System.Collections.Specialized;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.NUnit;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Core.Tests.Statistics;
@@ -13,6 +16,7 @@ using Everywhere.I18N;
 using Everywhere.Storage;
 using Everywhere.Views;
 using Lucide.Avalonia;
+using MessagePack;
 using NSubstitute;
 
 namespace Everywhere.Core.Tests.Chat;
@@ -24,10 +28,10 @@ public class ChatPresentationTests
     public async Task BranchSelector_WhenUnselectedSiblingIsAppended_RefreshesWithoutReplacingRow()
     {
         await using var context = new RootChatContext(new ChatData(), null);
-        var first = context.Data.Add(new UserChatMessage("original", []));
+        var first = context.Data.StartTurn(new UserChatMessage("original", []));
         await context.Presentation.PrepareInitialWindowAsync();
         var row = context.Presentation.Rows.OfType<ChatMessagePresentationRow>().Single();
-        await context.DispatchAsync(() => context.Data.Append(context.Data.RootNode, new UserChatMessage("alternative", []), shouldSelectChild: false));
+        await context.DispatchAsync(() => context.Data.StartTurn(context.Data.RootNode, new UserChatMessage("alternative", []), shouldSelectChild: false));
         Dispatcher.UIThread.RunJobs();
 
         Assert.That(context.Presentation.Rows.OfType<ChatMessagePresentationRow>().Single(), Is.SameAs(row));
@@ -45,12 +49,12 @@ public class ChatPresentationTests
     public async Task CanceledOutcome_WhenLaterUserTurnExists_DoesNotOfferContinueOnEarlierTurn()
     {
         await using var context = new RootChatContext(new ChatData(), null);
-        context.Data.Add(new UserChatMessage("first", []));
-        context.Data.Add(new AssistantChatMessage { IsCanceled = true });
+        context.Data.StartTurn(new UserChatMessage("first", []));
+        context.Data.Append(new AssistantChatMessage { IsCanceled = true });
         await context.Presentation.PrepareInitialWindowAsync();
         var row = context.Presentation.Rows.OfType<AssistantCanceledPresentationRow>().Single();
         Assert.That(row.IsContinuationTarget, Is.True);
-        context.Data.Add(new UserChatMessage("next", []));
+        context.Data.StartTurn(new UserChatMessage("next", []));
         Dispatcher.UIThread.RunJobs();
 
         Assert.That(context.Presentation.Rows.OfType<AssistantCanceledPresentationRow>().Single(), Is.SameAs(row));
@@ -88,7 +92,6 @@ public class ChatPresentationTests
         {
             Assert.That(((ChatMessagePresentationRow)rows[1]).Node.Message, Is.SameAs(action));
             Assert.That(functionItem.FunctionCall.Calls.Length, Is.EqualTo(2));
-            Assert.That(ChatActivityStatistics.Calculate([functionItem]).ToolCallCount, Is.EqualTo(1));
             Assert.That(functionItem.IsRunning, Is.True);
         });
     }
@@ -128,7 +131,7 @@ public class ChatPresentationTests
     }
 
     [AvaloniaTest]
-    public async Task CompletedTurn_WithOneActivity_OmitsProcessSummary()
+    public async Task CompletedTurn_WithOneActivity_ShowsProcessSummary()
     {
         var assistant = new AssistantChatMessage { IsBusy = false, FinishedAt = DateTimeOffset.UtcNow };
         assistant.AddSpan(FinishedReasoning("Think"));
@@ -139,8 +142,28 @@ public class ChatPresentationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(presentation.Rows.OfType<ProcessSummaryPresentationRow>(), Is.Empty);
+            var summary = presentation.Rows.OfType<ProcessSummaryPresentationRow>().Single();
+            Assert.That(presentation.Rows.OfType<ReasoningActivityItemPresentationRow>(), Is.Empty);
+            Assert.That(presentation.Rows.OfType<AssistantOutputPresentationRow>(), Has.Exactly(1).Items);
+            Assert.That(presentation.Rows.OfType<TurnFooterPresentationRow>(), Has.Exactly(1).Items);
+
+            summary.IsExpanded = true;
             Assert.That(presentation.Rows.OfType<ReasoningActivityItemPresentationRow>(), Has.Exactly(1).Items);
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task CompletedTurn_WithoutProcessItems_OmitsProcessSummary()
+    {
+        var assistant = new AssistantChatMessage { IsBusy = false, FinishedAt = DateTimeOffset.UtcNow };
+        assistant.AddSpan(FinishedText("Plain answer"));
+        await using var context = Context(new UserChatMessage("Simple question", []), assistant);
+        var presentation = context.Presentation;
+        await presentation.PrepareInitialWindowAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(presentation.Rows.OfType<ProcessSummaryPresentationRow>(), Is.Empty);
             Assert.That(presentation.Rows.OfType<AssistantOutputPresentationRow>(), Has.Exactly(1).Items);
             Assert.That(presentation.Rows.OfType<TurnFooterPresentationRow>(), Has.Exactly(1).Items);
         });
@@ -844,9 +867,7 @@ public class ChatPresentationTests
         Assert.Multiple(() =>
         {
             Assert.That(group.IsExpanded, Is.False);
-            Assert.That(group.Statistics.ReasoningCount, Is.Zero);
-            Assert.That(group.Statistics.ToolCallCount, Is.EqualTo(3));
-            Assert.That(group.Statistics.SubagentCount, Is.Zero);
+            Assert.That(group.Items, Has.Count.EqualTo(3));
         });
     }
 
@@ -906,18 +927,18 @@ public class ChatPresentationTests
     public async Task Reveal_WhenCompressionSeparatesSummaries_ExpandsOnlyTargetSummary()
     {
         await using var context = new RootChatContext(new ChatData(), null);
-        context.Data.Add(new UserChatMessage("Search partial output", []));
+        context.Data.StartTurn(new UserChatMessage("Search partial output", []));
         var first = new AssistantChatMessage { IsCanceled = true };
         var firstText = FinishedText("Before compression");
         first.AddSpan(firstText);
-        var firstNode = context.Data.Add(first);
+        var firstNode = context.Data.Append(first);
         var compression = new ContextCompressionChatMessage(firstNode.Id, "model", ContextCompressionTrigger.Manual, null, null);
         compression.Complete("Saved summary", false, DateTimeOffset.UtcNow);
-        context.Data.Add(compression);
+        context.Data.Append(compression);
         var second = new AssistantChatMessage { ErrorMessageKey = new DirectLocaleKey("failed") };
         var secondText = FinishedText("After compression");
         second.AddSpan(secondText);
-        var secondNode = context.Data.Add(second);
+        var secondNode = context.Data.Append(second);
         var presentation = context.Presentation;
         await presentation.PrepareInitialWindowAsync();
         var summaries = presentation.Rows.OfType<ProcessSummaryPresentationRow>().ToArray();
@@ -964,6 +985,8 @@ public class ChatPresentationTests
         var presentation = context.Presentation;
         await presentation.PrepareInitialWindowAsync();
 
+        var summary = presentation.Rows.OfType<ProcessSummaryPresentationRow>().Single();
+        summary.IsExpanded = true;
         var reasoning = presentation.Rows.OfType<ReasoningActivityItemPresentationRow>().Single();
         Assert.Multiple(() =>
         {
@@ -1013,14 +1036,11 @@ public class ChatPresentationTests
         await using var context = Context(new UserChatMessage("Delegate", []), assistant);
         var presentation = context.Presentation;
         await presentation.PrepareInitialWindowAsync();
+        var summary = presentation.Rows.OfType<ProcessSummaryPresentationRow>().Single();
+        summary.IsExpanded = true;
         var item = presentation.Rows.OfType<FunctionCallActivityItemPresentationRow>().Single();
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(presentation.Rows.OfType<ProcessSummaryPresentationRow>(), Is.Empty);
-            Assert.That(item.FunctionCall.Calls.Length, Is.EqualTo(1));
-            Assert.That(ChatActivityStatistics.Calculate([item]).SubagentCount, Is.EqualTo(1));
-        });
+        Assert.That(item.FunctionCall.Calls.Length, Is.EqualTo(1));
     }
 
     [AvaloniaTest]
@@ -1069,6 +1089,8 @@ public class ChatPresentationTests
 
         await Task.Delay(500);
         Assert.That(presentation.Rows.OfType<ActivityGroupPresentationRow>(), Is.Empty);
+        var summary = presentation.Rows.OfType<ProcessSummaryPresentationRow>().Single();
+        summary.IsExpanded = true;
         Assert.That(presentation.Rows.OfType<BusyActivityItemPresentationRow>(), Has.Exactly(1).Items);
     }
 
@@ -1184,13 +1206,21 @@ public class ChatPresentationTests
             Assert.Multiple(() =>
             {
                 Assert.That(functionMarker.IsRunning, Is.False);
-                Assert.That(functionMarker.IsSecondaryHeaderVisible, Is.False);
+                Assert.That(functionMarker.IsSecondaryHeaderVisible, Is.True);
                 Assert.That(reasoningMarker.IsRunning, Is.False);
-                Assert.That(reasoningMarker.IsSecondaryHeaderVisible, Is.False);
+                Assert.That(reasoningMarker.IsSecondaryHeaderVisible, Is.True);
                 Assert.That(busyMarker.IsRunning, Is.False);
                 Assert.That(reasoning.FinishedAt, Is.Null);
                 Assert.That(runningNotifications, Is.EquivalentTo(new ActivityItemPresentationRow[] { functionRow, reasoningRow }));
                 Assert.That(rowNotifications, Is.GreaterThan(0));
+            });
+            functionRow.IsExpanded = true;
+            reasoningRow.IsExpanded = true;
+            Dispatcher.UIThread.RunJobs();
+            Assert.Multiple(() =>
+            {
+                Assert.That(functionMarker.IsSecondaryHeaderVisible, Is.False);
+                Assert.That(reasoningMarker.IsSecondaryHeaderVisible, Is.False);
             });
         }
         finally
@@ -1228,6 +1258,8 @@ public class ChatPresentationTests
             // finished activity when the turn is later materialized.
             Assert.That(targets[^1].Node.Turn?.Activities, Is.EqualTo(new[] { retained }));
             Assert.That(await presentation.ShowLatestAsync(), Is.True);
+            var summary = presentation.Rows.OfType<ProcessSummaryPresentationRow>().Single();
+            summary.IsExpanded = true;
             var activities = presentation.Rows.OfType<ActivityGroupPresentationRow>().SelectMany(group => group.Items)
                 .Concat(presentation.Rows.OfType<ActivityItemPresentationRow>()).OfType<BusyActivityItemPresentationRow>().ToArray();
             Assert.Multiple(() =>
@@ -1265,7 +1297,11 @@ public class ChatPresentationTests
     private static RootChatContext Context(params ChatMessage[] messages)
     {
         var context = new RootChatContext(new ChatData(), null);
-        foreach (var message in messages) context.Data.Add(message);
+        foreach (var message in messages)
+        {
+            if (message is UserChatMessage) context.Data.StartTurn(message);
+            else context.Data.Append(message);
+        }
         return context;
     }
 
@@ -1276,11 +1312,11 @@ public class ChatPresentationTests
         var targets = new List<(ChatMessageNode, AssistantChatMessageTextSpan)>(turnCount);
         for (var index = 0; index < turnCount; index++)
         {
-            context.Data.Add(new UserChatMessage($"Question {index}", []));
+            context.Data.StartTurn(new UserChatMessage($"Question {index}", []));
             var assistant = new AssistantChatMessage { IsBusy = false, FinishedAt = DateTimeOffset.UtcNow };
             var span = FinishedText($"Answer {index}");
             assistant.AddSpan(span);
-            context.Data.Add(assistant);
+            context.Data.Append(assistant);
             targets.Add((context.Data.SelectedNodes[^1], span));
         }
 
@@ -1336,5 +1372,236 @@ public class ChatPresentationTests
             Assert.That(context.Presentation.Rows.OfType<ProcessSummaryPresentationRow>(), Is.Empty);
             Assert.That(context.Presentation.Rows.OfType<AssistantTextOutputPresentationRow>(), Has.Exactly(1).Items);
         });
+    }
+
+    [AvaloniaTest]
+    public async Task BackgroundJobNotification_BetweenAssistantActivities_MergesIntoSingleGroupAndAutoCollapsesWhenFinished()
+    {
+        await using var context = new RootChatContext(new ChatData(), null);
+        context.Data.StartTurn(new UserChatMessage("Run checks", []));
+
+        using var function1 = FunctionMessage("ReadFile", 1, false);
+        var assistant1 = new AssistantChatMessage { IsBusy = true };
+        assistant1.AddSpan(new AssistantChatMessageFunctionCallSpan(function1) { FinishedAt = DateTimeOffset.UtcNow });
+        context.Data.Append(assistant1);
+
+        context.Data.Append(new BackgroundJobNotificationChatMessage(
+            "bg-1",
+            "execute_in_terminal",
+            "git status",
+            isSuccess: true,
+            output: "clean",
+            errorMessage: null,
+            DateTimeOffset.UtcNow));
+
+        var assistant2 = new AssistantChatMessage { IsBusy = true };
+        assistant2.AddSpan(new AssistantChatMessageReasoningSpan("Line 1\n  Line 2"));
+        context.Data.Append(assistant2);
+
+        var presentation = context.Presentation;
+        await presentation.PrepareInitialWindowAsync();
+
+        var group = presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(group.IsRunning, Is.True);
+            Assert.That(group.IsExpanded, Is.True);
+            Assert.That(group.Items.OfType<FunctionCallActivityItemPresentationRow>(), Has.Exactly(1).Items);
+            var bgRow = group.Items.OfType<BackgroundJobActivityItemPresentationRow>().Single();
+            Assert.That(bgRow.State.Label, Is.EqualTo("git status"));
+            Assert.That(bgRow.State.IsSuccess, Is.True);
+            var reasoningRow = group.Items.OfType<ReasoningActivityItemPresentationRow>().Single();
+            Assert.That(reasoningRow.State.PreviewText, Is.EqualTo("Line 1 Line 2"));
+        });
+
+        assistant1.IsBusy = false;
+        assistant2.IsBusy = false;
+        context.Data.Append(new UserChatMessage("steer", []) { DeliveryMode = ChatInputDeliveryMode.Steer });
+
+        using var function3 = FunctionMessage("WriteFile", 1, true);
+        var assistant3 = new AssistantChatMessage { IsBusy = true };
+        assistant3.AddSpan(new AssistantChatMessageReasoningSpan("Next phase"));
+        assistant3.AddSpan(new AssistantChatMessageFunctionCallSpan(function3));
+        context.Data.Append(assistant3);
+        Dispatcher.UIThread.RunJobs();
+        await presentation.PrepareInitialWindowAsync();
+        Dispatcher.UIThread.RunJobs();
+
+        var groups = presentation.Rows.OfType<ActivityGroupPresentationRow>().ToArray();
+        Assert.That(groups, Has.Length.EqualTo(2));
+        Assert.That(groups[0].IsRunning, Is.False);
+        Assert.That(groups[1].IsRunning, Is.True);
+
+        await Task.Delay(500);
+        Dispatcher.UIThread.RunJobs();
+        Assert.That(groups[0].IsExpanded, Is.False);
+
+        // User manual toggling disables subsequent auto-collapse on completion.
+        groups[1].IsExpanded = false;
+        groups[1].IsExpanded = true;
+        function3.IsBusy = false;
+        assistant3.IsBusy = false;
+        context.Data.Append(new UserChatMessage("steer 2", []) { DeliveryMode = ChatInputDeliveryMode.Steer });
+        var assistant4 = new AssistantChatMessage { IsBusy = true };
+        assistant4.AddSpan(new AssistantChatMessageReasoningSpan("Trailing"));
+        context.Data.Append(assistant4);
+        Dispatcher.UIThread.RunJobs();
+        await presentation.PrepareInitialWindowAsync();
+        Dispatcher.UIThread.RunJobs();
+
+        await Task.Delay(500);
+        Dispatcher.UIThread.RunJobs();
+        Assert.That(groups[1].IsExpanded, Is.True);
+    }
+
+    [AvaloniaTest]
+    public async Task FunctionCallChatMessage_WhenCompletedOrDeserialized_RetainsAndDerivesCollapsedActivityPreview()
+    {
+        using var live = FunctionMessage("Read", 1, true);
+        var slot = live.RegisterActivityPresentation("preview");
+        slot.Preview = new ChatPluginTextActivityPreview(new DirectLocaleKey("Live preview"));
+        Assert.That(live.ActivityPreview, Is.InstanceOf<ChatPluginTextActivityPreview>());
+
+        live.UnregisterActivityPresentation("preview", slot);
+        live.IsBusy = false;
+        Assert.That(live.ActivityPreview, Is.InstanceOf<ChatPluginTextActivityPreview>());
+        if (live.ActivityPreview is ChatPluginTextActivityPreview liveText)
+        {
+            Assert.That(liveText.TextKey.ToString(), Is.EqualTo("Live preview"));
+        }
+
+        using var persisted = FunctionMessage("Code", 1, false);
+        persisted.DisplaySink.AppendBlock(new ChatPluginCodeBlockDisplayBlock("dotnet build\necho done", "pwsh"));
+        var codeBytes = MessagePackSerializer.Serialize<ChatMessage>(persisted);
+        using var restoredCode = (FunctionCallChatMessage)MessagePackSerializer.Deserialize<ChatMessage>(codeBytes);
+        Assert.That(restoredCode.ActivityPreview, Is.InstanceOf<ChatPluginTextActivityPreview>());
+        if (restoredCode.ActivityPreview is ChatPluginTextActivityPreview restoredText)
+        {
+            Assert.That(restoredText.TextKey.ToString(), Is.EqualTo("dotnet build echo done"));
+        }
+
+        using var refsMessage = FunctionMessage("Search", 1, false);
+        refsMessage.DisplaySink.AppendBlock(new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(@"C:\repo\Program.cs")));
+        var refBytes = MessagePackSerializer.Serialize<ChatMessage>(refsMessage);
+        using var restoredRefs = (FunctionCallChatMessage)MessagePackSerializer.Deserialize<ChatMessage>(refBytes);
+        Assert.That(restoredRefs.ActivityPreview, Is.InstanceOf<ChatPluginFileReferencesActivityPreview>());
+    }
+
+    [AvaloniaTest]
+    public void ActivityTemplates_SecondaryHeadersAndBackgroundJobIcons_UseMutedAndNeutralColorsAndSingleLineLayout()
+    {
+        var application = Application.Current ?? throw new InvalidOperationException("The test application is not initialized.");
+        if (!application.Styles.OfType<ShadUI.ShadTheme>().Any())
+        {
+            application.Styles.Add(new ShadUI.ShadTheme());
+        }
+
+        var previewPresenter = new ChatActivityPreviewPresenter
+        {
+            Content = new ChatPluginFileReferencesActivityPreview([new ChatPluginFileReference(@"C:\repo\Program.cs")])
+        };
+        var commandPreviewPresenter = new ChatActivityPreviewPresenter
+        {
+            Content = new ChatPluginCommandActivityPreview("  echo   1\n  echo 2  ")
+        };
+        var bgRow = new BackgroundJobActivityItemPresentationRow(
+            new BackgroundJobNotificationChatMessage(
+                "bg-1",
+                "execute_in_terminal",
+                "dotnet test",
+                isSuccess: true,
+                output: "ok",
+                errorMessage: null,
+                DateTimeOffset.UtcNow));
+        var waitingData = new ChatData();
+        var waitingUserNode = waitingData.StartTurn(new UserChatMessage("Run bg", []));
+        var waitingTurn = waitingUserNode.Turn ?? throw new InvalidOperationException();
+        waitingTurn.IncrementActiveBackgroundJobs();
+        var waitingRow = new BackgroundJobWaitingPresentationRow(waitingTurn);
+        waitingRow.Refresh();
+        var waitingMarker = BuildActivityMarker(waitingRow);
+        var bgMarker = BuildActivityMarker(bgRow);
+        var hostWindow = new Window
+        {
+            Width = 600,
+            Height = 200,
+            RequestedThemeVariant = ThemeVariant.Dark
+        };
+        hostWindow.Resources["FontSizeXs"] = 10d;
+        hostWindow.Resources["FontSizeS"] = 12.8d;
+        hostWindow.Resources["FontSizeM"] = 14d;
+        hostWindow.Resources["FontSizeL"] = 16d;
+        hostWindow.Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://Everywhere.Core/"))
+        {
+            Source = new Uri("avares://Everywhere.Core/Views/Controls/ConditionalContentControl.axaml")
+        });
+        hostWindow.Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://Everywhere.Core/"))
+        {
+            Source = new Uri("avares://Everywhere.Core/Views/Chat/ActivityMarker.axaml")
+        });
+        hostWindow.Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://Everywhere.Core/"))
+        {
+            Source = new Uri("avares://Everywhere.Core/Views/Chat/ChatActivityPreviewPresenter.axaml")
+        });
+        hostWindow.Content = new StackPanel
+        {
+            Children = { previewPresenter, commandPreviewPresenter, waitingMarker, bgMarker }
+        };
+
+        try
+        {
+            hostWindow.Show();
+            Dispatcher.UIThread.RunJobs();
+            hostWindow.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+            hostWindow.UpdateLayout();
+
+            var fileButton = previewPresenter.GetVisualDescendants().OfType<Button>().Single();
+            var fileText = fileButton.GetVisualDescendants().OfType<TextBlock>().Single();
+            var commandText = commandPreviewPresenter.GetVisualDescendants().OfType<TextBlock>().Single();
+            var waitingIcon = waitingMarker.Icon as LucideIcon ?? throw new InvalidOperationException();
+            var bgPanel = bgMarker.Icon as Panel ?? throw new InvalidOperationException();
+            var bgIcons = bgPanel.Children.OfType<LucideIcon>().ToArray();
+            var headerControl = bgMarker.Header as Control ?? throw new InvalidOperationException();
+            var secondaryControl = bgMarker.SecondaryHeader as Control ?? throw new InvalidOperationException();
+            var headerOrigin = headerControl.TranslatePoint(default, bgMarker);
+            var secondaryOrigin = secondaryControl.TranslatePoint(default, bgMarker);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(waitingRow.ActiveCount, Is.EqualTo(1));
+                Assert.That(waitingRow.IsRunning, Is.True);
+                Assert.That(waitingMarker.IsExpandable, Is.False);
+                Assert.That(waitingMarker.IsSecondaryHeaderVisible, Is.False);
+                Assert.That(waitingMarker.IsRunning, Is.True);
+                Assert.That(waitingIcon.Kind, Is.EqualTo(LucideIconKind.Clock));
+                Assert.That(waitingMarker.GetVisualDescendants().OfType<ShadUI.Loading>(), Is.Empty);
+
+                Assert.That(commandText.Text, Is.EqualTo("echo 1 echo 2"));
+                Assert.That(fileButton.Classes.Contains("Muted"), Is.True);
+                Assert.That(fileText.Classes.Contains("Muted"), Is.True);
+                if (hostWindow.TryFindResource("MutedColor", hostWindow.ActualThemeVariant, out var mutedValue) &&
+                    mutedValue is Avalonia.Media.Color mutedColor &&
+                    fileButton.Foreground is Avalonia.Media.ISolidColorBrush buttonBrush)
+                {
+                    Assert.That(buttonBrush.Color, Is.EqualTo(mutedColor));
+                }
+
+                Assert.That(bgIcons, Has.Length.EqualTo(2));
+                Assert.That(bgIcons[0].IsSet(TemplatedControl.ForegroundProperty), Is.False);
+                Assert.That(bgIcons[1].IsSet(TemplatedControl.ForegroundProperty), Is.False);
+                Assert.That(headerOrigin, Is.Not.Null);
+                Assert.That(secondaryOrigin, Is.Not.Null);
+                if (headerOrigin is { } h && secondaryOrigin is { } s)
+                {
+                    Assert.That(s.X, Is.GreaterThan(h.X));
+                    Assert.That(Math.Abs(s.Y - h.Y), Is.LessThan(8));
+                }
+            });
+        }
+        finally
+        {
+            hostWindow.Close();
+        }
     }
 }

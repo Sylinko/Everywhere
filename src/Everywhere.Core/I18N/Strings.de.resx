@@ -613,9 +613,6 @@
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Im Terminal Ausführen</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
-        <value>Führe {0} aus</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
         <value>Das folgende Skript wird ausgeführt</value>
     </data>
@@ -1027,6 +1024,21 @@
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
         <value>Senden</value>
     </data>
+    <data name="ChatInputArea_NewLine_ToolTip" xml:space="preserve">
+        <value>Neue Zeile</value>
+    </data>
+    <data name="ChatInputArea_Queue_ToolTip" xml:space="preserve">
+        <value>In Warteschlange</value>
+    </data>
+    <data name="ChatInputArea_ResumeButton_ToolTip" xml:space="preserve">
+        <value>Unterhaltung fortsetzen</value>
+    </data>
+    <data name="ChatInputArea_Steer_ToolTip" xml:space="preserve">
+        <value>Jetzt steuern</value>
+    </data>
+    <data name="ChatInputArea_Watermark_Busy" xml:space="preserve">
+        <value>Nachricht eingeben zum Ergänzen oder Einreihen…</value>
+    </data>
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>Einstellungen</value>
     </data>
@@ -1140,6 +1152,9 @@
     </data>
     <data name="ChatMessageControl_RetryButton_Content" xml:space="preserve">
         <value>Erneuern</value>
+    </data>
+    <data name="ChatMessageControl_SteerBadge" xml:space="preserve">
+        <value>Gesteuerte Unterhaltung</value>
     </data>
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>Darf „{0}“ ausgeführt werden?</value>
@@ -1285,9 +1300,6 @@
     <data name="ChatPlugin_MultiSelectHint" xml:space="preserve">
         <value>(Mehrfachauswahl)</value>
     </data>
-    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
-        <value>Abgeschlossen</value>
-    </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
         <value>Erledigte {0} Aktivitäten</value>
     </data>
@@ -1297,14 +1309,11 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>In dieser Runde wurde keine Antwort generiert.</value>
     </data>
-    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
-        <value>{0} Überlegungen</value>
+    <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
+        <value>Runde abgeschlossen</value>
     </data>
-    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
-        <value>{0} Unterassistenten</value>
-    </data>
-    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
-        <value>{0} Werkzeugaufrufe</value>
+    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
+        <value>Warte auf {0} Hintergrundaufgabe(n)…</value>
     </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>Wird bearbeitet</value>
@@ -2421,30 +2430,6 @@
     </data>
     <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
         <value>Denken Niveau</value>
-    </data>
-    <data name="Greetings_NotLoginTip1" xml:space="preserve">
-        <value>💡Die Everywhere Cloud-Dienste nutzen ausschließlich offizielle, hochentwickelte Modelle.</value>
-    </data>
-    <data name="Greetings_NotLoginTip2" xml:space="preserve">
-        <value>💡Registrieren Sie sich für die Everywhere Cloud-Dienste, um von zusätzlichen Paketen und kostenlosen Testversionen zu profitieren.</value>
-    </data>
-    <data name="Greetings_Tip1" xml:space="preserve">
-        <value>💡Du kannst mit Strg + Zahlentaste schnell zwischen den Assistenten wechseln.</value>
-    </data>
-    <data name="Greetings_Tip2" xml:space="preserve">
-        <value>💡Du kannst im linken unteren Bereich auf das Assistenten-Symbol mit dem Mausrad schnell wechseln.</value>
-    </data>
-    <data name="Greetings_Tip3" xml:space="preserve">
-        <value>💡Du kannst die Copilot-Taste als Everywhere-Verknüpfung festlegen.</value>
-    </data>
-    <data name="Greetings_Tip4" xml:space="preserve">
-        <value>💡Selbst bei der Hinzufügung eines einzelnen visuellen Elementes extrahiert Everywhere intelligent den gesamten Kontext.</value>
-    </data>
-    <data name="Greetings_Tip5" xml:space="preserve">
-        <value>💡Das Kernteam von Everywhere besteht nur aus zwei Personen. Beiträge und Feedback sind herzlich willkommen!</value>
-    </data>
-    <data name="Greetings_Tip6" xml:space="preserve">
-        <value>💡Treten Sie unserer offiziellen Community auf der Über-Seite bei und interagieren Sie mit uns~</value>
     </data>
     <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
         <value>Die Authentifizierung ist fehlgeschlagen. Prüfen Sie die Authentifizierungseinstellungen oder melden Sie sich erneut an.</value>
@@ -5033,5 +5018,62 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     </data>
     <data name="WelcomeView_TelemetryStep_Message2" xml:space="preserve">
         <value>Wenn Sie nicht teilnehmen, werden nur notwendige Daten gesendet. Seien Sie versichert, dass diese Wahl die Kernfunktionen nicht beeinträchtigt.</value>
+    </data>
+    <data name="BackgroundJobNotification_Completed" xml:space="preserve">
+        <value>Hintergrundauftrag abgeschlossen</value>
+    </data>
+    <data name="BackgroundJobNotification_Failed" xml:space="preserve">
+        <value>Hintergrundauftrag fehlgeschlagen</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageBackgroundJobs_Description" xml:space="preserve">
+        <value>Hintergrundaufträge dieser Sitzung auflisten, Live-Ausgabe prüfen oder stoppen.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageBackgroundJobs_Header" xml:space="preserve">
+        <value>Hintergrundaufträge verwalten</value>
+    </data>
+    <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
+        <value>Warteschlange (nach aktuellem Zug)</value>
+    </data>
+    <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
+        <value>Steuern (im nächsten Schritt eingreifen)</value>
+    </data>
+    <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
+        <value>Warteschlange</value>
+    </data>
+    <data name="ChatInputDeliveryMode_Steer" xml:space="preserve">
+        <value>Steuern</value>
+    </data>
+    <data name="ChatWindowSettings_BusySubmissionMode_Description" xml:space="preserve">
+        <value>Legen Sie fest, ob Nachrichten während einer laufenden Antwort standardmäßig eingereiht werden oder den Zug steuern.</value>
+    </data>
+    <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
+        <value>Standard-Sendeverhalten bei Auslastung</value>
+    </data>
+    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+        <value>Wird im Hintergrund ausgeführt</value>
+    </data>
+    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
+        <value>Diesen Hintergrundauftrag stoppen</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
+        <value>Leeren</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_Delete_ToolTip" xml:space="preserve">
+        <value>Eintrag entfernen</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_PausedBadge" xml:space="preserve">
+        <value>Pausiert</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ResumeButton" xml:space="preserve">
+        <value>Fortsetzen</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_ToggleMode_ToolTip" xml:space="preserve">
+        <value>Zwischen Warteschlange und Steuern wechseln</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_WaitingHeader" xml:space="preserve">
+        <value>Ausstehende Nachrichten</value>
+    </data>
+    <data name="ChatWindow_PendingInputs_Withdraw_ToolTip" xml:space="preserve">
+        <value>Zurück in das Eingabefeld ziehen</value>
     </data>
 </root>

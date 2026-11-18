@@ -80,11 +80,11 @@ public sealed partial class ChatTurnRenderTests
         var context = new RootChatContext(new ChatData(), null);
         for (var index = 0; index < turnCount; index++)
         {
-            context.Data.Add(new UserChatMessage($"History question {index}", []));
+            context.Data.StartTurn(new UserChatMessage($"History question {index}", []));
             var reply = new AssistantChatMessage();
             reply.AddSpan(new AssistantChatMessageTextSpan(
                 $"## Saved answer {index}\n\n" + string.Join("\n\n", Enumerable.Repeat("A saved paragraph with enough text to exercise variable-height history rows.", index % 3 + 1))));
-            context.Data.Add(reply);
+            context.Data.Append(reply);
         }
 
         return context;
@@ -110,14 +110,14 @@ public sealed partial class ChatTurnRenderTests
     public async Task Timeline_WhenStreamingAndSwitchingWindows_RendersSnapshotsAndKeepsVirtualizedContainers()
     {
         await using var context = new RootChatContext(new ChatData(), null);
-        var user = context.Data.Add(new UserChatMessage("Review the local history upgrade and verify the migration.", []));
+        var user = context.Data.StartTurn(new UserChatMessage("Review the local history upgrade and verify the migration.", []));
         var assistant = new AssistantChatMessage { IsBusy = true };
         var text = new AssistantChatMessageTextSpan("## Local history upgrade\n\nI will check the **turn structure**, then verify the saved branches.\n");
         assistant.AddSpan(text);
         var tool = new FunctionCallChatMessage(LucideIconKind.Database, new DirectLocaleKey("Verify migration")) { IsBusy = true };
         var progress = tool.DisplaySink.AppendProgress(new DirectLocaleKey("Checking saved branches"));
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
-        context.Data.Add(assistant);
+        context.Data.Append(assistant);
         var presentation = context.Presentation;
         await presentation.PrepareInitialWindowAsync();
         var textRow = presentation.Rows.OfType<AssistantTextOutputPresentationRow>().Single();
@@ -186,12 +186,12 @@ public sealed partial class ChatTurnRenderTests
 
             for (var index = 0; index < ChatPresentation.TurnBatchSize + 8; index++)
             {
-                context.Data.Add(new UserChatMessage($"History question {index}", []));
+                context.Data.StartTurn(new UserChatMessage($"History question {index}", []));
                 var reply = new AssistantChatMessage();
                 reply.AddSpan(new AssistantChatMessageTextSpan(
                     $"## Saved answer {index}\n\nThis turn keeps its own message identities and saved choices.\n\n" +
                     "- Read complete turns only when needed.\n- Keep older branches available.\n- Save changed nodes incrementally.\n"));
-                context.Data.Add(reply);
+                context.Data.Append(reply);
             }
 
             Dispatcher.UIThread.RunJobs();
@@ -243,7 +243,7 @@ public sealed partial class ChatTurnRenderTests
         try
         {
             await using var context = new RootChatContext(new ChatData(), null);
-            context.Data.Add(new UserChatMessage("Inspect the attached image.", []));
+            context.Data.StartTurn(new UserChatMessage("Inspect the attached image.", []));
             var tool = new FunctionCallChatMessage(
                 LucideIconKind.Image,
                 new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ViewImage_Header))
@@ -252,7 +252,7 @@ public sealed partial class ChatTurnRenderTests
             };
             var assistant = new AssistantChatMessage { IsBusy = true };
             assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
-            context.Data.Add(assistant);
+            context.Data.Append(assistant);
             await context.Presentation.PrepareInitialWindowAsync();
             var group = context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
             group.IsExpanded = true;
