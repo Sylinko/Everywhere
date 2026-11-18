@@ -57,7 +57,7 @@ public sealed class ChatRequestCaptureTests
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(function));
 
         var data = new ChatData();
-        data.Add(assistant);
+        data.Append(assistant);
         await using var runtime = new RootChatContext(data, null);
         var history = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
             Substitute.For<IPromptRenderer>(), "system", [assistant], Modalities.Text, context: runtime);

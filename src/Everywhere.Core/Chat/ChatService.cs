@@ -99,6 +99,7 @@ public sealed partial class ChatService : IChatService
     /// <inheritdoc />
     public Task<bool> SendMessageAsync(ChatContext chatContext, UserChatMessage message, CustomAssistant? customAssistant)
     {
+        EnsureDrainHook(chatContext);
         var chatData = chatContext.Data;
         return chatContext.TryStartAsync(
             () =>
@@ -107,7 +108,7 @@ public sealed partial class ChatService : IChatService
                 // Visual processing, statistics and generation remain outside this short operation.
                 var shouldCreateTitle = !chatData.HasHistory && string.IsNullOrWhiteSpace(chatData.Metadata.Topic);
                 var titleInput = shouldCreateTitle ? GetTitleInput(message) : null;
-                var node = chatData.Add(message);
+                var node = chatData.StartTurn(message);
                 if (titleInput is not null)
                 {
                     chatData.Metadata.Rename(string.Join(" ", titleInput.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)));
@@ -122,59 +123,246 @@ public sealed partial class ChatService : IChatService
                 activity?.SetTag("chat.context.id", chatData.Metadata.Id);
                 try
                 {
-                    if (titleInput is { Length: > 0 } && customAssistant is not null && _settings.ChatWindow.AutomaticallyGenerateTitle)
-                    {
-                        chatContext
-                            .RunBackgroundAsync(
-                                token => GenerateTopicAsync(customAssistant, titleInput, chatContext, summary, token),
-                                CancellationToken.None)
-                            .Detach(_logger.ToExceptionHandler());
-                    }
-
-                    await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
-                    var turnEventId = await _statisticsRecorder.RecordTurnAsync(
-                        chatData,
+                    await ExecuteUserTurnCoreAsync(
+                        chatContext,
+                        message,
                         userNode,
+                        titleInput,
+                        summary,
+                        customAssistant,
                         StatisticsTurnKind.Send,
                         cancellationToken);
-                    using var turnScope = BeginStatisticsTurn(turnEventId);
-
-                    if (customAssistant is null)
-                    {
-                        await chatContext.DispatchAsync(() => chatData.Append(userNode, CreateCustomAssistantNotSelectedErrorAssistantChatMessage()));
-                        return;
-                    }
-
-                    var appendTailNode = await ProcessUserChatMessageAsync(chatContext, customAssistant, userNode, cancellationToken);
-
-                    var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                    var assistantNode = await chatContext.DispatchAsync(() => chatData.Append(appendTailNode, assistantChatMessage));
-
-                    var systemPromptOverride = message.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
-                    await GenerateAsync(
-                        chatContext,
-                        customAssistant,
-                        assistantNode,
-                        CompressionBoundary.Before(userNode),
-                        systemPromptOverride: systemPromptOverride,
-                        cancellationToken: cancellationToken);
                 }
                 finally
                 {
                     DisposeVisualAnchors(message);
                 }
+
+                await DrainPendingWorkAsync(chatContext, cancellationToken);
             },
             _logger.ToExceptionHandler());
     }
 
     /// <inheritdoc />
-    public Task<bool> EditAsync(ChatContext chatContext, ChatMessageNode oldNode, UserChatMessage newMessage)
+    public async Task<bool> SubmitMessageAsync(
+        ChatContext chatContext,
+        UserChatMessage message,
+        CustomAssistant? customAssistant,
+        ChatInputDeliveryMode deliveryMode)
     {
-        if (oldNode.Message.Role != MEAI.ChatRole.User)
+        EnsureDrainHook(chatContext);
+
+        if (!chatContext.IsBusy)
         {
-            throw new InvalidOperationException("Only user messages can be edited.");
+            if (ShouldWaitForCurrentTurnBackgroundJobs(chatContext) && deliveryMode == ChatInputDeliveryMode.Steer)
+            {
+                if (await SendSteerInCurrentTurnAsync(chatContext, message, customAssistant))
+                {
+                    return true;
+                }
+            }
+            else if (!ShouldWaitForCurrentTurnBackgroundJobs(chatContext))
+            {
+                message.DeliveryMode = null;
+                if (await SendMessageAsync(chatContext, message, customAssistant))
+                {
+                    return true;
+                }
+            }
         }
 
+        if (chatContext.Data.IsDisposed || !chatContext.Root.CanAcceptWork)
+        {
+            return false;
+        }
+
+        var effectiveMode = deliveryMode is ChatInputDeliveryMode.Queue or ChatInputDeliveryMode.Steer ?
+            deliveryMode :
+            ChatInputDeliveryMode.Queue;
+        chatContext.PendingInputs.Enqueue(message, effectiveMode, customAssistant);
+
+        // Cover the narrow window where an active foreground operation finished while this item was being enqueued.
+        TryAutoStartPendingDrain(chatContext);
+        return true;
+    }
+
+    private Task<bool> SendSteerInCurrentTurnAsync(
+        ChatContext chatContext,
+        UserChatMessage message,
+        CustomAssistant? customAssistant)
+    {
+        message.DeliveryMode = ChatInputDeliveryMode.Steer;
+        var chatData = chatContext.Data;
+        return chatContext.TryStartAsync(
+            () =>
+            {
+                var tail = chatData.SelectedNodes[^1];
+                chatData.RecordPathChoices(tail);
+                return chatData.Append(tail, message);
+            },
+            async (userNode, cancellationToken) =>
+            {
+                using var activity = _activitySource.StartActivity();
+                activity?.SetTag("chat.context.id", chatData.Metadata.Id);
+                try
+                {
+                    await ExecuteSteerUserNodeAsync(
+                        chatContext,
+                        message,
+                        userNode,
+                        customAssistant ?? _settings.Model.SelectedCustomAssistant,
+                        cancellationToken);
+                }
+                finally
+                {
+                    DisposeVisualAnchors(message);
+                }
+
+                await DrainPendingWorkAsync(chatContext, cancellationToken);
+            },
+            _logger.ToExceptionHandler());
+    }
+
+    /// <inheritdoc />
+    public bool ResumePendingInputs(ChatContext chatContext)
+    {
+        EnsureDrainHook(chatContext);
+        if (!chatContext.PendingInputs.ResumeDrain())
+        {
+            return false;
+        }
+
+        return StartPendingDrainOperation(chatContext);
+    }
+
+    /// <inheritdoc />
+    public bool CanResume(ChatContext chatContext)
+    {
+        if (chatContext.IsTurnActive || chatContext.Data.IsDisposed)
+        {
+            return false;
+        }
+
+        if (chatContext.PendingInputs.WaitingCount > 0)
+        {
+            return true;
+        }
+
+        var tail = chatContext.Data.SelectedNodes.LastOrDefault();
+        if (tail?.Message is UserChatMessage or BackgroundJobNotificationChatMessage)
+        {
+            return true;
+        }
+
+        if (chatContext.Data.ContinuationTarget is { Message: AssistantChatMessage assistant })
+        {
+            return assistant.IsCanceled || assistant.ErrorMessageKey is not null || assistant.FinishedAt == default;
+        }
+
+        return chatContext.Data.SelectedTurns.Count > 0;
+    }
+
+    /// <inheritdoc />
+    public void Resume(ChatContext chatContext)
+    {
+        if (chatContext.IsTurnActive || chatContext.Data.IsDisposed)
+        {
+            return;
+        }
+
+        EnsureDrainHook(chatContext);
+        chatContext.PendingInputs.ResumeDrain();
+
+        var chatData = chatContext.Data;
+        var tail = chatData.SelectedNodes.LastOrDefault();
+        if (tail?.Message is UserChatMessage or BackgroundJobNotificationChatMessage ||
+            chatData is { ContinuationTarget: null, SelectedTurns.Count: > 0 })
+        {
+            var boundaryNode = chatData.SelectedTurns.LastOrDefault()?.UserNode ?? tail;
+            if (boundaryNode is null)
+            {
+                StartPendingDrainOperation(chatContext);
+                return;
+            }
+
+            var customAssistant = _settings.Model.SelectedCustomAssistant;
+            chatContext.TryExecute(
+                async cancellationToken =>
+                {
+                    using var activity = _activitySource.StartActivity();
+                    activity?.SetTag("chat.context.id", chatData.Metadata.Id);
+
+                    var appendTail = await chatContext.DispatchAsync(() =>
+                    {
+                        var selectedTail = chatData.SelectedNodes[^1];
+                        chatData.RecordPathChoices(selectedTail);
+                        return selectedTail;
+                    });
+
+                    if (customAssistant is null)
+                    {
+                        await chatContext.DispatchAsync(() => chatData.Append(
+                            appendTail,
+                            CreateCustomAssistantNotSelectedErrorAssistantChatMessage()));
+                        return;
+                    }
+
+                    var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+                    var assistantNode = await chatContext.DispatchAsync(() => chatData.Append(appendTail, assistantChatMessage));
+                    await GenerateAsync(
+                        chatContext,
+                        customAssistant,
+                        assistantNode,
+                        CompressionBoundary.Before(boundaryNode),
+                        purpose: StatisticsModelInvocationPurpose.ContinueResponse,
+                        cancellationToken: cancellationToken);
+
+                    await DrainPendingWorkAsync(chatContext, cancellationToken);
+                },
+                _logger.ToExceptionHandler());
+            return;
+        }
+
+        if (chatData.ContinuationTarget is { Message: AssistantChatMessage assistant } continuationNode &&
+            (assistant.IsCanceled || assistant.ErrorMessageKey is not null || assistant.FinishedAt == default))
+        {
+            Continue(chatContext, continuationNode);
+            return;
+        }
+
+        StartPendingDrainOperation(chatContext);
+    }
+
+    /// <inheritdoc />
+    public bool RemovePendingInput(ChatContext chatContext, Guid itemId)
+    {
+        if (!chatContext.PendingInputs.TryRemove(itemId, out var removed))
+        {
+            return false;
+        }
+
+        DisposeVisualAnchors(removed.Message);
+        return true;
+    }
+
+    /// <inheritdoc />
+    public void ClearPendingInputs(ChatContext chatContext)
+    {
+        foreach (var item in chatContext.PendingInputs.ClearAllUserItems())
+        {
+            DisposeVisualAnchors(item.Message);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<bool> EditAsync(ChatContext chatContext, ChatMessageNode oldNode, UserChatMessage newMessage)
+    {
+        if (!oldNode.IsTurnStart)
+        {
+            throw new InvalidOperationException("Only turn-starting user messages can be edited.");
+        }
+
+        EnsureDrainHook(chatContext);
         var chatData = oldNode.Data;
         var customAssistant = _settings.Model.SelectedCustomAssistant;
         return chatContext.TryStartAsync(
@@ -218,6 +406,8 @@ public sealed partial class ChatService : IChatService
                 {
                     DisposeVisualAnchors(newMessage);
                 }
+
+                await DrainPendingWorkAsync(chatContext, cancellationToken);
             },
             _logger.ToExceptionHandler());
     }
@@ -229,7 +419,14 @@ public sealed partial class ChatService : IChatService
             throw new InvalidOperationException("Only assistant messages can be retried.");
         }
 
-        var chatData = node.Data;
+        if (chatContext.IsTurnActive)
+        {
+            return;
+        }
+
+        EnsureDrainHook(chatContext);
+        var branchTarget = ResolveRetryTarget(node);
+        var chatData = branchTarget.Data;
         var customAssistant = _settings.Model.SelectedCustomAssistant;
 
         chatContext.TryExecute(
@@ -241,13 +438,15 @@ public sealed partial class ChatService : IChatService
                 await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
                 if (customAssistant is null)
                 {
-                    await chatContext.DispatchAsync(() => chatData.CreateBranchOn(node, CreateCustomAssistantNotSelectedErrorAssistantChatMessage()));
+                    await chatContext.DispatchAsync(() => chatData.CreateBranchOn(
+                        branchTarget,
+                        CreateCustomAssistantNotSelectedErrorAssistantChatMessage()));
                     return;
                 }
 
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                var userNode = node.Turn?.UserNode;
-                var assistantNode = await chatContext.DispatchAsync(() => chatData.CreateBranchOn(node, assistantChatMessage));
+                var userNode = branchTarget.Turn?.UserNode;
+                var assistantNode = await chatContext.DispatchAsync(() => chatData.CreateBranchOn(branchTarget, assistantChatMessage));
 
                 var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                     chatData,
@@ -262,8 +461,29 @@ public sealed partial class ChatService : IChatService
                     assistantNode,
                     CompressionBoundary.Before(userNode ?? assistantNode),
                     cancellationToken: cancellationToken);
+
+                await DrainPendingWorkAsync(chatContext, cancellationToken);
             },
             _logger.ToExceptionHandler());
+    }
+
+    private static ChatMessageNode ResolveRetryTarget(ChatMessageNode node)
+    {
+        if (node.Turn is not { } turn)
+        {
+            return node;
+        }
+
+        var earliestAssistant = node;
+        for (var current = node; current is not null && ReferenceEquals(current.Turn, turn); current = current.Parent)
+        {
+            if (current.MessageKind == ChatMessageKind.Assistant)
+            {
+                earliestAssistant = current;
+            }
+        }
+
+        return earliestAssistant;
     }
 
     public void Continue(ChatContext chatContext, ChatMessageNode node)
@@ -273,6 +493,7 @@ public sealed partial class ChatService : IChatService
             throw new InvalidOperationException("Only assistant messages can be continued.");
         }
 
+        EnsureDrainHook(chatContext);
         var chatData = node.Data;
         var customAssistant = _settings.Model.SelectedCustomAssistant;
 
@@ -307,6 +528,8 @@ public sealed partial class ChatService : IChatService
                     CompressionBoundary.Through(node),
                     purpose: StatisticsModelInvocationPurpose.ContinueResponse,
                     cancellationToken: cancellationToken);
+
+                await DrainPendingWorkAsync(chatContext, cancellationToken);
             },
             _logger.ToExceptionHandler());
     }
@@ -373,6 +596,478 @@ public sealed partial class ChatService : IChatService
                 }
             },
             _logger.ToExceptionHandler());
+    }
+
+    private readonly Dictionary<ChatContext, Action> _steerHooks = [];
+
+    private void EnsureDrainHook(ChatContext chatContext)
+    {
+        chatContext.ForegroundOperationCompleted -= HandleForegroundOperationCompleted;
+        chatContext.ForegroundOperationCompleted += HandleForegroundOperationCompleted;
+
+        if (_steerHooks.ContainsKey(chatContext))
+        {
+            return;
+        }
+
+        Action hook = () => TryAutoStartPendingDrain(chatContext);
+        _steerHooks.Add(chatContext, hook);
+        chatContext.PendingInputs.SteerRequested += hook;
+    }
+
+    private void HandleForegroundOperationCompleted(ChatContext chatContext)
+    {
+        TryAutoStartPendingDrain(chatContext);
+    }
+
+    private static bool ShouldWaitForCurrentTurnBackgroundJobs(ChatContext chatContext) =>
+        chatContext.Data.SelectedTurns.LastOrDefault()?.HasActiveBackgroundJobs == true;
+
+    private void HandleBackgroundJobCompleted(ChatBackgroundJob job)
+    {
+        var targetContext = job.OwnerContext.IsBusy ? job.OwnerContext : job.OwnerContext.Root;
+        if (targetContext.Data.IsDisposed || !targetContext.Root.CanAcceptWork)
+        {
+            job.ReleaseTurnHold();
+            return;
+        }
+
+        EnsureDrainHook(targetContext);
+        targetContext.PendingInputs.EnqueueWakeNotification(
+            new ChatBackgroundJobNotification(
+                job.JobId,
+                job.ToolName,
+                job.Label,
+                job.IsSuccess,
+                job.Output,
+                job.ErrorMessage,
+                job.FinishedAt ?? DateTimeOffset.UtcNow));
+
+        // Release the turn hold only after the wake notification is queued so Queue drain cannot race ahead.
+        job.ReleaseTurnHold();
+        TryAutoStartPendingDrain(targetContext);
+    }
+
+    private void TryAutoStartPendingDrain(ChatContext chatContext)
+    {
+        if (chatContext.IsBusy)
+        {
+            return;
+        }
+
+        if (ShouldWaitForCurrentTurnBackgroundJobs(chatContext))
+        {
+            if (chatContext.PendingInputs.HasPendingInTurnWork)
+            {
+                StartPendingDrainOperation(chatContext);
+            }
+            return;
+        }
+
+        if (!chatContext.PendingInputs.HasPendingTurnWork)
+        {
+            return;
+        }
+
+        StartPendingDrainOperation(chatContext);
+    }
+
+    private bool StartPendingDrainOperation(ChatContext chatContext)
+    {
+        var canStart = ShouldWaitForCurrentTurnBackgroundJobs(chatContext) ?
+            chatContext.PendingInputs.HasPendingInTurnWork :
+            chatContext.PendingInputs.HasPendingTurnWork;
+        if (!canStart)
+        {
+            return false;
+        }
+
+        return chatContext.TryExecute(
+            cancellationToken => DrainPendingWorkAsync(chatContext, cancellationToken),
+            _logger.ToExceptionHandler());
+    }
+
+    private async Task DrainPendingWorkAsync(ChatContext chatContext, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var wakes = chatContext.PendingInputs.TakeAllWakeNotifications();
+            if (wakes.Count > 0)
+            {
+                await ExecuteWakeTurnAsync(chatContext, wakes, cancellationToken);
+                continue;
+            }
+
+            if (!chatContext.PendingInputs.IsDrainPaused)
+            {
+                var steers = chatContext.PendingInputs.TakeAllSteers();
+                if (steers.Count > 0)
+                {
+                    await ExecuteSteersInCurrentTurnAsync(chatContext, steers, cancellationToken);
+                    continue;
+                }
+            }
+
+            if (ShouldWaitForCurrentTurnBackgroundJobs(chatContext))
+            {
+                break;
+            }
+
+            if (chatContext.PendingInputs.TryTakeNextQueued(out var nextItem))
+            {
+                try
+                {
+                    await ExecuteQueuedUserTurnAsync(chatContext, nextItem, cancellationToken);
+                }
+                finally
+                {
+                    DisposeVisualAnchors(nextItem.Message);
+                }
+
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    private async Task ExecuteQueuedUserTurnAsync(
+        ChatContext chatContext,
+        ChatPendingInputItem item,
+        CancellationToken cancellationToken)
+    {
+        var chatData = chatContext.Data;
+        var message = item.Message;
+        var (userNode, titleInput, summary) = await chatContext.DispatchAsync(() =>
+        {
+            var shouldCreateTitle = !chatData.HasHistory && string.IsNullOrWhiteSpace(chatData.Metadata.Topic);
+            var resolvedTitleInput = shouldCreateTitle ? GetTitleInput(message) : null;
+            var tail = chatData.SelectedNodes[^1];
+            chatData.RecordPathChoices(tail);
+            var appendedUser = chatData.StartTurn(tail, message);
+            if (resolvedTitleInput is not null)
+            {
+                chatData.Metadata.Rename(
+                    string.Join(" ", resolvedTitleInput.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)));
+            }
+
+            return (appendedUser, resolvedTitleInput, chatData.Metadata.Topic);
+        });
+
+        using var activity = _activitySource.StartActivity();
+        activity?.SetTag("chat.context.id", chatData.Metadata.Id);
+
+        await ExecuteUserTurnCoreAsync(
+            chatContext,
+            message,
+            userNode,
+            titleInput,
+            summary,
+            item.CustomAssistant ?? _settings.Model.SelectedCustomAssistant,
+            StatisticsTurnKind.Send,
+            cancellationToken);
+    }
+
+    private async Task ExecuteSteersInCurrentTurnAsync(
+        ChatContext chatContext,
+        IReadOnlyList<ChatPendingInputItem> steers,
+        CancellationToken cancellationToken)
+    {
+        var chatData = chatContext.Data;
+        var lastUserNode = default(ChatMessageNode);
+        var lastAssistant = default(CustomAssistant);
+        var firstInjectedNode = default(ChatMessageNode);
+        try
+        {
+            foreach (var steer in steers)
+            {
+                var userMessage = steer.Message;
+                userMessage.DeliveryMode = ChatInputDeliveryMode.Steer;
+                var userNode = await chatContext.DispatchAsync(() =>
+                {
+                    var tail = chatData.SelectedNodes[^1];
+                    chatData.RecordPathChoices(tail);
+                    var node = chatData.Append(tail, userMessage);
+                    firstInjectedNode ??= node;
+                    return node;
+                });
+
+                var turnEventId = await _statisticsRecorder.RecordTurnAsync(
+                    chatData,
+                    userNode,
+                    StatisticsTurnKind.Send,
+                    cancellationToken);
+                using var turnScope = BeginStatisticsTurn(turnEventId);
+
+                var customAssistant = steer.CustomAssistant ?? _settings.Model.SelectedCustomAssistant;
+                if (customAssistant is not null)
+                {
+                    lastUserNode = await ProcessUserChatMessageAsync(chatContext, customAssistant, userNode, cancellationToken);
+                    lastAssistant = customAssistant;
+                }
+                else
+                {
+                    lastUserNode = userNode;
+                    lastAssistant = null;
+                }
+            }
+        }
+        finally
+        {
+            foreach (var steer in steers)
+            {
+                DisposeVisualAnchors(steer.Message);
+            }
+        }
+
+        if (lastUserNode is null)
+        {
+            return;
+        }
+
+        using var activity = _activitySource.StartActivity();
+        activity?.SetTag("chat.context.id", chatData.Metadata.Id);
+        if (lastAssistant is null)
+        {
+            await chatContext.DispatchAsync(() => chatData.Append(lastUserNode, CreateCustomAssistantNotSelectedErrorAssistantChatMessage()));
+            return;
+        }
+
+        var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+        var assistantNode = await chatContext.DispatchAsync(() => chatData.Append(lastUserNode, assistantChatMessage));
+        await GenerateAsync(
+            chatContext,
+            lastAssistant,
+            assistantNode,
+            CompressionBoundary.Before(firstInjectedNode ?? lastUserNode),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task ExecuteSteerUserNodeAsync(
+        ChatContext chatContext,
+        UserChatMessage message,
+        ChatMessageNode userNode,
+        CustomAssistant? customAssistant,
+        CancellationToken cancellationToken)
+    {
+        var chatData = chatContext.Data;
+        var turnEventId = await _statisticsRecorder.RecordTurnAsync(
+            chatData,
+            userNode,
+            StatisticsTurnKind.Send,
+            cancellationToken);
+        using var turnScope = BeginStatisticsTurn(turnEventId);
+
+        if (customAssistant is null)
+        {
+            await chatContext.DispatchAsync(() => chatData.Append(userNode, CreateCustomAssistantNotSelectedErrorAssistantChatMessage()));
+            return;
+        }
+
+        var appendTailNode = await ProcessUserChatMessageAsync(chatContext, customAssistant, userNode, cancellationToken);
+        var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+        var assistantNode = await chatContext.DispatchAsync(() => chatData.Append(appendTailNode, assistantChatMessage));
+        var systemPromptOverride = message.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
+        await GenerateAsync(
+            chatContext,
+            customAssistant,
+            assistantNode,
+            CompressionBoundary.Before(userNode),
+            systemPromptOverride: systemPromptOverride,
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task ExecuteUserTurnCoreAsync(
+        ChatContext chatContext,
+        UserChatMessage message,
+        ChatMessageNode userNode,
+        string? titleInput,
+        string? summary,
+        CustomAssistant? customAssistant,
+        StatisticsTurnKind turnKind,
+        CancellationToken cancellationToken)
+    {
+        var chatData = chatContext.Data;
+        if (titleInput is { Length: > 0 } && customAssistant is not null && _settings.ChatWindow.AutomaticallyGenerateTitle)
+        {
+            chatContext
+                .RunBackgroundAsync(
+                    token => GenerateTopicAsync(customAssistant, titleInput, chatContext, summary, token),
+                    CancellationToken.None)
+                .Detach(_logger.ToExceptionHandler());
+        }
+
+        await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
+        var turnEventId = await _statisticsRecorder.RecordTurnAsync(
+            chatData,
+            userNode,
+            turnKind,
+            cancellationToken);
+        using var turnScope = BeginStatisticsTurn(turnEventId);
+
+        if (customAssistant is null)
+        {
+            await chatContext.DispatchAsync(() => chatData.Append(userNode, CreateCustomAssistantNotSelectedErrorAssistantChatMessage()));
+            return;
+        }
+
+        var appendTailNode = await ProcessUserChatMessageAsync(chatContext, customAssistant, userNode, cancellationToken);
+
+        var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+        var assistantNode = await chatContext.DispatchAsync(() => chatData.Append(appendTailNode, assistantChatMessage));
+
+        var systemPromptOverride = message.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
+        await GenerateAsync(
+            chatContext,
+            customAssistant,
+            assistantNode,
+            CompressionBoundary.Before(userNode),
+            systemPromptOverride: systemPromptOverride,
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task ExecuteWakeTurnAsync(
+        ChatContext chatContext,
+        IReadOnlyList<ChatBackgroundJobNotification> wakes,
+        CancellationToken cancellationToken)
+    {
+        var chatData = chatContext.Data;
+        var customAssistant = _settings.Model.SelectedCustomAssistant;
+
+        var (firstNotificationNode, lastNotificationNode) = await chatContext.DispatchAsync(() =>
+        {
+            var tail = chatData.SelectedNodes[^1];
+            chatData.RecordPathChoices(tail);
+            ChatMessageNode? firstNode = null;
+            foreach (var wake in wakes)
+            {
+                var notificationMessage = new BackgroundJobNotificationChatMessage(
+                    wake.JobId,
+                    wake.ToolName,
+                    wake.Label,
+                    wake.IsSuccess,
+                    wake.Output ?? string.Empty,
+                    wake.ErrorMessage,
+                    wake.CreatedAt);
+                tail = chatData.Append(tail, notificationMessage);
+                firstNode ??= tail;
+            }
+
+            return (firstNode ?? tail, tail);
+        });
+
+        using var activity = _activitySource.StartActivity();
+        activity?.SetTag("chat.context.id", chatData.Metadata.Id);
+
+        if (customAssistant is null)
+        {
+            await chatContext.DispatchAsync(() =>
+                chatData.Append(lastNotificationNode, CreateCustomAssistantNotSelectedErrorAssistantChatMessage()));
+            return;
+        }
+
+        var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+        var assistantNode = await chatContext.DispatchAsync(() => chatData.Append(lastNotificationNode, assistantChatMessage));
+
+        await GenerateAsync(
+            chatContext,
+            customAssistant,
+            assistantNode,
+            CompressionBoundary.Before(firstNotificationNode),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task<(
+        bool DidInject,
+        AssistantChatMessage NextAssistantMessage,
+        ChatMessageNode NextAssistantNode,
+        CompressionBoundary NextCompressionBoundary)> InjectSteersAndWakesIfAnyAsync(
+        ChatContext chatContext,
+        GenerationContext generationContext,
+        AssistantChatMessage currentAssistantMessage,
+        ChatMessageNode currentAssistantNode,
+        CompressionBoundary currentBoundary,
+        CancellationToken cancellationToken)
+    {
+        var wakes = chatContext.PendingInputs.TakeAllWakeNotifications();
+        var steers = chatContext.PendingInputs.TakeAllSteers();
+        if (wakes.Count == 0 && steers.Count == 0)
+        {
+            return (false, currentAssistantMessage, currentAssistantNode, currentBoundary);
+        }
+
+        var nextBoundary = currentBoundary;
+        ChatMessageNode? firstInjectedNode = null;
+
+        await chatContext.DispatchAsync(() =>
+        {
+            currentAssistantMessage.FinishedAt = DateTimeOffset.UtcNow;
+            currentAssistantMessage.IsBusy = false;
+
+            foreach (var wake in wakes)
+            {
+                var wakeMessage = new BackgroundJobNotificationChatMessage(
+                    wake.JobId,
+                    wake.ToolName,
+                    wake.Label,
+                    wake.IsSuccess,
+                    wake.Output ?? string.Empty,
+                    wake.ErrorMessage,
+                    wake.CreatedAt);
+                var appendedWake = generationContext.Append(wakeMessage);
+                firstInjectedNode ??= appendedWake;
+            }
+        });
+
+        foreach (var steer in steers)
+        {
+            var userMessage = steer.Message;
+            try
+            {
+                var userNode = await chatContext.DispatchAsync(() =>
+                {
+                    var node = generationContext.Append(userMessage);
+                    firstInjectedNode ??= node;
+                    return node;
+                });
+
+                var turnEventId = await _statisticsRecorder.RecordTurnAsync(
+                    chatContext.Data,
+                    userNode,
+                    StatisticsTurnKind.Send,
+                    cancellationToken);
+                using var turnScope = BeginStatisticsTurn(turnEventId);
+
+                var steerAssistant = steer.CustomAssistant ?? generationContext.Assistant as CustomAssistant ?? _settings.Model.SelectedCustomAssistant;
+                if (steerAssistant is not null)
+                {
+                    var processedTail = await ProcessUserChatMessageAsync(
+                        chatContext,
+                        steerAssistant,
+                        userNode,
+                        cancellationToken);
+                    if (!ReferenceEquals(processedTail, userNode))
+                    {
+                        await chatContext.DispatchAsync(() => generationContext.AdvanceAppendTailNode(processedTail));
+                    }
+                }
+            }
+            finally
+            {
+                DisposeVisualAnchors(userMessage);
+            }
+        }
+
+        if (firstInjectedNode is not null)
+        {
+            nextBoundary = CompressionBoundary.Before(firstInjectedNode);
+        }
+
+        var nextAssistantMessage = new AssistantChatMessage { IsBusy = true };
+        var nextAssistantNode = await chatContext.DispatchAsync(() => generationContext.Append(nextAssistantMessage));
+        return (true, nextAssistantMessage, nextAssistantNode, nextBoundary);
     }
 
     private static AssistantChatMessage CreateCustomAssistantNotSelectedErrorAssistantChatMessage() =>
@@ -509,10 +1204,11 @@ public sealed partial class ChatService : IChatService
         services.AddSingleton(chatContext);
         services.AddSingleton(assistant);
         services.AddTransient<IChatPluginDisplaySink>(static x =>
-            x.GetRequiredService<ChatContext>().GenerationContext?.FunctionCallContext.Value?.DisplaySink ??
+            (x.GetRequiredService<ChatContext>().GenerationContext?.FunctionCallContext.Value ?? FunctionCallContext.Current)?.DisplaySink ??
             throw new InvalidOperationException($"No {nameof(IChatPluginDisplaySink)} is available in current function call context."));
         services.AddTransient<IChatPluginUserInterface>(static x =>
             x.GetRequiredService<ChatContext>().GenerationContext?.FunctionCallContext.Value ??
+            FunctionCallContext.Current ??
             throw new InvalidOperationException($"No {nameof(IChatPluginUserInterface)} is available in current function call context."));
         services.AddTransient<IStorageProvider>(_ =>
             _serviceProvider.GetService<ChatWindow>()?.StorageProvider ?? App.StorageProvider);
@@ -599,7 +1295,8 @@ public sealed partial class ChatService : IChatService
                 customAssistant?.MaxContextRounds ?? -1,
                 approvalState,
                 isConversationTurn,
-                appendTailNode);
+                appendTailNode,
+                assistant);
         }
         catch
         {
@@ -739,12 +1436,19 @@ public sealed partial class ChatService : IChatService
                 _currentModelInvocationEventId.Value = invocationResult.InvocationId;
                 if (invocationResult.FunctionCalls.Count > 0)
                 {
-                    await InvokeFunctionsAsync(
-                        generationContext,
-                        chatContext,
-                        assistantChatMessage,
-                        invocationResult,
-                        cancellationToken);
+                    if (chatContext.PendingInputs.HasPendingSteers)
+                    {
+                        await AppendSkippedFunctionCallsAsync(generationContext, chatContext, assistantChatMessage, invocationResult);
+                    }
+                    else
+                    {
+                        await InvokeFunctionsAsync(
+                            generationContext,
+                            chatContext,
+                            assistantChatMessage,
+                            invocationResult,
+                            cancellationToken);
+                    }
                 }
 
                 // Advance only after all tool calls from this response have their results.
@@ -753,6 +1457,7 @@ public sealed partial class ChatService : IChatService
                 var shouldCompact = !hasAttemptedAutomaticCompaction &&
                     chatContext.ContextUsage.Snapshot.HasReachedCompressionThreshold(
                         generationContext.ContextCompressionThreshold);
+                var hasInjectedSteerOrWake = false;
                 if (shouldCompact)
                 {
                     hasAttemptedAutomaticCompaction = true;
@@ -764,7 +1469,21 @@ public sealed partial class ChatService : IChatService
                         cancellationToken);
                     if (!compacted.HasAppliedSummary) cancellationToken.ThrowIfCancellationRequested();
 
-                    if (compacted.HasAppliedSummary && invocationResult.FunctionCalls.Count > 0)
+                    var injection = await InjectSteersAndWakesIfAnyAsync(
+                        chatContext,
+                        generationContext,
+                        assistantChatMessage,
+                        assistantNode,
+                        compressionBoundary,
+                        cancellationToken);
+                    if (injection.DidInject)
+                    {
+                        hasInjectedSteerOrWake = true;
+                        assistantChatMessage = injection.NextAssistantMessage;
+                        assistantNode = injection.NextAssistantNode;
+                        compressionBoundary = injection.NextCompressionBoundary;
+                    }
+                    else if (compacted.HasAppliedSummary && invocationResult.FunctionCalls.Count > 0)
                     {
                         await chatContext.DispatchAsync(() =>
                         {
@@ -775,8 +1494,25 @@ public sealed partial class ChatService : IChatService
                         });
                     }
                 }
+                else
+                {
+                    var injection = await InjectSteersAndWakesIfAnyAsync(
+                        chatContext,
+                        generationContext,
+                        assistantChatMessage,
+                        assistantNode,
+                        compressionBoundary,
+                        cancellationToken);
+                    if (injection.DidInject)
+                    {
+                        hasInjectedSteerOrWake = true;
+                        assistantChatMessage = injection.NextAssistantMessage;
+                        assistantNode = injection.NextAssistantNode;
+                        compressionBoundary = injection.NextCompressionBoundary;
+                    }
+                }
 
-                if (invocationResult.FunctionCalls.Count <= 0) break;
+                if (!hasInjectedSteerOrWake && invocationResult.FunctionCalls.Count <= 0) break;
             }
 
             if (enableNotifications)
@@ -1101,6 +1837,7 @@ public sealed partial class ChatService : IChatService
                 }
                 case ConsentDecisionKind.Deny:
                 {
+                    await AppendFallbackDisplayBlockAsync();
                     toolStatus = context.ApprovalFailure is null ? StatisticsToolInvocationStatus.Denied : StatisticsToolInvocationStatus.Error;
                     return (new ToolResultRecord(content.Name, pluginName, content.CallId,
                         consentDecision.FormatReason("Tool execution was denied by approval.")), null);
@@ -1151,6 +1888,7 @@ public sealed partial class ChatService : IChatService
             }
 
             error = ex;
+            await AppendFallbackDisplayBlockAsync();
             record = new ToolResultRecord(content.Name, pluginName, content.CallId, new PromptTokenLimit(4096, $"Error: {ex.Message}"));
         }
         finally
@@ -1163,6 +1901,18 @@ public sealed partial class ChatService : IChatService
         }
 
         return (record, error);
+
+        Task AppendFallbackDisplayBlockAsync()
+        {
+            if (displayBlock is null) return Task.CompletedTask;
+            return context.ChatContext.DispatchAsync(() =>
+            {
+                if (context.FunctionCallChatMessage.DisplaySink.Items.Count == 0)
+                {
+                    context.FunctionCallChatMessage.DisplaySink.AppendBlock(displayBlock);
+                }
+            });
+        }
 
         Task<ConsentDecision> ProcessConsentAsync(string permissionKey)
         {

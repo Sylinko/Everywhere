@@ -163,7 +163,7 @@ public sealed class ChatSyncService : ObservableObject, IChatSyncService, IAsync
                     }
                     else
                     {
-                        var transport = new ChatSyncTransport(http, target, new ChatSyncCompatibility(ChatSyncProtocol.Version, 1, 2));
+                        var transport = new ChatSyncTransport(http, target, new ChatSyncCompatibility(ChatSyncProtocol.Version, 1, 3));
                         var session = new ChatSyncSession(_dbFactory, _storage, _manager, transport, _logger);
                         _connection = (session, http);
                         session.Changed += OnSessionChanged;

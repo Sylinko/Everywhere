@@ -104,6 +104,7 @@ public sealed partial class ChatData : ObservableObject, IDisposable
 
     /// <summary>
     /// Create a new branch on the specified sibling node by inserting a new message at that position.
+    /// Turn starts create a new turn branch; in-turn siblings remain in the parent turn.
     /// </summary>
     public ChatMessageNode CreateBranchOn(ChatMessageNode siblingNode, ChatMessage chatMessage)
     {
@@ -114,13 +115,26 @@ public sealed partial class ChatData : ObservableObject, IDisposable
         {
             RecordPathChoices(parent);
         }
-        return Append(parent, chatMessage, shouldSelectChild);
+
+        return siblingNode.IsTurnStart ?
+            StartTurn(parent, chatMessage, shouldSelectChild) :
+            Append(parent, chatMessage, shouldSelectChild);
     }
 
     /// <summary>
-    /// Adds a message at the end of the displayed branch. Generation code uses an explicit parent.
+    /// Starts a new turn at the end of the displayed branch.
     /// </summary>
-    public ChatMessageNode Add(ChatMessage message)
+    public ChatMessageNode StartTurn(ChatMessage message)
+    {
+        var parent = SelectedNodes[^1];
+        RecordPathChoices(parent);
+        return StartTurn(parent, message);
+    }
+
+    /// <summary>
+    /// Appends an in-turn or auxiliary message at the end of the displayed branch without starting a new turn.
+    /// </summary>
+    public ChatMessageNode Append(ChatMessage message)
     {
         var parent = SelectedNodes[^1];
         RecordPathChoices(parent);

@@ -24,8 +24,8 @@ public sealed class GenerationApprovalTests
     {
         using var session = CreateSession();
         using var data = new ChatData();
-        data.Add(new UserChatMessage("request", []));
-        var assistant = data.Add(new AssistantChatMessage());
+        data.StartTurn(new UserChatMessage("request", []));
+        var assistant = data.Append(new AssistantChatMessage());
         await using var generation = CreateGeneration(session, data);
         var compression = generation.Append(new ContextCompressionChatMessage(data.RootNode.Id, "model", ContextCompressionTrigger.Automatic, null, null));
         Assert.That(generation.CurrentAssistantNode, Is.SameAs(assistant));
@@ -48,7 +48,7 @@ public sealed class GenerationApprovalTests
         using var session = CreateSession();
         using var data = new ChatData();
         await using var runtime = new RootChatContext(data, null);
-        data.Add(new UserChatMessage("Run the task", [new TextAttachment(new DirectLocaleKey("source"), "task content 中文")]));
+        data.StartTurn(new UserChatMessage("Run the task", [new TextAttachment(new DirectLocaleKey("source"), "task content 中文")]));
         await using var generation = CreateGeneration(session, data);
         await using var invocation = CreateInvocation(runtime, generation, (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
         var arguments = invocation.FunctionCallContent.Arguments ?? throw new AssertionException("Missing arguments.");

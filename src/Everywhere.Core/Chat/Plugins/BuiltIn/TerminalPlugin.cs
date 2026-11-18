@@ -42,6 +42,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 ExecuteInTerminalAsync,
                 permissions: ChatFunctionPermissions.ShellExecute,
                 canBypassApproval: false,
+                supportsBackgrounding: true,
                 onPermissionConsent: _ => true));
     }
 
@@ -73,6 +74,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             canBypassApproval: configuredFunction.CanBypassApproval,
             isExperimental: configuredFunction.IsExperimental,
             isVisible: configuredFunction.IsVisible,
+            supportsBackgrounding: configuredFunction.SupportsBackgrounding,
             onPermissionConsent: configuredFunction.OnPermissionConsent,
             functionName: "execute_in_terminal",
             description: description,

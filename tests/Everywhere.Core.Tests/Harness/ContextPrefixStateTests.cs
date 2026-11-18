@@ -477,7 +477,7 @@ public sealed class ContextPrefixStateTests
         var root = manager.Current;
 
         // Turn 1: Both tools enabled (declared in reverse registration order, sorted alphabetically), initial skills.
-        var u1 = root.Data.Add(new UserChatMessage("First turn", []));
+        var u1 = root.Data.StartTurn(new UserChatMessage("First turn", []));
         var a1 = root.Data.Append(u1, new AssistantChatMessage { IsBusy = true });
         await root.ExecuteAsync(token => chat.GenerateAsync(root, assistant, a1, CompressionBoundary.Before(u1), enableNotifications: false, cancellationToken: token));
 

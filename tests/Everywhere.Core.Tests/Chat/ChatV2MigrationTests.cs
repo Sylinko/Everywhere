@@ -78,7 +78,7 @@ public sealed class ChatV2MigrationTests
         using var files = new DatabaseFiles();
         await files.InitializeAsync();
         using var data = new ChatData();
-        var user = data.Add(new UserStrategyChatMessage("retained", [], new Strategy
+        var user = data.StartTurn(new UserStrategyChatMessage("retained", [], new Strategy
         {
             Id = "test.strategy",
             NameKey = new DirectLocaleKey("Test strategy"),
@@ -219,7 +219,7 @@ public sealed class ChatV2MigrationTests
         var storage = new ChatTurnStorage(files.Factory);
         using var data = new ChatData();
         var user = new UserChatMessage("question", []);
-        var userNode = data.Add(user);
+        var userNode = data.StartTurn(user);
         await storage.SaveDataAsync(data);
         using var manager = new ChatContextManager(new Settings(new ServiceCollection().BuildServiceProvider()), storage, NullLogger<ChatContextManager>.Instance);
         var runtime = ChatStorageTestExtensions.AttachRoot(manager, data);
@@ -276,10 +276,10 @@ public sealed class ChatV2MigrationTests
         await files.InitializeAsync();
         var storage = new ChatTurnStorage(files.Factory);
         using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("selected question", []));
+        var user = data.StartTurn(new UserChatMessage("selected question", []));
         var assistant = new AssistantChatMessage();
         assistant.AddSpan(new AssistantChatMessageTextSpan("selected answer"));
-        data.Add(assistant);
+        data.Append(assistant);
         var other = data.CreateBranchOn(user, new UserChatMessage("other question", []));
         data.SelectChild(data.RootNode, user);
         await storage.SaveDataAsync(data);
@@ -301,7 +301,7 @@ public sealed class ChatV2MigrationTests
         var chatId = Guid.NewGuid();
         var toolId = Guid.NewGuid();
         var child = new ChatData();
-        child.Add(new UserChatMessage("child", [new FileAttachment(new DirectLocaleKey("file"), "missing.txt", "child-file", "text/plain")]));
+        child.StartTurn(new UserChatMessage("child", [new FileAttachment(new DirectLocaleKey("file"), "missing.txt", "child-file", "text/plain")]));
         using var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("tool"));
         tool.DisplaySink.AppendSubagent(child);
         var payload = MessagePackSerializer.Serialize<ChatMessage>(tool);
@@ -337,7 +337,7 @@ public sealed class ChatV2MigrationTests
         using var third = new ChatData();
         foreach (var context in new[] { first, second, third })
         {
-            context.Add(new UserChatMessage("message", []));
+            context.StartTurn(new UserChatMessage("message", []));
             context.Metadata.DateModified = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
             context.Metadata.Topic = ReferenceEquals(context, first) ? null : "same";
             await storage.SaveDataAsync(context);
@@ -398,12 +398,12 @@ public sealed class ChatV2MigrationTests
         await files.InitializeAsync();
         var storage = new ChatTurnStorage(files.Factory);
         using var data = new ChatData();
-        data.Add(new UserChatMessage("needle question", []));
-        data.Add(new VisualContextResetChatMessage("reset", Guid.NewGuid()));
+        data.StartTurn(new UserChatMessage("needle question", []));
+        data.Append(new VisualContextResetChatMessage("reset", Guid.NewGuid()));
         var assistant = new AssistantChatMessage();
         assistant.AddSpan(new AssistantChatMessageTextSpan("needle answer"));
-        var assistantNode = data.Add(assistant);
-        var second = data.Add(new UserChatMessage("second", []));
+        var assistantNode = data.Append(assistant);
+        var second = data.StartTurn(new UserChatMessage("second", []));
         var alternative = data.CreateBranchOn(second, new UserChatMessage("needle alternative", []));
         data.SelectChild(assistantNode, second);
         await storage.SaveDataAsync(data);
@@ -452,7 +452,7 @@ public sealed class ChatV2MigrationTests
         await files.InitializeAsync();
         var storage = new ChatTurnStorage(files.Factory);
         using var data = new ChatData();
-        var original = data.Add(new UserChatMessage("original", []));
+        var original = data.StartTurn(new UserChatMessage("original", []));
         var alternative = data.CreateBranchOn(original, new UserChatMessage("alternative", []));
         await storage.SaveDataAsync(data);
 
@@ -492,7 +492,7 @@ public sealed class ChatV2MigrationTests
 
         var storage = new ChatTurnStorage(files.Factory);
         using var data = new ChatData();
-        data.Add(new UserChatMessage("keep this", []));
+        data.StartTurn(new UserChatMessage("keep this", []));
         await Assert.ThatAsync(() => storage.SaveDataAsync(data), Throws.TypeOf<SqliteException>());
         Assert.That(data.PersistenceDirtyState.HasChanges, Is.True);
         await using (var db = files.Factory.CreateDbContext())
@@ -515,7 +515,7 @@ public sealed class ChatV2MigrationTests
         await files.InitializeAsync();
         var storage = new ChatTurnStorage(files.Factory);
         using var data = new ChatData();
-        data.Add(new UserChatMessage("retained", []));
+        data.StartTurn(new UserChatMessage("retained", []));
         await storage.SaveDataAsync(data);
         using var manager = new ChatContextManager(
             new Settings(new ServiceCollection().BuildServiceProvider()), storage, NullLogger<ChatContextManager>.Instance);
@@ -547,7 +547,7 @@ public sealed class ChatV2MigrationTests
         var storage = new ChatTurnStorage(files.Factory);
         using var data = new ChatData();
         var message = new UserChatMessage("first", []);
-        data.Add(message);
+        data.StartTurn(message);
         await storage.SaveDataAsync(data);
         await storage.ArchiveAsync(data.Metadata.Id);
         message.Content = "later output";

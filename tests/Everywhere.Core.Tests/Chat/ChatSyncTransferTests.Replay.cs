@@ -24,7 +24,7 @@ partial class ChatSyncTransferTests
         const string hash = "synced-tool-blob";
         using var stepDoc = JsonDocument.Parse("""{"type":"google_search_call","id":"hosted-1","signature":"search-sig"}""");
         using var data = new ChatData();
-        var turn = data.Add(new UserChatMessage("What's the weather?", []));
+        var turn = data.StartTurn(new UserChatMessage("What's the weather?", []));
         var assistant = new AssistantChatMessage();
         assistant.AddSpan(new AssistantChatMessageReasoningSpan("Checking forecast")
         {

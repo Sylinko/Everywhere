@@ -135,7 +135,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var message = new UserChatMessage("completed", []);
         await context.ExecuteAsync(_ =>
         {
-            data.Add(message);
+            data.StartTurn(message);
             return Task.CompletedTask;
         }, CancellationToken.None);
         await saved.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -495,7 +495,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
     private static ChatData Data(params ChatMessage[] messages)
     {
         var data = new ChatData();
-        foreach (var message in messages) data.Add(message);
+        foreach (var message in messages) { if (message is UserChatMessage) data.StartTurn(message); else data.Append(message); }
         return data;
     }
 
@@ -506,7 +506,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var data = new ChatData(metadata, [], root);
         foreach (var message in messages)
         {
-            data.Add(message);
+            if (message is UserChatMessage) data.StartTurn(message); else data.Append(message);
         }
 
         metadata.DateModified = modified;

@@ -691,6 +691,7 @@ public sealed partial class ChatContextManager :
         }
         root.Idle -= OnRootIdle;
         root.Input.Changed -= HandleInputChanged;
+        root.PendingInputs.PersistedStateChanged -= HandlePendingInputsChanged;
         root.DisposeAsync().AsTask().Detach(_logger.ToExceptionHandler());
     }
 
@@ -1228,7 +1229,7 @@ public sealed partial class ChatContextManager :
                     var root = CreateRoot(data);
                     if (input is not null)
                     {
-                        root.Input.Restore(input);
+                        RestoreLocalInput(root, input);
                     }
                     return root;
                 }
@@ -1697,6 +1698,7 @@ public sealed partial class ChatContextManager :
         var data = root.Data;
         root.Idle += OnRootIdle;
         root.Input.Changed += HandleInputChanged;
+        root.PendingInputs.PersistedStateChanged += HandlePendingInputsChanged;
         _roots[data.Metadata.Id] = root.Reference;
         _metadataMap.TryAdd(data.Metadata.Id, data.Metadata);
         if (data.PersistenceDirtyState.HasChanges || data.Metadata.CaptureChanges().HasChanges)

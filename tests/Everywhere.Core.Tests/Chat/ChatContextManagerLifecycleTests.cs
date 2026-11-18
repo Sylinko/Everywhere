@@ -113,7 +113,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             {
                 finishing.SetResult();
                 await release.Task;
-                await child.DispatchAsync(() => child.Data.Add(new UserChatMessage("stopped", [])));
+                await child.DispatchAsync(() => child.Data.StartTurn(new UserChatMessage("stopped", [])));
             }
         });
         try
@@ -193,7 +193,8 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
     {
         var metadata = Metadata("stored", 1);
         var rootNode = new ChatMessageNode(Guid.Empty, new RootChatMessage());
-        var userNode = new ChatMessageNode(Guid.NewGuid(), ChatMessageKind.User, metadata.DateCreated, metadata.DateModified);
+        var userId = Guid.NewGuid();
+        var userNode = new ChatMessageNode(userId, ChatMessageKind.User, userId, metadata.DateCreated, metadata.DateModified);
         rootNode.AddChild(userNode.Id);
         rootNode.SetChoiceChild(userNode.Id);
         var data = new ChatData(metadata, [userNode], rootNode);
@@ -289,7 +290,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
 
         async Task RunAsync(ChatContext context, CancellationToken token)
         {
-            await context.DispatchAsync(() => context.Data.Add(new UserChatMessage("running", [])));
+            await context.DispatchAsync(() => context.Data.StartTurn(new UserChatMessage("running", [])));
             await using var compaction = await context.BeginContextCompactionAsync();
             var interaction = context.UserInterfaceBroker.HandleAskQuestionAsync(
                 [new ChatPluginQuestion { Id = "question", Question = "Continue?" }], token);
@@ -353,7 +354,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var storage = new TestChatContextStorage([other]);
         using var manager = CreateManager(storage);
         var current = manager.Current;
-        var original = current.Data.Add(new UserChatMessage("current", []));
+        var original = current.Data.StartTurn(new UserChatMessage("current", []));
         var received = current.Data.Append(current.Data.RootNode, new UserChatMessage("synced branch", []), shouldSelectChild: false);
         // Model a merged durable choice while retaining the current reading projection.
         await current.DispatchAsync(() => current.Data.RootNode.SetChoiceChild(received.Id));
@@ -632,7 +633,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             var current = manager.Current;
             var runtime = current;
             await runtime.DispatchAsync(() => current.Data.Metadata.SetTemporary(action == "temporary"));
-            await runtime.DispatchAsync(() => current.Data.Add(new UserChatMessage("running", [])));
+            await runtime.DispatchAsync(() => current.Data.StartTurn(new UserChatMessage("running", [])));
             var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var operation = current.ExecuteAsync(token =>

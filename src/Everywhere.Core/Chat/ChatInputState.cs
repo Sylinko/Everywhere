@@ -140,19 +140,24 @@ public sealed class ChatInputState : ObservableObject, IDisposable
 
     /// <summary>
     /// Captures recoverable input values, not views, live nodes or visual anchor handles.
-    /// Empty input removes the local record rather than creating a stored chat. Capture is
-    /// synchronous; cancellation belongs to the later storage operation, not this UI snapshot.
+    /// Empty input and empty pending queue removes the local record rather than creating a stored chat.
+    /// Capture is synchronous; cancellation belongs to the later storage operation, not this UI snapshot.
     /// </summary>
-    public byte[]? Capture()
+    public byte[]? Capture(ChatPendingInputSnapshot[]? pendingInputs = null)
     {
-        return HasContent ?
-            MessagePackSerializer.Serialize(
-                new ChatInputSnapshot(
-                    Draft.Capture(),
-                    Edit?.NodeId,
-                    Edit?.Draft.Capture()),
-                cancellationToken: CancellationToken.None) :
-            null;
+        var hasPendingInputs = pendingInputs is { Length: > 0 };
+        if (!HasContent && !hasPendingInputs)
+        {
+            return null;
+        }
+
+        return MessagePackSerializer.Serialize(
+            new ChatInputSnapshot(
+                Draft.Capture(),
+                Edit?.NodeId,
+                Edit?.Draft.Capture(),
+                hasPendingInputs ? pendingInputs : null),
+            cancellationToken: CancellationToken.None);
     }
 
     /// <summary>
@@ -308,7 +313,20 @@ public sealed record ChatInputEdit(Guid NodeId, ChatInputDraft Draft);
 public sealed partial record ChatInputSnapshot(
     [property: Key(0)] ChatInputDraftSnapshot Draft,
     [property: Key(1)] Guid? EditingNodeId,
-    [property: Key(2)] ChatInputDraftSnapshot? Edit
+    [property: Key(2)] ChatInputDraftSnapshot? Edit,
+    [property: Key(3)] ChatPendingInputSnapshot[]? PendingInputs = null
+);
+
+/// <summary>
+/// Serializable pending input entry stored locally per conversation alongside drafts.
+/// </summary>
+[MessagePackObject]
+public sealed partial record ChatPendingInputSnapshot(
+    [property: Key(0)] Guid Id,
+    [property: Key(1)] ChatInputDraftSnapshot Content,
+    [property: Key(2)] ChatInputDeliveryMode DeliveryMode,
+    [property: Key(3)] Guid? CustomAssistantId,
+    [property: Key(4)] DateTimeOffset CreatedAt
 );
 
 /// <summary>

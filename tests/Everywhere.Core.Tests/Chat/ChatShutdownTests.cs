@@ -105,13 +105,13 @@ public sealed class ChatShutdownTests
         Assert.That(services.GetRequiredService<IChatContextManager>(), Is.SameAs(manager));
         var root = manager.CreateChat(isTemporary: false);
         var message = new UserChatMessage("saved before shutdown", []);
-        var node = await root.DispatchAsync(() => root.Data.Add(message));
+        var node = await root.DispatchAsync(() => root.Data.StartTurn(message));
         var chatId = root.Data.Metadata.Id;
         await manager.FlushPendingSavesAsync();
 
         var retryRoot = manager.CreateChat(isTemporary: false);
         var retryChatId = retryRoot.Data.Metadata.Id;
-        await retryRoot.DispatchAsync(() => retryRoot.Data.Add(new UserChatMessage("pending retry", [])));
+        await retryRoot.DispatchAsync(() => retryRoot.Data.StartTurn(new UserChatMessage("pending retry", [])));
         writes.ShouldRejectWrites = true;
         try
         {

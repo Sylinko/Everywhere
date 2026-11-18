@@ -64,7 +64,7 @@ partial class ChatData
                     return node;
                 }
 
-                if (node.MessageKind.IsTurnStart())
+                if (node.IsTurnStart)
                 {
                     return null;
                 }
@@ -136,10 +136,30 @@ partial class ChatData
     }
 
     /// <summary>
-    /// Appends to an explicit parent. Existing children keep their parent and identities.
-    /// Choosing the new child only changes the displayed path if its parent is displayed.
+    /// Starts a new turn under an explicit parent.
+    /// Only user-initiated message kinds may explicitly start a turn.
+    /// </summary>
+    public ChatMessageNode StartTurn(ChatMessageNode parent, ChatMessage message, bool shouldSelectChild = true)
+    {
+        if (!CanStartTurn(message.Kind))
+        {
+            throw new ArgumentException($"Message kind '{message.Kind}' cannot start a turn.", nameof(message));
+        }
+
+        return AppendNode(parent, message, shouldSelectChild, startsTurn: true);
+    }
+
+    /// <summary>
+    /// Appends to an explicit parent within the parent's existing turn (or auxiliary scope before the first turn).
+    /// Existing children keep their parent and identities. Choosing the new child only changes the displayed path
+    /// if its parent is displayed.
     /// </summary>
     public ChatMessageNode Append(ChatMessageNode parent, ChatMessage message, bool shouldSelectChild = true)
+    {
+        return AppendNode(parent, message, shouldSelectChild, startsTurn: false);
+    }
+
+    private ChatMessageNode AppendNode(ChatMessageNode parent, ChatMessage message, bool shouldSelectChild, bool startsTurn)
     {
         VerifyOwnedNode(parent);
 
@@ -148,7 +168,7 @@ partial class ChatData
             Data = this,
             Parent = parent,
         };
-        AssignTurn(node);
+        AssignTurn(node, startsTurn);
         _messageNodeMap.TryAdd(node.Id, node);
         PersistenceDirtyState.Mark(node, ChatNodeChangeKind.All);
 
@@ -298,10 +318,18 @@ partial class ChatData
         }
     }
 
-    private void AssignTurn(ChatMessageNode node)
+    internal static bool CanStartTurn(ChatMessageKind kind) =>
+        kind is ChatMessageKind.User or ChatMessageKind.UserStrategy or ChatMessageKind.UserAction;
+
+    private void AssignTurn(ChatMessageNode node, bool startsTurn)
     {
-        if (node.MessageKind.IsTurnStart())
+        if (startsTurn)
         {
+            if (!CanStartTurn(node.MessageKind))
+            {
+                throw new InvalidDataException($"Message kind '{node.MessageKind}' cannot start a turn.");
+            }
+
             node.Turn = new ChatTurn(node);
             _turnsById.TryAdd(node.Id, node.Turn);
         }
@@ -322,7 +350,7 @@ partial class ChatData
             foreach (var childId in parent.Children)
             {
                 var child = _messageNodeMap[childId];
-                AssignTurn(child);
+                AssignTurn(child, startsTurn: child.PersistedTurnId == child.Id);
                 pending.Push(child);
             }
         }

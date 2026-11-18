@@ -16,13 +16,13 @@ partial class ChatData
                 var node = FindNode(source.Id);
                 if (node is null)
                 {
-                    node = new ChatMessageNode(source.Id, source.MessageKind, source.CreatedAt, source.UpdatedAt)
+                    node = new ChatMessageNode(source.Id, source.MessageKind, source.TurnId, source.CreatedAt, source.UpdatedAt)
                     {
                         Data = this,
                         Parent = parent,
                     };
                     _messageNodeMap.TryAdd(node.Id, node);
-                    AssignTurn(node);
+                    AssignTurn(node, startsTurn: source.TurnId == source.Id);
                     parent.AddChild(node.Id);
                     changedParents.Add(parent);
                     if (node.Turn is { } newTurn)

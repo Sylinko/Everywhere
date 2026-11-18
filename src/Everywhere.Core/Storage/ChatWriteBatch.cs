@@ -101,18 +101,19 @@ public sealed record ChatInputWrite(byte[]? Payload, IReadOnlyList<ChatBlobWrite
     public bool IsNewChatDraft { get; init; }
 
     /// <summary>
-    /// Captures UI-owned input before asynchronous storage starts.
+    /// Captures UI-owned input and pending queue items before asynchronous storage starts.
     /// </summary>
-    public static ChatInputWrite Capture(ChatInputState input)
+    public static ChatInputWrite Capture(ChatInputState input, ChatPendingInputQueue? pendingInputs = null)
     {
         var files = input.Draft.AttachmentsSource.Items
             .AsValueEnumerable()
             .Concat(input.Edit?.Draft.AttachmentsSource.Items ?? [])
             .OfType<FileAttachment>()
+            .Concat(pendingInputs?.CaptureFileAttachments() ?? [])
             .DistinctBy(file => file.Sha256)
             .Select(file => new ChatBlobWrite(file.Sha256, file.FilePath, file.MimeType))
             .ToArray();
-        return new ChatInputWrite(input.Capture(), files);
+        return new ChatInputWrite(input.Capture(pendingInputs?.CaptureSnapshots()), files);
     }
 }
 

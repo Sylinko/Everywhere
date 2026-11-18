@@ -23,9 +23,9 @@ public sealed class StatisticsBackfillerTests
         using var chatDatabase = ChatTestDatabase.Create();
         using var statisticsDatabase = StatisticsTestDatabase.Create();
         using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("question", []));
-        data.Add(new ContextCompressionChatMessage(data.RootNode.Id, "test-model", ContextCompressionTrigger.Manual, null, null));
-        var assistant = data.Add(new AssistantChatMessage());
+        var user = data.StartTurn(new UserChatMessage("question", []));
+        data.Append(new ContextCompressionChatMessage(data.RootNode.Id, "test-model", ContextCompressionTrigger.Manual, null, null));
+        var assistant = data.Append(new AssistantChatMessage());
         await new ChatTurnStorage(chatDatabase.Factory).SaveDataAsync(data);
 
         var notificationCenter = new NotificationCenter(new InMemoryKeyValueStorage());

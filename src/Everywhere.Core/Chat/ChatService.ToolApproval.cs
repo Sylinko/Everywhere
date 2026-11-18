@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
-using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Common;
@@ -21,12 +20,19 @@ partial class ChatService
     {
         var generationContext = context.GenerationContext;
         ModelSession? selectedSession = null;
-        var session = generationContext.Session;
+        var isGenerationDisposed = generationContext.IsDisposed;
+        var session = isGenerationDisposed ? null : generationContext.Session;
         try
         {
             if (!_settings.SystemAssistant.ToolApproval.AutoSelect)
             {
                 session = selectedSession = _modelSessionFactory.Create(_settings.SystemAssistant.ToolApproval);
+            }
+            else if (session is null)
+            {
+                var fallbackAssistant = generationContext.Assistant ??
+                    throw new InvalidOperationException("Cannot create an approval session after generation disposal without an assistant configuration.");
+                session = selectedSession = _modelSessionFactory.Create(fallbackAssistant);
             }
 
             if (!session.Configuration.SupportsToolCall)
@@ -36,7 +42,7 @@ partial class ChatService
 
             var filePlugin = _chatPluginManager.BuiltInPlugins.AsValueEnumerable().OfType<FileSystemPlugin>().First();
             var reviewer = new ToolApprovalReviewer(this, context, session, filePlugin, _settings.SystemAssistant.AllowApprovalFileReads);
-            var input = await BuildApprovalInputAsync(context, scope, cancellationToken);
+            var input = await BuildApprovalInputWithLimitAsync(context, scope, session.Configuration.ContextLimit, cancellationToken);
             return await reviewer.ReviewAsync(input, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -45,7 +51,7 @@ partial class ChatService
         }
         catch (Exception ex)
         {
-            if (IsContextLengthExceeded(ex, session))
+            if (session is not null && IsContextLengthExceeded(ex, session))
             {
                 return ToolApprovalResult.Fail(
                     ToolApprovalFailure.ContextLimitExceeded,
@@ -72,9 +78,10 @@ partial class ChatService
         }
     }
 
-    private static async Task<string> BuildApprovalInputAsync(
+    private static async Task<string> BuildApprovalInputWithLimitAsync(
         FunctionCallContext context,
         ToolApprovalScope? scope,
+        int contextLimit,
         CancellationToken cancellationToken)
     {
         var generation = context.GenerationContext;
@@ -82,7 +89,7 @@ partial class ChatService
             context.ChatContext,
             generation.GetPath(),
             generation.MaxContextRounds,
-            generation.Session.Configuration.ContextLimit,
+            contextLimit,
             cancellationToken);
         var messages = historySelection.Messages;
         var history = new List<ToolApprovalHistoryEntry>();

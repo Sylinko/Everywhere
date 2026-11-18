@@ -72,7 +72,7 @@ public sealed class ImageViewRecoveryTests
         var data = root.Data;
 
         var attachment = await FileAttachment.CreateAsync(jpegPath, "image/jpeg");
-        var first = data.Add(new UserChatMessage("Inspect the older image", [attachment]));
+        var first = data.StartTurn(new UserChatMessage("Inspect the older image", [attachment]));
         await manager.FlushPendingChatAsync(root, CancellationToken.None);
         var olderImage = ChatImage.Read(jpegPath);
         using var olderStream = new MemoryStream(olderImage.Bytes, writable: false);

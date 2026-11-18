@@ -18,8 +18,8 @@ public sealed class ChatTurnTests
         var firstId = Guid.Parse("00000001-0000-0000-8000-000000000000");
         var secondId = Guid.Parse("00000100-0000-0000-8000-000000000000");
         var message = new UserChatMessage("request", []);
-        var first = new ChatMessageNode(firstId, ChatMessageKind.User, time, time);
-        var second = new ChatMessageNode(secondId, ChatMessageKind.User, time, time);
+        var first = new ChatMessageNode(firstId, ChatMessageKind.User, firstId, time, time);
+        var second = new ChatMessageNode(secondId, ChatMessageKind.User, secondId, time, time);
 
         // Exercise the old index-based wire representation, not a test-only construction API.
         var buffer = new System.Buffers.ArrayBufferWriter<byte>();
@@ -42,7 +42,7 @@ public sealed class ChatTurnTests
         });
 
         // A delayed message is inserted by its creation time, without stealing the selection.
-        var delayed = data.Append(root, message, shouldSelectChild: false);
+        var delayed = data.StartTurn(root, message, shouldSelectChild: false);
         Assert.That(root.Children[0], Is.EqualTo(delayed.Id));
         Assert.That(root.ChoiceChildId, Is.EqualTo(secondId));
     }
@@ -53,9 +53,9 @@ public sealed class ChatTurnTests
         foreach (var outcome in new[] { "Complete", "Cancel", "Fail" })
         {
             using var data = new ChatData();
-            var user = data.Add(new UserChatMessage("question", []));
+            var user = data.StartTurn(new UserChatMessage("question", []));
             var message = new ContextCompressionChatMessage(user.Id, "model", ContextCompressionTrigger.Manual, null, null);
-            var node = data.Add(message);
+            var node = data.Append(message);
             data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
             var captures = new List<ChatPayloadCapture>();
             data.DurableChanged += (_, _) =>
@@ -100,8 +100,8 @@ public sealed class ChatTurnTests
     public async Task RuntimeActivity_WhenCompleted_InvalidatesTurnWithoutDirtyingPayload()
     {
         using var data = new ChatData();
-        data.Add(new UserChatMessage("work", []));
-        var node = data.Add(new AssistantChatMessage());
+        data.StartTurn(new UserChatMessage("work", []));
+        var node = data.Append(new AssistantChatMessage());
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
         var revision = data.SelectedTurns.Single().Revision;
 
@@ -125,11 +125,11 @@ public sealed class ChatTurnTests
     public void NestedTool_WhenPreviewChanges_InvalidatesDirectOwnerWithoutPersistingRuntimeState()
     {
         using var data = new ChatData();
-        data.Add(new UserChatMessage("work", []));
+        data.StartTurn(new UserChatMessage("work", []));
         var assistant = new AssistantChatMessage();
         var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("Tool"));
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
-        var node = data.Add(assistant);
+        var node = data.Append(assistant);
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
         var revision = data.SelectedTurns.Single().Revision;
         var slot = tool.RegisterActivityPresentation("preview");
@@ -149,11 +149,11 @@ public sealed class ChatTurnTests
     public void NestedProgress_WhenReported_ChangesModelSynchronouslyAndMarksOwningNode()
     {
         using var data = new ChatData();
-        data.Add(new UserChatMessage("work", []));
+        data.StartTurn(new UserChatMessage("work", []));
         var assistant = new AssistantChatMessage();
         var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("Tool"));
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
-        var node = data.Add(assistant);
+        var node = data.Append(assistant);
         var container = new ChatPluginContainerDisplayBlock();
         tool.DisplaySink.AppendBlock(container);
         var reporter = container.DisplaySink.AppendProgress(new DirectLocaleKey("Progress"));
@@ -172,17 +172,17 @@ public sealed class ChatTurnTests
     public void EmbeddedChild_WhenContentChanges_DirtiesParentButRuntimeActivityDoesNot()
     {
         using var data = new ChatData();
-        data.Add(new UserChatMessage("parent", []));
+        data.StartTurn(new UserChatMessage("parent", []));
         var assistant = new AssistantChatMessage();
         var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("Child"));
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
-        var node = data.Add(assistant);
+        var node = data.Append(assistant);
         var child = new ChatData();
         tool.DisplaySink.AppendSubagent(child);
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
 
-        child.Add(new UserChatMessage("child", []));
-        child.Add(new AssistantChatMessage());
+        child.StartTurn(new UserChatMessage("child", []));
+        child.Append(new AssistantChatMessage());
         Assert.That(data.PersistenceDirtyState.Capture().Select(change => change.Node), Is.EqualTo(new[] { node }));
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
         child.Append(child.RootNode, new UserChatMessage("unselected child", []), shouldSelectChild: false);
@@ -201,11 +201,11 @@ public sealed class ChatTurnTests
     public void RetryTruncation_WhenRemovedSourceWritesLate_DoesNotDirtyItsFormerOwner()
     {
         using var data = new ChatData();
-        data.Add(new UserChatMessage("work", []));
+        data.StartTurn(new UserChatMessage("work", []));
         var assistant = new AssistantChatMessage();
         var span = new AssistantChatMessageTextSpan("provisional");
         assistant.AddSpan(span);
-        data.Add(assistant);
+        data.Append(assistant);
         assistant.TruncateSpans(0);
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
 
@@ -218,10 +218,10 @@ public sealed class ChatTurnTests
     public void EditAndRetry_WhenSwitchingBranches_PreserveTurnAndNodeIdentities()
     {
         using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("original", []));
-        var assistant = data.Add(new AssistantChatMessage());
-        var nextUser = data.Add(new UserChatMessage("next", []));
-        var nextAssistant = data.Add(new AssistantChatMessage());
+        var user = data.StartTurn(new UserChatMessage("original", []));
+        var assistant = data.Append(new AssistantChatMessage());
+        var nextUser = data.StartTurn(new UserChatMessage("next", []));
+        var nextAssistant = data.Append(new AssistantChatMessage());
 
         var remote = data.Append(user, new AssistantChatMessage(), shouldSelectChild: false);
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
@@ -268,11 +268,11 @@ public sealed class ChatTurnTests
     public void Append_WhenExistingChildrenAreUnselected_DoesNotReparentThem()
     {
         using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("request", []));
-        var original = data.Add(new AssistantChatMessage());
+        var user = data.StartTurn(new UserChatMessage("request", []));
+        var original = data.Append(new AssistantChatMessage());
         data.SelectChild(user, null);
 
-        var appended = data.Add(new AssistantChatMessage());
+        var appended = data.Append(new AssistantChatMessage());
         Assert.Multiple(() =>
         {
             Assert.That(original.Parent, Is.SameAs(user));
@@ -286,8 +286,8 @@ public sealed class ChatTurnTests
     public void Append_WhenExecutionBranchIsHidden_LeavesDisplayedBranchUnchanged()
     {
         using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("request", []));
-        var running = data.Add(new AssistantChatMessage());
+        var user = data.StartTurn(new UserChatMessage("request", []));
+        var running = data.Append(new AssistantChatMessage());
         var alternative = data.CreateBranchOn(running, new AssistantChatMessage());
         var revision = data.BranchRevision;
 
@@ -313,7 +313,7 @@ public sealed class ChatTurnTests
     public void CreateBranch_WhenOriginalSiblingIsNoLongerSelected_DoesNotOverrideNewSelection()
     {
         using var data = new ChatData();
-        var original = data.Add(new UserChatMessage("original", []));
+        var original = data.StartTurn(new UserChatMessage("original", []));
         var selected = data.CreateBranchOn(original, new UserChatMessage("selected", []));
         var revision = data.BranchRevision;
 
@@ -333,9 +333,9 @@ public sealed class ChatTurnTests
     public void Continue_WhenCompressionFollowsAssistant_UsesTrailingNodeWithoutStartingTurn()
     {
         using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("request", []));
-        var assistant = data.Add(new AssistantChatMessage());
-        var compression = data.Add(new ContextCompressionChatMessage(
+        var user = data.StartTurn(new UserChatMessage("request", []));
+        var assistant = data.Append(new AssistantChatMessage());
+        var compression = data.Append(new ContextCompressionChatMessage(
             assistant.Id, "model", ContextCompressionTrigger.Manual, null, null));
 
         Assert.That(data.ContinuationTarget, Is.SameAs(assistant));
@@ -355,13 +355,13 @@ public sealed class ChatTurnTests
     public void ContinuationTarget_WhenBranchOrUserTurnChanges_FollowsSelectedPath()
     {
         using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("request", []));
-        var assistant = data.Add(new AssistantChatMessage());
+        var user = data.StartTurn(new UserChatMessage("request", []));
+        var assistant = data.Append(new AssistantChatMessage());
         var retry = data.CreateBranchOn(assistant, new AssistantChatMessage());
         Assert.That(data.ContinuationTarget, Is.SameAs(retry));
         Assert.Throws<InvalidOperationException>(() => data.GetContinuationTail(assistant));
 
-        data.Add(new UserChatMessage("next", []));
+        data.StartTurn(new UserChatMessage("next", []));
         Assert.That(data.ContinuationTarget, Is.Null);
         Assert.Throws<InvalidOperationException>(() => data.GetContinuationTail(retry));
 
@@ -375,9 +375,9 @@ public sealed class ChatTurnTests
     public void ContentChange_WhenAssistantStreams_InvalidatesTurnWithoutChangingPath()
     {
         using var data = new ChatData();
-        data.Add(new UserChatMessage("request", []));
+        data.StartTurn(new UserChatMessage("request", []));
         var message = new AssistantChatMessage();
-        var node = data.Add(message);
+        var node = data.Append(message);
         var branchRevision = data.BranchRevision;
         var turnRevision = node.Turn?.Revision ?? throw new AssertionException("The assistant must belong to a turn.");
 
@@ -398,9 +398,9 @@ public sealed class ChatTurnTests
     public async Task SelectHistory_WhenVisualResetFollowsUser_DoesNotConsumeContextRound()
     {
         using var data = new ChatData();
-        var user = data.Add(new UserChatMessage("keep this user", []));
-        data.Add(new VisualContextResetChatMessage("reset notice", Guid.NewGuid()));
-        var assistant = data.Add(new AssistantChatMessage());
+        var user = data.StartTurn(new UserChatMessage("keep this user", []));
+        data.Append(new VisualContextResetChatMessage("reset notice", Guid.NewGuid()));
+        var assistant = data.Append(new AssistantChatMessage());
 
         await using var runtime = new RootChatContext(data, null);
         var selection = await ChatHistoryBuilder.SelectContextMessagesAsync(runtime, data.GetPathTo(assistant), 0, 0);

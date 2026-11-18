@@ -176,10 +176,12 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         var searchRegex = CreateRegex(isRegex ? pattern : Regex.Escape(pattern), options);
         var fileRegex = CreateRegex(filePattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
         var root = await _contextFactory.CreateAsync(path, chatContext.WorkingDirectory, cancellationToken);
-        await PublishFileReferenceAsync(
-            userInterface,
-            new ChatPluginFileReference(root.Path) { IsDirectory = root.IsDirectory },
-            new DirectLocaleKey(pattern));
+        var rootReference = new ChatPluginFileReference(root.Path) { IsDirectory = root.IsDirectory };
+        await userInterface.SetActivityPreviewAsync(new ChatPluginFileReferencesActivityPreview([rootReference], new DirectLocaleKey(pattern)));
+        if (root.IsDirectory)
+        {
+            await userInterface.DisplaySink.AppendFileReferencesAsync(rootReference);
+        }
 
         maxResults = Math.Clamp(maxResults, 1, 200);
         var internalMaxResults = maxResults * 5;
@@ -219,6 +221,11 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         {
             if (matches.Count == 0)
             {
+                if (!root.IsDirectory)
+                {
+                    await userInterface.DisplaySink.AppendFileReferencesAsync(rootReference);
+                }
+
                 return "Search timed out after 20 seconds. Found 0 files with matches so far. Try a more specific search pattern or path.";
             }
 
@@ -227,6 +234,11 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
 
         if (matches.Count == 0)
         {
+            if (!root.IsDirectory)
+            {
+                await userInterface.DisplaySink.AppendFileReferencesAsync(rootReference);
+            }
+
             return $"No matching lines found for {(isRegex ? "regex" : "literal text")} '{pattern}'.";
         }
 
@@ -332,7 +344,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
                     LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_CopyTo :
                     LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_MoveTo),
             destinationReference));
-        await userInterface.DisplaySink.AppendFileReferencesAsync(sourceReference, destinationReference);
+        await userInterface.DisplaySink.AppendBlockAsync(CreateFileTransferContent(sourceReference, destinationReference, operation));
 
         var operationName = operation is FileTransferOperation.Copy ? "copy" : "move";
         if (!isFile && !isDirectory)
@@ -1373,7 +1385,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         CancellationToken cancellationToken,
         bool forceConsent = false)
     {
-        if (chatContext.GenerationContext?.FunctionCallContext.Value?.BypassesApproval is true)
+        if ((chatContext.GenerationContext?.FunctionCallContext.Value ?? FunctionCallContext.Current)?.BypassesApproval is true)
         {
             return RequestConsentResult.Accept;
         }

@@ -30,7 +30,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(root.Data.Metadata.IsPinned, Is.False);
         Assert.That(root.Data.Metadata.IsArchived, Is.False);
 
-        await root.DispatchAsync(() => root.Data.Add(new UserChatMessage("first message", [])));
+        await root.DispatchAsync(() => root.Data.StartTurn(new UserChatMessage("first message", [])));
         await manager.SetPinnedAsync(root.Data.Metadata, true);
         Assert.That((await storage.ReadHistoryPageAsync(1)).Items.Single().IsPinned, Is.True);
         Assert.That(manager.Current, Is.SameAs(root));
@@ -166,7 +166,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         storage.Contexts[old.Id] = Data(old, new UserChatMessage("old", []));
         await using var manager = CreateManager(storage);
         var current = manager.Current;
-        await current.DispatchAsync(() => current.Data.Add(new UserChatMessage("archive me", [])));
+        await current.DispatchAsync(() => current.Data.StartTurn(new UserChatMessage("archive me", [])));
         await manager.ArchiveAsync(current.Data.Metadata);
         Assert.That(manager.Current.Data.Metadata, Is.SameAs(recent));
     }

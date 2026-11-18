@@ -37,19 +37,30 @@ public abstract class ChatFunction
     /// </summary>
     public bool CanBypassApproval { get; protected init; } = true;
 
+    /// <summary>
+    /// Gets whether this function is considered experimental and shows a warning badge in the UI. Experimental functions may be removed or changed without notice.
+    /// </summary>
     public bool IsExperimental { get; protected init; }
 
+    /// <summary>
+    /// Gets whether this function is visible in the UI. Hidden functions may still be invoked by name or through other tools.
+    /// </summary>
     public bool IsVisible { get; protected init; } = true;
 
     /// <summary>
     /// Opts into running alongside adjacent opted-in invocations, including other calls to this tool.
     /// </summary>
-    public bool SupportsParallelInvoke { get; init; }
+    public bool SupportsParallelInvoke { get; protected init; }
+
+    /// <summary>
+    /// Opts into detaching an active foreground invocation into session-scoped background execution.
+    /// </summary>
+    public bool SupportsBackgrounding { get; protected init; }
 
     /// <summary>
     /// Gets the input modalities a model must support for this function to be available.
     /// </summary>
-    public Modalities RequiredModalities { get; init; } = Modalities.None;
+    public Modalities RequiredModalities { get; protected init; } = Modalities.None;
 
     /// <summary>
     /// Gets the native MEAI <see cref="AIFunction"/> backing this descriptor.
@@ -116,6 +127,7 @@ public sealed class BuiltInChatFunction : ChatFunction
         bool isExperimental = false,
         bool isVisible = true,
         bool supportsParallelInvoke = false,
+        bool supportsBackgrounding = false,
         Modalities requiredModalities = Modalities.None,
         Func<FunctionCallContent, bool?>? onPermissionConsent = null,
         string? functionName = null,
@@ -160,6 +172,7 @@ public sealed class BuiltInChatFunction : ChatFunction
         IsExperimental = isExperimental;
         IsVisible = isVisible;
         SupportsParallelInvoke = supportsParallelInvoke;
+        SupportsBackgrounding = supportsBackgrounding;
         RequiredModalities = requiredModalities;
         OnPermissionConsent = onPermissionConsent;
 

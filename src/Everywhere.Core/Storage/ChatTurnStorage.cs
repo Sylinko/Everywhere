@@ -27,7 +27,7 @@ public sealed partial class ChatTurnStorage(IDbContextFactory<ChatV2DbContext> d
 
         var nodes = topology.AsValueEnumerable().ToDictionary(
             row => row.Id,
-            row => new ChatMessageNode(row.Id, row.MessageKind, row.CreatedAt, row.UpdatedAt)
+            row => new ChatMessageNode(row.Id, row.MessageKind, row.TurnId, row.CreatedAt, row.UpdatedAt)
             {
                 SummaryThroughNodeId = row.SummaryThroughNodeId,
             });
