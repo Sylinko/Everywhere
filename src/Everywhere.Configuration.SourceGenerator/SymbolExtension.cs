@@ -18,11 +18,11 @@ internal static class SymbolExtension
 
     extension(ISymbol symbol)
     {
-        public bool HasAttribute(string fullMetadataName)
-            => symbol.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == fullMetadataName);
+        public bool HasAttribute(string fullMetadataName) =>
+            symbol.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == fullMetadataName);
 
-        public AttributeData? GetAttribute(string fullMetadataName)
-            => symbol.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == fullMetadataName);
+        public AttributeData? GetAttribute(string fullMetadataName) =>
+            symbol.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == fullMetadataName);
 
         public bool IsHiddenItem() => symbol.HasAttribute(KnownAttributes.SettingsItemIgnore);
 
@@ -56,9 +56,12 @@ internal static class SymbolExtension
         public IEnumerable<ISymbol> GetAllMembers() =>
             type.GetMembers().Concat(type.BaseType?.GetAllMembers() ?? []);
 
-        public bool IsPartial() =>
+        /// <summary>
+        /// Checks partial declarations while honoring the current generator run cancellation.
+        /// </summary>
+        public bool IsPartial(CancellationToken token) =>
             type.DeclaringSyntaxReferences
-                .Select(r => r.GetSyntax())
+                .Select(r => r.GetSyntax(token))
                 .Any(syntax => syntax?.Modifiers().Any(m => m.Text == "partial") == true);
     }
 

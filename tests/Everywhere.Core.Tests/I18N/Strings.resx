@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="SettingsAlias_Header" xml:space="preserve"><value>Selection</value></data>
+  <data name="SettingsAlias_Description" xml:space="preserve"><value>Choose a value.</value></data>
+  <data name="SettingsAlias_Option" xml:space="preserve"><value>First option</value></data>
+</root>
