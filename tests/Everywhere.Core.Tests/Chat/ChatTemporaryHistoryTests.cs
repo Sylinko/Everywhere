@@ -28,7 +28,7 @@ partial class ChatContextManagerIncrementalLoadingTests
         var syncRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         manager.SyncRequested += (_, _) => syncRequested.TrySetResult();
         await manager.FlushPendingSavesAsync();
-        Assert.That(metadata.ActualTopic, Is.EqualTo(Everywhere.Core.I18N.LocaleKey.ChatContext_Temporary.I18N()));
+        Assert.That(metadata.ActualTopic, Is.EqualTo(Core.I18N.LocaleKey.ChatContext_Temporary.I18N()));
 
         await manager.PersistChatAsync(metadata);
         await root.ApplyAsync(() => metadata.SetTemporary(true));

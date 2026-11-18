@@ -198,21 +198,26 @@ public sealed partial class ChatContextManager :
     public ChatContextManager(
         Settings settings,
         IChatContextStorage chatContextStorage,
-        ILogger<ChatContextManager> logger)
+        ILogger<ChatContextManager> logger
+    )
     {
         _settings = settings;
         _chatContextStorage = chatContextStorage;
         _logger = logger;
 
-        AllHistory = _materializedHistorySource
+        // Group by stable chat identity so refreshing activity moves a row only when its
+        // section or sort position changes. List grouping would replace it on every touch.
+        _historyConnection = _materializedHistorySource
             .Connect()
+            .AddKey(static metadata => metadata.Id)
             .AutoRefresh(static metadata => metadata.DateModified)
             .ObserveOnAvaloniaDispatcher()
-            .GroupOn(GetHistorySection, _historyRegrouper)
+            .Group(GetHistorySection, _historyRegrouper)
             .Transform(static group => new ChatHistorySection(group))
             .DisposeMany()
-            .Sort(SortExpressionComparer<ChatHistorySection>.Ascending(static history => history.Kind))
-            .BindEx(out _historyConnection);
+            .SortAndBind(out var sections, SortExpressionComparer<ChatHistorySection>.Ascending(static section => section.Kind))
+            .Subscribe();
+        AllHistory = sections.ToReadOnlyBindableList();
 
         _saveDebounceExecutor = new DebounceExecutor<ChatContextManager, ThreadingTimerImpl>(
             () => this,
@@ -270,6 +275,7 @@ public sealed partial class ChatContextManager :
                     {
                         _busyContexts.Remove(message.Metadata.Id);
                     }
+
                     if (message.Metadata.States.HasFlag(ChatContextMetadataStates.HasNotification)) _notificationContexts.Add(message.Metadata.Id);
                     else _notificationContexts.Remove(message.Metadata.Id);
 
@@ -303,6 +309,7 @@ public sealed partial class ChatContextManager :
                         {
                             RestartHistoryMaterializationCore();
                         }
+
                         return;
                     }
 
@@ -317,6 +324,7 @@ public sealed partial class ChatContextManager :
                     {
                         RemoveHistoryMetadata(message.Metadata);
                     }
+
                     RestartHistoryMaterializationCore(resetRawHistory: true, preserveVisibleItems: true);
                     AddRecentHistoryMetadata(message.Metadata);
                 });
@@ -360,10 +368,12 @@ public sealed partial class ChatContextManager :
         {
             return;
         }
+
         if (!_metadataMap.TryGetValue(message.Metadata.Id, out var metadata) || !ReferenceEquals(metadata, message.Metadata))
         {
             return;
         }
+
         if (!QueueSave(message.Metadata))
         {
             return;
@@ -419,6 +429,7 @@ public sealed partial class ChatContextManager :
         {
             _commitGate.Release();
         }
+
         if (shouldRequestSync && hasStableWrites)
         {
             SyncRequested?.Invoke(this, EventArgs.Empty);
@@ -453,6 +464,7 @@ public sealed partial class ChatContextManager :
         {
             throw new AggregateException("Some conversations could not be saved.", failures);
         }
+
         return pendingSaves.Any(pendingSave => pendingSave.Root?.HasWork != true);
     }
 
@@ -467,13 +479,14 @@ public sealed partial class ChatContextManager :
         if (pendingSave.Root is { } root)
         {
             return await root.DispatchAsync(() =>
-            {
-                // Pair the detached input with this graph snapshot, not with whatever input
-                // happens to exist later when storage begins. Newer input stays pending.
-                var input = GetPendingInput(pendingSave.Metadata.Id);
-                var capture = ChatWriteBatch.Capture(root.Data);
-                return capture with { Batch = capture.Batch with { LocalInput = input?.Write } };
-            }).ConfigureAwait(false);
+                {
+                    // Pair the detached input with this graph snapshot, not with whatever input
+                    // happens to exist later when storage begins. Newer input stays pending.
+                    var input = GetPendingInput(pendingSave.Metadata.Id);
+                    var capture = ChatWriteBatch.Capture(root.Data);
+                    return capture with { Batch = capture.Batch with { LocalInput = input?.Write } };
+                })
+                .ConfigureAwait(false);
         }
 
         var metadata = ChatMetadataWrite.Capture(pendingSave.Metadata, out var changes);
@@ -488,11 +501,12 @@ public sealed partial class ChatContextManager :
                 .SaveChatContextAsync(capture.Batch with { LocalAccountId = pendingSave.LocalAccountId }, CancellationToken.None)
                 .ConfigureAwait(false);
             await root.DispatchAsync(() =>
-            {
-                pendingSave.Metadata.IsPersisted = true;
-                root.Data.PersistenceDirtyState.Acknowledge(capture.Changes);
-                pendingSave.Metadata.Acknowledge(capture.MetadataChanges);
-            }).ConfigureAwait(false);
+                {
+                    pendingSave.Metadata.IsPersisted = true;
+                    root.Data.PersistenceDirtyState.Acknowledge(capture.Changes);
+                    pendingSave.Metadata.Acknowledge(capture.MetadataChanges);
+                })
+                .ConfigureAwait(false);
             if (capture.Batch.LocalInput is { } input)
             {
                 AcknowledgeInput(pendingSave.Metadata.Id, input);
@@ -521,6 +535,7 @@ public sealed partial class ChatContextManager :
             {
                 _newChatDraft = null;
             }
+
             if (HistorySearchIncludesContent && _normalizedHistorySearchQuery is not null)
             {
                 RestartHistoryMaterializationCore();
@@ -573,6 +588,7 @@ public sealed partial class ChatContextManager :
                 root = pending.Root ?? root;
                 localAccountId = pending.LocalAccountId;
             }
+
             _pendingSaves[metadata.Id] = new PendingSave(root, metadata, localAccountId);
             return true;
         }
@@ -648,6 +664,7 @@ public sealed partial class ChatContextManager :
             AddRecentHistoryMetadata(_newChatDraft.Data.Metadata);
             return;
         }
+
         _newChatDraft = null;
 
         var isCurrentTemporary = _current?.Data.Metadata.IsTemporary is true;
@@ -715,6 +732,7 @@ public sealed partial class ChatContextManager :
         {
             if (!_roots.Remove(root.Data.Metadata.Id)) return;
         }
+
         root.Idle -= OnRootIdle;
         root.Input.Changed -= HandleInputChanged;
         root.PendingInputs.PersistedStateChanged -= HandlePendingInputsChanged;
@@ -786,6 +804,7 @@ public sealed partial class ChatContextManager :
                 {
                     await root.DispatchAsync(() => metadata.IsPinned = isPinned).ConfigureAwait(false);
                 }
+
                 SyncRequested?.Invoke(this, EventArgs.Empty);
             }
             finally
@@ -819,6 +838,7 @@ public sealed partial class ChatContextManager :
                 {
                     await root.StopAsync().ConfigureAwait(false);
                 }
+
                 await SavePendingChatAsync(metadata.Id).ConfigureAwait(false);
                 // Commit model state before releasing the persistence gate. History projection
                 // observes the notification independently; it is not part of this transaction.
@@ -832,6 +852,7 @@ public sealed partial class ChatContextManager :
                 {
                     root?.ResumeAfterStop();
                 }
+
                 _commitGate.Release();
             }
         });
@@ -851,6 +872,7 @@ public sealed partial class ChatContextManager :
                 return true;
             }
         }
+
         return FindRoot(chatId)?.HasWork == true;
     }
 
@@ -965,12 +987,14 @@ public sealed partial class ChatContextManager :
         {
             ReleaseRoot(root);
         }
+
         Dispatcher.UIThread.PostOnDemand(() =>
         {
             if (removed is not null)
             {
                 RemoveHistoryMetadata(removed);
             }
+
             RestartHistoryMaterialization();
             QueueLeaveUnavailableChat(chatId);
         });
@@ -1009,12 +1033,13 @@ public sealed partial class ChatContextManager :
             };
             await _chatContextStorage.SaveChatContextAsync(batch, CancellationToken.None).ConfigureAwait(false);
             await root.DispatchAsync(() =>
-            {
-                metadata.IsPersisted = true;
-                root.Data.PersistenceDirtyState.Acknowledge(changes);
-                metadata.Acknowledge(metadataChanges);
-                metadata.IsTemporary = false;
-            }).ConfigureAwait(false);
+                {
+                    metadata.IsPersisted = true;
+                    root.Data.PersistenceDirtyState.Acknowledge(changes);
+                    metadata.Acknowledge(metadataChanges);
+                    metadata.IsTemporary = false;
+                })
+                .ConfigureAwait(false);
             SyncRequested?.Invoke(this, EventArgs.Empty);
         }
         finally
@@ -1066,9 +1091,9 @@ public sealed partial class ChatContextManager :
     public Task<RootChatContext?> LoadChatContextAsync(ChatMetadata metadata, CancellationToken cancellationToken = default)
     {
         _metadataMap.TryAdd(metadata.Id, metadata);
-        return metadata.Id == _current?.Data.Metadata.Id ?
-            Task.FromResult<RootChatContext?>(_current) :
-            LoadChatContextAsync(metadata.Id, cancellationToken);
+        return metadata.Id == _current?.Data.Metadata.Id
+            ? Task.FromResult<RootChatContext?>(_current)
+            : LoadChatContextAsync(metadata.Id, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -1077,10 +1102,12 @@ public sealed partial class ChatContextManager :
         cancellationToken.ThrowIfCancellationRequested();
         ObjectDisposedException.ThrowIf(_isClosing, this);
         await root.ApplyAsync(() =>
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            root.Data.FollowDurableChoices();
-        }).WaitAsync(cancellationToken).ConfigureAwait(false);
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                root.Data.FollowDurableChoices();
+            })
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private CancellationTokenSource BeginCurrentSwitch()
@@ -1132,7 +1159,8 @@ public sealed partial class ChatContextManager :
     private async Task PrepareAndPublishCurrentAsync(
         RootChatContext? next,
         RootChatContext? previous,
-        CancellationTokenSource cancellation)
+        CancellationTokenSource cancellation
+    )
     {
         cancellation.Token.ThrowIfCancellationRequested();
         if (next is not null)
@@ -1141,15 +1169,20 @@ public sealed partial class ChatContextManager :
             {
                 await next.EnsureTurnLoadedAsync(target.Turn, cancellation.Token).ConfigureAwait(false);
             }
+
             if (!ReferenceEquals(next, previous))
             {
                 await ViewSyncedBranchAsync(next, cancellation.Token).ConfigureAwait(false);
             }
+
             // Preparation and publication remain UI-owned; canceled waits do not dispose the model.
             var isPrepared = await Dispatcher.UIThread.InvokeAsync(
-                () => next.Presentation.PrepareInitialWindowAsync(cancellation.Token),
-                DispatcherPriority.Normal,
-                cancellation.Token).GetTask().Unwrap().WaitAsync(cancellation.Token);
+                    () => next.Presentation.PrepareInitialWindowAsync(cancellation.Token),
+                    DispatcherPriority.Normal,
+                    cancellation.Token)
+                .GetTask()
+                .Unwrap()
+                .WaitAsync(cancellation.Token);
             if (!isPrepared)
             {
                 return;
@@ -1221,9 +1254,9 @@ public sealed partial class ChatContextManager :
                 pending.ShouldReload = false;
             }
 
-            var data = metadata.IsPersisted ?
-                await _chatContextStorage.GetChatContextAsync(metadata, cancellationToken).ConfigureAwait(false) :
-                new ChatData(metadata);
+            var data = metadata.IsPersisted
+                ? await _chatContextStorage.GetChatContextAsync(metadata, cancellationToken).ConfigureAwait(false)
+                : new ChatData(metadata);
             try
             {
                 var input = await _chatContextStorage.ReadInputAsync(metadata.Id, cancellationToken).ConfigureAwait(false);
@@ -1237,14 +1270,17 @@ public sealed partial class ChatContextManager :
                     {
                         throw new OperationCanceledException("The conversation was removed while loading.");
                     }
+
                     if (_roots.GetValueOrDefault(metadata.Id)?.Target is { } existing)
                     {
                         if (!ReferenceEquals(data, existing.Data))
                         {
                             data.Dispose();
                         }
+
                         return existing;
                     }
+
                     if (pending.ShouldReload)
                     {
                         // Sync committed while this detached read was in flight. Retry outside
@@ -1252,11 +1288,13 @@ public sealed partial class ChatContextManager :
                         data.Dispose();
                         continue;
                     }
+
                     var root = CreateRoot(data);
                     if (input is not null)
                     {
                         RestoreLocalInput(root, input);
                     }
+
                     return root;
                 }
                 finally
@@ -1360,12 +1398,13 @@ public sealed partial class ChatContextManager :
                 try
                 {
                     return await LoadMoreHistoryCoreAsync(
-                        count,
-                        generation,
-                        query,
-                        searchIncludesContent,
-                        generationToken,
-                        cancellationToken).ConfigureAwait(false);
+                            count,
+                            generation,
+                            query,
+                            searchIncludesContent,
+                            generationToken,
+                            cancellationToken)
+                        .ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (!_isClosing && generationToken.IsCancellationRequested &&
                                                          !cancellationToken.IsCancellationRequested)
@@ -1399,7 +1438,8 @@ public sealed partial class ChatContextManager :
         string? query,
         bool searchIncludesContent,
         CancellationToken generationToken,
-        CancellationToken callerToken)
+        CancellationToken callerToken
+    )
     {
         using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(generationToken, callerToken);
         var cancellationToken = linkedCancellation.Token;
@@ -1487,7 +1527,8 @@ public sealed partial class ChatContextManager :
     private async Task FetchRawHistoryPageAsync(
         int count,
         int generation,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         ChatHistoryCursor? cursor;
         lock (_historyStateLock)
@@ -1496,10 +1537,11 @@ public sealed partial class ChatContextManager :
         }
 
         var page = await _chatContextStorage.ReadHistoryPageAsync(
-            count,
-            cursor,
-            HistoryView,
-            cancellationToken).ConfigureAwait(false);
+                count,
+                cursor,
+                HistoryView,
+                cancellationToken)
+            .ConfigureAwait(false);
 
         lock (_historyStateLock)
         {
@@ -1535,7 +1577,8 @@ public sealed partial class ChatContextManager :
         ChatMetadata metadata,
         TextSearchPattern? pattern,
         bool includesContent,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (pattern is null) return true;
         if (metadata.ActualTopic?.Contains(pattern.Query, StringComparison.OrdinalIgnoreCase) is true) return true;
@@ -1543,9 +1586,9 @@ public sealed partial class ChatContextManager :
 
         try
         {
-            var context = metadata.Id == _current?.Data.Metadata.Id ?
-                _current :
-                await GetOrLoadContextAsync(metadata, cancellationToken).ConfigureAwait(false);
+            var context = metadata.Id == _current?.Data.Metadata.Id
+                ? _current
+                : await GetOrLoadContextAsync(metadata, cancellationToken).ConfigureAwait(false);
             return context is not null && await ChatTextSearcher.ContainsAsync(
                 context,
                 pattern,
@@ -1595,6 +1638,7 @@ public sealed partial class ChatContextManager :
             {
                 _materializedHistoryIds.Clear();
             }
+
             hasMoreItems = _historyScanIds.Count > 0 || !_rawHistoryExhausted;
         }
 
@@ -1608,6 +1652,7 @@ public sealed partial class ChatContextManager :
                 AddRecentHistoryMetadata(current.Data.Metadata);
             }
         }
+
         HasMoreItems = hasMoreItems;
 
         // Wake the loader even when HasMoreItems stayed true. Query changes clear results;
@@ -1853,7 +1898,8 @@ public sealed partial class ChatContextManager :
 
         public ValueTask<IncrementalLoadResult> LoadMoreAsync(
             int count,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             ObjectDisposedException.ThrowIf(Volatile.Read(ref _isDisposed) != 0, this);
             return owner.LoadMoreHistoryAsync(count, cancellationToken);

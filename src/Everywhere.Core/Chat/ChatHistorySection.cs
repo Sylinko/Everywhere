@@ -1,5 +1,4 @@
 ﻿using Everywhere.Collections;
-using Everywhere.Common;
 
 namespace Everywhere.Chat;
 
@@ -25,9 +24,9 @@ public sealed class ChatHistorySection : IDisposable
 
     private readonly IDisposable _metadataConnection;
 
-    internal ChatHistorySection(IGroup<ChatMetadata, ChatHistorySectionKind> group)
+    internal ChatHistorySection(IGroup<ChatMetadata, Guid, ChatHistorySectionKind> group)
     {
-        Kind = group.GroupKey;
+        Kind = group.Key;
         HeaderKey = new DynamicLocaleKey(
             Kind switch
             {
@@ -39,14 +38,15 @@ public sealed class ChatHistorySection : IDisposable
                 ChatHistorySectionKind.LastYear => LocaleKey.HumanizedDate_LastYear,
                 _ => LocaleKey.HumanizedDate_Earlier
             });
-        Items = group.List
+        _metadataConnection = group.Cache
             .Connect()
-            .Sort(
+            .SortAndBind(
+                out var items,
                 SortExpressionComparer<ChatMetadata>
                     .Descending(static metadata => metadata.DateModified)
                     .ThenByDescending(static metadata => metadata.Id))
-            .ObserveOnAvaloniaDispatcher()
-            .BindEx(out _metadataConnection);
+            .Subscribe();
+        Items = items.ToReadOnlyBindableList();
     }
 
     /// <summary>

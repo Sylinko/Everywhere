@@ -113,6 +113,11 @@ public static class ReadOnlyBindableListExtensions
         {
             switch (inner)
             {
+                case NotifyCollectionChangedSynchronizedViewList<T> view:
+                {
+                    CopyViewTo(view, array, index);
+                    break;
+                }
                 case ICollection collection:
                 {
                     collection.CopyTo(array, index);
@@ -140,6 +145,11 @@ public static class ReadOnlyBindableListExtensions
         {
             switch (inner)
             {
+                case NotifyCollectionChangedSynchronizedViewList<T> view:
+                {
+                    CopyViewTo(view, array, arrayIndex);
+                    break;
+                }
                 case ICollection<T> collection:
                 {
                     collection.CopyTo(array, arrayIndex);
@@ -153,6 +163,40 @@ public static class ReadOnlyBindableListExtensions
                     }
                     break;
                 }
+            }
+        }
+
+        // ObservableCollections 3.3.4 implements both CopyTo interfaces on this view but throws for both.
+        private static void CopyViewTo(NotifyCollectionChangedSynchronizedViewList<T> view, Array array, int index)
+        {
+            if (array.Length - index < view.Count)
+            {
+                throw new ArgumentException("The destination array is too small.", nameof(array));
+            }
+
+            try
+            {
+                switch (array)
+                {
+                    case T[] items:
+                    {
+                        foreach (var item in view) items[index++] = item;
+                        break;
+                    }
+                    case object?[] objects:
+                    {
+                        foreach (var item in view) objects[index++] = item;
+                        break;
+                    }
+                    default:
+                    {
+                        throw new ArgumentException("Expected a compatible, zero-based, one-dimensional array.", nameof(array));
+                    }
+                }
+            }
+            catch (ArrayTypeMismatchException ex)
+            {
+                throw new ArgumentException("The destination array's element type is incompatible.", nameof(array), ex);
             }
         }
 
