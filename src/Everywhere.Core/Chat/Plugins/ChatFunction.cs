@@ -227,6 +227,11 @@ public sealed class NativeChatFunction : ChatFunction
             ? name
             : method.Method.GetCustomAttribute<ChatFunctionAttribute>(false)?.Name;
 
+        // MEAI caches ReflectionAIFunctionDescriptor weakly by SerializerOptions; avoid pinning collectible
+        // mod assemblies into the host-wide AIJsonUtilities.DefaultOptions entry when none was supplied.
+        var effectiveSerializerOptions = jsonSerializerOptions ??
+            (method.Method.Module.Assembly.IsCollectible ? new JsonSerializerOptions(AIJsonUtilities.DefaultOptions) : null);
+
         return AIFunctionFactory.Create(
             method,
             new AIFunctionFactoryOptions
@@ -234,7 +239,7 @@ public sealed class NativeChatFunction : ChatFunction
                 Name = resolvedName,
                 Description = description,
                 ExcludeResultSchema = true,
-                SerializerOptions = jsonSerializerOptions,
+                SerializerOptions = effectiveSerializerOptions,
                 ConfigureParameterBinding = ConfigureServiceParameterBinding,
                 MarshalResult = static (value, _, _) => ValueTask.FromResult(value)
             });

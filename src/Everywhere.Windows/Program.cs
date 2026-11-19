@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Extensions;
@@ -16,7 +15,6 @@ using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Everywhere.TextSelection;
 using Everywhere.Windows.Automation;
-using Everywhere.Windows.Chat.Plugins;
 using Everywhere.Windows.Common;
 using Everywhere.Windows.Initialization;
 using Everywhere.Windows.Interop;
@@ -132,12 +130,6 @@ public static class Program
                 .AddChatEssentials()
                 .AddStrategyEngine()
                 .AddTextSelection()
-
-                #endregion
-
-                #region Chat Plugins
-
-                .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
 
                 #endregion
 

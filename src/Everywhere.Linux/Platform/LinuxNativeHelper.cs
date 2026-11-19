@@ -19,9 +19,6 @@ public sealed class LinuxNativeHelper : INativeHelper
     public bool IsInstalled => File.Exists("/usr/bin/Everywhere");
 
     /// <inheritdoc />
-    public bool IsAdministrator => Environment.UserName == "root";
-
-    /// <inheritdoc />
     public bool IsLowDataModeActive => false;
 
     /// <inheritdoc />

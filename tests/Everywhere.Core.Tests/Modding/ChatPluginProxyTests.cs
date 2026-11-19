@@ -52,7 +52,7 @@ public sealed class ChatPluginProxyTests
 
         var result = await binding.InvokeAsync(services, call, CancellationToken.None);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(plugin.Observed, Is.EqualTo("changed:a,b:20"));
             Assert.That(plugin.ObservedService, Is.SameAs(marker));
@@ -62,7 +62,7 @@ public sealed class ChatPluginProxyTests
             Assert.That(binding.Function.Function.UnderlyingMethod, Is.Null);
             Assert.That(binding.Function.Function.JsonSerializerOptions, Is.SameAs(AIJsonUtilities.DefaultOptions));
             Assert.That(binding.Declaration.JsonSchema.ToString(), Does.Contain("location"));
-        });
+        }
     }
 
     /// <summary>
@@ -86,6 +86,7 @@ public sealed class ChatPluginProxyTests
         }
 
         Assert.That(retained.Owner.IsAlive, Is.False, "Retained scopes and results must not pin collectible CLR metadata.");
+        Assert.That(retained.Scope.Plugins, Has.Count.EqualTo(1));
         Assert.That(retained.Binding.Declaration.JsonSchema.ToString(), Does.Contain("location"));
         Assert.That(retained.Result.Result, Is.EqualTo("docs:a,b:20"));
         var arguments = new Dictionary<string, object?>

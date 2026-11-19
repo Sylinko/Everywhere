@@ -1,8 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-using Everywhere.Chat.Permissions;
 using Everywhere.Harness;
 using Microsoft.Extensions.AI;
 
@@ -40,6 +38,7 @@ public partial class ChatPluginManager
     {
         private readonly Lock _gate = new();
         // Ownership is intentional: dynamically discovered functions must survive until this activation closes.
+        // ReSharper disable once CollectionNeverQueried.Local
         private readonly HashSet<NativeChatFunction> _functions = [];
         private readonly TaskCompletionSource _drained = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
