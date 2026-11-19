@@ -61,7 +61,7 @@ prerequisites, including Watchdog publishing. For another host input, copy
 `Everywhere.local.props.example` to the ignored `Everywhere.local.props` file and set the path.
 The declared host range must include that host; the project currently uses `[1.0.0]`.
 
-The output is `bin/Debug/net10.0-windows10.0.19041.0/win-x64/everywhere.everything-1.0.0.zip`.
+The output is `bin/Debug/net11.0-windows10.0.19041.0/win-x64/everywhere.everything-1.0.0.zip`.
 The SDK includes EverythingNetCore and the x64 native runtime, excluding host-owned assemblies.
 See the [developer guide](../../docs/Modding/02-ModDeveloperGuide.md) for host imports,
 compatibility and packaging, and the [validation record](../../docs/Modding/03-Validation.md)
@@ -72,8 +72,8 @@ for integration tests and remaining desktop acceptance checks.
 After building the package, select the explicit test by its exact name:
 
 ```powershell
-$env:EVERYWHERE_EVERYTHING_HOST = (Resolve-Path 'src/Everywhere.Windows/bin/Debug/net10.0-windows10.0.19041.0/win-x64').Path
-$env:EVERYWHERE_EVERYTHING_PACKAGE = (Resolve-Path 'mods/Everywhere.Mods.Everything/bin/Debug/net10.0-windows10.0.19041.0/win-x64/everywhere.everything-1.0.0.zip').Path
+$env:EVERYWHERE_EVERYTHING_HOST = (Resolve-Path 'src/Everywhere.Windows/bin/Debug/net11.0-windows10.0.19041.0/win-x64').Path
+$env:EVERYWHERE_EVERYTHING_PACKAGE = (Resolve-Path 'mods/Everywhere.Mods.Everything/bin/Debug/net11.0-windows10.0.19041.0/win-x64/everywhere.everything-1.0.0.zip').Path
 dotnet test tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj --filter 'FullyQualifiedName=Everywhere.Core.Tests.Modding.EverythingModTests.PackagedEverything_QueryAndUnload_PreservesUserProcessAndRevokesTools'
 ```
 

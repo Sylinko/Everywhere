@@ -58,7 +58,7 @@ dotnet build mods/Everywhere.Mods.Everything/Everywhere.Mods.Everything.csproj -
 如需使用其他宿主，将 `Everywhere.local.props.example` 复制为 Git 忽略的 `Everywhere.local.props`
 并填写路径。声明的宿主兼容范围必须包含该宿主；项目当前使用 `[1.0.0]`。
 
-输出为 `bin/Debug/net10.0-windows10.0.19041.0/win-x64/everywhere.everything-1.0.0.zip`。
+输出为 `bin/Debug/net11.0-windows10.0.19041.0/win-x64/everywhere.everything-1.0.0.zip`。
 SDK 打包 EverythingNetCore 和 x64 原生运行文件，排除宿主提供的程序集。
 宿主引用、兼容范围和打包规则见[开发者文档](../../docs/Modding/02-ModDeveloperGuide.md)；
 集成测试与尚待桌面验收的项目见[验证记录](../../docs/Modding/03-Validation.md)。
@@ -68,8 +68,8 @@ SDK 打包 EverythingNetCore 和 x64 原生运行文件，排除宿主提供的�
 构建模组包后，使用完整名称单独选择这项显式测试：
 
 ```powershell
-$env:EVERYWHERE_EVERYTHING_HOST = (Resolve-Path 'src/Everywhere.Windows/bin/Debug/net10.0-windows10.0.19041.0/win-x64').Path
-$env:EVERYWHERE_EVERYTHING_PACKAGE = (Resolve-Path 'mods/Everywhere.Mods.Everything/bin/Debug/net10.0-windows10.0.19041.0/win-x64/everywhere.everything-1.0.0.zip').Path
+$env:EVERYWHERE_EVERYTHING_HOST = (Resolve-Path 'src/Everywhere.Windows/bin/Debug/net11.0-windows10.0.19041.0/win-x64').Path
+$env:EVERYWHERE_EVERYTHING_PACKAGE = (Resolve-Path 'mods/Everywhere.Mods.Everything/bin/Debug/net11.0-windows10.0.19041.0/win-x64/everywhere.everything-1.0.0.zip').Path
 dotnet test tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj --filter 'FullyQualifiedName=Everywhere.Core.Tests.Modding.EverythingModTests.PackagedEverything_QueryAndUnload_PreservesUserProcessAndRevokesTools'
 ```
 
