@@ -1276,8 +1276,8 @@
     <data name="ChatPluginPage_StopMcpPluginButton_Content" xml:space="preserve">
         <value>Arrêter</value>
     </data>
-    <data name="ChatPluginPage_TabItem_BuiltIn_Header" xml:space="preserve">
-        <value>Intégré</value>
+    <data name="ChatPluginPage_TabItem_Native_Header" xml:space="preserve">
+        <value>Outils de l’application</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
         <value>Outils</value>

@@ -174,14 +174,14 @@
               Orientation="Horizontal" Spacing="4">
               <LucideIcon
                 Kind="Box" Size="14"/>
-              <TextBlock Text="{I18N {x:Static LocaleKey.ChatPluginPage_TabItem_BuiltIn_Header}}"/>
+              <TextBlock Text="{I18N {x:Static LocaleKey.ChatPluginPage_TabItem_Native_Header}}"/>
             </StackPanel>
           </TabItem.Header>
 
           <ListBox
             Classes="PluginListBox"
-            ItemsSource="{Binding ToolSettings.BuiltInPlugins}"
-            SelectedItem="{Binding SelectedBuiltInPlugin}"/>
+            ItemsSource="{Binding ToolSettings.NativePlugins}"
+            SelectedItem="{Binding SelectedNativePlugin}"/>
         </TabItem>
 
         <TabItem x:Name="McpTabItem">

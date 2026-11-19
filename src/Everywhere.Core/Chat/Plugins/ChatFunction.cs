@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text.Json;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Harness;
@@ -138,7 +139,8 @@ public sealed class NativeChatFunction : ChatFunction
         string? functionName = null,
         string? description = null,
         IDynamicLocaleKey? headerKey = null,
-        IDynamicLocaleKey? descriptionKey = null)
+        IDynamicLocaleKey? descriptionKey = null,
+        JsonSerializerOptions? jsonSerializerOptions = null)
     {
         var attributeFunctionName = method.Method.GetCustomAttribute<ChatFunctionAttribute>(false)?.Name;
         var resolvedFunctionName = !functionName.IsNullOrWhiteSpace() ? functionName : attributeFunctionName;
@@ -182,13 +184,44 @@ public sealed class NativeChatFunction : ChatFunction
         BeforeCallHook = beforeCallHook;
         PermissionConsentHook = permissionConsentHook;
 
-        Function = CreateNativeFunction(method, resolvedFunctionName, description);
+        Function = CreateNativeFunction(method, resolvedFunctionName, description, jsonSerializerOptions);
+    }
+
+    /// <summary>
+    /// Copies presentation and permissions for a host-owned invocation wrapper.
+    /// Callbacks supplied here resolve through the live registration rather than retaining plugin delegates.
+    /// </summary>
+    internal NativeChatFunction(
+        AIFunction function,
+        NativeChatFunction source,
+        BeforeCallHook? beforeCallHook,
+        PermissionConsentHook? permissionConsentHook)
+    {
+        Function = function;
+        HeaderKey = source.HeaderKey;
+        DescriptionKey = source.DescriptionKey;
+        Icon = source.Icon;
+        Permissions = source.Permissions;
+        IsDefaultEnabled = source.IsDefaultEnabled;
+        IsDefaultBypassApproval = source.IsDefaultBypassApproval;
+        CanBypassApproval = source.CanBypassApproval;
+        IsExperimental = source.IsExperimental;
+        IsVisible = source.IsVisible;
+        SupportsParallelInvoke = source.SupportsParallelInvoke;
+        SupportsBackgrounding = source.SupportsBackgrounding;
+        RequiredModalities = source.RequiredModalities;
+        BeforeCallHook = beforeCallHook;
+        PermissionConsentHook = permissionConsentHook;
     }
 
     /// <summary>
     /// Creates an <see cref="AIFunction"/> using Everywhere's service-injection and raw-result marshaling conventions.
     /// </summary>
-    public static AIFunction CreateNativeFunction(Delegate method, string? name = null, string? description = null)
+    public static AIFunction CreateNativeFunction(
+        Delegate method,
+        string? name = null,
+        string? description = null,
+        JsonSerializerOptions? jsonSerializerOptions = null)
     {
         var resolvedName = !name.IsNullOrWhiteSpace()
             ? name
@@ -201,6 +234,7 @@ public sealed class NativeChatFunction : ChatFunction
                 Name = resolvedName,
                 Description = description,
                 ExcludeResultSchema = true,
+                SerializerOptions = jsonSerializerOptions,
                 ConfigureParameterBinding = ConfigureServiceParameterBinding,
                 MarshalResult = static (value, _, _) => ValueTask.FromResult(value)
             });

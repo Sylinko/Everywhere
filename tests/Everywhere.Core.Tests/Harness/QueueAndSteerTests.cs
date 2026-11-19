@@ -423,8 +423,8 @@ public sealed class QueueAndSteerTests
         var functionCallMessage = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("probe"));
         var callContent = new Microsoft.Extensions.AI.FunctionCallContent("call-auto", "auto_probe");
         var binding = new ToolBinding(
-            autoHarness.Plugins.BuiltInPlugins.First(),
-            autoHarness.Plugins.BuiltInPlugins.First().Functions.First(),
+            autoHarness.Plugins.NativePlugins.First(),
+            autoHarness.Plugins.NativePlugins.First().Functions.First(),
             new());
 
         await using var functionContext = new FunctionCallContext(

@@ -186,6 +186,16 @@ public abstract class BuiltInChatPlugin(string name) : NativeChatPlugin(name)
 }
 
 /// <summary>
+/// A mod-supplied tool group. Register it with <see cref="IChatPluginManager"/> for revocable chat snapshots.
+/// Names must be unique among registered mod-supplied tool groups and remain stable across activations.
+/// </summary>
+public abstract class ModChatPlugin(string name) : NativeChatPlugin(name)
+{
+    /// <inheritdoc />
+    public sealed override string Key => $"mod.{Name}";
+}
+
+/// <summary>
 /// Chat plugin implemented via Model Context Protocol (MCP).
 /// </summary>
 public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger

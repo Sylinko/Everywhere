@@ -20,11 +20,11 @@ using ShadUI;
 
 namespace Everywhere.Chat.Plugins;
 
-public class ChatPluginManager : IChatPluginManager
+public partial class ChatPluginManager : IChatPluginManager, IDisposable
 {
     private const string McpRuntimeWarningKey = "mcp.runtime";
 
-    public IReadOnlyBindableList<BuiltInChatPlugin> BuiltInPlugins { get; }
+    public IReadOnlyBindableList<NativeChatPlugin> NativePlugins { get; }
 
     public IReadOnlyBindableList<McpChatPlugin> McpPlugins { get; }
 
@@ -33,9 +33,11 @@ public class ChatPluginManager : IChatPluginManager
     private readonly IRuntimeManager _runtimeManager;
     private readonly ILogger<ChatPluginManager> _logger;
 
+    private bool _isDisposed;
+
     private readonly ConcurrentDictionary<Guid, ManagedMcpClient> _managedClients = [];
     private readonly CompositeDisposable _disposables = new(3);
-    private readonly SourceList<BuiltInChatPlugin> _builtInPluginsSource = new();
+    private readonly SourceList<NativeChatPlugin> _nativePluginsSource = new();
     private readonly SourceList<McpChatPlugin> _mcpPluginsSource = new();
 
     public ChatPluginManager(
@@ -46,7 +48,7 @@ public class ChatPluginManager : IChatPluginManager
         ILogger<ChatPluginManager> logger)
     {
         _serviceProvider = serviceProvider;
-        _builtInPluginsSource.AddRange(builtInPlugins);
+        _nativePluginsSource.AddRange(builtInPlugins);
         _settings = settings;
         _runtimeManager = runtimeManager;
         _logger = logger;
@@ -60,12 +62,12 @@ public class ChatPluginManager : IChatPluginManager
         Task.Run(InitializeMcpPlugins).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
         _mcpPluginsSource.AddRange(mcpPlugins);
 
-        BuiltInPlugins = _builtInPluginsSource
+        NativePlugins = _nativePluginsSource
             .Connect()
             .Filter(p => p is { IsVisible: true, HasVisibleFunctions: true })
             .ObserveOnAvaloniaDispatcher()
             .BindEx(_disposables);
-        _disposables.Add(_builtInPluginsSource);
+        _disposables.Add(_nativePluginsSource);
 
         McpPlugins = _mcpPluginsSource
             .Connect()
@@ -400,49 +402,67 @@ public class ChatPluginManager : IChatPluginManager
 
         try
         {
-            foreach (var plugin in _builtInPluginsSource.Items.Cast<ChatPlugin>().Concat(_mcpPluginsSource.Items))
+            foreach (var plugin in _nativePluginsSource.Items.Cast<ChatPlugin>().Concat(_mcpPluginsSource.Items))
             {
                 var isPluginAllowed = toolRulesets?.GetPluginRule(plugin) ??
                     _settings.Plugin.ToolEnablementRulesets.GetPluginRule(plugin) ??
                     plugin.IsDefaultEnabled;
                 if (!isPluginAllowed) continue;
 
-                if (plugin is McpChatPlugin mcpChatPlugin)
+                ChatPluginRegistration? registration = null;
+                IDisposable? discovery = null;
+                if (plugin is ModChatPlugin modPlugin)
                 {
-                    startingMcpActivity ??= await chatContext.DispatchAsync(() => chatContext.Data.StartActivity(
-                        LucideIconKind.Server,
-                        new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp),
-                        removeAfterCompletion: false,
-                        owner: ownerNode.Message));
-
-                    try
+                    if (!_registrations.TryGetValue(modPlugin, out registration) ||
+                        !registration.TryEnterInvocation(out discovery))
                     {
-                        await StartMcpClientAsync(mcpChatPlugin, cancellationToken);
-                    }
-                    catch (HandledException)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new HandledException(
-                            ex,
-                            new FormattedDynamicLocaleKey(
-                                LocaleKey.ChatPluginManager_Common_FailedToStartMcpPlugin,
-                                new DirectLocaleKey(mcpChatPlugin.Name)));
+                        continue;
                     }
                 }
 
-                var actualFunctions = (await plugin.GetAvailableFunctionsAsync(cancellationToken))
-                    .AsValueEnumerable()
-                    .Where(function => configuration.InputModalities.HasFlag(function.RequiredModalities))
-                    .Where(function => toolRulesets?.GetFunctionRule(plugin, function) ??
-                        _settings.Plugin.ToolEnablementRulesets.GetFunctionRule(plugin, function) ??
-                        function.IsDefaultEnabled)
-                    .ToArray();
-                if (actualFunctions.Length > 0 || plugin is McpChatPlugin)
+                using (discovery)
                 {
-                    resultPlugins.Add(new ChatPluginSnapshot(plugin, pluginNameDeduplicator, functionNameDeduplicator, actualFunctions));
+                    if (plugin is McpChatPlugin mcpChatPlugin)
+                    {
+                        startingMcpActivity ??= await chatContext.DispatchAsync(() => chatContext.Data.StartActivity(
+                            LucideIconKind.Server,
+                            new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp),
+                            removeAfterCompletion: false,
+                            owner: ownerNode.Message));
+
+                        try
+                        {
+                            await StartMcpClientAsync(mcpChatPlugin, cancellationToken);
+                        }
+                        catch (HandledException)
+                        {
+                            throw;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new HandledException(
+                                ex,
+                                new FormattedDynamicLocaleKey(
+                                    LocaleKey.ChatPluginManager_Common_FailedToStartMcpPlugin,
+                                    new DirectLocaleKey(mcpChatPlugin.Name)));
+                        }
+                    }
+
+                    var availableFunctions = await plugin.GetAvailableFunctionsAsync(cancellationToken);
+                    var filteredFunctions = availableFunctions
+                        .Where(function => configuration.InputModalities.HasFlag(function.RequiredModalities))
+                        .Where(function => toolRulesets?.GetFunctionRule(plugin, function) ??
+                            _settings.Plugin.ToolEnablementRulesets.GetFunctionRule(plugin, function) ??
+                            function.IsDefaultEnabled);
+                    var actualFunctions = registration is null ?
+                        filteredFunctions.ToArray() :
+                        filteredFunctions
+                            .Select(ChatFunction (function) => registration.CreateFunction((NativeChatFunction)function))
+                            .ToArray();
+                    if (actualFunctions.Length > 0 || plugin is McpChatPlugin)
+                    {
+                        resultPlugins.Add(new ChatPluginSnapshot(plugin, pluginNameDeduplicator, functionNameDeduplicator, actualFunctions));
+                    }
                 }
             }
 
@@ -508,6 +528,9 @@ public class ChatPluginManager : IChatPluginManager
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
+
+        _isDisposed = true;
         _runtimeManager.StatusChanged -= HandleRuntimeManagerStatusChanged;
         foreach (var mcpClient in _managedClients.Values)
         {
@@ -615,17 +638,16 @@ public class ChatPluginManager : IChatPluginManager
 
     private sealed class ChatPluginSnapshot : ChatPlugin
     {
-        public override string Key => _originalChatPlugin.Key;
-        public override IDynamicLocaleKey HeaderKey => _originalChatPlugin.HeaderKey;
-        public override IDynamicLocaleKey DescriptionKey => _originalChatPlugin.DescriptionKey;
-        public override LucideIconKind? Icon => _originalChatPlugin.Icon;
-        public override string? BeautifulIcon => _originalChatPlugin.BeautifulIcon;
+        public override string Key { get; }
+        public override IDynamicLocaleKey HeaderKey { get; }
+        public override IDynamicLocaleKey DescriptionKey { get; }
+        public override LucideIconKind? Icon { get; }
+        public override string? BeautifulIcon { get; }
         public override int FunctionCount => Bindings.Length;
         public override IReadOnlyBindableList<ChatFunction> Functions => throw new NotSupportedException();
-        public override bool IsMcp => _originalChatPlugin.IsMcp;
+        public override bool IsMcp { get; }
 
         public ToolBinding[] Bindings { get; }
-        private readonly ChatPlugin _originalChatPlugin;
         private readonly ChatFunction[] _actualFunctions;
 
         public ChatPluginSnapshot(
@@ -635,9 +657,15 @@ public class ChatPluginManager : IChatPluginManager
             IReadOnlyList<ChatFunction> actualFunctions
         ) : base(pluginNameDeduplicator.Deduplicate(originalChatPlugin.Name))
         {
-            _originalChatPlugin = originalChatPlugin;
+            // Snapshots outlive plugin activations. Copy host-owned metadata, never the plugin instance.
+            Key = originalChatPlugin.Key;
+            HeaderKey = originalChatPlugin.HeaderKey;
+            DescriptionKey = originalChatPlugin.DescriptionKey;
+            Icon = originalChatPlugin.Icon;
+            BeautifulIcon = originalChatPlugin.BeautifulIcon;
+            IsMcp = originalChatPlugin.IsMcp;
             Bindings = actualFunctions
-                .Select(function => new ToolBinding(originalChatPlugin, function, functionNameDeduplicator))
+                .Select(function => new ToolBinding(this, function, functionNameDeduplicator))
                 .ToArray();
             _actualFunctions = Bindings.Select(binding => binding.Function).ToArray();
         }

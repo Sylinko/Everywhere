@@ -8,19 +8,26 @@ using Microsoft.Extensions.AI;
 namespace Everywhere.Chat.Plugins;
 
 /// <summary>
-/// Manages chat plugins, both built-in and MCP plugins.
+/// Manages chat plugins, including built-in, mod-supplied, and MCP plugins.
 /// </summary>
 public interface IChatPluginManager
 {
     /// <summary>
-    /// Gets the list of built-in chat plugins for Binding use in the UI.
+    /// Gets the combined list of built-in and mod-supplied native chat plugins for Binding use in the UI.
     /// </summary>
-    IReadOnlyBindableList<BuiltInChatPlugin> BuiltInPlugins { get; }
+    IReadOnlyBindableList<NativeChatPlugin> NativePlugins { get; }
 
     /// <summary>
     /// Gets the list of MCP chat plugins for Binding use in the UI.
     /// </summary>
     IReadOnlyBindableList<McpChatPlugin> McpPlugins { get; }
+
+    /// <summary>
+    /// Publishes a mod-supplied tool group for discovery and creates revocable functions for chat snapshots.
+    /// Close the returned registration before disposing the tool group's native or managed resources.
+    /// Its disposal removes the contribution and waits for discovery and invocations already in progress.
+    /// </summary>
+    IAsyncDisposable RegisterChatPlugin(ModChatPlugin plugin);
 
     /// <summary>
     /// Creates a new MCP plugin based on the provided configuration.
