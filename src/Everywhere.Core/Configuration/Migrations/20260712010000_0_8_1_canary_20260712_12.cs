@@ -9,14 +9,15 @@ namespace Everywhere.Configuration.Migrations;
 /// <summary>
 /// Normalizes legacy values and MCP plugin shapes that cannot be read by SettingsEngine.
 /// </summary>
-public sealed class _20260712010000_0_8_1_canary_20260712_12 : SettingsMigration
+public sealed class _20260712010000_0_8_1_canary_20260712_12 : SettingsMigration, ISettingsMigrationMetadata
 {
     private const ModelSpecializations KnownSpecializations =
         ModelSpecializations.TitleGeneration |
         ModelSpecializations.ContextCompression |
         ModelSpecializations.ImageUnderstanding;
 
-    public override SemanticVersion Version => new(0, 8, 1, 0, "canary.20260712.12");
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 8, 1, 0, "canary.20260712.12");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks =>
         [CleanupSystemAssistantSpecializations, MigrateMcpTransports, CleanupOfficialSearchDepth];

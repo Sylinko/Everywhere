@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Web;
 
 namespace Everywhere.Configuration;
@@ -12,11 +11,8 @@ namespace Everywhere.Configuration;
 /// </summary>
 [Serializable]
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-public sealed partial class Settings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
+public sealed class Settings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
-    [ObservableProperty]
-    public partial string? Version { get; set; }
-
     #region Common
 
     public CommonSettings Common { get; } = new(serviceProvider);

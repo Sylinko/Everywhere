@@ -1,6 +1,6 @@
 ﻿using Everywhere.Utilities;
 
-namespace Everywhere.Chat.Plugins;
+namespace Everywhere.FileSystem;
 
 /// <summary>
 /// Represents a file or directory record with metadata.

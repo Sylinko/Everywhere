@@ -8,9 +8,10 @@ namespace Everywhere.Configuration.Migrations;
 /// Recovers listed API keys left in the dedicated service used by the 0.5.6 and
 /// 0.5.7 Windows and macOS releases. Other profiles may still own unlisted keys.
 /// </summary>
-public sealed class _20261115200000_0_9_0_canary_20261115_28 : SettingsMigration
+public sealed class _20261115200000_0_9_0_canary_20261115_28 : SettingsMigration, ISettingsMigrationMetadata
 {
-    public override SemanticVersion Version => new(0, 9, 0, 0, "canary.20261115.28");
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 9, 0, 0, "canary.20261115.28");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks => [MigrateLegacyApiKeys];
 

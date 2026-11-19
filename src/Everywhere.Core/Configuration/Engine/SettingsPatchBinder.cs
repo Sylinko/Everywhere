@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json.Nodes;
@@ -17,6 +18,7 @@ namespace Everywhere.Configuration.Engine;
 public sealed class SettingsPatchBinder
 {
     private readonly ISettingsDescriptorProvider _descriptorProvider;
+    private readonly JsonSerializerOptions _serializerOptions;
     private readonly List<SettingsEngineDiagnostic> _diagnostics = [];
 
     /// <summary>
@@ -27,9 +29,11 @@ public sealed class SettingsPatchBinder
     /// source-generated provider is preferred and reflection is used as a
     /// compatibility fallback.
     /// </param>
-    public SettingsPatchBinder(ISettingsDescriptorProvider? descriptorProvider = null)
+    /// <param name="serializerOptions">Explicit model metadata and converters, or application defaults.</param>
+    public SettingsPatchBinder(ISettingsDescriptorProvider? descriptorProvider = null, JsonSerializerOptions? serializerOptions = null)
     {
         _descriptorProvider = descriptorProvider ?? SettingsDescriptorProviderFactory.Create();
+        _serializerOptions = serializerOptions ?? SettingsEngineJson.SerializerOptions;
     }
 
     /// <summary>
@@ -102,10 +106,10 @@ public sealed class SettingsPatchBinder
         }
     }
 
-    private static void WriteResolvedValue(JsonSettingsStorage store, PathResolution resolution)
+    private void WriteResolvedValue(JsonSettingsStorage store, PathResolution resolution)
     {
         var valueType = resolution.DeclaredType ?? resolution.RuntimeValue?.GetType() ?? typeof(object);
-        var node = SettingsEngineJson.SerializeToNode(resolution.RuntimeValue, valueType);
+        var node = JsonSerializer.SerializeToNode(resolution.RuntimeValue, valueType, _serializerOptions);
         store.ReplaceSubtree(resolution.JsonPath, node);
     }
 
@@ -833,7 +837,7 @@ public sealed class SettingsPatchBinder
 
         try
         {
-            value = SettingsEngineJson.Deserialize(node, contract.Type);
+            value = node.Deserialize(contract.Type, _serializerOptions);
             return true;
         }
         catch (Exception ex)
@@ -870,7 +874,7 @@ public sealed class SettingsPatchBinder
                 throw new InvalidOperationException($"Settings property '{property.ClrName}' does not have a dictionary key reader.");
             }
 
-            key = reader(keyText);
+            key = reader(keyText, _serializerOptions);
             if (key is not null) return true;
 
             AddDiagnostic(
@@ -945,7 +949,7 @@ public sealed class SettingsPatchBinder
                         $"Observed settings path segment '{segment}' must be a dictionary key.");
                 }
 
-                var key = indexedProperty.DictionaryKeyReader?.Invoke(keyText);
+                var key = indexedProperty.DictionaryKeyReader?.Invoke(keyText, _serializerOptions);
                 if (key is null || currentValue is not IDictionary dictionary || !dictionary.Contains(key))
                 {
                     throw new InvalidOperationException($"Observed settings dictionary key '{keyText}' cannot be resolved.");

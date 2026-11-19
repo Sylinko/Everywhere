@@ -9,6 +9,7 @@ using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.FileSystem;
 using Everywhere.Prompting.Documents;
 using Lucide.Avalonia;
 using Microsoft.Extensions.AI;

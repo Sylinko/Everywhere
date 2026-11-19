@@ -6,6 +6,17 @@ internal static class Diagnostics
 {
     private const string Category = $"{nameof(Everywhere)}.{nameof(Configuration)}.{nameof(SourceGenerator)}";
 
+    /// <summary>
+    /// Reports provider declarations that cannot receive a generated instance-based descriptor graph.
+    /// </summary>
+    public static readonly DiagnosticDescriptor InvalidDescriptorProvider = new(
+        id: "STG011",
+        title: "Invalid settings descriptor provider",
+        messageFormat: "Provider '{0}' must be a top-level, non-generic, non-static partial class",
+        category: Category,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     public static readonly DiagnosticDescriptor MustBePartial = new(
         id: "STG001",
         title: "Target class must be partial",

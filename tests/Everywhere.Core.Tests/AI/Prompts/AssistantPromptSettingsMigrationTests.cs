@@ -1,9 +1,12 @@
 using System.Text.Json.Nodes;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
+using Everywhere.AI.Prompts.Database;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Migrations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Everywhere.Core.Tests.AI.Prompts;
@@ -115,16 +118,20 @@ public sealed class AssistantPromptSettingsMigrationTests
 
     private static void RunPromptSettingsMigration(string path, PromptTestDatabase database)
     {
+        using var services = new ServiceCollection()
+            .AddSingleton<IDbContextFactory<PromptDbContext>>(database.Factory)
+            .AddSingleton<ILogger<_20260702120000_0_8_1_canary_20260702_12>>(
+                NullLogger<_20260702120000_0_8_1_canary_20260702_12>.Instance)
+            .AddSettingsMigration<_20260702120000_0_8_1_canary_20260702_12>()
+            .BuildServiceProvider();
+
         var migrator = new SettingsMigrator(
             path,
-            [CreatePromptMigration(database)],
+            services,
             NullLogger<SettingsMigrator>.Instance);
 
         migrator.Migrate();
     }
-
-    private static _20260702120000_0_8_1_canary_20260702_12 CreatePromptMigration(PromptTestDatabase database) =>
-        new(database.Factory, NullLogger<_20260702120000_0_8_1_canary_20260702_12>.Instance);
 
     private static string CreateSettingsJson(params JsonObject[] assistants) =>
         CreateSettingsRoot(assistants).ToJsonString();

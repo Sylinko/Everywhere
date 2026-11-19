@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Everywhere.Chat.Plugins;
+namespace Everywhere.FileSystem;
 
 /// <summary>
 /// Represents the content of a file read by a chat plugin.

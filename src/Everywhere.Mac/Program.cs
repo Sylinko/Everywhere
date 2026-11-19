@@ -191,6 +191,7 @@ public static class Program
                 .AddWatchdogManager()
                 .ConfigureNetwork()
                 .AddViewsAndViewModels()
+                .AddModding()
                 .AddDatabaseAndStorage()
                 .AddCloudClient()
                 .AddChatEssentials()

@@ -501,9 +501,9 @@ public sealed class SettingsControlItem(ISettingsControl control) : SettingsItem
     /// Creates the control when the settings item is presented. The <see cref="ISettingsControl"/> owns
     /// the control's caching policy; this item only carries the generated settings metadata.
     /// </summary>
-    public Control CreateControl(IServiceProvider serviceProvider)
+    public Control CreateControl()
     {
-        var result = control.CreateControl(serviceProvider);
+        var result = control.CreateControl();
         result.DataContext = ControlDataContext;
         return result;
     }

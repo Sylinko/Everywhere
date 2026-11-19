@@ -15,9 +15,10 @@ namespace Everywhere.Configuration.Migrations;
 /// 5. Move $Plugin.WebSearchEngine.SelectedWebSearchEngineProviderId to $Plugin.WebSearchEngine.SelectedProviderId
 /// 6. Delete $.Model.ModelProvider, $.Model.SelectedModelProviderId, $.Model.SelectedModelDefinitionId $.Internal and $.Behavior sections
 /// </summary>
-public class _20260103124001_0_5_6 : SettingsMigration
+public class _20260103124001_0_5_6 : SettingsMigration, ISettingsMigrationMetadata
 {
-    public override SemanticVersion Version => new(0, 5, 6);
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 5, 6);
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks =>
     [

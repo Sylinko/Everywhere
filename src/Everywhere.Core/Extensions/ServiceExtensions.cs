@@ -79,7 +79,7 @@ public static class ServiceExtensions
         public IServiceCollection AddSettings() =>
             services
                 .AddSingleton<Settings>()
-                .AddAsyncInitializer<SettingsEngine>()
+                .AddAsyncInitializer<SettingsInitializer>()
                 .AddTransient<SoftwareUpdateControl>()
                 .AddTransient<HostsStatusControl>()
                 .AddTransient<TextSelectionApplicationsControl>()
@@ -94,7 +94,14 @@ public static class ServiceExtensions
                 .AddSingleton<PersistentKeyValueStorage>()
                 .AddSingleton<IKeyValueStorage>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
                 .AddAsyncInitializer<PersistentKeyValueStorage>()
-                .AddSingleton<PersistentState>()
+                .AddSingleton<PersistentState>();
+
+        /// <summary>
+        /// Registers the mod settings registry and engine-owning initializer once; DI discovers its asynchronous disposal interface.
+        /// </summary>
+        public IServiceCollection AddModding() =>
+            services
+                .AddSingleton<IModSettingsRegistry, ModSettingsRegistry>()
                 .AddSingleton<ModEngineManager>()
                 .AddAsyncInitializer<ModEngineManager>();
 

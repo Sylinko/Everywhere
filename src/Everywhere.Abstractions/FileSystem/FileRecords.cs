@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Everywhere.Chat.Plugins;
+namespace Everywhere.FileSystem;
 
 /// <summary>
 /// Represents a collection of file records returned by a chat plugin.

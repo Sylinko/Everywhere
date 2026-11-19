@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using DynamicData;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
+using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
+using Everywhere.FileSystem;
 using Lucide.Avalonia;
 using Everywhere.Harness;
 

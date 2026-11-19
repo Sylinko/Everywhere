@@ -4,7 +4,7 @@ using Everywhere.Common;
 
 namespace Everywhere.Configuration.Migrations;
 
-public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
+public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration, ISettingsMigrationMetadata
 {
     private static readonly string[] BuiltInPluginKeys =
     [
@@ -16,7 +16,8 @@ public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
         "builtin.web"
     ];
 
-    public override SemanticVersion Version => new(0, 8, 1, 0, "canary.20260721.14");
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 8, 1, 0, "canary.20260721.14");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks => [MigrateToolSettings];
 

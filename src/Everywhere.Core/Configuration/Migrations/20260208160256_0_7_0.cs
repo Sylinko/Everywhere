@@ -18,9 +18,10 @@ namespace Everywhere.Configuration.Migrations;
 ///   4. Move "$.Common.FontSize" to "$.Display.FontSize" if exists
 ///   5. Move "$.ChatWindow.Shortcut" to "$.Shortcut.ChatWindow" if exists
 /// </summary>
-public class _20260208160256_0_7_0 : SettingsMigration
+public class _20260208160256_0_7_0 : SettingsMigration, ISettingsMigrationMetadata
 {
-    public override SemanticVersion Version => new(0, 7, 0);
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 7, 0);
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks =>
     [

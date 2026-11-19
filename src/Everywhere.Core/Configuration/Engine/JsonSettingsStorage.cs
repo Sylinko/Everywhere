@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
@@ -139,7 +139,7 @@ public readonly record struct SettingsJsonPath
 /// never flattens data into <c>IConfiguration</c> strings; the in-memory model stays
 /// a typed <see cref="JsonObject"/>.
 /// </remarks>
-public sealed class JsonSettingsStorage : IDisposable
+public sealed class JsonSettingsStorage : IDisposable, IAsyncDisposable
 {
     private const int DebounceMilliseconds = 200;
     private const int MaxWriteAttempts = 2;
@@ -150,6 +150,7 @@ public sealed class JsonSettingsStorage : IDisposable
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _saveLoopTask;
     private readonly SemaphoreSlim _signal = new(0);
+    private readonly SemaphoreSlim _writeGate = new(1);
     private readonly List<SettingsEngineDiagnostic> _diagnostics = []; // TODO: Bindable?
     private readonly Lock _diagnosticsLock = new();
 
@@ -197,7 +198,8 @@ public sealed class JsonSettingsStorage : IDisposable
     /// </summary>
     /// <param name="filePath">The settings JSON file path.</param>
     /// <param name="logger">An optional logger for parse and write failures.</param>
-    public static JsonSettingsStorage Load(string filePath, ILogger? logger = null)
+    /// <param name="jsonSerializerOptions">The owning engine's serialization options, or application defaults.</param>
+    public static JsonSettingsStorage Load(string filePath, ILogger? logger = null, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         JsonObject? root = null;
         SettingsEngineDiagnostic? parseDiagnostic = null;
@@ -222,7 +224,7 @@ public sealed class JsonSettingsStorage : IDisposable
             }
         }
 
-        var store = new JsonSettingsStorage(filePath, root ?? new JsonObject(), logger);
+        var store = new JsonSettingsStorage(filePath, root ?? new JsonObject(), logger, jsonSerializerOptions);
         if (parseDiagnostic is not null)
         {
             store.AddDiagnostic(parseDiagnostic);
@@ -295,11 +297,8 @@ public sealed class JsonSettingsStorage : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        // Only force save if there are actual changes.
-        if (_isDirty)
-        {
-            await SaveSnapshotToFileAsync(force: true, cancellationToken).ConfigureAwait(false);
-        }
+        // Join an in-flight save even when it has already consumed the dirty flag.
+        await SaveSnapshotToFileAsync(force: true, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -507,23 +506,29 @@ public sealed class JsonSettingsStorage : IDisposable
         }
     }
 
-    private Task SaveSnapshotToFileAsync(bool force, CancellationToken cancellationToken)
+    private async Task SaveSnapshotToFileAsync(bool force, CancellationToken cancellationToken)
     {
+        await _writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return DoAtomicWriteAsync(cancellationToken);
+            await DoAtomicWriteAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            RaiseWriteError(ex, 0, -1, FilePath);
-            if (force) throw;
-            return Task.CompletedTask;
+            _isDirty = true;
+            if (ex is not OperationCanceledException) RaiseWriteError(ex, 0, -1, FilePath);
+            if (force || cancellationToken.IsCancellationRequested) throw;
+        }
+        finally
+        {
+            _writeGate.Release();
         }
     }
 
     private async Task DoAtomicWriteAsync(CancellationToken cancellationToken)
     {
-        if (cancellationToken.IsCancellationRequested) return;
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_isDirty) return;
 
         string content;
         _lock.EnterReadLock();
@@ -574,13 +579,13 @@ public sealed class JsonSettingsStorage : IDisposable
             catch (OperationCanceledException)
             {
                 SafeDelete(tempPath);
-                break;
+                throw;
             }
             catch (Exception ex)
             {
                 RaiseWriteError(ex, attempt, bytesLen, FilePath);
                 SafeDelete(tempPath);
-                if (attempt == MaxWriteAttempts) break;
+                if (attempt == MaxWriteAttempts) throw;
 
                 await Task.Delay(50, CancellationToken.None).ConfigureAwait(false);
                 tempPath = Path.Combine(dir ?? string.Empty, Path.GetRandomFileName());
@@ -621,23 +626,22 @@ public sealed class JsonSettingsStorage : IDisposable
     /// <summary>
     /// Stops the save loop and releases synchronization primitives.
     /// </summary>
-    public void Dispose()
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Joins the save loop without requiring a caller synchronization context.
+    /// The settings engine flushes its final document before releasing this store.
+    /// </summary>
+    public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
 
         _disposed = true;
-        _cts.Cancel();
-        try
-        {
-            _saveLoopTask.Wait();
-        }
-        catch
-        {
-            // Ignore cancellation and background-loop shutdown errors.
-        }
-
+        await _cts.CancelAsync().ConfigureAwait(false);
+        await _saveLoopTask.ConfigureAwait(false);
         _cts.Dispose();
         _lock.Dispose();
         _signal.Dispose();
+        _writeGate.Dispose();
     }
 }

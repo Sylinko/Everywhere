@@ -14,3 +14,4 @@
  STG008  | Everywhere.Configuration.SourceGenerator | Error    | Diagnostics
  STG009  | Everywhere.Configuration.SourceGenerator | Error    | Diagnostics
  STG010  | Everywhere.Configuration.SourceGenerator | Error    | Diagnostics
+ STG011  | Everywhere.Configuration.SourceGenerator | Error    | Diagnostics

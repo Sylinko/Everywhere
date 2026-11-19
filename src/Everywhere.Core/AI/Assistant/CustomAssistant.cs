@@ -9,7 +9,6 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Views;
 using Lucide.Avalonia;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.AI;
 
@@ -81,8 +80,8 @@ public sealed partial class CustomAssistant : Assistant
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.CustomAssistant_PromptSelector_Header)]
     [SettingsItem(Index = 1)]
-    public SettingsControl<CustomAssistantPromptSelector> PromptSelector => new(x =>
-        new CustomAssistantPromptSelector(this, x)
+    public SettingsControl<CustomAssistantPromptSelector> PromptSelector => new(() =>
+        new CustomAssistantPromptSelector(this, ServiceLocator.Resolve<IServiceProvider>())
         {
             [!CustomAssistantPromptSelector.SelectedIdProperty] = CompiledBinding.Create(
                 (CustomAssistant xx) => xx.SystemPromptId,
@@ -96,8 +95,8 @@ public sealed partial class CustomAssistant : Assistant
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.ChatPluginPage_Title)]
     [SettingsItem(Index = 2)]
-    public SettingsControl<CustomAssistantToolSettingsView> ToolSettings => new(x =>
-        new CustomAssistantToolSettingsView(x.GetRequiredService<IChatPluginManager>(), x.GetRequiredService<Settings>())
+    public SettingsControl<CustomAssistantToolSettingsView> ToolSettings => new(() =>
+        new CustomAssistantToolSettingsView(ServiceLocator.Resolve<IChatPluginManager>(), ServiceLocator.Resolve<Settings>())
         {
             Assistant = this
         });

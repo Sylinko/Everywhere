@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using Everywhere.Common;
+using Everywhere.FileSystem;
 
 namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 
