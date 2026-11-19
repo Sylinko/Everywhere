@@ -6,6 +6,28 @@ namespace Everywhere.Core.Tests.Harness;
 
 public sealed class ResponseAssemblerTests
 {
+    [TestCase("R2", "A2")]
+    [TestCase("\n", " ")]
+    public void AppendUpdate_WhenInactiveChannelSendsEmptyStrings_PreservesContiguousBlocks(string reasoningTail, string answerTail)
+    {
+        var assembler = new ResponseAssembler("openai");
+
+        // Some Chat Completions endpoints send both fields in every delta. MEAI emits text first.
+        AppendDelta("", "R1");
+        AppendDelta("", reasoningTail);
+        AppendDelta("A1", "");
+        AppendDelta(answerTail, "");
+
+        Assert.That(
+            assembler.Blocks.Select(block => (block.IsReasoning, block.Text?.ToString())),
+            Is.EqualTo([(true, "R1" + reasoningTail), (false, "A1" + answerTail)]));
+
+        void AppendDelta(string text, string reasoning)
+        {
+            assembler.AppendUpdate(new ChatResponseUpdate { Contents = [new TextContent(text), new TextReasoningContent(reasoning)] });
+        }
+    }
+
     [Test]
     public void Append_WhenReasoningHasNoText_KeepsItsStateOffThePreviousVisibleBlock()
     {
@@ -19,7 +41,8 @@ public sealed class ResponseAssemblerTests
                 return buffer;
             });
         var before = assembler.Append(false, "before", null);
-        var opaque = assembler.Append(true, null, new Dictionary<string, object?> { [ReasoningMetadata.ProtectedDataKey] = "first" });
+        assembler.AppendUpdate(new ChatResponseUpdate { Contents = [new TextReasoningContent(null) { ProtectedData = "first" }] });
+        var opaque = assembler.Blocks[^1];
         assembler.EndBlock();
         var separate = assembler.Append(true, "summary", new Dictionary<string, object?> { [ReasoningMetadata.ProtectedDataKey] = "second" });
         assembler.Append(false, "after", null);

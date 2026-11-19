@@ -47,11 +47,14 @@ public sealed class ResponseAssembler(
             {
                 var itemId = reasoning.AdditionalProperties?.TryGetValue("reasoningItemId", out var rawId) is true ? rawId as string : null;
                 var isRedacted = reasoning.AdditionalProperties?.TryGetValue(ReasoningMetadata.IsRedactedKey, out var rawRedacted) is true && rawRedacted is true;
-                var hasGeminiStep = reasoning.AdditionalProperties?.ContainsKey(ReasoningMetadata.GeminiStepKey) is true;
+                var metadata = GetProviderReasoningMetadata(reasoning, itemId, isRedacted);
+
+                // An empty companion delta from a Chat Completions endpoint is not a change of block.
+                if (string.IsNullOrEmpty(reasoning.Text) && metadata is null) break;
 
                 // Start a fresh reasoning block when the native item ID changes, or when a redacted/native step arrives.
                 if (_current is { IsReasoning: true } &&
-                    (isRedacted || hasGeminiStep ||
+                    (isRedacted || metadata?.ContainsKey(ReasoningMetadata.GeminiStepKey) is true ||
                         _current.Metadata.ContainsKey(ReasoningMetadata.IsRedactedKey) ||
                         _current.Metadata.ContainsKey(ReasoningMetadata.GeminiStepKey) ||
                         itemId is not null && _currentSegmentId is not null && itemId != _currentSegmentId))
@@ -59,11 +62,15 @@ public sealed class ResponseAssembler(
                     EndBlock();
                 }
 
-                var metadata = BuildReasoningMetadata(reasoning, itemId, isRedacted);
+                if (!string.IsNullOrEmpty(dialect))
+                {
+                    (metadata ??= [])[ReasoningMetadata.DialectKey] = dialect;
+                }
+
                 Append(true, reasoning.Text, metadata, itemId);
                 break;
             }
-            case TextContent text:
+            case TextContent { Text.Length: > 0 } text:
             {
                 Append(false, text.Text, null);
                 break;
@@ -162,13 +169,9 @@ public sealed class ResponseAssembler(
         return joined?.ToString() ?? first ?? string.Empty;
     }
 
-    private Dictionary<string, object?>? BuildReasoningMetadata(TextReasoningContent reasoning, string? itemId, bool isRedacted)
+    private static Dictionary<string, object?>? GetProviderReasoningMetadata(TextReasoningContent reasoning, string? itemId, bool isRedacted)
     {
         Dictionary<string, object?>? metadata = null;
-        if (!string.IsNullOrEmpty(dialect))
-        {
-            (metadata ??= [])[ReasoningMetadata.DialectKey] = dialect;
-        }
 
         if (!string.IsNullOrEmpty(reasoning.ProtectedData))
         {
