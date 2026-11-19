@@ -5,12 +5,12 @@ namespace Everywhere.Modding.Packaging;
 /// <summary>
 /// Shares identifier, localization, URL, and license validation across manifests and indexes.
 /// </summary>
-internal static partial class ModValidationRules
+public static partial class ModValidationRules
 {
     /// <summary>
     /// Copies a language map while reporting case-colliding tags as invalid package data.
     /// </summary>
-    internal static Dictionary<string, string> NormalizeTranslations(Dictionary<string, string> translations)
+    public static Dictionary<string, string> NormalizeTranslations(Dictionary<string, string> translations)
     {
         var normalized = new Dictionary<string, string>(translations.Count, StringComparer.OrdinalIgnoreCase);
         foreach (var (language, value) in translations)
@@ -27,7 +27,7 @@ internal static partial class ModValidationRules
     /// <summary>
     /// Validates every declared language tag and rejects blank localized text.
     /// </summary>
-    internal static void ValidateTranslations(IReadOnlyDictionary<string, string> translations)
+    public static void ValidateTranslations(IReadOnlyDictionary<string, string> translations)
     {
         foreach (var (language, value) in translations)
         {
@@ -41,12 +41,12 @@ internal static partial class ModValidationRules
     /// <summary>
     /// Validates a logical mod or repository identifier.
     /// </summary>
-    internal static bool IsValidIdentifier(string identifier) => IdentifierPattern().IsMatch(identifier);
+    public static bool IsValidIdentifier(string identifier) => IdentifierPattern().IsMatch(identifier);
 
     /// <summary>
     /// Validates an optional author string without allowing blank values.
     /// </summary>
-    internal static void ValidateAuthor(string? author)
+    public static void ValidateAuthor(string? author)
     {
         if (author is not null && string.IsNullOrWhiteSpace(author))
         {
@@ -57,7 +57,7 @@ internal static partial class ModValidationRules
     /// <summary>
     /// Validates an icon extension for package-relative image assets.
     /// </summary>
-    internal static bool IsSupportedIconExtension(string path)
+    public static bool IsSupportedIconExtension(string path)
     {
         var extension = Path.GetExtension(path);
         return extension.Equals(".svg", StringComparison.OrdinalIgnoreCase) ||
@@ -70,7 +70,7 @@ internal static partial class ModValidationRules
     /// <summary>
     /// Validates an absolute HTTP(S) URL for display or mirror metadata without embedded credentials.
     /// </summary>
-    internal static Uri ValidateHttpUri(string value)
+    public static Uri ValidateHttpUri(string value)
     {
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
         {
@@ -92,7 +92,7 @@ internal static partial class ModValidationRules
     /// <summary>
     /// Validates repository web page URL and optional sub-directory declaration.
     /// </summary>
-    internal static void ValidateRepository(ModRepositoryInfo? repository)
+    public static void ValidateRepository(ModRepositoryInfo? repository)
     {
         if (repository is null) return;
 
@@ -106,7 +106,7 @@ internal static partial class ModValidationRules
     /// <summary>
     /// Validates an SPDX expression or custom license reference identifier.
     /// </summary>
-    internal static void ValidateSpdx(string spdx)
+    public static void ValidateSpdx(string spdx)
     {
         if (string.IsNullOrWhiteSpace(spdx))
         {
@@ -117,7 +117,7 @@ internal static partial class ModValidationRules
     /// <summary>
     /// Validates package license metadata, relative notice paths, and uniqueness.
     /// </summary>
-    internal static void ValidateLicense(ModLicense? license)
+    public static void ValidateLicense(ModLicense? license)
     {
         if (license is null) return;
 

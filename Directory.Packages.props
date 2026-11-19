@@ -15,6 +15,8 @@
   </PropertyGroup>
   <ItemGroup Label="Common">
     <PackageVersion Include="AngleSharp" Version="1.5.2" />
+    <PackageVersion Include="Autofac" Version="9.3.4" />
+    <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="11.0.2" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="DiffPlex" Version="1.9.0" />
     <PackageVersion Include="DynamicData" Version="9.5.0" />

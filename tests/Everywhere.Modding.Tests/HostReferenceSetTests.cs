@@ -92,7 +92,8 @@ public sealed class HostReferenceSetTests
         Assert.That(references.Assemblies, Has.Count.EqualTo(1));
         Assert.That(references.Assemblies["Everywhere.Modding.Abstractions"], Is.EqualTo(expected));
         Assert.That(references.RuntimeAssemblies, Has.Count.EqualTo(2));
-        Assert.That(references.RuntimeAssemblies["System.Private.CoreLib"],
+        Assert.That(
+            references.RuntimeAssemblies["System.Private.CoreLib"],
             Is.EqualTo(Path.Combine(_root, "System.Private.CoreLib.dll")));
     }
 

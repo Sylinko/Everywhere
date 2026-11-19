@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);FIXTURE_A</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Entry.cs" Link="Entry.cs" />
+    <ProjectReference Include="../../../../src/Everywhere.Modding.Abstractions/Everywhere.Modding.Abstractions.csproj" />
+    <ProjectReference Include="../B/ModFixture.B.csproj" Private="false" />
+  </ItemGroup>
+</Project>
