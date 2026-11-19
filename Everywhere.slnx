@@ -45,6 +45,11 @@
     <Project Path="src/Everywhere.I18N.Abstractions/Everywhere.I18N.Abstractions.csproj" />
     <Project Path="src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" />
   </Folder>
+  <Folder Name="/modding/">
+    <Project Path="src/Everywhere.Modding.Abstractions/Everywhere.Modding.Abstractions.csproj" />
+    <Project Path="src/Everywhere.Modding.Packaging/Everywhere.Modding.Packaging.csproj" />
+    <Project Path="src/Everywhere.Modding.Sdk/Everywhere.Modding.Sdk.csproj" />
+  </Folder>
   <Folder Name="/patches/">
     <File Path="patches/Directory.Packages.props" />
     <Project Path="patches/Everywhere.BuildTask.Patcher/Everywhere.BuildTask.Patcher.csproj" />
@@ -59,6 +64,7 @@
     <File Path="src/Build.Generate.Cloud.targets" />
     <File Path="src/Build.Generate.Telemetry.targets" />
     <File Path="src/Build.Generate.Versioning.targets" />
+    <File Path="src/Build.Modding.Hosting.targets" />
     <File Path="src/Build.Patches.targets" />
     <File Path="src/Build.Watchdog.targets" />
   </Folder>
@@ -70,6 +76,7 @@
     <Project Path="tests/Everywhere.Automation.Tests/Everywhere.Automation.Tests.csproj" />
     <Project Path="tests/Everywhere.AvaloniaDesignerHost/Everywhere.AvaloniaDesignerHost.csproj" />
     <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
+    <Project Path="tests/Everywhere.Modding.Tests/Everywhere.Modding.Tests.csproj" />
     <Project Path="tests/Everywhere.ProcessIsolation.Tests/Everywhere.ProcessIsolation.Tests.csproj" />
     <Project Path="tests/Everywhere.Terminal.TestApp/Everywhere.Terminal.TestApp.csproj" />
     <Project Path="tests/Everywhere.Terminal.Tests/Everywhere.Terminal.Tests.csproj" />

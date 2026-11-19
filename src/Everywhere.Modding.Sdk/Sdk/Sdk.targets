@@ -1,0 +1,161 @@
+<Project>
+  <PropertyGroup>
+    <_EverywhereIsSourceHost>$([System.String]::Copy('$(EverywhereHost)').EndsWith('.csproj', System.StringComparison.OrdinalIgnoreCase))</_EverywhereIsSourceHost>
+    <!-- Configuration and Platform keep normal project-reference semantics. Mod identity,
+         output locations and deployment options must not override the host's own properties. -->
+    <_EverywhereHostPropertiesToRemove>RuntimeIdentifier;RuntimeIdentifiers;SelfContained;PublishSelfContained;PublishAot;PublishTrimmed;PublishSingleFile</_EverywhereHostPropertiesToRemove>
+    <_EverywhereHostPropertiesToRemove>$(_EverywhereHostPropertiesToRemove);OutputPath;OutDir;BaseOutputPath;IntermediateOutputPath;BaseIntermediateOutputPath;MSBuildProjectExtensionsPath;PublishDir</_EverywhereHostPropertiesToRemove>
+    <_EverywhereHostPropertiesToRemove>$(_EverywhereHostPropertiesToRemove);Version;PackageVersion;AssemblyVersion;FileVersion;InformationalVersion;AssemblyName;RootNamespace</_EverywhereHostPropertiesToRemove>
+    <_EverywhereHostPropertiesToRemove>$(_EverywhereHostPropertiesToRemove);EverywhereHost;EverywhereHostVersion;EverywhereModApiVersion;EverywhereModId;EverywhereModEntryType;EverywhereModPlatform;EverywhereModPackagePath;EverywhereModToolsDirectory;EverywhereLocalConfiguration;EverywhereI18NNamespace</_EverywhereHostPropertiesToRemove>
+    <_EverywhereHostPropertiesToRemove>$(_EverywhereHostPropertiesToRemove);EverywhereModAuthor;EverywhereModHomepage;EverywhereModRepository;EverywhereModRepositoryDirectory;EverywhereModIcon;EverywhereModLicense;EverywhereModLicenseFile;EverywhereModRequireLicenseAcceptance</_EverywhereHostPropertiesToRemove>
+  </PropertyGroup>
+
+  <!-- Keep compilation in the standard restore/project-reference graph. The host supplies runtime
+       dependencies; mod-owned package references still contribute their own runtime assets. -->
+  <ItemGroup Condition="'$(_EverywhereIsSourceHost)' == 'true'">
+    <ProjectReference Include="$(EverywhereHost)"
+                      Private="false"
+                      IncludeAssets="compile"
+                      IsEverywhereHostReference="true"
+                      GlobalPropertiesToRemove="$(_EverywhereHostPropertiesToRemove)"/>
+  </ItemGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk"/>
+
+  <Target Name="EverywherePrepareHostProjectReferences" AfterTargets="IncludeTransitiveProjectReferences"
+          Condition="'$(_EverywhereIsSourceHost)' == 'true'">
+    <MSBuild Projects="$(EverywhereHost)" Targets="EverywhereGetModHostProjectReferences"
+             RemoveProperties="TargetFramework;$(_EverywhereHostPropertiesToRemove)">
+      <Output TaskParameter="TargetOutputs" ItemName="_EverywhereHostProjectReference"/>
+    </MSBuild>
+    <ItemGroup>
+      <ProjectReference Update="@(ProjectReference->WithMetadataValue('FullPath', '%(_EverywhereHostProjectReference.FullPath)'))">
+        <Private>false</Private>
+        <GlobalPropertiesToRemove>%(ProjectReference.GlobalPropertiesToRemove);$(_EverywhereHostPropertiesToRemove)</GlobalPropertiesToRemove>
+      </ProjectReference>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="EverywhereImportHost" BeforeTargets="ResolveAssemblyReferences" DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(DesignTimeBuild)' != 'true' Or '$(_EverywhereIsSourceHost)' != 'true'">
+    <Error Condition="'$(EverywhereHost)' == ''" Text="Specify EverywhereHost in Everywhere.local.props or as a build property."/>
+    <PropertyGroup>
+      <_EverywhereHostReferences>$(IntermediateOutputPath)everywhere-host-references.txt</_EverywhereHostReferences>
+      <_EverywhereHostDirectory Condition="'$(_EverywhereIsSourceHost)' != 'true'">$(EverywhereHost)</_EverywhereHostDirectory>
+    </PropertyGroup>
+    <!-- Reuse the resolved reference's framework/configuration and property isolation when reading
+         the host descriptor. Do not launch a separate dotnet build with different global properties. -->
+    <MSBuild Projects="@(_MSBuildProjectReferenceExistent)"
+             Targets="EverywhereExportModHost"
+             Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration);%(_MSBuildProjectReferenceExistent.SetPlatform);%(_MSBuildProjectReferenceExistent.SetTargetFramework)"
+             RemoveProperties="%(_MSBuildProjectReferenceExistent.GlobalPropertiesToRemove)$(_GlobalPropertiesToRemoveFromProjectReferences)"
+             Condition="'%(_MSBuildProjectReferenceExistent.IsEverywhereHostReference)' == 'true'">
+      <Output TaskParameter="TargetOutputs" ItemName="_EverywhereHostDescriptor"/>
+    </MSBuild>
+    <PropertyGroup Condition="'$(_EverywhereIsSourceHost)' == 'true'">
+      <_EverywhereHostDirectory>@(_EverywhereHostDescriptor->'%(RootDir)%(Directory).')</_EverywhereHostDirectory>
+    </PropertyGroup>
+    <Exec Command="dotnet &quot;$(EverywhereModToolsDirectory)/Everywhere.Modding.Sdk.dll&quot; import &quot;$(_EverywhereHostDirectory)&quot; &quot;$(_EverywhereHostReferences)&quot;"/>
+    <ReadLinesFromFile File="$(_EverywhereHostReferences)" Condition="'$(_EverywhereIsSourceHost)' != 'true'">
+      <Output TaskParameter="Lines" ItemName="_EverywhereHostReference"/>
+    </ReadLinesFromFile>
+    <ItemGroup Condition="'$(_EverywhereIsSourceHost)' != 'true'">
+      <Reference Include="@(_EverywhereHostReference)">
+        <HintPath>%(Identity)</HintPath>
+        <Private>false</Private>
+      </Reference>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="EverywherePack" DependsOnTargets="Build">
+    <Error Condition="'$(EverywhereModId)' == '' OR '$(EverywhereModEntryType)' == ''"
+           Text="EverywhereModId and EverywhereModEntryType must be declared in the project."/>
+    <PropertyGroup>
+      <EverywhereModPlatform Condition="'$(EverywhereModPlatform)' == ''">universal</EverywhereModPlatform>
+      <EverywhereModPackagePath Condition="'$(EverywhereModPackagePath)' == ''">$([System.IO.Path]::Combine('$(OutputPath)', '$(EverywhereModId)-$(Version).zip'))</EverywhereModPackagePath>
+      <_EverywherePackDirectory>$(IntermediateOutputPath)everywhere-pack</_EverywherePackDirectory>
+      <_EverywhereLocalizationDirectory>$(_EverywherePackDirectory)/i18n</_EverywhereLocalizationDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <_EverywherePackItem Include="@(Content)" Condition="'%(Content.Pack)' != 'false'"/>
+      <_EverywherePackItem Include="@(None)" Condition="'%(None.Pack)' == 'true'"/>
+      <_EverywhereExplicitlyUnpacked Include="@(Content)" Condition="'%(Content.Pack)' == 'false'"/>
+      <_EverywhereExplicitlyUnpacked Include="@(None)" Condition="'%(None.Pack)' == 'false'"/>
+    </ItemGroup>
+    <AssignTargetPath Files="@(_EverywherePackItem)" RootFolder="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="AssignedFiles" ItemName="_EverywhereAssignedPackItem"/>
+    </AssignTargetPath>
+    <ItemGroup>
+      <!-- Copy-local membership determines which resolved references are shipped. RAR supplies
+           typed reference/satellite lists; NuGet supplies AssetType on its runtime assets. -->
+      <_EverywhereResolvedAssembly Include="@(ReferencePath);@(ReferenceDependencyPaths);@(ReferenceSatellitePaths)"/>
+      <_EverywhereOtherReference Include="@(ReferenceCopyLocalPaths)"/>
+      <_EverywhereOtherReference Remove="@(_EverywhereResolvedAssembly)" MatchOnMetadata="FullPath" MatchOnMetadataOptions="PathLike"/>
+      <_EverywhereManagedReference Include="@(ReferenceCopyLocalPaths)"/>
+      <_EverywhereManagedReference Remove="@(_EverywhereOtherReference)" MatchOnMetadata="FullPath" MatchOnMetadataOptions="PathLike"/>
+      <_EverywhereNativeCopyLocal Include="@(NativeCopyLocalItems)"
+                                  Exclude="@(_NativeRestoredAppHostNETCore)"
+                                  Condition="'%(NativeCopyLocalItems.CopyLocal)' == 'true' And '$(RuntimeIdentifier)' != ''"/>
+      <_EverywhereOtherReference Remove="@(_EverywhereNativeCopyLocal)" MatchOnMetadata="FullPath" MatchOnMetadataOptions="PathLike"/>
+      <_EverywherePayload Include="@(_EverywhereManagedReference)">
+        <TargetPath>%(_EverywhereManagedReference.DestinationSubDirectory)%(_EverywhereManagedReference.Filename)%(_EverywhereManagedReference.Extension)</TargetPath>
+        <AssetType>runtime</AssetType>
+      </_EverywherePayload>
+      <_EverywherePayload Include="@(_EverywhereOtherReference)">
+        <TargetPath>%(_EverywhereOtherReference.DestinationSubDirectory)%(_EverywhereOtherReference.Filename)%(_EverywhereOtherReference.Extension)</TargetPath>
+        <AssetType Condition="'%(_EverywhereOtherReference.AssetType)' == ''">package-file</AssetType>
+      </_EverywherePayload>
+      <_EverywherePayload Include="@(_EverywhereNativeCopyLocal)">
+        <TargetPath>runtimes/$(RuntimeIdentifier)/native/%(Filename)%(Extension)</TargetPath>
+        <AssetType>package-file</AssetType>
+      </_EverywherePayload>
+      <_EverywherePayload Include="$(ProjectDepsFilePath)" Condition="Exists('$(ProjectDepsFilePath)')">
+        <TargetPath>$(TargetName).deps.json</TargetPath>
+        <AssetType>package-file</AssetType>
+      </_EverywherePayload>
+      <_EverywherePayload Include="@(IntermediateSatelliteAssembliesWithTargetPath)">
+        <AssetType>resources</AssetType>
+      </_EverywherePayload>
+      <_EverywherePayload Include="@(_EverywhereAssignedPackItem)">
+        <AssetType>pack-file</AssetType>
+      </_EverywherePayload>
+    </ItemGroup>
+    <ItemGroup>
+      <_EverywhereConventionalReadme Include="$(MSBuildProjectDirectory)/README.md" Condition="Exists('$(MSBuildProjectDirectory)/README.md')"/>
+      <_EverywhereConventionalReadme Include="$(MSBuildProjectDirectory)/README.*.md"/>
+      <_EverywhereConventionalReadme Remove="@(_EverywhereExplicitlyUnpacked)" MatchOnMetadata="FullPath" MatchOnMetadataOptions="PathLike"/>
+      <_EverywherePackProperty Include="AssemblyPath" Value="$(TargetPath)"/>
+      <_EverywherePackProperty Include="ReferenceList" Value="$(_EverywhereHostReferences)"/>
+      <_EverywherePackProperty Include="ModId" Value="$(EverywhereModId)"/>
+      <_EverywherePackProperty Include="Version" Value="$(Version)"/>
+      <_EverywherePackProperty Include="EntryType" Value="$(EverywhereModEntryType)"/>
+      <_EverywherePackProperty Include="Framework" Value="$(TargetFramework)"/>
+      <_EverywherePackProperty Include="HostRange" Value="$(EverywhereHostVersion)"/>
+      <_EverywherePackProperty Include="ApiRange" Value="$(EverywhereModApiVersion)"/>
+      <_EverywherePackProperty Include="Platform" Value="$(EverywhereModPlatform)"/>
+      <_EverywherePackProperty Include="OutputPath" Value="$(EverywhereModPackagePath)"/>
+      <_EverywherePackProperty Include="ProjectDirectory" Value="$(MSBuildProjectDirectory)"/>
+      <_EverywherePackProperty Include="Author" Value="$(EverywhereModAuthor)"/>
+      <_EverywherePackProperty Include="Homepage" Value="$(EverywhereModHomepage)"/>
+      <_EverywherePackProperty Include="Repository" Value="$(EverywhereModRepository)"/>
+      <_EverywherePackProperty Include="RepositoryDirectory" Value="$(EverywhereModRepositoryDirectory)"/>
+      <_EverywherePackProperty Include="Icon" Value="$(EverywhereModIcon)"/>
+      <_EverywherePackProperty Include="License" Value="$(EverywhereModLicense)"/>
+      <_EverywherePackProperty Include="LicenseFile" Value="$(EverywhereModLicenseFile)"/>
+      <_EverywherePackProperty Include="RequireLicenseAcceptance" Value="$(EverywhereModRequireLicenseAcceptance)"/>
+    </ItemGroup>
+    <!-- Rebuild the pack staging folder each time so removed localizations leave no stale files behind,
+         and project text metadata through task items to avoid MSBuild quote/semicolon parsing bugs. -->
+    <RemoveDir Directories="$(_EverywherePackDirectory)"/>
+    <MakeDir Directories="$(_EverywhereLocalizationDirectory)"/>
+    <WriteLinesToFile File="$(_EverywherePackDirectory)/properties.txt" Lines="@(_EverywherePackProperty->'%(Identity)=%(Value)')" Overwrite="true" Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(_EverywherePackDirectory)/payload.txt" Lines="@(_EverywherePayload->'%(FullPath)|%(TargetPath)|%(AssetType)|%(PackagePath)|%(RecursiveDir)')" Overwrite="true" Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(_EverywherePackDirectory)/dependencies.txt" Lines="@(EverywhereModDependency->'%(Identity)|%(Version)|%(Optional)|%(Assemblies)')" Overwrite="true" Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(_EverywherePackDirectory)/readmes.txt" Lines="@(_EverywhereConventionalReadme->'%(Filename)%(Extension)')" Overwrite="true" Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(_EverywhereLocalizationDirectory)/localizations.txt" Lines="@(EverywhereModLocalization)" Overwrite="true" Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(_EverywhereLocalizationDirectory)/%(EverywhereModLocalization.Identity).name.txt" Lines="@(EverywhereModLocalization->'%(Name)')" Overwrite="true" Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(_EverywhereLocalizationDirectory)/%(EverywhereModLocalization.Identity).description.txt" Lines="@(EverywhereModLocalization->'%(Description)')" Overwrite="true" Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(_EverywhereLocalizationDirectory)/%(EverywhereModLocalization.Identity).readme.txt" Lines="@(EverywhereModLocalization->'%(Readme)')" Overwrite="true" Encoding="UTF-8"/>
+    <Exec Command="dotnet &quot;$(EverywhereModToolsDirectory)/Everywhere.Modding.Sdk.dll&quot; pack &quot;$(_EverywherePackDirectory)&quot;"/>
+  </Target>
+</Project>

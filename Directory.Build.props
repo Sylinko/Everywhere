@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <CompilerVisibleProperty Include="EverywhereI18NNamespace" />
+    <CompilerVisibleProperty Include="EverywhereI18NNamespace"/>
   </ItemGroup>
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
