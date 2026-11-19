@@ -346,7 +346,12 @@ public sealed class ModEngine : IAsyncDisposable
                 return true;
             }
 
-            await Task.Delay(_options.CollectionDelay).ConfigureAwait(false);
+            if (attempt + 1 < _options.CollectionAttempts)
+            {
+                var multiplier = 1 << Math.Min(attempt, 4);
+                var delayMs = Math.Min(_options.CollectionDelay.TotalMilliseconds * multiplier, 250d);
+                await Task.Delay(TimeSpan.FromMilliseconds(delayMs)).ConfigureAwait(false);
+            }
         }
 
         // Host-acquired native references intentionally remain loaded until process exit.

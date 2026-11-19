@@ -14,10 +14,11 @@ public sealed record ModEngineOptions
     /// <summary>
     /// Gets the maximum number of forced collection observations per replacement.
     /// </summary>
-    public int CollectionAttempts { get; init; } = 10;
+    public int CollectionAttempts { get; init; } = 5;
 
     /// <summary>
-    /// Gets the pause between collection observations; finalizer execution is not a strict time bound.
+    /// Gets the initial delay between collection observations, doubled exponentially across retries up to 250 ms;
+    /// finalizer execution is not a strict time bound.
     /// </summary>
-    public TimeSpan CollectionDelay { get; init; } = TimeSpan.FromMilliseconds(50);
+    public TimeSpan CollectionDelay { get; init; } = TimeSpan.FromMilliseconds(15);
 }

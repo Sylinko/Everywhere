@@ -199,10 +199,15 @@ public sealed class ModPackageStore(string rootDirectory, string dataDirectory, 
     /// Tries to delete an installation only after the caller has released all users and selection references.
     /// Returns false for filesystem failures so the host can defer deletion without undoing activation.
     /// </summary>
-    public bool TryRemove(ModInstallation installation)
+    public bool TryRemove(ModInstallation installation) => TryRemoveDirectory(installation.Directory);
+
+    /// <summary>
+    /// Tries to delete an arbitrary package directory owned inside this store's <c>packages</c> root.
+    /// </summary>
+    public bool TryRemoveDirectory(string directory)
     {
         var root = Path.GetFullPath(Path.Combine(RootDirectory, "packages")) + Path.DirectorySeparatorChar;
-        var path = Path.GetFullPath(installation.Directory);
+        var path = Path.GetFullPath(directory);
         var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
         if (!path.StartsWith(root, comparison))
