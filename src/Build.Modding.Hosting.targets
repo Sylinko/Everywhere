@@ -1,0 +1,37 @@
+<Project>
+  <!-- This descriptor supplements deps.json; it does not duplicate the host dependency graph. -->
+  <PropertyGroup>
+    <EverywhereModApiVersion>1.0.0</EverywhereModApiVersion>
+  </PropertyGroup>
+
+  <Target Name="EverywhereWriteModHostDescriptor" AfterTargets="Build">
+    <PropertyGroup>
+      <_EverywhereDescriptorPath>$(TargetDir)mod-host.json</_EverywhereDescriptorPath>
+      <_EverywhereHostVersion Condition="'$(SemanticVersion)' != ''">$(SemanticVersion)</_EverywhereHostVersion>
+      <_EverywhereHostVersion Condition="'$(SemanticVersion)' == ''">$(Version)</_EverywhereHostVersion>
+      <_EverywhereDescriptor>{&quot;schemaVersion&quot;:1,&quot;hostVersion&quot;:&quot;$(_EverywhereHostVersion)&quot;,&quot;modApiVersion&quot;:&quot;$(EverywhereModApiVersion)&quot;,&quot;framework&quot;:&quot;$(TargetFramework)&quot;,&quot;runtimeIdentifier&quot;:&quot;$(RuntimeIdentifier)&quot;,&quot;entryAssembly&quot;:&quot;$(TargetFileName)&quot;}</_EverywhereDescriptor>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_EverywhereDescriptorPath)" Lines="$(_EverywhereDescriptor)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <Target Name="EverywhereExportModHost" DependsOnTargets="Build;EverywhereWriteModHostDescriptor" Returns="@(_EverywhereHostDescriptor)">
+    <ItemGroup>
+      <_EverywhereHostDescriptor Include="$(_EverywhereDescriptorPath)" />
+    </ItemGroup>
+  </Target>
+
+  <!-- The mod SDK uses the restored project graph to apply host ownership to implicit
+       transitive ProjectReferences as well as the application entry. No compilation DLLs are exported. -->
+  <Target Name="EverywhereGetModHostProjectReferences" DependsOnTargets="IncludeTransitiveProjectReferences"
+          Returns="@(_EverywhereHostProjectReference)">
+    <ItemGroup>
+      <_EverywhereHostProjectReference Include="@(ProjectReference->'%(FullPath)')" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="EverywherePublishModHostDescriptor" BeforeTargets="ComputeResolvedFilesToPublishList" DependsOnTargets="EverywhereWriteModHostDescriptor">
+    <ItemGroup>
+      <ResolvedFileToPublish Include="$(_EverywhereDescriptorPath)" RelativePath="mod-host.json" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+</Project>

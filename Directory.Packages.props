@@ -15,6 +15,8 @@
   </PropertyGroup>
   <ItemGroup Label="Common">
     <PackageVersion Include="AngleSharp" Version="1.5.2" />
+    <PackageVersion Include="Autofac" Version="9.3.4" />
+    <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="11.0.2" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="DiffPlex" Version="1.9.0" />
     <PackageVersion Include="DynamicData" Version="9.5.0" />
@@ -36,6 +38,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Windows.Console.ConPTY" Version="1.25.260930003" />
     <PackageVersion Include="MonoMod.Patcher" Version="25.0.1" />
+    <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
     <PackageVersion Include="ObservableCollections" Version="3.3.4" />
     <PackageVersion Include="OpenTelemetry" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />

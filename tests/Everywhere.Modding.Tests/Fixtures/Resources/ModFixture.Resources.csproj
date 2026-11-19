@@ -1,0 +1,5 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Everywhere.Modding.Abstractions/Everywhere.Modding.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

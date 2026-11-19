@@ -16,6 +16,7 @@ using Everywhere.Harness;
 using Everywhere.Harness.Mcp;
 using Everywhere.Initialization;
 using Everywhere.Interop;
+using Everywhere.Modding;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Input;
@@ -93,7 +94,9 @@ public static class ServiceExtensions
                 .AddSingleton<PersistentKeyValueStorage>()
                 .AddSingleton<IKeyValueStorage>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
                 .AddAsyncInitializer<PersistentKeyValueStorage>()
-                .AddSingleton<PersistentState>();
+                .AddSingleton<PersistentState>()
+                .AddSingleton<ModEngineManager>()
+                .AddAsyncInitializer<ModEngineManager>();
 
         public IServiceCollection AddViewsAndViewModels() =>
             services

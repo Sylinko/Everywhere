@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <ProjectReference Include="../../src/Everywhere.Modding.Hosting/Everywhere.Modding.Hosting.csproj" />
+    <Using Include="NUnit.Framework" />
+    <ProjectReference Include="Fixtures/A/ModFixture.A.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Fixtures/B/ModFixture.B.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Fixtures/Host/ModFixture.Host.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Everywhere.Modding.Sdk/Everywhere.Modding.Sdk.csproj" ReferenceOutputAssembly="false" />
+    <Compile Remove="Fixtures/**/*.cs" />
+    <ProjectReference Include="Fixtures/Resources/ModFixture.Resources.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="CopyModFixtures" AfterTargets="Build">
+    <ItemGroup>
+      <_ModFixture Include="Fixtures/A/bin/$(Configuration)/$(TargetFramework)/ModFixture.A.dll" />
+      <_ModFixture Include="Fixtures/Resources/bin/$(Configuration)/$(TargetFramework)/ModFixture.Resources.dll" />
+      <_ModFixture Include="Fixtures/B/bin/$(Configuration)/$(TargetFramework)/ModFixture.B.dll" />
+      <_ModFixture Include="Fixtures/B/bin/$(Configuration)/$(TargetFramework)/fr/ModFixture.B.resources.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ModFixture)" DestinationFolder="$(OutDir)fixtures" />
+  </Target>
+
+</Project>

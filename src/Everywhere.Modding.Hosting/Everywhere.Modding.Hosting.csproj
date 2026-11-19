@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>Package selection and collectible runtime for Everywhere mods.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac"/>
+    <PackageReference Include="Autofac.Extensions.DependencyInjection"/>
+    <PackageReference Include="ZLinq"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Everywhere.Modding.Abstractions/Everywhere.Modding.Abstractions.csproj"/>
+    <ProjectReference Include="../Everywhere.Modding.Packaging/Everywhere.Modding.Packaging.csproj"/>
+  </ItemGroup>
+
+</Project>

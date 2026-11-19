@@ -1,4 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using MessagePack;
 using Avalonia.Headless.NUnit;
@@ -115,6 +118,50 @@ public sealed class DynamicLocaleKeyTests
         {
             LocaleManager.CurrentLocale = oldLocale;
         }
+    }
+
+    [Test]
+    public void CompositeLocaleKeys_CopyOnlyCollectibleContainers()
+    {
+        IReadOnlyList<IDynamicLocaleKey?> hostArgs = [new DirectLocaleKey("a")];
+        var hostFormatted = new FormattedDynamicLocaleKey("k", hostArgs);
+        var hostKeys = new List<IDynamicLocaleKey> { new DirectLocaleKey("a") };
+        var hostAggregate = new AggregateDynamicLocaleKey(hostKeys);
+
+        var collectibleArgs = CreateCollectibleList<IDynamicLocaleKey?>(new DirectLocaleKey("b"));
+        var collectibleFormatted = new FormattedDynamicLocaleKey("k", collectibleArgs);
+        var collectibleKeys = CreateCollectibleList<IDynamicLocaleKey>(new DirectLocaleKey("b"));
+        var collectibleAggregate = new AggregateDynamicLocaleKey(collectibleKeys);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(GetArgs(hostFormatted), Is.SameAs(hostArgs));
+            Assert.That(GetKeys(hostAggregate), Is.SameAs(hostKeys));
+            Assert.That(collectibleArgs.GetType().IsCollectible, Is.True);
+            Assert.That(GetArgs(collectibleFormatted), Is.Not.SameAs(collectibleArgs));
+            Assert.That(GetArgs(collectibleFormatted).GetType().IsCollectible, Is.False);
+            Assert.That(GetKeys(collectibleAggregate), Is.Not.SameAs(collectibleKeys));
+            Assert.That(GetKeys(collectibleAggregate).GetType().IsCollectible, Is.False);
+        });
+    }
+
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "get_Args")]
+    private static extern IReadOnlyList<IDynamicLocaleKey?> GetArgs(FormattedDynamicLocaleKey target);
+
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "get_Keys")]
+    private static extern IReadOnlyList<IDynamicLocaleKey> GetKeys(AggregateDynamicLocaleKey target);
+
+    private static IReadOnlyList<T> CreateCollectibleList<T>(T item)
+    {
+        var assembly = AssemblyBuilder.DefineDynamicAssembly(
+            new AssemblyName("DynamicLocaleKeyCollectibleFixture"),
+            AssemblyBuilderAccess.RunAndCollect);
+        var module = assembly.DefineDynamicModule("DynamicLocaleKeyCollectibleFixture.dll");
+        var type = module.DefineType("CollectibleList", TypeAttributes.Public | TypeAttributes.Sealed, typeof(List<T>));
+        var typeInfo = type.CreateTypeInfo() ?? throw new InvalidOperationException("Failed to create collectible list type.");
+        var instance = (List<T>)(Activator.CreateInstance(typeInfo) ?? throw new InvalidOperationException("Failed to instantiate collectible list."));
+        instance.Add(item);
+        return instance;
     }
 
     private sealed class RecordingObserver : IObserver<object?>
