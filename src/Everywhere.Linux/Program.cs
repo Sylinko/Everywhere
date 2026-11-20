@@ -136,6 +136,7 @@ public static class Program
                 .AddDatabaseAndStorage()
                 .AddCloudClient()
                 .AddChatEssentials()
+                .AddModding()
                 .AddTextSelection()
 
                 #endregion

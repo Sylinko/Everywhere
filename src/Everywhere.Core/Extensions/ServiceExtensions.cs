@@ -1,4 +1,5 @@
-﻿using Everywhere.AI;
+﻿using System.Net;
+using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
 using Everywhere.Automation;
@@ -15,6 +16,8 @@ using Everywhere.Harness;
 using Everywhere.Harness.Mcp;
 using Everywhere.Initialization;
 using Everywhere.Interop;
+using Everywhere.Modding;
+using Everywhere.Modding.Hosting.Sources;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Input;
@@ -241,5 +244,25 @@ public static class ServiceExtensions
                 .AddSingleton<BuiltInChatPlugin, WebPlugin>()
                 .AddSingleton<BuiltInChatPlugin, TerminalPlugin>()
                 .AddSingleton<BuiltInChatPlugin, OfficeCLIPlugin>();
+
+        /// <summary>
+        /// Registers the mod manager, configured repository HTTP client, and startup reconciliation initializer.
+        /// </summary>
+        public IServiceCollection AddModding()
+        {
+            services
+                .AddHttpClient(ModManager.HttpClientName, static client => client.Timeout = TimeSpan.FromMinutes(5))
+                .ConfigurePrimaryHttpMessageHandler(static serviceProvider => new HttpClientHandler
+                {
+                    Proxy = serviceProvider.GetService<IWebProxy>(),
+                    UseProxy = true,
+                    AllowAutoRedirect = true
+                });
+
+            return services
+                .AddSingleton(sp => new ModManager(sp, builtInSources: sp.GetServices<IModRepositorySource>()))
+                .AddSingleton<IModManager>(sp => sp.GetRequiredService<ModManager>())
+                .AddAsyncInitializer<ModManager>();
+        }
     }
 }

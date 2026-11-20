@@ -1,0 +1,59 @@
+<Project>
+
+  <!-- Use the workspace SDK until its first NuGet release. EverywhereHost can be overridden in Everywhere.local.props. -->
+  <Import Project="../../../src/Everywhere.Modding.Sdk/Sdk/Sdk.props"/>
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <Version>1.0.0</Version>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <EverywhereModToolsDirectory>$(MSBuildThisFileDirectory)../../../src/Everywhere.Modding.Sdk/bin/$(Configuration)/net11.0</EverywhereModToolsDirectory>
+    <EverywhereHost Condition="'$(EverywhereHost)' == ''">$(MSBuildThisFileDirectory)../../../src/Everywhere.Core/Everywhere.Core.csproj</EverywhereHost>
+    <EverywhereHostVersion Condition="'$(EverywhereHostVersion)' == ''">[0.9.0-0,)</EverywhereHostVersion>
+    <EverywhereModId>everywhere.sample.navigation</EverywhereModId>
+    <EverywhereModEntryType>Everywhere.Mods.Sample.NavigationMod</EverywhereModEntryType>
+    <EverywhereModAuthor>Sylinko Inc.</EverywhereModAuthor>
+    <EverywhereModHomepage>https://everywhere.sylinko.com</EverywhereModHomepage>
+    <EverywhereModRepository>https://github.com/DearVa/Everywhere</EverywhereModRepository>
+    <EverywhereModRepositoryDirectory>mods/samples/Everywhere.Mods.Sample</EverywhereModRepositoryDirectory>
+    <EverywhereModLicense>Apache-2.0</EverywhereModLicense>
+    <EverywhereModLicenseFile>LICENSE</EverywhereModLicenseFile>
+    <EverywhereI18NNamespace>Everywhere.Mods.Sample.I18N</EverywhereI18NNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EverywhereModLocalization Include="en">
+      <Name>Navigation Sample</Name>
+      <Description>Demonstrates compiled XAML pages, dynamic localization, and navigation contributions inside a mod.</Description>
+      <Readme>README.md</Readme>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="zh-hans">
+      <Name>导航示例模组</Name>
+      <Description>演示在模组中提供编译后的 XAML 页面、动态多语言资源以及主导航栏扩展。</Description>
+    </EverywhereModLocalization>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference
+      Include="../../../src/Everywhere.Modding.Sdk/Everywhere.Modding.Sdk.csproj"
+      ReferenceOutputAssembly="false"
+      Private="false"
+      ExcludeAssets="all"
+      GlobalPropertiesToRemove="$(_EverywhereHostPropertiesToRemove);TargetFramework"/>
+    <ProjectReference
+      Include="../../../src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj"
+      ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="LICENSE" CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
+
+  <Import Project="../../../src/Build.I18N.targets"/>
+  <Import Project="../../../src/Everywhere.Modding.Sdk/Sdk/Sdk.targets"/>
+
+</Project>

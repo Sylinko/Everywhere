@@ -1,11 +1,12 @@
 ﻿using Avalonia;
-using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.Modding;
+using Everywhere.Modding.Hosting.Sources;
 using Everywhere.ProcessIsolation.Activation;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
@@ -15,7 +16,6 @@ using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Everywhere.TextSelection;
 using Everywhere.Windows.Automation;
-using Everywhere.Windows.Chat.Plugins;
 using Everywhere.Windows.Common;
 using Everywhere.Windows.Initialization;
 using Everywhere.Windows.Interop;
@@ -49,9 +49,9 @@ public static class Program
         var role = ProcessRoleCommandLine.Parse(args);
         if (role is not ProcessRole.Main)
         {
-            return await (role is ProcessRole.Input ?
-                ProcessRoleHostRunner.RunAsync(role, args, peerVerifier, static () => new WindowsInputHostSession()) :
-                RunAutomationHostAsync(args, peerVerifier)).ConfigureAwait(false);
+            return await (role is ProcessRole.Input
+                ? ProcessRoleHostRunner.RunAsync(role, args, peerVerifier, static () => new WindowsInputHostSession())
+                : RunAutomationHostAsync(args, peerVerifier)).ConfigureAwait(false);
         }
 
         // Claim before runtime initialization; Entrance disposes services and the lock before running post-exit hooks.
@@ -131,14 +131,14 @@ public static class Program
                 .AddDatabaseAndStorage()
                 .AddCloudClient()
                 .AddChatEssentials()
+                .AddModding()
+                .AddSingleton<IModRepositorySource>(_ => EmbeddedModSource.FromAssembly(
+                    ModManager.BuiltInSourceId,
+                    typeof(Program).Assembly,
+                    "Everywhere.BuiltInMods",
+                    isSignatureRequired: false))
                 .AddStrategyEngine()
                 .AddTextSelection()
-
-                #endregion
-
-                #region Chat Plugins
-
-                .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
 
                 #endregion
 

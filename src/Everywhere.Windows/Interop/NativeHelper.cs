@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Security;
-using System.Security.Principal;
 using Windows.Data.Xml.Dom;
 using Windows.Networking.Connectivity;
 using Windows.UI.Notifications;
@@ -28,16 +27,6 @@ public class NativeHelper : INativeHelper
     private static string ProcessFullPath => Path.GetFullPath(Environment.ProcessPath.NotNull());
 
     public bool IsInstalled => InstallationIdentity.IsCurrentRegisteredInstallation(ProcessFullPath);
-
-    public bool IsAdministrator
-    {
-        get
-        {
-            var identity = WindowsIdentity.GetCurrent();
-            var principal = new WindowsPrincipal(identity);
-            return principal.IsInRole(WindowsBuiltInRole.Administrator);
-        }
-    }
 
     public bool IsStartupEnabled
     {
@@ -216,9 +205,9 @@ public class NativeHelper : INativeHelper
 
         var buffer = new char[32_768].AsSpan();
         var length = (uint)buffer.Length;
-        return PInvoke.QueryFullProcessImageName(process, PROCESS_NAME_FORMAT.PROCESS_NAME_WIN32, buffer, ref length) && length > 0 ?
-            GetApplicationInfo(new string(buffer[..(int)length])) :
-            null;
+        return PInvoke.QueryFullProcessImageName(process, PROCESS_NAME_FORMAT.PROCESS_NAME_WIN32, buffer, ref length) && length > 0
+            ? GetApplicationInfo(new string(buffer[..(int)length]))
+            : null;
     }
 
     /// <inheritdoc />
@@ -226,9 +215,9 @@ public class NativeHelper : INativeHelper
     {
         try
         {
-            using var icon = path is not null && Path.IsPathFullyQualified(path) && File.Exists(path) ?
-                Icon.ExtractAssociatedIcon(path) ?? (Icon)SystemIcons.Application.Clone() :
-                (Icon)SystemIcons.Application.Clone();
+            using var icon = path is not null && Path.IsPathFullyQualified(path) && File.Exists(path)
+                ? Icon.ExtractAssociatedIcon(path) ?? (Icon)SystemIcons.Application.Clone()
+                : (Icon)SystemIcons.Application.Clone();
             using var bitmap = icon.ToBitmap();
             using var stream = new MemoryStream();
             bitmap.Save(stream, ImageFormat.Png);

@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Everywhere"/>
     <InternalsVisibleTo Include="Everywhere.Core.Tests"/>
+    <InternalsVisibleTo Include="Everywhere.Linux.Tests"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -81,6 +83,7 @@
     <ProjectReference Include="..\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\Everywhere.Modding.Hosting\Everywhere.Modding.Hosting.csproj"/>
     <ProjectReference Include="..\Everywhere.ProcessIsolation\Everywhere.ProcessIsolation.csproj"/>
     <ProjectReference Include="..\Everywhere.ProcessIsolation.SourceGenerator\Everywhere.ProcessIsolation.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\Everywhere.Prompting\Everywhere.Prompting.csproj"/>
@@ -170,5 +173,7 @@
 
   <Import Project="..\Build.Generate.Telemetry.targets"/>
   <Import Project="..\Build.Generate.Cloud.targets"/>
+  <Import Project="..\Build.Generate.Modding.targets"/>
+  <Import Project="..\Build.Modding.Hosting.targets"/>
 
 </Project>

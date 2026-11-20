@@ -136,8 +136,62 @@ public sealed class HostReferenceSetTests
         }
 
         File.WriteAllText(path, document.ToJsonString());
-        var exception = Assert.Throws<ModValidationException>(() => new HostReferenceSet(_root));
+        var exception = Assert.Throws<ModValidationException>(() => { _ = new HostReferenceSet(_root); });
         Assert.That(exception?.Code, Is.EqualTo(expectedCode));
+    }
+
+    /// <summary>
+    /// Package assets absent from a library output directory resolve through explicit probe directories,
+    /// while strict runtime resolution without probe directories keeps rejecting missing files.
+    /// </summary>
+    [Test]
+    public void Import_PackageProbeDirectories_ResolvesLibraryPackageAssetsOnlyWhenSupplied()
+    {
+        var probeRoot = Path.Combine(_root, "nuget-cache");
+        var packageAssetDirectory = Path.Combine(probeRoot, "acme.abstractions", "1.0.0", "lib", "net11.0");
+        var resourceAssetDirectory = Path.Combine(packageAssetDirectory, "fr");
+        Directory.CreateDirectory(resourceAssetDirectory);
+
+        var packageDll = Path.Combine(packageAssetDirectory, "Everywhere.Modding.Abstractions.dll");
+        File.Copy(typeof(IMod).Assembly.Location, packageDll);
+        var resourceDll = Path.Combine(resourceAssetDirectory, "Everywhere.Modding.Abstractions.resources.dll");
+        File.Copy(typeof(IMod).Assembly.Location, resourceDll);
+
+        File.Delete(Path.Combine(_root, "Everywhere.Modding.Abstractions.dll"));
+
+        File.WriteAllText(
+            Path.Combine(_root, "Host.deps.json"),
+            """
+            {
+              "runtimeTarget": { "name": "net11.0", "signature": "ignored" },
+              "targets": {
+                "net11.0": {
+                  "Everywhere.Modding.Abstractions/1.0.0": {
+                    "runtime": {
+                      "lib/net11.0/Everywhere.Modding.Abstractions.dll": { "assemblyVersion": "1.0.0.0" }
+                    },
+                    "resources": {
+                      "lib/net11.0/fr/Everywhere.Modding.Abstractions.resources.dll": { "locale": "fr" }
+                    }
+                  }
+                }
+              },
+              "libraries": {
+                "Everywhere.Modding.Abstractions/1.0.0": {
+                  "type": "package",
+                  "path": "acme.abstractions/1.0.0"
+                }
+              },
+              "compilationOptions": {}
+            }
+            """);
+
+        var missingException = Assert.Throws<ModValidationException>(() => { _ = new HostReferenceSet(_root); });
+        Assert.That(missingException?.Code, Is.EqualTo("MissingHostAsset"));
+
+        var references = new HostReferenceSet(_root, [probeRoot]);
+        Assert.That(references.Assemblies["Everywhere.Modding.Abstractions"], Is.EqualTo(packageDll));
+        Assert.That(references.ResourceAssemblies, Is.EqualTo(new[] { resourceDll }));
     }
 
     /// <summary>

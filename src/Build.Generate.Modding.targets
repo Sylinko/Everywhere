@@ -1,0 +1,36 @@
+<Project>
+  <!-- Local builds can supply the same public repository configuration as CI
+       without hardcoding deployment values or committing a private build profile. -->
+  <Import Project="$(EverywhereModdingConfigurationFile)" Condition="'$(EverywhereModdingConfigurationFile)' != '' And Exists('$(EverywhereModdingConfigurationFile)')"/>
+
+  <Target Name="GenerateModdingConstants" BeforeTargets="CoreCompile">
+    <Warning Condition="'$(OfficialModSourceUrl)' == '' Or '$(OfficialModSourcePublicKey)' == ''" Code="EVERYWHEREMODDING001"
+             Text="Official remote mod repository is disabled: supply OfficialModSourceUrl and OfficialModSourcePublicKey, or EverywhereModdingConfigurationFile, to enable it."/>
+    <PropertyGroup>
+      <OfficialModSourceUrl Condition="'$(OfficialModSourceUrl)' == ''"/>
+      <OfficialModSourceMirrors Condition="'$(OfficialModSourceMirrors)' == ''"/>
+      <OfficialModSourcePublicKey Condition="'$(OfficialModSourcePublicKey)' == ''"/>
+      <_SanitizedOfficialModSourceUrl>$([MSBuild]::Escape($([System.String]::Copy('$(OfficialModSourceUrl)').Replace('\', '\\').Replace('&quot;', '\&quot;'))))</_SanitizedOfficialModSourceUrl>
+      <_SanitizedOfficialModSourceMirrors>$([MSBuild]::Escape($([System.String]::Copy('$(OfficialModSourceMirrors)').Replace(';', ',').Replace('\', '\\').Replace('&quot;', '\&quot;'))))</_SanitizedOfficialModSourceMirrors>
+      <_SanitizedOfficialModSourcePublicKey>$([MSBuild]::Escape($([System.String]::Copy('$(OfficialModSourcePublicKey)').Replace('\', '\\').Replace('&quot;', '\&quot;'))))</_SanitizedOfficialModSourcePublicKey>
+      <GeneratedModdingConstantsFile>$(IntermediateOutputPath)ModdingConstants.g.cs</GeneratedModdingConstantsFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ModdingCode Include="// &lt;auto-generated /&gt;"/>
+      <ModdingCode Include="namespace Everywhere.Modding%3B"/>
+      <ModdingCode Include="internal static class ModdingConstants"/>
+      <ModdingCode Include="{"/>
+      <ModdingCode Include="public const string OfficialSourceUrl = &quot;$(_SanitizedOfficialModSourceUrl)&quot;%3B"/>
+      <ModdingCode Include="public const string OfficialSourceMirrors = &quot;$(_SanitizedOfficialModSourceMirrors)&quot;%3B"/>
+      <ModdingCode Include="public const string OfficialSourcePublicKey = &quot;$(_SanitizedOfficialModSourcePublicKey)&quot;%3B"/>
+      <ModdingCode Include="}"/>
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(GeneratedModdingConstantsFile)" Lines="@(ModdingCode)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
+
+    <ItemGroup>
+      <Compile Include="$(GeneratedModdingConstantsFile)"/>
+    </ItemGroup>
+  </Target>
+</Project>

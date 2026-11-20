@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="Everything_Header" xml:space="preserve">
+    <value>Everything</value>
+  </data>
+  <data name="Everything_Description" xml:space="preserve">
+    <value>Utilisez Everything (un moteur de recherche de fichiers local haute performance) pour rechercher des fichiers sur votre ordinateur.</value>
+  </data>
+  <data name="Everything_SearchFiles_Header" xml:space="preserve">
+    <value>Rechercher des fichiers via Everything</value>
+  </data>
+  <data name="Everything_SearchFiles_DetailMessage" xml:space="preserve">
+    <value>{0} Éléments Trouvés</value>
+  </data>
+  <data name="Everything_SearchFiles_Description" xml:space="preserve">
+    <value>Recherchez des fichiers avec Everything.</value>
+  </data>
+</root>

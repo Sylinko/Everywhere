@@ -71,5 +71,10 @@ internal sealed class HostDependencyManifest
         /// Gets the origin kind used to exclude framework runtime packs from host references.
         /// </summary>
         public string? Type { get; init; }
+
+        /// <summary>
+        /// Gets the package-store relative folder (e.g. <c>anglesharp/1.5.2</c>) declared by <c>.deps.json</c>.
+        /// </summary>
+        public string? Path { get; init; }
     }
 }

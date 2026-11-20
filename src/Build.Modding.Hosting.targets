@@ -31,7 +31,8 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="EverywherePublishModHostDescriptor" BeforeTargets="ComputeResolvedFilesToPublishList" DependsOnTargets="EverywhereWriteModHostDescriptor">
+  <Target Name="EverywherePublishModHostDescriptor" BeforeTargets="ComputeResolvedFilesToPublishList" DependsOnTargets="EverywhereWriteModHostDescriptor"
+          Condition="'$(OutputType)' == 'Exe' Or '$(OutputType)' == 'WinExe'">
     <ItemGroup>
       <ResolvedFileToPublish Include="$(_EverywhereDescriptorPath)" RelativePath="mod-host.json" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>

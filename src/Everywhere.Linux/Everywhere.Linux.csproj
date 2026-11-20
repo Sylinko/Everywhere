@@ -9,6 +9,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationIcon>..\..\img\Everywhere.ico</ApplicationIcon>
     <IsDeploymentTarget>true</IsDeploymentTarget>
+    <PublishTrimmed>false</PublishTrimmed>
     <UseAppHost>true</UseAppHost>
     <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
   </PropertyGroup>
@@ -53,4 +54,6 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
+
+  <Import Project="..\Build.Modding.Hosting.targets"/>
 </Project>

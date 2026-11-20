@@ -26,8 +26,6 @@ public sealed class NativeHelper : INativeHelper
     /// </summary>
     public bool IsInstalled => MainBundle.BundlePath.StartsWith("/Applications", StringComparison.OrdinalIgnoreCase);
 
-    public bool IsAdministrator => throw new PlatformNotSupportedException();
-
     /// <summary>
     /// Manages whether the app starts automatically on user login.
     /// A per-user LaunchAgent executes the application bundle at login.
@@ -236,9 +234,9 @@ public sealed class NativeHelper : INativeHelper
     /// <inheritdoc />
     public Bitmap? GetApplicationIcon(string? path)
     {
-        using var image = path is not null && Directory.Exists(path) ?
-            NSWorkspace.SharedWorkspace.IconForFile(path) :
-            NSWorkspace.SharedWorkspace.GetIcon(UTTypes.ApplicationBundle);
+        using var image = path is not null && Directory.Exists(path)
+            ? NSWorkspace.SharedWorkspace.IconForFile(path)
+            : NSWorkspace.SharedWorkspace.GetIcon(UTTypes.ApplicationBundle);
         using var tiff = image.AsTiff();
         if (tiff is null)
         {
@@ -262,7 +260,8 @@ public sealed class NativeHelper : INativeHelper
         public override void DidReceiveNotificationResponse(
             UNUserNotificationCenter center,
             UNNotificationResponse response,
-            Action completionHandler)
+            Action completionHandler
+        )
         {
             tcs.TrySetResult(true);
             completionHandler();
@@ -276,7 +275,8 @@ public sealed class NativeHelper : INativeHelper
         public override void WillPresentNotification(
             UNUserNotificationCenter center,
             UNNotification notification,
-            Action<UNNotificationPresentationOptions> completionHandler)
+            Action<UNNotificationPresentationOptions> completionHandler
+        )
         {
             // Show the notification even if the app is in the foreground.
             completionHandler(UNNotificationPresentationOptions.List | UNNotificationPresentationOptions.Banner);

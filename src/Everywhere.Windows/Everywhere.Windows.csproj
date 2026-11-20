@@ -11,9 +11,9 @@
     <ApplicationIcon>..\..\img\Everywhere.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <IsDeploymentTarget>true</IsDeploymentTarget>
-    <PublishTrimmed>true</PublishTrimmed>
+    <PublishTrimmed>false</PublishTrimmed>
+    <RespectAlreadyAssignedItemCulture>true</RespectAlreadyAssignedItemCulture>
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
-    <NoWarn>$(NoWarn),IL2057</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +26,6 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop"/>
-    <PackageReference Include="EverythingNetCore"/>
     <PackageReference Include="Microsoft.Windows.CsWin32">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -44,6 +43,11 @@
     <ProjectReference Include="..\..\patches\Everywhere.Patches.Contracts\Everywhere.Patches.Contracts.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\..\mods\Everywhere.Mods.Everything\Everywhere.Mods.Everything.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      ExcludeAssets="all"
+                      GlobalPropertiesToRemove="TargetFramework;RuntimeIdentifier;SelfContained;PublishTrimmed;PublishSingleFile;Version;SemanticVersion;AssemblyName;RootNamespace;PublishDir;OutputPath;OutDir"/>
     <ProjectReference Include="..\Everywhere.ProcessIsolation\Everywhere.ProcessIsolation.csproj"/>
   </ItemGroup>
 
@@ -64,45 +68,46 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Icons\Everything.svg"/>
-    <AvaloniaResource Include="Assets\Icons\Everything.svg"/>
     <None Remove="Assets\Icons\PowerShell.svg"/>
     <None Remove="Assets\Icons\Windows11.svg"/>
   </ItemGroup>
 
-  <ItemGroup>
-    <TrimmerRootAssembly Include="Everywhere"/>
-    <TrimmerRootAssembly Include="Everywhere.Abstractions"/>
-    <TrimmerRootAssembly Include="Everywhere.Core"/>
-    <TrimmerRootAssembly Include="Everywhere.Cloud"/>
-    <TrimmerRootAssembly Include="Everywhere.Patches.Contracts"/>
-    <TrimmerRootAssembly Include="Everywhere.I18N.Abstractions"/>
-    <TrimmerRootAssembly Include="AngleSharp"/>
-    <TrimmerRootAssembly Include="Anthropic"/>
-    <TrimmerRootAssembly Include="ExCSS"/>
-    <TrimmerRootAssembly Include="MessagePack"/>
-    <TrimmerRootAssembly Include="MicroCom.Runtime"/>
-    <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore"/>
-    <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Abstractions"/>
-    <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Relational"/>
-    <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Sqlite"/>
-    <TrimmerRootAssembly Include="ModelContextProtocol"/>
-    <TrimmerRootAssembly Include="ModelContextProtocol.Core"/>
-    <TrimmerRootAssembly Include="OllamaSharp"/>
-    <TrimmerRootAssembly Include="OpenAI"/>
-    <TrimmerRootAssembly Include="PuppeteerSharp"/>
-    <TrimmerRootAssembly Include="ReverseMarkdown"/>
-    <TrimmerRootAssembly Include="Serilog"/>
-    <TrimmerRootAssembly Include="ShadUI"/>
-    <TrimmerRootAssembly Include="SharpGen.Runtime"/>
-    <TrimmerRootAssembly Include="SharpGen.Runtime.COM"/>
-    <TrimmerRootAssembly Include="Vortice.Direct2D1"/>
-    <TrimmerRootAssembly Include="Vortice.Direct3D11"/>
-    <TrimmerRootAssembly Include="Vortice.DirectComposition"/>
-    <TrimmerRootAssembly Include="Vortice.DirectX"/>
-    <TrimmerRootAssembly Include="Vortice.DXGI"/>
-    <TrimmerRootAssembly Include="WinRT.Runtime"/>
-  </ItemGroup>
+  <Import Project="..\Build.Modding.Hosting.targets"/>
+
+  <!-- Package first-party built-in Windows mods as embedded static repository resources
+       so no loose mod binaries ship alongside the desktop executable. -->
+  <Target Name="PackBuiltInMods"
+          BeforeTargets="AssignTargetPaths"
+          DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <_BuiltInModsWorkDir>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)builtin-mods'))\</_BuiltInModsWorkDir>
+      <_BuiltInModPackagePath>$(_BuiltInModsWorkDir)staged\everywhere.everything.zip</_BuiltInModPackagePath>
+      <_BuiltInModRepoDir>$(_BuiltInModsWorkDir)repo\</_BuiltInModRepoDir>
+      <_BuiltInModSpecPath>$(_BuiltInModsWorkDir)spec.json</_BuiltInModSpecPath>
+      <_ModdingSdkDll>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Everywhere.Modding.Sdk\bin\$(Configuration)\net11.0\Everywhere.Modding.Sdk.dll'))</_ModdingSdkDll>
+      <_BuiltInModSpecJson>{&quot;format&quot;:1,&quot;id&quot;:&quot;builtin&quot;,&quot;title&quot;:{&quot;en&quot;:&quot;Built-in Mods&quot;,&quot;zh-hans&quot;:&quot;内置模组&quot;},&quot;metadata&quot;:{&quot;categories&quot;:{&quot;search&quot;:{&quot;title&quot;:{&quot;en&quot;:&quot;Search&quot;,&quot;zh-hans&quot;:&quot;搜索&quot;}}}},&quot;layout&quot;:&quot;directory&quot;,&quot;packages&quot;:[{&quot;path&quot;:&quot;staged/everywhere.everything.zip&quot;,&quot;isDefaultEnabled&quot;:true,&quot;category&quot;:&quot;search&quot;,&quot;channels&quot;:[&quot;stable&quot;]}]}</_BuiltInModSpecJson>
+    </PropertyGroup>
+
+    <MSBuild Projects="..\..\mods\Everywhere.Mods.Everything\Everywhere.Mods.Everything.csproj"
+             Targets="EverywherePack"
+             RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained;PublishTrimmed;PublishSingleFile;Version;SemanticVersion;AssemblyName;RootNamespace;PublishDir;OutputPath;OutDir"
+             Properties="Configuration=$(Configuration);EverywhereModPackagePath=$(_BuiltInModPackagePath)"/>
+
+    <RemoveDir Directories="$(_BuiltInModRepoDir)"/>
+    <MakeDir Directories="$(_BuiltInModsWorkDir)"/>
+    <WriteLinesToFile File="$(_BuiltInModSpecPath)" Lines="$(_BuiltInModSpecJson)" Overwrite="true"/>
+    <Exec Command="dotnet &quot;$(_ModdingSdkDll)&quot; build-index &quot;$(_BuiltInModSpecPath)&quot; &quot;$(_BuiltInModRepoDir)index.json&quot;"/>
+
+    <ItemGroup>
+      <_BuiltInModRepoFile Include="$(_BuiltInModRepoDir)**\*"/>
+      <EmbeddedResource Include="@(_BuiltInModRepoFile)">
+        <Type>Non-Resx</Type>
+        <WithCulture>false</WithCulture>
+        <LogicalName>Everywhere.BuiltInMods/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\Scripts\PortableUpdate.ps1">

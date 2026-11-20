@@ -19,16 +19,11 @@ internal static class Program
             {
                 case ["import", var host, var output]:
                 {
-                    var references = new HostReferenceSet(host);
-                    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)) ?? ".");
-                    await File.WriteAllLinesAsync(output, references.Assemblies.Values.Order(StringComparer.Ordinal));
-                    await File.WriteAllLinesAsync(
-                        output + ".runtime.txt",
-                        references.RuntimeAssemblies.Values.Concat(references.ResourceAssemblies).Order(StringComparer.Ordinal));
-                    await File.WriteAllTextAsync(
-                        output + ".host.json",
-                        JsonSerializer.Serialize(references.Descriptor, SdkJsonSerializerContext.Default.ModHostDescriptor));
-                    return 0;
+                    return await ExportHostAsync(host, output, packageFolders: null).ConfigureAwait(false);
+                }
+                case ["import", var host, var output, var packageFolders]:
+                {
+                    return await ExportHostAsync(host, output, packageFolders).ConfigureAwait(false);
                 }
                 case ["check", var packageDirectory]:
                 {
@@ -65,7 +60,7 @@ internal static class Program
                 default:
                 {
                     await Console.Error.WriteLineAsync(
-                        "Usage: Everywhere.Modding.Sdk import <host-directory> <reference-list> | check <package-directory> | pack <pack-directory> | keygen <private-key-pem> <public-key> | build-index <spec-json> <output-index-json> [private-key-pem]");
+                        "Usage: Everywhere.Modding.Sdk import <host-directory> <reference-list> [package-folders] | check <package-directory> | pack <pack-directory> | keygen <private-key-pem> <public-key> | build-index <spec-json> <output-index-json> [private-key-pem]");
                     return 2;
                 }
             }
@@ -77,5 +72,22 @@ internal static class Program
             await Console.Error.WriteLineAsync(JsonSerializer.Serialize(result, SdkJsonSerializerContext.Default.SdkErrorResult));
             return 1;
         }
+    }
+
+    private static async Task<int> ExportHostAsync(string host, string output, string? packageFolders)
+    {
+        var probeDirectories = string.IsNullOrWhiteSpace(packageFolders)
+            ? null
+            : packageFolders.Split([';', Path.PathSeparator], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var references = new HostReferenceSet(host, probeDirectories);
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)) ?? ".");
+        await File.WriteAllLinesAsync(output, references.Assemblies.Values.Order(StringComparer.Ordinal));
+        await File.WriteAllLinesAsync(
+            output + ".runtime.txt",
+            references.RuntimeAssemblies.Values.Concat(references.ResourceAssemblies).Order(StringComparer.Ordinal));
+        await File.WriteAllTextAsync(
+            output + ".host.json",
+            JsonSerializer.Serialize(references.Descriptor, SdkJsonSerializerContext.Default.ModHostDescriptor));
+        return 0;
     }
 }

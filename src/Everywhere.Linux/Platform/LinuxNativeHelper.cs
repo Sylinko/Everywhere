@@ -19,9 +19,6 @@ public sealed class LinuxNativeHelper : INativeHelper
     public bool IsInstalled => File.Exists("/usr/bin/Everywhere");
 
     /// <inheritdoc />
-    public bool IsAdministrator => Environment.UserName == "root";
-
-    /// <inheritdoc />
     public bool IsLowDataModeActive => false;
 
     /// <inheritdoc />
@@ -73,8 +70,11 @@ public sealed class LinuxNativeHelper : INativeHelper
         var path = Path.GetFullPath(identityOrPath);
         if (path.EndsWith(".desktop", StringComparison.Ordinal))
         {
-            var entries = File.ReadLines(path).Where(line => !line.StartsWith('#') && line.Contains('='))
-                .Select(line => line.Split('=', 2)).GroupBy(parts => parts[0]).ToDictionary(group => group.Key, group => group.First()[1]);
+            var entries = File.ReadLines(path)
+                .Where(line => !line.StartsWith('#') && line.Contains('='))
+                .Select(line => line.Split('=', 2))
+                .GroupBy(parts => parts[0])
+                .ToDictionary(group => group.Key, group => group.First()[1]);
             if (!entries.TryGetValue("Exec", out var command))
             {
                 return null;
@@ -89,7 +89,8 @@ public sealed class LinuxNativeHelper : INativeHelper
             if (!Path.IsPathFullyQualified(executable))
             {
                 executable = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(':')
-                    .Select(directory => Path.Combine(directory, executable)).FirstOrDefault(File.Exists);
+                    .Select(directory => Path.Combine(directory, executable))
+                    .FirstOrDefault(File.Exists);
             }
 
             if (executable is null || !File.Exists(executable))
@@ -140,7 +141,7 @@ public sealed class LinuxNativeHelper : INativeHelper
                 RedirectStandardError = true,
                 ArgumentList = { "trash", "--", Path.GetFullPath(path) }
             };
-            var process = default(Process);
+            Process process;
             try
             {
                 process = Process.Start(start) ?? throw new IOException("The desktop trash service could not start.");
@@ -149,6 +150,7 @@ public sealed class LinuxNativeHelper : INativeHelper
             {
                 throw new IOException("The desktop trash service is unavailable.", exception);
             }
+
             using (process)
             {
                 var error = process.StandardError.ReadToEndAsync();
@@ -163,14 +165,17 @@ public sealed class LinuxNativeHelper : INativeHelper
                         await error.ConfigureAwait(false);
                         continue;
                     }
+
                     if (!process.HasExited)
                     {
                         process.Kill(entireProcessTree: true);
                     }
+
                     await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
                     await error.ConfigureAwait(false);
                     throw;
                 }
+
                 var message = await error.ConfigureAwait(false);
                 if (process.ExitCode != 0)
                 {

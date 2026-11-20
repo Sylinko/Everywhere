@@ -35,6 +35,9 @@ jobs:
       AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
       CLOUD_BASE_URL: ${{ vars.CLOUD_BASE_URL }}
       ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
+      OFFICIAL_MOD_SOURCE_URL: ${{ vars.OFFICIAL_MOD_SOURCE_URL }}
+      OFFICIAL_MOD_SOURCE_MIRRORS: ${{ vars.OFFICIAL_MOD_SOURCE_MIRRORS }}
+      OFFICIAL_MOD_SOURCE_PUBLIC_KEY: ${{ vars.OFFICIAL_MOD_SOURCE_PUBLIC_KEY }}
     steps:
       - name: Prepare Windows build
         if: runner.os == 'Windows'

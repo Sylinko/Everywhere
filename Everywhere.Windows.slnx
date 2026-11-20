@@ -22,6 +22,7 @@
   <Project Path="src/Everywhere.Modding.Hosting/Everywhere.Modding.Hosting.csproj" />
   <Project Path="src/Everywhere.Modding.Packaging/Everywhere.Modding.Packaging.csproj" />
   <Project Path="src/Everywhere.Modding.Sdk/Everywhere.Modding.Sdk.csproj" />
+  <Project Path="mods/Everywhere.Mods.Everything/Everywhere.Mods.Everything.csproj" />
   <Project Path="src/Everywhere.Automation/Everywhere.Automation.csproj" />
   <Project Path="src/Everywhere.Cloud/Everywhere.Cloud.csproj" />
   <Project Path="src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj" />

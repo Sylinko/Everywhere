@@ -113,6 +113,9 @@ runs:
           -p:AIGatewayBaseUrl="$env:AI_GATEWAY_BASE_URL" `
           -p:CloudBaseUrl="$env:CLOUD_BASE_URL" `
           -p:AccountBaseUrl="$env:ACCOUNT_BASE_URL" `
+          -p:OfficialModSourceUrl="$env:OFFICIAL_MOD_SOURCE_URL" `
+          -p:OfficialModSourceMirrors="$env:OFFICIAL_MOD_SOURCE_MIRRORS" `
+          -p:OfficialModSourcePublicKey="$env:OFFICIAL_MOD_SOURCE_PUBLIC_KEY" `
           -o ./publish `
           --no-restore
 

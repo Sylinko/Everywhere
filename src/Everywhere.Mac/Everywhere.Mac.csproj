@@ -10,6 +10,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
     <IsDeploymentTarget>true</IsDeploymentTarget>
+    <PublishTrimmed>false</PublishTrimmed>
     <UseAppHost>true</UseAppHost>
     <CreateAppBundle>true</CreateAppBundle>
     <!-- The Apple SDK disables deps generation by default; OfficeCLI shares this graph. -->
@@ -192,6 +193,7 @@
 
   <Import Project="..\Build.I18N.targets"/>
   <Import Project="..\Build.Watchdog.targets"/>
+  <Import Project="..\Build.Modding.Hosting.targets"/>
 
   <!--
     The Unix OfficeCLI apphost has no extension. The macOS SDK only places

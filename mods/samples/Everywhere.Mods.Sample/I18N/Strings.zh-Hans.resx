@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="SampleMod_Title" xml:space="preserve"><value>模组示例</value></data>
+  <data name="SampleMod_Description" xml:space="preserve"><value>这个页面由模组提供，模组来自你的 mods 目录。</value></data>
+  <data name="SampleMod_Instructions" xml:space="preserve"><value>在 Everywhere 设置中切换语言，可以看到模组自己的翻译也跟着变化。</value></data>
+  <data name="SampleMod_Button" xml:space="preserve"><value>试试模组</value></data>
+  <data name="SampleMod_Result" xml:space="preserve"><value>模组的按钮可以正常工作！</value></data>
+</root>

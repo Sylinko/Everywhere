@@ -54,8 +54,12 @@
     </MSBuild>
     <PropertyGroup Condition="'$(_EverywhereIsSourceHost)' == 'true'">
       <_EverywhereHostDirectory>@(_EverywhereHostDescriptor->'%(RootDir)%(Directory).')</_EverywhereHostDirectory>
+      <_EverywherePackageProbeFolders Condition="'$(NuGetPackageFolders)' != ''">$([System.String]::Copy('$(NuGetPackageFolders)').Replace('\', '/'))</_EverywherePackageProbeFolders>
     </PropertyGroup>
-    <Exec Command="dotnet &quot;$(EverywhereModToolsDirectory)/Everywhere.Modding.Sdk.dll&quot; import &quot;$(_EverywhereHostDirectory)&quot; &quot;$(_EverywhereHostReferences)&quot;"/>
+    <Exec Condition="'$(_EverywherePackageProbeFolders)' != ''"
+          Command="dotnet &quot;$(EverywhereModToolsDirectory)/Everywhere.Modding.Sdk.dll&quot; import &quot;$(_EverywhereHostDirectory)&quot; &quot;$(_EverywhereHostReferences)&quot; &quot;$(_EverywherePackageProbeFolders)&quot;"/>
+    <Exec Condition="'$(_EverywherePackageProbeFolders)' == ''"
+          Command="dotnet &quot;$(EverywhereModToolsDirectory)/Everywhere.Modding.Sdk.dll&quot; import &quot;$(_EverywhereHostDirectory)&quot; &quot;$(_EverywhereHostReferences)&quot;"/>
     <ReadLinesFromFile File="$(_EverywhereHostReferences)" Condition="'$(_EverywhereIsSourceHost)' != 'true'">
       <Output TaskParameter="Lines" ItemName="_EverywhereHostReference"/>
     </ReadLinesFromFile>

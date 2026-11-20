@@ -170,6 +170,7 @@ internal sealed class SettingsInitializer : IAsyncInitializer, IDisposable
         services.AddSettingsMigration<_20261115200000_0_9_0_canary_20261115_28>();
         services.AddSettingsMigration<_20261123162000_0_9_0_canary_20261123_29>();
         services.AddSettingsMigration<_20261124140000_0_9_0_canary_20261124_30>();
+        services.AddSettingsMigration<_20261124180000_0_9_0_canary_20261124_31>();
 
         return services.BuildServiceProvider();
     }

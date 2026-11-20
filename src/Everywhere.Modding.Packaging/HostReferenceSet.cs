@@ -57,13 +57,16 @@ public sealed class HostReferenceSet
 
     /// <summary>
     /// Reads an explicitly mod-enabled distribution. Missing import metadata is an unsupported-host error.
+    /// Optional <paramref name="packageProbeDirectories"/> are searched only during build-time import from
+    /// library hosts whose <c>package</c> assets remain in the NuGet package cache rather than copied locally.
     /// </summary>
-    public HostReferenceSet(string hostDirectory)
+    public HostReferenceSet(string hostDirectory, IReadOnlyList<string>? packageProbeDirectories = null)
     {
         Directory = Path.GetFullPath(
             hostDirectory.EndsWith(".app", StringComparison.OrdinalIgnoreCase)
                 ? Path.Combine(hostDirectory, "Contents", "MonoBundle")
                 : hostDirectory);
+        var probeDirectories = NormalizeProbeDirectories(packageProbeDirectories);
         var descriptorPath = Path.Combine(Directory, DescriptorFileName);
         if (!File.Exists(descriptorPath))
         {
@@ -95,17 +98,14 @@ public sealed class HostReferenceSet
 
         foreach (var (library, assets) in target)
         {
-            var isRuntimePack = dependencies.Libraries.TryGetValue(library, out var origin) && origin.Type == "runtimepack";
+            dependencies.Libraries.TryGetValue(library, out var origin);
+            var isRuntimePack = origin?.Type == "runtimepack";
 
             foreach (var asset in assets.Runtime.Keys)
             {
-                var relative = PackagePath.Resolve(Directory, asset);
                 var flat = Path.Combine(Directory, Path.GetFileName(asset));
-                var path = File.Exists(relative) ? relative : flat;
-                if (!File.Exists(path))
-                {
+                var path = ResolveAssetPath(asset, flat, origin, probeDirectories) ??
                     throw new ModValidationException("MissingHostAsset", $"Declared host asset '{asset}' is missing.");
-                }
 
                 var identity = AssemblyName.GetAssemblyName(path);
                 var name = identity.Name ?? throw new ModValidationException("InvalidHostAsset", path);
@@ -120,13 +120,9 @@ public sealed class HostReferenceSet
 
             foreach (var (asset, resource) in assets.Resources)
             {
-                var relative = PackagePath.Resolve(Directory, asset);
                 var deployed = PackagePath.Resolve(Directory, resource.Locale + "/" + Path.GetFileName(asset));
-                var path = File.Exists(relative) ? relative : deployed;
-                if (!File.Exists(path))
-                {
+                var path = ResolveAssetPath(asset, deployed, origin, probeDirectories) ??
                     throw new ModValidationException("MissingHostAsset", $"Declared host resource '{asset}' is missing.");
-                }
 
                 resourceAssemblies.Add(path);
             }
@@ -141,5 +137,43 @@ public sealed class HostReferenceSet
         Assemblies = assemblies;
         RuntimeAssemblies = runtimeAssemblies;
         ResourceAssemblies = resourceAssemblies;
+    }
+
+    private string? ResolveAssetPath(
+        string asset,
+        string fallbackPath,
+        HostDependencyManifest.LibraryOrigin? origin,
+        IReadOnlyList<string> probeDirectories
+    )
+    {
+        var relative = PackagePath.Resolve(Directory, asset);
+        if (File.Exists(relative)) return relative;
+        if (File.Exists(fallbackPath)) return fallbackPath;
+
+        if (probeDirectories.Count == 0 || origin is not { Type: "package", Path.Length: > 0 } packageOrigin)
+        {
+            return null;
+        }
+
+        foreach (var probeDirectory in probeDirectories)
+        {
+            var packageRoot = PackagePath.Resolve(probeDirectory, packageOrigin.Path);
+            var candidate = PackagePath.Resolve(packageRoot, asset);
+            if (File.Exists(candidate)) return candidate;
+        }
+
+        return null;
+    }
+
+    private static string[] NormalizeProbeDirectories(IReadOnlyList<string>? packageProbeDirectories)
+    {
+        if (packageProbeDirectories is not { Count: > 0 }) return [];
+
+        return packageProbeDirectories
+            .Where(static path => !string.IsNullOrWhiteSpace(path))
+            .Select(Path.GetFullPath)
+            .Where(System.IO.Directory.Exists)
+            .Distinct(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal)
+            .ToArray();
     }
 }

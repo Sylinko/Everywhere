@@ -45,6 +45,9 @@ runs:
           /p:AIGatewayBaseUrl="$AI_GATEWAY_BASE_URL" \
           /p:CloudBaseUrl="$CLOUD_BASE_URL" \
           /p:AccountBaseUrl="$ACCOUNT_BASE_URL" \
+          /p:OfficialModSourceUrl="$OFFICIAL_MOD_SOURCE_URL" \
+          /p:OfficialModSourceMirrors="$OFFICIAL_MOD_SOURCE_MIRRORS" \
+          /p:OfficialModSourcePublicKey="$OFFICIAL_MOD_SOURCE_PUBLIC_KEY" \
           --self-contained true \
           --no-restore
 

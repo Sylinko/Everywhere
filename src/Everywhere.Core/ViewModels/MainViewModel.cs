@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -45,6 +46,77 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
         WeakReferenceMessenger.Default.Register(this);
     }
 
+    /// <summary>
+    /// Adds a navigation contribution on the UI thread. Register the returned asynchronous resource
+    /// with the mod context so disposal marshals removal and selection cleanup onto the UI thread.
+    /// </summary>
+    public IAsyncDisposable RegisterNavigationItem(IMainViewNavigationTopLevelItem page)
+    {
+        Dispatcher.UIThread.VerifyAccess();
+
+        var bindings = new CompositeDisposable();
+        var item = CreateNavigationItem(page, bindings);
+
+        if (page is IMainViewNavigationTopLevelItemWithSubItems factory)
+        {
+            foreach (var child in factory.CreateSubItems())
+            {
+                item.Children.Add(CreateNavigationItem(child, bindings));
+            }
+        }
+
+        _itemsSource.Edit(list =>
+        {
+            var index = list
+                .AsValueEnumerable()
+                .TakeWhile(existing => existing.Route is not IMainViewNavigationItem navigation || navigation.Index <= page.Index)
+                .Count();
+            list.Insert(index, item);
+        });
+
+        return new NavigationRegistration(() =>
+        {
+            _itemsSource.Edit(list =>
+            {
+                if (FindNavigationBarItem([item], candidate => ReferenceEquals(candidate, SelectedItem)) is not null)
+                {
+                    SelectedItem = FindNavigationBarItem(
+                        list.Where(candidate => candidate != item),
+                        candidate => candidate.Route is not null);
+                }
+
+                list.Remove(item);
+            });
+
+            bindings.Dispose();
+            ClearNavigationItem(item);
+        });
+
+        static NavigationBarItem CreateNavigationItem(IMainViewNavigationItem navigationPage, CompositeDisposable disposables)
+        {
+            var navigationItem = new NavigationBarItem
+            {
+                Icon = navigationPage.Icon,
+                Tag = navigationPage.RouteKey,
+                Route = navigationPage
+            };
+            disposables.Add(navigationItem.Bind(ContentControl.ContentProperty, navigationPage.TitleKey.ToBinding()));
+            disposables.Add(navigationItem.Bind(NavigationBarItem.ToolTipProperty, navigationPage.TitleKey.ToBinding()));
+            return navigationItem;
+        }
+
+        static void ClearNavigationItem(NavigationBarItem navigationItem)
+        {
+            foreach (var child in navigationItem.Children) ClearNavigationItem(child);
+
+            navigationItem.Children.Clear();
+            navigationItem.Route = null;
+            navigationItem.Content = null;
+            navigationItem.ClearValue(NavigationBarItem.ToolTipProperty);
+            navigationItem.Tag = null;
+        }
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -89,14 +161,15 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
             if (page is IMainViewNavigationTopLevelItemWithSubItems factory)
             {
                 item.Children.AddRange(
-                    factory.CreateSubItems().Select(i => new NavigationBarItem
-                    {
-                        Icon = i.Icon,
-                        [!ContentControl.ContentProperty] = i.TitleKey.ToBinding(),
-                        [!NavigationBarItem.ToolTipProperty] = i.TitleKey.ToBinding(),
-                        Tag = i.RouteKey,
-                        Route = i
-                    }));
+                    factory.CreateSubItems()
+                        .Select(i => new NavigationBarItem
+                        {
+                            Icon = i.Icon,
+                            [!ContentControl.ContentProperty] = i.TitleKey.ToBinding(),
+                            [!NavigationBarItem.ToolTipProperty] = i.TitleKey.ToBinding(),
+                            Tag = i.RouteKey,
+                            Route = i
+                        }));
             }
         }
 
@@ -245,9 +318,8 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
         }
 
         var nextSegmentIndex = segmentIndex + 1;
-        NavigationRouteMatch? bestMatch = item.Route is null ?
-            null :
-            new NavigationRouteMatch(item, segments.AsValueEnumerable().Skip(nextSegmentIndex).ToArray());
+        NavigationRouteMatch? bestMatch =
+            item.Route is null ? null : new NavigationRouteMatch(item, segments.AsValueEnumerable().Skip(nextSegmentIndex).ToArray());
         foreach (var child in item.Children.AsValueEnumerable())
         {
             if (FindNavigationRouteMatch(child, segments, nextSegmentIndex) is { } childMatch)
@@ -300,4 +372,19 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
     }
 
     private readonly record struct NavigationRouteMatch(NavigationBarItem Item, IReadOnlyList<string> RemainingSegments);
+
+    /// <summary>
+    /// Releases its removal callback after one use so a disposed token cannot retain mod views.
+    /// </summary>
+    private sealed class NavigationRegistration(Action remove) : IAsyncDisposable
+    {
+        private Action? _remove = remove;
+
+        /// <inheritdoc />
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref _remove, null) is not { } callback) return;
+            await Dispatcher.UIThread.InvokeAsync(callback);
+        }
+    }
 }
