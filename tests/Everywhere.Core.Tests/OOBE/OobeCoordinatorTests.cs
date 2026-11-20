@@ -1,5 +1,5 @@
+using Everywhere.Common;
 using Everywhere.Configuration;
-using Everywhere.Configuration.Engine;
 using Everywhere.Core.Tests.Configuration;
 using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,9 +19,9 @@ public sealed class OobeCoordinatorTests
             var filePath = Path.Combine(tempDir.FullName, "settings.json");
             await using var services = new ServiceCollection().BuildServiceProvider();
             var settings = new Settings(services);
-            using var engine = new SettingsEngine(settings, filePath, services, NullLoggerFactory.Instance);
+            using var initializer = new SettingsInitializer(settings, filePath, services, NullLoggerFactory.Instance);
 
-            await engine.InitializeAsync(default);
+            await ((IAsyncInitializer)initializer).InitializeAsync(default);
 
             Assert.That(settings.CompletedOobeVersion, Is.Zero);
         }
@@ -52,9 +52,9 @@ public sealed class OobeCoordinatorTests
                 """);
             await using var services = new ServiceCollection().BuildServiceProvider();
             var settings = new Settings(services);
-            using var engine = new SettingsEngine(settings, filePath, services, NullLoggerFactory.Instance);
+            using var initializer = new SettingsInitializer(settings, filePath, services, NullLoggerFactory.Instance);
 
-            await engine.InitializeAsync(default);
+            await ((IAsyncInitializer)initializer).InitializeAsync(default);
 
             Assert.That(settings.CompletedOobeVersion, Is.EqualTo(OobeCoordinator.LegacyBaselineVersion));
         }
@@ -86,9 +86,9 @@ public sealed class OobeCoordinatorTests
                 """);
             await using var services = new ServiceCollection().BuildServiceProvider();
             var settings = new Settings(services);
-            using var engine = new SettingsEngine(settings, filePath, services, NullLoggerFactory.Instance);
+            using var initializer = new SettingsInitializer(settings, filePath, services, NullLoggerFactory.Instance);
 
-            await engine.InitializeAsync(default);
+            await ((IAsyncInitializer)initializer).InitializeAsync(default);
 
             Assert.That(settings.CompletedOobeVersion, Is.Zero);
         }

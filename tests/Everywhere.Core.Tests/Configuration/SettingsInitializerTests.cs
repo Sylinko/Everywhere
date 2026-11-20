@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI;
+using Everywhere.AI.Prompts.Database;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -12,6 +14,7 @@ using Everywhere.Extensions;
 using Everywhere.TextSelection;
 using Everywhere.Utilities;
 using Everywhere.Web;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -20,7 +23,7 @@ using SettingsDescriptorProviderFactory = Everywhere.Configuration.Engine.Settin
 
 namespace Everywhere.Core.Tests.Configuration;
 
-public sealed class SettingsEngineTests
+public sealed class SettingsInitializerTests
 {
     [Test]
     public async Task InitializeAsync_MigratesLegacyScalarValues()
@@ -42,18 +45,19 @@ public sealed class SettingsEngineTests
             }
             """);
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
-        var engine = new SettingsEngine(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
+        using var engine = new SettingsInitializer(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
 
-        await engine.InitializeAsync(default);
+        await ((IAsyncInitializer)engine).InitializeAsync(default);
 
         var root = Require(JsonNode.Parse(File.ReadAllText(file.Path))).AsObject();
         var titleGeneration = Require(Require(root["SystemAssistant"])["TitleGeneration"]).AsObject();
         var plugins = Require(Require(root["Plugin"])["McpChatPlugins"]).AsObject();
         var officialSettings = Require(
-            Require(
                 Require(
                     Require(
-                        Require(root["Plugin"])["WebSearchEngine"])["Providers"])["Official"])["Settings"]).AsObject();
+                        Require(
+                            Require(root["Plugin"])["WebSearchEngine"])["Providers"])["Official"])["Settings"])
+            .AsObject();
 
         Assert.Multiple(() =>
         {
@@ -64,15 +68,19 @@ public sealed class SettingsEngineTests
             Assert.That(plugins["22222222-2222-2222-2222-222222222222"]!["$type"]!.GetValue<string>(), Is.EqualTo("sse"));
             Assert.That(plugins.ContainsKey("33333333-3333-3333-3333-333333333333"), Is.False);
             Assert.That(officialSettings["Depth"]!.GetValue<string>(), Is.EqualTo("UltraFast"));
-            Assert.That(engine.Settings.SystemAssistant.TitleGeneration.Configuration.Specializations,
+            Assert.That(
+                engine.Settings.SystemAssistant.TitleGeneration.Configuration.Specializations,
                 Is.EqualTo(ModelSpecializations.TitleGeneration));
             Assert.That(engine.Settings.Plugin.McpChatPlugins, Has.Count.EqualTo(2));
-            Assert.That(engine.Settings.Plugin.McpChatPlugins[Guid.Parse("11111111-1111-1111-1111-111111111111")],
+            Assert.That(
+                engine.Settings.Plugin.McpChatPlugins[Guid.Parse("11111111-1111-1111-1111-111111111111")],
                 Is.TypeOf<StdioMcpTransportConfiguration>());
-            Assert.That(engine.Settings.Plugin.McpChatPlugins[Guid.Parse("22222222-2222-2222-2222-222222222222")],
+            Assert.That(
+                engine.Settings.Plugin.McpChatPlugins[Guid.Parse("22222222-2222-2222-2222-222222222222")],
                 Is.TypeOf<HttpMcpTransportConfiguration>());
             Assert.That(
-                ((OfficialWebSearchEngineProvider)engine.Settings.Plugin.WebSearchEngine.Providers[WebSearchEngineProviderId.Official]).Settings.Depth,
+                ((OfficialWebSearchEngineProvider)engine.Settings.Plugin.WebSearchEngine.Providers[WebSearchEngineProviderId.Official]).Settings
+                .Depth,
                 Is.EqualTo(OfficialConnector.SearchDepth.UltraFast));
             Assert.That(engine.Diagnostics, Is.Empty);
         });
@@ -87,14 +95,16 @@ public sealed class SettingsEngineTests
         http.Headers.Add(new ObservableKeyValuePair<string, string>("Authorization", "token"));
 
         var updatedPlugins = Require(
-            Require(engine.Storage.CreateSnapshot()["Plugin"])["McpChatPlugins"]).AsObject();
+                Require(engine.Storage.CreateSnapshot()["Plugin"])["McpChatPlugins"])
+            .AsObject();
         var updatedStdio = Require(updatedPlugins["11111111-1111-1111-1111-111111111111"]).AsObject();
         var updatedHttp = Require(updatedPlugins["22222222-2222-2222-2222-222222222222"]).AsObject();
         Assert.Multiple(() =>
         {
             Assert.That(updatedStdio["$type"]!.GetValue<string>(), Is.EqualTo("stdio"));
             Assert.That(updatedStdio["Name"]!.GetValue<string>(), Is.EqualTo("updated"));
-            Assert.That(updatedStdio["Arguments"]!.AsArray().Select(static node => node!.GetValue<string>()),
+            Assert.That(
+                updatedStdio["Arguments"]!.AsArray().Select(static node => node!.GetValue<string>()),
                 Is.EqualTo(new[] { "second" }));
             Assert.That(updatedStdio["EnvironmentVariables"]!["KEY"]!.GetValue<string>(), Is.EqualTo("value"));
             Assert.That(updatedHttp["Headers"]!["Authorization"]!.GetValue<string>(), Is.EqualTo("token"));
@@ -104,7 +114,7 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
-    public async Task InitializeAsync_PatchesExistingSettingsRoot()
+    public async Task InitializeAsync_PatchesExistingSettingsRootAndPreservesVersionOnSave()
     {
         using var file = TestSettingsFile(
             """
@@ -117,13 +127,23 @@ public sealed class SettingsEngineTests
             """);
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);
-        var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
-        await engine.InitializeAsync(default);
+        using var engine = new SettingsInitializer(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+        await ((IAsyncInitializer)engine).InitializeAsync(default);
 
         Assert.That(engine.Settings, Is.SameAs(settings));
-        Assert.That(settings.Version, Is.EqualTo("99.0.0"));
+        Assert.That(engine.Storage.CreateSnapshot()["Version"]?.GetValue<string>(), Is.EqualTo("99.0.0"));
         Assert.That(settings.Common.IsStatisticsEnabled, Is.False);
         Assert.That(engine.Diagnostics, Is.Empty);
+
+        settings.Common.IsStatisticsEnabled = true;
+        await engine.Storage.FlushAsync();
+
+        var saved = Require(JsonNode.Parse(File.ReadAllText(file.Path)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(saved["Version"]?.GetValue<string>(), Is.EqualTo("99.0.0"));
+            Assert.That(saved["Common"]?["IsStatisticsEnabled"]?.GetValue<bool>(), Is.True);
+        });
     }
 
     [Test]
@@ -143,9 +163,9 @@ public sealed class SettingsEngineTests
             """);
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);
-        var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+        using var engine = new SettingsInitializer(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
 
-        await engine.InitializeAsync(default);
+        await ((IAsyncInitializer)engine).InitializeAsync(default);
 
         var root = Require(JsonNode.Parse(File.ReadAllText(file.Path))).AsObject();
         var chatWindow = Require(Require(root["Shortcut"])["ChatWindow"]).AsObject();
@@ -205,32 +225,67 @@ public sealed class SettingsEngineTests
             }
             """);
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
-        var engine = new SettingsEngine(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
+        var settings = new Settings(serviceProvider);
+        using var engine = new SettingsInitializer(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
 
-        await engine.InitializeAsync(default);
+        await ((IAsyncInitializer)engine).InitializeAsync(CancellationToken.None);
 
         Assert.Multiple(() =>
         {
             Assert.That(engine.Diagnostics, Is.Empty);
 
-            Assert.That(engine.Settings.Model.CustomAssistants[0].Icon?.Type, Is.EqualTo(ColoredIconType.Tabler));
-            Assert.That(engine.Settings.Model.CustomAssistants[0].Icon?.Kind, Is.EqualTo(TablerIconKind.Robot));
+            Assert.That(settings.Model.CustomAssistants[0].Icon?.Type, Is.EqualTo(ColoredIconType.Tabler));
+            Assert.That(settings.Model.CustomAssistants[0].Icon?.Kind, Is.EqualTo(TablerIconKind.Robot));
 
-            Assert.That(engine.Settings.Model.CustomAssistants[1].Icon?.Type, Is.EqualTo(ColoredIconType.Tabler));
-            Assert.That(engine.Settings.Model.CustomAssistants[1].Icon?.Kind, Is.EqualTo(TablerIconKind.Bolt));
+            Assert.That(settings.Model.CustomAssistants[1].Icon?.Type, Is.EqualTo(ColoredIconType.Tabler));
+            Assert.That(settings.Model.CustomAssistants[1].Icon?.Kind, Is.EqualTo(TablerIconKind.Bolt));
 
-            Assert.That(engine.Settings.Model.CustomAssistants[2].Icon?.Type, Is.EqualTo(ColoredIconType.Text));
-            Assert.That(engine.Settings.Model.CustomAssistants[2].Icon?.Kind, Is.EqualTo(TablerIconKind.ArrowDown));
-            Assert.That(engine.Settings.Model.CustomAssistants[2].Icon?.Text, Is.EqualTo("😀"));
+            Assert.That(settings.Model.CustomAssistants[2].Icon?.Type, Is.EqualTo(ColoredIconType.Text));
+            Assert.That(settings.Model.CustomAssistants[2].Icon?.Kind, Is.EqualTo(TablerIconKind.ArrowDown));
+            Assert.That(settings.Model.CustomAssistants[2].Icon?.Text, Is.EqualTo("😀"));
 
-            var builtInAction = (BuiltInTextSelectionToolbarAction)engine.Settings.TextSelection.ToolbarActions[0];
+            var builtInAction = (BuiltInTextSelectionToolbarAction)settings.TextSelection.ToolbarActions[0];
             Assert.That(builtInAction.IconOverride?.Type, Is.EqualTo(ColoredIconType.Tabler));
             Assert.That(builtInAction.IconOverride?.Kind, Is.EqualTo(TablerIconKind.School));
 
-            var customAction = (CustomTextSelectionToolbarAction)engine.Settings.TextSelection.ToolbarActions[1];
+            var customAction = (CustomTextSelectionToolbarAction)settings.TextSelection.ToolbarActions[1];
             Assert.That(customAction.Icon.Type, Is.EqualTo(ColoredIconType.Tabler));
             Assert.That(customAction.Icon.Kind, Is.EqualTo(TablerIconKind.Trash));
         });
+    }
+
+    [Test]
+    public async Task InitializeAsync_WhenMigrationsAlreadyApplied_DoesNotResolvePromptDatabaseFactory()
+    {
+        using var file = TestSettingsFile("""{"Version":"99.0.0"}""");
+        await using var serviceProvider = new ServiceCollection()
+            .AddSingleton<IDbContextFactory<PromptDbContext>>(_ => throw new InvalidOperationException("Database factory must not be resolved."))
+            .BuildServiceProvider();
+        using var engine = new SettingsInitializer(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
+
+        await ((IAsyncInitializer)engine).InitializeAsync(CancellationToken.None);
+
+        Assert.That(engine.Storage.CreateSnapshot()["Version"]?.GetValue<string>(), Is.EqualTo("99.0.0"));
+    }
+
+    [Test]
+    public async Task InitializeAsync_WithPromptMigration_LeavesSharedFactoryOwnedByRootProvider()
+    {
+        using var file = TestSettingsFile("""{"Version":"0.8.0"}""");
+        var factory = new TrackingPromptDbContextFactory();
+
+        await using (var serviceProvider = new ServiceCollection()
+                         .AddSingleton<IDbContextFactory<PromptDbContext>>(_ => factory)
+                         .BuildServiceProvider())
+        {
+            using var engine = new SettingsInitializer(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
+
+            await ((IAsyncInitializer)engine).InitializeAsync(CancellationToken.None);
+
+            Assert.That(factory.IsDisposed, Is.False);
+        }
+
+        Assert.That(factory.IsDisposed, Is.True);
     }
 
     [Test, NonParallelizable, Platform("Win,MacOsX")]
@@ -240,9 +295,10 @@ public sealed class SettingsEngineTests
         const string legacyService = "com.sylinko.everywhere.apikeys";
         var id = Guid.NewGuid();
         var account = id.ToString("N");
-        using var file = TestSettingsFile($$"""
-            { "Version": "{{previousVersion}}", "Model": { "ApiKeys": [{ "Id": "{{id}}", "Name": "model" }] } }
-            """);
+        using var file = TestSettingsFile(
+            $$"""
+              { "Version": "{{previousVersion}}", "Model": { "ApiKeys": [{ "Id": "{{id}}", "Name": "model" }] } }
+              """);
         using var provider = new ServiceCollection().BuildServiceProvider();
         using var scope = new SecretStoreScope();
         var store = scope.Store;
@@ -250,21 +306,22 @@ public sealed class SettingsEngineTests
         store.GetSecret(legacyService, account).Returns("saved");
         store.GetSecret(ApiKey.ServiceName, account).Returns((string?)null, "saved");
         var shouldFailDeletion = true;
-        store.When(item => item.DeleteSecret(legacyService, account)).Do(_ =>
-        {
-            if (shouldFailDeletion)
+        store.When(item => item.DeleteSecret(legacyService, account))
+            .Do(_ =>
             {
-                throw new IOException("Deletion refused");
-            }
-        });
-        using var engine = new SettingsEngine(new Settings(provider), file.Path, provider, NullLoggerFactory.Instance);
+                if (shouldFailDeletion)
+                {
+                    throw new IOException("Deletion refused");
+                }
+            });
+        using var engine = new SettingsInitializer(new Settings(provider), file.Path, provider, NullLoggerFactory.Instance);
 
-        await Assert.ThrowsAsync<IOException>(() => engine.InitializeAsync(default));
+        await Assert.ThrowsAsync<IOException>(() => ((IAsyncInitializer)engine).InitializeAsync(default));
         Assert.That(Require(JsonNode.Parse(File.ReadAllText(file.Path)))["Version"]?.ToString(), Is.EqualTo(previousVersion));
 
         shouldFailDeletion = false;
-        await engine.InitializeAsync(default);
-        Assert.That(engine.Settings.Version, Is.Not.EqualTo(previousVersion));
+        await ((IAsyncInitializer)engine).InitializeAsync(default);
+        Assert.That(engine.Storage.CreateSnapshot()["Version"]?.GetValue<string>(), Is.Not.EqualTo(previousVersion));
         store.Received(1).SetSecret(ApiKey.ServiceName, account, "saved");
         store.Received(2).DeleteSecret(legacyService, account);
     }
@@ -284,13 +341,17 @@ public sealed class SettingsEngineTests
             .BuildServiceProvider();
 
         Assert.That(serviceProvider.GetRequiredService<Settings>(), Is.Not.Null);
+        Assert.That(serviceProvider.GetRequiredService<IModSettingsRegistry>(), Is.Not.Null);
 
         var registrations = serviceProvider.GetServices<AsyncInitializerRegistration>().ToList();
-        Assert.That(registrations.Select(r => r.Index), Is.EqualTo(new[]
-        {
-            AsyncInitializerIndex.Settings,
-            AsyncInitializerIndex.Database - 1
-        }));
+        Assert.That(
+            registrations.Select(r => r.Index),
+            Is.EqualTo(
+                new[]
+                {
+                    AsyncInitializerIndex.Settings,
+                    AsyncInitializerIndex.Database - 1
+                }));
     }
 
     [Test]
@@ -368,19 +429,21 @@ public sealed class SettingsEngineTests
     public void Patch_CreatesApiKeyWithInitOnlyIdFromJson()
     {
         var apiKeyId = Guid.Parse("018fe8f2-3d4a-7c1b-9a2f-2d994c37a001");
-        var root = Require(JsonNode.Parse(
-            $$"""
-            {
-              "Model": {
-                "ApiKeys": [
-                  {
-                    "Id": "{{apiKeyId:D}}",
-                    "Name": "primary"
-                  }
-                ]
-              }
-            }
-            """)).AsObject();
+        var root = Require(
+                JsonNode.Parse(
+                    $$"""
+                      {
+                        "Model": {
+                          "ApiKeys": [
+                            {
+                              "Id": "{{apiKeyId:D}}",
+                              "Name": "primary"
+                            }
+                          ]
+                        }
+                      }
+                      """))
+            .AsObject();
         using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);
         var binder = new SettingsPatchBinder();
@@ -399,18 +462,20 @@ public sealed class SettingsEngineTests
     [Test]
     public void Patch_MissingApiKeyIdKeepsApiKeyDefaultId()
     {
-        var root = Require(JsonNode.Parse(
-            """
-            {
-              "Model": {
-                "ApiKeys": [
-                  {
-                    "Name": "generated"
-                  }
-                ]
-              }
-            }
-            """)).AsObject();
+        var root = Require(
+                JsonNode.Parse(
+                    """
+                    {
+                      "Model": {
+                        "ApiKeys": [
+                          {
+                            "Name": "generated"
+                          }
+                        ]
+                      }
+                    }
+                    """))
+            .AsObject();
         using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);
         var binder = new SettingsPatchBinder();
@@ -429,19 +494,21 @@ public sealed class SettingsEngineTests
     [Test]
     public void Patch_InvalidApiKeyIdReportsPropertyDiagnosticAndKeepsDefaultId()
     {
-        var root = Require(JsonNode.Parse(
-            """
-            {
-              "Model": {
-                "ApiKeys": [
-                  {
-                    "Id": "not-a-guid",
-                    "Name": "fallback"
-                  }
-                ]
-              }
-            }
-            """)).AsObject();
+        var root = Require(
+                JsonNode.Parse(
+                    """
+                    {
+                      "Model": {
+                        "ApiKeys": [
+                          {
+                            "Id": "not-a-guid",
+                            "Name": "fallback"
+                          }
+                        ]
+                      }
+                    }
+                    """))
+            .AsObject();
         using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);
         var binder = new SettingsPatchBinder();
@@ -468,13 +535,13 @@ public sealed class SettingsEngineTests
         var id = Guid.Parse("018fe8f2-3d4a-7c1b-9a2f-2d994c37a002");
         using var file = TestSettingsFile(
             $$"""
-            {
-              "CreatedInit": {
-                "Id": "{{id:D}}",
-                "Name": "reflection"
+              {
+                "CreatedInit": {
+                  "Id": "{{id:D}}",
+                  "Name": "reflection"
+                }
               }
-            }
-            """);
+              """);
         using var store = JsonSettingsStorage.Load(file.Path);
         var target = new TestRoot();
 
@@ -1067,9 +1134,9 @@ public sealed class SettingsEngineTests
         var settings = new Settings(serviceProvider);
         var id = Guid.CreateVersion7();
 
-        using (var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance))
+        using (var engine = new SettingsInitializer(settings, file.Path, serviceProvider, NullLoggerFactory.Instance))
         {
-            await engine.InitializeAsync(default);
+            await ((IAsyncInitializer)engine).InitializeAsync(default);
             settings.Plugin.WebSearchEngine.ApiKeys.Add(new ApiKey { Id = id, Name = "Tavily test" });
             var tavily = (ApiKeyWebSearchEngineProvider)settings.Plugin.WebSearchEngine.Providers[WebSearchEngineProviderId.Tavily];
             tavily.ApiKey = id;
@@ -1080,8 +1147,8 @@ public sealed class SettingsEngineTests
         }
 
         var reloadedSettings = new Settings(serviceProvider);
-        using var reloadedEngine = new SettingsEngine(reloadedSettings, file.Path, serviceProvider, NullLoggerFactory.Instance);
-        await reloadedEngine.InitializeAsync(default);
+        using var reloadedEngine = new SettingsInitializer(reloadedSettings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+        await ((IAsyncInitializer)reloadedEngine).InitializeAsync(default);
 
         var reloadedTavily = (ApiKeyWebSearchEngineProvider)reloadedSettings.Plugin.WebSearchEngine.Providers[WebSearchEngineProviderId.Tavily];
         Assert.Multiple(() =>
@@ -1158,7 +1225,12 @@ public sealed class SettingsEngineTests
         }
 
         segments.Add(DeepObserverPathSegment.Property(nameof(StdioMcpTransportConfiguration.Command)));
-        binder.WriteObservedPath(store, binder.GetDescriptor(typeof(PolymorphicRoot)), target, new DeepObserverPath(segments.ToArray()), transport.Command);
+        binder.WriteObservedPath(
+            store,
+            binder.GetDescriptor(typeof(PolymorphicRoot)),
+            target,
+            new DeepObserverPath(segments.ToArray()),
+            transport.Command);
 
         var node = Require(store.CreateSnapshot()[propertyName]);
         if (propertyName == nameof(PolymorphicRoot.Transports))
@@ -1274,10 +1346,11 @@ public sealed class SettingsEngineTests
         using var file = TestSettingsFile("{}");
         using var store = JsonSettingsStorage.Load(file.Path);
 
-        var tasks = Enumerable.Range(0, 40).Select(i => Task.Run(() =>
-            store.ReplaceSubtree(
-                new SettingsJsonPath([SettingsJsonPathSegment.Property("Values"), SettingsJsonPathSegment.Property(i.ToString())]),
-                JsonValue.Create(i))));
+        var tasks = Enumerable.Range(0, 40)
+            .Select(i => Task.Run(() =>
+                store.ReplaceSubtree(
+                    new SettingsJsonPath([SettingsJsonPathSegment.Property("Values"), SettingsJsonPathSegment.Property(i.ToString())]),
+                    JsonValue.Create(i))));
 
         await Task.WhenAll(tasks);
         await store.FlushAsync();
@@ -1288,7 +1361,7 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
-    public async Task Store_WriteFailureAddsDiagnosticAndDeletesTemporaryFiles()
+    public void Store_WriteFailureAddsDiagnosticAndDeletesTemporaryFiles()
     {
         using var directory = new TempDirectory();
         var invalidTarget = Path.Combine(directory.Path, "settings-directory");
@@ -1298,10 +1371,40 @@ public sealed class SettingsEngineTests
         store.ReplaceSubtree(
             new SettingsJsonPath([SettingsJsonPathSegment.Property("Name")]),
             JsonValue.Create("cannot-write-over-directory"));
-        await store.FlushAsync();
+        Assert.That(async () => await store.FlushAsync(), Throws.InstanceOf<IOException>().Or.InstanceOf<UnauthorizedAccessException>());
 
         Assert.That(store.Diagnostics.Any(d => d.Kind == SettingsEngineDiagnosticKind.WriteFailure), Is.True);
         Assert.That(Directory.GetFiles(directory.Path), Is.Empty);
+    }
+
+    [Test]
+    public async Task SettingsEngine_WithPrunePolicyAtRoot_PrunesUnknownKeysInStorageAndPreservesVersion()
+    {
+        using var file = TestSettingsFile(
+            """
+            {
+              "Version": "2.0.0",
+              "Value": 42,
+              "ObsoleteKey": "stale"
+            }
+            """);
+        var model = new PrunableRoot();
+        var storage = JsonSettingsStorage.Load(file.Path);
+        var binder = new SettingsPatchBinder(new ReflectionSettingsDescriptorProvider());
+        await using (var engine = new SettingsEngine<PrunableRoot>(model, storage, binder))
+        {
+            Assert.That(model.Value, Is.EqualTo(42));
+            Assert.That(engine.Diagnostics, Is.Empty);
+            model.Value = 99;
+        }
+
+        var saved = Require(JsonNode.Parse(await File.ReadAllTextAsync(file.Path))).AsObject();
+        Assert.Multiple(() =>
+        {
+            Assert.That(saved["Version"]?.GetValue<string>(), Is.EqualTo("2.0.0"));
+            Assert.That(saved["Value"]?.GetValue<int>(), Is.EqualTo(99));
+            Assert.That(saved.ContainsKey("ObsoleteKey"), Is.False);
+        });
     }
 
     private static DeepObserverPath ObservedPath(params DeepObserverPathSegment[] segments) => new(segments);
@@ -1326,10 +1429,12 @@ public sealed class SettingsEngineTests
         public Dictionary<string, TestItem?> NullableDictionaryValues { get; } = [];
         public Dictionary<int, string> NumberedNames { get; } = [];
         public Dictionary<TestDictionaryKey, string> EnumNames { get; } = [];
+
         public ObservableImmutableDictionary<string, TestItem> ReadOnlyItems { get; } = new(
         [
             new KeyValuePair<string, TestItem>("existing", new TestItem { Name = "old" })
         ]);
+
         public IReadOnlyList<int> WritableReadOnlyNumbers { get; set; } = new ReadOnlyCollection<int>(new List<int> { 9 });
         public IReadOnlyList<int> GetterOnlyReadOnlyNumbers { get; } = new ReadOnlyCollection<int>(new List<int> { 9 });
         public int Count { get; set; }
@@ -1421,6 +1526,33 @@ public sealed class SettingsEngineTests
     private sealed class SerializedThing
     {
         public int Value { get; set; }
+    }
+
+    [SettingsUnknownMemberHandling(SettingsUnknownMemberHandling.Prune)]
+    private sealed class PrunableRoot : ObservableObject
+    {
+        public int Value
+        {
+            get;
+            set => SetProperty(ref field, value);
+        }
+    }
+
+    /// <summary>
+    /// Tracks root-container ownership without opening a database when no prompt text needs migration.
+    /// </summary>
+    private sealed class TrackingPromptDbContextFactory : IDbContextFactory<PromptDbContext>, IDisposable
+    {
+        /// <summary>
+        /// Gets whether the owning container has released the factory.
+        /// </summary>
+        public bool IsDisposed { get; private set; }
+
+        /// <inheritdoc />
+        public PromptDbContext CreateDbContext() => throw new InvalidOperationException("No prompt data requires a database.");
+
+        /// <inheritdoc />
+        public void Dispose() => IsDisposed = true;
     }
 
     private sealed class TempSettingsFile : IDisposable

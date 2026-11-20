@@ -1,17 +1,19 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
+using Everywhere.SourceGeneration;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Everywhere.Configuration.SourceGenerator;
 
 /// <summary>
-/// Generates SettingsEngine descriptor metadata for the application settings graph.
+/// Generates SettingsEngine descriptor metadata for application settings and explicitly declared mod roots.
 /// </summary>
 /// <remarks>
 /// The generated provider mirrors <c>ReflectionSettingsDescriptorProvider</c>
-/// metadata without emitting reflection-based property accessors. It is only
-/// produced for the assembly that owns <c>Everywhere.Configuration.Settings</c>.
+/// metadata without emitting reflection-based property accessors. The application root is automatic;
+/// mod providers opt in with <c>GeneratedSettingsDescriptorAttribute</c>.
 /// </remarks>
 [Generator(LanguageNames.CSharp)]
 public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenerator
@@ -39,36 +41,91 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         PropertyFlags.ElementAllowsNull
     ];
 
+    /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var host = context.CompilationProvider.Select(static (compilation, token) =>
+            {
+                if (compilation.GetTypeByMetadataName("Everywhere.Configuration.Engine.ISettingsDescriptorProvider") is null ||
+                    compilation.Assembly.GetTypeByMetadataName("Everywhere.Configuration.Settings") is not { } root)
+                {
+                    return null;
+                }
+
+                return new ProviderModel("Settings.GeneratedDescriptorProvider.g.cs", null, null, BuildModels(compilation, root, token));
+            })
+            .WithTrackingName("HostDescriptorModel");
+
+        var mods = context.SyntaxProvider.ForAttributeWithMetadataName(
+            "Everywhere.Configuration.GeneratedSettingsDescriptorAttribute",
+            static (node, _) => node is TypeDeclarationSyntax,
+            static (attributeContext, token) => AnalyzeProvider(attributeContext, token));
+
         context.RegisterSourceOutput(
-            context.CompilationProvider,
-            static (spc, compilation) => Emit(spc, compilation));
+            mods,
+            static (production, result) =>
+            {
+                foreach (var diagnostic in result.Diagnostics)
+                {
+                    production.ReportDiagnostic(diagnostic);
+                }
+            });
+
+        var modModels = mods.Select(static (result, _) => result.Model).WithTrackingName("ModDescriptorModel");
+        var hostSources = host.Select(static (model, token) => GenerateProvider(model, token)).WithTrackingName("HostDescriptorSource");
+        var modSources = modModels.Select(static (model, token) => GenerateProvider(model, token)).WithTrackingName("ModDescriptorSource");
+        context.RegisterSourceOutput(hostSources, static (production, source) => Emit(production, source));
+        context.RegisterSourceOutput(modSources, static (production, source) => Emit(production, source));
     }
 
-    private static void Emit(SourceProductionContext ctx, Compilation compilation)
+    /// <summary>
+    /// Resolves an explicitly annotated provider without enumerating unrelated compilation types.
+    /// </summary>
+    private static AnalysisResult<ProviderModel> AnalyzeProvider(GeneratorAttributeSyntaxContext context, CancellationToken token)
     {
-        var settingsType = compilation.Assembly.GetTypeByMetadataName("Everywhere.Configuration.Settings");
-        if (settingsType is null)
+        var analysis = new AnalysisContext(token);
+        var compilation = context.SemanticModel.Compilation;
+        var type = (INamedTypeSymbol)context.TargetSymbol;
+        if (compilation.GetTypeByMetadataName("Everywhere.Configuration.Engine.ISettingsDescriptorProvider") is null ||
+            context.Attributes[0].ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol root)
         {
-            return;
+            return analysis.Complete<ProviderModel>(null);
         }
 
-        if (compilation.GetTypeByMetadataName("Everywhere.Configuration.Engine.ISettingsDescriptorProvider") is null)
+        if (!type.IsPartial(token) || type.ContainingType is not null || type.IsGenericType || type.IsStatic || type.TypeKind != TypeKind.Class)
         {
-            return;
+            analysis.ReportDiagnostic(Diagnostic.Create(Diagnostics.InvalidDescriptorProvider, type.Locations.FirstOrDefault(), type.Name));
+            return analysis.Complete<ProviderModel>(null);
         }
 
-        var models = BuildModels(compilation, settingsType);
-        if (models.Length == 0)
-        {
-            return;
-        }
-
-        ctx.AddSource("Settings.GeneratedDescriptorProvider.g.cs", GenerateSource(models));
+        return analysis.Complete(
+            new ProviderModel(
+                type.ToDisplayString().Replace('.', '_') + ".SettingsDescriptors.g.cs",
+                type.GetNamespace(),
+                type.Name,
+                BuildModels(compilation, root, token)));
     }
 
-    private static ImmutableArray<TypeModel> BuildModels(Compilation compilation, INamedTypeSymbol settingsType)
+    /// <summary>
+    /// Formats only providers whose value models changed.
+    /// </summary>
+    private static (string HintName, string Source)? GenerateProvider(ProviderModel? model, CancellationToken token)
+    {
+        return model is null ? null : (model.HintName, GenerateSource(model.Types, model.Namespace, model.Name, token));
+    }
+
+    /// <summary>
+    /// Adds one independently generated provider file.
+    /// </summary>
+    private static void Emit(SourceProductionContext context, (string HintName, string Source)? source)
+    {
+        if (source is { } value)
+        {
+            context.AddSource(value.HintName, value.Source);
+        }
+    }
+
+    private static EquatableArray<TypeModel> BuildModels(Compilation compilation, INamedTypeSymbol settingsType, CancellationToken token)
     {
         var queue = new Queue<INamedTypeSymbol>();
         var seen = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
@@ -83,44 +140,29 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         // generated provider.
         while (queue.Count > 0)
         {
+            token.ThrowIfCancellationRequested();
             var type = queue.Dequeue();
             var properties = GetSettingsProperties(type)
-                .Select(property => BuildPropertyModel(compilation, property))
+                .Select(property =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    return BuildPropertyModel(compilation, property, Enqueue);
+                })
                 .OfType<PropertyModel>()
                 .ToImmutableArray();
 
             var model = new TypeModel(
-                type,
+                FormatType(type),
                 GetCreateMethodName(models.Count, type),
                 GetConstructorKind(type),
                 GetUnknownMemberHandling(type, null),
                 HasAttribute(type, KnownAttributes.SettingsSerializedSubtree),
-                properties);
+                new EquatableArray<PropertyModel>(properties));
 
             models.Add(model);
-
-            foreach (var property in properties)
-            {
-                if (property.ChildType is not null)
-                {
-                    Enqueue(property.ChildType);
-                }
-
-                var indexedType = property.Kind is "Array" or "List" ? property.ElementType
-                    : property.Kind == "Dictionary" ? property.DictionaryValueType
-                    : null;
-
-                if (indexedType is INamedTypeSymbol namedIndexedType &&
-                    property.Kind != "SerializedSubtree" &&
-                    (HasAttribute(namedIndexedType, KnownAttributes.SettingsSerializedSubtree) ||
-                        CanPatchAsObject(compilation, namedIndexedType)))
-                {
-                    Enqueue(namedIndexedType);
-                }
-            }
         }
 
-        return [.. models];
+        return new EquatableArray<TypeModel>(models.ToImmutableArray());
 
         void Enqueue(INamedTypeSymbol type)
         {
@@ -180,7 +222,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         }
     }
 
-    private static PropertyModel? BuildPropertyModel(Compilation compilation, IPropertySymbol property)
+    private static PropertyModel? BuildPropertyModel(Compilation compilation, IPropertySymbol property, Action<INamedTypeSymbol> enqueue)
     {
         if (property.Type.TypeKind == TypeKind.Error)
         {
@@ -256,39 +298,66 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             return null;
         }
 
+        if (childType is not null)
+        {
+            enqueue(childType);
+        }
+
+        var indexedType = kind is "Array" or "List" ? elementType : kind == "Dictionary" ? dictionaryValueType : null;
+        if (indexedType is INamedTypeSymbol namedIndexedType &&
+            (HasAttribute(namedIndexedType, KnownAttributes.SettingsSerializedSubtree) || CanPatchAsObject(compilation, namedIndexedType)))
+        {
+            enqueue(namedIndexedType);
+        }
+
         return new PropertyModel(
-            property.ContainingType,
+            FormatType(property.ContainingType),
             property.Name,
             jsonName,
-            propertyType,
+            FormatType(propertyType),
+            FormatValueType(propertyType),
             kind,
             flags,
-            elementType,
-            dictionaryKeyType,
-            dictionaryValueType,
+            elementType is null ? null : FormatType(elementType),
+            dictionaryKeyType is null ? null : FormatType(dictionaryKeyType),
+            dictionaryValueType is null ? null : FormatType(dictionaryValueType),
             GetUnknownMemberHandling(property, propertyType),
-            childType);
+            childType is null ? null : FormatType(childType));
     }
 
-    private static string GenerateSource(ImmutableArray<TypeModel> models)
+    private static string GenerateSource(
+        EquatableArray<TypeModel> models,
+        string? providerNamespace,
+        string? providerName,
+        CancellationToken token
+    )
     {
         var sb = new StringBuilder();
         sb.AppendLine("// <auto-generated/>");
         sb.AppendLine("#nullable enable");
         sb.AppendLine();
-        sb.Append("namespace ").Append(EngineNamespace).AppendLine(";");
+        if (providerNamespace != string.Empty)
+        {
+            sb.Append("namespace ").Append(providerNamespace ?? EngineNamespace).AppendLine(";");
+        }
+
         sb.AppendLine();
-        sb.AppendLine("internal static partial class SettingsDescriptorProviderFactory");
-        sb.AppendLine("{");
-        sb.Append("    static partial void TryCreateGenerated(ref ")
-            .Append(EngineGlobalPrefix)
-            .AppendLine(".ISettingsDescriptorProvider? provider)");
-        sb.AppendLine("    {");
-        sb.AppendLine("        provider = new GeneratedSettingsDescriptorProvider();");
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
-        sb.AppendLine();
-        sb.Append("internal sealed class GeneratedSettingsDescriptorProvider : ")
+        if (providerName is null)
+        {
+            sb.AppendLine("internal static partial class SettingsDescriptorProviderFactory");
+            sb.AppendLine("{");
+            sb.Append("    static partial void TryCreateGenerated(ref ")
+                .Append(EngineGlobalPrefix)
+                .AppendLine(".ISettingsDescriptorProvider? provider)");
+            sb.AppendLine("    {");
+            sb.AppendLine("        provider = new GeneratedSettingsDescriptorProvider();");
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
+
+        sb.Append(providerName is null ? "internal sealed class GeneratedSettingsDescriptorProvider" : "partial class " + providerName)
+            .Append(" : ")
             .Append(EngineGlobalPrefix)
             .AppendLine(".ISettingsDescriptorProvider");
         sb.AppendLine("{");
@@ -307,8 +376,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         sb.AppendLine("        return value is null ? default! : (T)value;");
         sb.AppendLine("    }");
         sb.AppendLine();
-        sb.AppendLine("    // Generated descriptors cover the known Settings graph; the fallback keeps");
-        sb.AppendLine("    // tests and future extension types working until the generator learns them.");
+        sb.AppendLine("    /// <inheritdoc />");
         sb.Append("    public ")
             .Append(EngineGlobalPrefix)
             .AppendLine(".ISettingsDescriptor GetDescriptor(global::System.Type type)");
@@ -333,7 +401,8 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
 
         foreach (var model in models)
         {
-            sb.Append("        if (type == typeof(").Append(FormatType(model.Type)).AppendLine("))");
+            token.ThrowIfCancellationRequested();
+            sb.Append("        if (type == typeof(").Append(model.Type).AppendLine("))");
             sb.AppendLine("        {");
             sb.Append("            return ").Append(model.CreateMethodName).AppendLine("();");
             sb.AppendLine("        }");
@@ -345,6 +414,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
 
         foreach (var model in models)
         {
+            token.ThrowIfCancellationRequested();
             sb.AppendLine();
             EmitCreateMethod(sb, model);
         }
@@ -390,16 +460,16 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
 
     private static void EmitPropertyDescriptor(StringBuilder sb, PropertyModel property)
     {
-        var ownerType = FormatType(property.OwnerType);
-        var propertyType = FormatType(property.PropertyType);
-        var propertyValueType = FormatValueType(property.PropertyType);
-        var setter = property.Flags.HasFlag(PropertyFlags.CanWrite) ?
-            $"static (instance, value) => (({ownerType})instance).{property.ClrName} = CastPropertyValue<{propertyValueType}>(value)" :
-            "null";
-        var childDescriptor = property.ChildType is null ? "null" : $"GetDescriptor(typeof({FormatType(property.ChildType)}))";
-        var dictionaryKeyReader = property.DictionaryKeyType is null ?
-            "null" :
-            $"static keyText => {EngineGlobalPrefix}.DictionaryKeyReader<{FormatType(property.DictionaryKeyType)}>.ReadObject(keyText)";
+        var ownerType = property.OwnerType;
+        var propertyType = property.PropertyType;
+        var propertyValueType = property.PropertyValueType;
+        var setter = property.Flags.HasFlag(PropertyFlags.CanWrite)
+            ? $"static (instance, value) => (({ownerType})instance).{property.ClrName} = CastPropertyValue<{propertyValueType}>(value)"
+            : "null";
+        var childDescriptor = property.ChildType is null ? "null" : $"GetDescriptor(typeof({property.ChildType}))";
+        var dictionaryKeyReader = property.DictionaryKeyType is null
+            ? "null"
+            : $"static (keyText, options) => {EngineGlobalPrefix}.DictionaryKeyReader<{property.DictionaryKeyType}>.ReadObject(keyText, options)";
 
         sb.Append("                new ")
             .Append(EngineGlobalPrefix)
@@ -441,7 +511,9 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
 
     private static void EmitDescriptorClass(StringBuilder sb, TypeModel model)
     {
-        sb.Append("    private sealed class ").Append(GetDescriptorClassName(model)).Append(" : ")
+        sb.Append("    private sealed class ")
+            .Append(GetDescriptorClassName(model))
+            .Append(" : ")
             .Append(EngineGlobalPrefix)
             .AppendLine(".SettingsObjectDescriptor");
         sb.AppendLine("    {");
@@ -450,7 +522,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             .Append(EngineGlobalPrefix)
             .AppendLine(".ISettingsPropertyDescriptor> properties)");
         sb.AppendLine("            : base(");
-        sb.Append("                typeof(").Append(FormatType(model.Type)).AppendLine("),");
+        sb.Append("                typeof(").Append(model.Type).AppendLine("),");
         sb.AppendLine("                properties,");
         sb.Append("                ")
             .Append(ConfigurationGlobalPrefix)
@@ -486,7 +558,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         }
         else
         {
-            sb.Append("                instance = new ").Append(FormatType(model.Type)).AppendLine("();");
+            sb.Append("                instance = new ").Append(model.Type).AppendLine("();");
             sb.AppendLine("                return true;");
         }
 
@@ -561,7 +633,8 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
     private static void EmitSingleInitializerCreateInstanceMethodBody(
         StringBuilder sb,
         TypeModel model,
-        PropertyModel property)
+        PropertyModel property
+    )
     {
         sb.Append("        if (initialValues?.TryGetValue(\"")
             .Append(EscapeStringForCode(property.JsonName))
@@ -574,7 +647,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         sb.Append("                ")
             .Append(property.ClrName)
             .Append(" = CastPropertyValue<")
-            .Append(FormatValueType(property.PropertyType))
+            .Append(property.PropertyValueType)
             .AppendLine(">(initValue),");
         sb.AppendLine("            };");
         sb.AppendLine("        }");
@@ -586,7 +659,8 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         StringBuilder sb,
         TypeModel model,
         ImmutableArray<PropertyModel> properties,
-        int mask)
+        int mask
+    )
     {
         sb.Append(GetConstructorExpression(model));
 
@@ -609,7 +683,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             sb.Append("                ")
                 .Append(property.ClrName)
                 .Append(" = CastPropertyValue<")
-                .Append(FormatValueType(property.PropertyType))
+                .Append(property.PropertyValueType)
                 .Append(">(initValue_")
                 .Append(i.ToString(CultureInfo.InvariantCulture))
                 .AppendLine("),");
@@ -621,7 +695,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
     private static string GetConstructorExpression(TypeModel model) =>
         model.ConstructorKind switch
         {
-            ConstructorKind.Default => $"new {FormatType(model.Type)}()",
+            ConstructorKind.Default => $"new {model.Type}()",
             _ => "null"
         };
 
@@ -921,8 +995,8 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
 
     private static ITypeSymbol UnwrapNullableReference(ITypeSymbol type) => type;
 
-    private static string FormatNullableTypeOf(ITypeSymbol? type) =>
-        type is null ? "null" : $"typeof({FormatType(type)})";
+    private static string FormatNullableTypeOf(string? type) =>
+        type is null ? "null" : $"typeof({type})";
 
     private static string FormatPropertyFlags(PropertyFlags flags)
     {
@@ -985,26 +1059,43 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         ElementAllowsNull = 1 << 3
     }
 
+    /// <summary>
+    /// Describes one reachable settings type without retaining its Roslyn symbol.
+    /// </summary>
     private sealed record TypeModel(
-        INamedTypeSymbol Type,
+        string Type,
         string CreateMethodName,
         ConstructorKind ConstructorKind,
         string UnknownMemberHandling,
         bool IsSerializedSubtree,
-        ImmutableArray<PropertyModel> Properties
+        EquatableArray<PropertyModel> Properties
     );
 
+    /// <summary>
+    /// Contains the resolved names and patching capabilities used by a property descriptor.
+    /// </summary>
     private sealed record PropertyModel(
-        INamedTypeSymbol OwnerType,
+        string OwnerType,
         string ClrName,
         string JsonName,
-        ITypeSymbol PropertyType,
+        string PropertyType,
+        string PropertyValueType,
         string Kind,
         PropertyFlags Flags,
-        ITypeSymbol? ElementType,
-        ITypeSymbol? DictionaryKeyType,
-        ITypeSymbol? DictionaryValueType,
+        string? ElementType,
+        string? DictionaryKeyType,
+        string? DictionaryValueType,
         string UnknownMemberHandling,
-        INamedTypeSymbol? ChildType
+        string? ChildType
+    );
+
+    /// <summary>
+    /// Defines a complete provider output; nested arrays compare by content.
+    /// </summary>
+    private sealed record ProviderModel(
+        string HintName,
+        string? Namespace,
+        string? Name,
+        EquatableArray<TypeModel> Types
     );
 }

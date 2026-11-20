@@ -2,8 +2,8 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
-using ZLinq;
 
 namespace Everywhere.Configuration.Engine;
 
@@ -209,7 +209,7 @@ public interface ISettingsPropertyDescriptor
     /// descriptors provide a closed generic delegate here so the binder does not
     /// need runtime generic construction on the normal Settings path.
     /// </remarks>
-    Func<string, object?>? DictionaryKeyReader { get; }
+    Func<string, JsonSerializerOptions, object?>? DictionaryKeyReader { get; }
 
     /// <summary>
     /// Gets the unknown-member policy that applies to this property's object subtree.
@@ -450,9 +450,7 @@ public sealed class ReflectionSettingsDescriptorProvider : ISettingsDescriptorPr
             return SettingsPropertyFlags.None;
         }
 
-        return IsInitOnly(property) ?
-            SettingsPropertyFlags.CanInitialize :
-            SettingsPropertyFlags.CanWrite;
+        return IsInitOnly(property) ? SettingsPropertyFlags.CanInitialize : SettingsPropertyFlags.CanWrite;
     }
 
     private static bool IsInitOnly(PropertyInfo property) =>
@@ -466,7 +464,8 @@ public sealed class ReflectionSettingsDescriptorProvider : ISettingsDescriptorPr
         NullabilityInfo propertyNullability,
         Type elementType,
         bool isArray,
-        bool isDictionary)
+        bool isDictionary
+    )
     {
         if (isArray)
         {
@@ -502,11 +501,15 @@ public class SettingsObjectDescriptor : ISettingsDescriptor
 {
     private readonly Dictionary<string, ISettingsPropertyDescriptor> _propertiesByName;
 
-    internal SettingsObjectDescriptor(
+    /// <summary>
+    /// Creates the shared descriptor base used by generated providers, including providers in mod assemblies.
+    /// </summary>
+    protected internal SettingsObjectDescriptor(
         Type type,
         IReadOnlyList<ISettingsPropertyDescriptor> properties,
         SettingsUnknownMemberHandling unknownMemberHandling,
-        bool isSerializedSubtree)
+        bool isSerializedSubtree
+    )
     {
         Type = type;
         Properties = properties;
@@ -553,7 +556,8 @@ internal sealed class ReflectionSettingsObjectDescriptor : SettingsObjectDescrip
         Type type,
         IReadOnlyList<ISettingsPropertyDescriptor> properties,
         SettingsUnknownMemberHandling unknownMemberHandling,
-        bool isSerializedSubtree)
+        bool isSerializedSubtree
+    )
         : base(type, properties, unknownMemberHandling, isSerializedSubtree)
     {
         _instanceType = Nullable.GetUnderlyingType(type) ?? type;
@@ -612,7 +616,10 @@ public sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDescri
     private readonly Func<object, object?> _getter;
     private readonly Action<object, object?>? _setter;
 
-    internal DelegateSettingsPropertyDescriptor(
+    /// <summary>
+    /// Creates a generated property descriptor, including its caller-configured key conversion.
+    /// </summary>
+    public DelegateSettingsPropertyDescriptor(
         Type ownerType,
         string clrName,
         string jsonName,
@@ -622,11 +629,12 @@ public sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDescri
         Type? elementType,
         Type? dictionaryKeyType,
         Type? dictionaryValueType,
-        Func<string, object?>? dictionaryKeyReader,
+        Func<string, JsonSerializerOptions, object?>? dictionaryKeyReader,
         SettingsUnknownMemberHandling unknownMemberHandling,
         ISettingsDescriptor? childDescriptor,
         Func<object, object?> getter,
-        Action<object, object?>? setter)
+        Action<object, object?>? setter
+    )
     {
         OwnerType = ownerType;
         ClrName = clrName;
@@ -674,7 +682,7 @@ public sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDescri
     public Type? DictionaryValueType { get; }
 
     /// <inheritdoc />
-    public Func<string, object?>? DictionaryKeyReader { get; }
+    public Func<string, JsonSerializerOptions, object?>? DictionaryKeyReader { get; }
 
     /// <inheritdoc />
     public SettingsUnknownMemberHandling UnknownMemberHandling { get; }
@@ -713,9 +721,10 @@ public sealed class SettingsPropertyDescriptor : ISettingsPropertyDescriptor
         Type? elementType,
         Type? dictionaryKeyType,
         Type? dictionaryValueType,
-        Func<string, object?>? dictionaryKeyReader,
+        Func<string, JsonSerializerOptions, object?>? dictionaryKeyReader,
         SettingsUnknownMemberHandling unknownMemberHandling,
-        ISettingsDescriptor? childDescriptor)
+        ISettingsDescriptor? childDescriptor
+    )
     {
         OwnerType = ownerType;
         _property = property;
@@ -760,7 +769,7 @@ public sealed class SettingsPropertyDescriptor : ISettingsPropertyDescriptor
     public Type? DictionaryValueType { get; }
 
     /// <inheritdoc />
-    public Func<string, object?>? DictionaryKeyReader { get; }
+    public Func<string, JsonSerializerOptions, object?>? DictionaryKeyReader { get; }
 
     /// <inheritdoc />
     public SettingsUnknownMemberHandling UnknownMemberHandling { get; }

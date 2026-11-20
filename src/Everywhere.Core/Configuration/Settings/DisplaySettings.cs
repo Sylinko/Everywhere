@@ -115,7 +115,7 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
         LocaleKey.DisplaySettings_Font_Header,
         LocaleKey.DisplaySettings_Font_Description)]
     [SettingsItem(Group = "_")]
-    public SettingsControl<FontFamilyPicker> FontFamilyControl => new(x => new FontFamilyPicker(x.GetRequiredService<FontFamilyCatalog>())
+    public SettingsControl<FontFamilyPicker> FontFamilyControl => new(() => new FontFamilyPicker(GetRequiredService<FontFamilyCatalog>())
     {
         [!FontFamilyPicker.SelectedFontFamilyNameProperty] = CompiledBinding.Create(
             (DisplaySettings settings) => settings.FontFamily,

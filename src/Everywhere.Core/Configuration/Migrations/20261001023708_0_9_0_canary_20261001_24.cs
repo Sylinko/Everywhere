@@ -7,9 +7,10 @@ using PresetModelTemplates = Everywhere.AI.PresetModelTemplates;
 
 namespace Everywhere.Configuration.Migrations;
 
-public sealed class _20261001023708_0_9_0_canary_20261001_24 : SettingsMigration
+public sealed class _20261001023708_0_9_0_canary_20261001_24 : SettingsMigration, ISettingsMigrationMetadata
 {
-    public override SemanticVersion Version => new(0, 9, 0, 0, "canary.20261001.24");
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 9, 0, 0, "canary.20261001.24");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks => [MigrateAssistants];
 

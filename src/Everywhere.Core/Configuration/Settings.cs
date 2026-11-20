@@ -14,8 +14,6 @@ namespace Everywhere.Configuration;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed partial class Settings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
-    [ObservableProperty]
-    public partial string? Version { get; set; }
 
     /// <summary>
     /// Highest completed onboarding capability version; zero records an unfinished run, even when

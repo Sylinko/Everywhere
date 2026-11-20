@@ -14,6 +14,17 @@ internal static class Diagnostics
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    /// <summary>
+    /// Reports provider declarations that cannot receive a generated instance-based descriptor graph.
+    /// </summary>
+    public static readonly DiagnosticDescriptor InvalidDescriptorProvider = new(
+        id: "STG011",
+        title: "Invalid settings descriptor provider",
+        messageFormat: "Provider '{0}' must be a top-level, non-generic, non-static partial class",
+        category: Category,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     public static readonly DiagnosticDescriptor NullableSettingsControl = new(
         id: "STG003",
         title: "Nullable SettingsControl",
@@ -41,7 +52,8 @@ internal static class Diagnostics
     public static readonly DiagnosticDescriptor UnsupportedSettingsItemType = new(
         id: "STG006",
         title: "Unsupported Settings Item Type, using implicit TemplatedItem",
-        messageFormat: "Property '{0}' is of unsupported type '{1}' for a settings item, it's recommended to use explicit SettingsTemplatedItem attribute",
+        messageFormat:
+        "Property '{0}' is of unsupported type '{1}' for a settings item, it's recommended to use explicit SettingsTemplatedItem attribute",
         category: Category,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
@@ -73,7 +85,8 @@ internal static class Diagnostics
     public static readonly DiagnosticDescriptor DuplicateSettingsItemDeclaration = new(
         id: "STG010",
         title: "Duplicate settings item declaration",
-        messageFormat: "Property '{0}' must have at most one SettingsItem attribute or specialized derived attribute; SettingsItems may be combined separately",
+        messageFormat:
+        "Property '{0}' must have at most one SettingsItem attribute or specialized derived attribute; SettingsItems may be combined separately",
         category: Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

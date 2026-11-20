@@ -5,10 +5,24 @@ using System.Text.Json.Serialization;
 
 namespace Everywhere.Configuration.Engine;
 
-internal static class SettingsEngineJson
+/// <summary>
+/// Provides default JSON serializer and document options used by the settings engine.
+/// </summary>
+public static class SettingsEngineJson
 {
+    /// <summary>
+    /// Names the root document metadata used by migrations, excluded from runtime settings models.
+    /// </summary>
+    public const string VersionPropertyName = "Version";
+
+    /// <summary>
+    /// Gets the default JSON serializer options configured for application settings persistence.
+    /// </summary>
     public static JsonSerializerOptions SerializerOptions { get; } = CreateSerializerOptions();
 
+    /// <summary>
+    /// Gets the default JSON document options used when parsing settings files.
+    /// </summary>
     public static JsonDocumentOptions DocumentOptions { get; } = new()
     {
         AllowTrailingCommas = true,
@@ -16,9 +30,15 @@ internal static class SettingsEngineJson
         CommentHandling = JsonCommentHandling.Skip
     };
 
+    /// <summary>
+    /// Serializes a value using <see cref="SerializerOptions"/>.
+    /// </summary>
     public static JsonNode? SerializeToNode(object? value, Type type) =>
         JsonSerializer.SerializeToNode(value, type, SerializerOptions);
 
+    /// <summary>
+    /// Deserializes a JSON node using <see cref="SerializerOptions"/>.
+    /// </summary>
     public static object? Deserialize(JsonNode? node, Type type) =>
         node?.Deserialize(type, SerializerOptions);
 

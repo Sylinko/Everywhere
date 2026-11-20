@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 
@@ -11,25 +12,26 @@ public sealed class ShortcutSettingsMigrationTests
     [Test]
     public void Migrate_0_8_0_MovesLegacyShortcutValuesToMain()
     {
-        using var file = TestSettingsFile("""
-        {
-          "Version": "0.7.0",
-          "Shortcut": {
-            "ChatWindow": {
-              "Key": "K",
-              "Modifiers": "Control, Shift"
-            },
-            "PickVisualElement": {
-              "Key": "P",
-              "Modifiers": "Alt"
-            },
-            "TakeScreenshot": {
-              "Key": "S",
-              "Modifiers": "Meta, Shift"
+        using var file = TestSettingsFile(
+            """
+            {
+              "Version": "0.7.0",
+              "Shortcut": {
+                "ChatWindow": {
+                  "Key": "K",
+                  "Modifiers": "Control, Shift"
+                },
+                "PickVisualElement": {
+                  "Key": "P",
+                  "Modifiers": "Alt"
+                },
+                "TakeScreenshot": {
+                  "Key": "S",
+                  "Modifiers": "Meta, Shift"
+                }
+              }
             }
-          }
-        }
-        """);
+            """);
 
         Migrate(file.Path);
 
@@ -43,28 +45,29 @@ public sealed class ShortcutSettingsMigrationTests
     [Test]
     public void Migrate_0_8_0_FillsMissingMainValuesWithoutOverwritingExistingValues()
     {
-        using var file = TestSettingsFile("""
-        {
-          "Version": "0.7.0",
-          "Shortcut": {
-            "ChatWindow": {
-              "Main": {
-                "Key": "Existing"
-              },
-              "Key": "Legacy",
-              "Modifiers": "Control"
-            },
-            "PickVisualElement": {
-              "Main": {
-                "Key": "ExistingKey",
-                "Modifiers": "ExistingModifiers"
-              },
-              "Key": "LegacyKey",
-              "Modifiers": "LegacyModifiers"
+        using var file = TestSettingsFile(
+            """
+            {
+              "Version": "0.7.0",
+              "Shortcut": {
+                "ChatWindow": {
+                  "Main": {
+                    "Key": "Existing"
+                  },
+                  "Key": "Legacy",
+                  "Modifiers": "Control"
+                },
+                "PickVisualElement": {
+                  "Main": {
+                    "Key": "ExistingKey",
+                    "Modifiers": "ExistingModifiers"
+                  },
+                  "Key": "LegacyKey",
+                  "Modifiers": "LegacyModifiers"
+                }
+              }
             }
-          }
-        }
-        """);
+            """);
 
         Migrate(file.Path);
 
@@ -76,9 +79,12 @@ public sealed class ShortcutSettingsMigrationTests
 
     private static void Migrate(string path)
     {
+        using var services = new ServiceCollection()
+            .AddSettingsMigration<_20260614154350_0_8_0>()
+            .BuildServiceProvider();
         var migrator = new SettingsMigrator(
             path,
-            [new _20260614154350_0_8_0()],
+            services,
             Substitute.For<ILogger>());
 
         migrator.Migrate();

@@ -17,14 +17,15 @@ namespace Everywhere.Configuration.Migrations;
 /// root properties that no longer exist in the active model, and normalizes
 /// a few known enum and property-name shapes that predate the current model.
 /// </remarks>
-public sealed class _20260629120000_0_8_1_canary_20260629_12 : SettingsMigration
+public sealed class _20260629120000_0_8_1_canary_20260629_12 : SettingsMigration, ISettingsMigrationMetadata
 {
     private const ModelSpecializations KnownSpecializations =
         ModelSpecializations.TitleGeneration |
         ModelSpecializations.ContextCompression |
         ModelSpecializations.ImageUnderstanding;
 
-    public override SemanticVersion Version => new(0, 8, 1, 0, "canary.20260629.12");
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 8, 1, 0, "canary.20260629.12");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks => [CleanupCustomAssistants, CleanupWebSearchProviders];
 

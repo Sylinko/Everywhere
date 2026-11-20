@@ -38,6 +38,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Everywhere.Core\Everywhere.Core.csproj"/>
     <ProjectReference Include="..\..\src\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
+    <ProjectReference Include="..\..\src\Everywhere.Modding.Hosting\Everywhere.Modding.Hosting.csproj"/>
     <ProjectReference Include="..\..\src\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
   </ItemGroup>
 

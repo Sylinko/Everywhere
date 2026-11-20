@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Everywhere.Common;
 using Everywhere.Utilities;
@@ -17,6 +18,7 @@ namespace Everywhere.Configuration.Engine;
 public sealed class SettingsPatchBinder
 {
     private readonly ISettingsDescriptorProvider _descriptorProvider;
+    private readonly JsonSerializerOptions _serializerOptions;
     private readonly List<SettingsEngineDiagnostic> _diagnostics = [];
 
     /// <summary>
@@ -27,9 +29,11 @@ public sealed class SettingsPatchBinder
     /// source-generated provider is preferred and reflection is used as a
     /// compatibility fallback.
     /// </param>
-    public SettingsPatchBinder(ISettingsDescriptorProvider? descriptorProvider = null)
+    /// <param name="serializerOptions">Explicit model metadata and converters, or application defaults.</param>
+    public SettingsPatchBinder(ISettingsDescriptorProvider? descriptorProvider = null, JsonSerializerOptions? serializerOptions = null)
     {
         _descriptorProvider = descriptorProvider ?? SettingsDescriptorProviderFactory.Create();
+        _serializerOptions = serializerOptions ?? SettingsEngineJson.SerializerOptions;
     }
 
     /// <summary>
@@ -70,7 +74,8 @@ public sealed class SettingsPatchBinder
         ISettingsDescriptor rootDescriptor,
         object rootValue,
         DeepObserverPath observedPath,
-        object? observedValue)
+        object? observedValue
+    )
     {
         try
         {
@@ -102,10 +107,10 @@ public sealed class SettingsPatchBinder
         }
     }
 
-    private static void WriteResolvedValue(JsonSettingsStorage store, PathResolution resolution)
+    private void WriteResolvedValue(JsonSettingsStorage store, PathResolution resolution)
     {
         var valueType = resolution.DeclaredType ?? resolution.RuntimeValue?.GetType() ?? typeof(object);
-        var node = SettingsEngineJson.SerializeToNode(resolution.RuntimeValue, valueType);
+        var node = JsonSerializer.SerializeToNode(resolution.RuntimeValue, valueType, _serializerOptions);
         store.ReplaceSubtree(resolution.JsonPath, node);
     }
 
@@ -115,9 +120,15 @@ public sealed class SettingsPatchBinder
         object target,
         string path,
         SettingsUnknownMemberHandling unknownMemberHandling,
-        ISet<string>? initializedJsonNames = null)
+        ISet<string>? initializedJsonNames = null
+    )
     {
         var knownNames = new HashSet<string>(StringComparer.Ordinal);
+        if (path.Length == 0)
+        {
+            // Root "Version" belongs to SettingsMigrator metadata rather than any runtime settings property.
+            knownNames.Add(SettingsEngineJson.VersionPropertyName);
+        }
 
         foreach (var property in descriptor.Properties)
         {
@@ -179,9 +190,9 @@ public sealed class SettingsPatchBinder
 
     private void PatchNullProperty(ISettingsPropertyDescriptor property, object target, string path)
     {
-        var failureKind = property.Kind == SettingsPropertyKind.SerializedSubtree ?
-            SettingsEngineDiagnosticKind.SerializedSubtreeFailure :
-            SettingsEngineDiagnosticKind.ScalarConversionFailure;
+        var failureKind = property.Kind == SettingsPropertyKind.SerializedSubtree
+            ? SettingsEngineDiagnosticKind.SerializedSubtreeFailure
+            : SettingsEngineDiagnosticKind.ScalarConversionFailure;
 
         if (!property.Flags.HasFlag(SettingsPropertyFlags.AllowsNull))
         {
@@ -360,7 +371,8 @@ public sealed class SettingsPatchBinder
         Type replacementType,
         ValueContract elementContract,
         string path,
-        out object? replacement)
+        out object? replacement
+    )
     {
         replacement = null;
 
@@ -478,7 +490,8 @@ public sealed class SettingsPatchBinder
         JsonObject obj,
         IDictionary dictionary,
         ISettingsPropertyDescriptor property,
-        string path)
+        string path
+    )
     {
         var patchedAny = false;
         var isObjectValueDictionary = property.DictionaryValueType is { } valueType &&
@@ -536,7 +549,8 @@ public sealed class SettingsPatchBinder
         object? existingValue,
         string path,
         SettingsEngineDiagnosticKind failureKind,
-        out object? replacement)
+        out object? replacement
+    )
     {
         replacement = null;
 
@@ -547,9 +561,7 @@ public sealed class SettingsPatchBinder
             return ValuePatchResult.PatchedInPlace;
         }
 
-        return TryCreateValue(node, contract, path, failureKind, out replacement) ?
-            ValuePatchResult.Replace :
-            ValuePatchResult.Failed;
+        return TryCreateValue(node, contract, path, failureKind, out replacement) ? ValuePatchResult.Replace : ValuePatchResult.Failed;
     }
 
     private bool TryCreateValue(JsonNode? node, ValueContract contract, string path, out object? value) =>
@@ -560,7 +572,8 @@ public sealed class SettingsPatchBinder
         ValueContract contract,
         string path,
         SettingsEngineDiagnosticKind failureKind,
-        out object? value)
+        out object? value
+    )
     {
         value = null;
         var normalizedType = Nullable.GetUnderlyingType(contract.Type) ?? contract.Type;
@@ -690,7 +703,8 @@ public sealed class SettingsPatchBinder
         JsonNode? node,
         ISettingsPropertyDescriptor property,
         string path,
-        out object? value)
+        out object? value
+    )
     {
         value = null;
 
@@ -723,9 +737,9 @@ public sealed class SettingsPatchBinder
             node,
             GetValueContract(property),
             path,
-            property.Kind == SettingsPropertyKind.SerializedSubtree ?
-                SettingsEngineDiagnosticKind.SerializedSubtreeFailure :
-                SettingsEngineDiagnosticKind.ScalarConversionFailure,
+            property.Kind == SettingsPropertyKind.SerializedSubtree
+                ? SettingsEngineDiagnosticKind.SerializedSubtreeFailure
+                : SettingsEngineDiagnosticKind.ScalarConversionFailure,
             out value);
     }
 
@@ -787,7 +801,8 @@ public sealed class SettingsPatchBinder
         JsonObject json,
         HashSet<string> knownNames,
         string path,
-        SettingsUnknownMemberHandling unknownMemberHandling)
+        SettingsUnknownMemberHandling unknownMemberHandling
+    )
     {
         if (unknownMemberHandling == SettingsUnknownMemberHandling.Preserve)
         {
@@ -816,7 +831,8 @@ public sealed class SettingsPatchBinder
         ValueContract contract,
         string path,
         SettingsEngineDiagnosticKind failureKind,
-        out object? value)
+        out object? value
+    )
     {
         value = null;
 
@@ -833,7 +849,7 @@ public sealed class SettingsPatchBinder
 
         try
         {
-            value = SettingsEngineJson.Deserialize(node, contract.Type);
+            value = node.Deserialize(contract.Type, _serializerOptions);
             return true;
         }
         catch (Exception ex)
@@ -859,7 +875,8 @@ public sealed class SettingsPatchBinder
         string keyText,
         ISettingsPropertyDescriptor property,
         string path,
-        [NotNullWhen(true)] out object? key)
+        [NotNullWhen(true)] out object? key
+    )
     {
         var keyType = property.DictionaryKeyType ?? typeof(string);
 
@@ -870,7 +887,7 @@ public sealed class SettingsPatchBinder
                 throw new InvalidOperationException($"Settings property '{property.ClrName}' does not have a dictionary key reader.");
             }
 
-            key = reader(keyText);
+            key = reader(keyText, _serializerOptions);
             if (key is not null) return true;
 
             AddDiagnostic(
@@ -897,7 +914,8 @@ public sealed class SettingsPatchBinder
         ISettingsDescriptor rootDescriptor,
         object rootValue,
         DeepObserverPath observedPath,
-        object? observedValue)
+        object? observedValue
+    )
     {
         var jsonSegments = new List<SettingsJsonPathSegment>();
         ISettingsDescriptor? currentDescriptor = rootDescriptor;
@@ -945,7 +963,7 @@ public sealed class SettingsPatchBinder
                         $"Observed settings path segment '{segment}' must be a dictionary key.");
                 }
 
-                var key = indexedProperty.DictionaryKeyReader?.Invoke(keyText);
+                var key = indexedProperty.DictionaryKeyReader?.Invoke(keyText, _serializerOptions);
                 if (key is null || currentValue is not IDictionary dictionary || !dictionary.Contains(key))
                 {
                     throw new InvalidOperationException($"Observed settings dictionary key '{keyText}' cannot be resolved.");
@@ -993,9 +1011,9 @@ public sealed class SettingsPatchBinder
                 return new PathResolution(new SettingsJsonPath(jsonSegments), declaredType, currentValue);
             }
 
-            indexedProperty = property.Kind is SettingsPropertyKind.Array or SettingsPropertyKind.List or SettingsPropertyKind.Dictionary ?
-                property :
-                null;
+            indexedProperty = property.Kind is SettingsPropertyKind.Array or SettingsPropertyKind.List or SettingsPropertyKind.Dictionary
+                ? property
+                : null;
         }
 
         return new PathResolution(new SettingsJsonPath(jsonSegments), declaredType, observedValue);
@@ -1037,13 +1055,14 @@ public sealed class SettingsPatchBinder
         SettingsEngineDiagnosticSeverity severity,
         string path,
         IDynamicLocaleKey message,
-        Exception? exception = null) =>
+        Exception? exception = null
+    ) =>
         _diagnostics.Add(new SettingsEngineDiagnostic(kind, severity, path, message, exception));
 
     private static IDynamicLocaleKey DiagnosticMessage(string key, params object?[] args) =>
-        args.Length == 0 ?
-            new DynamicLocaleKey(key) :
-            new FormattedDynamicLocaleKey(
+        args.Length == 0
+            ? new DynamicLocaleKey(key)
+            : new FormattedDynamicLocaleKey(
                 key,
                 args.Select(static arg => new DirectLocaleKey(arg)).ToArray());
 

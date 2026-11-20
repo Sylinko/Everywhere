@@ -1,9 +1,11 @@
 using System.Text.Json.Nodes;
-using Everywhere.AI;
 using Everywhere.AI.Prompts;
+using Everywhere.AI.Prompts.Database;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Migrations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Everywhere.Core.Tests.AI.Prompts;
@@ -15,8 +17,9 @@ public sealed class AssistantPromptSettingsMigrationTests
     {
         using var database = PromptTestDatabase.Create();
         await database.MigrateAsync();
-        using var file = TestSettingsFile(CreateSettingsJson(
-            AssistantJson(Guid.CreateVersion7(), "Coder", "Custom\r\ninstructions")));
+        using var file = TestSettingsFile(
+            CreateSettingsJson(
+                AssistantJson(Guid.CreateVersion7(), "Coder", "Custom\r\ninstructions")));
 
         RunPromptSettingsMigration(file.Path, database);
 
@@ -43,9 +46,10 @@ public sealed class AssistantPromptSettingsMigrationTests
     {
         using var database = PromptTestDatabase.Create();
         await database.MigrateAsync();
-        using var file = TestSettingsFile(CreateSettingsJson(
-            AssistantJson(Guid.CreateVersion7(), "One", "Shared\r\nbody"),
-            AssistantJson(Guid.CreateVersion7(), "Two", "Shared\nbody")));
+        using var file = TestSettingsFile(
+            CreateSettingsJson(
+                AssistantJson(Guid.CreateVersion7(), "One", "Shared\r\nbody"),
+                AssistantJson(Guid.CreateVersion7(), "Two", "Shared\nbody")));
 
         RunPromptSettingsMigration(file.Path, database);
 
@@ -66,10 +70,11 @@ public sealed class AssistantPromptSettingsMigrationTests
     {
         using var database = PromptTestDatabase.Create();
         await database.MigrateAsync();
-        using var file = TestSettingsFile(CreateSettingsJson(
-            AssistantJson(Guid.CreateVersion7(), "Empty", string.Empty),
-            AssistantJson(Guid.CreateVersion7(), "Default", DefaultPrompts.DefaultSystemPrompt),
-            AssistantJson(Guid.CreateVersion7(), "Missing")));
+        using var file = TestSettingsFile(
+            CreateSettingsJson(
+                AssistantJson(Guid.CreateVersion7(), "Empty", string.Empty),
+                AssistantJson(Guid.CreateVersion7(), "Default", DefaultPrompts.DefaultSystemPrompt),
+                AssistantJson(Guid.CreateVersion7(), "Missing")));
 
         RunPromptSettingsMigration(file.Path, database);
 
@@ -94,10 +99,12 @@ public sealed class AssistantPromptSettingsMigrationTests
     {
         using var database = PromptTestDatabase.Create();
         await database.MigrateAsync();
-        using var firstFile = TestSettingsFile(CreateSettingsJson(
-            AssistantJson(Guid.CreateVersion7(), "First", "Reusable prompt")));
-        using var secondFile = TestSettingsFile(CreateSettingsJson(
-            AssistantJson(Guid.CreateVersion7(), "Second", "Reusable prompt")));
+        using var firstFile = TestSettingsFile(
+            CreateSettingsJson(
+                AssistantJson(Guid.CreateVersion7(), "First", "Reusable prompt")));
+        using var secondFile = TestSettingsFile(
+            CreateSettingsJson(
+                AssistantJson(Guid.CreateVersion7(), "Second", "Reusable prompt")));
 
         RunPromptSettingsMigration(firstFile.Path, database);
         var firstPromptId = ReadPromptId(ReadAssistant(ReadRoot(firstFile.Path), 0));
@@ -115,16 +122,20 @@ public sealed class AssistantPromptSettingsMigrationTests
 
     private static void RunPromptSettingsMigration(string path, PromptTestDatabase database)
     {
+        using var services = new ServiceCollection()
+            .AddSingleton<IDbContextFactory<PromptDbContext>>(database.Factory)
+            .AddSingleton<ILogger<_20260702120000_0_8_1_canary_20260702_12>>(
+                NullLogger<_20260702120000_0_8_1_canary_20260702_12>.Instance)
+            .AddSettingsMigration<_20260702120000_0_8_1_canary_20260702_12>()
+            .BuildServiceProvider();
+
         var migrator = new SettingsMigrator(
             path,
-            [CreatePromptMigration(database)],
+            services,
             NullLogger<SettingsMigrator>.Instance);
 
         migrator.Migrate();
     }
-
-    private static _20260702120000_0_8_1_canary_20260702_12 CreatePromptMigration(PromptTestDatabase database) =>
-        new(database.Factory, NullLogger<_20260702120000_0_8_1_canary_20260702_12>.Instance);
 
     private static string CreateSettingsJson(params JsonObject[] assistants) =>
         CreateSettingsRoot(assistants).ToJsonString();

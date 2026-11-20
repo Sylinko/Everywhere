@@ -32,7 +32,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
         LocaleKey.SoftwareSettings_SoftwareUpdate_Header,
         LocaleKey.SoftwareSettings_SoftwareUpdate_Description)]
     [SettingsItem(Group = "_")]
-    public SettingsControl<SoftwareUpdateControl> SoftwareUpdate { get; } = new();
+    public SettingsControl<SoftwareUpdateControl> SoftwareUpdate { get; } = new(serviceProvider);
 
     [ObservableProperty]
     [DynamicLocaleKey(
@@ -68,7 +68,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.Empty)]
     [SettingsItem(Group = LocaleKey.SoftwareSettings_HostsStatus_Header, Classes = ["FullWidth", "NoHeading"])]
-    public SettingsControl<HostsStatusControl> HostsStatus { get; } = new();
+    public SettingsControl<HostsStatusControl> HostsStatus { get; } = new(serviceProvider);
 
 #if WINDOWS
     [JsonIgnore]
@@ -76,7 +76,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
         LocaleKey.HostsStatusControl_ServiceMode_Header,
         LocaleKey.HostsStatusControl_ServiceMode_Description)]
     [SettingsItem(Group = LocaleKey.SoftwareSettings_HostsStatus_Header)]
-    public SettingsControl<HostsServiceModeControl> HostsServiceMode { get; } = new();
+    public SettingsControl<HostsServiceModeControl> HostsServiceMode { get; } = new(serviceProvider);
 #endif
 
     [ObservableProperty]
@@ -112,5 +112,5 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
         LocaleKey.SoftwareSettings_DebugFeatures_Header,
         LocaleKey.SoftwareSettings_DebugFeatures_Description)]
     [SettingsItem(Group = LocaleKey.Common_Advanced)]
-    public SettingsControl<DebugFeaturesControl> DebugFeatures { get; } = new();
+    public SettingsControl<DebugFeaturesControl> DebugFeatures { get; } = new(serviceProvider);
 }

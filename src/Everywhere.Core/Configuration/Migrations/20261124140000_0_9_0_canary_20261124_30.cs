@@ -8,9 +8,10 @@ namespace Everywhere.Configuration.Migrations;
 /// Migrates persisted <see cref="ColoredIcon"/> definitions from Lucide enum names/IDs
 /// to canonical <see cref="TablerIconKind"/> names and <see cref="ColoredIconType.Tabler"/>.
 /// </summary>
-public sealed class _20261124140000_0_9_0_canary_20261124_30 : SettingsMigration
+public sealed class _20261124140000_0_9_0_canary_20261124_30 : SettingsMigration, ISettingsMigrationMetadata
 {
-    public override SemanticVersion Version => new(0, 9, 0, 0, "canary.20261124.30");
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 9, 0, 0, "canary.20261124.30");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks => [MigrateColoredIcons];
 

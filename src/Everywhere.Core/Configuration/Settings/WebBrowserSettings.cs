@@ -5,7 +5,7 @@ using Everywhere.Views;
 namespace Everywhere.Configuration;
 
 [GeneratedSettingsItems]
-public sealed partial class WebBrowserSettings : ObservableObject
+public sealed partial class WebBrowserSettings(IServiceProvider serviceProvider) : ObservableObject
 {
     [ObservableProperty]
     [DynamicLocaleKey(
@@ -19,5 +19,5 @@ public sealed partial class WebBrowserSettings : ObservableObject
         LocaleKey.WebBrowserSettings_OpenBrowser_Header,
         LocaleKey.WebBrowserSettings_OpenBrowser_Description)]
     [SettingsItem(Group = LocaleKey.BuiltInChatPlugin_Web_WebExtract_Header)]
-    public SettingsControl<OpenWebBrowserControl> OpenBrowser { get; } = new();
+    public SettingsControl<OpenWebBrowserControl> OpenBrowser { get; } = new(serviceProvider);
 }

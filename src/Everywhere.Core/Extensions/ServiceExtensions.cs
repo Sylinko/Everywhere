@@ -10,7 +10,6 @@ using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
-using Everywhere.Configuration.Engine;
 using Everywhere.Database;
 using Everywhere.Harness;
 using Everywhere.Harness.Mcp;
@@ -79,7 +78,8 @@ public static class ServiceExtensions
         public IServiceCollection AddSettings() =>
             services
                 .AddSingleton<Settings>()
-                .AddAsyncInitializer<SettingsEngine>()
+                .AddSingleton<IModSettingsRegistry, ModSettingsRegistry>()
+                .AddAsyncInitializer<SettingsInitializer>()
                 .AddTransient<SoftwareUpdateControl>()
                 .AddTransient<HostsStatusControl>()
                 .AddTransient<TextSelectionApplicationsControl>()
@@ -158,11 +158,12 @@ public static class ServiceExtensions
                 .AddDbContextFactory<ChatV2DbContext>((provider, options) =>
                 {
                     var dbPath = RuntimeConstants.GetDatabasePath("chat-v2.db");
-                    options.UseSqlite(new SqliteConnectionStringBuilder
-                    {
-                        DataSource = dbPath,
-                        ForeignKeys = true,
-                    }.ToString());
+                    options.UseSqlite(
+                        new SqliteConnectionStringBuilder
+                        {
+                            DataSource = dbPath,
+                            ForeignKeys = true,
+                        }.ToString());
                     options.UseLoggerFactory(provider.GetRequiredService<ILoggerFactory>());
                     options.UseApplicationServiceProvider(null);
                 })

@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using Everywhere.Common;
 
 namespace Everywhere.Configuration;
 
@@ -8,11 +7,6 @@ namespace Everywhere.Configuration;
 /// </summary>
 public abstract class SettingsMigration
 {
-    /// <summary>
-    /// The target version of the migration.
-    /// </summary>
-    public abstract SemanticVersion Version { get; }
-
     /// <summary>
     /// The list of migration tasks to be performed.
     /// </summary>

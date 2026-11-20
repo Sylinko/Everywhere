@@ -49,7 +49,7 @@ public sealed partial class FileSystemSettings : ObservableObject
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.FileSystemSettings_ApprovalPaths_Header, LocaleKey.FileSystemSettings_ApprovalPaths_Description)]
     [SettingsItem(Classes = ["FullWidth"])]
-    public SettingsControl<FileSystemSettingsControl> ApprovalPathsControl => new(_ => new FileSystemSettingsControl(this));
+    public SettingsControl<FileSystemSettingsControl> ApprovalPathsControl => new(() => new FileSystemSettingsControl(this));
 
     /// <summary>
     /// Returns whether every supplied path is covered by at least one configured approval glob.
@@ -157,9 +157,9 @@ public sealed class FileSystemApprovalPath : ObservableValidator
             return new ValidationResult(LocaleKey.ValidationErrorMessage_Required.I18N());
         }
 
-        return FileSystemApprovalGlob.TryCreate(pattern, out _) ?
-            ValidationResult.Success :
-            new ValidationResult(LocaleKey.FileSystemSettings_InvalidApprovalPath_ErrorMessage.I18N());
+        return FileSystemApprovalGlob.TryCreate(pattern, out _)
+            ? ValidationResult.Success
+            : new ValidationResult(LocaleKey.FileSystemSettings_InvalidApprovalPath_ErrorMessage.I18N());
     }
 }
 
@@ -267,7 +267,8 @@ public sealed class FileSystemApprovalPathCollectionJsonConverter : JsonConverte
     public override void Write(
         Utf8JsonWriter writer,
         FileSystemApprovalPathCollection value,
-        JsonSerializerOptions options)
+        JsonSerializerOptions options
+    )
     {
         writer.WriteStartArray();
         foreach (var item in value) writer.WriteStringValue(item.Pattern);
