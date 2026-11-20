@@ -11,14 +11,14 @@ namespace Everywhere.Chat.Plugins;
 /// </summary>
 public interface IToolRulesets
 {
-    bool? GetPluginRule(ChatPlugin plugin);
+    bool? GetPluginRule(IChatPluginKey plugin);
 
-    bool? GetFunctionRule(ChatPlugin plugin, ChatFunction function);
+    bool? GetFunctionRule(IChatPluginKey plugin, ChatFunction function);
 }
 
 /// <summary>
 /// Pattern-based function rules grouped by plugin pattern.
-/// The outer key only matches <see cref="ChatPlugin.Key"/> and each inner key only matches a function name.
+/// The outer key only matches <see cref="IChatPluginKey.Key"/> and each inner key only matches a function name.
 /// </summary>
 /// <example>
 /// <code>
@@ -63,7 +63,7 @@ public class ToolPatternRulesets : Dictionary<string, ToolFunctionPatternRuleset
         return result;
     }
 
-    public bool? GetPluginRule(ChatPlugin plugin)
+    public bool? GetPluginRule(IChatPluginKey plugin)
     {
         bool? result = null;
         foreach (var (_, functions) in GetMatchingPluginRules(plugin.Key))
@@ -81,7 +81,7 @@ public class ToolPatternRulesets : Dictionary<string, ToolFunctionPatternRuleset
         return result;
     }
 
-    public bool? GetFunctionRule(ChatPlugin plugin, ChatFunction function)
+    public bool? GetFunctionRule(IChatPluginKey plugin, ChatFunction function)
     {
         bool? result = null;
         foreach (var (_, functions) in GetMatchingPluginRules(plugin.Key))

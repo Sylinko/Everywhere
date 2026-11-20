@@ -301,7 +301,7 @@ public sealed class ToolApprovalReviewerTests
             _context = new FunctionCallContext(
                 _generation.Services,
                 chatContext,
-                new ToolBinding(plugin, function, new()),
+                plugin.CreateSnapshot(new(), new(), [function]).Bindings[0],
                 new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")),
                 new MEAI.FunctionCallContent(Guid.NewGuid().ToString(), function.Function.Name, new Dictionary<string, object?>()),
                 new ObservableToolRulesets(),

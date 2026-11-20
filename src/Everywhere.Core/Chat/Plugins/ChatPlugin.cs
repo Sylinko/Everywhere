@@ -16,7 +16,7 @@ namespace Everywhere.Chat.Plugins;
 /// <summary>
 /// Base class for chat tool plugins in Everywhere.
 /// </summary>
-public abstract class ChatPlugin : ObservableObject, IDisposable
+public abstract class ChatPlugin : ObservableObject, IChatPluginKey, IDisposable
 {
     public string Name { get; }
 
@@ -57,8 +57,6 @@ public abstract class ChatPlugin : ObservableObject, IDisposable
     /// </summary>
     public virtual IReadOnlyList<SettingsItem>? SettingsItems => null;
 
-    public abstract bool IsMcp { get; }
-
     private readonly SourceCache<ChatPluginWarning, string> _warningsSource = new(x => x.Key);
     private readonly IDisposable _warningsConnection;
 
@@ -77,6 +75,15 @@ public abstract class ChatPlugin : ObservableObject, IDisposable
 
     public virtual ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(CancellationToken cancellationToken) =>
         ValueTask.FromResult(GetChatFunctions());
+
+    /// <summary>
+    /// Creates an immutable, host-owned generation snapshot for the specified enabled functions.
+    /// </summary>
+    public abstract ChatPluginSnapshot CreateSnapshot(
+        NumberedDeduplicator pluginNameDeduplicator,
+        NumberedDeduplicator functionNameDeduplicator,
+        IReadOnlyList<ChatFunction> actualFunctions
+    );
 
     public virtual void Dispose()
     {
@@ -164,8 +171,6 @@ public abstract class NativeChatPlugin(string name) : ChatPlugin<NativeChatFunct
     /// </summary>
     public virtual bool IsVisible => true;
 
-    public override bool IsMcp => false;
-
     public bool HasVisibleFunctions
     {
         get
@@ -175,6 +180,13 @@ public abstract class NativeChatPlugin(string name) : ChatPlugin<NativeChatFunct
             return result;
         }
     }
+
+    /// <inheritdoc />
+    public abstract override NativeChatPluginSnapshot CreateSnapshot(
+        NumberedDeduplicator pluginNameDeduplicator,
+        NumberedDeduplicator functionNameDeduplicator,
+        IReadOnlyList<ChatFunction> actualFunctions
+    );
 }
 
 /// <summary>
@@ -183,6 +195,13 @@ public abstract class NativeChatPlugin(string name) : ChatPlugin<NativeChatFunct
 public abstract class BuiltInChatPlugin(string name) : NativeChatPlugin(name)
 {
     public override sealed string Key => $"builtin.{Name}";
+
+    /// <inheritdoc />
+    public sealed override BuiltInChatPluginSnapshot CreateSnapshot(
+        NumberedDeduplicator pluginNameDeduplicator,
+        NumberedDeduplicator functionNameDeduplicator,
+        IReadOnlyList<ChatFunction> actualFunctions
+    ) => new(this, pluginNameDeduplicator, functionNameDeduplicator, actualFunctions);
 }
 
 /// <summary>
@@ -290,7 +309,12 @@ public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger
 
     IDisposable? ILogger.BeginScope<TState>(TState state) => null;
 
-    public override bool IsMcp => true;
+    /// <inheritdoc />
+    public override McpChatPluginSnapshot CreateSnapshot(
+        NumberedDeduplicator pluginNameDeduplicator,
+        NumberedDeduplicator functionNameDeduplicator,
+        IReadOnlyList<ChatFunction> actualFunctions
+    ) => new(this, pluginNameDeduplicator, functionNameDeduplicator, actualFunctions);
 
     public override void Dispose()
     {

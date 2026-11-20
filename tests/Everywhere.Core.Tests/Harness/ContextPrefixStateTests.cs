@@ -561,7 +561,7 @@ public sealed class ContextPrefixStateTests
         });
     }
 
-    [Test]
+    [AvaloniaTest]
     public void Apply_WhenDuplicateNamedMcpServerDisabledAndSameSchemaSiblingShiftsIntoSlot_ResetsEpoch()
     {
         using var firstMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "first", Command = "npx" });
@@ -628,9 +628,10 @@ public sealed class ContextPrefixStateTests
 
     private static TestPluginScope CreateMcpScope(params McpChatPlugin[] plugins)
     {
-        var names = new NumberedDeduplicator();
+        var pluginNames = new NumberedDeduplicator();
+        var functionNames = new NumberedDeduplicator();
         var schema = JsonElement.Parse("""{"type":"object","properties":{"term":{"type":"string"}}}""");
-        var bindings = plugins
+        var snapshots = plugins
             .Select(plugin =>
             {
                 var tool = (ManagedMcpClientTool)(Activator.CreateInstance(
@@ -640,16 +641,16 @@ public sealed class ContextPrefixStateTests
                         [new Tool { Name = "query", Description = "Run query", InputSchema = schema }, null, "query"],
                         null)
                     ?? throw new AssertionException("Missing ManagedMcpClientTool constructor."));
-                return new ToolBinding(plugin, new McpChatFunction(tool), names);
+                return (ChatPluginSnapshot)plugin.CreateSnapshot(pluginNames, functionNames, [new McpChatFunction(tool)]);
             })
             .ToList();
 
-        return new TestPluginScope(plugins, bindings);
+        return new TestPluginScope(snapshots, [.. snapshots.SelectMany(static snapshot => snapshot.Bindings)]);
     }
 
-    private sealed class TestPluginScope(IReadOnlyList<ChatPlugin> plugins, IReadOnlyList<ToolBinding> bindings) : IChatPluginScope
+    private sealed class TestPluginScope(IReadOnlyList<ChatPluginSnapshot> plugins, IReadOnlyList<ToolBinding> bindings) : IChatPluginScope
     {
-        public IReadOnlyList<ChatPlugin> Plugins { get; } = plugins;
+        public IReadOnlyList<ChatPluginSnapshot> Plugins { get; } = plugins;
         public IReadOnlyList<AIFunctionDeclaration> Declarations { get; } = [.. bindings.Select(static binding => binding.Declaration)];
         private readonly Dictionary<string, ToolBinding> _bindings = bindings.ToDictionary(
             static binding => binding.Declaration.Name,

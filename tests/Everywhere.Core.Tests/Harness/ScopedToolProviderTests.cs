@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Avalonia.Headless.NUnit;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
@@ -129,7 +130,7 @@ public sealed partial class ScopedToolProviderTests
         };
     }
 
-    [Test]
+    [AvaloniaTest]
     public void ToolBinding_FormatsMcpNamespacesSanitizesCharactersAndClampsTo64Chars()
     {
         var escapeMethod = typeof(ManagedMcpClient).GetMethod("EscapeToolName", BindingFlags.NonPublic | BindingFlags.Static)
@@ -140,26 +141,32 @@ public sealed partial class ScopedToolProviderTests
         using var builtIn = new SampleBuiltInPlugin();
         using var firstMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "first", Command = "npx" });
         using var secondMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "second", Command = "npx" });
+        var pluginDeduplicator = new NumberedDeduplicator();
         var deduplicator = new NumberedDeduplicator();
 
-        var builtInBinding = new ToolBinding(
-            builtIn,
-            new NativeChatFunction((Func<string>)(static () => "ok"), ChatFunctionPermissions.None, functionName: "search_files"),
-            deduplicator);
+        var builtInSnapshot = builtIn.CreateSnapshot(
+            pluginDeduplicator,
+            deduplicator,
+            [new NativeChatFunction((Func<string>)(static () => "ok"), ChatFunctionPermissions.None, functionName: "search_files")]);
+        var builtInBinding = builtInSnapshot.Bindings[0];
 
         var longRawName = "shared_" + new string('a', 60);
         var mcpFunction1 = new McpChatFunction(CreateManagedMcpTool(longRawName));
         var mcpFunction2 = new McpChatFunction(CreateManagedMcpTool(longRawName));
         var dirtyMcpFunction = new McpChatFunction(CreateManagedMcpTool("dir/open:item 你好"));
 
-        var mcpBinding1 = new ToolBinding(firstMcp, mcpFunction1, deduplicator);
-        var mcpBinding2 = new ToolBinding(secondMcp, mcpFunction2, deduplicator);
-        var dirtyBinding = new ToolBinding(firstMcp, dirtyMcpFunction, deduplicator);
+        var mcpSnapshot1 = firstMcp.CreateSnapshot(pluginDeduplicator, deduplicator, [mcpFunction1, dirtyMcpFunction]);
+        var mcpSnapshot2 = secondMcp.CreateSnapshot(pluginDeduplicator, deduplicator, [mcpFunction2]);
+        var mcpBinding1 = mcpSnapshot1.Bindings[0];
+        var dirtyBinding = mcpSnapshot1.Bindings[1];
+        var mcpBinding2 = mcpSnapshot2.Bindings[0];
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(escaped, Is.EqualTo("fs_read_tool_v1___"));
             Assert.That(escapeMethod.Invoke(null, [""]), Is.EqualTo("tool"));
+            Assert.That(builtInBinding.Plugin, Is.TypeOf<BuiltInChatPluginSnapshot>());
+            Assert.That(mcpBinding1.Plugin, Is.TypeOf<McpChatPluginSnapshot>());
             Assert.That(builtInBinding.Declaration.Name, Is.EqualTo("search_files"));
             Assert.That(mcpBinding1.Declaration.Name, Does.StartWith("mcp__shared_"));
             Assert.That(mcpBinding1.Declaration.Name, Has.Length.EqualTo(ToolBinding.MaxWireNameLength));

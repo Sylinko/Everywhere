@@ -452,7 +452,7 @@ public class ChatPluginManager : IChatPluginManager
                     .ToArray();
                 if (actualFunctions.Length > 0 || plugin is McpChatPlugin)
                 {
-                    resultPlugins.Add(new ChatPluginSnapshot(plugin, pluginNameDeduplicator, functionNameDeduplicator, actualFunctions));
+                    resultPlugins.Add(plugin.CreateSnapshot(pluginNameDeduplicator, functionNameDeduplicator, actualFunctions));
                 }
             }
 
@@ -466,7 +466,7 @@ public class ChatPluginManager : IChatPluginManager
 
     private sealed class ChatPluginScope : IChatPluginScope
     {
-        public IReadOnlyList<ChatPlugin> Plugins { get; }
+        public IReadOnlyList<ChatPluginSnapshot> Plugins { get; }
         public IReadOnlyList<AIFunctionDeclaration> Declarations { get; }
         private readonly Dictionary<string, ToolBinding> _bindings;
 
@@ -625,37 +625,5 @@ public class ChatPluginManager : IChatPluginManager
                 innerLogger.Log(logLevel, eventId, state, exception, formatter);
             }
         }
-    }
-
-    private sealed class ChatPluginSnapshot : ChatPlugin
-    {
-        public override string Key => _originalChatPlugin.Key;
-        public override IDynamicLocaleKey HeaderKey => _originalChatPlugin.HeaderKey;
-        public override IDynamicLocaleKey DescriptionKey => _originalChatPlugin.DescriptionKey;
-        public override LucideIconKind? Icon => _originalChatPlugin.Icon;
-        public override string? BeautifulIcon => _originalChatPlugin.BeautifulIcon;
-        public override int FunctionCount => Bindings.Length;
-        public override IReadOnlyBindableList<ChatFunction> Functions => throw new NotSupportedException();
-        public override bool IsMcp => _originalChatPlugin.IsMcp;
-
-        public ToolBinding[] Bindings { get; }
-        private readonly ChatPlugin _originalChatPlugin;
-        private readonly ChatFunction[] _actualFunctions;
-
-        public ChatPluginSnapshot(
-            ChatPlugin originalChatPlugin,
-            NumberedDeduplicator pluginNameDeduplicator,
-            NumberedDeduplicator functionNameDeduplicator,
-            IReadOnlyList<ChatFunction> actualFunctions
-        ) : base(pluginNameDeduplicator.Deduplicate(originalChatPlugin.Name))
-        {
-            _originalChatPlugin = originalChatPlugin;
-            Bindings = actualFunctions
-                .Select(function => new ToolBinding(originalChatPlugin, function, functionNameDeduplicator))
-                .ToArray();
-            _actualFunctions = Bindings.Select(binding => binding.Function).ToArray();
-        }
-
-        public override IReadOnlyList<ChatFunction> GetChatFunctions() => _actualFunctions;
     }
 }

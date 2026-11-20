@@ -89,7 +89,7 @@ public interface IChatPluginScope
     /// <summary>
     /// Gets all plugins in this scope.
     /// </summary>
-    IReadOnlyList<ChatPlugin> Plugins { get; }
+    IReadOnlyList<ChatPluginSnapshot> Plugins { get; }
 
     /// <summary>
     /// Gets the declaration-only catalog in model order. No invocation or approval state leaves the host.

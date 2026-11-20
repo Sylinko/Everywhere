@@ -1830,7 +1830,7 @@ public sealed partial class ChatService : IChatService
             1,
             new KeyValuePair<string, object?>("gen_ai.tool.plugin", pluginName),
             new KeyValuePair<string, object?>("gen_ai.tool.name", content.Name),
-            new KeyValuePair<string, object?>("gen_ai.tool.is_mcp", context.ChatPlugin.IsMcp));
+            new KeyValuePair<string, object?>("gen_ai.tool.is_mcp", context.ChatPlugin is McpChatPluginSnapshot));
 
         ToolResultRecord record;
         var error = default(Exception);

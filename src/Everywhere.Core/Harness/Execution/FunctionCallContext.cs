@@ -27,7 +27,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
 
     public ToolBinding Binding { get; }
 
-    public ChatPlugin ChatPlugin => Binding.Plugin;
+    public ChatPluginSnapshot ChatPlugin => Binding.Plugin;
 
     public ChatFunction ChatFunction => Binding.Function;
 

@@ -14,10 +14,10 @@ public sealed class ToolRulesetsPipeline : IToolRulesets
         _sources = [.. sources.Where(static source => source is not null).Cast<IToolRulesets>()];
     }
 
-    public bool? GetPluginRule(ChatPlugin plugin) =>
+    public bool? GetPluginRule(IChatPluginKey plugin) =>
         _sources.AsValueEnumerable().Aggregate(null, (bool? current, IToolRulesets source) => source.GetPluginRule(plugin) ?? current);
 
-    public bool? GetFunctionRule(ChatPlugin plugin, ChatFunction function) =>
+    public bool? GetFunctionRule(IChatPluginKey plugin, ChatFunction function) =>
         _sources.AsValueEnumerable().Aggregate(null, (bool? current, IToolRulesets source) => source.GetFunctionRule(plugin, function) ?? current);
 }
 
@@ -32,10 +32,10 @@ public class ObservableToolRulesets : ObservableDictionary<string, bool>, IToolR
     {
     }
 
-    public bool? GetPluginRule(ChatPlugin plugin) =>
+    public bool? GetPluginRule(IChatPluginKey plugin) =>
         TryGetValue(ToolSettingsKey.ForPlugin(plugin), out var value) ? value : null;
 
-    public bool? GetFunctionRule(ChatPlugin plugin, ChatFunction function) =>
+    public bool? GetFunctionRule(IChatPluginKey plugin, ChatFunction function) =>
         TryGetValue(ToolSettingsKey.ForFunction(plugin, function), out var value) ? value : null;
 }
 
@@ -44,13 +44,13 @@ public class ObservableToolRulesets : ObservableDictionary<string, bool>, IToolR
 /// </summary>
 public static class ToolBypassApprovalPolicy
 {
-    public static bool BypassesApproval(IToolRulesets rulesets, ChatPlugin plugin, ChatFunction function)
+    public static bool BypassesApproval(IToolRulesets rulesets, IChatPluginKey plugin, ChatFunction function)
     {
         if (!function.CanBypassApproval) return false;
         return rulesets.GetFunctionRule(plugin, function) ?? rulesets.GetPluginRule(plugin) ?? function.IsDefaultBypassApproval;
     }
 
-    public static void SetPluginRule(ObservableToolRulesets rulesets, ChatPlugin plugin, bool value)
+    public static void SetPluginRule(ObservableToolRulesets rulesets, IChatPluginKey plugin, bool value)
     {
         var pluginKey = ToolSettingsKey.ForPlugin(plugin);
         if (!value)
@@ -77,7 +77,7 @@ public static class ToolBypassApprovalPolicy
         rulesets[pluginKey] = true;
     }
 
-    public static void SetFunctionRule(ObservableToolRulesets rulesets, ChatPlugin plugin, ChatFunction function, bool value)
+    public static void SetFunctionRule(ObservableToolRulesets rulesets, IChatPluginKey plugin, ChatFunction function, bool value)
     {
         if (!function.CanBypassApproval) return;
 
@@ -111,11 +111,11 @@ public static class ToolBypassApprovalPolicy
 /// </summary>
 public static class ToolSettingsKey
 {
-    public static string ForPlugin(ChatPlugin plugin) => ForPlugin(plugin.Key);
+    public static string ForPlugin(IChatPluginKey plugin) => ForPlugin(plugin.Key);
 
     public static string ForPlugin(string pluginKey) => $"p:{Escape(pluginKey)}";
 
-    public static string ForFunction(ChatPlugin plugin, ChatFunction function) =>
+    public static string ForFunction(IChatPluginKey plugin, ChatFunction function) =>
         ForFunction(plugin.Key, function.Name);
 
     public static string ForFunction(string pluginKey, string functionName) =>
@@ -123,7 +123,7 @@ public static class ToolSettingsKey
 
     public static string ForFunctionPrefix(string pluginKey) => $"f:{Escape(pluginKey)}/";
 
-    public static string ForPermission(ChatPlugin plugin, ChatFunction function, string? id = null)
+    public static string ForPermission(IChatPluginKey plugin, ChatFunction function, string? id = null)
     {
         var functionKey = ForFunction(plugin, function);
         return string.IsNullOrEmpty(id) ? functionKey : $"{functionKey}/permission/{Escape(id)}";

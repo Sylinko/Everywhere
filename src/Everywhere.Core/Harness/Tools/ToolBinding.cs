@@ -17,9 +17,9 @@ public sealed class ToolBinding
     public const int MaxWireNameLength = 64;
 
     /// <summary>
-    /// Gets the plugin that owns this tool.
+    /// Gets the plugin snapshot that owns this tool.
     /// </summary>
-    public ChatPlugin Plugin { get; }
+    public ChatPluginSnapshot Plugin { get; }
 
     /// <summary>
     /// Gets the snapshot of the host function descriptor.
@@ -39,26 +39,19 @@ public sealed class ToolBinding
     /// <summary>
     /// Reserves one unique name from the generation's shared name set and captures its invocation target.
     /// </summary>
-    public ToolBinding(ChatPlugin plugin, ChatFunction function, NumberedDeduplicator names)
+    public ToolBinding(ChatPluginSnapshot plugin, ChatFunction function, NumberedDeduplicator names)
     {
         Plugin = plugin;
         // MCP discovery can refresh the UI descriptor; freeze it before reading either declaration or target.
         Function = function is McpChatFunction mcp ? mcp.Snapshot() : function;
         _target = Function.Function;
-        var name = names.Deduplicate(FormatScopedName(plugin, _target.Name), MaxWireNameLength);
+        var wireName = plugin.FormatWireName(SanitizeWireName(_target.Name));
+        var name = names.Deduplicate(wireName, MaxWireNameLength);
         Declaration = AIFunctionFactory.CreateDeclaration(
             name,
             _target.Description,
             _target.JsonSchema,
             _target.ReturnJsonSchema);
-    }
-
-    private static string FormatScopedName(ChatPlugin plugin, string rawName)
-    {
-        var sanitized = SanitizeWireName(rawName);
-        return plugin.IsMcp || plugin.Key.StartsWith("mcp.", StringComparison.Ordinal)
-            ? $"mcp__{sanitized}"
-            : sanitized;
     }
 
     private static string SanitizeWireName(string rawName)

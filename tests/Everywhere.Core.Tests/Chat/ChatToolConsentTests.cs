@@ -30,6 +30,7 @@ namespace Everywhere.Core.Tests.Chat;
 /// <summary>
 /// Exercises outer approval and pre-call display hooks through <see cref="ChatService"/> with plugin snapshots.
 /// </summary>
+[NonParallelizable]
 public sealed class ChatToolConsentTests
 {
     /// <summary>
@@ -39,7 +40,7 @@ public sealed class ChatToolConsentTests
     public async Task McpSnapshot_AllowToolGroup_RemembersStableKeyAndBypassesNextPrompt()
     {
         using var harness = new ConsentHarness(isMcp: true, ToolApprovalMode.Ask, consentHook: null);
-        Assert.That(harness.Context.ChatPlugin, Is.Not.InstanceOf<McpChatPlugin>());
+        Assert.That(harness.Context.ChatPlugin, Is.TypeOf<McpChatPluginSnapshot>());
 
         var invocation = harness.InvokeAsync();
         var request = await harness.GetRequestAsync();
@@ -187,16 +188,8 @@ public sealed class ChatToolConsentTests
                     permissionConsentHook: consentHook,
                     functionName: "consent_probe");
 
-            var snapshotType = typeof(ChatPluginManager).GetNestedType("ChatPluginSnapshot", BindingFlags.NonPublic) ??
-                throw new AssertionException("Missing production snapshot.");
-            var snapshot = (ChatPlugin)(Activator.CreateInstance(
-                    snapshotType,
-                    _plugin,
-                    new NumberedDeduplicator(),
-                    new NumberedDeduplicator(),
-                    new[] { function }) ??
-                throw new AssertionException("Missing snapshot constructor."));
-            var binding = new ToolBinding(snapshot, function, new NumberedDeduplicator());
+            var snapshot = _plugin.CreateSnapshot(new NumberedDeduplicator(), new NumberedDeduplicator(), [function]);
+            var binding = snapshot.Bindings[0];
 
             _chatData = new ChatData();
             _rootChatContext = new RootChatContext(_chatData, null);
@@ -287,7 +280,6 @@ public sealed class ChatToolConsentTests
             _generation.DisposeAsync().AsTask().GetAwaiter().GetResult();
             _rootChatContext.DisposeAsync().AsTask().GetAwaiter().GetResult();
             _chatData.Dispose();
-            Context.ChatPlugin.Dispose();
             _plugin.Dispose();
             _session.Dispose();
             _timeout.Dispose();

@@ -247,7 +247,7 @@ public sealed class ImageViewRecoveryTests
         await using var root = new RootChatContext(new ChatData(), null);
         var scope = await manager.CreateScopeAsync(
             new AdvancedAssistantConfiguration { InputModalities = Modalities.Text }, root, root.Data.RootNode, null, CancellationToken.None);
-        var functions = scope.Plugins.Single().GetChatFunctions().Select(function => function.Function.Name).ToArray();
+        var functions = scope.Plugins.Single().Functions.Select(function => function.Function.Name).ToArray();
         using (Assert.EnterMultipleScope())
         {
             Assert.That(functions, Does.Contain("manage_todo"));

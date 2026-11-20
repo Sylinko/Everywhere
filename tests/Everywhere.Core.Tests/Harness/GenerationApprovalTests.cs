@@ -205,7 +205,7 @@ public sealed class GenerationApprovalTests
         return new FunctionCallContext(
             generation.Services,
             context,
-            new ToolBinding(plugin, function, new()),
+            plugin.CreateSnapshot(new(), new(), [function]).Bindings[0],
             new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")),
             call,
             new ObservableToolRulesets(),
