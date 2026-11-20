@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Net;
 using System.Text;
@@ -133,7 +134,9 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
             //     McpChatPlugin.UpdateBeautifulIcon(icons[0].Source);
             // }
 
-            var tools = (await ListToolsAsync(linkedCts.Token)).AsValueEnumerable().OrderBy(x => x.ProtocolTool.Name, StringComparer.Ordinal).ToArray();
+            var tools = (await ListToolsAsync(linkedCts.Token)).AsValueEnumerable()
+                .OrderBy(x => x.ProtocolTool.Name, StringComparer.Ordinal)
+                .ToArray();
             McpChatPlugin.EditFunctions(list =>
             {
                 int i = 0, j = 0;
@@ -234,7 +237,8 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
     public async ValueTask<object?> CallToolAsync(
         string toolName,
         IReadOnlyDictionary<string, object?> arguments,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var client = await EnsureConnectedAsync(cancellationToken);
 
@@ -360,16 +364,29 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
         return managedTools;
     }
 
+    private static readonly SearchValues<char> AllowedMcpIdentifierChars =
+        SearchValues.Create("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_");
+
     /// <summary>
-    /// MCP tool names allow A-Z a-z 0-9 _ - .
-    /// but SK/AIFunction only allows A-Z a-z 0-9 _
-    /// so we replace - and . with _
+    /// MCP tool names allow arbitrary characters beyond provider wire identifiers, so replace any
+    /// character outside <c>[a-zA-Z0-9_]</c> (including <c>-</c> and <c>.</c> for stable rule keys) with <c>_</c>.
     /// </summary>
     private static string EscapeToolName(string name)
     {
-        return name.AsSpan().IndexOfAny('-', '.') >= 0 ?
-            new string(name.AsValueEnumerable().Select(static c => c is '-' or '.' ? '_' : c).ToArray()) :
-            name;
+        if (string.IsNullOrEmpty(name)) return "tool";
+        if (!name.AsSpan().ContainsAnyExcept(AllowedMcpIdentifierChars)) return name;
+
+        return string.Create(
+            name.Length,
+            name,
+            static (destination, source) =>
+            {
+                for (var i = 0; i < source.Length; i++)
+                {
+                    var ch = source[i];
+                    destination[i] = AllowedMcpIdentifierChars.Contains(ch) ? ch : '_';
+                }
+            });
     }
 
     private IClientTransport CreateTransport()
@@ -455,14 +472,15 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
 
     private string EnsureWorkingDirectory(string? workingDirectory)
     {
-        return Directory.Exists(workingDirectory) ?
-            workingDirectory :
-            RuntimeConstants.EnsureWritableDataFolderPath("plugins", "mcp", McpChatPlugin.Id.ToString("N"));
+        return Directory.Exists(workingDirectory)
+            ? workingDirectory
+            : RuntimeConstants.EnsureWritableDataFolderPath("plugins", "mcp", McpChatPlugin.Id.ToString("N"));
     }
 
     private static Dictionary<string, string?> EnsureLatestPath(
         Dictionary<string, string?> environmentVariables,
-        IReadOnlyList<string> managedPathEntries)
+        IReadOnlyList<string> managedPathEntries
+    )
     {
         var latestPath = EnvironmentVariableUtilities.GetLatestPathVariable();
 
@@ -498,12 +516,14 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_transport")]
     private static extern ref ITransport GetMcpClientTransport(
         [UnsafeAccessorType("ModelContextProtocol.Client.McpClientImpl, ModelContextProtocol.Core")]
-        object client);
+        object client
+    );
 
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_process")]
     private static extern ref Process GetStdioClientSessionTransportProcess(
         [UnsafeAccessorType("ModelContextProtocol.Client.StdioClientSessionTransport, ModelContextProtocol.Core")]
-        object transport);
+        object transport
+    );
 
     /// <summary>
     /// Escaped name & tool

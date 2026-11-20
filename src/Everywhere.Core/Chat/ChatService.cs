@@ -70,7 +70,8 @@ public sealed partial class ChatService : IChatService
         ChatVisualService visualService,
         IVisualContextScanEffect visualContextScanEffect,
         IServiceProvider serviceProvider,
-        ILogger<ChatService> logger)
+        ILogger<ChatService> logger
+    )
     {
         _chatContextManager = chatContextManager;
         _chatPluginManager = chatPluginManager;
@@ -148,7 +149,8 @@ public sealed partial class ChatService : IChatService
         ChatContext chatContext,
         UserChatMessage message,
         CustomAssistant? customAssistant,
-        ChatInputDeliveryMode deliveryMode)
+        ChatInputDeliveryMode deliveryMode
+    )
     {
         EnsureDrainHook(chatContext);
 
@@ -176,9 +178,7 @@ public sealed partial class ChatService : IChatService
             return false;
         }
 
-        var effectiveMode = deliveryMode is ChatInputDeliveryMode.Queue or ChatInputDeliveryMode.Steer ?
-            deliveryMode :
-            ChatInputDeliveryMode.Queue;
+        var effectiveMode = deliveryMode is ChatInputDeliveryMode.Queue or ChatInputDeliveryMode.Steer ? deliveryMode : ChatInputDeliveryMode.Queue;
         chatContext.PendingInputs.Enqueue(message, effectiveMode, customAssistant);
 
         // Cover the narrow window where an active foreground operation finished while this item was being enqueued.
@@ -189,7 +189,8 @@ public sealed partial class ChatService : IChatService
     private Task<bool> SendSteerInCurrentTurnAsync(
         ChatContext chatContext,
         UserChatMessage message,
-        CustomAssistant? customAssistant)
+        CustomAssistant? customAssistant
+    )
     {
         message.DeliveryMode = ChatInputDeliveryMode.Steer;
         var chatData = chatContext.Data;
@@ -661,6 +662,7 @@ public sealed partial class ChatService : IChatService
             {
                 StartPendingDrainOperation(chatContext);
             }
+
             return;
         }
 
@@ -674,9 +676,9 @@ public sealed partial class ChatService : IChatService
 
     private bool StartPendingDrainOperation(ChatContext chatContext)
     {
-        var canStart = ShouldWaitForCurrentTurnBackgroundJobs(chatContext) ?
-            chatContext.PendingInputs.HasPendingInTurnWork :
-            chatContext.PendingInputs.HasPendingTurnWork;
+        var canStart = ShouldWaitForCurrentTurnBackgroundJobs(chatContext)
+            ? chatContext.PendingInputs.HasPendingInTurnWork
+            : chatContext.PendingInputs.HasPendingTurnWork;
         if (!canStart)
         {
             return false;
@@ -736,7 +738,8 @@ public sealed partial class ChatService : IChatService
     private async Task ExecuteQueuedUserTurnAsync(
         ChatContext chatContext,
         ChatPendingInputItem item,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var chatData = chatContext.Data;
         var message = item.Message;
@@ -773,7 +776,8 @@ public sealed partial class ChatService : IChatService
     private async Task ExecuteSteersInCurrentTurnAsync(
         ChatContext chatContext,
         IReadOnlyList<ChatPendingInputItem> steers,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var chatData = chatContext.Data;
         var lastUserNode = default(ChatMessageNode);
@@ -850,7 +854,8 @@ public sealed partial class ChatService : IChatService
         UserChatMessage message,
         ChatMessageNode userNode,
         CustomAssistant? customAssistant,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var chatData = chatContext.Data;
         var turnEventId = await _statisticsRecorder.RecordTurnAsync(
@@ -887,7 +892,8 @@ public sealed partial class ChatService : IChatService
         string? summary,
         CustomAssistant? customAssistant,
         StatisticsTurnKind turnKind,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var chatData = chatContext.Data;
         if (titleInput is { Length: > 0 } && customAssistant is not null && _settings.ChatWindow.AutomaticallyGenerateTitle)
@@ -931,7 +937,8 @@ public sealed partial class ChatService : IChatService
     private async Task ExecuteWakeTurnAsync(
         ChatContext chatContext,
         IReadOnlyList<ChatBackgroundJobNotification> wakes,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var chatData = chatContext.Data;
         var customAssistant = _settings.Model.SelectedCustomAssistant;
@@ -989,7 +996,8 @@ public sealed partial class ChatService : IChatService
         AssistantChatMessage currentAssistantMessage,
         ChatMessageNode currentAssistantNode,
         CompressionBoundary currentBoundary,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var wakes = chatContext.PendingInputs.TakeAllWakeNotifications();
         var steers = chatContext.PendingInputs.TakeAllSteers();
@@ -1040,7 +1048,8 @@ public sealed partial class ChatService : IChatService
                     cancellationToken);
                 using var turnScope = BeginStatisticsTurn(turnEventId);
 
-                var steerAssistant = steer.CustomAssistant ?? generationContext.Assistant as CustomAssistant ?? _settings.Model.SelectedCustomAssistant;
+                var steerAssistant = steer.CustomAssistant ??
+                    generationContext.Assistant as CustomAssistant ?? _settings.Model.SelectedCustomAssistant;
                 if (steerAssistant is not null)
                 {
                     var processedTail = await ProcessUserChatMessageAsync(
@@ -1081,7 +1090,8 @@ public sealed partial class ChatService : IChatService
         ChatContext chatContext,
         CustomAssistant customAssistant,
         ChatMessageNode userNode,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var chatData = chatContext.Data;
         var userChatMessage = (UserChatMessage)userNode.Message;
@@ -1192,7 +1202,8 @@ public sealed partial class ChatService : IChatService
         ChatContext chatContext,
         ChatMessageNode appendTailNode,
         Assistant assistant,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         using var activity = _activitySource.StartActivity();
 
@@ -1245,7 +1256,8 @@ public sealed partial class ChatService : IChatService
         Assistant assistant,
         string? systemPromptOverride,
         CancellationToken cancellationToken,
-        bool isConversationTurn = true)
+        bool isConversationTurn = true
+    )
     {
         var approvalState = chatContext.InheritedApprovalState ?? new GenerationApprovalState(_settings.Plugin.ApprovalMode);
         var session = _modelSessionFactory.Create(assistant);
@@ -1289,9 +1301,9 @@ public sealed partial class ChatService : IChatService
                 promptRenderer,
                 promptRenderer.RenderSystemPrompt(systemPromptTemplate),
                 session.Configuration.InputModalities,
-                customAssistant is not null ?
-                    ContextUsageSnapshot.NormalizeCompressionThresholdPercentage(customAssistant.ContextCompressionThreshold) :
-                    ContextUsageSnapshot.DefaultCompressionThresholdPercentage,
+                customAssistant is not null
+                    ? ContextUsageSnapshot.NormalizeCompressionThresholdPercentage(customAssistant.ContextCompressionThreshold)
+                    : ContextUsageSnapshot.DefaultCompressionThresholdPercentage,
                 customAssistant?.MaxContextRounds ?? -1,
                 approvalState,
                 isConversationTurn,
@@ -1322,7 +1334,8 @@ public sealed partial class ChatService : IChatService
         string? systemPromptOverride = null,
         bool enableNotifications = true,
         StatisticsModelInvocationPurpose purpose = StatisticsModelInvocationPurpose.ChatResponse,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var chatData = chatContext.Data;
         var assistantChatMessage = (AssistantChatMessage)assistantNode.Message;
@@ -1381,13 +1394,12 @@ public sealed partial class ChatService : IChatService
                         selection.Messages,
                         async history =>
                         {
-                            var currentTools = session.Configuration.SupportsToolCall &&
-                                generationContext.PluginScope?.Declarations is { Count: > 0 } declarations
-                                    ? declarations
-                                    : null;
+                            var currentScope = session.Configuration.SupportsToolCall
+                                ? generationContext.PluginScope
+                                : null;
                             var resolvedPrefix = await chatContext.DispatchAsync(() => chatContext.PrefixState.Apply(
                                 history,
-                                currentTools,
+                                currentScope,
                                 new ContextPrefixIdentity(
                                     session.Dialect,
                                     session.Configuration.ModelId,
@@ -1565,7 +1577,8 @@ public sealed partial class ChatService : IChatService
         ChatContext chatContext,
         GenerationContext generationContext,
         AssistantChatMessage? assistantChatMessage,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var selection = await ChatHistoryBuilder.SelectContextMessagesAsync(
             chatContext,
@@ -1600,7 +1613,8 @@ public sealed partial class ChatService : IChatService
         IList<MEAI.AITool>? toolDeclarations,
         AssistantChatMessage assistantChatMessage,
         StatisticsModelInvocationPurpose purpose,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var session = generationContext.Session;
         var chatData = chatContext.Data;
@@ -1790,7 +1804,8 @@ public sealed partial class ChatService : IChatService
         MEAI.FunctionCallContent content,
         FunctionCallContext context,
         ChatPluginDisplayBlock? displayBlock,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var pluginName = context.ChatPlugin.Key;
         using var activity = _activitySource.StartChatActivity("execute_tool", session.Configuration);
@@ -1839,7 +1854,10 @@ public sealed partial class ChatService : IChatService
                 {
                     await AppendFallbackDisplayBlockAsync();
                     toolStatus = context.ApprovalFailure is null ? StatisticsToolInvocationStatus.Denied : StatisticsToolInvocationStatus.Error;
-                    return (new ToolResultRecord(content.Name, pluginName, content.CallId,
+                    return (new ToolResultRecord(
+                        content.Name,
+                        pluginName,
+                        content.CallId,
                         consentDecision.FormatReason("Tool execution was denied by approval.")), null);
                 }
                 case ConsentDecisionKind.Custom when
@@ -1871,13 +1889,10 @@ public sealed partial class ChatService : IChatService
         }
         catch (Exception ex)
         {
-            toolStatus = ex is OperationCanceledException || cancellationToken.IsCancellationRequested ?
-                StatisticsToolInvocationStatus.Canceled :
-                context.ApprovalFailure is not null ?
-                    StatisticsToolInvocationStatus.Error :
-                    context.HasApprovalDenied ?
-                        StatisticsToolInvocationStatus.Denied :
-                        StatisticsToolInvocationStatus.Error;
+            toolStatus = ex is OperationCanceledException || cancellationToken.IsCancellationRequested ? StatisticsToolInvocationStatus.Canceled :
+                context.ApprovalFailure is not null ? StatisticsToolInvocationStatus.Error :
+                context.HasApprovalDenied ? StatisticsToolInvocationStatus.Denied :
+                StatisticsToolInvocationStatus.Error;
             var isCallerCancellation = IsCallerCancellation(ex, cancellationToken);
             ex = HandledFunctionInvokingException.Handle(ex);
             if (!isCallerCancellation)
@@ -1976,7 +1991,8 @@ public sealed partial class ChatService : IChatService
         string userMessage,
         ChatContext chatContext,
         string? expectedTopic,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var metadata = chatContext.Data.Metadata;
         ModelSession? session = null;
@@ -2063,7 +2079,8 @@ public sealed partial class ChatService : IChatService
         MEAI.FunctionCallContent content,
         ChatPlugin? plugin,
         StatisticsToolInvocationStatus status,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var invocationId = Guid.CreateVersion7();
         var startedAt = DateTimeOffset.UtcNow;

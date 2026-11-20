@@ -1,16 +1,24 @@
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Everywhere.AI;
+using Everywhere.Chat.Permissions;
+using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Harness;
+using Everywhere.Harness.Mcp;
+using Everywhere.I18N;
+using Everywhere.Utilities;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol.Protocol;
 using AnthropicModelSession = Everywhere.Harness.AnthropicModelSession;
 
 namespace Everywhere.Core.Tests.Harness;
 
-public sealed class ScopedToolProviderTests
+public sealed partial class ScopedToolProviderTests
 {
     // A provider that recognizes only executable AIFunction objects silently omits the
     // entire catalog. Check the SDK's actual POST, not just ChatOptions in the host.
@@ -91,7 +99,9 @@ public sealed class ScopedToolProviderTests
                     Assert.That(body.GetProperty("tool_choice").GetProperty("type").GetString(), Is.EqualTo("none"));
                     break;
                 case ModelProviderSchema.Google:
-                    Assert.That(body.GetProperty("toolConfig").GetProperty("functionCallingConfig").GetProperty("mode").GetString(), Is.EqualTo("NONE"));
+                    Assert.That(
+                        body.GetProperty("toolConfig").GetProperty("functionCallingConfig").GetProperty("mode").GetString(),
+                        Is.EqualTo("NONE"));
                     break;
                 case ModelProviderSchema.GoogleInteractions:
                     Assert.That(body.GetProperty("generation_config").GetProperty("tool_choice").GetString(), Is.EqualTo("none"));
@@ -105,7 +115,11 @@ public sealed class ScopedToolProviderTests
         return configuration.Schema switch
         {
             ModelProviderSchema.OpenAI => new OpenAIModelSession(configuration, new OpenAIOptions(), connection, NullLoggerFactory.Instance),
-            ModelProviderSchema.OpenAIResponses => new OpenAIResponsesModelSession(configuration, new OpenAIResponsesOptions(), connection, NullLoggerFactory.Instance),
+            ModelProviderSchema.OpenAIResponses => new OpenAIResponsesModelSession(
+                configuration,
+                new OpenAIResponsesOptions(),
+                connection,
+                NullLoggerFactory.Instance),
             ModelProviderSchema.Anthropic => new AnthropicModelSession(configuration, new AnthropicOptions(), connection),
             ModelProviderSchema.Google => new GoogleModelSession(configuration, new GoogleOptions(), connection),
             ModelProviderSchema.GoogleInteractions => new GoogleInteractionsModelSession(configuration, new GoogleInteractionsOptions(), connection),
@@ -113,6 +127,95 @@ public sealed class ScopedToolProviderTests
             ModelProviderSchema.Ollama => new OllamaModelSession(configuration, connection),
             _ => throw new ArgumentOutOfRangeException(nameof(configuration))
         };
+    }
+
+    [Test]
+    public void ToolBinding_FormatsMcpNamespacesSanitizesCharactersAndClampsTo64Chars()
+    {
+        var escapeMethod = typeof(ManagedMcpClient).GetMethod("EscapeToolName", BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new AssertionException("Missing ManagedMcpClient.EscapeToolName.");
+        var escaped = (string)(escapeMethod.Invoke(null, ["fs/read-tool.v1 中文"])
+            ?? throw new AssertionException("EscapeToolName returned null."));
+
+        using var builtIn = new SampleBuiltInPlugin();
+        using var firstMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "first", Command = "npx" });
+        using var secondMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "second", Command = "npx" });
+        var deduplicator = new NumberedDeduplicator();
+
+        var builtInBinding = new ToolBinding(
+            builtIn,
+            new NativeChatFunction((Func<string>)(static () => "ok"), ChatFunctionPermissions.None, functionName: "search_files"),
+            deduplicator);
+
+        var longRawName = "shared_" + new string('a', 60);
+        var mcpFunction1 = new McpChatFunction(CreateManagedMcpTool(longRawName));
+        var mcpFunction2 = new McpChatFunction(CreateManagedMcpTool(longRawName));
+        var dirtyMcpFunction = new McpChatFunction(CreateManagedMcpTool("dir/open:item 你好"));
+
+        var mcpBinding1 = new ToolBinding(firstMcp, mcpFunction1, deduplicator);
+        var mcpBinding2 = new ToolBinding(secondMcp, mcpFunction2, deduplicator);
+        var dirtyBinding = new ToolBinding(firstMcp, dirtyMcpFunction, deduplicator);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(escaped, Is.EqualTo("fs_read_tool_v1___"));
+            Assert.That(escapeMethod.Invoke(null, [""]), Is.EqualTo("tool"));
+            Assert.That(builtInBinding.Declaration.Name, Is.EqualTo("search_files"));
+            Assert.That(mcpBinding1.Declaration.Name, Does.StartWith("mcp__shared_"));
+            Assert.That(mcpBinding1.Declaration.Name, Has.Length.EqualTo(ToolBinding.MaxWireNameLength));
+            Assert.That(mcpBinding2.Declaration.Name, Does.StartWith("mcp__shared_").And.EndWith("_1"));
+            Assert.That(mcpBinding2.Declaration.Name, Has.Length.EqualTo(ToolBinding.MaxWireNameLength));
+            Assert.That(mcpBinding2.Declaration.Name, Is.Not.EqualTo(mcpBinding1.Declaration.Name));
+            Assert.That(dirtyBinding.Declaration.Name, Is.EqualTo("mcp__dir_open_item___"));
+            Assert.That(WireNameRegex().IsMatch(mcpBinding1.Declaration.Name), Is.True);
+            Assert.That(WireNameRegex().IsMatch(mcpBinding2.Declaration.Name), Is.True);
+            Assert.That(WireNameRegex().IsMatch(dirtyBinding.Declaration.Name), Is.True);
+        }
+    }
+
+    [GeneratedRegex("^[a-zA-Z0-9_-]{1,64}$")]
+    private static partial Regex WireNameRegex();
+
+    [Test]
+    public void NativeChatFunction_WhenNameViolatesWirePatternOrMaxLength_ThrowsArgumentException()
+    {
+        foreach (var invalidName in new[]
+                     { "", "bad.name", "bad/name", "bad name", "工具", new string('a', NativeChatFunction.MaxNativeFunctionNameLength + 1) })
+        {
+            Assert.Throws<ArgumentException>(() => _ = new NativeChatFunction(
+                (Func<string>)(static () => "ok"),
+                ChatFunctionPermissions.None,
+                functionName: invalidName));
+
+            var rawFunction = AIFunctionFactory.Create(() => "ok", new AIFunctionFactoryOptions { Name = invalidName });
+            Assert.Throws<ArgumentException>(() => _ = new NativeChatFunction(rawFunction, ChatFunctionPermissions.None));
+        }
+
+        var maxValidName = "valid-tool_" + new string('a', NativeChatFunction.MaxNativeFunctionNameLength - "valid-tool_".Length);
+        var validFunction = new NativeChatFunction(
+            (Func<string>)(static () => "ok"),
+            ChatFunctionPermissions.None,
+            functionName: maxValidName);
+        Assert.That(validFunction.Name, Is.EqualTo(maxValidName));
+    }
+
+    private static ManagedMcpClientTool CreateManagedMcpTool(string name)
+    {
+        return (ManagedMcpClientTool)(Activator.CreateInstance(
+                typeof(ManagedMcpClientTool),
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                null,
+                [new Tool { Name = name, InputSchema = JsonElement.Parse("""{"type":"object","properties":{}}""") }, null, name],
+                null)
+            ?? throw new AssertionException("Missing ManagedMcpClientTool constructor."));
+    }
+
+    private sealed class SampleBuiltInPlugin : BuiltInChatPlugin
+    {
+        public override IDynamicLocaleKey HeaderKey { get; } = new DirectLocaleKey("Built-in");
+        public override IDynamicLocaleKey DescriptionKey { get; } = new DirectLocaleKey("Built-in test plugin");
+
+        public SampleBuiltInPlugin() : base("sample_builtin") { }
     }
 
     private sealed class RequestRecorder : HttpMessageHandler

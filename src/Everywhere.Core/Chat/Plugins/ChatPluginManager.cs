@@ -43,7 +43,8 @@ public class ChatPluginManager : IChatPluginManager
         IEnumerable<BuiltInChatPlugin> builtInPlugins,
         Settings settings,
         IRuntimeManager runtimeManager,
-        ILogger<ChatPluginManager> logger)
+        ILogger<ChatPluginManager> logger
+    )
     {
         _serviceProvider = serviceProvider;
         _builtInPluginsSource.AddRange(builtInPlugins);
@@ -225,9 +226,9 @@ public class ChatPluginManager : IChatPluginManager
 
     public RuntimeDependency? GetMissingRuntimeDependency(McpChatPlugin mcpChatPlugin)
     {
-        return mcpChatPlugin.TransportConfiguration is StdioMcpTransportConfiguration stdio ?
-            _runtimeManager.GetMissingDependency(stdio.Command) :
-            null;
+        return mcpChatPlugin.TransportConfiguration is StdioMcpTransportConfiguration stdio
+            ? _runtimeManager.GetMissingDependency(stdio.Command)
+            : null;
     }
 
     public void RefreshMcpRuntimeWarnings()
@@ -241,7 +242,8 @@ public class ChatPluginManager : IChatPluginManager
     private async Task EnsureMcpStartPreconditionsAsync(
         McpChatPlugin mcpChatPlugin,
         McpTransportConfiguration transportConfiguration,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (transportConfiguration is not StdioMcpTransportConfiguration stdio) return;
 
@@ -276,7 +278,8 @@ public class ChatPluginManager : IChatPluginManager
     private static bool TryCreateMcpStartHandledException(
         McpTransportConfiguration transportConfiguration,
         Exception exception,
-        [NotNullWhen(true)] out HandledException? handledException)
+        [NotNullWhen(true)] out HandledException? handledException
+    )
     {
         handledException = null;
         if (exception is HandledException handled)
@@ -290,8 +293,9 @@ public class ChatPluginManager : IChatPluginManager
             return false;
         }
 
-        var systemException = exception.Segregate().FirstOrDefault(static e =>
-            e is Win32Exception or FileNotFoundException or DirectoryNotFoundException);
+        var systemException = exception.Segregate()
+            .FirstOrDefault(static e =>
+                e is Win32Exception or FileNotFoundException or DirectoryNotFoundException);
         if (systemException is null)
         {
             return false;
@@ -313,9 +317,7 @@ public class ChatPluginManager : IChatPluginManager
     {
         if (RuntimeDependencyDetector.LooksLikePath(command))
         {
-            var commandPath = Path.IsPathFullyQualified(command) ?
-                command :
-                Path.GetFullPath(command, GetConfiguredWorkingDirectory(stdio));
+            var commandPath = Path.IsPathFullyQualified(command) ? command : Path.GetFullPath(command, GetConfiguredWorkingDirectory(stdio));
             return File.Exists(commandPath);
         }
 
@@ -379,9 +381,9 @@ public class ChatPluginManager : IChatPluginManager
 
     private static string GetConfiguredWorkingDirectory(StdioMcpTransportConfiguration stdio)
     {
-        return !stdio.WorkingDirectory.IsNullOrWhiteSpace() && Directory.Exists(stdio.WorkingDirectory) ?
-            stdio.WorkingDirectory :
-            Environment.CurrentDirectory;
+        return !stdio.WorkingDirectory.IsNullOrWhiteSpace() && Directory.Exists(stdio.WorkingDirectory)
+            ? stdio.WorkingDirectory
+            : Environment.CurrentDirectory;
     }
 
     private static string NormalizeCommand(string command) => command.Trim().Trim('"');
@@ -391,7 +393,8 @@ public class ChatPluginManager : IChatPluginManager
         ChatContext chatContext,
         ChatMessageNode ownerNode,
         IToolRulesets? toolRulesets,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var pluginNameDeduplicator = new NumberedDeduplicator();
         var functionNameDeduplicator = new NumberedDeduplicator();
@@ -400,7 +403,14 @@ public class ChatPluginManager : IChatPluginManager
 
         try
         {
-            foreach (var plugin in _builtInPluginsSource.Items.Cast<ChatPlugin>().Concat(_mcpPluginsSource.Items))
+            BuiltInChatPlugin[] builtInPlugins = [];
+            _builtInPluginsSource.Edit(list =>
+                builtInPlugins = [.. list.OrderBy(static plugin => plugin.Key, StringComparer.Ordinal)]);
+
+            McpChatPlugin[] mcpPlugins = [];
+            _mcpPluginsSource.Edit(list => mcpPlugins = [.. list]);
+
+            foreach (var plugin in builtInPlugins.Cast<ChatPlugin>().Concat(mcpPlugins))
             {
                 var isPluginAllowed = toolRulesets?.GetPluginRule(plugin) ??
                     _settings.Plugin.ToolEnablementRulesets.GetPluginRule(plugin) ??
@@ -484,13 +494,15 @@ public class ChatPluginManager : IChatPluginManager
         public bool TryGetBinding(
             string functionName,
             [NotNullWhen(true)] out ToolBinding? binding,
-            [NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames)
+            [NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames
+        )
         {
             if (_bindings.TryGetValue(functionName, out binding))
             {
                 similarFunctionNames = null;
                 return true;
             }
+
             similarFunctionNames =
             [
                 .. Process.ExtractTop(functionName, _bindings.Keys, limit: 5)
@@ -544,7 +556,8 @@ public class ChatPluginManager : IChatPluginManager
     private async Task ResolveMcpRuntimeDependencyAsync(
         McpChatPlugin mcpChatPlugin,
         RuntimeDependency dependency,
-        ToastResult? toastResult)
+        ToastResult? toastResult
+    )
     {
         if (toastResult != ToastResult.ActionButtonClicked) return;
 
@@ -605,7 +618,8 @@ public class ChatPluginManager : IChatPluginManager
                 EventId eventId,
                 TState state,
                 Exception? exception,
-                Func<TState, Exception?, string> formatter)
+                Func<TState, Exception?, string> formatter
+            )
             {
                 mcpChatPlugin.Log(logLevel, eventId, state, exception, formatter);
                 innerLogger.Log(logLevel, eventId, state, exception, formatter);

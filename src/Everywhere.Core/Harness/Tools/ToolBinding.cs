@@ -1,3 +1,4 @@
+using System.Buffers;
 using Everywhere.Chat.Plugins;
 using Everywhere.Utilities;
 using Microsoft.Extensions.AI;
@@ -10,6 +11,11 @@ namespace Everywhere.Harness;
 /// </summary>
 public sealed class ToolBinding
 {
+    /// <summary>
+    /// Maximum model-facing tool declaration name length enforced by major providers (OpenAI / Gemini).
+    /// </summary>
+    public const int MaxWireNameLength = 64;
+
     /// <summary>
     /// Gets the plugin that owns this tool.
     /// </summary>
@@ -25,6 +31,9 @@ public sealed class ToolBinding
     /// </summary>
     public AIFunctionDeclaration Declaration { get; }
 
+    private static readonly SearchValues<char> AllowedWireNameChars =
+        SearchValues.Create("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-");
+
     private readonly AIFunction _target;
 
     /// <summary>
@@ -36,12 +45,38 @@ public sealed class ToolBinding
         // MCP discovery can refresh the UI descriptor; freeze it before reading either declaration or target.
         Function = function is McpChatFunction mcp ? mcp.Snapshot() : function;
         _target = Function.Function;
-        var name = names.Deduplicate(_target.Name);
+        var name = names.Deduplicate(FormatScopedName(plugin, _target.Name), MaxWireNameLength);
         Declaration = AIFunctionFactory.CreateDeclaration(
             name,
             _target.Description,
             _target.JsonSchema,
             _target.ReturnJsonSchema);
+    }
+
+    private static string FormatScopedName(ChatPlugin plugin, string rawName)
+    {
+        var sanitized = SanitizeWireName(rawName);
+        return plugin.IsMcp || plugin.Key.StartsWith("mcp.", StringComparison.Ordinal)
+            ? $"mcp__{sanitized}"
+            : sanitized;
+    }
+
+    private static string SanitizeWireName(string rawName)
+    {
+        if (string.IsNullOrEmpty(rawName)) return "tool";
+        if (!rawName.AsSpan().ContainsAnyExcept(AllowedWireNameChars)) return rawName;
+
+        return string.Create(
+            rawName.Length,
+            rawName,
+            static (destination, source) =>
+            {
+                for (var i = 0; i < source.Length; i++)
+                {
+                    var ch = source[i];
+                    destination[i] = AllowedWireNameChars.Contains(ch) ? ch : '_';
+                }
+            });
     }
 
     /// <summary>
@@ -50,7 +85,8 @@ public sealed class ToolBinding
     public async Task<FunctionResultContent> InvokeAsync(
         IServiceProvider services,
         FunctionCallContent call,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (call.Exception is { } error)
         {

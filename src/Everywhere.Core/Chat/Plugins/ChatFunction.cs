@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Buffers;
+using System.Reflection;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Harness;
@@ -88,6 +89,11 @@ public abstract class ChatFunction
 /// </summary>
 public sealed class NativeChatFunction : ChatFunction
 {
+    /// <summary>
+    /// Maximum length allowed for a canonical native function name, leaving room for wire prefixes and suffixes.
+    /// </summary>
+    public const int MaxNativeFunctionNameLength = 55;
+
     public override IDynamicLocaleKey HeaderKey { get; }
 
     public override IDynamicLocaleKey DescriptionKey => field ?? base.DescriptionKey;
@@ -102,6 +108,9 @@ public sealed class NativeChatFunction : ChatFunction
     /// <inheritdoc />
     public override PermissionConsentHook? PermissionConsentHook { get; }
 
+    private static readonly SearchValues<char> AllowedFunctionNameChars =
+        SearchValues.Create("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-");
+
     /// <summary>
     /// Registers an existing MEAI <see cref="AIFunction"/> with localized presentation and approval policy.
     /// </summary>
@@ -109,8 +118,10 @@ public sealed class NativeChatFunction : ChatFunction
         AIFunction function,
         ChatFunctionPermissions permissions,
         IDynamicLocaleKey? headerKey = null,
-        IDynamicLocaleKey? descriptionKey = null)
+        IDynamicLocaleKey? descriptionKey = null
+    )
     {
+        ValidateFunctionName(function.Name);
         Function = function;
         Permissions = permissions;
         IsDefaultBypassApproval = permissions <= ChatFunctionPermissions.BypassApproval;
@@ -138,7 +149,8 @@ public sealed class NativeChatFunction : ChatFunction
         string? functionName = null,
         string? description = null,
         IDynamicLocaleKey? headerKey = null,
-        IDynamicLocaleKey? descriptionKey = null)
+        IDynamicLocaleKey? descriptionKey = null
+    )
     {
         var attributeFunctionName = method.Method.GetCustomAttribute<ChatFunctionAttribute>(false)?.Name;
         var resolvedFunctionName = !functionName.IsNullOrWhiteSpace() ? functionName : attributeFunctionName;
@@ -183,6 +195,19 @@ public sealed class NativeChatFunction : ChatFunction
         PermissionConsentHook = permissionConsentHook;
 
         Function = CreateNativeFunction(method, resolvedFunctionName, description);
+        ValidateFunctionName(Function.Name);
+    }
+
+    private static void ValidateFunctionName(string name)
+    {
+        if (string.IsNullOrEmpty(name) ||
+            name.Length > MaxNativeFunctionNameLength ||
+            name.AsSpan().ContainsAnyExcept(AllowedFunctionNameChars))
+        {
+            throw new ArgumentException(
+                $"Chat function name '{name}' must match ^[a-zA-Z0-9_-]{{1,{MaxNativeFunctionNameLength}}}$.",
+                nameof(name));
+        }
     }
 
     /// <summary>

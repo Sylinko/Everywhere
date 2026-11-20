@@ -1,5 +1,6 @@
 using System.Net;
 using System.Reactive.Disposables;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Avalonia.Headless.NUnit;
@@ -15,14 +16,17 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Core.Tests.Statistics;
 using Everywhere.Harness;
+using Everywhere.Harness.Mcp;
 using Everywhere.I18N;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Storage;
+using Everywhere.Utilities;
 using Lucide.Avalonia;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol.Protocol;
 using NSubstitute;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
@@ -89,16 +93,18 @@ public sealed class ContextPrefixStateTests
             Assert.That(second.History[1].Text, Is.EqualTo("Turn 1"));
             Assert.That(second.History[2].Text, Is.EqualTo("Reply 1"));
             Assert.That(second.History[3].Role, Is.EqualTo(ChatRole.User));
-            Assert.That(second.History[3].Text, Does.StartWith("<system-reminder>")
-                .And.Contain("```diff")
-                .And.Contain("-Skills: skill-a")
-                .And.Contain("+Skills: skill-a, skill-b")
-                .And.Contain("-WorkingDirectory: /work/a")
-                .And.Contain("+WorkingDirectory: /work/b")
-                .And.Contain("-Date: 2026-11-17")
-                .And.Contain("+Date: 2026-11-18")
-                .And.Not.Contain("Unchanged header line 1")
-                .And.Not.Contain("Unchanged footer line 4"));
+            Assert.That(
+                second.History[3].Text,
+                Does.StartWith("<system-reminder>")
+                    .And.Contain("```diff")
+                    .And.Contain("-Skills: skill-a")
+                    .And.Contain("+Skills: skill-a, skill-b")
+                    .And.Contain("-WorkingDirectory: /work/a")
+                    .And.Contain("+WorkingDirectory: /work/b")
+                    .And.Contain("-Date: 2026-11-17")
+                    .And.Contain("+Date: 2026-11-18")
+                    .And.Not.Contain("Unchanged header line 1")
+                    .And.Not.Contain("Unchanged footer line 4"));
             Assert.That(second.History[4].Text, Is.EqualTo("Turn 2"));
         });
 
@@ -286,7 +292,10 @@ public sealed class ContextPrefixStateTests
         var windowEvicted = state.Apply(
             [new ChatMessage(ChatRole.System, "P2"), new ChatMessage(ChatRole.User, "U2"), new ChatMessage(ChatRole.User, "U3")],
             null,
-            identity with { ActiveSummaryNodeId = compressed.HasResetEpoch ? identity.ActiveSummaryNodeId : null, WindowStartNodeId = Guid.CreateVersion7() },
+            identity with
+            {
+                ActiveSummaryNodeId = compressed.HasResetEpoch ? identity.ActiveSummaryNodeId : null, WindowStartNodeId = Guid.CreateVersion7()
+            },
             t0.AddMinutes(8));
         Assert.That(windowEvicted.HasResetEpoch, Is.True);
     }
@@ -460,9 +469,19 @@ public sealed class ContextPrefixStateTests
             new AssistantCatalog(Substitute.For<IPresetModelProvider>(), Substitute.For<IOfficialModelProvider>()));
         using var visual = new ChatVisualService(new ImageViewRecoveryTests.UnusedHostConnectionSource());
         var chat = new ChatService(
-            manager, plugins, factory, specializations, blobs, settings, promptService,
-            skillProvider, Substitute.For<IStatisticsRecorder>(), visual,
-            Substitute.For<IVisualContextScanEffect>(), services, NullLogger<ChatService>.Instance);
+            manager,
+            plugins,
+            factory,
+            specializations,
+            blobs,
+            settings,
+            promptService,
+            skillProvider,
+            Substitute.For<IStatisticsRecorder>(),
+            visual,
+            Substitute.For<IVisualContextScanEffect>(),
+            services,
+            NullLogger<ChatService>.Instance);
 
         var configuration = new AdvancedAssistantConfiguration
         {
@@ -479,7 +498,13 @@ public sealed class ContextPrefixStateTests
         // Turn 1: Both tools enabled (declared in reverse registration order, sorted alphabetically), initial skills.
         var u1 = root.Data.StartTurn(new UserChatMessage("First turn", []));
         var a1 = root.Data.Append(u1, new AssistantChatMessage { IsBusy = true });
-        await root.ExecuteAsync(token => chat.GenerateAsync(root, assistant, a1, CompressionBoundary.Before(u1), enableNotifications: false, cancellationToken: token));
+        await root.ExecuteAsync(token => chat.GenerateAsync(
+            root,
+            assistant,
+            a1,
+            CompressionBoundary.Before(u1),
+            enableNotifications: false,
+            cancellationToken: token));
 
         // Turn 2: Disable zebra_probe (must NOT disappear from wire tools), update skills & apply Strategy override.
         settings.Plugin.ToolEnablementRulesets[ToolSettingsKey.ForFunction(probePlugin.Key, "zebra_probe")] = false;
@@ -534,6 +559,117 @@ public sealed class ContextPrefixStateTests
             var turn3Input = wire.Requests[3].GetProperty("input").ToString();
             Assert.That(turn3Input, Does.Contain("skill-beta"));
         });
+    }
+
+    [Test]
+    public void Apply_WhenDuplicateNamedMcpServerDisabledAndSameSchemaSiblingShiftsIntoSlot_ResetsEpoch()
+    {
+        using var firstMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "first", Command = "npx" });
+        using var secondMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "second", Command = "npx" });
+
+        var scopeBoth = CreateMcpScope(firstMcp, secondMcp);
+        var scopeOnlyFirst = CreateMcpScope(firstMcp);
+        var scopeOnlySecond = CreateMcpScope(secondMcp);
+
+        var state = new ContextPrefixState();
+        var t0 = new DateTimeOffset(2026, 11, 20, 10, 0, 0, TimeSpan.Zero);
+        var identity = new ContextPrefixIdentity("openai", "gpt-5", true, null, Guid.CreateVersion7());
+
+        var turn1 = state.Apply(
+            [new ChatMessage(ChatRole.System, "System"), new ChatMessage(ChatRole.User, "U1")],
+            scopeBoth,
+            identity,
+            t0);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(turn1.HasResetEpoch, Is.True);
+            Assert.That(turn1.Tools?.Select(static t => t.Name), Is.EqualTo((string[])["mcp__query", "mcp__query_1"]));
+        }
+
+        // Disabling the second server keeps mcp__query mapped to firstMcp, preserving the prompt-cache epoch.
+        var disableSecond = state.Apply(
+            [
+                new ChatMessage(ChatRole.System, "System"),
+                new ChatMessage(ChatRole.User, "U1"),
+                new ChatMessage(ChatRole.Assistant, "A1"),
+                new ChatMessage(ChatRole.User, "U2")
+            ],
+            scopeOnlyFirst,
+            identity,
+            t0.AddMinutes(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(disableSecond.HasResetEpoch, Is.False);
+            Assert.That(disableSecond.Tools?.Select(static t => t.Name), Is.EqualTo((string[])["mcp__query", "mcp__query_1"]));
+            Assert.That(disableSecond.History[3].Text, Does.Contain("mcp__query_1"));
+        }
+
+        // Disabling firstMcp shifts secondMcp into mcp__query with identical schema; PluginKey mismatch resets the epoch.
+        var disableFirst = state.Apply(
+            [
+                new ChatMessage(ChatRole.System, "System"),
+                new ChatMessage(ChatRole.User, "U1"),
+                new ChatMessage(ChatRole.Assistant, "A1"),
+                new ChatMessage(ChatRole.User, "U2"),
+                new ChatMessage(ChatRole.Assistant, "A2"),
+                new ChatMessage(ChatRole.User, "U3")
+            ],
+            scopeOnlySecond,
+            identity,
+            t0.AddMinutes(2));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(disableFirst.HasResetEpoch, Is.True);
+            Assert.That(disableFirst.Tools?.Select(static t => t.Name), Is.EqualTo((string[])["mcp__query"]));
+            Assert.That(scopeOnlySecond.TryGetBinding("mcp__query", out var shiftedBinding, out _), Is.True);
+            Assert.That(shiftedBinding?.Plugin.Key, Is.EqualTo(secondMcp.Key));
+        }
+    }
+
+    private static TestPluginScope CreateMcpScope(params McpChatPlugin[] plugins)
+    {
+        var names = new NumberedDeduplicator();
+        var schema = JsonElement.Parse("""{"type":"object","properties":{"term":{"type":"string"}}}""");
+        var bindings = plugins
+            .Select(plugin =>
+            {
+                var tool = (ManagedMcpClientTool)(Activator.CreateInstance(
+                        typeof(ManagedMcpClientTool),
+                        BindingFlags.Instance | BindingFlags.NonPublic,
+                        null,
+                        [new Tool { Name = "query", Description = "Run query", InputSchema = schema }, null, "query"],
+                        null)
+                    ?? throw new AssertionException("Missing ManagedMcpClientTool constructor."));
+                return new ToolBinding(plugin, new McpChatFunction(tool), names);
+            })
+            .ToList();
+
+        return new TestPluginScope(plugins, bindings);
+    }
+
+    private sealed class TestPluginScope(IReadOnlyList<ChatPlugin> plugins, IReadOnlyList<ToolBinding> bindings) : IChatPluginScope
+    {
+        public IReadOnlyList<ChatPlugin> Plugins { get; } = plugins;
+        public IReadOnlyList<AIFunctionDeclaration> Declarations { get; } = [.. bindings.Select(static binding => binding.Declaration)];
+        private readonly Dictionary<string, ToolBinding> _bindings = bindings.ToDictionary(
+            static binding => binding.Declaration.Name,
+            StringComparer.Ordinal);
+
+        public bool TryGetBinding(
+            string functionName,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ToolBinding? binding,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames
+        )
+        {
+            if (_bindings.TryGetValue(functionName, out binding))
+            {
+                similarFunctionNames = null;
+                return true;
+            }
+
+            similarFunctionNames = [];
+            return false;
+        }
     }
 
     private static AIFunctionDeclaration CreateTool(string name, string description = "Test tool") =>

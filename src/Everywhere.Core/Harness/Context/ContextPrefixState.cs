@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using DiffPlex;
 using DiffPlex.Chunkers;
 using DiffPlex.Model;
+using Everywhere.Chat.Plugins;
 using Microsoft.Extensions.AI;
 
 namespace Everywhere.Harness;
@@ -86,17 +87,54 @@ public sealed class ContextPrefixState
     /// resetting the active prefix epoch and injecting anchored <c>&lt;system-reminder&gt;</c> deltas
     /// when system instructions or disabled tools change mid-epoch.
     /// </summary>
+    [OverloadResolutionPriority(1)]
     public ContextPrefixResolution Apply(
         IList<ChatMessage> history,
         IReadOnlyList<AIFunctionDeclaration>? currentTools,
         ContextPrefixIdentity identity,
-        DateTimeOffset utcNow)
+        DateTimeOffset utcNow
+    ) =>
+        ApplyCore(history, currentTools, currentScope: null, identity, utcNow);
+
+    /// <summary>
+    /// Resolves the wire history and tool list for one conversational model request from a resolved
+    /// <see cref="IChatPluginScope"/>, including owning plugin identity in tool fingerprints so disabling
+    /// an earlier duplicate tool resets the epoch instead of letting a sibling silently inherit its name.
+    /// </summary>
+    public ContextPrefixResolution Apply(
+        IList<ChatMessage> history,
+        IChatPluginScope? currentScope,
+        ContextPrefixIdentity identity,
+        DateTimeOffset utcNow
+    ) =>
+        ApplyCore(
+            history,
+            currentScope?.Declarations is { Count: > 0 } declarations ? declarations : null,
+            currentScope,
+            identity,
+            utcNow);
+
+    private ContextPrefixResolution ApplyCore(
+        IList<ChatMessage> history,
+        IReadOnlyList<AIFunctionDeclaration>? currentTools,
+        IChatPluginScope? currentScope,
+        ContextPrefixIdentity identity,
+        DateTimeOffset utcNow
+    )
     {
         var (hasSystemHead, systemPrompt, capturedMessages, currentHashes) = CaptureHistory(history);
         var activeTools = currentTools is { Count: > 0 } ? currentTools : null;
 
         using var scope = _syncLock.EnterScope();
-        if (_snapshot is null || ShouldResetEpoch(_snapshot, activeTools, identity, hasSystemHead, currentHashes, utcNow, out var commonPrefixLength))
+        if (_snapshot is null || ShouldResetEpoch(
+                _snapshot,
+                activeTools,
+                currentScope,
+                identity,
+                hasSystemHead,
+                currentHashes,
+                utcNow,
+                out var commonPrefixLength))
         {
             var lockedTools = activeTools is null ? [] : activeTools.ToArray();
             _snapshot = new EpochSnapshot(
@@ -104,7 +142,7 @@ public sealed class ContextPrefixState
                 hasSystemHead,
                 systemPrompt,
                 lockedTools,
-                BuildToolFingerprints(lockedTools),
+                BuildToolFingerprints(lockedTools, currentScope),
                 currentHashes,
                 utcNow);
 
@@ -163,7 +201,8 @@ public sealed class ContextPrefixState
     public ContextPrefixResolution? ProjectReadOnly(
         IList<ChatMessage> history,
         ContextPrefixIdentity identity,
-        DateTimeOffset utcNow)
+        DateTimeOffset utcNow
+    )
     {
         var (hasSystemHead, _, capturedMessages, currentHashes) = CaptureHistory(history);
 
@@ -193,7 +232,8 @@ public sealed class ContextPrefixState
     }
 
     private static (bool HasSystemHead, string SystemPrompt, ChatMessage[] CapturedMessages, MessageHash[] Hashes) CaptureHistory(
-        IList<ChatMessage> history)
+        IList<ChatMessage> history
+    )
     {
         var hasSystemHead = history.Count > 0 && history[0].Role == ChatRole.System;
         var systemPrompt = hasSystemHead ? history[0].Text : string.Empty;
@@ -216,7 +256,8 @@ public sealed class ContextPrefixState
         string initialSystemPrompt,
         ChatMessage[] capturedMessages,
         List<PrefixReminderEntry> reminders,
-        int maxReminderAnchor)
+        int maxReminderAnchor
+    )
     {
         var effectiveHistory = new List<ChatMessage>(capturedMessages.Length + reminders.Count + (hasSystemHead ? 1 : 0));
         if (hasSystemHead)
@@ -228,8 +269,8 @@ public sealed class ContextPrefixState
         for (var i = 0; i <= capturedMessages.Length; i++)
         {
             while (reminderCursor < reminders.Count &&
-                reminders[reminderCursor].AfterMessageCount <= maxReminderAnchor &&
-                reminders[reminderCursor].AfterMessageCount == i)
+                   reminders[reminderCursor].AfterMessageCount <= maxReminderAnchor &&
+                   reminders[reminderCursor].AfterMessageCount == i)
             {
                 effectiveHistory.Add(new ChatMessage(ChatRole.User, reminders[reminderCursor].Content));
                 reminderCursor++;
@@ -250,7 +291,8 @@ public sealed class ContextPrefixState
         bool hasSystemHead,
         MessageHash[] currentHashes,
         DateTimeOffset utcNow,
-        out int commonPrefixLength)
+        out int commonPrefixLength
+    )
     {
         commonPrefixLength = CountCommonPrefix(snapshot.LastRequestMessageHashes, currentHashes);
         if (utcNow - snapshot.LastUsedAt > _cacheTtl) return false;
@@ -262,18 +304,20 @@ public sealed class ContextPrefixState
     private bool ShouldResetEpoch(
         EpochSnapshot snapshot,
         IReadOnlyList<AIFunctionDeclaration>? currentTools,
+        IChatPluginScope? currentScope,
         ContextPrefixIdentity identity,
         bool hasSystemHead,
         MessageHash[] currentHashes,
         DateTimeOffset utcNow,
-        out int commonPrefixLength)
+        out int commonPrefixLength
+    )
     {
         if (!CanReusePrefix(snapshot, identity, hasSystemHead, currentHashes, utcNow, out commonPrefixLength))
         {
             return true;
         }
 
-        return HasAdditiveOrModifiedTools(currentTools, snapshot.ToolFingerprints);
+        return HasAdditiveOrModifiedTools(currentTools, currentScope, snapshot.ToolFingerprints);
     }
 
     private static int CountCommonPrefix(MessageHash[] previous, MessageHash[] current)
@@ -290,7 +334,9 @@ public sealed class ContextPrefixState
 
     private static bool HasAdditiveOrModifiedTools(
         IReadOnlyList<AIFunctionDeclaration>? currentTools,
-        Dictionary<string, ToolFingerprint> lockedFingerprints)
+        IChatPluginScope? currentScope,
+        Dictionary<string, ToolFingerprint> lockedFingerprints
+    )
     {
         if (currentTools is null || currentTools.Count == 0) return false;
 
@@ -301,7 +347,9 @@ public sealed class ContextPrefixState
                 return true;
             }
 
-            if (!string.Equals(tool.Description, locked.Description, StringComparison.Ordinal) ||
+            var pluginKey = ResolvePluginKey(currentScope, tool.Name);
+            if (!string.Equals(pluginKey, locked.PluginKey, StringComparison.Ordinal) ||
+                !string.Equals(tool.Description, locked.Description, StringComparison.Ordinal) ||
                 !string.Equals(tool.JsonSchema.GetRawText(), locked.SchemaRawText, StringComparison.Ordinal))
             {
                 return true;
@@ -311,20 +359,30 @@ public sealed class ContextPrefixState
         return false;
     }
 
-    private static Dictionary<string, ToolFingerprint> BuildToolFingerprints(AIFunctionDeclaration[] tools)
+    private static Dictionary<string, ToolFingerprint> BuildToolFingerprints(
+        AIFunctionDeclaration[] tools,
+        IChatPluginScope? currentScope
+    )
     {
         var map = new Dictionary<string, ToolFingerprint>(tools.Length, StringComparer.Ordinal);
         foreach (var tool in tools)
         {
-            map[tool.Name] = new ToolFingerprint(tool.Description, tool.JsonSchema.GetRawText());
+            map[tool.Name] = new ToolFingerprint(
+                ResolvePluginKey(currentScope, tool.Name),
+                tool.Description,
+                tool.JsonSchema.GetRawText());
         }
 
         return map;
     }
 
+    private static string? ResolvePluginKey(IChatPluginScope? scope, string toolName) =>
+        scope is not null && scope.TryGetBinding(toolName, out var binding, out _) ? binding.Plugin.Key : null;
+
     private static HashSet<string> ComputeDisabledToolNames(
         string[] lockedToolNames,
-        IReadOnlyList<AIFunctionDeclaration>? currentTools)
+        IReadOnlyList<AIFunctionDeclaration>? currentTools
+    )
     {
         if (lockedToolNames.Length == 0) return EmptyStringSet.Instance;
 
@@ -356,7 +414,8 @@ public sealed class ContextPrefixState
         string previousSystemPrompt,
         string initialSystemPrompt,
         HashSet<string> currentDisabledTools,
-        HashSet<string> previousDisabledTools)
+        HashSet<string> previousDisabledTools
+    )
     {
         var lines = new List<string>();
 
@@ -391,7 +450,8 @@ public sealed class ContextPrefixState
     private static string? BuildSystemPromptDelta(
         string current,
         string previous,
-        string initial)
+        string initial
+    )
     {
         if (string.Equals(current, previous, StringComparison.Ordinal))
         {
@@ -490,7 +550,8 @@ public sealed class ContextPrefixState
         IReadOnlyList<string> piecesNew,
         IList<DiffBlock> blocks,
         int groupStart,
-        int groupEnd)
+        int groupEnd
+    )
     {
         var first = blocks[groupStart];
         var last = blocks[groupEnd];
@@ -501,9 +562,13 @@ public sealed class ContextPrefixState
 
         builder
             .Append("@@ -")
-            .Append(startA + 1).Append(',').Append(endA - startA)
+            .Append(startA + 1)
+            .Append(',')
+            .Append(endA - startA)
             .Append(" +")
-            .Append(startB + 1).Append(',').Append(endB - startB)
+            .Append(startB + 1)
+            .Append(',')
+            .Append(endB - startB)
             .Append(" @@");
 
         var cursorA = startA;
@@ -669,6 +734,7 @@ public sealed class ContextPrefixState
                 {
                     HashContent(ref hasher, part);
                 }
+
                 break;
             case JsonElement element:
                 hasher.AddTag(0x38);
@@ -706,7 +772,7 @@ public sealed class ContextPrefixState
         public static HashSet<string> Instance { get; } = new(0, StringComparer.Ordinal);
     }
 
-    private sealed record ToolFingerprint(string Description, string SchemaRawText);
+    private sealed record ToolFingerprint(string? PluginKey, string Description, string SchemaRawText);
 
     private sealed record PrefixReminderEntry(
         int AfterMessageCount,
@@ -722,7 +788,8 @@ public sealed class ContextPrefixState
         AIFunctionDeclaration[] lockedTools,
         Dictionary<string, ToolFingerprint> toolFingerprints,
         MessageHash[] initialHashes,
-        DateTimeOffset createdAt)
+        DateTimeOffset createdAt
+    )
     {
         public ContextPrefixIdentity Identity { get; } = identity;
         public bool HasSystemHead { get; } = hasSystemHead;
