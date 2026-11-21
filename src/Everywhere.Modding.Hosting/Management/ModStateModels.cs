@@ -227,4 +227,9 @@ public sealed record ModStateDocument
     /// Gets or sets package-store relative directories pending cleanup after locks or restarts clear.
     /// </summary>
     public HashSet<string> RetiredDirectories { get; set; } = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets or sets uninstalled mod identifiers whose persistent data directories are pending deletion once file locks clear.
+    /// </summary>
+    public HashSet<string> RetiredDataModIds { get; set; } = new(StringComparer.Ordinal);
 }

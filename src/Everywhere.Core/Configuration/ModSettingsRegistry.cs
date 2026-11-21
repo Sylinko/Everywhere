@@ -30,6 +30,15 @@ public sealed class ModSettingsRegistry : IModSettingsRegistry
     }
 
     /// <inheritdoc />
+    public bool HasSettings(string modId)
+    {
+        lock (_gate)
+        {
+            return _registrations.TryGetValue(modId, out var registration) && registration.IsAvailable;
+        }
+    }
+
+    /// <inheritdoc />
     public Control? CreateView(string modId)
     {
         Dispatcher.UIThread.VerifyAccess();
@@ -44,6 +53,8 @@ public sealed class ModSettingsRegistry : IModSettingsRegistry
     /// </summary>
     private sealed class Registration(ModSettingsRegistry owner, IModContext context, Func<SettingsItems> createItems) : IAsyncDisposable
     {
+        internal bool IsAvailable => _context is not null && !_context.Stopping.IsCancellationRequested && _createItems is not null;
+
         private readonly string _modId = context.ModId;
         private IModContext? _context = context;
         private Func<SettingsItems>? _createItems = createItems;

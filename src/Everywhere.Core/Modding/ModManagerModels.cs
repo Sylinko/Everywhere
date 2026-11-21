@@ -307,6 +307,11 @@ public sealed record ModOperationResult
     public IReadOnlyList<string> AffectedDependents { get; init; } = [];
 
     /// <summary>
+    /// Gets installed-but-disabled dependency mod IDs that would also be enabled when enabling a consumer mod.
+    /// </summary>
+    public IReadOnlyList<string> AffectedDependencies { get; init; } = [];
+
+    /// <summary>
     /// Gets pending license agreements that must be accepted before proceeding.
     /// </summary>
     public IReadOnlyList<ModLicenseRequirement> PendingLicenses { get; init; } = [];

@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Everywhere.Modding;
 using Everywhere.Modding.Abstractions;
 using Everywhere.Modding.Hosting;
@@ -205,9 +206,16 @@ public sealed class ModManagerTests
         Assert.That(Volatile.Read(ref stateChangedCount[0]), Is.EqualTo(beforeDisable + 1));
         Assert.That(manager.InstalledMods.All(mod => !mod.IsEnabled), Is.True);
 
-        // Re-enabling acme.app automatically re-enables its required dependency acme.lib.
+        // Re-enabling acme.app requires confirmation when its dependency acme.lib is disabled, then succeeds with cascade.
+        var enableGuard = await manager.SetEnabledAsync("acme.app", isEnabled: true);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(enableGuard.Status, Is.EqualTo(ModOperationStatus.ConfirmationRequired));
+            Assert.That(enableGuard.AffectedDependencies, Is.EqualTo(new[] { "acme.lib" }));
+        }
+
         var beforeEnable = Volatile.Read(ref stateChangedCount[0]);
-        var enableApp = await manager.SetEnabledAsync("acme.app", isEnabled: true);
+        var enableApp = await manager.SetEnabledAsync("acme.app", isEnabled: true, shouldCascadeDependencies: true);
         Assert.That(enableApp.Status, Is.EqualTo(ModOperationStatus.Applied));
         Assert.That(Volatile.Read(ref stateChangedCount[0]), Is.EqualTo(beforeEnable + 1));
         Assert.That(manager.InstalledMods.All(mod => mod.IsEnabled && mod.State == ModState.Active), Is.True);
@@ -231,6 +239,74 @@ public sealed class ModManagerTests
         var cascadeUninstall = await manager.UninstallAsync("acme.lib", shouldDeleteData: true, shouldCascadeDependents: true);
         Assert.That(cascadeUninstall.Status, Is.EqualTo(ModOperationStatus.Applied));
         Assert.That(manager.InstalledMods, Is.Empty);
+    }
+
+    [Test]
+    public async Task SetEnabledAsync_WhenMissingDependencyAvailableInSource_ReturnsConfirmationWithoutSilentDownload()
+    {
+        await using var harness = new Harness();
+        var depZip = CreateFixtureZipBytes("acme.dep", "1.0.0");
+        var appDir = Path.Combine(harness.Root, "dev-app");
+        WriteFixtureDirectory(appDir, "acme.app", "1.0.0", [new ModDependency { Id = "acme.dep", Version = "[1.0.0,2.0.0)", Assemblies = [] }]);
+
+        var repoResources = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["index.json"] = CreateDirectoryIndexBytes("custom", ("acme.dep", "1.0.0", "packages/acme.dep-1.0.0.zip", depZip, false)),
+            ["packages/acme.dep-1.0.0.zip"] = depZip
+        };
+        var source = CreateEmbeddedSource("custom", repoResources);
+
+        await using (var manager1 = harness.CreateManager(builtInSources: [source]))
+        {
+            await manager1.InitializeAsync(CancellationToken.None);
+            Assert.That((await manager1.InstallAsync("acme.dep")).Status, Is.EqualTo(ModOperationStatus.Applied));
+            Assert.That((await manager1.ImportDirectoryAsync(appDir)).Status, Is.EqualTo(ModOperationStatus.Applied));
+            Assert.That(
+                (await manager1.SetEnabledAsync("acme.dep", isEnabled: false, shouldCascadeDependents: true)).Status,
+                Is.EqualTo(ModOperationStatus.Applied));
+        }
+
+        // Remove acme.dep from mods-state.json so acme.app remains installed/disabled while acme.dep must be downloaded.
+        var statePath = harness.Options.StateFilePath ?? throw new InvalidOperationException("Missing state file path.");
+        var stateJson = JsonNode.Parse(await File.ReadAllTextAsync(statePath))?.AsObject()
+            ?? throw new InvalidOperationException("Invalid test mods-state.json.");
+        var modsNode = stateJson["mods"]?.AsObject() ?? throw new InvalidOperationException("Missing mods property.");
+        Assert.That(modsNode.Remove("acme.dep"), Is.True);
+        await File.WriteAllTextAsync(statePath, stateJson.ToJsonString());
+
+        await using var manager2 = harness.CreateManager(builtInSources: [source]);
+        await manager2.InitializeAsync(CancellationToken.None);
+
+        var enableResult = await manager2.SetEnabledAsync("acme.app", isEnabled: true);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(enableResult.Status, Is.EqualTo(ModOperationStatus.ConfirmationRequired));
+            Assert.That(
+                enableResult.SolveResult?.Packages.Any(pkg => pkg.Id == "acme.dep" && !pkg.IsAlreadyInstalledVersion),
+                Is.True);
+            Assert.That(manager2.InstalledMods.Single(m => m.Id == "acme.app").IsEnabled, Is.False);
+            Assert.That(manager2.InstalledMods.Any(m => m.Id == "acme.dep"), Is.False);
+        }
+    }
+
+    [Test]
+    public async Task DisposeAsync_CalledTwiceDirectlyAndThroughHostServiceContainer_IsIdempotent()
+    {
+        await using var harness = new Harness();
+
+        var directManager = harness.CreateManager();
+        await directManager.DisposeAsync();
+        await directManager.DisposeAsync();
+
+        // Mirrors ServiceExtensions.AddModding(), where Autofac's Disposer receives both ModManager and IModManager.
+        var options = harness.CreateOptions();
+        var services = new ServiceCollection()
+            .AddSingleton(sp => new ModManager(sp, options))
+            .AddSingleton<IModManager>(sp => sp.GetRequiredService<ModManager>());
+        var container = new HostServiceContainer(services);
+        _ = container.GetRequiredService<IModManager>();
+
+        await container.DisposeAsync();
     }
 
     private static EmbeddedModSource CreateEmbeddedSource(string id, Dictionary<string, byte[]> resources) =>
@@ -350,6 +426,8 @@ public sealed class ModManagerTests
 
         public IList<string> Trace { get; } = new List<string>();
 
+        public ModManagerOptions Options { get; }
+
         private readonly HostServiceContainer _services;
         private readonly HostAssemblyCatalog _catalog;
         private readonly ModHostEnvironment _host = new("win-x64", "0.9.0", "1.0.0", "net11.0");
@@ -365,15 +443,11 @@ public sealed class ModManagerTests
                 .Where(path => !string.Equals(path, selfLocation, StringComparison.OrdinalIgnoreCase) && IsManagedAssembly(path))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
             _catalog = new HostAssemblyCatalog(hostPaths);
+            Options = CreateOptions();
         }
 
-        public ModManager CreateManager(
-            IEnumerable<IModRepositorySource>? builtInSources = null,
-            string officialUrl = "",
-            string officialPublicKey = ""
-        )
-        {
-            var options = new ModManagerOptions
+        public ModManagerOptions CreateOptions(string officialUrl = "", string officialPublicKey = "") =>
+            new()
             {
                 StateFilePath = Path.Combine(Root, "state", ModStateStore.DefaultFileName),
                 PackageStoreDirectory = Path.Combine(Root, "cache", "packages"),
@@ -392,8 +466,12 @@ public sealed class ModManagerTests
                 }
             };
 
-            return new ModManager(_services, options, builtInSources);
-        }
+        public ModManager CreateManager(
+            IEnumerable<IModRepositorySource>? builtInSources = null,
+            string officialUrl = "",
+            string officialPublicKey = ""
+        ) =>
+            new(_services, CreateOptions(officialUrl, officialPublicKey), builtInSources);
 
         public async ValueTask DisposeAsync()
         {

@@ -113,6 +113,62 @@ public sealed class ModStateStoreTests
     }
 
     /// <summary>
+    /// Persistent data directories that cannot be deleted immediately remain queued in RetiredDataModIds,
+    /// sweep on cold startup, and are cleared if the same mod is reinstalled first.
+    /// </summary>
+    [Test]
+    public async Task RecordUninstall_LockedOrPendingDataDirectory_SweepsAtStartupUnlessReinstalled()
+    {
+        var packageStore = CreatePackageStore();
+        var statePath = Path.Combine(_root, ModStateStore.DefaultFileName);
+        var store = new ModStateStore(statePath, packageStore);
+        store.Load();
+
+        var a1 = await ImportZipAsync(packageStore, "acme.data", "1.0.0", "a1");
+        store.RecordInstallOrUpdate("acme.data", a1, "official", ModInstallIntent.Explicit);
+        var dataDir = packageStore.GetDataDirectory(a1);
+        var lockedPath = Path.Combine(dataDir, "prefs.lock");
+        await File.WriteAllTextAsync(lockedPath, "in-use");
+
+        if (OperatingSystem.IsWindows())
+        {
+            await using var lockStream = new FileStream(lockedPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            store.RecordUninstall("acme.data", isRestartRequired: false, shouldDeleteData: true);
+            Assert.That(store.State.RetiredDataModIds, Does.Contain("acme.data"));
+            Assert.That(Directory.Exists(dataDir), Is.True);
+        }
+        else
+        {
+            store.State.RetiredDataModIds.Add("acme.data");
+            store.Save();
+        }
+
+        // Startup sweep clears the retired data directory once file handles are closed.
+        var nextRun = new ModStateStore(statePath, packageStore);
+        nextRun.Load();
+        await nextRun.ReconcileStartupAsync();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(nextRun.State.RetiredDataModIds, Is.Empty);
+            Assert.That(Directory.Exists(dataDir), Is.False);
+        }
+
+        // Reinstalling the mod cancels any pending data retirement before sweeping.
+        nextRun.State.RetiredDataModIds.Add("acme.reinstall");
+        var b1 = await ImportZipAsync(packageStore, "acme.reinstall", "1.0.0", "b1");
+        var reinstallDataDir = packageStore.GetDataDirectory(b1);
+        await File.WriteAllTextAsync(Path.Combine(reinstallDataDir, "keep.json"), "{}");
+        nextRun.RecordInstallOrUpdate("acme.reinstall", b1, "official", ModInstallIntent.Explicit);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(nextRun.State.RetiredDataModIds, Is.Empty);
+            Assert.That(File.Exists(Path.Combine(reinstallDataDir, "keep.json")), Is.True);
+        }
+    }
+
+    /// <summary>
     /// Unpacked development folders skip re-import when fingerprints match and re-import automatically when modified.
     /// </summary>
     [Test]

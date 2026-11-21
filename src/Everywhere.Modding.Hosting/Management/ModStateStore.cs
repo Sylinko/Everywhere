@@ -62,7 +62,8 @@ public sealed class ModStateStore
             Sources = document.Sources,
             Mods = new Dictionary<string, ModStateRecord>(document.Mods, StringComparer.Ordinal),
             SeenDefaultModIds = new HashSet<string>(document.SeenDefaultModIds, StringComparer.Ordinal),
-            RetiredDirectories = new HashSet<string>(document.RetiredDirectories, StringComparer.Ordinal)
+            RetiredDirectories = new HashSet<string>(document.RetiredDirectories, StringComparer.Ordinal),
+            RetiredDataModIds = new HashSet<string>(document.RetiredDataModIds, StringComparer.Ordinal)
         };
     }
 
@@ -118,6 +119,10 @@ public sealed class ModStateStore
     {
         var diagnostics = new List<ModDiagnostic>();
         var isDirty = SweepRetiredDirectories();
+        if (SweepRetiredDataDirectories())
+        {
+            isDirty = true;
+        }
 
         foreach (var (modId, record) in State.Mods.ToArray())
         {
@@ -134,7 +139,7 @@ public sealed class ModStateStore
                         RetireSlot(pending.TargetInstallation);
                         if (pending.ShouldDeleteData)
                         {
-                            TryDeleteDataDirectory(modId);
+                            RetireDataDirectory(modId);
                         }
 
                         State.Mods.Remove(modId);
@@ -221,7 +226,7 @@ public sealed class ModStateStore
             }
         }
 
-        if (SweepRetiredDirectories())
+        if (SweepRetiredDirectories() | SweepRetiredDataDirectories())
         {
             isDirty = true;
         }
@@ -309,7 +314,9 @@ public sealed class ModStateStore
             record.ActiveInstallation = slot;
         }
 
+        State.RetiredDataModIds.Remove(modId);
         SweepRetiredDirectories();
+        SweepRetiredDataDirectories();
         Save();
     }
 
@@ -328,6 +335,7 @@ public sealed class ModStateStore
             RetireSlot(previous);
             record.PreviousInstallation = null;
             SweepRetiredDirectories();
+            SweepRetiredDataDirectories();
             Save();
             return false;
         }
@@ -360,6 +368,7 @@ public sealed class ModStateStore
         }
 
         SweepRetiredDirectories();
+        SweepRetiredDataDirectories();
         Save();
         return true;
     }
@@ -393,13 +402,14 @@ public sealed class ModStateStore
 
             if (shouldDeleteData)
             {
-                TryDeleteDataDirectory(modId);
+                RetireDataDirectory(modId);
             }
 
             State.Mods.Remove(modId);
         }
 
         SweepRetiredDirectories();
+        SweepRetiredDataDirectories();
         Save();
     }
 
@@ -525,9 +535,40 @@ public sealed class ModStateStore
         return didChange;
     }
 
-    private void TryDeleteDataDirectory(string modId)
+    private void RetireDataDirectory(string modId)
     {
         if (!ModValidationRules.IsValidIdentifier(modId)) return;
+
+        State.RetiredDataModIds.Add(modId);
+    }
+
+    private bool SweepRetiredDataDirectories()
+    {
+        if (State.RetiredDataModIds.Count == 0) return false;
+
+        var didChange = false;
+        foreach (var modId in State.RetiredDataModIds.ToArray())
+        {
+            if (!ModValidationRules.IsValidIdentifier(modId))
+            {
+                State.RetiredDataModIds.Remove(modId);
+                didChange = true;
+                continue;
+            }
+
+            if (TryDeleteDataDirectory(modId))
+            {
+                State.RetiredDataModIds.Remove(modId);
+                didChange = true;
+            }
+        }
+
+        return didChange;
+    }
+
+    private bool TryDeleteDataDirectory(string modId)
+    {
+        if (!ModValidationRules.IsValidIdentifier(modId)) return true;
 
         var path = Path.Combine(_packageStore.DataDirectory, modId);
         try
@@ -536,12 +577,16 @@ public sealed class ModStateStore
             {
                 Directory.Delete(path, recursive: true);
             }
+
+            return true;
         }
         catch (IOException)
         {
+            return false;
         }
         catch (UnauthorizedAccessException)
         {
+            return false;
         }
     }
 

@@ -71,7 +71,7 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="EverywherePack" DependsOnTargets="Build">
+  <Target Name="EverywherePack" DependsOnTargets="Build" Returns="@(_EverywherePackOutput)">
     <Error Condition="'$(EverywhereModId)' == '' OR '$(EverywhereModEntryType)' == ''"
            Text="EverywhereModId and EverywhereModEntryType must be declared in the project."/>
     <PropertyGroup>
@@ -161,5 +161,8 @@
     <WriteLinesToFile File="$(_EverywhereLocalizationDirectory)/%(EverywhereModLocalization.Identity).description.txt" Lines="@(EverywhereModLocalization->'%(Description)')" Overwrite="true" Encoding="UTF-8"/>
     <WriteLinesToFile File="$(_EverywhereLocalizationDirectory)/%(EverywhereModLocalization.Identity).readme.txt" Lines="@(EverywhereModLocalization->'%(Readme)')" Overwrite="true" Encoding="UTF-8"/>
     <Exec Command="dotnet &quot;$(EverywhereModToolsDirectory)/Everywhere.Modding.Sdk.dll&quot; pack &quot;$(_EverywherePackDirectory)&quot;"/>
+    <ItemGroup>
+      <_EverywherePackOutput Include="$([System.IO.Path]::GetFullPath('$(EverywhereModPackagePath)'))"/>
+    </ItemGroup>
   </Target>
 </Project>

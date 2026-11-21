@@ -46,13 +46,20 @@ public static class ModManifestFile
     }
 
     /// <summary>
+    /// Validates and serializes SDK-generated metadata as UTF-8 JSON bytes.
+    /// </summary>
+    public static byte[] SerializeToUtf8Bytes(ModManifest manifest)
+    {
+        Validate(manifest);
+        return JsonSerializer.SerializeToUtf8Bytes(manifest, JsonContext.ModManifest);
+    }
+
+    /// <summary>
     /// Writes SDK-generated metadata after validating its structure.
     /// </summary>
     public static void Write(string directory, ModManifest manifest)
     {
-        Validate(manifest);
-        using var stream = File.Create(Path.Combine(directory, FileName));
-        JsonSerializer.Serialize(stream, manifest, JsonContext.ModManifest);
+        File.WriteAllBytes(Path.Combine(directory, FileName), SerializeToUtf8Bytes(manifest));
     }
 
     /// <summary>

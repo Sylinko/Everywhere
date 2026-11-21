@@ -36,6 +36,10 @@
     <PackageReference Include="Vortice.DirectComposition"/>
   </ItemGroup>
 
+  <PropertyGroup>
+    <_BuiltInModPropertiesToRemove>TargetFramework;RuntimeIdentifier;RuntimeIdentifiers;SelfContained;PublishSelfContained;PublishAot;PublishTrimmed;PublishSingleFile;OutputPath;OutDir;BaseOutputPath;IntermediateOutputPath;BaseIntermediateOutputPath;MSBuildProjectExtensionsPath;PublishDir;Version;PackageVersion;AssemblyVersion;FileVersion;InformationalVersion;AssemblyName;RootNamespace</_BuiltInModPropertiesToRemove>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
@@ -43,17 +47,24 @@
     <ProjectReference Include="..\..\patches\Everywhere.Patches.Contracts\Everywhere.Patches.Contracts.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\Everywhere.Modding.Sdk\Everywhere.Modding.Sdk.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      ExcludeAssets="all"
+                      GlobalPropertiesToRemove="$(_BuiltInModPropertiesToRemove)"/>
     <ProjectReference Include="..\..\mods\Everywhere.Mods.Everything\Everywhere.Mods.Everything.csproj"
                       ReferenceOutputAssembly="false"
                       Private="false"
                       ExcludeAssets="all"
-                      GlobalPropertiesToRemove="TargetFramework;RuntimeIdentifier;SelfContained;PublishTrimmed;PublishSingleFile;Version;SemanticVersion;AssemblyName;RootNamespace;PublishDir;OutputPath;OutDir"/>
+                      IsEverywhereBuiltInMod="true"
+                      GlobalPropertiesToRemove="$(_BuiltInModPropertiesToRemove)"/>
     <ProjectReference Include="..\Everywhere.ProcessIsolation\Everywhere.ProcessIsolation.csproj"/>
   </ItemGroup>
 
   <Import Project="..\Build.I18N.targets"/>
   <Import Project="..\Build.Patches.targets"/>
   <Import Project="..\Build.Watchdog.targets"/>
+  <Import Project="..\Build.Modding.Hosting.targets"/>
 
   <ItemGroup>
     <None Include="..\..\img\Everywhere.ico">
@@ -72,12 +83,9 @@
     <None Remove="Assets\Icons\Windows11.svg"/>
   </ItemGroup>
 
-  <Import Project="..\Build.Modding.Hosting.targets"/>
-
   <!-- Package first-party built-in Windows mods as embedded static repository resources
        so no loose mod binaries ship alongside the desktop executable. -->
-  <Target Name="PackBuiltInMods"
-          BeforeTargets="AssignTargetPaths"
+  <Target Name="_PrepareBuiltInModsInputs"
           DependsOnTargets="ResolveProjectReferences"
           Condition="'$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
@@ -89,16 +97,33 @@
       <_BuiltInModSpecJson>{&quot;format&quot;:1,&quot;id&quot;:&quot;builtin&quot;,&quot;title&quot;:{&quot;en&quot;:&quot;Built-in Mods&quot;,&quot;zh-hans&quot;:&quot;内置模组&quot;},&quot;metadata&quot;:{&quot;categories&quot;:{&quot;search&quot;:{&quot;title&quot;:{&quot;en&quot;:&quot;Search&quot;,&quot;zh-hans&quot;:&quot;搜索&quot;}}}},&quot;layout&quot;:&quot;directory&quot;,&quot;packages&quot;:[{&quot;path&quot;:&quot;staged/everywhere.everything.zip&quot;,&quot;isDefaultEnabled&quot;:true,&quot;category&quot;:&quot;search&quot;,&quot;channels&quot;:[&quot;stable&quot;]}]}</_BuiltInModSpecJson>
     </PropertyGroup>
 
-    <MSBuild Projects="..\..\mods\Everywhere.Mods.Everything\Everywhere.Mods.Everything.csproj"
+    <!-- Reuse the resolved project reference configuration so MSBuild hits the cached build graph instead of rebuilding upstream projects. -->
+    <MSBuild Projects="@(_MSBuildProjectReferenceExistent)"
              Targets="EverywherePack"
-             RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained;PublishTrimmed;PublishSingleFile;Version;SemanticVersion;AssemblyName;RootNamespace;PublishDir;OutputPath;OutDir"
-             Properties="Configuration=$(Configuration);EverywhereModPackagePath=$(_BuiltInModPackagePath)"/>
+             Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration);%(_MSBuildProjectReferenceExistent.SetPlatform);%(_MSBuildProjectReferenceExistent.SetTargetFramework)"
+             RemoveProperties="%(_MSBuildProjectReferenceExistent.GlobalPropertiesToRemove);$(_GlobalPropertiesToRemoveFromProjectReferences)"
+             Condition="'%(_MSBuildProjectReferenceExistent.IsEverywhereBuiltInMod)' == 'true'">
+      <Output TaskParameter="TargetOutputs" ItemName="_BuiltInModPackage"/>
+    </MSBuild>
 
-    <RemoveDir Directories="$(_BuiltInModRepoDir)"/>
+    <Copy SourceFiles="@(_BuiltInModPackage)" DestinationFiles="$(_BuiltInModPackagePath)" SkipUnchangedFiles="true"/>
     <MakeDir Directories="$(_BuiltInModsWorkDir)"/>
-    <WriteLinesToFile File="$(_BuiltInModSpecPath)" Lines="$(_BuiltInModSpecJson)" Overwrite="true"/>
-    <Exec Command="dotnet &quot;$(_ModdingSdkDll)&quot; build-index &quot;$(_BuiltInModSpecPath)&quot; &quot;$(_BuiltInModRepoDir)index.json&quot;"/>
+    <WriteLinesToFile File="$(_BuiltInModSpecPath)" Lines="$(_BuiltInModSpecJson)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
+  </Target>
 
+  <Target Name="_BuildBuiltInModsIndex"
+          DependsOnTargets="_PrepareBuiltInModsInputs"
+          Inputs="$(_BuiltInModPackagePath);$(_BuiltInModSpecPath);$(_ModdingSdkDll)"
+          Outputs="$(_BuiltInModRepoDir)index.json"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <RemoveDir Directories="$(_BuiltInModRepoDir)"/>
+    <Exec Command="dotnet &quot;$(_ModdingSdkDll)&quot; build-index &quot;$(_BuiltInModSpecPath)&quot; &quot;$(_BuiltInModRepoDir)index.json&quot;"/>
+  </Target>
+
+  <Target Name="PackBuiltInMods"
+          BeforeTargets="AssignTargetPaths"
+          DependsOnTargets="_BuildBuiltInModsIndex"
+          Condition="'$(DesignTimeBuild)' != 'true'">
     <ItemGroup>
       <_BuiltInModRepoFile Include="$(_BuiltInModRepoDir)**\*"/>
       <EmbeddedResource Include="@(_BuiltInModRepoFile)">
@@ -106,6 +131,7 @@
         <WithCulture>false</WithCulture>
         <LogicalName>Everywhere.BuiltInMods/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)</LogicalName>
       </EmbeddedResource>
+      <FileWrites Include="$(_BuiltInModPackagePath);$(_BuiltInModSpecPath);@(_BuiltInModRepoFile)"/>
     </ItemGroup>
   </Target>
 

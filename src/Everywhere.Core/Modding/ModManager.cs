@@ -44,6 +44,9 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
     public bool IsRestartRequired => _engine?.IsRestartRequired ?? false;
 
     /// <inheritdoc />
+    public IReadOnlyList<ModDiagnostic> RestartDiagnostics => Volatile.Read(ref _restartDiagnostics);
+
+    /// <inheritdoc />
     public IReadOnlyList<ModSummary> InstalledMods => Volatile.Read(ref _installedMods);
 
     /// <inheritdoc />
@@ -70,8 +73,9 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
     private IReadOnlyList<ModSummary> _installedMods = [];
     private IReadOnlyList<InstalledModSnapshot> _installedSnapshots = [];
     private IReadOnlyList<ModSourceInfo> _sources = [];
+    private IReadOnlyList<ModDiagnostic> _restartDiagnostics = [];
     private bool _isInitialized;
-    private bool _isDisposed;
+    private int _disposeState;
 
     /// <summary>
     /// Initializes a <see cref="ModManager"/> bound to host services, optional built-in embedded sources, and path/environment overrides.
@@ -491,12 +495,13 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         string modId,
         bool isEnabled,
         bool shouldCascadeDependents = false,
+        bool shouldCascadeDependencies = false,
         CancellationToken cancellationToken = default
     )
     {
         if (isEnabled)
         {
-            return await EnableModAsync(modId, cancellationToken).ConfigureAwait(false);
+            return await EnableModAsync(modId, shouldCascadeDependencies, cancellationToken).ConfigureAwait(false);
         }
 
         ModOperationResult result;
@@ -504,6 +509,11 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         try
         {
             await EnsureEngineInitializedLockedAsync(cancellationToken).ConfigureAwait(false);
+            if (IsRestartRequired)
+            {
+                return RestartRequiredResult();
+            }
+
             if (!_stateStore.State.Mods.TryGetValue(modId, out var record))
             {
                 return Failed($"Mod '{modId}' is not installed.");
@@ -575,6 +585,11 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         try
         {
             await EnsureEngineInitializedLockedAsync(cancellationToken).ConfigureAwait(false);
+            if (IsRestartRequired)
+            {
+                return RestartRequiredResult();
+            }
+
             if (!_stateStore.State.Mods.TryGetValue(modId, out _))
             {
                 return Failed($"Mod '{modId}' is not installed.");
@@ -671,6 +686,11 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         try
         {
             await EnsureEngineInitializedLockedAsync(cancellationToken).ConfigureAwait(false);
+            if (IsRestartRequired)
+            {
+                return RestartRequiredResult();
+            }
+
             if (!_stateStore.State.Mods.TryGetValue(modId, out var record) || record.PreviousInstallation is not { } previousSlot)
             {
                 return Failed($"Mod '{modId}' has no retained previous installation to roll back to.");
@@ -1002,12 +1022,14 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposeState, 1) != 0)
+        {
+            return;
+        }
+
         await _operation.WaitAsync().ConfigureAwait(false);
         try
         {
-            if (_isDisposed) return;
-            _isDisposed = true;
-
             if (_engine is not null)
             {
                 try
@@ -1029,7 +1051,6 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         finally
         {
             _operation.Release();
-            _operation.Dispose();
         }
     }
 
@@ -1048,6 +1069,11 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         try
         {
             await EnsureEngineInitializedLockedAsync(cancellationToken).ConfigureAwait(false);
+            if (IsRestartRequired)
+            {
+                return RestartRequiredResult();
+            }
+
             var plan = await PlanTargetAsync(
                     modId,
                     preferredSourceId,
@@ -1089,7 +1115,11 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         return result;
     }
 
-    private async Task<ModOperationResult> EnableModAsync(string modId, CancellationToken cancellationToken)
+    private async Task<ModOperationResult> EnableModAsync(
+        string modId,
+        bool shouldCascadeDependencies,
+        CancellationToken cancellationToken
+    )
     {
         ModOperationResult result;
         bool shouldRaiseChanged;
@@ -1097,6 +1127,11 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         try
         {
             await EnsureEngineInitializedLockedAsync(cancellationToken).ConfigureAwait(false);
+            if (IsRestartRequired)
+            {
+                return RestartRequiredResult();
+            }
+
             if (!_stateStore.State.Mods.TryGetValue(modId, out var record))
             {
                 return Failed($"Mod '{modId}' is not installed.");
@@ -1107,88 +1142,104 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
                 return new ModOperationResult { Status = ModOperationStatus.Applied };
             }
 
-            if (IsRestartRequired)
-            {
-                record.IsEnabled = true;
-                _stateStore.Save();
-                RefreshSnapshotsLocked();
-                shouldRaiseChanged = true;
-                result = RestartRequiredResult();
-            }
-            else if (HostEnvironment is not { } hostEnvironment || _engine is not { } engine)
+            if (HostEnvironment is not { } hostEnvironment || _engine is not { } engine)
             {
                 return Failed("Mod runtime host descriptor could not be resolved.");
             }
+
+            var target = new ModTargetRequirement(
+                modId,
+                VersionRange: null,
+                PreferredChannel: null,
+                PreferredSourceId: record.SourceId,
+                Intent: record.Intent);
+
+            // Attempt offline resolution first using already-installed dependencies before querying network sources.
+            var installed = BuildInstalledSnapshotsLocked();
+            var offlineSolve = ModDependencySolver.Solve(
+                new ModSolveRequest
+                {
+                    Host = hostEnvironment,
+                    Sources = [],
+                    Installed = installed,
+                    Targets = [target],
+                    ShouldKeepInstalledVersions = true
+                });
+
+            if (offlineSolve.IsSuccess)
+            {
+                var disabledDependencies = CollectDisabledDependenciesLocked(offlineSolve, modId);
+                if (disabledDependencies.Length > 0 && !shouldCascadeDependencies)
+                {
+                    return new ModOperationResult
+                    {
+                        Status = ModOperationStatus.ConfirmationRequired,
+                        AffectedDependencies = disabledDependencies,
+                        SolveResult = offlineSolve,
+                        Message = $"Enabling '{modId}' also requires enabling dependency mod(s): {string.Join(", ", disabledDependencies)}."
+                    };
+                }
+
+                foreach (var pkg in offlineSolve.Packages)
+                {
+                    if (_stateStore.State.Mods.TryGetValue(pkg.Id, out var pkgRecord))
+                    {
+                        pkgRecord.IsEnabled = true;
+                    }
+                }
+
+                _stateStore.Save();
+                var applyResult = await engine.ApplyAsync(BuildDesiredDefinitionsLocked(), cancellationToken).ConfigureAwait(false);
+                RecordApplyResult("enable", applyResult);
+                RefreshSnapshotsLocked();
+                shouldRaiseChanged = true;
+                result = FromApplyResult(applyResult);
+            }
             else
             {
-                var target = new ModTargetRequirement(
-                    modId,
-                    VersionRange: null,
-                    PreferredChannel: null,
-                    PreferredSourceId: record.SourceId,
-                    Intent: record.Intent);
+                var plan = await PlanTargetAsync(
+                        modId,
+                        preferredSourceId: record.SourceId,
+                        versionRange: null,
+                        channel: null,
+                        acceptedLicenses: null,
+                        cancellationToken)
+                    .ConfigureAwait(false);
 
-                // Attempt offline resolution first using already-installed dependencies before querying network sources.
-                var installed = BuildInstalledSnapshotsLocked();
-                var offlineSolve = ModDependencySolver.Solve(
-                    new ModSolveRequest
-                    {
-                        Host = hostEnvironment,
-                        Sources = [],
-                        Installed = installed,
-                        Targets = [target],
-                        ShouldKeepInstalledVersions = true
-                    });
-
-                if (offlineSolve.IsSuccess)
+                if (plan.ImmediateFailure is not null)
                 {
-                    foreach (var pkg in offlineSolve.Packages)
-                    {
-                        if (_stateStore.State.Mods.TryGetValue(pkg.Id, out var pkgRecord))
-                        {
-                            pkgRecord.IsEnabled = true;
-                        }
-                    }
-
-                    _stateStore.Save();
-                    var applyResult = await engine.ApplyAsync(BuildDesiredDefinitionsLocked(), cancellationToken).ConfigureAwait(false);
-                    RecordApplyResult("enable", applyResult);
-                    RefreshSnapshotsLocked();
-                    shouldRaiseChanged = true;
-                    result = FromApplyResult(applyResult);
+                    return plan.ImmediateFailure;
                 }
-                else
+
+                var solve = plan.SolveResult;
+                var disabledDependencies = solve is null ? [] : CollectDisabledDependenciesLocked(solve, modId);
+                var hasDownloads = solve?.Packages.Any(static pkg => !pkg.IsAlreadyInstalledVersion) == true;
+                if (hasDownloads || plan.PendingLicenses.Count > 0 || disabledDependencies.Length > 0 && !shouldCascadeDependencies)
                 {
-                    var plan = await PlanTargetAsync(
-                            modId,
-                            preferredSourceId: record.SourceId,
-                            versionRange: null,
-                            channel: null,
-                            acceptedLicenses: null,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (plan.ImmediateFailure is not null)
+                    return new ModOperationResult
                     {
-                        return plan.ImmediateFailure;
-                    }
-
-                    if (plan.PendingLicenses.Count > 0)
-                    {
-                        return CreatePlanResult(plan);
-                    }
-
-                    result = await ExecuteSolvedPlanLockedAsync(
-                            plan,
-                            preferredChannel: record.PreferredChannel,
-                            pinnedVersion: record.PinnedVersion,
-                            acceptedLicenses: null,
-                            progress: null,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                    shouldRaiseChanged =
-                        result.Status is ModOperationStatus.Applied or ModOperationStatus.CompletedWithErrors or ModOperationStatus.RestartRequired;
+                        Status = ModOperationStatus.ConfirmationRequired,
+                        AffectedDependencies = disabledDependencies,
+                        PendingLicenses = plan.PendingLicenses,
+                        SolveResult = solve,
+                        Message = hasDownloads
+                            ? $"Enabling '{modId}' requires downloading missing dependencies."
+                            : plan.PendingLicenses.Count > 0
+                                ? "One or more required mods need license acceptance before enabling."
+                                : $"Enabling '{modId}' also requires enabling dependency mod(s): {string.Join(", ", disabledDependencies)}."
+                    };
                 }
+
+                result = await ExecuteSolvedPlanLockedAsync(
+                        plan,
+                        preferredChannel: record.PreferredChannel,
+                        pinnedVersion: record.PinnedVersion,
+                        acceptedLicenses: null,
+                        progress: null,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                shouldRaiseChanged =
+                    result.Status is ModOperationStatus.Applied or ModOperationStatus.CompletedWithErrors or ModOperationStatus.RestartRequired;
             }
         }
         finally
@@ -1199,6 +1250,17 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         if (shouldRaiseChanged) OnStateChanged();
         return result;
     }
+
+    private string[] CollectDisabledDependenciesLocked(ModSolveResult solve, string targetModId) =>
+    [
+        .. solve.Packages
+            .Select(static pkg => pkg.Id)
+            .Where(id =>
+                !string.Equals(id, targetModId, StringComparison.Ordinal) &&
+                _stateStore.State.Mods.TryGetValue(id, out var depRecord) &&
+                !depRecord.IsEnabled)
+            .Distinct(StringComparer.Ordinal)
+    ];
 
     private async Task<PlannedOperation> PlanTargetAsync(
         string modId,
@@ -1211,7 +1273,7 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
     {
         if (HostEnvironment is null)
         {
-            return new PlannedOperation(null, [], Failed("Mod runtime host metadata is unavailable."));
+            return new PlannedOperation(null, [], [], Failed("Mod runtime host metadata is unavailable."));
         }
 
         var catalogs = await FetchEnabledCatalogsLockedAsync(shouldForceRefresh: false, cancellationToken).ConfigureAwait(false);
@@ -1231,6 +1293,7 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
             return new PlannedOperation(
                 solveResult,
                 [],
+                [],
                 new ModOperationResult
                 {
                     Status = ModOperationStatus.Failed,
@@ -1240,7 +1303,8 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         }
 
         var pendingLicenses = CollectPendingLicenses(solveResult.Packages, acceptedLicenses);
-        return new PlannedOperation(solveResult, pendingLicenses, null);
+        var affectedDependencies = CollectDisabledDependenciesLocked(solveResult, modId);
+        return new PlannedOperation(solveResult, pendingLicenses, affectedDependencies, null);
     }
 
     private IReadOnlyList<ModLicenseRequirement> CollectPendingLicenses(
@@ -1454,14 +1518,19 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
                 };
             }
 
-            if (solve.Packages.Any(pkg => !pkg.IsAlreadyInstalledVersion && !string.Equals(pkg.Id, modId, StringComparison.Ordinal)))
+            var missingPackages = solve.Packages
+                .Where(pkg => !pkg.IsAlreadyInstalledVersion && !string.Equals(pkg.Id, modId, StringComparison.Ordinal))
+                .Select(static pkg => $"{pkg.Id} v{pkg.Version}")
+                .ToArray();
+            if (missingPackages.Length > 0)
             {
                 _packageStore.TryRemove(installation);
                 return new ModOperationResult
                 {
                     Status = ModOperationStatus.Failed,
                     SolveResult = solve,
-                    Message = $"Mod '{modId}' requires additional missing dependencies that are not installed yet."
+                    Message =
+                        $"Mod '{modId}' requires additional missing dependencies that are not installed yet: {string.Join(", ", missingPackages)}."
                 };
             }
         }
@@ -2082,6 +2151,10 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
 
         _modDiagnostics.Clear();
         RecordDiagnostics(result.Diagnostics);
+        if (result.Status == ModApplyStatus.RestartRequired)
+        {
+            Volatile.Write(ref _restartDiagnostics, [.. result.Diagnostics]);
+        }
 
         foreach (var diagnostic in result.Diagnostics)
         {
@@ -2134,14 +2207,17 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
 
     private static ModOperationResult CreatePlanResult(PlannedOperation plan)
     {
-        if (plan.PendingLicenses.Count > 0)
+        if (plan.PendingLicenses.Count > 0 || plan.AffectedDependencies.Count > 0)
         {
             return new ModOperationResult
             {
                 Status = ModOperationStatus.ConfirmationRequired,
+                AffectedDependencies = plan.AffectedDependencies,
                 PendingLicenses = plan.PendingLicenses,
                 SolveResult = plan.SolveResult,
-                Message = "One or more selected mods require explicit license acceptance before installation."
+                Message = plan.PendingLicenses.Count > 0
+                    ? "One or more selected mods require explicit license acceptance before installation."
+                    : $"Proceeding requires enabling dependency mod(s): {string.Join(", ", plan.AffectedDependencies)}."
             };
         }
 
@@ -2176,16 +2252,18 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
             Message = message
         };
 
-    private static ModOperationResult RestartRequiredResult() =>
+    private ModOperationResult RestartRequiredResult() =>
         new()
         {
             Status = ModOperationStatus.RestartRequired,
+            Diagnostics = RestartDiagnostics,
             Message = "A restart is required before further mod activations or removals can take effect."
         };
 
     private sealed record PlannedOperation(
         ModSolveResult? SolveResult,
         IReadOnlyList<ModLicenseRequirement> PendingLicenses,
+        IReadOnlyList<string> AffectedDependencies,
         ModOperationResult? ImmediateFailure
     );
 }

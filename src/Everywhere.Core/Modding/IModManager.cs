@@ -1,3 +1,4 @@
+using Everywhere.Modding.Hosting;
 using Everywhere.Modding.Hosting.Management;
 using Everywhere.Modding.Hosting.Resolution;
 
@@ -23,6 +24,11 @@ public interface IModManager
     /// Gets whether hot retirement blocked further runtime activations until the application restarts.
     /// </summary>
     bool IsRestartRequired { get; }
+
+    /// <summary>
+    /// Gets host-owned diagnostics explaining why runtime retirement required a restart.
+    /// </summary>
+    IReadOnlyList<ModDiagnostic> RestartDiagnostics { get; }
 
     /// <summary>
     /// Gets the current host-owned snapshots of all installed mods.
@@ -104,12 +110,14 @@ public interface IModManager
     Task<ModOperationResult> ReloadLocalDirectoryAsync(string modId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Enables or disables an installed mod, optionally cascading to reverse-dependent mods when disabling.
+    /// Enables or disables an installed mod, optionally cascading to reverse-dependent mods when disabling
+    /// or to required disabled dependencies when enabling.
     /// </summary>
     Task<ModOperationResult> SetEnabledAsync(
         string modId,
         bool isEnabled,
         bool shouldCascadeDependents = false,
+        bool shouldCascadeDependencies = false,
         CancellationToken cancellationToken = default
     );
 

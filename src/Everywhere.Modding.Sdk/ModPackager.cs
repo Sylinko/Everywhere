@@ -1,7 +1,10 @@
+using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Everywhere.Modding.Abstractions;
 using Everywhere.Modding.Packaging;
@@ -18,7 +21,7 @@ internal static class ModPackager
     /// </summary>
     public static string Pack(string packDirectory)
     {
-        var fullPackDirectory = Path.GetFullPath(packDirectory);
+        var fullPackDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(packDirectory));
         var properties = ReadProperties(Path.Combine(fullPackDirectory, "properties.txt"));
         var assemblyPath = GetRequiredProperty(properties, "AssemblyPath");
         var referenceList = GetRequiredProperty(properties, "ReferenceList");
@@ -250,9 +253,18 @@ internal static class ModPackager
             Entry = entry
         };
         ApplyPresentation(manifest, fullPackDirectory, projectDirectory, files);
-        ModManifestFile.Validate(manifest);
+        var manifestBytes = ModManifestFile.SerializeToUtf8Bytes(manifest);
 
         var output = Path.GetFullPath(outputPath);
+        var stampPath = Path.Combine(
+            Path.GetDirectoryName(fullPackDirectory) ?? fullPackDirectory,
+            Path.GetFileName(fullPackDirectory) + ".inputs");
+        var inputFingerprint = CreatePackFingerprint(output, manifestBytes, files);
+        if (IsArchiveUpToDate(output, stampPath, inputFingerprint))
+        {
+            return output;
+        }
+
         var parent = Path.GetDirectoryName(output) ?? ".";
         Directory.CreateDirectory(parent);
         var staging = Path.Combine(parent, ".mod-pack-" + Guid.NewGuid().ToString("N"));
@@ -268,9 +280,16 @@ internal static class ModPackager
                 File.Copy(source, destination);
             }
 
-            ModManifestFile.Write(staging, manifest);
+            File.WriteAllBytes(Path.Combine(staging, ModManifestFile.FileName), manifestBytes);
+            // Delete the stamp before creating or replacing the archive so a failed run never leaves a stale cache marker.
+            if (File.Exists(stampPath))
+            {
+                File.Delete(stampPath);
+            }
+
             ZipFile.CreateFromDirectory(staging, temporaryArchive);
             File.Move(temporaryArchive, output, overwrite: true);
+            File.WriteAllText(stampPath, inputFingerprint);
             return output;
         }
         finally
@@ -278,6 +297,49 @@ internal static class ModPackager
             Directory.Delete(staging, recursive: true);
             if (File.Exists(temporaryArchive)) File.Delete(temporaryArchive);
         }
+    }
+
+    private static bool IsArchiveUpToDate(string outputPath, string stampPath, string inputFingerprint)
+    {
+        return File.Exists(outputPath) && File.Exists(stampPath) && File.ReadAllText(stampPath) == inputFingerprint;
+    }
+
+    private static string CreatePackFingerprint(
+        string outputPath,
+        byte[] manifestBytes,
+        Dictionary<string, string> files
+    )
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine(outputPath);
+        builder.AppendLine(Convert.ToHexStringLower(SHA256.HashData(manifestBytes)));
+
+        AppendToolStamp(builder, typeof(ModPackager).Assembly.Location);
+        AppendToolStamp(builder, typeof(ModManifestFile).Assembly.Location);
+
+        foreach (var (relative, source) in files.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var info = new FileInfo(source);
+            builder.Append(relative)
+                .Append('|').Append(info.FullName)
+                .Append('|').Append(info.Length)
+                .Append('|').AppendLine(info.LastWriteTimeUtc.Ticks.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
+    }
+
+    private static void AppendToolStamp(StringBuilder builder, string assemblyPath)
+    {
+        if (string.IsNullOrEmpty(assemblyPath) || !File.Exists(assemblyPath))
+        {
+            return;
+        }
+
+        var info = new FileInfo(assemblyPath);
+        builder.Append(info.FullName)
+            .Append('|').Append(info.Length)
+            .Append('|').AppendLine(info.LastWriteTimeUtc.Ticks.ToString(CultureInfo.InvariantCulture));
     }
 
     private static string ResolvePackagePath(string sourcePath, string assignedTargetPath, string packagePath, string recursiveDir)

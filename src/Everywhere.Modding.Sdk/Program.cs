@@ -81,13 +81,36 @@ internal static class Program
             : packageFolders.Split([';', Path.PathSeparator], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var references = new HostReferenceSet(host, probeDirectories);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)) ?? ".");
-        await File.WriteAllLinesAsync(output, references.Assemblies.Values.Order(StringComparer.Ordinal));
-        await File.WriteAllLinesAsync(
-            output + ".runtime.txt",
-            references.RuntimeAssemblies.Values.Concat(references.ResourceAssemblies).Order(StringComparer.Ordinal));
-        await File.WriteAllTextAsync(
-            output + ".host.json",
-            JsonSerializer.Serialize(references.Descriptor, SdkJsonSerializerContext.Default.ModHostDescriptor));
+        await WriteAllLinesIfChangedAsync(output, references.Assemblies.Values.Order(StringComparer.Ordinal)).ConfigureAwait(false);
+        await WriteAllLinesIfChangedAsync(
+                output + ".runtime.txt",
+                references.RuntimeAssemblies.Values.Concat(references.ResourceAssemblies).Order(StringComparer.Ordinal))
+            .ConfigureAwait(false);
+        await WriteAllTextIfChangedAsync(
+                output + ".host.json",
+                JsonSerializer.Serialize(references.Descriptor, SdkJsonSerializerContext.Default.ModHostDescriptor))
+            .ConfigureAwait(false);
         return 0;
+    }
+
+    private static Task WriteAllLinesIfChangedAsync(string path, IEnumerable<string> lines)
+    {
+        var builder = new System.Text.StringBuilder();
+        foreach (var line in lines)
+        {
+            builder.AppendLine(line);
+        }
+
+        return WriteAllTextIfChangedAsync(path, builder.ToString());
+    }
+
+    private static async Task WriteAllTextIfChangedAsync(string path, string content)
+    {
+        if (File.Exists(path) && await File.ReadAllTextAsync(path).ConfigureAwait(false) == content)
+        {
+            return;
+        }
+
+        await File.WriteAllTextAsync(path, content).ConfigureAwait(false);
     }
 }

@@ -18,6 +18,11 @@ public interface IModSettingsRegistry
     IAsyncDisposable Register(IModContext context, Func<SettingsItems> createItems);
 
     /// <summary>
+    /// Checks whether the specified active mod has an available registered settings entry without materializing its view.
+    /// </summary>
+    bool HasSettings(string modId);
+
+    /// <summary>
     /// Gets or creates the active mod's settings view on the UI thread. Returns <see langword="null"/> when unavailable.
     /// Repeated calls return the same view until registration closes; no mod is activated by this call.
     /// </summary>

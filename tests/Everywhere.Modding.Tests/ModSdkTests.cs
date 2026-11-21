@@ -354,6 +354,66 @@ public sealed class ModSdkTests
     }
 
     /// <summary>
+    /// Unchanged pack inputs skip re-zipping and preserve archive timestamps, while changed inputs regenerate the package.
+    /// </summary>
+    [Test]
+    public async Task Pack_WhenInputsAreUnchanged_PreservesArchiveAndRegeneratesOnChange()
+    {
+        var tools = Path.Combine(_repository, "src", "Everywhere.Modding.Sdk", "bin", _configuration, "net11.0", "Everywhere.Modding.Sdk.dll");
+        var references = Path.Combine(_root, "references.txt");
+        var packDirectory = Path.Combine(_root, "incremental-pack");
+        Directory.CreateDirectory(packDirectory);
+        var archivePath = Path.Combine(_root, "incremental.zip");
+        var assembly = Path.Combine(AppContext.BaseDirectory, "fixtures", "ModFixture.B.dll");
+        var readmePath = Path.Combine(_root, "README.md");
+        await File.WriteAllTextAsync(readmePath, "# Initial");
+        var contract = typeof(IMod).Assembly.Location;
+        var host = new ModHostDescriptor
+        {
+            HostVersion = "0.9.0",
+            ModApiVersion = "1.0.0",
+            Framework = "net11.0",
+            RuntimeIdentifier = "win-x64",
+            EntryAssembly = "Host.dll"
+        };
+        await File.WriteAllLinesAsync(references, [contract]);
+        await File.WriteAllLinesAsync(references + ".runtime.txt", [contract]);
+        await File.WriteAllTextAsync(references + ".host.json", JsonSerializer.Serialize(host));
+        await File.WriteAllTextAsync(Path.Combine(packDirectory, "payload.txt"), $"{readmePath}|README.md|pack-file||");
+        await File.WriteAllTextAsync(Path.Combine(packDirectory, "readmes.txt"), "README.md");
+        await WritePackPropertiesAsync(
+            Path.Combine(packDirectory, "properties.txt"),
+            assembly,
+            references,
+            "fixture.incremental",
+            "1.0.0",
+            "ModFixture.Entry",
+            "[0.9.0,0.10.0)",
+            archivePath);
+
+        var first = await RunAsync(_root, tools, "pack", packDirectory);
+        Assert.That(first.ExitCode, Is.Zero, first.Output);
+
+        var preservedTimestamp = DateTime.UtcNow.AddDays(-10);
+        File.SetLastWriteTimeUtc(archivePath, preservedTimestamp);
+        var expectedTimestamp = File.GetLastWriteTimeUtc(archivePath);
+
+        var second = await RunAsync(_root, tools, "pack", packDirectory);
+        Assert.That(second.ExitCode, Is.Zero, second.Output);
+        Assert.That(File.GetLastWriteTimeUtc(archivePath), Is.EqualTo(expectedTimestamp));
+
+        await File.WriteAllTextAsync(readmePath, "# Updated content");
+        File.SetLastWriteTimeUtc(readmePath, DateTime.UtcNow.AddMinutes(1));
+        var third = await RunAsync(_root, tools, "pack", packDirectory);
+        Assert.That(third.ExitCode, Is.Zero, third.Output);
+        Assert.That(File.GetLastWriteTimeUtc(archivePath), Is.GreaterThan(expectedTimestamp));
+
+        var unpacked = Path.Combine(_root, "incremental-unpacked");
+        await ZipFile.ExtractToDirectoryAsync(archivePath, unpacked);
+        Assert.That(await File.ReadAllTextAsync(Path.Combine(unpacked, "README.md")), Is.EqualTo("# Updated content"));
+    }
+
+    /// <summary>
     /// Universal mods can bundle multi-platform native files in runtimes/{rid}/native/, strip declared dependency assemblies,
     /// and generate signed static indexes across both layouts.
     /// </summary>
