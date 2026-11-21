@@ -40,7 +40,7 @@ This evolution abandons runtime injection in favor of physically rewriting the t
 
 1.  **The Weaving Tool:** We introduced a lightweight, cross-platform CLI tool (`Everywhere.BuildTask.Patcher`).
 2.  **Declarative Patching:** Patch logic is now written as standard C\# in isolated Donor projects (e.g., `Everywhere.Patches.Avalonia.Controls`). Instead of Harmony's Prefix/Postfix, we utilize `[MonoModPatch]` and `[MonoModReplace]` attributes. Private members are safely mapped using `extern` or private declarations, eliminating the need for `[UnsafeAccessor]` or reflection.
-3.  **Pipeline Interception:** [Build.Patches.targets](../src/Build.Patches.targets) runs after `ResolveAssemblyReferences`, consumes the SDK-selected implementation DLLs from `RuntimeCopyLocalItems`, `RuntimePackAsset`, and `ReferenceCopyLocalPaths`, and weaves the donor IL into intermediate output. It does not infer runtime paths from reference-assembly directory names. It keeps `ReferencePath` unchanged for compilation, replaces `ReferenceCopyLocalPaths`, and replaces `ResolvedFileToPublish`, `RuntimeCopyLocalItems`, and `RuntimePackAsset` before publish postprocessing. Keeping these runtime and publish paths aligned allows ILLink to process the patched assemblies correctly. Donor projects are build dependencies rather than runtime references.
+3.  **Pipeline Interception:** [Build.Patches.targets](../src/Build.Patches.targets) runs after `ResolveAssemblyReferences`, consumes the canonical SDK-selected implementation DLLs from `RuntimeCopyLocalItems` and `RuntimePackAsset`, weaves the donor IL into intermediate output, and removes all matching copies from `ReferenceCopyLocalPaths` (including duplicate project-reference copies). It does not infer runtime paths from reference-assembly directory names, keeps `ReferencePath` unchanged for compilation, and replaces `ResolvedFileToPublish`, `RuntimeCopyLocalItems`, and `RuntimePackAsset` before publish postprocessing so ILLink processes the patched assemblies cleanly. Donor projects are build dependencies rather than runtime references.
 
 **Outcomes:**
 This approach generates perfectly standard, statically modified binaries containing zero runtime hooking overhead. It is completely transparent to our GitHub Actions CI/CD workflows and fully compatible with global code-signing pipelines (Certum for Windows, Apple Codesign for macOS). The modified third-party libraries inherit the primary application's digital signature, permanently resolving all anti-virus false positives and cross-platform distribution blockers.
@@ -66,9 +66,11 @@ These changes preserve SDK policy; application retries belong to the request lay
 Weaving remains an `AfterTargets="ResolveAssemblyReferences"` operation. The SDK
 has already resolved runtime assets and handled package conflicts at that point;
 patching does not add build work to project evaluation, restore, or design-time
-builds. Donors remain ordinary build-order project references. Only assemblies
-also present in the consumer's compilation references are patched, so importing
-the shared targets does not force every available patch into every consumer.
+builds. Donors remain ordinary build-order project references. Assemblies
+present in the consumer's compilation references or SDK-selected runtime assets
+(covering packages like Avalonia when `AvaloniaAccessUnstablePrivateApis` defers
+compile references until `CoreCompile`) are patched, while unreferenced assemblies
+still stay untouched when importing the shared targets.
 
 Each output records its input paths, sizes, and modification timestamps, including
 the donor and patching tools. Unchanged inputs preserve the DLL and stamp timestamps;

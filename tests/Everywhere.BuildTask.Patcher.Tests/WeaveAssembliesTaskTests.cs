@@ -157,6 +157,56 @@ public sealed class WeaveAssembliesTaskTests
     }
 
     [Test]
+    public void Execute_WithRuntimeAssetAbsentFromCompileReferences_PatchesRuntimeImplementation()
+    {
+        var runtime = CreateAssembly("runtime", "Example", 1);
+        var donor = CreateAssembly("donor", "Example.Patch", 42, isDonor: true);
+        var task = CreateRuntimeOnlyTask(donor, runtime);
+
+        Assert.That(task.Execute(), Is.True, GetErrors(task));
+        Assert.Multiple(() =>
+        {
+            Assert.That(task.AddedReferences, Has.Length.EqualTo(1));
+            Assert.That(ReadValue(task.AddedReferences[0].ItemSpec), Is.EqualTo(42));
+            Assert.That(task.RemovedReferences.Single().ItemSpec, Is.EqualTo(runtime));
+        });
+    }
+
+    [Test]
+    public void Execute_WithRuntimeOnlyFrameworkAsset_RejectsRewritingNativeRegistrationTokens()
+    {
+        var runtime = CreateAssembly("runtime", "Example", 1);
+        var donor = CreateAssembly("donor", "Example.Patch", 42, isDonor: true);
+        var task = CreateRuntimeOnlyTask(donor, runtime);
+        task.RuntimeAssemblies[0].SetMetadata("FrameworkReferenceName", "Example.Framework");
+
+        Assert.That(task.Execute(), Is.False);
+        Assert.That(GetErrors(task), Does.Contain("native SDK components may depend on stable metadata tokens"));
+    }
+
+    [Test]
+    public void Execute_WithCopyLocalDuplicatesIncludingProjectReferenceCopy_WeavesCanonicalRuntimeAndRemovesAllCopyLocalCopies()
+    {
+        var runtime = CreateAssembly("runtime", "Example", 1);
+        var projectBinCopy = CreateAssembly("project-bin", "Example", 99);
+        var donor = CreateAssembly("donor", "Example.Patch", 42, isDonor: true);
+        var task = CreateRuntimeOnlyTask(donor, runtime);
+        task.RuntimeAssemblies[0].SetMetadata("NuGetPackageId", "Example.Runtime");
+        task.RuntimeAssemblies[0].SetMetadata("DestinationSubPath", "Example.dll");
+        task.CopyLocalPaths = [new TaskItem(projectBinCopy), new TaskItem(runtime)];
+
+        Assert.That(task.Execute(), Is.True, GetErrors(task));
+        Assert.Multiple(() =>
+        {
+            Assert.That(task.AddedReferences, Has.Length.EqualTo(1));
+            Assert.That(ReadValue(task.AddedReferences[0].ItemSpec), Is.EqualTo(42));
+            Assert.That(task.AddedReferences[0].GetMetadata("NuGetPackageId"), Is.EqualTo("Example.Runtime"));
+            Assert.That(task.AddedReferences[0].GetMetadata("DestinationSubPath"), Is.EqualTo("Example.dll"));
+            Assert.That(task.RemovedReferences.Select(item => item.ItemSpec), Is.EquivalentTo([projectBinCopy, runtime]));
+        });
+    }
+
+    [Test]
     public async Task MsBuild_DuringEvaluationAndDesignTimeBuild_DoesNotWeave()
     {
         var project = CreatePipelineProject("RuntimePackAsset");
@@ -262,6 +312,20 @@ public sealed class WeaveAssembliesTaskTests
         {
             BuildEngine = new TestBuildEngine(),
             References = [new TaskItem(reference), new TaskItem(typeof(object).Assembly.Location)],
+            RuntimeAssemblies = runtimePaths.Select(path => (ITaskItem)new TaskItem(path)).ToArray(),
+            PatchAssemblies = [patch],
+            OutputDirectory = Path.Combine(_directory, "patched")
+        };
+    }
+
+    private WeaveAssembliesTask CreateRuntimeOnlyTask(string donor, params string[] runtimePaths)
+    {
+        var patch = new TaskItem(donor);
+        patch.SetMetadata("PatchTargets", "Example");
+        return new WeaveAssembliesTask
+        {
+            BuildEngine = new TestBuildEngine(),
+            References = [new TaskItem(typeof(object).Assembly.Location)],
             RuntimeAssemblies = runtimePaths.Select(path => (ITaskItem)new TaskItem(path)).ToArray(),
             PatchAssemblies = [patch],
             OutputDirectory = Path.Combine(_directory, "patched")

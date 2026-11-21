@@ -70,7 +70,8 @@
 
     <Everywhere.BuildTask.Patcher.WeaveAssembliesTask
         References="@(ReferencePath)"
-        RuntimeAssemblies="@(RuntimeCopyLocalItems);@(RuntimePackAsset);@(ReferenceCopyLocalPaths)"
+        RuntimeAssemblies="@(RuntimeCopyLocalItems);@(RuntimePackAsset)"
+        CopyLocalPaths="@(ReferenceCopyLocalPaths)"
         PatchAssemblies="@(PatchAssembly)"
         OutputDirectory="$(IntermediateOutputPath)Patched\">
       <Output TaskParameter="RemovedReferences" ItemName="_RemovedReferences" />

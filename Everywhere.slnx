@@ -42,7 +42,6 @@
     <Project Path="src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" />
   </Folder>
   <Folder Name="/patches/">
-    <File Path="patches/Directory.Build.props" />
     <File Path="patches/Directory.Packages.props" />
     <Project Path="patches/Everywhere.BuildTask.Patcher/Everywhere.BuildTask.Patcher.csproj" />
     <Project Path="patches/Everywhere.Patches.Avalonia.Controls/Everywhere.Patches.Avalonia.Controls.csproj" />

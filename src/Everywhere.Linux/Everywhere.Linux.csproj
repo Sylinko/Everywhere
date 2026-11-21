@@ -40,6 +40,8 @@
   </ItemGroup>
 
   <Import Project="..\Build.I18N.targets"/>
+  <Import Project="..\Build.Patches.targets" />
+  <Import Project="..\Build.Watchdog.targets" />
 
   <ItemGroup>
     <None Include="..\..\img\Everywhere.ico">
@@ -51,7 +53,4 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
-
-  <Import Project="..\Build.Patches.targets" />
-  <Import Project="..\Build.Watchdog.targets" />
 </Project>

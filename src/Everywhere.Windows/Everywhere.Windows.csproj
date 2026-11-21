@@ -48,6 +48,8 @@
   </ItemGroup>
 
   <Import Project="..\Build.I18N.targets"/>
+  <Import Project="..\Build.Patches.targets"/>
+  <Import Project="..\Build.Watchdog.targets"/>
 
   <ItemGroup>
     <None Include="..\..\img\Everywhere.ico">
@@ -67,9 +69,6 @@
     <None Remove="Assets\Icons\PowerShell.svg"/>
     <None Remove="Assets\Icons\Windows11.svg"/>
   </ItemGroup>
-
-  <Import Project="..\Build.Patches.targets"/>
-  <Import Project="..\Build.Watchdog.targets"/>
 
   <ItemGroup>
     <TrimmerRootAssembly Include="Everywhere"/>

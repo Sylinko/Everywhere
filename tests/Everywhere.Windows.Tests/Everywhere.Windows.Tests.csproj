@@ -25,4 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Everywhere.Windows\Everywhere.Windows.csproj"/>
   </ItemGroup>
+
+  <Import Project="..\..\src\Build.Patches.targets"/>
 </Project>

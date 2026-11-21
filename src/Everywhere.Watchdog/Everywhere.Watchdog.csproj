@@ -6,11 +6,11 @@
     <SelfContained>true</SelfContained>
     <OptimizationPreference>Size</OptimizationPreference>
     <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64;linux-arm64</RuntimeIdentifiers>
-    <RuntimeIdentifier Condition="'$(IsWindows)' == 'true' AND '$(IsX64)' == 'true'">win-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(IsOSX)' == 'true' AND '$(IsX64)' == 'true'">osx-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(IsOSX)' == 'true' AND '$(IsARM64)' == 'true'">osx-arm64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(IsLinux)' == 'true' AND '$(IsX64)' == 'true'">linux-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(IsLinux)' == 'true' AND '$(IsARM64)' == 'true'">linux-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(IsWindows)' == 'true' AND '$(IsX64)' == 'true'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(IsOSX)' == 'true' AND '$(IsX64)' == 'true'">osx-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(IsOSX)' == 'true' AND '$(IsARM64)' == 'true'">osx-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(IsLinux)' == 'true' AND '$(IsX64)' == 'true'">linux-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(IsLinux)' == 'true' AND '$(IsARM64)' == 'true'">linux-arm64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>

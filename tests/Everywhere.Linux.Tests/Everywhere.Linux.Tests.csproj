@@ -9,4 +9,6 @@
     <Using Include="NUnit.Framework" />
     <ProjectReference Include="../../src/Everywhere.Linux/Everywhere.Linux.csproj" />
   </ItemGroup>
+
+  <Import Project="../../src/Build.Patches.targets" />
 </Project>

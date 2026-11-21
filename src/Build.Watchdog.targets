@@ -10,8 +10,15 @@
     <WatchdogDir>$(MSBuildThisFileDirectory)Everywhere.Watchdog\</WatchdogDir>
     <WatchdogProject>$(WatchdogDir)Everywhere.Watchdog.csproj</WatchdogProject>
 
+    <!-- Prefer the target RID when set so cross-architecture/OS paths match the target rather than the build machine. -->
+    <_WatchdogRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</_WatchdogRuntimeIdentifier>
+    <_WatchdogRuntimeIdentifier Condition="'$(_WatchdogRuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</_WatchdogRuntimeIdentifier>
+
     <!-- Define the output directory for the Watchdog publish artifacts. -->
-    <WatchdogOutDir>$(WatchdogDir)bin\$(Configuration)\$(TargetFrameworkPrefix)\$(RuntimeIdentifier)\publish\</WatchdogOutDir>
+    <WatchdogOutDir>$(WatchdogDir)bin\$(Configuration)\$(TargetFrameworkPrefix)\$(_WatchdogRuntimeIdentifier)\publish\</WatchdogOutDir>
+
+    <_IsWatchdogWindows Condition="'$(_WatchdogRuntimeIdentifier)' != ''">$([System.String]::Copy('$(_WatchdogRuntimeIdentifier)').StartsWith('win', System.StringComparison.OrdinalIgnoreCase))</_IsWatchdogWindows>
+    <_IsWatchdogWindows Condition="'$(_IsWatchdogWindows)' == ''">$([MSBuild]::IsOSPlatform('Windows'))</_IsWatchdogWindows>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,13 +26,13 @@
     <ProjectReference Include="$(WatchdogProject)" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
-  <PropertyGroup Condition="$([System.String]::Copy($(RuntimeIdentifier)).StartsWith('win')) OR $([MSBuild]::IsOSPlatform('Windows'))">
-    <!-- Define the Watchdog executable path for Windows. -->
+  <PropertyGroup Condition="'$(_IsWatchdogWindows)' == 'true'">
+    <!-- Define the Watchdog executable path for Windows targets. -->
     <WatchdogExecutable>$(WatchdogOutDir)Everywhere.Watchdog.exe</WatchdogExecutable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="!($([System.String]::Copy($(RuntimeIdentifier)).StartsWith('win')) OR $([MSBuild]::IsOSPlatform('Windows')))">
-    <!-- Define the Watchdog executable path for non-Windows platforms. -->
+  <PropertyGroup Condition="'$(_IsWatchdogWindows)' != 'true'">
+    <!-- Define the Watchdog executable path for non-Windows targets. -->
     <WatchdogExecutable>$(WatchdogOutDir)Everywhere.Watchdog</WatchdogExecutable>
   </PropertyGroup>
 
@@ -39,6 +46,6 @@
     <MSBuild Projects="$(WatchdogProject)"
              Targets="Publish"
              RemoveProperties="TargetFramework"
-             Properties="NoBuild=true;PublishDir=$(WatchdogOutDir);RuntimeIdentifier=$(RuntimeIdentifier);Configuration=$(Configuration)" />
+             Properties="NoBuild=true;PublishDir=$(WatchdogOutDir);RuntimeIdentifier=$(_WatchdogRuntimeIdentifier);Configuration=$(Configuration)" />
   </Target>
 </Project>

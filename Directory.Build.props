@@ -42,31 +42,17 @@
 
   <PropertyGroup Condition="'$(_OSArchitecture)' == 'X64'">
     <IsX64>true</IsX64>
-    <DefineConstants>$(DefineConstants);X64;IsX64</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(_OSArchitecture)' == 'X86'">
     <IsX86>true</IsX86>
-    <DefineConstants>$(DefineConstants);X86;IsX86</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(_OSArchitecture)' == 'Arm64'">
     <IsARM64>true</IsARM64>
-    <DefineConstants>$(DefineConstants);ARM64;IsARM64</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(_OSArchitecture)' == 'Arm'">
     <IsARM>true</IsARM>
-    <DefineConstants>$(DefineConstants);ARM;IsARM</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(IsWindows)' == 'true' OR '$(IsLinux)' == 'true' OR '$(IsOSX)' == 'true'">
-    <IsDesktop>true</IsDesktop>
-    <DefineConstants>$(DefineConstants);DESKTOP;IsDesktop</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(IsLinux)' == 'true' OR '$(IsOSX)' == 'true'">
-    <IsUnix>true</IsUnix>
-    <DefineConstants>$(DefineConstants);UNIX;IsUnix</DefineConstants>
   </PropertyGroup>
 </Project>
