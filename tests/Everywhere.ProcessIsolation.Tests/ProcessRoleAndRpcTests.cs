@@ -1,4 +1,5 @@
 using System.IO.Pipes;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Hosts.Control;
@@ -982,6 +983,71 @@ public class ProcessRoleAndRpcTests
         await Assert.CatchAsync<OperationCanceledException>(async () => await invocation);
 
         await cancellationObserved.Task.WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    [Test, Platform("Win")]
+    public async Task TryConnectMainControlAsync_WhenActivationPresentAndMainControlStartsLate_ConnectsSuccessfully()
+    {
+        var sessionId = $"test-{Guid.NewGuid():N}";
+        await using var activationServer = NamedPipeEndpoint.CreateServer(ProcessRoleNames.GetApplicationActivationEndpoint(sessionId));
+        await using var clientStream = new NamedPipeClientStream(
+            ".",
+            ProcessRoleNames.GetMainControlEndpoint(sessionId),
+            PipeDirection.InOut,
+            PipeOptions.Asynchronous);
+
+        var connectTask = TryConnectMainControlAsync(clientStream, sessionId, CancellationToken.None);
+        await Task.Delay(350);
+
+        await using var controlServer = NamedPipeEndpoint.CreateServer(ProcessRoleNames.GetMainControlEndpoint(sessionId));
+        var acceptTask = controlServer.WaitForConnectionAsync();
+
+        Assert.That(await connectTask.WaitAsync(TimeSpan.FromSeconds(5)), Is.True);
+        await acceptTask.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.That(clientStream.IsConnected, Is.True);
+    }
+
+    [Test, Platform("Win")]
+    public async Task TryConnectMainControlAsync_WhenActivationDisappearsDuringWait_ReturnsFalseQuickly()
+    {
+        var sessionId = $"test-{Guid.NewGuid():N}";
+        var activationServer = NamedPipeEndpoint.CreateServer(ProcessRoleNames.GetApplicationActivationEndpoint(sessionId));
+        try
+        {
+            await using var clientStream = new NamedPipeClientStream(
+                ".",
+                ProcessRoleNames.GetMainControlEndpoint(sessionId),
+                PipeDirection.InOut,
+                PipeOptions.Asynchronous);
+
+            var connectTask = TryConnectMainControlAsync(clientStream, sessionId, CancellationToken.None);
+            await Task.Delay(250);
+            await activationServer.DisposeAsync();
+            activationServer = null;
+
+            Assert.That(await connectTask.WaitAsync(TimeSpan.FromMilliseconds(1500)), Is.False);
+            Assert.That(EndpointPresenceProbe.IsPresent(ProcessRoleNames.GetApplicationActivationEndpoint(sessionId)), Is.False);
+        }
+        finally
+        {
+            if (activationServer is not null)
+            {
+                await activationServer.DisposeAsync();
+            }
+        }
+    }
+
+    private static Task<bool> TryConnectMainControlAsync(
+        NamedPipeClientStream stream,
+        string desktopSessionId,
+        CancellationToken cancellationToken)
+    {
+        var method = typeof(ApplicationShutdownRunner).GetMethod(
+                "TryConnectMainControlAsync",
+                BindingFlags.Static | BindingFlags.NonPublic) ??
+            throw new MissingMethodException(typeof(ApplicationShutdownRunner).FullName, "TryConnectMainControlAsync");
+        return (Task<bool>)(method.Invoke(null, [stream, desktopSessionId, cancellationToken]) ??
+            throw new InvalidOperationException("TryConnectMainControlAsync returned null."));
     }
 
     private static async IAsyncEnumerable<int> CreateStream(int value, [EnumeratorCancellation] CancellationToken cancellationToken)

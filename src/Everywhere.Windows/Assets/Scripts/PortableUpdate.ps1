@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string] $ApplicationPath,
-    [Parameter(Mandatory = $true)][string] $FailureMessage
+    [Parameter(Mandatory = $true)][string] $FailureMessage,
+    [Parameter(Mandatory = $false)][int] $ParentProcessId = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -32,27 +33,41 @@ try {
         throw 'The prepared application executable is missing.'
     }
 
-    Write-Log 'Requesting cooperative shutdown.'
-    # Start-Process resolves WorkingDirectory as a PowerShell path; escape literal brackets.
-    $controller = Start-Process -FilePath $ApplicationPath -ArgumentList '--hosts-control', 'shutdown' -WorkingDirectory ([WildcardPattern]::Escape($workspace)) -WindowStyle Hidden -PassThru -Wait
-    try {
-        if ($controller.ExitCode -ne 0) {
-            throw "Application shutdown failed (exit code $($controller.ExitCode)). No files were replaced."
+    if ($ParentProcessId -gt 0) {
+        Write-Log "Waiting for the previous application process ($ParentProcessId) to exit."
+        Wait-Process -Id $ParentProcessId -Timeout 15 -ErrorAction SilentlyContinue
+        if ($null -ne (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue)) {
+            throw "Previous application process $ParentProcessId did not exit within 15 seconds. No files were replaced."
         }
-    } finally {
-        $controller.Dispose()
     }
     $hasClosed = $true
 
     # Directory.Move fails if the destination exists; it never nests or merges directories.
     Write-Log 'Moving the current version to backup.'
-    [IO.Directory]::Move($appDir, $backupDir)
+    $moveAttempt = 0
+    while ($true) {
+        try {
+            [IO.Directory]::Move($appDir, $backupDir)
+            break
+        } catch {
+            $moveAttempt++
+            $isTransientLock =
+                $_.Exception -is [IO.IOException] -or
+                $_.Exception -is [UnauthorizedAccessException] -or
+                $_.Exception.InnerException -is [IO.IOException] -or
+                $_.Exception.InnerException -is [UnauthorizedAccessException]
+            if ($moveAttempt -ge 20 -or -not $isTransientLock) {
+                throw
+            }
+            Start-Sleep -Milliseconds 150
+        }
+    }
     $hasBackup = $true
     [IO.Directory]::Move($stagingDir, $appDir)
     $hasInstalled = $true
 
     Write-Log 'Starting the updated application.'
-    Start-Process -FilePath $ApplicationPath -WorkingDirectory ([WildcardPattern]::Escape($appDir))
+    Start-Process -FilePath $ApplicationPath -ArgumentList '--ui' -WorkingDirectory ([WildcardPattern]::Escape($appDir))
 } catch {
     Write-Log "Update failed: $($_.Exception.Message)"
     try {
@@ -64,7 +79,7 @@ try {
             [IO.Directory]::Move($backupDir, $appDir)
         }
         if ($hasClosed) {
-            Start-Process -FilePath $ApplicationPath -WorkingDirectory ([WildcardPattern]::Escape($appDir))
+            Start-Process -FilePath $ApplicationPath -ArgumentList '--ui' -WorkingDirectory ([WildcardPattern]::Escape($appDir))
         }
     } catch {
         Write-Log "Recovery failed; files have been retained: $($_.Exception.Message)"

@@ -1,7 +1,10 @@
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
+using Avalonia;
 using Everywhere.Common;
 using Everywhere.Interop;
 using Serilog;
@@ -25,14 +28,32 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
 
     public Task ExecuteUpdateAsync(string assetPath, CancellationToken cancellationToken)
     {
-        if (!assetPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        if (Application.Current is not App app)
         {
-            return UpdateViaPortableAsync(assetPath, cancellationToken);
+            throw new InvalidOperationException("The application instance is unavailable for update handoff.");
         }
 
-        Process.Start(new ProcessStartInfo(assetPath) { UseShellExecute = true });
-        // Setup coordinates normal shutdown after the user confirms installation.
-        // Cancelling UAC or the wizard must leave the running application intact.
+        if (!assetPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            return UpdateViaPortableAsync(app, assetPath, cancellationToken);
+        }
+
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(assetPath)
+            {
+                Arguments = "/SILENT /CLOSEAPPLICATIONS /LAUNCH",
+                UseShellExecute = true
+            }) ?? throw new InvalidOperationException("Failed to start the setup installer.");
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+        {
+            // User declined the UAC prompt; keep the running application and ready package intact.
+            Log.Information("User cancelled elevation for installer {InstallerPath}.", assetPath);
+            return Task.CompletedTask;
+        }
+
+        app.Shutdown();
         return Task.CompletedTask;
     }
 
@@ -48,15 +69,14 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
         return false;
     }
 
-    private static async Task UpdateViaPortableAsync(string zipPath, CancellationToken cancellationToken = default)
+    private static async Task UpdateViaPortableAsync(App app, string zipPath, CancellationToken cancellationToken = default)
     {
         var executablePath = Environment.ProcessPath ?? throw new InvalidOperationException("The application executable path is unavailable.");
-        var startInfo = await PreparePortableUpdateAsync(zipPath, executablePath, cancellationToken);
-        using var process = new Process { StartInfo = startInfo };
+        var startInfo = await PreparePortableUpdateAsync(zipPath, executablePath, Environment.ProcessId, cancellationToken);
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!process.Start()) throw new InvalidOperationException("Failed to start the portable updater.");
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Failed to start the portable updater.");
         }
         catch
         {
@@ -64,17 +84,14 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
             throw;
         }
 
-        // Keep Installing active until the helper exits, preventing another update from starting.
-        // After handoff, the helper owns shutdown, recovery files and failure UI. Do not cancel
-        // this wait or rethrow its reported failure as a second Toast.
-        await process.WaitForExitAsync();
-        if (process.ExitCode != 0)
-        {
-            Log.Warning("The portable updater exited with code {ExitCode}. Recovery files: {Directory}.", process.ExitCode, startInfo.WorkingDirectory);
-        }
+        app.Shutdown();
     }
 
-    private static async Task<ProcessStartInfo> PreparePortableUpdateAsync(string zipPath, string executablePath, CancellationToken cancellationToken)
+    private static async Task<ProcessStartInfo> PreparePortableUpdateAsync(
+        string zipPath,
+        string executablePath,
+        int parentProcessId,
+        CancellationToken cancellationToken)
     {
         var applicationDirectory = Path.GetDirectoryName(executablePath) ??
             throw new InvalidOperationException("The application directory is unavailable.");
@@ -115,7 +132,8 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
                     "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
                     "-File", scriptPath,
                     "-ApplicationPath", executablePath,
-                    "-FailureMessage", failureMessage
+                    "-FailureMessage", failureMessage,
+                    "-ParentProcessId", parentProcessId.ToString(CultureInfo.InvariantCulture)
                 }
             };
 

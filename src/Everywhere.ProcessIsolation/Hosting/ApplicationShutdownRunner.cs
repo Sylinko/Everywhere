@@ -13,6 +13,8 @@ namespace Everywhere.ProcessIsolation.Hosting;
 public static class ApplicationShutdownRunner
 {
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(3);
+    private const int ConnectAttemptTimeoutMilliseconds = 200;
 
     /// <summary>
     /// Waits for Main process termination, not merely an RPC reply or endpoint disappearance.
@@ -22,6 +24,7 @@ public static class ApplicationShutdownRunner
     {
         if (!OperatingSystem.IsWindows()) return ReportFailure("Installation shutdown is supported only on Windows.");
         var identity = RpcRuntimeIdentity.CreateCurrent(ProcessRole.Main);
+        if (AreEndpointsAbsent(identity.DesktopSessionId)) return HostsControlExitCodes.Success;
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(ShutdownTimeout);
         try
@@ -32,11 +35,7 @@ public static class ApplicationShutdownRunner
                 PipeDirection.InOut,
                 PipeOptions.Asynchronous);
 
-            try
-            {
-                await stream.ConnectAsync(3000, deadline.Token).ConfigureAwait(false);
-            }
-            catch (TimeoutException)
+            if (!await TryConnectMainControlAsync(stream, identity.DesktopSessionId, deadline.Token).ConfigureAwait(false))
             {
                 return AreEndpointsAbsent(identity.DesktopSessionId) ?
                     HostsControlExitCodes.Success :
@@ -96,6 +95,38 @@ public static class ApplicationShutdownRunner
         {
             return ReportFailure($"Application shutdown could not be confirmed: {exception.Message}");
         }
+    }
+
+    private static async Task<bool> TryConnectMainControlAsync(
+        NamedPipeClientStream stream,
+        string desktopSessionId,
+        CancellationToken cancellationToken)
+    {
+        using var connectDeadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        connectDeadline.CancelAfter(ConnectTimeout);
+
+        while (!connectDeadline.IsCancellationRequested)
+        {
+            if (AreEndpointsAbsent(desktopSessionId))
+            {
+                return false;
+            }
+
+            try
+            {
+                await stream.ConnectAsync(ConnectAttemptTimeoutMilliseconds, connectDeadline.Token).ConfigureAwait(false);
+                return true;
+            }
+            catch (TimeoutException)
+            {
+            }
+            catch (OperationCanceledException) when (connectDeadline.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+
+        return false;
     }
 
     private static bool AreEndpointsAbsent(string desktopSessionId) =>

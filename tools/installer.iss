@@ -66,10 +66,12 @@ en.ContinueExit=Continue
 zh.ContinueExit=继续
 en.CancelExit=Cancel
 zh.CancelExit=取消
-en.WaitingForExit=Waiting for Everywhere to exit...
-zh.WaitingForExit=正在等待 Everywhere 自行退出…
-en.WaitingForExitDetail=Waiting up to 10 seconds.
-zh.WaitingForExitDetail=最多等待 10 秒。
+en.SilentInstallationInUse=Everywhere is still running and could not be closed automatically. The new version was not installed. Please exit Everywhere and try again.
+zh.SilentInstallationInUse=Everywhere 仍在运行且未能自动关闭，新版本尚未安装。请先退出 Everywhere 后重试。
+en.SilentInstallationCheckFailed=Setup could not check whether Everywhere is still running (Windows error %1). The new version was not installed. Please exit Everywhere and try again.
+zh.SilentInstallationCheckFailed=安装程序无法确认 Everywhere 是否仍在运行（Windows 错误 %1），新版本尚未安装。请先退出 Everywhere 后重试。
+en.SilentPreviousUninstallFailed=The previous version could not be uninstalled (error code %1). Setup cannot continue. See the Setup log for details.
+zh.SilentPreviousUninstallFailed=旧版本未能完成卸载（错误代码 %1），安装已中止。详情请查看安装日志。
 en.PreviousInstallationCheckFailed=Setup could not check whether Everywhere is still running (Windows error %1). Please exit Everywhere, then choose Retry. Choose Continue to try to force it to close and continue installing. Unsaved changes may be lost. Choose Cancel to stop Setup.
 zh.PreviousInstallationCheckFailed=安装程序无法确认 Everywhere 是否仍在运行（Windows 错误 %1）。请先退出 Everywhere，再点击“重试”。点击“继续”将尝试强制关闭 Everywhere 并继续安装，未保存的内容可能丢失。点击“取消”退出安装。
 en.ShortcutCreationFailed=Everywhere was installed, but some shortcuts could not be created. You can still open Everywhere from its installation folder. See the Setup log for details.
@@ -190,6 +192,7 @@ var
   ActiveControllerJob: NativeInt;
   IsPreparingInstallation: Boolean;
   HasPreparedInstallation: Boolean;
+  HasCompletedPostInstall: Boolean;
   HasCapturedPreviousDesktopShortcuts: Boolean;
   PreviousCommonDesktopTarget: String;
   PreviousUserDesktopTarget: String;
@@ -620,8 +623,12 @@ begin
   Result := False;
   if HasCommandLineParameter('/IGNOREUNINSTALLFAILURE') then
     exit;
-  if WizardSilent or HasCommandLineParameter('/SUPPRESSMSGBOXES') then
+  if WizardSilent then
+  begin
+    SuppressibleMsgBox(FmtMessage(ExpandConstant('{cm:SilentPreviousUninstallFailed}'), [IntToStr(ResultCode)]),
+      mbError, MB_OK, IDOK);
     WindowsExitProcess(7);
+  end;
   if IsWaiting then
     Prompt := ExpandConstant('{cm:PreviousUninstallWaitFailed}')
   else
@@ -807,76 +814,47 @@ begin
   end;
 end;
 
-procedure IgnoreWaitWindowClose(Sender: TObject; var CanClose: Boolean);
+procedure WaitUntilInstallationProcessesExit(Directory: String; Deadline: Int64);
+var
+  Processes: TRunningProcesses;
 begin
-  CanClose := False;
+  while WindowsGetTickCount64() < Deadline do
+  begin
+    if not FindInstallationProcesses(Directory, False, Processes) then
+      break;
+    if GetArrayLength(Processes) = 0 then
+      break;
+    Sleep(50);
+    PumpMessages();
+  end;
 end;
 
 procedure RequestCooperativeExit(Directory: String; IsDesktopUser: Boolean);
 var
-  Dialog: TSetupForm;
-  OwnerForm: TSetupForm;
-  LabelControl: TNewStaticText;
-  Progress: TNewProgressBar;
-  Processes: TRunningProcesses;
   ResultCode: Integer;
   Deadline: Int64;
-  IsSilent: Boolean;
 begin
   if not FileExists(AddBackslash(Directory) + '{#AppExeName}') then
     exit;
   if IsUninstaller then
   begin
-    IsSilent := UninstallSilent;
-    OwnerForm := UninstallProgressForm;
+    UninstallProgressForm.StatusLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}');
+    UninstallProgressForm.Update;
   end
   else
   begin
-    IsSilent := WizardSilent;
-    OwnerForm := WizardForm;
+    WizardForm.PreparingLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}');
+    WizardForm.PreparingLabel.Visible := True;
+    WizardForm.Update;
   end;
-  Dialog := nil;
   try
-    if not IsSilent then
-    begin
-      Dialog := CreateCustomForm(ScaleX(380), ScaleY(110), False, False);
-      Dialog.Caption := '{#AppName}';
-      Dialog.OnCloseQuery := @IgnoreWaitWindowClose;
-      LabelControl := TNewStaticText.Create(Dialog);
-      LabelControl.Parent := Dialog;
-      LabelControl.SetBounds(ScaleX(16), ScaleY(16), ScaleX(348), ScaleY(24));
-      LabelControl.Caption := ExpandConstant('{cm:WaitingForExit}');
-      Progress := TNewProgressBar.Create(Dialog);
-      Progress.Parent := Dialog;
-      Progress.SetBounds(ScaleX(16), ScaleY(48), ScaleX(348), ScaleY(18));
-      Progress.Style := npbstMarquee;
-      LabelControl := TNewStaticText.Create(Dialog);
-      LabelControl.Parent := Dialog;
-      LabelControl.SetBounds(ScaleX(16), ScaleY(78), ScaleX(348), ScaleY(20));
-      LabelControl.Caption := ExpandConstant('{cm:WaitingForExitDetail}');
-      OwnerForm.Enabled := False;
-      Dialog.Show;
-      PumpMessages();
-    end;
     Deadline := WindowsGetTickCount64() + ShutdownTimeout;
     RunController(AddBackslash(Directory) + '{#AppExeName}', '--hosts-control shutdown', IsDesktopUser, ShutdownTimeout, ResultCode);
     Log(Format('Cooperative shutdown returned code %d.', [ResultCode]));
-    while WindowsGetTickCount64() < Deadline do
-    begin
-      if not FindInstallationProcesses(Directory, False, Processes) then
-        break;
-      if GetArrayLength(Processes) = 0 then
-        break;
-      Sleep(50);
-      PumpMessages();
-    end;
+    WaitUntilInstallationProcessesExit(Directory, Deadline);
   finally
-    if Dialog <> nil then
-    begin
-      Dialog.Free;
-      OwnerForm.Enabled := True;
-      OwnerForm.BringToFront;
-    end;
+    if not IsUninstaller then
+      WizardForm.PreparingLabel.Visible := False;
   end;
 end;
 
@@ -885,32 +863,37 @@ var
   Processes: TRunningProcesses;
   Response: Integer;
   HasInspected: Boolean;
+  LastError: Integer;
   Prompt: String;
 begin
   Result := '';
   repeat
     HasInspected := FindInstallationProcesses(Directory, False, Processes);
+    LastError := DLLGetLastError;
     if HasInspected and (GetArrayLength(Processes) = 0) then
       exit;
     if HasInspected and CanRequestShutdown and (not HasCommandLineParameter('/NOCLOSEAPPLICATIONS')) then
     begin
       RequestCooperativeExit(Directory, IsDesktopUser);
       HasInspected := FindInstallationProcesses(Directory, False, Processes);
+      LastError := DLLGetLastError;
       if HasInspected and (GetArrayLength(Processes) = 0) then
         exit;
+    end;
+    if not HasInspected then
+      Log(Format('Could not inspect running processes for %s: Windows error %d.', [Directory, LastError]));
+    if WizardSilent then
+    begin
+      if HasInspected then
+        Result := ExpandConstant('{cm:SilentInstallationInUse}')
+      else
+        Result := FmtMessage(ExpandConstant('{cm:SilentInstallationCheckFailed}'), [IntToStr(LastError)]);
+      exit;
     end;
     if HasInspected then
       Prompt := ExpandConstant('{cm:PreviousInstallationInUse}')
     else
-    begin
-      Prompt := FmtMessage(ExpandConstant('{cm:PreviousInstallationCheckFailed}'), [IntToStr(DLLGetLastError)]);
-      Log('Could not inspect running processes for: ' + Directory);
-    end;
-    if WizardSilent then
-    begin
-      Result := Prompt;
-      exit;
-    end;
+      Prompt := FmtMessage(ExpandConstant('{cm:PreviousInstallationCheckFailed}'), [IntToStr(LastError)]);
     Response := SuppressibleTaskDialogMsgBox(ExpandConstant('{cm:ClosingEverywhere}'),
       Prompt + #13#10#13#10 + Directory,
       mbConfirmation, MB_YESNOCANCEL, [ExpandConstant('{cm:RetryExit}'),
@@ -932,40 +915,29 @@ var
   FileName: String;
   Parameters: String;
   ResultCode: Integer;
-  ShouldShowUninstallProgress: Boolean;
   WasCancelEnabled: Boolean;
   HasIgnoredWaitFailure: Boolean;
 begin
   Result := False;
-  ShouldShowUninstallProgress := not WizardSilent;
   repeat
     FileName := ExtractCommandExecutable(Uninstaller);
     ResultCode := 2; { ERROR_FILE_NOT_FOUND }
     if (FileName <> '') and FileExists(FileName) then
     begin
-      if ShouldShowUninstallProgress then
-        Parameters := '/SILENT'
-      else
-        Parameters := '/VERYSILENT';
-      Parameters := Parameters + ' /SUPPRESSMSGBOXES /NORESTART /LOG /ALLOWINCOMPLETECLEANUP';
+      Parameters := '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG /ALLOWINCOMPLETECLEANUP';
       if IsUpgrade then
         Parameters := Parameters + ' /UPGRADE';
       WizardForm.PreparingLabel.Caption := ExpandConstant('{cm:RemovingPreviousVersion}');
-      { Native uninstall cannot be cancelled once removal begins. Transfer the
-        visible UI to its progress window and restore Setup on every return. }
+      WizardForm.PreparingLabel.Visible := True;
+      WizardForm.Update;
+      { Keep Setup's own single window visible while the previous uninstaller runs very silently. }
       WasCancelEnabled := WizardForm.CancelButton.Enabled;
       WizardForm.CancelButton.Enabled := False;
       try
-        if ShouldShowUninstallProgress then
-          WizardForm.Hide;
         Result := ExecutePreviousUninstaller(FileName, Parameters, IsDesktopUser, ResultCode, HasIgnoredWaitFailure);
       finally
+        WizardForm.PreparingLabel.Visible := False;
         WizardForm.CancelButton.Enabled := WasCancelEnabled;
-        if ShouldShowUninstallProgress then
-        begin
-          WizardForm.Show;
-          WizardForm.BringToFront;
-        end;
       end;
       if Result then
         exit;
@@ -1333,7 +1305,8 @@ begin
     HasShortcutFailure := True;
 
   if IsPreviousApplicationTarget(PreviousCommonDesktopTarget, True) or
-     ((PreviousCommonDesktopTarget = '') and (PreviousUserDesktopTarget = '') and WizardIsTaskSelected('desktopicon')) then
+     (((not WizardSilent) or (GetArrayLength(PreviousInstallations) = 0)) and
+      (PreviousCommonDesktopTarget = '') and (PreviousUserDesktopTarget = '') and WizardIsTaskSelected('desktopicon')) then
     if not RecreateInstalledShortcut(ExpandConstant('{commondesktop}\{#AppName}.lnk'),
       ExpandConstant('{app}\{#AppExeName}'), '') then
       HasShortcutFailure := True;
@@ -1630,6 +1603,7 @@ var
 begin
   if Step = ssPostInstall then
   begin
+    HasCompletedPostInstall := True;
     UpdateInstalledShortcuts();
     { Inno recreates its uninstall key when saving uninstall information. }
     if not (RegWriteDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'ShutdownProtocolVersion', 1) and
@@ -1643,11 +1617,13 @@ begin
     if not RunController(ExpandConstant('{app}\{#AppExeName}'), '--hosts-control install', False, 10000, ResultCode) then
       Log(Format('Service installation failed with code %d.', [ResultCode]));
   end
-  else if (Step = ssDone) and (not WizardSilent) and LaunchCheckBox.Visible and LaunchCheckBox.Checked then
+  else if (Step = ssDone) and HasCompletedPostInstall and (DesktopUserToken <> 0) and
+          (((not WizardSilent) and LaunchCheckBox.Visible and LaunchCheckBox.Checked) or
+           HasCommandLineParameter('/LAUNCH')) then
   begin
     { Use the desktop shell's identity, even if Setup was launched elevated.
       Never fall back to launching the interactive app with Setup's identity. }
-    if StartProgram(ExpandConstant('{app}\{#AppExeName}'), '', True, 0, ProcessInfo, ResultCode) then
+    if StartProgram(ExpandConstant('{app}\{#AppExeName}'), '--ui', True, 0, ProcessInfo, ResultCode) then
     begin
       WindowsCloseHandle(ProcessInfo.Thread);
       WindowsCloseHandle(ProcessInfo.Process);
@@ -1678,20 +1654,22 @@ end;
 procedure CurUninstallStepChanged(Step: TUninstallStep);
 var
   ErrorDetail: String;
+  Processes: TRunningProcesses;
 begin
   if Step <> usUninstall then
     exit;
-  { Uninstall shares best-effort resource cleanup with Setup. File-in-use errors
-    remain the native uninstaller's responsibility, not a second dialog flow. }
-  if FileExists(ExpandConstant('{app}\{#AppExeName}')) then
-  begin
-    UninstallProgressForm.StatusLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}');
-    RequestCooperativeExit(ExpandConstant('{app}'), DesktopUserToken <> 0);
-  end;
-  { Only same-directory replacement requests preservation. Older uninstallers
-    ignore this option; their historical state reset is intentionally accepted. }
+  { Only same-directory replacement requests preservation. Setup already verified
+    and closed running processes before launching the upgrade uninstaller. }
   if HasCommandLineParameter('/UPGRADE') then
     exit;
+  { Uninstall shares best-effort resource cleanup with Setup. File-in-use errors
+    remain the native uninstaller's responsibility, not a second dialog flow. }
+  if FileExists(ExpandConstant('{app}\{#AppExeName}')) and
+     FindInstallationProcesses(ExpandConstant('{app}'), False, Processes) and
+     (GetArrayLength(Processes) > 0) then
+  begin
+    RequestCooperativeExit(ExpandConstant('{app}'), DesktopUserToken <> 0);
+  end;
   CleanupPreviousShortcuts(ExpandConstant('{app}'), ExpandConstant('{uninstallexe}'));
   if not CleanupOwnedTasks(ExpandConstant('{app}\{#AppExeName}'), ErrorDetail) then
     Log('Uninstall task cleanup failed: ' + ErrorDetail);
