@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
 using Avalonia.Controls;
@@ -260,7 +259,7 @@ public sealed class EverythingModTests
     {
         page.SelectedPlugin = page.ToolSettings.NativePlugins.Single();
         var icon = page.SelectedPlugin.Plugin.BeautifulIcon ?? throw new AssertionException("Missing embedded Everything icon.");
-        var svg = XDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(icon)));
+        var svg = XDocument.Parse(icon);
         Assert.That(svg.Root?.Name, Is.EqualTo(XName.Get("svg", "http://www.w3.org/2000/svg")));
         var tab = page.ContentTabItems.OfType<ChatPluginPageViewModel.SettingsTabItem>().Single();
         Assert.That(tab.SettingsItems, Is.SameAs(page.SelectedPlugin.Plugin.SettingsItems));

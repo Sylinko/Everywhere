@@ -1,0 +1,166 @@
+<UserControl
+  x:Class="Everywhere.Views.Modding.ModSourcesDialog" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:modding="clr-namespace:Everywhere.Views.Modding"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" x:Name="Self"
+  x:DataType="modding:ModSourcesDialog">
+  <StackPanel
+    Width="640" Spacing="12">
+    <DockPanel HorizontalSpacing="12">
+      <Button
+        Classes="Secondary" DockPanel.Dock="Right"
+        VerticalAlignment="Center"
+        shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
+        Command="{Binding OpenAddSourceDialogCommand}"
+        Content="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_AddButton}}"
+        IsEnabled="{Binding !IsSubmitting}"/>
+
+      <TextBlock
+        Classes="Muted Caption" VerticalAlignment="Center"
+        Text="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_Description}}"
+        TextWrapping="Wrap"/>
+    </DockPanel>
+
+    <shadui:Toast
+      Title="{I18N {x:Static LocaleKey.Common_Error}}"
+      HorizontalAlignment="Stretch" CanDismiss="False"
+      CanDismissByClicking="False"
+      Content="{Binding ErrorMessage}"
+      IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+      Notification="Error"/>
+
+    <ScrollViewer
+      MaxHeight="360" HorizontalScrollBarVisibility="Disabled"
+      VerticalScrollBarVisibility="Auto">
+      <ItemsControl
+        Classes="Draggable"
+        ItemsSource="{Binding SourceItems}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="modding:ModSourcesDialog+SourceItemPresentation">
+            <shadui:SmoothBorder
+              Classes="SourceRow" Padding="10,8"
+              Background="Transparent"
+              BorderBrush="{DynamicResource BorderColor}"
+              BorderThickness="1"
+              CornerRadius="{DynamicResource XlCornerRadius}">
+              <Grid
+                ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                <Border
+                  x:Name="DragHandle" Grid.Column="0"
+                  Padding="2,6" VerticalAlignment="Center"
+                  Background="Transparent" Cursor="SizeNorthSouth"
+                  ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_DragToReorder}}">
+                  <TablerIcon
+                    Foreground="{DynamicResource MutedColor}"
+                    IsHitTestVisible="False" Kind="GripVertical"
+                    Size="{DynamicResource FontSizeL}"/>
+                </Border>
+
+                <StackPanel
+                  Grid.Column="1" VerticalAlignment="Center"
+                  Spacing="4">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="6">
+                    <TextBlock
+                      Classes="Strong" VerticalAlignment="Center"
+                      Text="{Binding DisplayNameKey^}"/>
+
+                    <shadui:Badge
+                      Background="{DynamicResource SuccessColor60}"
+                      Content="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_SignedBadge}}"
+                      Foreground="{DynamicResource BadgeForegroundColor}"
+                      IsVisible="{Binding IsSigned}"/>
+
+                    <shadui:Badge
+                      Background="{DynamicResource WarningColor60}"
+                      Content="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_UnsignedBadge}}"
+                      Foreground="{DynamicResource BadgeForegroundColor}"
+                      IsVisible="{Binding IsUnsigned}"/>
+
+                    <shadui:Badge
+                      Background="{DynamicResource SecondaryColor}"
+                      Content="{Binding MirrorsBadgeKey^, FallbackValue={x:Null}}"
+                      Foreground="{DynamicResource SecondaryForegroundColor}"
+                      IsVisible="{Binding HasMirrors}"/>
+                  </StackPanel>
+
+                  <TextBlock
+                    Classes="Muted Caption"
+                    Text="{Binding SubtitleKey^}"
+                    TextTrimming="CharacterEllipsis"
+                    ToolTip.Tip="{Binding ToolTipText}"/>
+                </StackPanel>
+
+                <StackPanel
+                  Grid.Column="2" VerticalAlignment="Center"
+                  Orientation="Horizontal" Spacing="4">
+                  <Button
+                    x:Name="RemoveSourceButton" Classes="Ghost Compact Uniform"
+                    IsEnabled="{Binding !#Self.IsSubmitting}"
+                    IsVisible="{Binding IsRemovable}"
+                    ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Delete}}">
+                    <TablerIcon
+                      Foreground="{DynamicResource DestructiveColor}"
+                      Kind="Trash"
+                      Size="{DynamicResource FontSizeM}"/>
+                    <Button.Flyout>
+                      <Flyout>
+                        <StackPanel
+                          Margin="6" Spacing="4">
+                          <TextBlock
+                            Margin="6,4"
+                            Text="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_DeleteConfirmation}}"/>
+                          <StackPanel
+                            HorizontalAlignment="Right" Orientation="Horizontal"
+                            Spacing="4">
+                            <Button
+                              Classes="Secondary Compact" MinWidth="48"
+                              Content="{I18N {x:Static LocaleKey.Common_Cancel}}">
+                              <Interaction.Behaviors>
+                                <ButtonClickEventTriggerBehavior>
+                                  <HideFlyoutAction Flyout="{Binding #RemoveSourceButton.Flyout}"/>
+                                </ButtonClickEventTriggerBehavior>
+                              </Interaction.Behaviors>
+                            </Button>
+                            <Button
+                              Classes="Destructive Compact" MinWidth="48"
+                              Content="{I18N {x:Static LocaleKey.Common_Delete}}">
+                              <Interaction.Behaviors>
+                                <ButtonClickEventTriggerBehavior>
+                                  <InvokeCommandAction
+                                    Command="{Binding #Self.RemoveSourceCommand}"
+                                    CommandParameter="{Binding}"/>
+                                  <HideFlyoutAction Flyout="{Binding #RemoveSourceButton.Flyout}"/>
+                                </ButtonClickEventTriggerBehavior>
+                              </Interaction.Behaviors>
+                            </Button>
+                          </StackPanel>
+                        </StackPanel>
+                      </Flyout>
+                    </Button.Flyout>
+                  </Button>
+
+                  <shadui:AsyncToggleSwitch
+                    Margin="4,0,0,0" VerticalAlignment="Center"
+                    Command="{Binding SetEnabledCommand}"
+                    IsBusy="{Binding #Self.IsSubmitting}"
+                    IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                    IsEnabled="{Binding CanToggle}"
+                    ToolTip.Tip="{Binding ToggleToolTipKey^}"/>
+                </StackPanel>
+              </Grid>
+            </shadui:SmoothBorder>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+
+        <ItemsControl.Styles>
+          <Style Selector="shadui|SmoothBorder.SourceRow">
+            <Setter Property="Margin" Value="0,0,0,6"/>
+          </Style>
+          <Style Selector="shadui|SmoothBorder.SourceRow:pointerover">
+            <Setter Property="Background" Value="{DynamicResource GhostColor}"/>
+          </Style>
+        </ItemsControl.Styles>
+      </ItemsControl>
+    </ScrollViewer>
+  </StackPanel>
+</UserControl>

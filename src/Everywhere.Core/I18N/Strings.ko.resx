@@ -1187,13 +1187,13 @@
         <value>{0} 링크</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>MCP &quot;{0}&quot;를 시작할 수 없습니다.</value>
+        <value>MCP "{0}"를 시작할 수 없습니다.</value>
     </data>
     <data name="ChatPluginManager_Common_InvalidMcpTransportConfiguration" xml:space="preserve">
         <value>잘못된 MCP 구성입니다.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
+        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_StartFailure" xml:space="preserve">
         <value>This MCP server requires {0}. Install it before starting the server.</value>
@@ -3114,6 +3114,511 @@
     <data name="Modalities_Video" xml:space="preserve">
         <value>비디오</value>
     </data>
+    <data name="ModPage_ConfirmCascadeDisable_DialogTitle" xml:space="preserve">
+        <value>종속 모드 비활성화</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeDisable_Message" xml:space="preserve">
+        <value>다음 활성화된 모드가 {0}에 의존하므로 함께 비활성화됩니다:
+
+{1}</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_DialogTitle" xml:space="preserve">
+        <value>필수 종속 모드 활성화</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_Message" xml:space="preserve">
+        <value>{0} 모드는 비활성화된 {2}개의 모드에 의존합니다:
+
+{1}
+
+계속하면 해당 모드도 함께 활성화됩니다.</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_AcceptButton" xml:space="preserve">
+        <value>동의 및 설치</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_DialogTitle" xml:space="preserve">
+        <value>모드 설치 확인</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_EnableDependenciesHeader" xml:space="preserve">
+        <value>비활성화된 다음 종속 모드도 함께 활성화됩니다:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicenseEntry" xml:space="preserve">
+        <value>{0} v{1} ({2})</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicensesHeader" xml:space="preserve">
+        <value>다음 라이선스 동의가 필요합니다:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_PackagesHeader" xml:space="preserve">
+        <value>다음 패키지가 설치되거나 업데이트됩니다:</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_DialogTitle" xml:space="preserve">
+        <value>모드 롤백</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_Message" xml:space="preserve">
+        <value>{0}을(를) 이전 버전 {1}(으)로 롤백하시겠습니까?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DeleteDataCheckBox" xml:space="preserve">
+        <value>저장된 모드 데이터도 함께 삭제</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DependentsWarning" xml:space="preserve">
+        <value>함께 제거될 종속 모드:
+{0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DialogTitle" xml:space="preserve">
+        <value>{0} 제거</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_Message" xml:space="preserve">
+        <value>{0}을(를) 제거하시겠습니까?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_RemoveOrphansCheckBox" xml:space="preserve">
+        <value>더 이상 사용하지 않는 자동 설치 종속성도 제거 ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_Conflict" xml:space="preserve">
+        <value>모드 또는 어셈블리 충돌</value>
+    </data>
+    <data name="ModPage_Diagnostic_DependencyFailed" xml:space="preserve">
+        <value>필수 종속 모드를 사용할 수 없음</value>
+    </data>
+    <data name="ModPage_Diagnostic_Generic" xml:space="preserve">
+        <value>모드 문제({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_IncompatibleHost" xml:space="preserve">
+        <value>이 Everywhere 버전과 호환되지 않음</value>
+    </data>
+    <data name="ModPage_Diagnostic_InstallationMissing" xml:space="preserve">
+        <value>모드 파일이 없거나 손상됨</value>
+    </data>
+    <data name="ModPage_Diagnostic_LoadFailed" xml:space="preserve">
+        <value>모드 로드 실패</value>
+    </data>
+    <data name="ModPage_Diagnostic_LocalDirectoryIssue" xml:space="preserve">
+        <value>로컬 개발 폴더 문제</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModInitializeFailed" xml:space="preserve">
+        <value>모드 초기화 실패</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModRetirementFailed" xml:space="preserve">
+        <value>모드 중지 중 오류 발생</value>
+    </data>
+    <data name="ModPage_Diagnostic_PendingUnload" xml:space="preserve">
+        <value>리소스 해제를 위해 다시 시작 대기 중</value>
+    </data>
+    <data name="ModPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>왼쪽에서 모드를 선택하거나 로컬 패키지를 가져오세요</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Description" xml:space="preserve">
+        <value>리포지토리 소스를 추가하거나 로컬 .zip 패키지 또는 개발 폴더를 가져오세요</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Title" xml:space="preserve">
+        <value>사용 가능한 원격 모드가 없습니다</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Description" xml:space="preserve">
+        <value>탐색 탭을 둘러보거나 로컬 .zip 패키지 또는 폴더를 가져오세요</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Title" xml:space="preserve">
+        <value>아직 설치된 모드가 없습니다</value>
+    </data>
+    <data name="ModPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>이 모드 활성화 또는 비활성화</value>
+    </data>
+    <data name="ModPage_Error_DependenciesUnsatisfied_DialogTitle" xml:space="preserve">
+        <value>종속성을 해결할 수 없습니다</value>
+    </data>
+    <data name="ModPage_Error_DependencyConflict_Header" xml:space="preserve">
+        <value>선택한 모드에 해결되지 않은 종속성 또는 버전 충돌이 있습니다:</value>
+    </data>
+    <data name="ModPage_Error_MissingDependencies_Header" xml:space="preserve">
+        <value>활성화된 소스에서 다음 필수 종속성을 찾을 수 없습니다:</value>
+    </data>
+    <data name="ModPage_FilterButton_ToolTip" xml:space="preserve">
+        <value>필터 및 정렬</value>
+    </data>
+    <data name="ModPage_FilterMenu_Reset" xml:space="preserve">
+        <value>필터 초기화</value>
+    </data>
+    <data name="ModPage_FilterMenu_SortHeader" xml:space="preserve">
+        <value>정렬 기준</value>
+    </data>
+    <data name="ModPage_Filter_AllCategories" xml:space="preserve">
+        <value>모든 카테고리</value>
+    </data>
+    <data name="ModPage_Filter_AllSources" xml:space="preserve">
+        <value>모든 소스</value>
+    </data>
+    <data name="ModPage_ImportButton_ToolTip" xml:space="preserve">
+        <value>로컬 모드 가져오기</value>
+    </data>
+    <data name="ModPage_ImportDirectoryPicker_Title" xml:space="preserve">
+        <value>모드 폴더 선택</value>
+    </data>
+    <data name="ModPage_ImportDirectory_MenuItem" xml:space="preserve">
+        <value>로컬 폴더 가져오기...</value>
+    </data>
+    <data name="ModPage_ImportZipPicker_Title" xml:space="preserve">
+        <value>모드 패키지(.zip) 선택</value>
+    </data>
+    <data name="ModPage_ImportZip_MenuItem" xml:space="preserve">
+        <value>패키지(.zip) 가져오기...</value>
+    </data>
+    <data name="ModPage_IncompatibleBadge" xml:space="preserve">
+        <value>호환되지 않음</value>
+    </data>
+    <data name="ModPage_Incompatible_Platform" xml:space="preserve">
+        <value>현재 플랫폼({0})에서 지원되지 않습니다.</value>
+    </data>
+    <data name="ModPage_Incompatible_Version" xml:space="preserve">
+        <value>호환되는 Everywhere 버전이 필요합니다(현재: {0}, Mod API {1}).</value>
+    </data>
+    <data name="ModPage_InstallButton_Content" xml:space="preserve">
+        <value>설치</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Confirm" xml:space="preserve">
+        <value>시작하기</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendBody" xml:space="preserve">
+        <value>활성화된 모드는 앱에 도구, 명령 또는 설정을 등록합니다. 비활성화하거나 제거하면 자동으로 철회되며, 핫 언로드가 불가능한 경우 재시작 후 적용됩니다.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendTitle" xml:space="preserve">
+        <value>필요에 따라 기능 확장</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Introduction" xml:space="preserve">
+        <value>모드는 사용자 지정 도구, 로컬 통합 및 설정으로 Everywhere를 확장합니다.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Note" xml:space="preserve">
+        <value>모드 시스템은 현재 실험적 기능이며, 향후 릴리스에서 API와 동작이 변경될 수 있습니다.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityBody" xml:space="preserve">
+        <value>모드 코드는 Everywhere 프로세스 내부에서 현재 사용자 계정과 동일한 권한으로 실행됩니다. 신뢰할 수 있는 소스의 모드만 설치하고 활성화하세요.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityTitle" xml:space="preserve">
+        <value>프로세스 내 실행 및 신뢰</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesBody" xml:space="preserve">
+        <value>탐색에서 공식 또는 사용자 지정 소스의 모드를 찾아 설치하거나, 로컬 ZIP 패키지 및 개발 디렉터리를 직접 가져올 수 있습니다.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesTitle" xml:space="preserve">
+        <value>카탈로그 탐색 및 로컬 가져오기</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Title" xml:space="preserve">
+        <value>모드 시작하기</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Empty" xml:space="preserve">
+        <value>이 모드에는 라이선스 본문 문서가 포함되어 있지 않습니다.</value>
+    </data>
+    <data name="ModPage_LicenseDialog_ThirdPartySection" xml:space="preserve">
+        <value>타사 고지 사항</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Title" xml:space="preserve">
+        <value>라이선스 - {0}</value>
+    </data>
+    <data name="ModPage_Metadata_ApiVersion" xml:space="preserve">
+        <value>API 호환성</value>
+    </data>
+    <data name="ModPage_Metadata_Author" xml:space="preserve">
+        <value>작성자</value>
+    </data>
+    <data name="ModPage_Metadata_CardTitle" xml:space="preserve">
+        <value>세부 정보</value>
+    </data>
+    <data name="ModPage_Metadata_Category" xml:space="preserve">
+        <value>카테고리</value>
+    </data>
+    <data name="ModPage_Metadata_DependenciesHeader" xml:space="preserve">
+        <value>종속성</value>
+    </data>
+    <data name="ModPage_Metadata_DependencyOptional" xml:space="preserve">
+        <value>{0} (선택 사항)</value>
+    </data>
+    <data name="ModPage_Metadata_Homepage" xml:space="preserve">
+        <value>홈페이지</value>
+    </data>
+    <data name="ModPage_Metadata_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="ModPage_Metadata_License" xml:space="preserve">
+        <value>라이선스</value>
+    </data>
+    <data name="ModPage_Metadata_LocalPath" xml:space="preserve">
+        <value>로컬 경로</value>
+    </data>
+    <data name="ModPage_Metadata_PackageSize" xml:space="preserve">
+        <value>패키지 크기</value>
+    </data>
+    <data name="ModPage_Metadata_PublishedAt" xml:space="preserve">
+        <value>게시일</value>
+    </data>
+    <data name="ModPage_Metadata_Repository" xml:space="preserve">
+        <value>리포지토리</value>
+    </data>
+    <data name="ModPage_Metadata_ResourcesHeader" xml:space="preserve">
+        <value>리소스</value>
+    </data>
+    <data name="ModPage_Metadata_Source" xml:space="preserve">
+        <value>소스</value>
+    </data>
+    <data name="ModPage_Metadata_TagsHeader" xml:space="preserve">
+        <value>카테고리 및 태그</value>
+    </data>
+    <data name="ModPage_Metadata_Version" xml:space="preserve">
+        <value>버전</value>
+    </data>
+    <data name="ModPage_Metadata_ViewLicense" xml:space="preserve">
+        <value>라이선스 보기</value>
+    </data>
+    <data name="ModPage_Notice_TechnicalDetails" xml:space="preserve">
+        <value>기술 세부 정보</value>
+    </data>
+    <data name="ModPage_OpenLocalFolderButton_ToolTip" xml:space="preserve">
+        <value>모드 폴더 열기</value>
+    </data>
+    <data name="ModPage_ProgressToast_Installing" xml:space="preserve">
+        <value>{0} 설치 중...</value>
+    </data>
+    <data name="ModPage_ProgressToast_Updating" xml:space="preserve">
+        <value>{0} 업데이트 중...</value>
+    </data>
+    <data name="ModPage_Readme_Empty" xml:space="preserve">
+        <value>이 모드에는 README 문서가 없습니다.</value>
+    </data>
+    <data name="ModPage_RefreshButton_ToolTip" xml:space="preserve">
+        <value>모드 카탈로그 새로 고침</value>
+    </data>
+    <data name="ModPage_ReloadLocalButton_Content" xml:space="preserve">
+        <value>다시 로드</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionDisable" xml:space="preserve">
+        <value>재시작 시 비활성화</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUninstall" xml:space="preserve">
+        <value>재시작 시 제거</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUpdate" xml:space="preserve">
+        <value>v{0}(으)로 업데이트</value>
+    </data>
+    <data name="ModPage_RestartDialog_DiagnosticsHeader" xml:space="preserve">
+        <value>기술 세부 정보</value>
+    </data>
+    <data name="ModPage_RestartDialog_Explanation" xml:space="preserve">
+        <value>일부 모드를 비활성화, 업데이트 또는 제거하는 동안 모든 리소스를 즉시 해제하지 못했습니다. 안정성을 위해 이번 세션에서는 추가 모드 변경이 일시 중지되며 대기 중인 변경 사항은 Everywhere를 다시 시작하면 자동으로 적용됩니다.</value>
+    </data>
+    <data name="ModPage_RestartDialog_PendingModsHeader" xml:space="preserve">
+        <value>재시작 대기 중인 변경 사항:</value>
+    </data>
+    <data name="ModPage_RestartDialog_RestartButton" xml:space="preserve">
+        <value>Everywhere 다시 시작</value>
+    </data>
+    <data name="ModPage_RestartDialog_SaveWorkWarning" xml:space="preserve">
+        <value>다시 시작하기 전에 진행 중인 대화나 작업을 저장하세요.</value>
+    </data>
+    <data name="ModPage_RestartDialog_Title" xml:space="preserve">
+        <value>모드 변경 사항을 적용하려면 Everywhere 다시 시작</value>
+    </data>
+    <data name="ModPage_RestartRequired_Description" xml:space="preserve">
+        <value>일부 모드가 아직 리소스를 사용 중입니다. 대기 중인 변경 사항은 다시 시작 후 적용됩니다.</value>
+    </data>
+    <data name="ModPage_RestartRequired_Title" xml:space="preserve">
+        <value>변경 사항을 적용하려면 다시 시작해야 합니다</value>
+    </data>
+    <data name="ModPage_RollbackButton_Content" xml:space="preserve">
+        <value>롤백 ({0})</value>
+    </data>
+    <data name="ModPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>모드 검색...</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Detail" xml:space="preserve">
+        <value>이 모드에는 현재 플랫폼용 빌드가 포함되어 있지 않습니다.</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Title" xml:space="preserve">
+        <value>지원되지 않는 플랫폼</value>
+    </data>
+    <data name="ModPage_Sort_Default" xml:space="preserve">
+        <value>기본 순서</value>
+    </data>
+    <data name="ModPage_Source_BuiltIn" xml:space="preserve">
+        <value>내장</value>
+    </data>
+    <data name="ModPage_Source_LocalDir" xml:space="preserve">
+        <value>로컬 폴더</value>
+    </data>
+    <data name="ModPage_Source_LocalZip" xml:space="preserve">
+        <value>로컬 ZIP</value>
+    </data>
+    <data name="ModPage_Source_Official" xml:space="preserve">
+        <value>공식</value>
+    </data>
+    <data name="ModPage_SourcesButton_ToolTip" xml:space="preserve">
+        <value>모드 소스 관리</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddButton" xml:space="preserve">
+        <value>소스 추가</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddHeader" xml:space="preserve">
+        <value>소스 추가</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BrowseFolder_ToolTip" xml:space="preserve">
+        <value>폴더 찾아보기</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInAlwaysEnabled_ToolTip" xml:space="preserve">
+        <value>기본 제공 모드 소스는 항상 활성화됩니다</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInSubtitle" xml:space="preserve">
+        <value>Everywhere에 기본 제공되는 공식 모드</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DeleteConfirmation" xml:space="preserve">
+        <value>이 소스를 제거하시겠습니까?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Description" xml:space="preserve">
+        <value>모드 및 종속성 확인 시 위에서 아래 순서로 소스를 검색합니다. 항목을 드래그하여 순서를 변경할 수 있습니다.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DragToReorder" xml:space="preserve">
+        <value>드래그하여 우선순위 변경</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdHint" xml:space="preserve">
+        <value>소문자, 숫자, 점, 하이픈 또는 밑줄만 사용할 수 있습니다. 비워 두면 자동으로 생성됩니다.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdLabel" xml:space="preserve">
+        <value>소스 ID(선택 사항)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdPlaceholder" xml:space="preserve">
+        <value>선택적 사용자 지정 ID (예: my-feed)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsCountBadge" xml:space="preserve">
+        <value>미러 {0}개</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsLabel" xml:space="preserve">
+        <value>미러 URL(선택 사항)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsPlaceholder" xml:space="preserve">
+        <value>선택적 미러 URL (쉼표로 구분)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_SignedBadge" xml:space="preserve">
+        <value>서명됨</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Title" xml:space="preserve">
+        <value>모드 소스</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Toggle_ToolTip" xml:space="preserve">
+        <value>이 모드 소스 활성화 또는 비활성화</value>
+    </data>
+    <data name="ModPage_SourcesDialog_TrustButton" xml:space="preserve">
+        <value>신뢰 및 추가</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UnsignedBadge" xml:space="preserve">
+        <value>서명되지 않음</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmMessage" xml:space="preserve">
+        <value>이 모드 소스({0})는 서명되지 않았습니다. 신뢰할 수 없는 소스의 모드는 기기에서 임의의 코드를 실행할 수 있습니다. 신뢰하고 추가하시겠습니까?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmTitle" xml:space="preserve">
+        <value>서명되지 않은 모드 소스를 신뢰하시겠습니까?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlLabel" xml:space="preserve">
+        <value>인덱스 URL 또는 로컬 폴더</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlPlaceholder" xml:space="preserve">
+        <value>인덱스 URL (https://.../index.json) 또는 로컬 폴더 경로</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_InvalidId" xml:space="preserve">
+        <value>소스 ID는 소문자 또는 숫자로 시작하고 끝나야 하며 a-z, 0-9, '.', '-', '_'만 포함해야 합니다.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_UrlRequired" xml:space="preserve">
+        <value>HTTPS/HTTP 인덱스 URL을 입력하거나 로컬 폴더를 선택하세요.</value>
+    </data>
+    <data name="ModPage_Status_Active" xml:space="preserve">
+        <value>활성</value>
+    </data>
+    <data name="ModPage_Status_Error" xml:space="preserve">
+        <value>오류</value>
+    </data>
+    <data name="ModPage_Status_Inactive" xml:space="preserve">
+        <value>비활성화됨</value>
+    </data>
+    <data name="ModPage_Status_Loading" xml:space="preserve">
+        <value>로딩 중</value>
+    </data>
+    <data name="ModPage_Status_PendingRestart" xml:space="preserve">
+        <value>재시작 대기 중</value>
+    </data>
+    <data name="ModPage_Status_Skipped" xml:space="preserve">
+        <value>건너뜀</value>
+    </data>
+    <data name="ModPage_Tab_Discover_Header" xml:space="preserve">
+        <value>탐색</value>
+    </data>
+    <data name="ModPage_Tab_Installed_Header" xml:space="preserve">
+        <value>설치됨</value>
+    </data>
+    <data name="ModPage_Tab_Overview_Header" xml:space="preserve">
+        <value>개요</value>
+    </data>
+    <data name="ModPage_Tab_Settings_Header" xml:space="preserve">
+        <value>설정</value>
+    </data>
+    <data name="ModPage_Title" xml:space="preserve">
+        <value>모드</value>
+    </data>
+    <data name="ModPage_Toast_CatalogRefreshFailed" xml:space="preserve">
+        <value>모드 카탈로그 새로 고침 실패</value>
+    </data>
+    <data name="ModPage_Toast_OperationCompletedWithErrors" xml:space="preserve">
+        <value>완료되었으나 일부 모드에 문제가 있습니다</value>
+    </data>
+    <data name="ModPage_Toast_OperationFailed" xml:space="preserve">
+        <value>모드 작업 실패</value>
+    </data>
+    <data name="ModPage_ToolTip_AutoDependency" xml:space="preserve">
+        <value>다른 모드의 종속성으로 자동 설치됨</value>
+    </data>
+    <data name="ModPage_ToolTip_ChannelAvailable" xml:space="preserve">
+        <value>{0} 채널 버전 사용 가능 (v{1})</value>
+    </data>
+    <data name="ModPage_UninstallButton_Content" xml:space="preserve">
+        <value>제거</value>
+    </data>
+    <data name="ModPage_UpdateAvailableBadge" xml:space="preserve">
+        <value>업데이트</value>
+    </data>
+    <data name="ModPage_UpdateButton_Content" xml:space="preserve">
+        <value>{0}(으)로 업데이트</value>
+    </data>
+    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
+        <value>기본 제공</value>
+    </data>
+    <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
+        <value>서명됨 ({0})</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalArchive" xml:space="preserve">
+        <value>로컬 압축 패키지</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalDirectory" xml:space="preserve">
+        <value>로컬 개발 디렉터리</value>
+    </data>
+    <data name="ModPage_VerificationBadge_OfficialSigned" xml:space="preserve">
+        <value>공식 인증됨</value>
+    </data>
+    <data name="ModPage_VerificationBadge_UnsignedSource" xml:space="preserve">
+        <value>서명되지 않음 ({0})</value>
+    </data>
+    <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
+        <value>공식 Everywhere 릴리스에 기본 포함됨</value>
+    </data>
+    <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
+        <value>소스 "{0}" 공개 키 서명 검증됨 (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_LocalArchive" xml:space="preserve">
+        <value>로컬 압축 패키지에서 가져옴 (검증되지 않음)</value>
+    </data>
+    <data name="ModPage_Verification_LocalDirectory" xml:space="preserve">
+        <value>로컬 개발 디렉터리에서 가져옴 (검증되지 않음)</value>
+    </data>
+    <data name="ModPage_Verification_OfficialSigned" xml:space="preserve">
+        <value>Everywhere 공식 저장소 서명 검증됨 (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_UnsignedSource" xml:space="preserve">
+        <value>서명되지 않은 소스 "{0}"에서 제공됨 (SHA-256 체크섬만 확인)</value>
+    </data>
+    <data name="ModPage_ViewDetailsButton_Content" xml:space="preserve">
+        <value>자세히 보기</value>
+    </data>
     <data name="ModelProviderSchema_Anthropic" xml:space="preserve">
         <value>Anthropic</value>
     </data>
@@ -3802,52 +4307,52 @@
         <value>텍스트 선택</value>
     </data>
     <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
-        <value>설정 사전 키 &quot;{0}&quot;을(를) &quot;{1}&quot;로 읽을 수 없습니다.</value>
+        <value>설정 사전 키 "{0}"을(를) "{1}"로 읽을 수 없습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
-        <value>설정 사전 &quot;{0}&quot;은 변경할 수 없으며 교체할 수 없습니다.</value>
+        <value>설정 사전 "{0}"은 변경할 수 없으며 교체할 수 없습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
-        <value>설정 목록 &quot;{0}&quot;에는 JSON 배열이 필요합니다.</value>
+        <value>설정 목록 "{0}"에는 JSON 배열이 필요합니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
-        <value>설정 사전 &quot;{0}&quot;에는 JSON 객체가 필요합니다.</value>
+        <value>설정 사전 "{0}"에는 JSON 객체가 필요합니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
-        <value>설정 객체 &quot;{0}&quot;에는 JSON 객체가 필요합니다.</value>
+        <value>설정 객체 "{0}"에는 JSON 객체가 필요합니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
-        <value>설정 목록 &quot;{0}&quot;은 변경할 수 없으며 교체할 수 없습니다.</value>
+        <value>설정 목록 "{0}"은 변경할 수 없으며 교체할 수 없습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
-        <value>null을 비nullable 설정 값 &quot;{0}&quot;에 할당할 수 없습니다.</value>
+        <value>null을 비nullable 설정 값 "{0}"에 할당할 수 없습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
-        <value>설정 객체 &quot;{0}&quot;가 비어 있으며 생성할 수 없습니다.</value>
+        <value>설정 객체 "{0}"가 비어 있으며 생성할 수 없습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
-        <value>설정 문서 &quot;{0}&quot; 구문 분석 실패, 새로운 메모리 문서가 생성되었습니다.</value>
+        <value>설정 문서 "{0}" 구문 분석 실패, 새로운 메모리 문서가 생성되었습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
-        <value>설정 값 &quot;{0}&quot;은 null로 설정할 수 있지만, 해당 속성은 쓰기 불가능하여 비워둘 수 없습니다.</value>
+        <value>설정 값 "{0}"은 null로 설정할 수 있지만, 해당 속성은 쓰기 불가능하여 비워둘 수 없습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
-        <value>설정 값 &quot;{0}&quot;을(를) &quot;{1}&quot;로 읽을 수 없습니다.</value>
+        <value>설정 값 "{0}"을(를) "{1}"로 읽을 수 없습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
-        <value>직렬화된 하위 트리 &quot;{0}&quot;는 읽기 전용 속성으로 교체할 수 없습니다.</value>
+        <value>직렬화된 하위 트리 "{0}"는 읽기 전용 속성으로 교체할 수 없습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
-        <value>알 수 없는 설정 구성원 &quot;{0}&quot;입니다.</value>
+        <value>알 수 없는 설정 구성원 "{0}"입니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
-        <value>설정 속성 &quot;{1}&quot;의 유형 &quot;{0}&quot;은 지원되지 않습니다.</value>
+        <value>설정 속성 "{1}"의 유형 "{0}"은 지원되지 않습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
-        <value>설정 JSON을 &quot;{0}&quot;에 쓰기 실패 (시도 {1}회, 내용 길이 {2} 바이트).</value>
+        <value>설정 JSON을 "{0}"에 쓰기 실패 (시도 {1}회, 내용 길이 {2} 바이트).</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
-        <value>설정 경로 &quot;{0}&quot; 쓰기 실패.</value>
+        <value>설정 경로 "{0}" 쓰기 실패.</value>
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>문서 보기</value>
@@ -3957,9 +4462,6 @@
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
         <value>기술을 다시 스캔할 수 없습니다.</value>
     </data>
-    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>기술이 다시 스캔되었습니다.</value>
-    </data>
     <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>기능 검색...</value>
     </data>
@@ -4021,7 +4523,7 @@
         <value>자동 업데이트</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere는 시작 후 자동으로 실행됩니다. &quot;관리자 권한으로 시작&quot;이 활성화된 경우, 현재 옵션은 관리자 모드에서만 비활성화할 수 있습니다.</value>
+        <value>Everywhere는 시작 후 자동으로 실행됩니다. "관리자 권한으로 시작"이 활성화된 경우, 현재 옵션은 관리자 모드에서만 비활성화할 수 있습니다.</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Header" xml:space="preserve">
         <value>시작 시 실행</value>
@@ -4294,13 +4796,13 @@
         <value>승인 도우미 파일 읽기 허용</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>채팅에서 선택한 어시스턴트가 &quot;새 어시스턴트 할당&quot; 도구를 통해 일상적인 작업을 위임하면, 기본 하위 에이전트가 독립적인 컨텍스트에서 이를 처리하고 결과를 반환합니다. &quot;자동 선택&quot;은 채팅에서 선택한 어시스턴트를 사용합니다.</value>
+        <value>채팅에서 선택한 어시스턴트가 "새 어시스턴트 할당" 도구를 통해 일상적인 작업을 위임하면, 기본 하위 에이전트가 독립적인 컨텍스트에서 이를 처리하고 결과를 반환합니다. "자동 선택"은 채팅에서 선택한 어시스턴트를 사용합니다.</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
         <value>기본 서브 어시스턴트</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>주 어시스턴트가 필요에 따라 호출하는 비주얼 전문가입니다. 주 어시스턴트가 필요하다고 판단할 때 &quot;새 어시스턴트 할당&quot; 도구를 통해 이미지를 분석하도록 요청합니다. 선택한 모델이 시각 인식 기능을 갖추었는지 확인하세요.</value>
+        <value>주 어시스턴트가 필요에 따라 호출하는 비주얼 전문가입니다. 주 어시스턴트가 필요하다고 판단할 때 "새 어시스턴트 할당" 도구를 통해 이미지를 분석하도록 요청합니다. 선택한 모델이 시각 인식 기능을 갖추었는지 확인하세요.</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>이미지 이해 서브 어시스턴트</value>
@@ -4934,7 +5436,7 @@
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>무엇을 해야 할지 모른다면 기본값으로 두세요. &quot;http(s)://&quot;로 시작해야 합니다.</value>
+        <value>무엇을 해야 할지 모른다면 기본값으로 두세요. "http(s)://"로 시작해야 합니다.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
         <value>API Url</value>
@@ -5025,7 +5527,7 @@
         <value>유용한 링크: </value>
     </data>
     <data name="WelcomeView_IntroStep_Message6" xml:space="preserve">
-        <value>팁: &quot;정보 - 환영 페이지&quot;를 클릭하여 이 메시지를 다시 열 수 있습니다.</value>
+        <value>팁: "정보 - 환영 페이지"를 클릭하여 이 메시지를 다시 열 수 있습니다.</value>
     </data>
     <data name="WelcomeView_LetsStartButton_Content" xml:space="preserve">
         <value>시작합시다!</value>

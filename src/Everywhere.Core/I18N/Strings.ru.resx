@@ -1187,13 +1187,13 @@
         <value>{0} Ссылки</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Не удалось запустить MCP &quot;{0}&quot;</value>
+        <value>Не удалось запустить MCP "{0}"</value>
     </data>
     <data name="ChatPluginManager_Common_InvalidMcpTransportConfiguration" xml:space="preserve">
         <value>Недействительная конфигурация MCP.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
+        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_StartFailure" xml:space="preserve">
         <value>This MCP server requires {0}. Install it before starting the server.</value>
@@ -3114,6 +3114,511 @@
     <data name="Modalities_Video" xml:space="preserve">
         <value>Видео</value>
     </data>
+    <data name="ModPage_ConfirmCascadeDisable_DialogTitle" xml:space="preserve">
+        <value>Отключить зависимые моды</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeDisable_Message" xml:space="preserve">
+        <value>Следующие включённые моды зависят от {0} и также будут отключены:
+
+{1}</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_DialogTitle" xml:space="preserve">
+        <value>Включить требуемые зависимости</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_Message" xml:space="preserve">
+        <value>Мод {0} зависит от {2} отключённых модов:
+
+{1}
+
+Продолжение также включит их.</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_AcceptButton" xml:space="preserve">
+        <value>Принять и установить</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_DialogTitle" xml:space="preserve">
+        <value>Подтвердить установку мода</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_EnableDependenciesHeader" xml:space="preserve">
+        <value>Также будут включены следующие отключённые зависимости:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicenseEntry" xml:space="preserve">
+        <value>{0} v{1} ({2})</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicensesHeader" xml:space="preserve">
+        <value>Требуется принятие лицензии:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_PackagesHeader" xml:space="preserve">
+        <value>Будут установлены или обновлены следующие пакеты:</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_DialogTitle" xml:space="preserve">
+        <value>Откатить мод</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_Message" xml:space="preserve">
+        <value>Откатить {0} к предыдущей версии {1}?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DeleteDataCheckBox" xml:space="preserve">
+        <value>Также удалить сохранённые данные мода</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DependentsWarning" xml:space="preserve">
+        <value>Зависимые моды, которые также будут удалены:
+{0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DialogTitle" xml:space="preserve">
+        <value>Удалить {0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_Message" xml:space="preserve">
+        <value>Вы уверены, что хотите удалить {0}?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_RemoveOrphansCheckBox" xml:space="preserve">
+        <value>Также удалить неиспользуемые автоматически установленные зависимости ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_Conflict" xml:space="preserve">
+        <value>Конфликт модов или сборок</value>
+    </data>
+    <data name="ModPage_Diagnostic_DependencyFailed" xml:space="preserve">
+        <value>Требуемая зависимость недоступна</value>
+    </data>
+    <data name="ModPage_Diagnostic_Generic" xml:space="preserve">
+        <value>Ошибка мода ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_IncompatibleHost" xml:space="preserve">
+        <value>Несовместимо с текущей версией Everywhere</value>
+    </data>
+    <data name="ModPage_Diagnostic_InstallationMissing" xml:space="preserve">
+        <value>Файлы мода отсутствуют или повреждены</value>
+    </data>
+    <data name="ModPage_Diagnostic_LoadFailed" xml:space="preserve">
+        <value>Не удалось загрузить мод</value>
+    </data>
+    <data name="ModPage_Diagnostic_LocalDirectoryIssue" xml:space="preserve">
+        <value>Проблема с локальной папкой разработки</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModInitializeFailed" xml:space="preserve">
+        <value>Не удалось инициализировать мод</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModRetirementFailed" xml:space="preserve">
+        <value>Не удалось корректно остановить мод</value>
+    </data>
+    <data name="ModPage_Diagnostic_PendingUnload" xml:space="preserve">
+        <value>Ожидание перезапуска для освобождения ресурсов</value>
+    </data>
+    <data name="ModPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Выберите мод слева или импортируйте локальный пакет</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Description" xml:space="preserve">
+        <value>Добавьте источник репозитория или импортируйте локальный .zip-пакет или папку разработки</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Title" xml:space="preserve">
+        <value>Нет доступных удалённых модов</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Description" xml:space="preserve">
+        <value>Откройте вкладку «Обзор» или импортируйте локальный .zip-пакет или папку</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Title" xml:space="preserve">
+        <value>Пока нет установленных модов</value>
+    </data>
+    <data name="ModPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>Включить или отключить этот мод</value>
+    </data>
+    <data name="ModPage_Error_DependenciesUnsatisfied_DialogTitle" xml:space="preserve">
+        <value>Не удалось разрешить зависимости</value>
+    </data>
+    <data name="ModPage_Error_DependencyConflict_Header" xml:space="preserve">
+        <value>У выбранного мода есть неразрешённые зависимости или конфликты версий:</value>
+    </data>
+    <data name="ModPage_Error_MissingDependencies_Header" xml:space="preserve">
+        <value>Не удалось найти следующие обязательные зависимости ни в одном включённом источнике:</value>
+    </data>
+    <data name="ModPage_FilterButton_ToolTip" xml:space="preserve">
+        <value>Фильтрация и сортировка</value>
+    </data>
+    <data name="ModPage_FilterMenu_Reset" xml:space="preserve">
+        <value>Сбросить фильтры</value>
+    </data>
+    <data name="ModPage_FilterMenu_SortHeader" xml:space="preserve">
+        <value>Сортировка</value>
+    </data>
+    <data name="ModPage_Filter_AllCategories" xml:space="preserve">
+        <value>Все категории</value>
+    </data>
+    <data name="ModPage_Filter_AllSources" xml:space="preserve">
+        <value>Все источники</value>
+    </data>
+    <data name="ModPage_ImportButton_ToolTip" xml:space="preserve">
+        <value>Импортировать локальный мод</value>
+    </data>
+    <data name="ModPage_ImportDirectoryPicker_Title" xml:space="preserve">
+        <value>Выберите папку мода</value>
+    </data>
+    <data name="ModPage_ImportDirectory_MenuItem" xml:space="preserve">
+        <value>Импортировать локальную папку...</value>
+    </data>
+    <data name="ModPage_ImportZipPicker_Title" xml:space="preserve">
+        <value>Выберите пакет мода (.zip)</value>
+    </data>
+    <data name="ModPage_ImportZip_MenuItem" xml:space="preserve">
+        <value>Импортировать пакет (.zip)...</value>
+    </data>
+    <data name="ModPage_IncompatibleBadge" xml:space="preserve">
+        <value>Несовместим</value>
+    </data>
+    <data name="ModPage_Incompatible_Platform" xml:space="preserve">
+        <value>Не поддерживается на текущей платформе ({0}).</value>
+    </data>
+    <data name="ModPage_Incompatible_Version" xml:space="preserve">
+        <value>Требуется совместимая версия Everywhere (текущая: {0}, Mod API {1}).</value>
+    </data>
+    <data name="ModPage_InstallButton_Content" xml:space="preserve">
+        <value>Установить</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Confirm" xml:space="preserve">
+        <value>Начать</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendBody" xml:space="preserve">
+        <value>Включённые моды регистрируют в приложении инструменты, команды или настройки. При отключении или удалении они отзываются автоматически либо откладываются до перезапуска, если горячая выгрузка невозможна.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendTitle" xml:space="preserve">
+        <value>Расширение возможностей по мере необходимости</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Introduction" xml:space="preserve">
+        <value>Моды расширяют Everywhere пользовательскими инструментами, локальными интеграциями и настройками.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Note" xml:space="preserve">
+        <value>Система модов сейчас является экспериментальной; API и поведение могут измениться в будущих выпусках.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityBody" xml:space="preserve">
+        <value>Код мода выполняется внутри процесса Everywhere с теми же правами, что и ваша учётная запись. Устанавливайте и включайте только моды из надёжных источников.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityTitle" xml:space="preserve">
+        <value>Выполнение в процессе и доверие</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesBody" xml:space="preserve">
+        <value>Ищите и устанавливайте моды из официальных или пользовательских источников во вкладке «Обзор», либо импортируйте локальные ZIP-пакеты и каталоги разработки напрямую.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesTitle" xml:space="preserve">
+        <value>Каталог источников и локальный импорт</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Title" xml:space="preserve">
+        <value>Добро пожаловать в моды</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Empty" xml:space="preserve">
+        <value>Вместе с этим модом не поставляется текст лицензии.</value>
+    </data>
+    <data name="ModPage_LicenseDialog_ThirdPartySection" xml:space="preserve">
+        <value>Уведомления третьих сторон</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Title" xml:space="preserve">
+        <value>Лицензия - {0}</value>
+    </data>
+    <data name="ModPage_Metadata_ApiVersion" xml:space="preserve">
+        <value>Совместимость API</value>
+    </data>
+    <data name="ModPage_Metadata_Author" xml:space="preserve">
+        <value>Автор</value>
+    </data>
+    <data name="ModPage_Metadata_CardTitle" xml:space="preserve">
+        <value>Подробности</value>
+    </data>
+    <data name="ModPage_Metadata_Category" xml:space="preserve">
+        <value>Категория</value>
+    </data>
+    <data name="ModPage_Metadata_DependenciesHeader" xml:space="preserve">
+        <value>Зависимости</value>
+    </data>
+    <data name="ModPage_Metadata_DependencyOptional" xml:space="preserve">
+        <value>{0} (необяз.)</value>
+    </data>
+    <data name="ModPage_Metadata_Homepage" xml:space="preserve">
+        <value>Домашняя страница</value>
+    </data>
+    <data name="ModPage_Metadata_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="ModPage_Metadata_License" xml:space="preserve">
+        <value>Лицензия</value>
+    </data>
+    <data name="ModPage_Metadata_LocalPath" xml:space="preserve">
+        <value>Локальный путь</value>
+    </data>
+    <data name="ModPage_Metadata_PackageSize" xml:space="preserve">
+        <value>Размер пакета</value>
+    </data>
+    <data name="ModPage_Metadata_PublishedAt" xml:space="preserve">
+        <value>Опубликовано</value>
+    </data>
+    <data name="ModPage_Metadata_Repository" xml:space="preserve">
+        <value>Репозиторий</value>
+    </data>
+    <data name="ModPage_Metadata_ResourcesHeader" xml:space="preserve">
+        <value>Ресурсы</value>
+    </data>
+    <data name="ModPage_Metadata_Source" xml:space="preserve">
+        <value>Источник</value>
+    </data>
+    <data name="ModPage_Metadata_TagsHeader" xml:space="preserve">
+        <value>Категории и теги</value>
+    </data>
+    <data name="ModPage_Metadata_Version" xml:space="preserve">
+        <value>Версия</value>
+    </data>
+    <data name="ModPage_Metadata_ViewLicense" xml:space="preserve">
+        <value>Просмотреть лицензию</value>
+    </data>
+    <data name="ModPage_Notice_TechnicalDetails" xml:space="preserve">
+        <value>Технические подробности</value>
+    </data>
+    <data name="ModPage_OpenLocalFolderButton_ToolTip" xml:space="preserve">
+        <value>Открыть папку мода</value>
+    </data>
+    <data name="ModPage_ProgressToast_Installing" xml:space="preserve">
+        <value>Установка {0}...</value>
+    </data>
+    <data name="ModPage_ProgressToast_Updating" xml:space="preserve">
+        <value>Обновление {0}...</value>
+    </data>
+    <data name="ModPage_Readme_Empty" xml:space="preserve">
+        <value>Этот мод не содержит документа README.</value>
+    </data>
+    <data name="ModPage_RefreshButton_ToolTip" xml:space="preserve">
+        <value>Обновить каталоги модов</value>
+    </data>
+    <data name="ModPage_ReloadLocalButton_Content" xml:space="preserve">
+        <value>Перезагрузить</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionDisable" xml:space="preserve">
+        <value>Отключить при перезапуске</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUninstall" xml:space="preserve">
+        <value>Удалить при перезапуске</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUpdate" xml:space="preserve">
+        <value>Обновить до v{0}</value>
+    </data>
+    <data name="ModPage_RestartDialog_DiagnosticsHeader" xml:space="preserve">
+        <value>Технические подробности</value>
+    </data>
+    <data name="ModPage_RestartDialog_Explanation" xml:space="preserve">
+        <value>Некоторым модам не удалось сразу освободить все ресурсы при отключении, обновлении или удалении. Дальнейшие изменения модов в этом сеансе приостановлены, а ожидающие изменения вступят в силу автоматически после перезапуска Everywhere.</value>
+    </data>
+    <data name="ModPage_RestartDialog_PendingModsHeader" xml:space="preserve">
+        <value>Ожидающие перезапуска изменения:</value>
+    </data>
+    <data name="ModPage_RestartDialog_RestartButton" xml:space="preserve">
+        <value>Перезапустить Everywhere</value>
+    </data>
+    <data name="ModPage_RestartDialog_SaveWorkWarning" xml:space="preserve">
+        <value>Перед перезапуском сохраните активные диалоги и несохранённую работу.</value>
+    </data>
+    <data name="ModPage_RestartDialog_Title" xml:space="preserve">
+        <value>Перезапустить Everywhere для применения изменений</value>
+    </data>
+    <data name="ModPage_RestartRequired_Description" xml:space="preserve">
+        <value>Некоторые моды ещё используются. Ожидающие изменения вступят в силу после перезапуска.</value>
+    </data>
+    <data name="ModPage_RestartRequired_Title" xml:space="preserve">
+        <value>Требуется перезапуск</value>
+    </data>
+    <data name="ModPage_RollbackButton_Content" xml:space="preserve">
+        <value>Откатить ({0})</value>
+    </data>
+    <data name="ModPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Поиск модов...</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Detail" xml:space="preserve">
+        <value>Этот мод не содержит сборки для вашей текущей платформы.</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Title" xml:space="preserve">
+        <value>Неподдерживаемая платформа</value>
+    </data>
+    <data name="ModPage_Sort_Default" xml:space="preserve">
+        <value>По умолчанию</value>
+    </data>
+    <data name="ModPage_Source_BuiltIn" xml:space="preserve">
+        <value>Встроенный</value>
+    </data>
+    <data name="ModPage_Source_LocalDir" xml:space="preserve">
+        <value>Локальная папка</value>
+    </data>
+    <data name="ModPage_Source_LocalZip" xml:space="preserve">
+        <value>Локальный ZIP</value>
+    </data>
+    <data name="ModPage_Source_Official" xml:space="preserve">
+        <value>Официальный</value>
+    </data>
+    <data name="ModPage_SourcesButton_ToolTip" xml:space="preserve">
+        <value>Управление источниками модов</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddButton" xml:space="preserve">
+        <value>Добавить источник</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddHeader" xml:space="preserve">
+        <value>Добавить источник</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BrowseFolder_ToolTip" xml:space="preserve">
+        <value>Выбрать папку</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInAlwaysEnabled_ToolTip" xml:space="preserve">
+        <value>Встроенный источник модов всегда включён</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInSubtitle" xml:space="preserve">
+        <value>Официальные встроенные моды Everywhere</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DeleteConfirmation" xml:space="preserve">
+        <value>Удалить этот источник?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Description" xml:space="preserve">
+        <value>При разрешении модов и зависимостей источники просматриваются сверху вниз. Перетащите элементы, чтобы изменить порядок.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DragToReorder" xml:space="preserve">
+        <value>Перетащите для изменения приоритета</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdHint" xml:space="preserve">
+        <value>Строчные буквы, цифры, точки, дефисы или подчёркивания. Если не указано, создаётся автоматически.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdLabel" xml:space="preserve">
+        <value>ID источника (необязательно)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdPlaceholder" xml:space="preserve">
+        <value>Необязательный ID (например, my-feed)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsCountBadge" xml:space="preserve">
+        <value>Зеркал: {0}</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsLabel" xml:space="preserve">
+        <value>URL зеркал (необязательно)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsPlaceholder" xml:space="preserve">
+        <value>Необязательные URL зеркал через запятую</value>
+    </data>
+    <data name="ModPage_SourcesDialog_SignedBadge" xml:space="preserve">
+        <value>Подписан</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Title" xml:space="preserve">
+        <value>Источники модов</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Toggle_ToolTip" xml:space="preserve">
+        <value>Включить или отключить этот источник модов</value>
+    </data>
+    <data name="ModPage_SourcesDialog_TrustButton" xml:space="preserve">
+        <value>Доверять и добавить</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UnsignedBadge" xml:space="preserve">
+        <value>Не подписан</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmMessage" xml:space="preserve">
+        <value>Этот источник модов ({0}) не имеет цифровой подписи. Моды из ненадёжных источников могут выполнять произвольный код на устройстве. Доверять и добавить этот источник?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmTitle" xml:space="preserve">
+        <value>Доверять неподписанному источнику?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlLabel" xml:space="preserve">
+        <value>URL индекса или локальная папка</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlPlaceholder" xml:space="preserve">
+        <value>URL индекса (https://.../index.json) или путь к локальной папке</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_InvalidId" xml:space="preserve">
+        <value>ID источника должен начинаться и заканчиваться строчной буквой или цифрой и содержать только a-z, 0-9, '.', '-' или '_'.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_UrlRequired" xml:space="preserve">
+        <value>Введите URL индекса HTTPS/HTTP или выберите локальную папку.</value>
+    </data>
+    <data name="ModPage_Status_Active" xml:space="preserve">
+        <value>Активен</value>
+    </data>
+    <data name="ModPage_Status_Error" xml:space="preserve">
+        <value>Ошибка</value>
+    </data>
+    <data name="ModPage_Status_Inactive" xml:space="preserve">
+        <value>Отключён</value>
+    </data>
+    <data name="ModPage_Status_Loading" xml:space="preserve">
+        <value>Загрузка</value>
+    </data>
+    <data name="ModPage_Status_PendingRestart" xml:space="preserve">
+        <value>Ожидается перезапуск</value>
+    </data>
+    <data name="ModPage_Status_Skipped" xml:space="preserve">
+        <value>Пропущен</value>
+    </data>
+    <data name="ModPage_Tab_Discover_Header" xml:space="preserve">
+        <value>Обзор</value>
+    </data>
+    <data name="ModPage_Tab_Installed_Header" xml:space="preserve">
+        <value>Установленные</value>
+    </data>
+    <data name="ModPage_Tab_Overview_Header" xml:space="preserve">
+        <value>Обзор</value>
+    </data>
+    <data name="ModPage_Tab_Settings_Header" xml:space="preserve">
+        <value>Настройки</value>
+    </data>
+    <data name="ModPage_Title" xml:space="preserve">
+        <value>Моды</value>
+    </data>
+    <data name="ModPage_Toast_CatalogRefreshFailed" xml:space="preserve">
+        <value>Не удалось обновить каталоги модов</value>
+    </data>
+    <data name="ModPage_Toast_OperationCompletedWithErrors" xml:space="preserve">
+        <value>Завершено с проблемами в модах</value>
+    </data>
+    <data name="ModPage_Toast_OperationFailed" xml:space="preserve">
+        <value>Не удалось выполнить операцию с модом</value>
+    </data>
+    <data name="ModPage_ToolTip_AutoDependency" xml:space="preserve">
+        <value>Установлено автоматически как зависимость</value>
+    </data>
+    <data name="ModPage_ToolTip_ChannelAvailable" xml:space="preserve">
+        <value>Доступен канал {0} (v{1})</value>
+    </data>
+    <data name="ModPage_UninstallButton_Content" xml:space="preserve">
+        <value>Удалить</value>
+    </data>
+    <data name="ModPage_UpdateAvailableBadge" xml:space="preserve">
+        <value>Обновление</value>
+    </data>
+    <data name="ModPage_UpdateButton_Content" xml:space="preserve">
+        <value>Обновить до {0}</value>
+    </data>
+    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
+        <value>Встроенный</value>
+    </data>
+    <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
+        <value>Подписано ({0})</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalArchive" xml:space="preserve">
+        <value>Локальный архив</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalDirectory" xml:space="preserve">
+        <value>Локальный каталог</value>
+    </data>
+    <data name="ModPage_VerificationBadge_OfficialSigned" xml:space="preserve">
+        <value>Проверено официально</value>
+    </data>
+    <data name="ModPage_VerificationBadge_UnsignedSource" xml:space="preserve">
+        <value>Без подписи ({0})</value>
+    </data>
+    <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
+        <value>Встроен в официальный выпуск Everywhere</value>
+    </data>
+    <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
+        <value>Проверено подписью открытого ключа источника «{0}» (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_LocalArchive" xml:space="preserve">
+        <value>Импортировано из локального архива (без проверки подписи)</value>
+    </data>
+    <data name="ModPage_Verification_LocalDirectory" xml:space="preserve">
+        <value>Импортировано из локального каталога разработки (без проверки подписи)</value>
+    </data>
+    <data name="ModPage_Verification_OfficialSigned" xml:space="preserve">
+        <value>Проверено официальной подписью репозитория Everywhere (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_UnsignedSource" xml:space="preserve">
+        <value>Из неподписанного источника «{0}» (только контрольная сумма SHA-256)</value>
+    </data>
+    <data name="ModPage_ViewDetailsButton_Content" xml:space="preserve">
+        <value>Подробнее</value>
+    </data>
     <data name="ModelProviderSchema_Anthropic" xml:space="preserve">
         <value>Anthropic</value>
     </data>
@@ -3957,9 +4462,6 @@
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
         <value>Не удалось пересканировать навыки.</value>
     </data>
-    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>Навыки успешно пересканированы.</value>
-    </data>
     <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Поиск навыков...</value>
     </data>
@@ -4294,13 +4796,13 @@
         <value>Разрешить помощнику по утверждению чтение файлов</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Когда выбранный в чате ассистент делегирует рутинные задачи с помощью инструмента &quot;Назначить нового ассистента&quot;, субассистент по умолчанию обрабатывает их в независимом контексте и возвращает результаты. &quot;Автоматический выбор&quot; использует выбранного в чате ассистента.</value>
+        <value>Когда выбранный в чате ассистент делегирует рутинные задачи с помощью инструмента "Назначить нового ассистента", субассистент по умолчанию обрабатывает их в независимом контексте и возвращает результаты. "Автоматический выбор" использует выбранного в чате ассистента.</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
         <value>Стандартный Подассистент</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Визуальный эксперт, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент считает это необходимым, он передает изображение для анализа с помощью инструмента &quot;Назначить нового ассистента&quot;. Убедитесь, что выбранная модель обладает способностями визуального распознавания.</value>
+        <value>Визуальный эксперт, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент считает это необходимым, он передает изображение для анализа с помощью инструмента "Назначить нового ассистента". Убедитесь, что выбранная модель обладает способностями визуального распознавания.</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Подассистент Понимания Изображений</value>
@@ -4934,7 +5436,7 @@
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>Оставьте это значение по умолчанию, если не знаете, что делать. Должно начинаться с &quot;http(s)://&quot;.</value>
+        <value>Оставьте это значение по умолчанию, если не знаете, что делать. Должно начинаться с "http(s)://".</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
         <value>API Url</value>

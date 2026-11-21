@@ -1187,13 +1187,13 @@
         <value>{0} 個網址</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>無法啟動 MCP &quot;{0}&quot;</value>
+        <value>無法啟動 MCP "{0}"</value>
     </data>
     <data name="ChatPluginManager_Common_InvalidMcpTransportConfiguration" xml:space="preserve">
         <value>無效的 MCP 配置。</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>找不到 MCP 命令 &quot;{0}&quot;。請安裝它，或者修改命令路徑。</value>
+        <value>找不到 MCP 命令 "{0}"。請安裝它，或者修改命令路徑。</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_StartFailure" xml:space="preserve">
         <value>這個 MCP 伺服器需要 {0}。請先安裝它再啟動伺服器。</value>
@@ -3114,6 +3114,511 @@
     <data name="Modalities_Video" xml:space="preserve">
         <value>視頻</value>
     </data>
+    <data name="ModPage_ConfirmCascadeDisable_DialogTitle" xml:space="preserve">
+        <value>停用相依模組</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeDisable_Message" xml:space="preserve">
+        <value>以下已啟用的模組相依於 {0}，停用它也將一併停用：
+
+{1}</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_DialogTitle" xml:space="preserve">
+        <value>啟用相依模組</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_Message" xml:space="preserve">
+        <value>「{0}」相依於以下 {2} 個已停用模組：
+
+{1}
+
+繼續操作將同時啟用它們。</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_AcceptButton" xml:space="preserve">
+        <value>同意並安裝</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_DialogTitle" xml:space="preserve">
+        <value>確認安裝模組</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_EnableDependenciesHeader" xml:space="preserve">
+        <value>以下已停用的相依模組也將一併啟用：</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicenseEntry" xml:space="preserve">
+        <value>{0} v{1}（{2}）</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicensesHeader" xml:space="preserve">
+        <value>需要同意以下授權條款：</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_PackagesHeader" xml:space="preserve">
+        <value>將安裝或更新以下模組套件：</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_DialogTitle" xml:space="preserve">
+        <value>復原模組</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_Message" xml:space="preserve">
+        <value>確定將 {0} 復原至上一版本 {1} 嗎？</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DeleteDataCheckBox" xml:space="preserve">
+        <value>同時刪除該模組儲存的資料</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DependentsWarning" xml:space="preserve">
+        <value>以下相依模組相依於它，也將一併解除安裝：
+{0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DialogTitle" xml:space="preserve">
+        <value>解除安裝 {0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_Message" xml:space="preserve">
+        <value>確定要解除安裝 {0} 嗎？</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_RemoveOrphansCheckBox" xml:space="preserve">
+        <value>同時清理不再需要的自動安裝相依項目（{0}）</value>
+    </data>
+    <data name="ModPage_Diagnostic_Conflict" xml:space="preserve">
+        <value>模組或組件衝突</value>
+    </data>
+    <data name="ModPage_Diagnostic_DependencyFailed" xml:space="preserve">
+        <value>所需依賴模組無法使用</value>
+    </data>
+    <data name="ModPage_Diagnostic_Generic" xml:space="preserve">
+        <value>模組異常（{0}）</value>
+    </data>
+    <data name="ModPage_Diagnostic_IncompatibleHost" xml:space="preserve">
+        <value>與目前的 Everywhere 版本不相容</value>
+    </data>
+    <data name="ModPage_Diagnostic_InstallationMissing" xml:space="preserve">
+        <value>模組檔案遺失或已損毀</value>
+    </data>
+    <data name="ModPage_Diagnostic_LoadFailed" xml:space="preserve">
+        <value>模組載入失敗</value>
+    </data>
+    <data name="ModPage_Diagnostic_LocalDirectoryIssue" xml:space="preserve">
+        <value>本機開發資料夾異常</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModInitializeFailed" xml:space="preserve">
+        <value>模組初始化失敗</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModRetirementFailed" xml:space="preserve">
+        <value>停用模組時發生異常</value>
+    </data>
+    <data name="ModPage_Diagnostic_PendingUnload" xml:space="preserve">
+        <value>等待重新啟動以釋放資源</value>
+    </data>
+    <data name="ModPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>請在左側選擇一個模組，或匯入本機模組套件</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Description" xml:space="preserve">
+        <value>可新增自訂模組來源，或直接匯入本機 .zip 模組套件 / 開發資料夾</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Title" xml:space="preserve">
+        <value>目前沒有可用的遠端模組</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Description" xml:space="preserve">
+        <value>可前往「探索」分頁取得模組，或匯入本機 .zip 模組套件 / 資料夾</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Title" xml:space="preserve">
+        <value>尚未安裝任何模組</value>
+    </data>
+    <data name="ModPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>啟用或停用此模組</value>
+    </data>
+    <data name="ModPage_Error_DependenciesUnsatisfied_DialogTitle" xml:space="preserve">
+        <value>無法解析模組相依性</value>
+    </data>
+    <data name="ModPage_Error_DependencyConflict_Header" xml:space="preserve">
+        <value>所選模組存在無法解決的相依性或版本衝突：</value>
+    </data>
+    <data name="ModPage_Error_MissingDependencies_Header" xml:space="preserve">
+        <value>無法在已啟用的模組來源中找到以下必要相依項目：</value>
+    </data>
+    <data name="ModPage_FilterButton_ToolTip" xml:space="preserve">
+        <value>篩選與排序</value>
+    </data>
+    <data name="ModPage_FilterMenu_Reset" xml:space="preserve">
+        <value>重設篩選</value>
+    </data>
+    <data name="ModPage_FilterMenu_SortHeader" xml:space="preserve">
+        <value>排序方式</value>
+    </data>
+    <data name="ModPage_Filter_AllCategories" xml:space="preserve">
+        <value>所有分類</value>
+    </data>
+    <data name="ModPage_Filter_AllSources" xml:space="preserve">
+        <value>所有來源</value>
+    </data>
+    <data name="ModPage_ImportButton_ToolTip" xml:space="preserve">
+        <value>匯入本機模組</value>
+    </data>
+    <data name="ModPage_ImportDirectoryPicker_Title" xml:space="preserve">
+        <value>選擇模組資料夾</value>
+    </data>
+    <data name="ModPage_ImportDirectory_MenuItem" xml:space="preserve">
+        <value>匯入本機資料夾...</value>
+    </data>
+    <data name="ModPage_ImportZipPicker_Title" xml:space="preserve">
+        <value>選擇模組套件 (.zip)</value>
+    </data>
+    <data name="ModPage_ImportZip_MenuItem" xml:space="preserve">
+        <value>匯入模組套件 (.zip)...</value>
+    </data>
+    <data name="ModPage_IncompatibleBadge" xml:space="preserve">
+        <value>不相容</value>
+    </data>
+    <data name="ModPage_Incompatible_Platform" xml:space="preserve">
+        <value>不支援目前的系統平台（{0}）。</value>
+    </data>
+    <data name="ModPage_Incompatible_Version" xml:space="preserve">
+        <value>與目前的 Everywhere 版本不相容（目前版本 {0}，Mod API {1}）。</value>
+    </data>
+    <data name="ModPage_InstallButton_Content" xml:space="preserve">
+        <value>安裝</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Confirm" xml:space="preserve">
+        <value>開始使用</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendBody" xml:space="preserve">
+        <value>已啟用的模組會將工具、命令或設定註冊至應用程式中；停用或解除安裝時會自動撤銷，若無法熱卸載則會在重新啟動後生效。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendTitle" xml:space="preserve">
+        <value>依需求擴充能力</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Introduction" xml:space="preserve">
+        <value>模組可為 Everywhere 擴充自訂工具、本機整合與設定。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Note" xml:space="preserve">
+        <value>模組系統目前仍屬實驗性功能，API 與行為在後續版本中可能會有所變更。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityBody" xml:space="preserve">
+        <value>模組程式碼會直接在 Everywhere 處理程序內執行，並具備與目前使用者帳戶相同的權限。請僅安裝並啟用來自可信來源的模組。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityTitle" xml:space="preserve">
+        <value>處理程序內執行與信任邊界</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesBody" xml:space="preserve">
+        <value>你可以在「探索」中瀏覽並安裝官方或自訂模組來源的模組，也能直接匯入本機 ZIP 套件或開發目錄。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesTitle" xml:space="preserve">
+        <value>目錄探索與本機匯入</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Title" xml:space="preserve">
+        <value>歡迎使用模組</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Empty" xml:space="preserve">
+        <value>此模組未隨附授權條款全文。</value>
+    </data>
+    <data name="ModPage_LicenseDialog_ThirdPartySection" xml:space="preserve">
+        <value>第三方授權聲明</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Title" xml:space="preserve">
+        <value>授權條款 - {0}</value>
+    </data>
+    <data name="ModPage_Metadata_ApiVersion" xml:space="preserve">
+        <value>API 相容性</value>
+    </data>
+    <data name="ModPage_Metadata_Author" xml:space="preserve">
+        <value>作者</value>
+    </data>
+    <data name="ModPage_Metadata_CardTitle" xml:space="preserve">
+        <value>詳細資訊</value>
+    </data>
+    <data name="ModPage_Metadata_Category" xml:space="preserve">
+        <value>分類</value>
+    </data>
+    <data name="ModPage_Metadata_DependenciesHeader" xml:space="preserve">
+        <value>相依項目</value>
+    </data>
+    <data name="ModPage_Metadata_DependencyOptional" xml:space="preserve">
+        <value>{0}（選用）</value>
+    </data>
+    <data name="ModPage_Metadata_Homepage" xml:space="preserve">
+        <value>首頁</value>
+    </data>
+    <data name="ModPage_Metadata_Id" xml:space="preserve">
+        <value>識別碼</value>
+    </data>
+    <data name="ModPage_Metadata_License" xml:space="preserve">
+        <value>授權條款</value>
+    </data>
+    <data name="ModPage_Metadata_LocalPath" xml:space="preserve">
+        <value>本機路徑</value>
+    </data>
+    <data name="ModPage_Metadata_PackageSize" xml:space="preserve">
+        <value>套件大小</value>
+    </data>
+    <data name="ModPage_Metadata_PublishedAt" xml:space="preserve">
+        <value>發佈時間</value>
+    </data>
+    <data name="ModPage_Metadata_Repository" xml:space="preserve">
+        <value>原始碼儲存庫</value>
+    </data>
+    <data name="ModPage_Metadata_ResourcesHeader" xml:space="preserve">
+        <value>資源</value>
+    </data>
+    <data name="ModPage_Metadata_Source" xml:space="preserve">
+        <value>來源</value>
+    </data>
+    <data name="ModPage_Metadata_TagsHeader" xml:space="preserve">
+        <value>分類與標籤</value>
+    </data>
+    <data name="ModPage_Metadata_Version" xml:space="preserve">
+        <value>版本</value>
+    </data>
+    <data name="ModPage_Metadata_ViewLicense" xml:space="preserve">
+        <value>檢視授權條款</value>
+    </data>
+    <data name="ModPage_Notice_TechnicalDetails" xml:space="preserve">
+        <value>技術詳細資訊</value>
+    </data>
+    <data name="ModPage_OpenLocalFolderButton_ToolTip" xml:space="preserve">
+        <value>開啟模組資料夾</value>
+    </data>
+    <data name="ModPage_ProgressToast_Installing" xml:space="preserve">
+        <value>正在安裝 {0}...</value>
+    </data>
+    <data name="ModPage_ProgressToast_Updating" xml:space="preserve">
+        <value>正在更新 {0}...</value>
+    </data>
+    <data name="ModPage_Readme_Empty" xml:space="preserve">
+        <value>此模組未提供說明文件。</value>
+    </data>
+    <data name="ModPage_RefreshButton_ToolTip" xml:space="preserve">
+        <value>重新整理模組目錄</value>
+    </data>
+    <data name="ModPage_ReloadLocalButton_Content" xml:space="preserve">
+        <value>重新載入</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionDisable" xml:space="preserve">
+        <value>重新啟動後停用</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUninstall" xml:space="preserve">
+        <value>重新啟動後解除安裝</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUpdate" xml:space="preserve">
+        <value>更新至 v{0}</value>
+    </data>
+    <data name="ModPage_RestartDialog_DiagnosticsHeader" xml:space="preserve">
+        <value>技術詳細資訊</value>
+    </data>
+    <data name="ModPage_RestartDialog_Explanation" xml:space="preserve">
+        <value>部分模組在停用、更新或解除安裝時未能立即釋放所有資源。為確保執行穩定，目前已暫停於本次工作階段繼續變更模組，待處理的變更將於重新啟動 Everywhere 後自動生效。</value>
+    </data>
+    <data name="ModPage_RestartDialog_PendingModsHeader" xml:space="preserve">
+        <value>等待重新啟動生效的變更：</value>
+    </data>
+    <data name="ModPage_RestartDialog_RestartButton" xml:space="preserve">
+        <value>重新啟動 Everywhere</value>
+    </data>
+    <data name="ModPage_RestartDialog_SaveWorkWarning" xml:space="preserve">
+        <value>重新啟動前請先儲存進行中的對話或工作內容。</value>
+    </data>
+    <data name="ModPage_RestartDialog_Title" xml:space="preserve">
+        <value>重新啟動 Everywhere 以套用模組變更</value>
+    </data>
+    <data name="ModPage_RestartRequired_Description" xml:space="preserve">
+        <value>部分模組仍在使用資源，待處理的變更將於重新啟動後生效。</value>
+    </data>
+    <data name="ModPage_RestartRequired_Title" xml:space="preserve">
+        <value>需要重新啟動以完成變更</value>
+    </data>
+    <data name="ModPage_RollbackButton_Content" xml:space="preserve">
+        <value>復原 ({0})</value>
+    </data>
+    <data name="ModPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>搜尋模組...</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Detail" xml:space="preserve">
+        <value>此模組未提供適用於目前作業系統平台的版本。</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Title" xml:space="preserve">
+        <value>不支援的平台</value>
+    </data>
+    <data name="ModPage_Sort_Default" xml:space="preserve">
+        <value>預設排序</value>
+    </data>
+    <data name="ModPage_Source_BuiltIn" xml:space="preserve">
+        <value>內建</value>
+    </data>
+    <data name="ModPage_Source_LocalDir" xml:space="preserve">
+        <value>本機資料夾</value>
+    </data>
+    <data name="ModPage_Source_LocalZip" xml:space="preserve">
+        <value>本機套件</value>
+    </data>
+    <data name="ModPage_Source_Official" xml:space="preserve">
+        <value>官方</value>
+    </data>
+    <data name="ModPage_SourcesButton_ToolTip" xml:space="preserve">
+        <value>管理模組來源</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddButton" xml:space="preserve">
+        <value>新增來源</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddHeader" xml:space="preserve">
+        <value>新增模組來源</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BrowseFolder_ToolTip" xml:space="preserve">
+        <value>選擇本機資料夾</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInAlwaysEnabled_ToolTip" xml:space="preserve">
+        <value>內建模組來源始終保持啟用</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInSubtitle" xml:space="preserve">
+        <value>隨 Everywhere 內建的模組</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DeleteConfirmation" xml:space="preserve">
+        <value>移除此模組來源？</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Description" xml:space="preserve">
+        <value>解析模組與依賴時依由上到下的優先順序搜尋，可拖曳調整順序。</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DragToReorder" xml:space="preserve">
+        <value>拖曳以調整優先順序</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdHint" xml:space="preserve">
+        <value>僅限小寫字母、數字、點、連字號或底線；留空時自動產生。</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdLabel" xml:space="preserve">
+        <value>來源識別碼（選填）</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdPlaceholder" xml:space="preserve">
+        <value>選用自訂 ID（例如 my-feed）</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsCountBadge" xml:space="preserve">
+        <value>{0} 個鏡像</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsLabel" xml:space="preserve">
+        <value>鏡像網址（選填）</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsPlaceholder" xml:space="preserve">
+        <value>選用鏡像網址（多個請以逗號分隔）</value>
+    </data>
+    <data name="ModPage_SourcesDialog_SignedBadge" xml:space="preserve">
+        <value>已簽署</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Title" xml:space="preserve">
+        <value>模組來源管理</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Toggle_ToolTip" xml:space="preserve">
+        <value>啟用或停用此模組來源</value>
+    </data>
+    <data name="ModPage_SourcesDialog_TrustButton" xml:space="preserve">
+        <value>信任並新增</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UnsignedBadge" xml:space="preserve">
+        <value>未簽署</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmMessage" xml:space="preserve">
+        <value>此模組來源（{0}）未經數位簽章驗證，來自不受信任來源的模組可在裝置上執行任意程式碼。確定要信任並新增此來源嗎？</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmTitle" xml:space="preserve">
+        <value>信任未簽署的模組來源？</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlLabel" xml:space="preserve">
+        <value>索引網址或本機資料夾</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlPlaceholder" xml:space="preserve">
+        <value>輸入索引網址 (https://.../index.json) 或本機資料夾路徑</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_InvalidId" xml:space="preserve">
+        <value>來源識別碼必須以小寫字母或數字開頭與結尾，且僅包含 a-z、0-9、.、- 或 _。</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_UrlRequired" xml:space="preserve">
+        <value>請輸入索引網址或選擇本機資料夾。</value>
+    </data>
+    <data name="ModPage_Status_Active" xml:space="preserve">
+        <value>已啟用</value>
+    </data>
+    <data name="ModPage_Status_Error" xml:space="preserve">
+        <value>錯誤</value>
+    </data>
+    <data name="ModPage_Status_Inactive" xml:space="preserve">
+        <value>已停用</value>
+    </data>
+    <data name="ModPage_Status_Loading" xml:space="preserve">
+        <value>載入中</value>
+    </data>
+    <data name="ModPage_Status_PendingRestart" xml:space="preserve">
+        <value>待重新啟動生效</value>
+    </data>
+    <data name="ModPage_Status_Skipped" xml:space="preserve">
+        <value>已略過</value>
+    </data>
+    <data name="ModPage_Tab_Discover_Header" xml:space="preserve">
+        <value>探索</value>
+    </data>
+    <data name="ModPage_Tab_Installed_Header" xml:space="preserve">
+        <value>已安裝</value>
+    </data>
+    <data name="ModPage_Tab_Overview_Header" xml:space="preserve">
+        <value>概覽</value>
+    </data>
+    <data name="ModPage_Tab_Settings_Header" xml:space="preserve">
+        <value>設定</value>
+    </data>
+    <data name="ModPage_Title" xml:space="preserve">
+        <value>模組</value>
+    </data>
+    <data name="ModPage_Toast_CatalogRefreshFailed" xml:space="preserve">
+        <value>重新整理模組目錄失敗</value>
+    </data>
+    <data name="ModPage_Toast_OperationCompletedWithErrors" xml:space="preserve">
+        <value>操作已完成，但部分模組發生異常</value>
+    </data>
+    <data name="ModPage_Toast_OperationFailed" xml:space="preserve">
+        <value>模組操作失敗</value>
+    </data>
+    <data name="ModPage_ToolTip_AutoDependency" xml:space="preserve">
+        <value>作為其他模組的相依項目自動安裝</value>
+    </data>
+    <data name="ModPage_ToolTip_ChannelAvailable" xml:space="preserve">
+        <value>提供 {0} 通道版本 (v{1})</value>
+    </data>
+    <data name="ModPage_UninstallButton_Content" xml:space="preserve">
+        <value>解除安裝</value>
+    </data>
+    <data name="ModPage_UpdateAvailableBadge" xml:space="preserve">
+        <value>有更新</value>
+    </data>
+    <data name="ModPage_UpdateButton_Content" xml:space="preserve">
+        <value>更新至 {0}</value>
+    </data>
+    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
+        <value>官方內建</value>
+    </data>
+    <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
+        <value>已簽章 ({0})</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalArchive" xml:space="preserve">
+        <value>本機壓縮套件</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalDirectory" xml:space="preserve">
+        <value>本機開發目錄</value>
+    </data>
+    <data name="ModPage_VerificationBadge_OfficialSigned" xml:space="preserve">
+        <value>官方驗證</value>
+    </data>
+    <data name="ModPage_VerificationBadge_UnsignedSource" xml:space="preserve">
+        <value>未簽章 ({0})</value>
+    </data>
+    <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
+        <value>隨 Everywhere 官方發行版內建</value>
+    </data>
+    <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
+        <value>已通過模組來源「{0}」公鑰簽章驗證 (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_LocalArchive" xml:space="preserve">
+        <value>由本機壓縮套件匯入（未經倉庫簽章驗證）</value>
+    </data>
+    <data name="ModPage_Verification_LocalDirectory" xml:space="preserve">
+        <value>由本機開發目錄匯入（未經倉庫簽章驗證）</value>
+    </data>
+    <data name="ModPage_Verification_OfficialSigned" xml:space="preserve">
+        <value>已通過 Everywhere 官方倉庫簽章驗證 (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_UnsignedSource" xml:space="preserve">
+        <value>來自未簽章的模組來源「{0}」（僅驗證 SHA-256 雜湊）</value>
+    </data>
+    <data name="ModPage_ViewDetailsButton_Content" xml:space="preserve">
+        <value>檢視詳細資訊</value>
+    </data>
     <data name="ModelProviderSchema_Anthropic" xml:space="preserve">
         <value>Anthropic</value>
     </data>
@@ -3957,9 +4462,6 @@
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
         <value>無法重新掃描技能。</value>
     </data>
-    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>技能已重新掃描。</value>
-    </data>
     <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>搜索技能...</value>
     </data>
@@ -4300,7 +4802,7 @@
         <value>默認子助手</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>供主助手按需調用的視覺專家。當主助手認為有必要時，會通過&quot;指派新助手&quot;工具將圖片交由它分析。請確保所選模型具備視覺識別能力。</value>
+        <value>供主助手按需調用的視覺專家。當主助手認為有必要時，會通過"指派新助手"工具將圖片交由它分析。請確保所選模型具備視覺識別能力。</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>圖像理解子助手</value>
@@ -4934,7 +5436,7 @@
         <value>博查</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>如果不確定該如何設定，請保持預設。必須以 &quot;http(s)://&quot; 開頭。</value>
+        <value>如果不確定該如何設定，請保持預設。必須以 "http(s)://" 開頭。</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
         <value>API 網址</value>

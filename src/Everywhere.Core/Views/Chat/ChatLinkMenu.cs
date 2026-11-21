@@ -12,7 +12,7 @@ namespace Everywhere.Views;
 
 public static class ChatLinkMenu
 {
-    public static ContextMenu Create(TopLevel owner, ChatLinkInteraction interaction)
+    public static ContextMenu Create(TopLevel owner, ChatLinkInteraction interaction, bool allowLocalLinks = true)
     {
         var menu = new ContextMenu
         {
@@ -24,8 +24,13 @@ public static class ChatLinkMenu
         {
             var items = menu.DataContext switch
             {
-                Link { HRef: { } address } link => CreateItems(owner, interaction, ChatLinkTarget.Parse(address.OriginalString), GetText(link), link),
-                ChatLinkTarget target => CreateItems(owner, interaction, target, target.Address, null),
+                Link { HRef: { } address } link => CreateItems(
+                    owner,
+                    interaction,
+                    NormalizeTarget(ChatLinkTarget.Parse(address.OriginalString), allowLocalLinks),
+                    GetText(link),
+                    link),
+                ChatLinkTarget target => CreateItems(owner, interaction, NormalizeTarget(target, allowLocalLinks), target.Address, null),
                 _ => null
             };
             menu.ItemsSource = items;
@@ -33,6 +38,11 @@ public static class ChatLinkMenu
         menu.Closed += (_, _) => menu.DataContext = null;
         return menu;
     }
+
+    private static ChatLinkTarget NormalizeTarget(ChatLinkTarget target, bool allowLocalLinks) =>
+        !allowLocalLinks && target.Kind == ChatLinkKind.Local
+            ? target with { Kind = ChatLinkKind.Unsupported }
+            : target;
 
     private static List<object> CreateItems(TopLevel owner, ChatLinkInteraction interaction, ChatLinkTarget target, string label, Link? link)
     {
@@ -77,7 +87,7 @@ public static class ChatLinkMenu
             item.Command = new AsyncRelayCommand(() =>
             {
                 // Match LiveMarkdown's left-click visited state. Copying and saving are not navigation.
-                if (link is not null && (action is ChatLinkAction.Open or ChatLinkAction.Reveal or ChatLinkAction.OpenWith))
+                if (link is not null && action is ChatLinkAction.Open or ChatLinkAction.Reveal or ChatLinkAction.OpenWith)
                 {
                     link.IsClicked = true;
                 }

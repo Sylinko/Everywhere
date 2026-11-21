@@ -1,0 +1,53 @@
+<UserControl
+  x:Class="Everywhere.Views.Modding.ModDependencyErrorDialog" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:modding="clr-namespace:Everywhere.Views.Modding"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:DataType="modding:ModDependencyErrorDialog">
+  <StackPanel
+    MaxWidth="520" Spacing="10">
+    <TextBlock
+      Text="{Binding Preview.HeaderKey^}"
+      TextWrapping="Wrap"/>
+
+    <ScrollViewer
+      MaxHeight="220" HorizontalScrollBarVisibility="Disabled">
+      <shadui:SmoothBorder
+        Padding="10,8"
+        Background="{DynamicResource LightCardBackgroundColor}"
+        CornerRadius="{DynamicResource XlCornerRadius}">
+        <ItemsControl ItemsSource="{Binding Preview.Entries}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="8"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ModPageViewModel+ModDependencyIssueEntry">
+              <DockPanel HorizontalSpacing="8">
+                <TablerIcon
+                  DockPanel.Dock="Left" VerticalAlignment="Top"
+                  Margin="0,2,0,0"
+                  Foreground="{DynamicResource WarningColor}"
+                  Kind="{Binding Icon}"
+                  Size="15"/>
+                <StackPanel Spacing="2">
+                  <TextBlock
+                    FontWeight="SemiBold"
+                    Foreground="{DynamicResource ForegroundColor}"
+                    Text="{Binding Title}"
+                    TextWrapping="Wrap"/>
+                  <TextBlock
+                    Classes="Muted Caption"
+                    IsVisible="{Binding HasDetail}"
+                    Text="{Binding Detail}"
+                    TextWrapping="Wrap"/>
+                </StackPanel>
+              </DockPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </shadui:SmoothBorder>
+    </ScrollViewer>
+  </StackPanel>
+</UserControl>

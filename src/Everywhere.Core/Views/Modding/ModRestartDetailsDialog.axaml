@@ -1,0 +1,82 @@
+<UserControl
+  x:Class="Everywhere.Views.Modding.ModRestartDetailsDialog" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:modding="clr-namespace:Everywhere.Views.Modding"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:DataType="modding:ModRestartDetailsDialog">
+  <StackPanel
+    MaxWidth="540" Spacing="12">
+    <TextBlock
+      Text="{I18N {x:Static LocaleKey.ModPage_RestartDialog_Explanation}}"
+      TextWrapping="Wrap"/>
+
+    <shadui:Toast
+      Title="{I18N {x:Static LocaleKey.Common_Warning}}"
+      HorizontalAlignment="Stretch" CanDismiss="False"
+      CanDismissByClicking="False"
+      Content="{I18N {x:Static LocaleKey.ModPage_RestartDialog_SaveWorkWarning}}"
+      Notification="Warning"/>
+
+    <StackPanel
+      IsVisible="{Binding Snapshot.HasPendingEntries}"
+      Spacing="6">
+      <TextBlock
+        Classes="Strong"
+        Text="{I18N {x:Static LocaleKey.ModPage_RestartDialog_PendingModsHeader}}"
+        TextWrapping="Wrap"/>
+      <ScrollViewer
+        MaxHeight="140" HorizontalScrollBarVisibility="Disabled">
+        <shadui:SmoothBorder
+          Padding="10,8"
+          Background="{DynamicResource LightCardBackgroundColor}"
+          CornerRadius="{DynamicResource XlCornerRadius}">
+          <ItemsControl ItemsSource="{Binding Snapshot.PendingEntries}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="8"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ModPageViewModel+ModRestartPendingEntry">
+                <DockPanel HorizontalSpacing="8">
+                  <shadui:Badge
+                    DockPanel.Dock="Right" VerticalAlignment="Center"
+                    Background="{DynamicResource WarningColor60}"
+                    Content="{Binding ActionBadgeKey^}"
+                    Foreground="{DynamicResource BadgeForegroundColor}"/>
+                  <TablerIcon
+                    DockPanel.Dock="Left" VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="{Binding Icon}"
+                    Size="14"/>
+                  <TextBlock
+                    VerticalAlignment="Center" FontWeight="SemiBold"
+                    Text="{Binding DisplayName}"
+                    TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </shadui:SmoothBorder>
+      </ScrollViewer>
+    </StackPanel>
+
+    <Expander
+      Header="{I18N {x:Static LocaleKey.ModPage_RestartDialog_DiagnosticsHeader}}"
+      IsExpanded="False"
+      IsVisible="{Binding Snapshot.HasDiagnostics}">
+      <Border
+        MaxHeight="160" Padding="10"
+        BorderBrush="{DynamicResource BorderColor}"
+        BorderThickness="1"
+        CornerRadius="{DynamicResource MdCornerRadius}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <SelectableTextBlock
+            FontFamily="{StaticResource MonospaceFontFamily}"
+            FontSize="{DynamicResource FontSizeS}"
+            Text="{Binding Snapshot.DiagnosticText}"
+            TextWrapping="Wrap"/>
+        </ScrollViewer>
+      </Border>
+    </Expander>
+  </StackPanel>
+</UserControl>

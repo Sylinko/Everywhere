@@ -1073,7 +1073,7 @@
         <value>Bu dosyayı açabilecek yüklü bir uygulama yok.</value>
     </data>
     <data name="ChatLink_NoAssociatedApplication" xml:space="preserve">
-        <value>Bu dosyayı açmak için varsayılan bir uygulama yok. Menüden &quot;Birlikte Aç…&quot; seçeneğini belirleyin.</value>
+        <value>Bu dosyayı açmak için varsayılan bir uygulama yok. Menüden "Birlikte Aç…" seçeneğini belirleyin.</value>
     </data>
     <data name="ChatLink_NoBrowser" xml:space="preserve">
         <value>Lütfen sistem ayarlarından varsayılan tarayıcıyı belirleyip yeniden deneyin.</value>
@@ -1187,13 +1187,13 @@
         <value>{0} Bağlantı</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>MCP &quot;{0}&quot; başlatılamadı</value>
+        <value>MCP "{0}" başlatılamadı</value>
     </data>
     <data name="ChatPluginManager_Common_InvalidMcpTransportConfiguration" xml:space="preserve">
         <value>Geçersiz MCP yapılandırması.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
+        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_StartFailure" xml:space="preserve">
         <value>This MCP server requires {0}. Install it before starting the server.</value>
@@ -3114,6 +3114,511 @@ Bu işlem geri alınamaz.</value>
     <data name="Modalities_Video" xml:space="preserve">
         <value>Video</value>
     </data>
+    <data name="ModPage_ConfirmCascadeDisable_DialogTitle" xml:space="preserve">
+        <value>Bağımlı Modları Devre Dışı Bırak</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeDisable_Message" xml:space="preserve">
+        <value>Aşağıdaki etkin modlar {0} moduna bağımlıdır ve onlar da devre dışı bırakılacaktır:
+
+{1}</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_DialogTitle" xml:space="preserve">
+        <value>Gerekli Bağımlılıkları Etkinleştir</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_Message" xml:space="preserve">
+        <value>{0}, devre dışı bırakılmış {2} moda bağımlıdır:
+
+{1}
+
+Devam ederseniz bunlar da etkinleştirilecektir.</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_AcceptButton" xml:space="preserve">
+        <value>Kabul Et ve Yükle</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_DialogTitle" xml:space="preserve">
+        <value>Mod Yüklemesini Onayla</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_EnableDependenciesHeader" xml:space="preserve">
+        <value>Devre dışı bırakılmış aşağıdaki bağımlılıklar da etkinleştirilecektir:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicenseEntry" xml:space="preserve">
+        <value>{0} v{1} ({2})</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicensesHeader" xml:space="preserve">
+        <value>Lisans onayı gerekiyor:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_PackagesHeader" xml:space="preserve">
+        <value>Aşağıdaki paketler yüklenecek veya güncellenecektir:</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_DialogTitle" xml:space="preserve">
+        <value>Modu Geri Al</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_Message" xml:space="preserve">
+        <value>{0} önceki sürüm olan {1} sürümüne geri alınsın mı?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DeleteDataCheckBox" xml:space="preserve">
+        <value>Kaydedilmiş mod verilerini de sil</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DependentsWarning" xml:space="preserve">
+        <value>Birlikte kaldırılacak bağımlı modlar:
+{0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DialogTitle" xml:space="preserve">
+        <value>{0} Kaldır</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_Message" xml:space="preserve">
+        <value>{0} modunu kaldırmak istediğinizden emin misiniz?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_RemoveOrphansCheckBox" xml:space="preserve">
+        <value>Artık kullanılmayan otomatik yüklü bağımlılıkları da kaldır ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_Conflict" xml:space="preserve">
+        <value>Mod veya derleme çakışması</value>
+    </data>
+    <data name="ModPage_Diagnostic_DependencyFailed" xml:space="preserve">
+        <value>Gerekli bağımlılık kullanılamıyor</value>
+    </data>
+    <data name="ModPage_Diagnostic_Generic" xml:space="preserve">
+        <value>Mod sorunu ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_IncompatibleHost" xml:space="preserve">
+        <value>Bu Everywhere sürümüyle uyumsuz</value>
+    </data>
+    <data name="ModPage_Diagnostic_InstallationMissing" xml:space="preserve">
+        <value>Mod dosyaları eksik veya bozuk</value>
+    </data>
+    <data name="ModPage_Diagnostic_LoadFailed" xml:space="preserve">
+        <value>Mod yüklenemedi</value>
+    </data>
+    <data name="ModPage_Diagnostic_LocalDirectoryIssue" xml:space="preserve">
+        <value>Yerel geliştirme klasörü sorunu</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModInitializeFailed" xml:space="preserve">
+        <value>Mod başlatılamadı</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModRetirementFailed" xml:space="preserve">
+        <value>Mod düzgün şekilde durdurulamadı</value>
+    </data>
+    <data name="ModPage_Diagnostic_PendingUnload" xml:space="preserve">
+        <value>Kaynakları serbest bırakmak için yeniden başlatma bekleniyor</value>
+    </data>
+    <data name="ModPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Soldan bir mod seçin veya yerel bir paket içe aktarın</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Description" xml:space="preserve">
+        <value>Bir depo kaynağı ekleyin veya yerel bir .zip paketi ya da geliştirme klasörü içe aktarın</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Title" xml:space="preserve">
+        <value>Kullanılabilir uzak mod yok</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Description" xml:space="preserve">
+        <value>Keşfet sekmesine göz atın veya yerel bir .zip paketi ya da klasör içe aktarın</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Title" xml:space="preserve">
+        <value>Henüz yüklü mod yok</value>
+    </data>
+    <data name="ModPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>Bu modu etkinleştir veya devre dışı bırak</value>
+    </data>
+    <data name="ModPage_Error_DependenciesUnsatisfied_DialogTitle" xml:space="preserve">
+        <value>Bağımlılıklar Çözümlenemedi</value>
+    </data>
+    <data name="ModPage_Error_DependencyConflict_Header" xml:space="preserve">
+        <value>Seçilen modda çözümlenemeyen bağımlılık veya sürüm çakışmaları var:</value>
+    </data>
+    <data name="ModPage_Error_MissingDependencies_Header" xml:space="preserve">
+        <value>Aşağıdaki gerekli bağımlılıklar etkinleştirilmiş hiçbir kaynakta bulunamadı:</value>
+    </data>
+    <data name="ModPage_FilterButton_ToolTip" xml:space="preserve">
+        <value>Filtrele ve sırala</value>
+    </data>
+    <data name="ModPage_FilterMenu_Reset" xml:space="preserve">
+        <value>Filtreleri sıfırla</value>
+    </data>
+    <data name="ModPage_FilterMenu_SortHeader" xml:space="preserve">
+        <value>Sıralama ölçütü</value>
+    </data>
+    <data name="ModPage_Filter_AllCategories" xml:space="preserve">
+        <value>Tüm kategoriler</value>
+    </data>
+    <data name="ModPage_Filter_AllSources" xml:space="preserve">
+        <value>Tüm kaynaklar</value>
+    </data>
+    <data name="ModPage_ImportButton_ToolTip" xml:space="preserve">
+        <value>Yerel mod içe aktar</value>
+    </data>
+    <data name="ModPage_ImportDirectoryPicker_Title" xml:space="preserve">
+        <value>Mod klasörü seçin</value>
+    </data>
+    <data name="ModPage_ImportDirectory_MenuItem" xml:space="preserve">
+        <value>Yerel klasör içe aktar...</value>
+    </data>
+    <data name="ModPage_ImportZipPicker_Title" xml:space="preserve">
+        <value>Mod paketi (.zip) seçin</value>
+    </data>
+    <data name="ModPage_ImportZip_MenuItem" xml:space="preserve">
+        <value>Paket içe aktar (.zip)...</value>
+    </data>
+    <data name="ModPage_IncompatibleBadge" xml:space="preserve">
+        <value>Uyumsuz</value>
+    </data>
+    <data name="ModPage_Incompatible_Platform" xml:space="preserve">
+        <value>Mevcut platformda ({0}) desteklenmiyor.</value>
+    </data>
+    <data name="ModPage_Incompatible_Version" xml:space="preserve">
+        <value>Uyumlu bir Everywhere sürümü gerektirir (mevcut: {0}, Mod API {1}).</value>
+    </data>
+    <data name="ModPage_InstallButton_Content" xml:space="preserve">
+        <value>Yükle</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Confirm" xml:space="preserve">
+        <value>Başla</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendBody" xml:space="preserve">
+        <value>Etkinleştirilen modlar uygulamaya araçlar, komutlar veya ayarlar kaydeder. Devre dışı bırakıldığında veya kaldırıldığında bunlar otomatik olarak geri alınır ya da sıcak kaldırma mümkün değilse yeniden başlatma planlanır.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendTitle" xml:space="preserve">
+        <value>Yetenekleri isteğe bağlı genişletin</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Introduction" xml:space="preserve">
+        <value>Modlar, özel araçlar, yerel entegrasyonlar ve ayarlarla Everywhere'i genişletir.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Note" xml:space="preserve">
+        <value>Mod sistemi şu anda deneyseldir; API'ler ve davranışlar gelecek sürümlerde değişebilir.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityBody" xml:space="preserve">
+        <value>Mod kodu, kullanıcı hesabınızla aynı izinlere sahip olarak doğrudan Everywhere süreci içinde çalışır. Yalnızca güvendiğiniz kaynaklardan mod yükleyin ve etkinleştirin.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityTitle" xml:space="preserve">
+        <value>Süreç içi yürütme ve güven</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesBody" xml:space="preserve">
+        <value>Keşfet bölümünde resmi veya özel kaynaklardan modlara göz atıp yükleyin ya da yerel ZIP paketlerini ve geliştirme dizinlerini doğrudan içe aktarın.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesTitle" xml:space="preserve">
+        <value>Katalog keşfi ve yerel içe aktarma</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Title" xml:space="preserve">
+        <value>Modlara Hoş Geldiniz</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Empty" xml:space="preserve">
+        <value>Bu mod ile birlikte lisans metin belgesi sağlanmamış.</value>
+    </data>
+    <data name="ModPage_LicenseDialog_ThirdPartySection" xml:space="preserve">
+        <value>Üçüncü Taraf Bildirimleri</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Title" xml:space="preserve">
+        <value>Lisans - {0}</value>
+    </data>
+    <data name="ModPage_Metadata_ApiVersion" xml:space="preserve">
+        <value>API Uyumluluğu</value>
+    </data>
+    <data name="ModPage_Metadata_Author" xml:space="preserve">
+        <value>Yazar</value>
+    </data>
+    <data name="ModPage_Metadata_CardTitle" xml:space="preserve">
+        <value>Ayrıntılar</value>
+    </data>
+    <data name="ModPage_Metadata_Category" xml:space="preserve">
+        <value>Kategori</value>
+    </data>
+    <data name="ModPage_Metadata_DependenciesHeader" xml:space="preserve">
+        <value>Bağımlılıklar</value>
+    </data>
+    <data name="ModPage_Metadata_DependencyOptional" xml:space="preserve">
+        <value>{0} (isteğe bağlı)</value>
+    </data>
+    <data name="ModPage_Metadata_Homepage" xml:space="preserve">
+        <value>Ana Sayfa</value>
+    </data>
+    <data name="ModPage_Metadata_Id" xml:space="preserve">
+        <value>Kimlik</value>
+    </data>
+    <data name="ModPage_Metadata_License" xml:space="preserve">
+        <value>Lisans</value>
+    </data>
+    <data name="ModPage_Metadata_LocalPath" xml:space="preserve">
+        <value>Yerel yol</value>
+    </data>
+    <data name="ModPage_Metadata_PackageSize" xml:space="preserve">
+        <value>Paket Boyutu</value>
+    </data>
+    <data name="ModPage_Metadata_PublishedAt" xml:space="preserve">
+        <value>Yayınlanma</value>
+    </data>
+    <data name="ModPage_Metadata_Repository" xml:space="preserve">
+        <value>Depo</value>
+    </data>
+    <data name="ModPage_Metadata_ResourcesHeader" xml:space="preserve">
+        <value>Kaynaklar</value>
+    </data>
+    <data name="ModPage_Metadata_Source" xml:space="preserve">
+        <value>Kaynak</value>
+    </data>
+    <data name="ModPage_Metadata_TagsHeader" xml:space="preserve">
+        <value>Kategoriler ve Etiketler</value>
+    </data>
+    <data name="ModPage_Metadata_Version" xml:space="preserve">
+        <value>Sürüm</value>
+    </data>
+    <data name="ModPage_Metadata_ViewLicense" xml:space="preserve">
+        <value>Lisansı görüntüle</value>
+    </data>
+    <data name="ModPage_Notice_TechnicalDetails" xml:space="preserve">
+        <value>Teknik ayrıntılar</value>
+    </data>
+    <data name="ModPage_OpenLocalFolderButton_ToolTip" xml:space="preserve">
+        <value>Mod klasörünü aç</value>
+    </data>
+    <data name="ModPage_ProgressToast_Installing" xml:space="preserve">
+        <value>{0} yükleniyor...</value>
+    </data>
+    <data name="ModPage_ProgressToast_Updating" xml:space="preserve">
+        <value>{0} güncelleniyor...</value>
+    </data>
+    <data name="ModPage_Readme_Empty" xml:space="preserve">
+        <value>Bu mod bir README belgesi sağlamıyor.</value>
+    </data>
+    <data name="ModPage_RefreshButton_ToolTip" xml:space="preserve">
+        <value>Mod kataloglarını yenile</value>
+    </data>
+    <data name="ModPage_ReloadLocalButton_Content" xml:space="preserve">
+        <value>Yeniden Yükle</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionDisable" xml:space="preserve">
+        <value>Yeniden başlatmada devre dışı bırak</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUninstall" xml:space="preserve">
+        <value>Yeniden başlatmada kaldır</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUpdate" xml:space="preserve">
+        <value>v{0} sürümüne güncelle</value>
+    </data>
+    <data name="ModPage_RestartDialog_DiagnosticsHeader" xml:space="preserve">
+        <value>Teknik ayrıntılar</value>
+    </data>
+    <data name="ModPage_RestartDialog_Explanation" xml:space="preserve">
+        <value>Bazı modlar devre dışı bırakılırken, güncellenirken veya kaldırılırken tüm kaynakları hemen serbest bırakamadı. Bu oturumda yeni mod değişiklikleri duraklatıldı; bekleyen değişiklikler Everywhere yeniden başlatıldığında otomatik olarak uygulanacaktır.</value>
+    </data>
+    <data name="ModPage_RestartDialog_PendingModsHeader" xml:space="preserve">
+        <value>Yeniden başlatmayı bekleyen değişiklikler:</value>
+    </data>
+    <data name="ModPage_RestartDialog_RestartButton" xml:space="preserve">
+        <value>Everywhere'i Yeniden Başlat</value>
+    </data>
+    <data name="ModPage_RestartDialog_SaveWorkWarning" xml:space="preserve">
+        <value>Yeniden başlatmadan önce lütfen devam eden sohbetlerinizi veya çalışmalarınızı kaydedin.</value>
+    </data>
+    <data name="ModPage_RestartDialog_Title" xml:space="preserve">
+        <value>Mod Değişikliklerini Uygulamak İçin Everywhere'i Yeniden Başlat</value>
+    </data>
+    <data name="ModPage_RestartRequired_Description" xml:space="preserve">
+        <value>Bazı modlar hâlâ kullanımda. Bekleyen değişiklikler yeniden başlatma sonrasında geçerli olacak.</value>
+    </data>
+    <data name="ModPage_RestartRequired_Title" xml:space="preserve">
+        <value>Değişiklikler için yeniden başlatma gerekli</value>
+    </data>
+    <data name="ModPage_RollbackButton_Content" xml:space="preserve">
+        <value>Geri Al ({0})</value>
+    </data>
+    <data name="ModPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Mod ara...</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Detail" xml:space="preserve">
+        <value>Bu mod mevcut platformunuz için bir derleme içermiyor.</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Title" xml:space="preserve">
+        <value>Desteklenmeyen platform</value>
+    </data>
+    <data name="ModPage_Sort_Default" xml:space="preserve">
+        <value>Varsayılan sıralama</value>
+    </data>
+    <data name="ModPage_Source_BuiltIn" xml:space="preserve">
+        <value>Yerleşik</value>
+    </data>
+    <data name="ModPage_Source_LocalDir" xml:space="preserve">
+        <value>Yerel klasör</value>
+    </data>
+    <data name="ModPage_Source_LocalZip" xml:space="preserve">
+        <value>Yerel ZIP</value>
+    </data>
+    <data name="ModPage_Source_Official" xml:space="preserve">
+        <value>Resmî</value>
+    </data>
+    <data name="ModPage_SourcesButton_ToolTip" xml:space="preserve">
+        <value>Mod kaynaklarını yönet</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddButton" xml:space="preserve">
+        <value>Kaynak Ekle</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddHeader" xml:space="preserve">
+        <value>Kaynak ekle</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BrowseFolder_ToolTip" xml:space="preserve">
+        <value>Klasör seç</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInAlwaysEnabled_ToolTip" xml:space="preserve">
+        <value>Yerleşik mod kaynağı her zaman etkindir</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInSubtitle" xml:space="preserve">
+        <value>Everywhere ile birlikte gelen resmi modlar</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DeleteConfirmation" xml:space="preserve">
+        <value>Bu kaynak kaldırılsın mı?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Description" xml:space="preserve">
+        <value>Modlar ve bağımlılıklar çözümlenirken kaynaklar yukarıdan aşağıya aranır. Sıralamayı değiştirmek için sürükleyin.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DragToReorder" xml:space="preserve">
+        <value>Önceliği değiştirmek için sürükleyin</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdHint" xml:space="preserve">
+        <value>Küçük harf, rakam, nokta, tire veya alt çizgi. Boş bırakılırsa otomatik oluşturulur.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdLabel" xml:space="preserve">
+        <value>Kaynak Kimliği (İsteğe Bağlı)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdPlaceholder" xml:space="preserve">
+        <value>İsteğe bağlı özel kimlik (ör. my-feed)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsCountBadge" xml:space="preserve">
+        <value>{0} yansı</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsLabel" xml:space="preserve">
+        <value>Yansı URL'leri (İsteğe Bağlı)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsPlaceholder" xml:space="preserve">
+        <value>İsteğe bağlı ayna URL'leri (virgülle ayrılmış)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_SignedBadge" xml:space="preserve">
+        <value>İmzalı</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Title" xml:space="preserve">
+        <value>Mod Kaynakları</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Toggle_ToolTip" xml:space="preserve">
+        <value>Bu mod kaynağını etkinleştir veya devre dışı bırak</value>
+    </data>
+    <data name="ModPage_SourcesDialog_TrustButton" xml:space="preserve">
+        <value>Güven ve Ekle</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UnsignedBadge" xml:space="preserve">
+        <value>İmzasız</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmMessage" xml:space="preserve">
+        <value>Bu mod kaynağı ({0}) imzasızdır. Güvenilmeyen kaynaklardan gelen modlar cihazınızda rastgele kod çalıştırabilir. Bu kaynağa güvenip eklemek istiyor musunuz?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmTitle" xml:space="preserve">
+        <value>İmzasız Mod Kaynağına Güvenilsin mi?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlLabel" xml:space="preserve">
+        <value>Dizin URL'si veya Yerel Klasör</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlPlaceholder" xml:space="preserve">
+        <value>Dizin URL'si (https://.../index.json) veya yerel klasör yolu</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_InvalidId" xml:space="preserve">
+        <value>Kaynak kimliği küçük harf veya rakamla başlamalı ve bitmeli; yalnızca a-z, 0-9, '.', '-' veya '_' içermelidir.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_UrlRequired" xml:space="preserve">
+        <value>Lütfen bir HTTPS/HTTP dizin URL'si girin veya yerel bir klasör seçin.</value>
+    </data>
+    <data name="ModPage_Status_Active" xml:space="preserve">
+        <value>Etkin</value>
+    </data>
+    <data name="ModPage_Status_Error" xml:space="preserve">
+        <value>Hata</value>
+    </data>
+    <data name="ModPage_Status_Inactive" xml:space="preserve">
+        <value>Devre dışı</value>
+    </data>
+    <data name="ModPage_Status_Loading" xml:space="preserve">
+        <value>Yükleniyor</value>
+    </data>
+    <data name="ModPage_Status_PendingRestart" xml:space="preserve">
+        <value>Yeniden başlatma bekleniyor</value>
+    </data>
+    <data name="ModPage_Status_Skipped" xml:space="preserve">
+        <value>Atlandı</value>
+    </data>
+    <data name="ModPage_Tab_Discover_Header" xml:space="preserve">
+        <value>Keşfet</value>
+    </data>
+    <data name="ModPage_Tab_Installed_Header" xml:space="preserve">
+        <value>Yüklü</value>
+    </data>
+    <data name="ModPage_Tab_Overview_Header" xml:space="preserve">
+        <value>Genel Bakış</value>
+    </data>
+    <data name="ModPage_Tab_Settings_Header" xml:space="preserve">
+        <value>Ayarlar</value>
+    </data>
+    <data name="ModPage_Title" xml:space="preserve">
+        <value>Modlar</value>
+    </data>
+    <data name="ModPage_Toast_CatalogRefreshFailed" xml:space="preserve">
+        <value>Mod katalogları yenilenemedi</value>
+    </data>
+    <data name="ModPage_Toast_OperationCompletedWithErrors" xml:space="preserve">
+        <value>Mod sorunlarıyla tamamlandı</value>
+    </data>
+    <data name="ModPage_Toast_OperationFailed" xml:space="preserve">
+        <value>Mod işlemi başarısız oldu</value>
+    </data>
+    <data name="ModPage_ToolTip_AutoDependency" xml:space="preserve">
+        <value>Bağımlılık olarak otomatik yüklendi</value>
+    </data>
+    <data name="ModPage_ToolTip_ChannelAvailable" xml:space="preserve">
+        <value>{0} kanalı mevcut (v{1})</value>
+    </data>
+    <data name="ModPage_UninstallButton_Content" xml:space="preserve">
+        <value>Kaldır</value>
+    </data>
+    <data name="ModPage_UpdateAvailableBadge" xml:space="preserve">
+        <value>Güncelleme</value>
+    </data>
+    <data name="ModPage_UpdateButton_Content" xml:space="preserve">
+        <value>{0} sürümüne güncelle</value>
+    </data>
+    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
+        <value>Yerleşik</value>
+    </data>
+    <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
+        <value>İmzalı ({0})</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalArchive" xml:space="preserve">
+        <value>Yerel Arşiv</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalDirectory" xml:space="preserve">
+        <value>Yerel Dizin</value>
+    </data>
+    <data name="ModPage_VerificationBadge_OfficialSigned" xml:space="preserve">
+        <value>Resmi Onaylı</value>
+    </data>
+    <data name="ModPage_VerificationBadge_UnsignedSource" xml:space="preserve">
+        <value>İmzasız ({0})</value>
+    </data>
+    <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
+        <value>Resmi Everywhere sürümüyle birlikte gelir</value>
+    </data>
+    <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
+        <value>"{0}" kaynağının açık anahtar imzasıyla doğrulandı (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_LocalArchive" xml:space="preserve">
+        <value>Yerel arşivden içe aktarıldı (doğrulanmamış)</value>
+    </data>
+    <data name="ModPage_Verification_LocalDirectory" xml:space="preserve">
+        <value>Yerel geliştirme dizininden içe aktarıldı (doğrulanmamış)</value>
+    </data>
+    <data name="ModPage_Verification_OfficialSigned" xml:space="preserve">
+        <value>Everywhere resmi depo imzasıyla doğrulandı (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_UnsignedSource" xml:space="preserve">
+        <value>İmzasız "{0}" kaynağından (yalnızca SHA-256 özeti)</value>
+    </data>
+    <data name="ModPage_ViewDetailsButton_Content" xml:space="preserve">
+        <value>Ayrıntıları Görüntüle</value>
+    </data>
     <data name="ModelProviderSchema_Anthropic" xml:space="preserve">
         <value>Anthropic</value>
     </data>
@@ -3802,52 +4307,52 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Metin seçimi</value>
     </data>
     <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
-        <value>Ayar sözlüğü anahtarı &quot;{0}&quot; &quot;{1}&quot; olarak okunamadı.</value>
+        <value>Ayar sözlüğü anahtarı "{0}" "{1}" olarak okunamadı.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
-        <value>Ayar sözlüğü &quot;{0}&quot; değiştirilemez, bu nedenle değiştirilemez.</value>
+        <value>Ayar sözlüğü "{0}" değiştirilemez, bu nedenle değiştirilemez.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
-        <value>Ayar listesi &quot;{0}&quot; için JSON dizisi bekleniyor.</value>
+        <value>Ayar listesi "{0}" için JSON dizisi bekleniyor.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
-        <value>Ayar sözlüğü &quot;{0}&quot; için JSON nesnesi bekleniyor.</value>
+        <value>Ayar sözlüğü "{0}" için JSON nesnesi bekleniyor.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
-        <value>Ayar nesnesi &quot;{0}&quot; için JSON nesnesi bekleniyor.</value>
+        <value>Ayar nesnesi "{0}" için JSON nesnesi bekleniyor.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
-        <value>Ayar listesi &quot;{0}&quot; değiştirilemez, bu nedenle değiştirilemez.</value>
+        <value>Ayar listesi "{0}" değiştirilemez, bu nedenle değiştirilemez.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
-        <value>Boş değeri &quot;{0}&quot; için atanamaz, çünkü bu ayar değeri boş olamaz.</value>
+        <value>Boş değeri "{0}" için atanamaz, çünkü bu ayar değeri boş olamaz.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
-        <value>Ayar nesnesi &quot;{0}&quot; boş ve oluşturulamıyor.</value>
+        <value>Ayar nesnesi "{0}" boş ve oluşturulamıyor.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
-        <value>Ayar belgesi &quot;{0}&quot; ayrıştırılamadı, yeni bir bellek belgesi oluşturuldu.</value>
+        <value>Ayar belgesi "{0}" ayrıştırılamadı, yeni bir bellek belgesi oluşturuldu.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
-        <value>Ayar değeri &quot;{0}&quot; null olabilir, ancak özelliği yazılamaz, bu yüzden boş bırakılamaz.</value>
+        <value>Ayar değeri "{0}" null olabilir, ancak özelliği yazılamaz, bu yüzden boş bırakılamaz.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
-        <value>Ayar değeri &quot;{0}&quot; &quot;{1}&quot; olarak okunamadı.</value>
+        <value>Ayar değeri "{0}" "{1}" olarak okunamadı.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
-        <value>Serileştirilmiş alt ağaç &quot;{0}&quot; değiştirilemez, çünkü bu özellik yazılabilir değil.</value>
+        <value>Serileştirilmiş alt ağaç "{0}" değiştirilemez, çünkü bu özellik yazılabilir değil.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
-        <value>Bilinmeyen ayar üyesi &quot;{0}&quot;.</value>
+        <value>Bilinmeyen ayar üyesi "{0}".</value>
     </data>
     <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
-        <value>Ayar özelliği &quot;{1}&quot; için tür &quot;{0}&quot; desteklenmiyor.</value>
+        <value>Ayar özelliği "{1}" için tür "{0}" desteklenmiyor.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
-        <value>Ayar JSON'unu &quot;{0}&quot;'a yazmak başarısız oldu (deneme {1}, içerik uzunluğu {2} bayt).</value>
+        <value>Ayar JSON'unu "{0}"'a yazmak başarısız oldu (deneme {1}, içerik uzunluğu {2} bayt).</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
-        <value>Ayar yolu &quot;{0}&quot; yazılamadı.</value>
+        <value>Ayar yolu "{0}" yazılamadı.</value>
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Belgeyi görüntüle</value>
@@ -3956,9 +4461,6 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     </data>
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
         <value>Yetenekler yeniden taranamadı.</value>
-    </data>
-    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>Yetenekler yeniden tarandı.</value>
     </data>
     <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Yetenekleri ara...</value>
@@ -4294,13 +4796,13 @@ Yayın tarihi: {2}</value>
         <value>Onay Asistanının Dosya Okumasına İzin Ver</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Sohbette seçilen asistan, &quot;Yeni Asistan Ata&quot; aracılığıyla rutin görevleri devrettiğinde, varsayılan alt ajan bunları bağımsız bir bağlamda işler ve sonuçları döndürür. &quot;Otomatik Seçim&quot;, sohbette seçilen asistanı kullanır.</value>
+        <value>Sohbette seçilen asistan, "Yeni Asistan Ata" aracılığıyla rutin görevleri devrettiğinde, varsayılan alt ajan bunları bağımsız bir bağlamda işler ve sonuçları döndürür. "Otomatik Seçim", sohbette seçilen asistanı kullanır.</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
         <value>Varsayılan Alt Asistan</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Ana asistanın ihtiyaç duyduğunda çağırabileceği görsel uzman. Ana asistan, gerektiğinde resmi analiz etmesi için onu &quot;Yeni Asistan Atama&quot; aracıyla görevlendirir. Seçilen modelin görsel tanıma yeteneğine sahip olduğundan emin olun.</value>
+        <value>Ana asistanın ihtiyaç duyduğunda çağırabileceği görsel uzman. Ana asistan, gerektiğinde resmi analiz etmesi için onu "Yeni Asistan Atama" aracıyla görevlendirir. Seçilen modelin görsel tanıma yeteneğine sahip olduğundan emin olun.</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Görüntü Anlama Alt Asistanı</value>
@@ -4640,7 +5142,7 @@ Güncellemek için aşağıdaki komutu kopyalayıp terminalde çalıştırın.</
         <value>Onay asistanını ayrı olarak belirttiğinizde, onay içeriği bu asistanın kullandığı hizmet tarafından işlenecektir. AI onayı hala yanlış değerlendirmeler yapabilir, istediğiniz zaman modları değiştirebilirsiniz.</value>
     </data>
     <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-        <value>Varsayılan olarak, sohbette seçilen asistan kullanılır. &quot;Sistem asistanı&quot; ayarlarında ayrıca bir asistan belirleyebilirsiniz.</value>
+        <value>Varsayılan olarak, sohbette seçilen asistan kullanılır. "Sistem asistanı" ayarlarında ayrıca bir asistan belirleyebilirsiniz.</value>
     </data>
     <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
         <value>Onaylayacak Kişiyi Seçin</value>
@@ -4934,7 +5436,7 @@ Güncellemek için aşağıdaki komutu kopyalayıp terminalde çalıştırın.</
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>Ne yapacağını bilmiyorsan varsayılan değerde bırak. &quot;http(s)://&quot; ile başlamalıdır.</value>
+        <value>Ne yapacağını bilmiyorsan varsayılan değerde bırak. "http(s)://" ile başlamalıdır.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
         <value>API Adresi</value>

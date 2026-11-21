@@ -1,7 +1,5 @@
 # Everything 搜索模组
 
-[English](README.md)
-
 在 Everywhere 的聊天工具中通过 Everything 搜索本地文件与文件夹。
 该模组作为 Windows x64 发行版的内嵌内置模组随宿主一同发布（通过 `EmbeddedModSource` 加载），仅支持 **Windows x64**；其他平台会显示 `Skipped` / `UnsupportedPlatform`。
 

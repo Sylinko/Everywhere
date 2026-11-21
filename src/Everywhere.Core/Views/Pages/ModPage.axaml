@@ -1,0 +1,1156 @@
+<UserControl
+  x:Class="Everywhere.Views.Pages.ModPage" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:modding="clr-namespace:Everywhere.Views.Modding" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:Name="Self" x:DataType="vm:ModPageViewModel">
+  <UserControl.Styles>
+    <Style Selector="ListBox.ModListBox">
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Background" Value="{DynamicResource TransparentColor}"/>
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+      <Style Selector="^ ListBoxItem">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      </Style>
+      <Setter Property="ItemTemplate">
+        <DataTemplate x:DataType="vm:ModPageViewModel+ModItemPresentation">
+          <Grid
+            Background="Transparent" ColumnDefinitions="Auto,*,Auto,Auto"
+            ColumnSpacing="10" ToolTip.HorizontalOffset="8"
+            ToolTip.Placement="Right" ToolTip.ShowDelay="250">
+            <ToolTip.Tip>
+              <StackPanel
+                MinWidth="220" MaxWidth="300"
+                Margin="2,4" Spacing="8">
+                <StackPanel.Styles>
+                  <Style Selector="TablerIcon.VerificationIcon">
+                    <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
+                    <Style Selector="^.Trusted">
+                      <Setter Property="Foreground" Value="{DynamicResource SuccessColor}"/>
+                    </Style>
+                    <Style Selector="^.Warning">
+                      <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+                    </Style>
+                  </Style>
+
+                  <Style Selector="TextBlock.VerificationText">
+                    <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
+                    <Style Selector="^.Trusted">
+                      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+                    </Style>
+                    <Style Selector="^.Warning">
+                      <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+                    </Style>
+                  </Style>
+
+                  <Style Selector="TablerIcon.NoteIcon">
+                    <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
+                    <Style Selector="^.Warning">
+                      <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+                    </Style>
+                  </Style>
+                </StackPanel.Styles>
+
+                <v:TrimmingStackPanel
+                  MinimumLeadingVisibleItems="1" MinimumTrailingVisibleItems="1"
+                  Orientation="Horizontal" Spacing="8">
+                  <TextBlock
+                    VerticalAlignment="Center" FontWeight="SemiBold"
+                    Foreground="{DynamicResource ForegroundColor}"
+                    Text="{Binding DisplayName}"
+                    TextTrimming="CharacterEllipsis"/>
+                  <shadui:Badge
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource SecondaryColor}"
+                    Content="{Binding VersionBadgeText}"
+                    FontFamily="{StaticResource MonospaceFontFamily}"
+                    Foreground="{DynamicResource SecondaryForegroundColor}"/>
+                </v:TrimmingStackPanel>
+
+                <ItemsControl
+                  IsVisible="{Binding HasToolTipChips}"
+                  ItemsSource="{Binding ToolTipChips}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <v:TrimmingStackPanel
+                        MinimumLeadingVisibleItems="1" Orientation="Horizontal"
+                        Spacing="12"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ModPageViewModel+ModToolTipChip">
+                      <StackPanel
+                        Orientation="Horizontal" Spacing="4">
+                        <TablerIcon
+                          VerticalAlignment="Center"
+                          Foreground="{DynamicResource MutedColor}"
+                          Kind="{Binding Icon}"
+                          Size="12"/>
+                        <TextBlock
+                          Classes="Muted Caption" VerticalAlignment="Center"
+                          Text="{Binding Text}"
+                          TextWrapping="NoWrap"/>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock
+                  Foreground="{DynamicResource ForegroundColor}"
+                  IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                  MaxLines="6"
+                  Text="{Binding Description}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+
+                <DockPanel HorizontalSpacing="6">
+                  <TablerIcon
+                    Classes="VerificationIcon" DockPanel.Dock="Left"
+                    VerticalAlignment="Center"
+                    Classes.Trusted="{Binding IsVerificationTrusted}"
+                    Classes.Warning="{Binding IsVerificationWarning}"
+                    IsFilled="{Binding IsVerificationTrusted}"
+                    Kind="{Binding VerificationIcon}"
+                    Size="14"/>
+                  <TextBlock
+                    Classes="Caption VerificationText" VerticalAlignment="Center"
+                    Classes.Trusted="{Binding IsVerificationTrusted}"
+                    Classes.Warning="{Binding IsVerificationWarning}"
+                    Text="{Binding VerificationTextKey^, FallbackValue={x:Null}}"
+                    TextWrapping="Wrap"/>
+                </DockPanel>
+
+                <Border
+                  Height="1"
+                  Background="{DynamicResource BorderColor}"
+                  IsVisible="{Binding HasToolTipNotes}"/>
+
+                <ItemsControl
+                  IsVisible="{Binding HasToolTipNotes}"
+                  ItemsSource="{Binding ToolTipNotes}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel Spacing="4"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ModPageViewModel+ModToolTipNote">
+                      <DockPanel HorizontalSpacing="6">
+                        <TablerIcon
+                          Classes="NoteIcon" DockPanel.Dock="Left"
+                          VerticalAlignment="Center"
+                          Classes.Warning="{Binding IsWarning}"
+                          Kind="{Binding Icon}"
+                          Size="13"/>
+                        <TextBlock
+                          Classes="Muted Caption" VerticalAlignment="Center"
+                          Text="{Binding TextKey^, FallbackValue={x:Null}}"
+                          TextWrapping="Wrap"/>
+                      </DockPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </ToolTip.Tip>
+
+            <Panel
+              Grid.Column="0" Width="32"
+              Height="32" VerticalAlignment="Center">
+              <Image
+                x:Name="ListModIconImage" Width="32"
+                Height="32" md:AsyncImageLoader.SizeToContent="Manual"
+                md:AsyncImageLoader.Source="{Binding IconSource}"
+                Stretch="Uniform"/>
+              <TablerIcon
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                IsVisible="{Binding #ListModIconImage.Source, Converter={x:Static ObjectConverters.IsNull}}"
+                Kind="Puzzle" Size="24"/>
+            </Panel>
+
+            <StackPanel
+              Grid.Column="1" VerticalAlignment="Center"
+              Spacing="2">
+              <v:TrimmingStackPanel
+                MinimumLeadingVisibleItems="1" MinimumTrailingVisibleItems="1"
+                Orientation="Horizontal" Spacing="6">
+                <TextBlock
+                  VerticalAlignment="Center"
+                  Text="{Binding DisplayName}"
+                  TextTrimming="CharacterEllipsis"/>
+
+                <shadui:Badge
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource PrimaryColor20}"
+                  Content="{I18N {x:Static LocaleKey.ModPage_UpdateAvailableBadge}}"
+                  Foreground="{DynamicResource PrimaryColor}"
+                  IsVisible="{Binding HasUpdate}"/>
+              </v:TrimmingStackPanel>
+
+              <TextBlock
+                Classes="Muted Caption"
+                IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                MaxLines="2"
+                Text="{Binding Description}"
+                TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+
+            <TablerIcon
+              Grid.Column="2" VerticalAlignment="Center"
+              Foreground="{DynamicResource WarningColor}"
+              IsFilled="True"
+              IsVisible="{Binding ShowListWarningIcon}"
+              Kind="AlertTriangle"
+              Size="{DynamicResource FontSizeL}"/>
+
+            <Panel
+              Grid.Column="3" VerticalAlignment="Center">
+              <shadui:AsyncToggleSwitch
+                Margin="0,0,4,0" VerticalAlignment="Center"
+                Command="{Binding SetEnabledCommand}"
+                IsBusy="{Binding #Self.ViewModel.IsBusy}"
+                IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                IsVisible="{Binding IsInstalled}"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_EnableSwitch_ToolTip}}"/>
+
+              <Button
+                Classes="Primary Compact" Padding="10,4"
+                VerticalAlignment="Center"
+                shadui:ButtonAssist.ShowProgress="{Binding IsInstalling}"
+                Command="{Binding #Self.InstallModCommand}"
+                CommandParameter="{Binding}"
+                Content="{I18N {x:Static LocaleKey.ModPage_InstallButton_Content}}"
+                IsVisible="{Binding ShowListInstallButton}"/>
+
+              <shadui:Badge
+                VerticalAlignment="Center"
+                Background="{DynamicResource WarningColor60}"
+                Content="{I18N {x:Static LocaleKey.ModPage_IncompatibleBadge}}"
+                Foreground="{DynamicResource BadgeForegroundColor}"
+                IsVisible="{Binding ShowListIncompatibleBadge}"/>
+            </Panel>
+          </Grid>
+        </DataTemplate>
+      </Setter>
+      <Setter Property="Interaction.Behaviors">
+        <BehaviorCollectionTemplate>
+          <BehaviorCollection>
+            <shadui:SwallowBringIntoViewEventBehavior/>
+          </BehaviorCollection>
+        </BehaviorCollectionTemplate>
+      </Setter>
+    </Style>
+
+    <Style Selector="TablerIcon.HeaderMetaIcon">
+      <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
+      <Style Selector="^.Trusted">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
+      </Style>
+      <Style Selector="^.Warning">
+        <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="TextBlock.HeaderMetaText">
+      <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
+      <Style Selector="^.Trusted">
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+      </Style>
+      <Style Selector="^.Warning">
+        <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="SelectableTextBlock.MetadataValue.Monospace">
+      <Setter Property="FontFamily" Value="{StaticResource MonospaceFontFamily}"/>
+    </Style>
+
+    <Style Selector="Grid.OverviewBodyGrid">
+      <Setter Property="ColumnSpacing" Value="20"/>
+      <Setter Property="RowSpacing" Value="0"/>
+
+      <Style Selector="^ &gt; Panel.OverviewReadmePane">
+        <Setter Property="Grid.Row" Value="0"/>
+        <Setter Property="Grid.Column" Value="0"/>
+        <Setter Property="Grid.ColumnSpan" Value="1"/>
+      </Style>
+
+      <Style Selector="^ &gt; Border.OverviewDetailsPane">
+        <Setter Property="Grid.Row" Value="0"/>
+        <Setter Property="Grid.Column" Value="1"/>
+        <Setter Property="Grid.ColumnSpan" Value="1"/>
+        <Setter Property="BorderThickness" Value="1,0,0,0"/>
+        <Setter Property="Padding" Value="20,0,0,0"/>
+      </Style>
+
+      <Style Selector="^.narrow">
+        <Setter Property="ColumnSpacing" Value="0"/>
+        <Setter Property="RowSpacing" Value="16"/>
+
+        <Style Selector="^ &gt; Border.OverviewDetailsPane">
+          <Setter Property="Grid.Row" Value="0"/>
+          <Setter Property="Grid.Column" Value="0"/>
+          <Setter Property="Grid.ColumnSpan" Value="2"/>
+          <Setter Property="BorderThickness" Value="0,0,0,1"/>
+          <Setter Property="Padding" Value="0,0,0,16"/>
+        </Style>
+
+        <Style Selector="^ &gt; Panel.OverviewReadmePane">
+          <Setter Property="Grid.Row" Value="1"/>
+          <Setter Property="Grid.Column" Value="0"/>
+          <Setter Property="Grid.ColumnSpan" Value="2"/>
+        </Style>
+      </Style>
+    </Style>
+  </UserControl.Styles>
+
+  <shadui:NavigationView
+    x:Name="RootNavigationView" Padding="24,0,24,20"
+    HeaderMaxWidth="1160"
+    PageTransition="{x:Null}"
+    PaneWidth="360" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+    SelectedItem="{Binding SelectedMod, Mode=TwoWay}">
+    <shadui:NavigationView.PaneHeader>
+      <StackPanel
+        Margin="0,14,0,10" Spacing="10">
+        <DockPanel
+          Height="36" HorizontalSpacing="8">
+          <shadui:ControlGroup
+            DockPanel.Dock="Right" VerticalAlignment="Center"
+            Orientation="Horizontal">
+            <Button
+              Classes="Secondary"
+              IsEnabled="{Binding CanMutateMods}"
+              ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_ImportButton_ToolTip}}">
+              <TablerIcon
+                Kind="FileImport"
+                Size="{DynamicResource FontSizeL}"/>
+              <Button.Flyout>
+                <MenuFlyout Placement="Bottom">
+                  <MenuItem
+                    Command="{Binding #Self.ImportZipCommand}"
+                    Header="{I18N {x:Static LocaleKey.ModPage_ImportZip_MenuItem}}">
+                    <MenuItem.Icon>
+                      <TablerIcon
+                        Kind="FileZip"
+                        Size="{DynamicResource FontSizeL}"/>
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <MenuItem
+                    Command="{Binding #Self.ImportDirectoryCommand}"
+                    Header="{I18N {x:Static LocaleKey.ModPage_ImportDirectory_MenuItem}}">
+                    <MenuItem.Icon>
+                      <TablerIcon
+                        Kind="FolderOpen"
+                        Size="{DynamicResource FontSizeL}"/>
+                    </MenuItem.Icon>
+                  </MenuItem>
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+
+            <Button
+              Classes="Secondary"
+              Command="{Binding #Self.ManageSourcesCommand}"
+              ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_SourcesButton_ToolTip}}">
+              <TablerIcon
+                Kind="Database"
+                Size="{DynamicResource FontSizeL}"/>
+            </Button>
+
+            <Button
+              Classes="Secondary"
+              Command="{Binding RefreshCatalogsCommand}"
+              ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_RefreshButton_ToolTip}}">
+              <TablerIcon
+                Classes.Spinning="{Binding IsLoadingCatalog}"
+                Kind="Refresh"
+                Size="{DynamicResource FontSizeL}"/>
+            </Button>
+          </shadui:ControlGroup>
+
+          <v:TrimmingStackPanel
+            VerticalAlignment="Center" MinimumLeadingVisibleItems="1"
+            MinimumTrailingVisibleItems="1" Orientation="Horizontal"
+            Spacing="8">
+            <TextBlock
+              Classes="h1" VerticalAlignment="Center"
+              Text="{I18N {x:Static LocaleKey.ModPage_Title}}"
+              TextTrimming="CharacterEllipsis"/>
+
+            <shadui:Badge
+              VerticalAlignment="Center"
+              Background="{DynamicResource WarningColor60}"
+              Content="{I18N {x:Static LocaleKey.ExperimentalBadge_Content}}"
+              Foreground="{DynamicResource BadgeForegroundColor}"
+              ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
+          </v:TrimmingStackPanel>
+        </DockPanel>
+
+        <DockPanel HorizontalSpacing="6">
+          <Button
+            x:Name="DiscoverFilterButton" Classes="Secondary"
+            DockPanel.Dock="Right" Width="34"
+            Height="34" Padding="0"
+            CornerRadius="999"
+            IsVisible="{Binding HasDiscoverFilterMenu}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_FilterButton_ToolTip}}">
+            <Panel
+              Width="16" Height="16">
+              <TablerIcon
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Kind="Filter"
+                Size="{DynamicResource FontSizeL}"/>
+              <Border
+                Width="6" Height="6"
+                Margin="0,-2,-2,0" HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Background="{DynamicResource PrimaryColor}"
+                CornerRadius="3"
+                IsVisible="{Binding HasActiveDiscoverFilter}"/>
+            </Panel>
+            <Button.Flyout>
+              <Flyout Placement="BottomEdgeAlignedRight">
+                <StackPanel
+                  Width="220" Spacing="8">
+                  <StackPanel
+                    IsVisible="{Binding HasMultipleSources}"
+                    Spacing="4">
+                    <TextBlock
+                      Classes="Muted Caption" Margin="8,2,8,0"
+                      Text="{I18N {x:Static LocaleKey.ModPage_Metadata_Source}}"/>
+                    <ItemsControl ItemsSource="{Binding SourceFilterItems}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ModPageViewModel+ModFilterOption">
+                          <Button
+                            Classes="Ghost Compact" Padding="8,5"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Command="{Binding SelectCommand}">
+                            <DockPanel HorizontalSpacing="8">
+                              <TablerIcon
+                                DockPanel.Dock="Right" VerticalAlignment="Center"
+                                Foreground="{DynamicResource PrimaryColor}"
+                                IsVisible="{Binding IsSelected}"
+                                Kind="Check" Size="14"/>
+                              <TextBlock
+                                VerticalAlignment="Center"
+                                Text="{Binding TitleKey^}"
+                                TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+
+                  <StackPanel
+                    IsVisible="{Binding HasCategoryFilters}"
+                    Spacing="4">
+                    <TextBlock
+                      Classes="Muted Caption" Margin="8,2,8,0"
+                      Text="{I18N {x:Static LocaleKey.ModPage_Metadata_Category}}"/>
+                    <ItemsControl ItemsSource="{Binding CategoryFilterItems}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ModPageViewModel+ModFilterOption">
+                          <Button
+                            Classes="Ghost Compact" Padding="8,5"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Command="{Binding SelectCommand}">
+                            <DockPanel HorizontalSpacing="8">
+                              <TablerIcon
+                                DockPanel.Dock="Right" VerticalAlignment="Center"
+                                Foreground="{DynamicResource PrimaryColor}"
+                                IsVisible="{Binding IsSelected}"
+                                Kind="Check" Size="14"/>
+                              <TextBlock
+                                VerticalAlignment="Center"
+                                Text="{Binding TitleKey^}"
+                                TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+
+                  <StackPanel
+                    IsVisible="{Binding HasSortOptions}"
+                    Spacing="4">
+                    <TextBlock
+                      Classes="Muted Caption" Margin="8,2,8,0"
+                      Text="{I18N {x:Static LocaleKey.ModPage_FilterMenu_SortHeader}}"/>
+                    <ItemsControl ItemsSource="{Binding SortOptionItems}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ModPageViewModel+ModSortOption">
+                          <Button
+                            Classes="Ghost Compact" Padding="8,5"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Command="{Binding SelectCommand}">
+                            <DockPanel HorizontalSpacing="8">
+                              <TablerIcon
+                                DockPanel.Dock="Right" VerticalAlignment="Center"
+                                Foreground="{DynamicResource PrimaryColor}"
+                                IsVisible="{Binding IsSelected}"
+                                Kind="Check" Size="14"/>
+                              <TextBlock
+                                VerticalAlignment="Center"
+                                Text="{Binding TitleKey^}"
+                                TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+
+                  <Border
+                    Height="1"
+                    Background="{DynamicResource BorderColor}"
+                    IsVisible="{Binding HasActiveDiscoverFilter}"/>
+
+                  <Button
+                    Classes="Secondary Compact" HorizontalAlignment="Stretch"
+                    Command="{Binding ResetDiscoverFiltersCommand}"
+                    Content="{I18N {x:Static LocaleKey.ModPage_FilterMenu_Reset}}"
+                    IsVisible="{Binding HasActiveDiscoverFilter}"/>
+                </StackPanel>
+              </Flyout>
+            </Button.Flyout>
+          </Button>
+
+          <TextBox
+            Classes="Clearable" CornerRadius="999"
+            FontWeight="Normal"
+            PlaceholderText="{I18N {x:Static LocaleKey.ModPage_SearchBox_PlaceholderText}}"
+            Text="{Binding SearchText, Mode=TwoWay, Delay=250}"/>
+        </DockPanel>
+
+        <shadui:Toast
+          Title="{I18N {x:Static LocaleKey.ModPage_RestartRequired_Title}}"
+          Padding="12,8" HorizontalAlignment="Stretch"
+          ActionButtonContent="{I18N {x:Static LocaleKey.ModPage_ViewDetailsButton_Content}}"
+          ActionCommand="{Binding #Self.ShowRestartDetailsCommand}"
+          CanDismiss="False" CanDismissByClicking="False"
+          Content="{I18N {x:Static LocaleKey.ModPage_RestartRequired_Description}}"
+          IsVisible="{Binding IsRestartRequired}"
+          Notification="Warning"/>
+      </StackPanel>
+    </shadui:NavigationView.PaneHeader>
+
+    <shadui:NavigationView.PaneContent>
+      <TabControl SelectedIndex="{Binding SelectedPaneTabIndex, Mode=TwoWay}">
+        <TabItem Header="{I18N {x:Static LocaleKey.ModPage_Tab_Installed_Header}}">
+          <Panel>
+            <ListBox
+              Classes="ModListBox"
+              IsVisible="{Binding HasInstalledItems}"
+              ItemsSource="{Binding InstalledItems}"
+              SelectedItem="{Binding SelectedInstalledItem, Mode=TwoWay}"/>
+
+            <StackPanel
+              Margin="12" HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              IsVisible="{Binding !HasInstalledItems}"
+              Spacing="8">
+              <Image
+                Height="96" HorizontalAlignment="Center"
+                Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+              <TextBlock
+                Classes="Strong"
+                Text="{I18N {x:Static LocaleKey.ModPage_EmptyInstalled_Title}}"
+                TextAlignment="Center" TextWrapping="Wrap"/>
+              <TextBlock
+                Classes="Muted Caption"
+                Text="{I18N {x:Static LocaleKey.ModPage_EmptyInstalled_Description}}"
+                TextAlignment="Center" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Panel>
+        </TabItem>
+
+        <TabItem Header="{I18N {x:Static LocaleKey.ModPage_Tab_Discover_Header}}">
+          <DockPanel
+            LastChildFill="True" VerticalSpacing="8">
+            <shadui:Toast
+              Title="{I18N {x:Static LocaleKey.ModPage_Toast_CatalogRefreshFailed}}"
+              DockPanel.Dock="Top" Padding="10,6"
+              HorizontalAlignment="Stretch" CanDismiss="False"
+              CanDismissByClicking="False"
+              Content="{Binding CatalogErrorSummary}"
+              IsVisible="{Binding CatalogErrorSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              Notification="Warning"/>
+
+            <Panel>
+              <ListBox
+                Classes="ModListBox"
+                IsVisible="{Binding HasDiscoverItems}"
+                ItemsSource="{Binding DiscoverItems}"
+                SelectedItem="{Binding SelectedDiscoverItem, Mode=TwoWay}"/>
+
+              <shadui:Loading
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                IsVisible="{Binding IsLoadingCatalog}"/>
+
+              <StackPanel
+                Margin="12" HorizontalAlignment="Center"
+                VerticalAlignment="Center" Spacing="10">
+                <StackPanel.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="!HasDiscoverItems"/>
+                    <Binding Path="!IsLoadingCatalog"/>
+                  </MultiBinding>
+                </StackPanel.IsVisible>
+
+                <Image
+                  Height="96" HorizontalAlignment="Center"
+                  Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+                <TextBlock
+                  Classes="Strong"
+                  Text="{I18N {x:Static LocaleKey.ModPage_EmptyDiscover_Title}}"
+                  TextAlignment="Center" TextWrapping="Wrap"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.ModPage_EmptyDiscover_Description}}"
+                  TextAlignment="Center" TextWrapping="Wrap"/>
+
+                <StackPanel
+                  Margin="0,4,0,0" HorizontalAlignment="Center"
+                  Orientation="Horizontal" Spacing="8">
+                  <Button
+                    Classes="Secondary"
+                    shadui:ButtonAssist.Icon="{TablerIconContent Database}"
+                    Command="{Binding #Self.ManageSourcesCommand}"
+                    Content="{I18N {x:Static LocaleKey.ModPage_SourcesButton_ToolTip}}"/>
+                  <Button
+                    Classes="Secondary"
+                    shadui:ButtonAssist.Icon="{TablerIconContent FileZip}"
+                    Command="{Binding #Self.ImportZipCommand}"
+                    Content="{I18N {x:Static LocaleKey.ModPage_ImportZip_MenuItem}}"/>
+                </StackPanel>
+              </StackPanel>
+            </Panel>
+          </DockPanel>
+        </TabItem>
+      </TabControl>
+    </shadui:NavigationView.PaneContent>
+
+    <shadui:NavigationView.Header>
+      <Border
+        Height="36" Margin="0,14,0,14">
+        <StackPanel
+          HorizontalAlignment="Right" VerticalAlignment="Center"
+          IsVisible="{Binding SelectedMod, Converter={x:Static ObjectConverters.IsNotNull}}"
+          Orientation="Horizontal" Spacing="6">
+          <Button
+            Classes="Primary"
+            shadui:ButtonAssist.Icon="{TablerIconContent Download}"
+            shadui:ButtonAssist.ShowProgress="{Binding #Self.InstallModCommand.IsRunning}"
+            Command="{Binding #Self.InstallModCommand}"
+            CommandParameter="{Binding SelectedMod}"
+            Content="{I18N {x:Static LocaleKey.ModPage_InstallButton_Content}}"
+            IsVisible="{Binding SelectedMod?.CanInstall, FallbackValue={x:False}, TargetNullValue={x:False}}"/>
+
+          <Button
+            Classes="Primary"
+            shadui:ButtonAssist.Icon="{TablerIconContent Refresh}"
+            shadui:ButtonAssist.ShowProgress="{Binding #Self.UpdateModCommand.IsRunning}"
+            Command="{Binding #Self.UpdateModCommand}"
+            CommandParameter="{Binding SelectedMod}"
+            Content="{Binding SelectedMod?.UpdateButtonContentKey^, FallbackValue={x:Null}}"
+            IsVisible="{Binding SelectedMod?.CanUpdate, FallbackValue={x:False}, TargetNullValue={x:False}}"/>
+
+          <Button
+            Classes="Secondary"
+            shadui:ButtonAssist.Icon="{TablerIconContent Refresh}"
+            shadui:ButtonAssist.ShowProgress="{Binding ReloadLocalDirectoryCommand.IsRunning}"
+            Command="{Binding ReloadLocalDirectoryCommand}"
+            CommandParameter="{Binding SelectedMod}"
+            Content="{I18N {x:Static LocaleKey.ModPage_ReloadLocalButton_Content}}"
+            IsVisible="{Binding SelectedMod?.IsLocalDirectory, FallbackValue={x:False}, TargetNullValue={x:False}}"/>
+
+          <Button
+            Classes="Secondary"
+            shadui:ButtonAssist.Icon="{TablerIconContent FolderOpen}"
+            Command="{Binding OpenLocalDirectoryCommand}"
+            CommandParameter="{Binding SelectedMod}"
+            IsVisible="{Binding SelectedMod?.IsLocalDirectory, FallbackValue={x:False}, TargetNullValue={x:False}}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_OpenLocalFolderButton_ToolTip}}"/>
+
+          <Button
+            Classes="Secondary"
+            shadui:ButtonAssist.Icon="{TablerIconContent Rotate}"
+            shadui:ButtonAssist.ShowProgress="{Binding #Self.RollbackModCommand.IsRunning}"
+            Command="{Binding #Self.RollbackModCommand}"
+            CommandParameter="{Binding SelectedMod}"
+            Content="{Binding SelectedMod?.RollbackButtonContentKey^, FallbackValue={x:Null}}"
+            IsVisible="{Binding SelectedMod?.CanRollback, FallbackValue={x:False}, TargetNullValue={x:False}}"/>
+
+          <Button
+            Classes="Secondary"
+            shadui:ButtonAssist.Icon="{TablerIconContent Trash}"
+            shadui:ButtonAssist.ShowProgress="{Binding #Self.UninstallModCommand.IsRunning}"
+            Command="{Binding #Self.UninstallModCommand}"
+            CommandParameter="{Binding SelectedMod}"
+            Content="{I18N {x:Static LocaleKey.ModPage_UninstallButton_Content}}"
+            Foreground="{DynamicResource DestructiveColor}"
+            IsVisible="{Binding SelectedMod?.IsInstalled, FallbackValue={x:False}, TargetNullValue={x:False}}"/>
+        </StackPanel>
+      </Border>
+    </shadui:NavigationView.Header>
+
+    <shadui:NavigationView.ContentTemplate>
+      <DataTemplate x:DataType="vm:ModPageViewModel+ModItemPresentation">
+        <Grid
+          MaxWidth="1160" Margin="0,12,0,0"
+          ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,*"
+          RowSpacing="10">
+          <Panel
+            Grid.Row="0" Grid.Column="0"
+            Width="64" Height="64"
+            VerticalAlignment="Top">
+            <Image
+              x:Name="DetailModIconImage" Width="64"
+              Height="64" md:AsyncImageLoader.SizeToContent="Manual"
+              md:AsyncImageLoader.Source="{Binding IconSource}"
+              Stretch="Uniform"/>
+            <TablerIcon
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              IsVisible="{Binding #DetailModIconImage.Source, Converter={x:Static ObjectConverters.IsNull}}"
+              Kind="Puzzle" Size="56"/>
+          </Panel>
+
+          <StackPanel
+            Grid.Row="0" Grid.Column="1"
+            Margin="16,0,0,0" Spacing="6">
+            <v:TrimmingStackPanel
+              MinimumLeadingVisibleItems="1" MinimumTrailingVisibleItems="2"
+              Orientation="Horizontal" Spacing="8">
+              <TextBlock
+                Classes="h3" VerticalAlignment="Center"
+                Text="{Binding DisplayName}"
+                TextTrimming="CharacterEllipsis"/>
+
+              <shadui:Badge
+                VerticalAlignment="Center"
+                Background="{DynamicResource SecondaryColor}"
+                Content="{Binding VersionBadgeText}"
+                FontFamily="{StaticResource MonospaceFontFamily}"
+                Foreground="{DynamicResource SecondaryForegroundColor}"/>
+
+              <shadui:AsyncToggleSwitch
+                VerticalAlignment="Center"
+                Command="{Binding SetEnabledCommand}"
+                IsBusy="{Binding #Self.ViewModel.IsBusy}"
+                IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_EnableSwitch_ToolTip}}">
+                <shadui:AsyncToggleSwitch.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="IsInstalled"/>
+                    <Binding Path="#RootNavigationView.IsCompact"/>
+                  </MultiBinding>
+                </shadui:AsyncToggleSwitch.IsVisible>
+              </shadui:AsyncToggleSwitch>
+
+              <shadui:Badge
+                VerticalAlignment="Center"
+                Background="{DynamicResource SuccessColor60}"
+                Content="{Binding StatusBadgeTextKey^, FallbackValue={x:Null}}"
+                Foreground="{DynamicResource BadgeForegroundColor}">
+                <shadui:Badge.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="IsStatusActive"/>
+                    <Binding Path="!#RootNavigationView.IsCompact"/>
+                  </MultiBinding>
+                </shadui:Badge.IsVisible>
+              </shadui:Badge>
+
+              <shadui:Badge
+                VerticalAlignment="Center"
+                Background="{DynamicResource SecondaryColor}"
+                Content="{Binding StatusBadgeTextKey^, FallbackValue={x:Null}}"
+                Foreground="{DynamicResource SecondaryForegroundColor}">
+                <shadui:Badge.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="IsStatusInactive"/>
+                    <Binding Path="!#RootNavigationView.IsCompact"/>
+                  </MultiBinding>
+                </shadui:Badge.IsVisible>
+              </shadui:Badge>
+
+              <shadui:Badge
+                VerticalAlignment="Center"
+                Background="{DynamicResource SecondaryColor}"
+                Content="{Binding StatusBadgeTextKey^, FallbackValue={x:Null}}"
+                Foreground="{DynamicResource SecondaryForegroundColor}"
+                IsVisible="{Binding IsStatusTransitioning}"/>
+
+              <shadui:Badge
+                VerticalAlignment="Center"
+                Background="{DynamicResource WarningColor60}"
+                Content="{Binding StatusBadgeTextKey^, FallbackValue={x:Null}}"
+                Foreground="{DynamicResource BadgeForegroundColor}"
+                IsVisible="{Binding IsStatusWarning}"/>
+
+              <shadui:Badge
+                VerticalAlignment="Center"
+                Background="{DynamicResource ErrorColor60}"
+                Content="{Binding StatusBadgeTextKey^, FallbackValue={x:Null}}"
+                Foreground="{DynamicResource BadgeForegroundColor}"
+                IsVisible="{Binding IsStatusError}"/>
+            </v:TrimmingStackPanel>
+
+            <ItemsControl
+              IsVisible="{Binding HasHeaderMetaItems}"
+              ItemsSource="{Binding HeaderMetaItems}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <v:TrimmingStackPanel
+                    MinimumLeadingVisibleItems="1" Orientation="Horizontal"
+                    Spacing="14"/>
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ModPageViewModel+ModHeaderMetaItem">
+                  <StackPanel
+                    Background="Transparent" Orientation="Horizontal"
+                    Spacing="5"
+                    ToolTip.Tip="{Binding ToolTipKey^, FallbackValue={x:Null}}">
+                    <TablerIcon
+                      Classes="HeaderMetaIcon" VerticalAlignment="Center"
+                      Classes.Trusted="{Binding IsTrusted}"
+                      Classes.Warning="{Binding IsWarning}"
+                      IsFilled="{Binding IsTrusted}"
+                      Kind="{Binding Icon}"
+                      Size="14"/>
+                    <TextBlock
+                      Classes="Caption HeaderMetaText" VerticalAlignment="Center"
+                      Classes.Trusted="{Binding IsTrusted}"
+                      Classes.Warning="{Binding IsWarning}"
+                      Text="{Binding TextKey^, FallbackValue={x:Null}}"
+                      TextWrapping="NoWrap"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock
+              Classes="Muted"
+              IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              Text="{Binding Description}"
+              TextWrapping="Wrap"/>
+          </StackPanel>
+
+          <ItemsControl
+            Grid.Row="1" Grid.Column="0"
+            Grid.ColumnSpan="2"
+            IsVisible="{Binding HasNotices}"
+            ItemsSource="{Binding Notices}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="6"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.Styles>
+              <Style Selector="Border.ModNoticeCard">
+                <Setter Property="Background" Value="{DynamicResource WarningColor20}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
+              </Style>
+              <Style Selector="Border.ModNoticeCard.Error">
+                <Setter Property="Background" Value="{DynamicResource ErrorColor20}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource ErrorColor60}"/>
+              </Style>
+              <Style Selector="Border.ModNoticeCard TablerIcon">
+                <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+              </Style>
+              <Style Selector="Border.ModNoticeCard.Error TablerIcon">
+                <Setter Property="Foreground" Value="{DynamicResource ErrorColor}"/>
+              </Style>
+            </ItemsControl.Styles>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ModPageViewModel+ModNoticeItem">
+                <Border
+                  Classes="ModNoticeCard" Padding="12,10"
+                  BorderThickness="1"
+                  Classes.Error="{Binding IsError}"
+                  CornerRadius="{DynamicResource XlCornerRadius}">
+                  <StackPanel Spacing="6">
+                    <Grid
+                      ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                      <TablerIcon
+                        Grid.Column="0" Margin="0,2,0,0"
+                        VerticalAlignment="Top" IsFilled="True"
+                        Kind="{Binding IconKind}"
+                        Size="{DynamicResource FontSizeL}"/>
+
+                      <StackPanel
+                        Grid.Column="1" Spacing="2">
+                        <TextBlock
+                          Classes="Strong"
+                          Text="{Binding TitleKey^}"
+                          TextWrapping="Wrap"/>
+                        <TextBlock
+                          Classes="Caption"
+                          Text="{Binding SummaryKey^}"
+                          TextWrapping="Wrap"/>
+                      </StackPanel>
+                    </Grid>
+
+                    <Expander
+                      Header="{I18N {x:Static LocaleKey.ModPage_Notice_TechnicalDetails}}"
+                      IsExpanded="False"
+                      IsVisible="{Binding HasTechnicalDetail}">
+                      <ScrollViewer
+                        MaxHeight="160" HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto">
+                        <SelectableTextBlock
+                          Margin="0,4,0,0"
+                          FontFamily="{StaticResource MonospaceFontFamily}"
+                          FontSize="{DynamicResource FontSizeS}"
+                          Text="{Binding TechnicalDetail}"
+                          TextWrapping="Wrap"/>
+                      </ScrollViewer>
+                    </Expander>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TabControl
+            Grid.Row="2" Grid.Column="0"
+            Grid.ColumnSpan="2"
+            SelectedIndex="{Binding #Self.ViewModel.SelectedDetailTabIndex, Mode=TwoWay}">
+            <TabItem Header="{I18N {x:Static LocaleKey.ModPage_Tab_Overview_Header}}">
+              <ScrollViewer
+                Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+                <Grid
+                  x:Name="OverviewBodyGrid" Classes="OverviewBodyGrid"
+                  Margin="0,6,12,0" RowDefinitions="Auto,Auto">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*"/>
+                    <ColumnDefinition
+                      Width="*" MinWidth="160"/>
+                  </Grid.ColumnDefinitions>
+                  <Interaction.Behaviors>
+                    <AdaptiveBehavior>
+                      <AdaptiveClassSetter
+                        MinWidth="0" MaxWidth="600"
+                        ClassName="narrow" MaxWidthOperator="LessThan"
+                        MinWidthOperator="GreaterThanOrEqual"/>
+                      <AdaptiveClassSetter
+                        MinWidth="600" MaxWidth="Infinity"
+                        ClassName="wide" MaxWidthOperator="LessThan"
+                        MinWidthOperator="GreaterThanOrEqual"/>
+                    </AdaptiveBehavior>
+                  </Interaction.Behaviors>
+
+                  <!--  Grid positions are controlled by Grid.OverviewBodyGrid styles for responsive 3:1 vs stacked layout  -->
+                  <!--  ReSharper disable Xaml.MissingGridIndex  -->
+                  <Panel
+                    x:Name="OverviewReadmePane" Classes="OverviewReadmePane">
+                    <shadui:Loading
+                      Width="20" Height="20"
+                      Margin="0,24" HorizontalAlignment="Center"
+                      VerticalAlignment="Top"
+                      IsVisible="{Binding #Self.ViewModel.IsLoadingSelectedReadme}"/>
+
+                    <modding:ModReadmeMarkdownRenderer
+                      IsVisible="{Binding #Self.ViewModel.HasSelectedReadme}"
+                      Text="{Binding #Self.ViewModel.SelectedReadmeMarkdown}"/>
+
+                    <TextBlock
+                      Classes="Muted" Margin="0,8"
+                      Text="{I18N {x:Static LocaleKey.ModPage_Readme_Empty}}"
+                      TextWrapping="Wrap">
+                      <TextBlock.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                          <Binding Path="!#Self.ViewModel.HasSelectedReadme"/>
+                          <Binding Path="!#Self.ViewModel.IsLoadingSelectedReadme"/>
+                        </MultiBinding>
+                      </TextBlock.IsVisible>
+                    </TextBlock>
+                  </Panel>
+
+                  <Border
+                    x:Name="OverviewDetailsPane" Classes="OverviewDetailsPane"
+                    BorderBrush="{DynamicResource BorderColor60}">
+                    <StackPanel
+                      VerticalAlignment="Top" Spacing="16">
+                      <StackPanel Spacing="8">
+                        <TextBlock
+                          Classes="Strong"
+                          Text="{I18N {x:Static LocaleKey.ModPage_Metadata_CardTitle}}"/>
+
+                        <ItemsControl
+                          Grid.IsSharedSizeScope="True"
+                          ItemsSource="{Binding MetadataFields}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ModPageViewModel+ModMetadataField">
+                              <Grid
+                                Margin="0,3" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition
+                                    Width="Auto" SharedSizeGroup="ModFieldKey"/>
+                                  <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock
+                                  Classes="Muted Caption" Grid.Column="0"
+                                  VerticalAlignment="Top"
+                                  Text="{Binding LabelKey^}"/>
+
+                                <Panel Grid.Column="1">
+                                  <TextBlock
+                                    Classes="Caption" VerticalAlignment="Top"
+                                    IsVisible="{Binding HasLocalizedValue}"
+                                    Text="{Binding LocalizedValueKey^, FallbackValue={x:Null}}"
+                                    TextTrimming="CharacterEllipsis"/>
+                                  <SelectableTextBlock
+                                    Classes="Caption MetadataValue" VerticalAlignment="Top"
+                                    Classes.Monospace="{Binding IsMonospace}"
+                                    IsVisible="{Binding !HasLocalizedValue}"
+                                    Text="{Binding Value}"
+                                    TextWrapping="Wrap"/>
+                                </Panel>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+
+                      <StackPanel
+                        IsVisible="{Binding HasTags}"
+                        Spacing="8">
+                        <TextBlock
+                          Classes="Strong"
+                          Text="{I18N {x:Static LocaleKey.ModPage_Metadata_TagsHeader}}"/>
+
+                        <ItemsControl ItemsSource="{Binding Tags}">
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <WrapPanel
+                                ItemSpacing="6" LineSpacing="6"
+                                Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                              <shadui:Badge
+                                Background="{DynamicResource SecondaryColor}"
+                                Content="{Binding}"
+                                Foreground="{DynamicResource SecondaryForegroundColor}"/>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+
+                      <StackPanel
+                        IsVisible="{Binding HasDependencies}"
+                        Spacing="8">
+                        <TextBlock
+                          Classes="Strong"
+                          Text="{I18N {x:Static LocaleKey.ModPage_Metadata_DependenciesHeader}}"/>
+
+                        <ItemsControl ItemsSource="{Binding DependencyItems}">
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <StackPanel Spacing="6"/>
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ModPageViewModel+ModDependencyDisplayItem">
+                              <DockPanel HorizontalSpacing="8">
+                                <shadui:Badge
+                                  DockPanel.Dock="Right" VerticalAlignment="Center"
+                                  Background="{DynamicResource SecondaryColor}"
+                                  Content="{Binding VersionLabelKey^, FallbackValue={x:Null}}"
+                                  FontFamily="{StaticResource MonospaceFontFamily}"
+                                  Foreground="{DynamicResource SecondaryForegroundColor}"/>
+
+                                <TextBlock
+                                  Classes="Caption" VerticalAlignment="Center"
+                                  FontFamily="{StaticResource MonospaceFontFamily}"
+                                  Text="{Binding Id}"
+                                  TextTrimming="CharacterEllipsis"
+                                  ToolTip.Tip="{Binding Id}"/>
+                              </DockPanel>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+
+                      <StackPanel
+                        IsVisible="{Binding HasResources}"
+                        Spacing="6">
+                        <TextBlock
+                          Classes="Strong"
+                          Text="{I18N {x:Static LocaleKey.ModPage_Metadata_ResourcesHeader}}"/>
+
+                        <StackPanel Spacing="2">
+                          <Button
+                            Classes="Ghost Compact" HorizontalAlignment="Left"
+                            shadui:ButtonAssist.Icon="{TablerIconContent Globe}"
+                            Command="{Binding #Self.ViewModel.OpenUrlCommand}"
+                            CommandParameter="{Binding Homepage}"
+                            Content="{I18N {x:Static LocaleKey.ModPage_Metadata_Homepage}}"
+                            IsVisible="{Binding HasHomepage}"/>
+
+                          <Button
+                            Classes="Ghost Compact" HorizontalAlignment="Left"
+                            shadui:ButtonAssist.Icon="{TablerIconContent SourceCode}"
+                            Command="{Binding #Self.ViewModel.OpenUrlCommand}"
+                            CommandParameter="{Binding RepositoryUrl}"
+                            Content="{I18N {x:Static LocaleKey.ModPage_Metadata_Repository}}"
+                            IsVisible="{Binding HasRepositoryUrl}"/>
+
+                          <Button
+                            Classes="Ghost Compact" HorizontalAlignment="Left"
+                            shadui:ButtonAssist.Icon="{TablerIconContent Scale}"
+                            Command="{Binding #Self.ShowLicenseCommand}"
+                            CommandParameter="{Binding}"
+                            Content="{Binding LicenseLabelKey^}"
+                            IsVisible="{Binding HasLicense}"
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_Metadata_ViewLicense}}"/>
+
+                          <Button
+                            Classes="Ghost Compact" HorizontalAlignment="Left"
+                            shadui:ButtonAssist.Icon="{TablerIconContent FolderOpen}"
+                            Command="{Binding #Self.ViewModel.OpenLocalDirectoryCommand}"
+                            CommandParameter="{Binding}"
+                            Content="{I18N {x:Static LocaleKey.ModPage_OpenLocalFolderButton_ToolTip}}"
+                            IsVisible="{Binding IsLocalDirectory}"/>
+                        </StackPanel>
+                      </StackPanel>
+                    </StackPanel>
+                  </Border>
+                  <!--  ReSharper restore Xaml.MissingGridIndex  -->
+                </Grid>
+              </ScrollViewer>
+            </TabItem>
+
+            <TabItem
+              Header="{I18N {x:Static LocaleKey.ModPage_Tab_Settings_Header}}"
+              IsVisible="{Binding HasSettings}">
+              <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <ContentControl Content="{Binding #Self.ActiveSettingsControl, FallbackValue={x:Null}}"/>
+              </ScrollViewer>
+            </TabItem>
+          </TabControl>
+        </Grid>
+      </DataTemplate>
+    </shadui:NavigationView.ContentTemplate>
+
+    <shadui:NavigationView.EmptyContent>
+      <StackPanel
+        HorizontalAlignment="Center" VerticalAlignment="Center"
+        Spacing="16">
+        <Image
+          Height="128" HorizontalAlignment="Center"
+          Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+        <TextBlock
+          Text="{I18N {x:Static LocaleKey.ModPage_EmptyContent_SelectInstruction}}"
+          TextAlignment="Center" TextWrapping="Wrap"/>
+      </StackPanel>
+    </shadui:NavigationView.EmptyContent>
+  </shadui:NavigationView>
+</UserControl>

@@ -1,0 +1,21 @@
+<UserControl
+  x:Class="Everywhere.Views.Modding.ModLicenseDialogView" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:modding="clr-namespace:Everywhere.Views.Modding"
+  x:DataType="modding:ModLicenseDialogView">
+  <ScrollViewer
+    MaxWidth="640" MaxHeight="460"
+    HorizontalScrollBarVisibility="Disabled">
+    <Panel>
+      <SelectableTextBlock
+        FontFamily="{StaticResource MonospaceFontFamily}"
+        IsVisible="{Binding HasLicenseText}"
+        Text="{Binding LicenseText}"
+        TextWrapping="Wrap"/>
+      <TextBlock
+        Classes="Muted"
+        IsVisible="{Binding !HasLicenseText}"
+        Text="{I18N {x:Static LocaleKey.ModPage_LicenseDialog_Empty}}"
+        TextWrapping="Wrap"/>
+    </Panel>
+  </ScrollViewer>
+</UserControl>

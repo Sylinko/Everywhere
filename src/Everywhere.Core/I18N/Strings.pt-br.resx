@@ -1166,7 +1166,7 @@
         <value>Permitir que “{0}” seja executado?</value>
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
-        <value>Permitir que &quot;{0}&quot; seja executado? Ele requer a permissão &quot;{1}&quot;</value>
+        <value>Permitir que "{0}" seja executado? Ele requer a permissão "{1}"</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
         <value>Sempre permitir todas as ferramentas de “{0}”</value>
@@ -1187,13 +1187,13 @@
         <value>{0} links</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Não foi possível iniciar o MCP &quot;{0}&quot;</value>
+        <value>Não foi possível iniciar o MCP "{0}"</value>
     </data>
     <data name="ChatPluginManager_Common_InvalidMcpTransportConfiguration" xml:space="preserve">
         <value>Configuração MCP inválida.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>Comando MCP &quot;{0}&quot; não encontrado. Por favor, instale-o ou modifique o caminho do comando.</value>
+        <value>Comando MCP "{0}" não encontrado. Por favor, instale-o ou modifique o caminho do comando.</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_StartFailure" xml:space="preserve">
         <value>Este servidor MCP requer {0}. Por favor, instale-o antes de iniciar o servidor.</value>
@@ -1223,7 +1223,7 @@
         <value>Importados {0} Servidores MCP</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
-        <value>Você tem certeza que deseja remover &quot;{0}&quot;?</value>
+        <value>Você tem certeza que deseja remover "{0}"?</value>
     </data>
     <data name="ChatPluginPage_AddMcpPluginButton_Content" xml:space="preserve">
         <value>Adicionar</value>
@@ -2423,7 +2423,7 @@
         <value>Incluir Raciocínio</value>
     </data>
     <data name="GoogleOptions_ThinkingBudget_Description" xml:space="preserve">
-        <value>Limite de tokens de raciocínio do modelo Gemini 2.5; &quot;0&quot; desativa o raciocínio, &quot;-1&quot; ativa o raciocínio dinâmico.</value>
+        <value>Limite de tokens de raciocínio do modelo Gemini 2.5; "0" desativa o raciocínio, "-1" ativa o raciocínio dinâmico.</value>
     </data>
     <data name="GoogleOptions_ThinkingBudget_Header" xml:space="preserve">
         <value>Orçamento de Raciocínio</value>
@@ -2555,7 +2555,7 @@
         <value>O modelo forneceu um valor inválido para o parâmetro “{0}”, possivelmente devido a uma alucinação do modelo.</value>
     </data>
     <data name="HandledFunctionInvokingException_ArgumentMissing" xml:space="preserve">
-        <value>Parâmetro obrigatório &quot;{0}&quot; ausente ao chamar a ferramenta. Isso pode ser causado por uma alucinação do modelo.</value>
+        <value>Parâmetro obrigatório "{0}" ausente ao chamar a ferramenta. Isso pode ser causado por uma alucinação do modelo.</value>
     </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>As chamadas de ferramentas pelo modelo foram bloqueadas.</value>
@@ -3085,7 +3085,7 @@ Esta ação não pode ser desfeita.</value>
         <value>Já existe um item com este nome.</value>
     </data>
     <data name="McpTransportConfiguration_Name_ValidationErrorMessage_Regex" xml:space="preserve">
-        <value>Apenas números, letras e os caracteres &quot;-&quot; e &quot;_&quot; são permitidos.</value>
+        <value>Apenas números, letras e os caracteres "-" e "_" são permitidos.</value>
     </data>
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>Incluir conteúdo de raciocínio/pensamento na resposta</value>
@@ -3113,6 +3113,511 @@ Esta ação não pode ser desfeita.</value>
     </data>
     <data name="Modalities_Video" xml:space="preserve">
         <value>Vídeo</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeDisable_DialogTitle" xml:space="preserve">
+        <value>Desativar mods dependentes</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeDisable_Message" xml:space="preserve">
+        <value>Os seguintes mods ativados dependem de {0} e também serão desativados:
+
+{1}</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_DialogTitle" xml:space="preserve">
+        <value>Ativar dependências necessárias</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_Message" xml:space="preserve">
+        <value>{0} depende de {2} mod(s) desativado(s):
+
+{1}
+
+Continuar também os ativará.</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_AcceptButton" xml:space="preserve">
+        <value>Aceitar e instalar</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_DialogTitle" xml:space="preserve">
+        <value>Confirmar instalação do mod</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_EnableDependenciesHeader" xml:space="preserve">
+        <value>As seguintes dependências desativadas também serão ativadas:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicenseEntry" xml:space="preserve">
+        <value>{0} v{1} ({2})</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicensesHeader" xml:space="preserve">
+        <value>Aceitação de licença necessária:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_PackagesHeader" xml:space="preserve">
+        <value>Os seguintes pacotes serão instalados ou atualizados:</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_DialogTitle" xml:space="preserve">
+        <value>Reverter mod</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_Message" xml:space="preserve">
+        <value>Reverter {0} para a versão anterior {1}?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DeleteDataCheckBox" xml:space="preserve">
+        <value>Também excluir os dados salvos do mod</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DependentsWarning" xml:space="preserve">
+        <value>Mods dependentes que também serão desinstalados:
+{0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DialogTitle" xml:space="preserve">
+        <value>Desinstalar {0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_Message" xml:space="preserve">
+        <value>Tem certeza de que deseja desinstalar {0}?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_RemoveOrphansCheckBox" xml:space="preserve">
+        <value>Também remover dependências instaladas automaticamente não utilizadas ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_Conflict" xml:space="preserve">
+        <value>Conflito de mod ou assembly</value>
+    </data>
+    <data name="ModPage_Diagnostic_DependencyFailed" xml:space="preserve">
+        <value>Dependência necessária indisponível</value>
+    </data>
+    <data name="ModPage_Diagnostic_Generic" xml:space="preserve">
+        <value>Problema no mod ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_IncompatibleHost" xml:space="preserve">
+        <value>Incompatível com esta versão do Everywhere</value>
+    </data>
+    <data name="ModPage_Diagnostic_InstallationMissing" xml:space="preserve">
+        <value>Arquivos do mod ausentes ou corrompidos</value>
+    </data>
+    <data name="ModPage_Diagnostic_LoadFailed" xml:space="preserve">
+        <value>Falha ao carregar o mod</value>
+    </data>
+    <data name="ModPage_Diagnostic_LocalDirectoryIssue" xml:space="preserve">
+        <value>Problema na pasta de desenvolvimento local</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModInitializeFailed" xml:space="preserve">
+        <value>Falha ao inicializar o mod</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModRetirementFailed" xml:space="preserve">
+        <value>Falha ao interromper o mod corretamente</value>
+    </data>
+    <data name="ModPage_Diagnostic_PendingUnload" xml:space="preserve">
+        <value>Aguardando reinício para liberar recursos</value>
+    </data>
+    <data name="ModPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Selecione um mod à esquerda ou importe um pacote local</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Description" xml:space="preserve">
+        <value>Adicione uma fonte de repositório ou importe um pacote .zip local ou pasta de desenvolvimento</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Title" xml:space="preserve">
+        <value>Nenhum mod remoto disponível</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Description" xml:space="preserve">
+        <value>Navegue pela aba Descobrir ou importe um pacote .zip local ou pasta</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Title" xml:space="preserve">
+        <value>Nenhum mod instalado ainda</value>
+    </data>
+    <data name="ModPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>Ativar ou desativar este mod</value>
+    </data>
+    <data name="ModPage_Error_DependenciesUnsatisfied_DialogTitle" xml:space="preserve">
+        <value>Não foi possível resolver as dependências</value>
+    </data>
+    <data name="ModPage_Error_DependencyConflict_Header" xml:space="preserve">
+        <value>O mod selecionado possui dependências não resolvidas ou conflitos de versão:</value>
+    </data>
+    <data name="ModPage_Error_MissingDependencies_Header" xml:space="preserve">
+        <value>As seguintes dependências obrigatórias não foram encontradas em nenhuma fonte habilitada:</value>
+    </data>
+    <data name="ModPage_FilterButton_ToolTip" xml:space="preserve">
+        <value>Filtrar e ordenar</value>
+    </data>
+    <data name="ModPage_FilterMenu_Reset" xml:space="preserve">
+        <value>Redefinir filtros</value>
+    </data>
+    <data name="ModPage_FilterMenu_SortHeader" xml:space="preserve">
+        <value>Ordenar por</value>
+    </data>
+    <data name="ModPage_Filter_AllCategories" xml:space="preserve">
+        <value>Todas as categorias</value>
+    </data>
+    <data name="ModPage_Filter_AllSources" xml:space="preserve">
+        <value>Todas as fontes</value>
+    </data>
+    <data name="ModPage_ImportButton_ToolTip" xml:space="preserve">
+        <value>Importar mod local</value>
+    </data>
+    <data name="ModPage_ImportDirectoryPicker_Title" xml:space="preserve">
+        <value>Selecionar pasta do mod</value>
+    </data>
+    <data name="ModPage_ImportDirectory_MenuItem" xml:space="preserve">
+        <value>Importar pasta local...</value>
+    </data>
+    <data name="ModPage_ImportZipPicker_Title" xml:space="preserve">
+        <value>Selecionar pacote do mod (.zip)</value>
+    </data>
+    <data name="ModPage_ImportZip_MenuItem" xml:space="preserve">
+        <value>Importar pacote (.zip)...</value>
+    </data>
+    <data name="ModPage_IncompatibleBadge" xml:space="preserve">
+        <value>Incompatível</value>
+    </data>
+    <data name="ModPage_Incompatible_Platform" xml:space="preserve">
+        <value>Não suportado na plataforma atual ({0}).</value>
+    </data>
+    <data name="ModPage_Incompatible_Version" xml:space="preserve">
+        <value>Requer uma versão compatível do Everywhere (atual: {0}, Mod API {1}).</value>
+    </data>
+    <data name="ModPage_InstallButton_Content" xml:space="preserve">
+        <value>Instalar</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Confirm" xml:space="preserve">
+        <value>Começar</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendBody" xml:space="preserve">
+        <value>Mods ativados registram ferramentas, comandos ou configurações no aplicativo. Desativar ou desinstalar revoga esses registros automaticamente, ou agenda uma reinicialização se o descarregamento a quente não estiver disponível.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendTitle" xml:space="preserve">
+        <value>Amplie recursos sob demanda</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Introduction" xml:space="preserve">
+        <value>Os mods ampliam o Everywhere com ferramentas personalizadas, integrações locais e configurações.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Note" xml:space="preserve">
+        <value>O sistema de mods é atualmente experimental; as APIs e o comportamento podem mudar em versões futuras.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityBody" xml:space="preserve">
+        <value>O código do mod é executado dentro do processo do Everywhere com as mesmas permissões da sua conta de usuário. Instale e ative apenas mods de fontes confiáveis.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityTitle" xml:space="preserve">
+        <value>Execução no processo e confiança</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesBody" xml:space="preserve">
+        <value>Navegue e instale mods de fontes oficiais ou personalizadas em Descobrir, ou importe diretamente pacotes ZIP locais e diretórios de desenvolvimento.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesTitle" xml:space="preserve">
+        <value>Descoberta no catálogo e importação local</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Title" xml:space="preserve">
+        <value>Bem-vindo aos mods</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Empty" xml:space="preserve">
+        <value>Nenhum documento de texto de licença acompanha este mod.</value>
+    </data>
+    <data name="ModPage_LicenseDialog_ThirdPartySection" xml:space="preserve">
+        <value>Avisos de terceiros</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Title" xml:space="preserve">
+        <value>Licença - {0}</value>
+    </data>
+    <data name="ModPage_Metadata_ApiVersion" xml:space="preserve">
+        <value>Compatibilidade de API</value>
+    </data>
+    <data name="ModPage_Metadata_Author" xml:space="preserve">
+        <value>Autor</value>
+    </data>
+    <data name="ModPage_Metadata_CardTitle" xml:space="preserve">
+        <value>Detalhes</value>
+    </data>
+    <data name="ModPage_Metadata_Category" xml:space="preserve">
+        <value>Categoria</value>
+    </data>
+    <data name="ModPage_Metadata_DependenciesHeader" xml:space="preserve">
+        <value>Dependências</value>
+    </data>
+    <data name="ModPage_Metadata_DependencyOptional" xml:space="preserve">
+        <value>{0} (opcional)</value>
+    </data>
+    <data name="ModPage_Metadata_Homepage" xml:space="preserve">
+        <value>Página inicial</value>
+    </data>
+    <data name="ModPage_Metadata_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="ModPage_Metadata_License" xml:space="preserve">
+        <value>Licença</value>
+    </data>
+    <data name="ModPage_Metadata_LocalPath" xml:space="preserve">
+        <value>Caminho local</value>
+    </data>
+    <data name="ModPage_Metadata_PackageSize" xml:space="preserve">
+        <value>Tamanho do pacote</value>
+    </data>
+    <data name="ModPage_Metadata_PublishedAt" xml:space="preserve">
+        <value>Publicado</value>
+    </data>
+    <data name="ModPage_Metadata_Repository" xml:space="preserve">
+        <value>Repositório</value>
+    </data>
+    <data name="ModPage_Metadata_ResourcesHeader" xml:space="preserve">
+        <value>Recursos</value>
+    </data>
+    <data name="ModPage_Metadata_Source" xml:space="preserve">
+        <value>Fonte</value>
+    </data>
+    <data name="ModPage_Metadata_TagsHeader" xml:space="preserve">
+        <value>Categorias e tags</value>
+    </data>
+    <data name="ModPage_Metadata_Version" xml:space="preserve">
+        <value>Versão</value>
+    </data>
+    <data name="ModPage_Metadata_ViewLicense" xml:space="preserve">
+        <value>Ver licença</value>
+    </data>
+    <data name="ModPage_Notice_TechnicalDetails" xml:space="preserve">
+        <value>Detalhes técnicos</value>
+    </data>
+    <data name="ModPage_OpenLocalFolderButton_ToolTip" xml:space="preserve">
+        <value>Abrir pasta do mod</value>
+    </data>
+    <data name="ModPage_ProgressToast_Installing" xml:space="preserve">
+        <value>Instalando {0}...</value>
+    </data>
+    <data name="ModPage_ProgressToast_Updating" xml:space="preserve">
+        <value>Atualizando {0}...</value>
+    </data>
+    <data name="ModPage_Readme_Empty" xml:space="preserve">
+        <value>Este mod não fornece um documento README.</value>
+    </data>
+    <data name="ModPage_RefreshButton_ToolTip" xml:space="preserve">
+        <value>Atualizar catálogos de mods</value>
+    </data>
+    <data name="ModPage_ReloadLocalButton_Content" xml:space="preserve">
+        <value>Recarregar</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionDisable" xml:space="preserve">
+        <value>Desativar ao reiniciar</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUninstall" xml:space="preserve">
+        <value>Desinstalar ao reiniciar</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUpdate" xml:space="preserve">
+        <value>Atualizar para v{0}</value>
+    </data>
+    <data name="ModPage_RestartDialog_DiagnosticsHeader" xml:space="preserve">
+        <value>Detalhes técnicos</value>
+    </data>
+    <data name="ModPage_RestartDialog_Explanation" xml:space="preserve">
+        <value>Alguns mods não puderam liberar todos os recursos imediatamente ao serem desativados, atualizados ou desinstalados. Outras alterações de mods foram pausadas nesta sessão e as alterações pendentes entrarão em vigor automaticamente após reiniciar o Everywhere.</value>
+    </data>
+    <data name="ModPage_RestartDialog_PendingModsHeader" xml:space="preserve">
+        <value>Alterações pendentes de reinicialização:</value>
+    </data>
+    <data name="ModPage_RestartDialog_RestartButton" xml:space="preserve">
+        <value>Reiniciar Everywhere</value>
+    </data>
+    <data name="ModPage_RestartDialog_SaveWorkWarning" xml:space="preserve">
+        <value>Salve quaisquer conversas ou trabalhos em andamento antes de reiniciar.</value>
+    </data>
+    <data name="ModPage_RestartDialog_Title" xml:space="preserve">
+        <value>Reiniciar o Everywhere para aplicar alterações de mods</value>
+    </data>
+    <data name="ModPage_RestartRequired_Description" xml:space="preserve">
+        <value>Alguns mods ainda estão em uso. As alterações pendentes entrarão em vigor após reiniciar.</value>
+    </data>
+    <data name="ModPage_RestartRequired_Title" xml:space="preserve">
+        <value>Reinício necessário para aplicar alterações</value>
+    </data>
+    <data name="ModPage_RollbackButton_Content" xml:space="preserve">
+        <value>Reverter ({0})</value>
+    </data>
+    <data name="ModPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Pesquisar mods...</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Detail" xml:space="preserve">
+        <value>Este mod não inclui uma compilação para a sua plataforma atual.</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Title" xml:space="preserve">
+        <value>Plataforma não suportada</value>
+    </data>
+    <data name="ModPage_Sort_Default" xml:space="preserve">
+        <value>Ordem padrão</value>
+    </data>
+    <data name="ModPage_Source_BuiltIn" xml:space="preserve">
+        <value>Integrado</value>
+    </data>
+    <data name="ModPage_Source_LocalDir" xml:space="preserve">
+        <value>Pasta local</value>
+    </data>
+    <data name="ModPage_Source_LocalZip" xml:space="preserve">
+        <value>ZIP local</value>
+    </data>
+    <data name="ModPage_Source_Official" xml:space="preserve">
+        <value>Oficial</value>
+    </data>
+    <data name="ModPage_SourcesButton_ToolTip" xml:space="preserve">
+        <value>Gerenciar fontes de mods</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddButton" xml:space="preserve">
+        <value>Adicionar fonte</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddHeader" xml:space="preserve">
+        <value>Adicionar fonte</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BrowseFolder_ToolTip" xml:space="preserve">
+        <value>Procurar pasta</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInAlwaysEnabled_ToolTip" xml:space="preserve">
+        <value>A fonte integrada está sempre ativada</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInSubtitle" xml:space="preserve">
+        <value>Mods oficiais integrados ao Everywhere</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DeleteConfirmation" xml:space="preserve">
+        <value>Remover esta fonte?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Description" xml:space="preserve">
+        <value>As fontes são consultadas de cima para baixo ao resolver mods e dependências. Arraste os itens para reordenar.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DragToReorder" xml:space="preserve">
+        <value>Arraste para reordenar a prioridade</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdHint" xml:space="preserve">
+        <value>Letras minúsculas, dígitos, pontos, hifens ou sublinhados. Gerado automaticamente se deixado em branco.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdLabel" xml:space="preserve">
+        <value>ID da fonte (opcional)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdPlaceholder" xml:space="preserve">
+        <value>ID personalizado opcional (ex.: my-feed)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsCountBadge" xml:space="preserve">
+        <value>{0} espelho(s)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsLabel" xml:space="preserve">
+        <value>URLs de espelho (opcional)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsPlaceholder" xml:space="preserve">
+        <value>URLs de espelhos opcionais separadas por vírgulas</value>
+    </data>
+    <data name="ModPage_SourcesDialog_SignedBadge" xml:space="preserve">
+        <value>Assinado</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Title" xml:space="preserve">
+        <value>Fontes de mods</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Toggle_ToolTip" xml:space="preserve">
+        <value>Ativar ou desativar esta fonte de mods</value>
+    </data>
+    <data name="ModPage_SourcesDialog_TrustButton" xml:space="preserve">
+        <value>Confiar e adicionar</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UnsignedBadge" xml:space="preserve">
+        <value>Não assinado</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmMessage" xml:space="preserve">
+        <value>Esta fonte de mods ({0}) não é assinada. Mods de fontes não confiáveis podem executar código arbitrário no seu dispositivo. Deseja confiar e adicionar esta fonte?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmTitle" xml:space="preserve">
+        <value>Confiar em fonte de mods não assinada?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlLabel" xml:space="preserve">
+        <value>URL do índice ou pasta local</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlPlaceholder" xml:space="preserve">
+        <value>URL do índice (https://.../index.json) ou caminho da pasta local</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_InvalidId" xml:space="preserve">
+        <value>O ID da fonte deve começar e terminar com uma letra minúscula ou dígito e conter apenas a-z, 0-9, '.', '-' ou '_'.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_UrlRequired" xml:space="preserve">
+        <value>Informe uma URL de índice HTTPS/HTTP ou escolha uma pasta local.</value>
+    </data>
+    <data name="ModPage_Status_Active" xml:space="preserve">
+        <value>Ativo</value>
+    </data>
+    <data name="ModPage_Status_Error" xml:space="preserve">
+        <value>Erro</value>
+    </data>
+    <data name="ModPage_Status_Inactive" xml:space="preserve">
+        <value>Desativado</value>
+    </data>
+    <data name="ModPage_Status_Loading" xml:space="preserve">
+        <value>Carregando</value>
+    </data>
+    <data name="ModPage_Status_PendingRestart" xml:space="preserve">
+        <value>Reinício pendente</value>
+    </data>
+    <data name="ModPage_Status_Skipped" xml:space="preserve">
+        <value>Ignorado</value>
+    </data>
+    <data name="ModPage_Tab_Discover_Header" xml:space="preserve">
+        <value>Descobrir</value>
+    </data>
+    <data name="ModPage_Tab_Installed_Header" xml:space="preserve">
+        <value>Instalados</value>
+    </data>
+    <data name="ModPage_Tab_Overview_Header" xml:space="preserve">
+        <value>Visão geral</value>
+    </data>
+    <data name="ModPage_Tab_Settings_Header" xml:space="preserve">
+        <value>Configurações</value>
+    </data>
+    <data name="ModPage_Title" xml:space="preserve">
+        <value>Mods</value>
+    </data>
+    <data name="ModPage_Toast_CatalogRefreshFailed" xml:space="preserve">
+        <value>Falha ao atualizar os catálogos de mods</value>
+    </data>
+    <data name="ModPage_Toast_OperationCompletedWithErrors" xml:space="preserve">
+        <value>Concluído com problemas em mods</value>
+    </data>
+    <data name="ModPage_Toast_OperationFailed" xml:space="preserve">
+        <value>Falha na operação do mod</value>
+    </data>
+    <data name="ModPage_ToolTip_AutoDependency" xml:space="preserve">
+        <value>Instalado automaticamente como dependência</value>
+    </data>
+    <data name="ModPage_ToolTip_ChannelAvailable" xml:space="preserve">
+        <value>Canal {0} disponível (v{1})</value>
+    </data>
+    <data name="ModPage_UninstallButton_Content" xml:space="preserve">
+        <value>Desinstalar</value>
+    </data>
+    <data name="ModPage_UpdateAvailableBadge" xml:space="preserve">
+        <value>Atualização</value>
+    </data>
+    <data name="ModPage_UpdateButton_Content" xml:space="preserve">
+        <value>Atualizar para {0}</value>
+    </data>
+    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
+        <value>Integrado</value>
+    </data>
+    <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
+        <value>Assinado ({0})</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalArchive" xml:space="preserve">
+        <value>Arquivo local</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalDirectory" xml:space="preserve">
+        <value>Diretório local</value>
+    </data>
+    <data name="ModPage_VerificationBadge_OfficialSigned" xml:space="preserve">
+        <value>Verificado oficial</value>
+    </data>
+    <data name="ModPage_VerificationBadge_UnsignedSource" xml:space="preserve">
+        <value>Não assinado ({0})</value>
+    </data>
+    <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
+        <value>Incluído no lançamento oficial do Everywhere</value>
+    </data>
+    <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
+        <value>Verificado pela assinatura da fonte "{0}" (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_LocalArchive" xml:space="preserve">
+        <value>Importado de arquivo local (não verificado)</value>
+    </data>
+    <data name="ModPage_Verification_LocalDirectory" xml:space="preserve">
+        <value>Importado de diretório de desenvolvimento local (não verificado)</value>
+    </data>
+    <data name="ModPage_Verification_OfficialSigned" xml:space="preserve">
+        <value>Verificado pela assinatura oficial do repositório Everywhere (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_UnsignedSource" xml:space="preserve">
+        <value>De fonte não assinada "{0}" (apenas soma SHA-256)</value>
+    </data>
+    <data name="ModPage_ViewDetailsButton_Content" xml:space="preserve">
+        <value>Ver detalhes</value>
     </data>
     <data name="ModelProviderSchema_Anthropic" xml:space="preserve">
         <value>Anthropic</value>
@@ -3220,7 +3725,7 @@ Esta ação não pode ser desfeita.</value>
         <value>Esforço de Raciocínio</value>
     </data>
     <data name="OpenAIOptions_ThinkingType_Description" xml:space="preserve">
-        <value>Alternativas compatíveis com OpenAI, como &quot;enabled&quot; ou &quot;disabled&quot;. Deixe em branco por padrão.</value>
+        <value>Alternativas compatíveis com OpenAI, como "enabled" ou "disabled". Deixe em branco por padrão.</value>
     </data>
     <data name="OpenAIOptions_ThinkingType_Header" xml:space="preserve">
         <value>Tipo de Raciocínio</value>
@@ -3232,7 +3737,7 @@ Esta ação não pode ser desfeita.</value>
         <value>Esforço de Raciocínio</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Description" xml:space="preserve">
-        <value>Solicite um resumo de raciocínio para modelos suportados, como &quot;auto&quot;. Deixe em branco por padrão.</value>
+        <value>Solicite um resumo de raciocínio para modelos suportados, como "auto". Deixe em branco por padrão.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>Resumo do Raciocínio</value>
@@ -3802,52 +4307,52 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
         <value>Seleção de texto</value>
     </data>
     <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
-        <value>Falha ao ler a chave do dicionário de configurações &quot;{0}&quot; como &quot;{1}&quot;.</value>
+        <value>Falha ao ler a chave do dicionário de configurações "{0}" como "{1}".</value>
     </data>
     <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
-        <value>O dicionário de configurações &quot;{0}&quot; é imutável e não pode ser substituído.</value>
+        <value>O dicionário de configurações "{0}" é imutável e não pode ser substituído.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
-        <value>A lista de configurações &quot;{0}&quot; requer um array JSON.</value>
+        <value>A lista de configurações "{0}" requer um array JSON.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
-        <value>O dicionário de configurações &quot;{0}&quot; requer um objeto JSON.</value>
+        <value>O dicionário de configurações "{0}" requer um objeto JSON.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
-        <value>O objeto de configurações &quot;{0}&quot; requer um objeto JSON.</value>
+        <value>O objeto de configurações "{0}" requer um objeto JSON.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
-        <value>A lista de configurações &quot;{0}&quot; é imutável e não pode ser substituída.</value>
+        <value>A lista de configurações "{0}" é imutável e não pode ser substituída.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
-        <value>Não é possível atribuir null ao valor de configuração não anulável &quot;{0}&quot;.</value>
+        <value>Não é possível atribuir null ao valor de configuração não anulável "{0}".</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
-        <value>O objeto de configurações &quot;{0}&quot; está vazio e não pode ser criado.</value>
+        <value>O objeto de configurações "{0}" está vazio e não pode ser criado.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
-        <value>Falha ao analisar o documento de configuração &quot;{0}&quot;, um novo documento na memória foi criado.</value>
+        <value>Falha ao analisar o documento de configuração "{0}", um novo documento na memória foi criado.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
-        <value>O valor da configuração &quot;{0}&quot; pode ser nulo, mas sua propriedade não é gravável e não pode ser limpa.</value>
+        <value>O valor da configuração "{0}" pode ser nulo, mas sua propriedade não é gravável e não pode ser limpa.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
-        <value>Falha ao ler o valor de configuração &quot;{0}&quot; como &quot;{1}&quot;.</value>
+        <value>Falha ao ler o valor de configuração "{0}" como "{1}".</value>
     </data>
     <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
-        <value>A subárvore serializada &quot;{0}&quot; não pode ser substituída, pois a propriedade não é gravável.</value>
+        <value>A subárvore serializada "{0}" não pode ser substituída, pois a propriedade não é gravável.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
-        <value>Membro de configuração desconhecido &quot;{0}&quot;.</value>
+        <value>Membro de configuração desconhecido "{0}".</value>
     </data>
     <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
-        <value>O tipo &quot;{0}&quot; da propriedade de configuração &quot;{1}&quot; não é suportado.</value>
+        <value>O tipo "{0}" da propriedade de configuração "{1}" não é suportado.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
-        <value>Falha ao escrever o JSON de configurações em &quot;{0}&quot; (tentativa {1}, comprimento do conteúdo {2} bytes).</value>
+        <value>Falha ao escrever o JSON de configurações em "{0}" (tentativa {1}, comprimento do conteúdo {2} bytes).</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
-        <value>Falha ao escrever o caminho de configuração &quot;{0}&quot;.</value>
+        <value>Falha ao escrever o caminho de configuração "{0}".</value>
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Exibir documento</value>
@@ -3956,9 +4461,6 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
     </data>
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
         <value>Não foi possível reanalisar as habilidades</value>
-    </data>
-    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>Habilidades reanalisadas com sucesso</value>
     </data>
     <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Buscar Habilidades...</value>
@@ -4294,13 +4796,13 @@ Data de lançamento: {2}</value>
         <value>Permitir que o assistente de aprovação leia arquivos</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Quando o assistente selecionado no chat delega tarefas de rotina por meio da ferramenta &quot;Designar Novo Assistente&quot;, o subagente padrão as processa em um contexto independente e retorna os resultados. &quot;Seleção automática&quot; usa o assistente selecionado no chat.</value>
+        <value>Quando o assistente selecionado no chat delega tarefas de rotina por meio da ferramenta "Designar Novo Assistente", o subagente padrão as processa em um contexto independente e retorna os resultados. "Seleção automática" usa o assistente selecionado no chat.</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
         <value>Assistente Padrão</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Especialista visual acionado pelo assistente principal conforme necessário. Quando o assistente principal julgar necessário, ele designará este agente para analisar a imagem por meio da ferramenta &quot;Designar Novo Assistente&quot;. Certifique-se de que o modelo selecionado possui capacidade de reconhecimento visual.</value>
+        <value>Especialista visual acionado pelo assistente principal conforme necessário. Quando o assistente principal julgar necessário, ele designará este agente para analisar a imagem por meio da ferramenta "Designar Novo Assistente". Certifique-se de que o modelo selecionado possui capacidade de reconhecimento visual.</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Assistente de Análise de Imagem</value>
@@ -4640,7 +5142,7 @@ Copie o comando abaixo e execute-o no terminal para atualizar.</value>
         <value>Ao especificar um assistente de aprovação separadamente, o conteúdo da aprovação será processado pelo serviço utilizado por esse assistente. A aprovação da IA ainda pode cometer erros, você pode mudar de modo a qualquer momento.</value>
     </data>
     <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-        <value>Por padrão, o assistente selecionado no chat é usado; você também pode especificar um separadamente nas configurações de &quot;Assistente do sistema&quot;.</value>
+        <value>Por padrão, o assistente selecionado no chat é usado; você também pode especificar um separadamente nas configurações de "Assistente do sistema".</value>
     </data>
     <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
         <value>Escolha Quem Aprovará</value>

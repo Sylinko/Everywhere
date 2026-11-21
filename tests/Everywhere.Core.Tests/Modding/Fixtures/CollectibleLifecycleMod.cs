@@ -32,3 +32,15 @@ public sealed class CollectibleLifecycleMod : IMod, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 }
+
+/// <summary>
+/// Throws during disposal so host retirement tests can exercise <c>RestartRequired</c> flows.
+/// </summary>
+public sealed class FailingStopMod : IMod, IAsyncDisposable
+{
+    /// <inheritdoc />
+    public ValueTask InitializeAsync(IModContext context, CancellationToken cancellationToken) => ValueTask.CompletedTask;
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync() => throw new InvalidOperationException("Simulated retirement failure");
+}

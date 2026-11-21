@@ -434,4 +434,18 @@ ul, ol { padding-left: 2em; }
       <Setter Property="Background" Value="{DynamicResource AcrylicWindowBackgroundColor}"/>
     </Style>
   </Style>
+
+  <Style Selector="TablerIcon.Spinning">
+    <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+    <Style.Animations>
+      <Animation IterationCount="Infinite" Duration="0:0:1">
+        <KeyFrame Cue="0%">
+          <Setter Property="RotateTransform.Angle" Value="0"/>
+        </KeyFrame>
+        <KeyFrame Cue="100%">
+          <Setter Property="RotateTransform.Angle" Value="360"/>
+        </KeyFrame>
+      </Animation>
+    </Style.Animations>
+  </Style>
 </Styles>

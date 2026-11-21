@@ -59,7 +59,7 @@ public sealed class EverythingChatPlugin : ModChatPlugin
         if (stream is null) return null;
 
         using var reader = new StreamReader(stream);
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(reader.ReadToEnd()));
+        return reader.ReadToEnd();
     }
 
     /// <summary>

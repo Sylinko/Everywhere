@@ -17,7 +17,7 @@ public sealed class NotificationMarkdownRenderer : MarkdownRenderer
     public static readonly StyledProperty<string?> TextProperty =
         AvaloniaProperty.Register<NotificationMarkdownRenderer, string?>(nameof(Text));
 
-    private static readonly MarkdownPipeline NotificationPipeline = CreatePipeline();
+    private static readonly MarkdownPipeline NotificationPipeline = CreateRemoteSafePipeline();
 
     /// <summary>
     /// Creates a background parser with a remote-document resource policy.
@@ -38,12 +38,15 @@ public sealed class NotificationMarkdownRenderer : MarkdownRenderer
 
     protected override Type StyleKeyOverride => typeof(MarkdownRenderer);
 
-    private static MarkdownPipeline CreatePipeline()
+    /// <summary>
+    /// Builds a Markdown pipeline that disables raw HTML and restricts image URLs to HTTPS.
+    /// </summary>
+    internal static MarkdownPipeline CreateRemoteSafePipeline()
     {
         var builder = new MarkdownPipelineBuilder().UseAdvancedExtensions().DisableHtml();
         builder.DocumentProcessed += document =>
         {
-            // Markdown image sources otherwise support file:// and local paths. Announcements
+            // Markdown image sources otherwise support file:// and local paths. External documents
             // may load HTTPS images, but cannot use that renderer capability to read local files.
             foreach (var image in document.Descendants<LinkInline>().Where(link => link.IsImage))
             {

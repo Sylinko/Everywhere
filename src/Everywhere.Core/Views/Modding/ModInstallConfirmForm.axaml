@@ -1,0 +1,153 @@
+<UserControl
+  x:Class="Everywhere.Views.Modding.ModInstallConfirmForm" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:modding="clr-namespace:Everywhere.Views.Modding"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
+  x:DataType="modding:ModInstallConfirmForm">
+  <StackPanel
+    MaxWidth="560" Spacing="12">
+    <StackPanel
+      IsVisible="{Binding Preview.HasPackages}"
+      Spacing="6">
+      <TextBlock
+        Classes="Strong"
+        Text="{I18N {x:Static LocaleKey.ModPage_ConfirmInstall_PackagesHeader}}"
+        TextWrapping="Wrap"/>
+      <ScrollViewer
+        MaxHeight="140" HorizontalScrollBarVisibility="Disabled">
+        <shadui:SmoothBorder
+          Padding="10,8"
+          Background="{DynamicResource LightCardBackgroundColor}"
+          CornerRadius="{DynamicResource XlCornerRadius}">
+          <ItemsControl ItemsSource="{Binding Preview.Packages}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="8"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ModPageViewModel+ModInstallPackageEntry">
+                <v:TrimmingStackPanel
+                  MinimumLeadingVisibleItems="2" MinimumTrailingVisibleItems="2"
+                  Orientation="Horizontal" Spacing="8">
+                  <TablerIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="Package" Size="14"/>
+                  <TextBlock
+                    VerticalAlignment="Center" FontWeight="SemiBold"
+                    Text="{Binding DisplayName}"
+                    TextTrimming="CharacterEllipsis"/>
+                  <shadui:Badge
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource SecondaryColor}"
+                    Content="{Binding VersionBadge}"
+                    FontFamily="{StaticResource MonospaceFontFamily}"
+                    Foreground="{DynamicResource SecondaryForegroundColor}"/>
+                  <TextBlock
+                    Classes="Muted Caption" VerticalAlignment="Center"
+                    Text="{Binding SourceNameKey^}"
+                    TextTrimming="CharacterEllipsis"/>
+                </v:TrimmingStackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </shadui:SmoothBorder>
+      </ScrollViewer>
+    </StackPanel>
+
+    <StackPanel
+      IsVisible="{Binding Preview.HasDependenciesToEnable}"
+      Spacing="6">
+      <TextBlock
+        Classes="Strong"
+        Text="{I18N {x:Static LocaleKey.ModPage_ConfirmInstall_EnableDependenciesHeader}}"
+        TextWrapping="Wrap"/>
+      <ScrollViewer
+        MaxHeight="120" HorizontalScrollBarVisibility="Disabled">
+        <shadui:SmoothBorder
+          Padding="10,8"
+          Background="{DynamicResource LightCardBackgroundColor}"
+          CornerRadius="{DynamicResource XlCornerRadius}">
+          <ItemsControl ItemsSource="{Binding Preview.DependenciesToEnable}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="6"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <DockPanel HorizontalSpacing="8">
+                  <TablerIcon
+                    DockPanel.Dock="Left" VerticalAlignment="Center"
+                    Foreground="{DynamicResource PrimaryColor}"
+                    Kind="Power" Size="14"/>
+                  <TextBlock
+                    VerticalAlignment="Center"
+                    Text="{Binding}"
+                    TextWrapping="Wrap"/>
+                </DockPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </shadui:SmoothBorder>
+      </ScrollViewer>
+    </StackPanel>
+
+    <StackPanel
+      IsVisible="{Binding Preview.HasLicenses}"
+      Spacing="6">
+      <TextBlock
+        Classes="Strong"
+        Text="{I18N {x:Static LocaleKey.ModPage_ConfirmInstall_LicensesHeader}}"
+        TextWrapping="Wrap"/>
+      <shadui:SmoothBorder
+        Padding="10,8"
+        Background="{DynamicResource LightCardBackgroundColor}"
+        CornerRadius="{DynamicResource XlCornerRadius}">
+        <ItemsControl ItemsSource="{Binding Preview.PendingLicenses}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="6"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ModPageViewModel+ModInstallLicenseEntry">
+              <DockPanel
+                HorizontalSpacing="8" LastChildFill="True">
+                <Button
+                  Classes="Secondary Compact" DockPanel.Dock="Right"
+                  Command="{Binding #Self.ViewLicenseCommand}"
+                  CommandParameter="{Binding}"
+                  Content="{I18N {x:Static LocaleKey.ModPage_Metadata_ViewLicense}}"
+                  IsVisible="{Binding HasDocument}"/>
+                <TablerIcon
+                  DockPanel.Dock="Left" VerticalAlignment="Center"
+                  Foreground="{DynamicResource MutedColor}"
+                  Kind="Scale" Size="14"/>
+                <TextBlock
+                  VerticalAlignment="Center"
+                  Text="{Binding SummaryText}"
+                  TextWrapping="Wrap"/>
+              </DockPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </shadui:SmoothBorder>
+
+      <Border
+        MaxHeight="200" Padding="10"
+        BorderBrush="{DynamicResource BorderColor}"
+        BorderThickness="1"
+        CornerRadius="{DynamicResource MdCornerRadius}"
+        IsVisible="{Binding IsLicenseReaderVisible}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <SelectableTextBlock
+            FontFamily="{StaticResource MonospaceFontFamily}"
+            Text="{Binding LicenseViewerText}"
+            TextWrapping="Wrap"/>
+        </ScrollViewer>
+      </Border>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

@@ -115,7 +115,6 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
                 await SkillManager.RefreshAsync(token);
                 SyncSkillsFromManager();
                 TrySelectSkill(selectedSkillId);
-                ToastManager.Success(LocaleKey.SkillPage_RescanSuccessToast_Title.I18N());
             },
             ToastExceptionHandler,
             cancellationToken);
@@ -242,6 +241,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
     private void ApplyFilteredSkills(IReadOnlyCollection<SkillDescriptorWrapper> skills)
     {
         var skillsBySourceKey = skills
+            .AsValueEnumerable()
             .GroupBy(static item => item.SourceKey)
             .ToDictionary(static group => group.Key, static group => group.ToArray(), StringComparer.OrdinalIgnoreCase);
         var visibleSourceGroups = SkillManager.SourceGroups

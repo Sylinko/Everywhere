@@ -1187,13 +1187,13 @@
         <value>{0} Links</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Konnte MCP &quot;{0}&quot; nicht starten</value>
+        <value>Konnte MCP "{0}" nicht starten</value>
     </data>
     <data name="ChatPluginManager_Common_InvalidMcpTransportConfiguration" xml:space="preserve">
         <value>Ungültige MCP-Konfiguration.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
+        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_StartFailure" xml:space="preserve">
         <value>This MCP server requires {0}. Install it before starting the server.</value>
@@ -3114,6 +3114,511 @@ Diese Aktion kann nicht rückgängig gemacht werden.</value>
     <data name="Modalities_Video" xml:space="preserve">
         <value>Video</value>
     </data>
+    <data name="ModPage_ConfirmCascadeDisable_DialogTitle" xml:space="preserve">
+        <value>Abhängige Mods deaktivieren</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeDisable_Message" xml:space="preserve">
+        <value>Die folgenden aktivierten Mods hängen von {0} ab und werden ebenfalls deaktiviert:
+
+{1}</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_DialogTitle" xml:space="preserve">
+        <value>Erforderliche Abhängigkeiten aktivieren</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_Message" xml:space="preserve">
+        <value>{0} hängt von {2} deaktivierten Mod(s) ab:
+
+{1}
+
+Beim Fortfahren werden diese ebenfalls aktiviert.</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_AcceptButton" xml:space="preserve">
+        <value>Akzeptieren &amp; installieren</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_DialogTitle" xml:space="preserve">
+        <value>Mod-Installation bestätigen</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_EnableDependenciesHeader" xml:space="preserve">
+        <value>Die folgenden deaktivierten Abhängigkeiten werden ebenfalls aktiviert:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicenseEntry" xml:space="preserve">
+        <value>{0} v{1} ({2})</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicensesHeader" xml:space="preserve">
+        <value>Zustimmung zur Lizenz erforderlich:</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_PackagesHeader" xml:space="preserve">
+        <value>Die folgenden Pakete werden installiert oder aktualisiert:</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_DialogTitle" xml:space="preserve">
+        <value>Mod zurücksetzen</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_Message" xml:space="preserve">
+        <value>{0} auf die vorherige Version {1} zurücksetzen?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DeleteDataCheckBox" xml:space="preserve">
+        <value>Gespeicherte Mod-Daten ebenfalls löschen</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DependentsWarning" xml:space="preserve">
+        <value>Abhängige Mods, die ebenfalls deinstalliert werden:
+{0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DialogTitle" xml:space="preserve">
+        <value>{0} deinstallieren</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_Message" xml:space="preserve">
+        <value>Möchten Sie {0} wirklich deinstallieren?</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_RemoveOrphansCheckBox" xml:space="preserve">
+        <value>Nicht mehr benötigte automatisch installierte Abhängigkeiten entfernen ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_Conflict" xml:space="preserve">
+        <value>Mod- oder Assembly-Konflikt</value>
+    </data>
+    <data name="ModPage_Diagnostic_DependencyFailed" xml:space="preserve">
+        <value>Erforderliche Abhängigkeit nicht verfügbar</value>
+    </data>
+    <data name="ModPage_Diagnostic_Generic" xml:space="preserve">
+        <value>Mod-Problem ({0})</value>
+    </data>
+    <data name="ModPage_Diagnostic_IncompatibleHost" xml:space="preserve">
+        <value>Nicht mit dieser Everywhere-Version kompatibel</value>
+    </data>
+    <data name="ModPage_Diagnostic_InstallationMissing" xml:space="preserve">
+        <value>Mod-Dateien fehlen oder sind beschädigt</value>
+    </data>
+    <data name="ModPage_Diagnostic_LoadFailed" xml:space="preserve">
+        <value>Mod konnte nicht geladen werden</value>
+    </data>
+    <data name="ModPage_Diagnostic_LocalDirectoryIssue" xml:space="preserve">
+        <value>Problem mit lokalem Entwicklungsordner</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModInitializeFailed" xml:space="preserve">
+        <value>Mod konnte nicht initialisiert werden</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModRetirementFailed" xml:space="preserve">
+        <value>Mod konnte nicht sauber gestoppt werden</value>
+    </data>
+    <data name="ModPage_Diagnostic_PendingUnload" xml:space="preserve">
+        <value>Wartet auf Neustart zur Ressourcenfreigabe</value>
+    </data>
+    <data name="ModPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Wählen Sie links einen Mod aus oder importieren Sie ein lokales Paket</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Description" xml:space="preserve">
+        <value>Fügen Sie eine Repository-Quelle hinzu oder importieren Sie ein lokales .zip-Paket oder einen Entwicklungsordner</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Title" xml:space="preserve">
+        <value>Keine Remote-Mods verfügbar</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Description" xml:space="preserve">
+        <value>Durchsuchen Sie den Tab „Entdecken“ oder importieren Sie ein lokales .zip-Paket bzw. einen Ordner</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Title" xml:space="preserve">
+        <value>Noch keine Mods installiert</value>
+    </data>
+    <data name="ModPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>Diesen Mod aktivieren oder deaktivieren</value>
+    </data>
+    <data name="ModPage_Error_DependenciesUnsatisfied_DialogTitle" xml:space="preserve">
+        <value>Abhängigkeiten konnten nicht aufgelöst werden</value>
+    </data>
+    <data name="ModPage_Error_DependencyConflict_Header" xml:space="preserve">
+        <value>Der ausgewählte Mod weist ungelöste Abhängigkeits- oder Versionskonflikte auf:</value>
+    </data>
+    <data name="ModPage_Error_MissingDependencies_Header" xml:space="preserve">
+        <value>Die folgenden erforderlichen Abhängigkeiten wurden in keiner aktivierten Quelle gefunden:</value>
+    </data>
+    <data name="ModPage_FilterButton_ToolTip" xml:space="preserve">
+        <value>Filtern und sortieren</value>
+    </data>
+    <data name="ModPage_FilterMenu_Reset" xml:space="preserve">
+        <value>Filter zurücksetzen</value>
+    </data>
+    <data name="ModPage_FilterMenu_SortHeader" xml:space="preserve">
+        <value>Sortieren nach</value>
+    </data>
+    <data name="ModPage_Filter_AllCategories" xml:space="preserve">
+        <value>Alle Kategorien</value>
+    </data>
+    <data name="ModPage_Filter_AllSources" xml:space="preserve">
+        <value>Alle Quellen</value>
+    </data>
+    <data name="ModPage_ImportButton_ToolTip" xml:space="preserve">
+        <value>Lokalen Mod importieren</value>
+    </data>
+    <data name="ModPage_ImportDirectoryPicker_Title" xml:space="preserve">
+        <value>Mod-Ordner auswählen</value>
+    </data>
+    <data name="ModPage_ImportDirectory_MenuItem" xml:space="preserve">
+        <value>Lokalen Ordner importieren...</value>
+    </data>
+    <data name="ModPage_ImportZipPicker_Title" xml:space="preserve">
+        <value>Mod-Paket (.zip) auswählen</value>
+    </data>
+    <data name="ModPage_ImportZip_MenuItem" xml:space="preserve">
+        <value>Paket (.zip) importieren...</value>
+    </data>
+    <data name="ModPage_IncompatibleBadge" xml:space="preserve">
+        <value>Inkompatibel</value>
+    </data>
+    <data name="ModPage_Incompatible_Platform" xml:space="preserve">
+        <value>Wird auf der aktuellen Plattform ({0}) nicht unterstützt.</value>
+    </data>
+    <data name="ModPage_Incompatible_Version" xml:space="preserve">
+        <value>Erfordert eine kompatible Everywhere-Version (aktuell: {0}, Mod API {1}).</value>
+    </data>
+    <data name="ModPage_InstallButton_Content" xml:space="preserve">
+        <value>Installieren</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Confirm" xml:space="preserve">
+        <value>Loslegen</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendBody" xml:space="preserve">
+        <value>Aktivierte Mods registrieren Werkzeuge, Befehle oder Einstellungen in der App. Beim Deaktivieren oder Deinstallieren werden sie automatisch entfernt oder nach einem Neustart wirksam, falls kein Hot-Unload möglich ist.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendTitle" xml:space="preserve">
+        <value>Funktionen bei Bedarf erweitern</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Introduction" xml:space="preserve">
+        <value>Mods erweitern Everywhere um benutzerdefinierte Werkzeuge, lokale Integrationen und Einstellungen.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Note" xml:space="preserve">
+        <value>Das Mod-System ist derzeit experimentell; APIs und Verhalten können sich in zukünftigen Versionen ändern.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityBody" xml:space="preserve">
+        <value>Mod-Code wird direkt im Everywhere-Prozess mit denselben Rechten wie Ihr Benutzerkonto ausgeführt. Installieren und aktivieren Sie nur Mods aus vertrauenswürdigen Quellen.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityTitle" xml:space="preserve">
+        <value>Ausführung im Prozess und Vertrauen</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesBody" xml:space="preserve">
+        <value>Durchsuchen und installieren Sie Mods aus offiziellen oder benutzerdefinierten Quellen unter Entdecken, oder importieren Sie lokale ZIP-Pakete und Entwicklungsverzeichnisse direkt.</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesTitle" xml:space="preserve">
+        <value>Katalogsuche und lokaler Import</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Title" xml:space="preserve">
+        <value>Willkommen bei Mods</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Empty" xml:space="preserve">
+        <value>Diesem Mod liegt kein Lizenztextdokument bei.</value>
+    </data>
+    <data name="ModPage_LicenseDialog_ThirdPartySection" xml:space="preserve">
+        <value>Hinweise von Drittanbietern</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Title" xml:space="preserve">
+        <value>Lizenz - {0}</value>
+    </data>
+    <data name="ModPage_Metadata_ApiVersion" xml:space="preserve">
+        <value>API-Kompatibilität</value>
+    </data>
+    <data name="ModPage_Metadata_Author" xml:space="preserve">
+        <value>Autor</value>
+    </data>
+    <data name="ModPage_Metadata_CardTitle" xml:space="preserve">
+        <value>Details</value>
+    </data>
+    <data name="ModPage_Metadata_Category" xml:space="preserve">
+        <value>Kategorie</value>
+    </data>
+    <data name="ModPage_Metadata_DependenciesHeader" xml:space="preserve">
+        <value>Abhängigkeiten</value>
+    </data>
+    <data name="ModPage_Metadata_DependencyOptional" xml:space="preserve">
+        <value>{0} (optional)</value>
+    </data>
+    <data name="ModPage_Metadata_Homepage" xml:space="preserve">
+        <value>Startseite</value>
+    </data>
+    <data name="ModPage_Metadata_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="ModPage_Metadata_License" xml:space="preserve">
+        <value>Lizenz</value>
+    </data>
+    <data name="ModPage_Metadata_LocalPath" xml:space="preserve">
+        <value>Lokaler Pfad</value>
+    </data>
+    <data name="ModPage_Metadata_PackageSize" xml:space="preserve">
+        <value>Paketgröße</value>
+    </data>
+    <data name="ModPage_Metadata_PublishedAt" xml:space="preserve">
+        <value>Veröffentlicht</value>
+    </data>
+    <data name="ModPage_Metadata_Repository" xml:space="preserve">
+        <value>Repository</value>
+    </data>
+    <data name="ModPage_Metadata_ResourcesHeader" xml:space="preserve">
+        <value>Ressourcen</value>
+    </data>
+    <data name="ModPage_Metadata_Source" xml:space="preserve">
+        <value>Quelle</value>
+    </data>
+    <data name="ModPage_Metadata_TagsHeader" xml:space="preserve">
+        <value>Kategorien &amp; Tags</value>
+    </data>
+    <data name="ModPage_Metadata_Version" xml:space="preserve">
+        <value>Version</value>
+    </data>
+    <data name="ModPage_Metadata_ViewLicense" xml:space="preserve">
+        <value>Lizenz anzeigen</value>
+    </data>
+    <data name="ModPage_Notice_TechnicalDetails" xml:space="preserve">
+        <value>Technische Details</value>
+    </data>
+    <data name="ModPage_OpenLocalFolderButton_ToolTip" xml:space="preserve">
+        <value>Mod-Ordner öffnen</value>
+    </data>
+    <data name="ModPage_ProgressToast_Installing" xml:space="preserve">
+        <value>{0} wird installiert...</value>
+    </data>
+    <data name="ModPage_ProgressToast_Updating" xml:space="preserve">
+        <value>{0} wird aktualisiert...</value>
+    </data>
+    <data name="ModPage_Readme_Empty" xml:space="preserve">
+        <value>Dieser Mod stellt kein README-Dokument bereit.</value>
+    </data>
+    <data name="ModPage_RefreshButton_ToolTip" xml:space="preserve">
+        <value>Mod-Kataloge aktualisieren</value>
+    </data>
+    <data name="ModPage_ReloadLocalButton_Content" xml:space="preserve">
+        <value>Neu laden</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionDisable" xml:space="preserve">
+        <value>Bei Neustart deaktivieren</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUninstall" xml:space="preserve">
+        <value>Bei Neustart deinstallieren</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUpdate" xml:space="preserve">
+        <value>Auf v{0} aktualisieren</value>
+    </data>
+    <data name="ModPage_RestartDialog_DiagnosticsHeader" xml:space="preserve">
+        <value>Technische Details</value>
+    </data>
+    <data name="ModPage_RestartDialog_Explanation" xml:space="preserve">
+        <value>Einige Mods konnten beim Deaktivieren, Aktualisieren oder Deinstallieren nicht alle Ressourcen sofort freigeben. Weitere Mod-Änderungen sind in dieser Sitzung pausiert und ausstehende Änderungen werden nach dem Neustart von Everywhere automatisch wirksam.</value>
+    </data>
+    <data name="ModPage_RestartDialog_PendingModsHeader" xml:space="preserve">
+        <value>Ausstehende Änderungen für den Neustart:</value>
+    </data>
+    <data name="ModPage_RestartDialog_RestartButton" xml:space="preserve">
+        <value>Everywhere neu starten</value>
+    </data>
+    <data name="ModPage_RestartDialog_SaveWorkWarning" xml:space="preserve">
+        <value>Bitte speichern Sie laufende Unterhaltungen oder Arbeiten vor dem Neustart.</value>
+    </data>
+    <data name="ModPage_RestartDialog_Title" xml:space="preserve">
+        <value>Everywhere neu starten, um Mod-Änderungen anzuwenden</value>
+    </data>
+    <data name="ModPage_RestartRequired_Description" xml:space="preserve">
+        <value>Einige Mods werden noch verwendet. Ausstehende Änderungen werden nach dem Neustart wirksam.</value>
+    </data>
+    <data name="ModPage_RestartRequired_Title" xml:space="preserve">
+        <value>Neustart erforderlich</value>
+    </data>
+    <data name="ModPage_RollbackButton_Content" xml:space="preserve">
+        <value>Zurücksetzen ({0})</value>
+    </data>
+    <data name="ModPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Mods suchen...</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Detail" xml:space="preserve">
+        <value>Dieser Mod enthält keinen Build für Ihre aktuelle Plattform.</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Title" xml:space="preserve">
+        <value>Nicht unterstützte Plattform</value>
+    </data>
+    <data name="ModPage_Sort_Default" xml:space="preserve">
+        <value>Standardreihenfolge</value>
+    </data>
+    <data name="ModPage_Source_BuiltIn" xml:space="preserve">
+        <value>Integriert</value>
+    </data>
+    <data name="ModPage_Source_LocalDir" xml:space="preserve">
+        <value>Lokaler Ordner</value>
+    </data>
+    <data name="ModPage_Source_LocalZip" xml:space="preserve">
+        <value>Lokales ZIP</value>
+    </data>
+    <data name="ModPage_Source_Official" xml:space="preserve">
+        <value>Offiziell</value>
+    </data>
+    <data name="ModPage_SourcesButton_ToolTip" xml:space="preserve">
+        <value>Mod-Quellen verwalten</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddButton" xml:space="preserve">
+        <value>Quelle hinzufügen</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddHeader" xml:space="preserve">
+        <value>Quelle hinzufügen</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BrowseFolder_ToolTip" xml:space="preserve">
+        <value>Ordner durchsuchen</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInAlwaysEnabled_ToolTip" xml:space="preserve">
+        <value>Die integrierte Mod-Quelle ist immer aktiviert</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInSubtitle" xml:space="preserve">
+        <value>Offizielle, in Everywhere integrierte Mods</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DeleteConfirmation" xml:space="preserve">
+        <value>Diese Quelle entfernen?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Description" xml:space="preserve">
+        <value>Quellen werden beim Auflösen von Mods und Abhängigkeiten von oben nach unten durchsucht. Zum Sortieren ziehen.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DragToReorder" xml:space="preserve">
+        <value>Ziehen, um Priorität zu ändern</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdHint" xml:space="preserve">
+        <value>Kleinbuchstaben, Ziffern, Punkte, Bindestriche oder Unterstriche. Wird bei leerem Feld automatisch erzeugt.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdLabel" xml:space="preserve">
+        <value>Quellen-ID (optional)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdPlaceholder" xml:space="preserve">
+        <value>Optionale benutzerdefinierte ID (z. B. my-feed)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsCountBadge" xml:space="preserve">
+        <value>{0} Mirror(s)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsLabel" xml:space="preserve">
+        <value>Mirror-URLs (optional)</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsPlaceholder" xml:space="preserve">
+        <value>Optionale Spiegel-URLs, durch Kommas getrennt</value>
+    </data>
+    <data name="ModPage_SourcesDialog_SignedBadge" xml:space="preserve">
+        <value>Signiert</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Title" xml:space="preserve">
+        <value>Mod-Quellen</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Toggle_ToolTip" xml:space="preserve">
+        <value>Diese Mod-Quelle aktivieren oder deaktivieren</value>
+    </data>
+    <data name="ModPage_SourcesDialog_TrustButton" xml:space="preserve">
+        <value>Vertrauen &amp; hinzufügen</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UnsignedBadge" xml:space="preserve">
+        <value>Unsigniert</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmMessage" xml:space="preserve">
+        <value>Diese Mod-Quelle ({0}) ist nicht signiert. Mods aus nicht vertrauenswürdigen Quellen können beliebigen Code auf Ihrem Gerät ausführen. Möchten Sie dieser Quelle vertrauen und sie hinzufügen?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmTitle" xml:space="preserve">
+        <value>Unsignierter Mod-Quelle vertrauen?</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlLabel" xml:space="preserve">
+        <value>Index-URL oder lokaler Ordner</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlPlaceholder" xml:space="preserve">
+        <value>Index-URL (https://.../index.json) oder lokaler Ordnerpfad</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_InvalidId" xml:space="preserve">
+        <value>Die Quellen-ID muss mit einem Kleinbuchstaben oder einer Ziffer beginnen und enden und darf nur a-z, 0-9, '.', '-' oder '_' enthalten.</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_UrlRequired" xml:space="preserve">
+        <value>Bitte geben Sie eine HTTPS/HTTP-Index-URL ein oder wählen Sie einen lokalen Ordner.</value>
+    </data>
+    <data name="ModPage_Status_Active" xml:space="preserve">
+        <value>Aktiv</value>
+    </data>
+    <data name="ModPage_Status_Error" xml:space="preserve">
+        <value>Fehler</value>
+    </data>
+    <data name="ModPage_Status_Inactive" xml:space="preserve">
+        <value>Deaktiviert</value>
+    </data>
+    <data name="ModPage_Status_Loading" xml:space="preserve">
+        <value>Wird geladen</value>
+    </data>
+    <data name="ModPage_Status_PendingRestart" xml:space="preserve">
+        <value>Neustart ausstehend</value>
+    </data>
+    <data name="ModPage_Status_Skipped" xml:space="preserve">
+        <value>Übersprungen</value>
+    </data>
+    <data name="ModPage_Tab_Discover_Header" xml:space="preserve">
+        <value>Entdecken</value>
+    </data>
+    <data name="ModPage_Tab_Installed_Header" xml:space="preserve">
+        <value>Installiert</value>
+    </data>
+    <data name="ModPage_Tab_Overview_Header" xml:space="preserve">
+        <value>Übersicht</value>
+    </data>
+    <data name="ModPage_Tab_Settings_Header" xml:space="preserve">
+        <value>Einstellungen</value>
+    </data>
+    <data name="ModPage_Title" xml:space="preserve">
+        <value>Mods</value>
+    </data>
+    <data name="ModPage_Toast_CatalogRefreshFailed" xml:space="preserve">
+        <value>Fehler beim Aktualisieren der Mod-Kataloge</value>
+    </data>
+    <data name="ModPage_Toast_OperationCompletedWithErrors" xml:space="preserve">
+        <value>Mit Mod-Problemen abgeschlossen</value>
+    </data>
+    <data name="ModPage_Toast_OperationFailed" xml:space="preserve">
+        <value>Mod-Vorgang fehlgeschlagen</value>
+    </data>
+    <data name="ModPage_ToolTip_AutoDependency" xml:space="preserve">
+        <value>Automatisch als Abhängigkeit installiert</value>
+    </data>
+    <data name="ModPage_ToolTip_ChannelAvailable" xml:space="preserve">
+        <value>Kanal "{0}" verfügbar (v{1})</value>
+    </data>
+    <data name="ModPage_UninstallButton_Content" xml:space="preserve">
+        <value>Deinstallieren</value>
+    </data>
+    <data name="ModPage_UpdateAvailableBadge" xml:space="preserve">
+        <value>Update</value>
+    </data>
+    <data name="ModPage_UpdateButton_Content" xml:space="preserve">
+        <value>Auf {0} aktualisieren</value>
+    </data>
+    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
+        <value>Integriert</value>
+    </data>
+    <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
+        <value>Signiert ({0})</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalArchive" xml:space="preserve">
+        <value>Lokales Archiv</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalDirectory" xml:space="preserve">
+        <value>Lokales Verzeichnis</value>
+    </data>
+    <data name="ModPage_VerificationBadge_OfficialSigned" xml:space="preserve">
+        <value>Offiziell verifiziert</value>
+    </data>
+    <data name="ModPage_VerificationBadge_UnsignedSource" xml:space="preserve">
+        <value>Unsigniert ({0})</value>
+    </data>
+    <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
+        <value>In der offiziellen Everywhere-Veröffentlichung enthalten</value>
+    </data>
+    <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
+        <value>Durch Signatur der Quelle "{0}" verifiziert (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_LocalArchive" xml:space="preserve">
+        <value>Aus lokalem Archiv importiert (nicht verifiziert)</value>
+    </data>
+    <data name="ModPage_Verification_LocalDirectory" xml:space="preserve">
+        <value>Aus lokalem Entwicklungsverzeichnis importiert (nicht verifiziert)</value>
+    </data>
+    <data name="ModPage_Verification_OfficialSigned" xml:space="preserve">
+        <value>Durch offizielle Everywhere-Repository-Signatur verifiziert (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_UnsignedSource" xml:space="preserve">
+        <value>Aus unsignierter Quelle "{0}" (nur SHA-256-Prüfsumme)</value>
+    </data>
+    <data name="ModPage_ViewDetailsButton_Content" xml:space="preserve">
+        <value>Details anzeigen</value>
+    </data>
     <data name="ModelProviderSchema_Anthropic" xml:space="preserve">
         <value>Anthropic</value>
     </data>
@@ -3957,9 +4462,6 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
         <value>Fähigkeiten konnten nicht neu gescannt werden.</value>
     </data>
-    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>Fähigkeiten wurden neu gescannt.</value>
-    </data>
     <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Fähigkeiten suchen...</value>
     </data>
@@ -4294,13 +4796,13 @@ Veröffentlichungsdatum: {2}</value>
         <value>Genehmigungsassistent darf Dateien lesen</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Wenn der im Chat ausgewählte Assistent über das Werkzeug &quot;Neuen Assistenten zuweisen&quot; Routineaufgaben delegiert, bearbeitet der Standard-Subagent sie in einem unabhängigen Kontext und gibt die Ergebnisse zurück. &quot;Automatische Auswahl&quot; verwendet den im Chat ausgewählten Assistenten.</value>
+        <value>Wenn der im Chat ausgewählte Assistent über das Werkzeug "Neuen Assistenten zuweisen" Routineaufgaben delegiert, bearbeitet der Standard-Subagent sie in einem unabhängigen Kontext und gibt die Ergebnisse zurück. "Automatische Auswahl" verwendet den im Chat ausgewählten Assistenten.</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
         <value>Standard-Subassistent</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Ein visueller Experte, der vom Hauptassistenten nach Bedarf aufgerufen wird. Wenn der Hauptassistent es für notwendig hält, wird er über das Werkzeug &quot;Neuen Assistenten zuweisen&quot; mit der Analyse von Bildern beauftragt. Bitte stellen Sie sicher, dass das gewählte Modell über visuelle Erkennungsfähigkeiten verfügt.</value>
+        <value>Ein visueller Experte, der vom Hauptassistenten nach Bedarf aufgerufen wird. Wenn der Hauptassistent es für notwendig hält, wird er über das Werkzeug "Neuen Assistenten zuweisen" mit der Analyse von Bildern beauftragt. Bitte stellen Sie sicher, dass das gewählte Modell über visuelle Erkennungsfähigkeiten verfügt.</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Bildverständnis-Subassistent</value>
@@ -4934,7 +5436,7 @@ Kopiere den Befehl unten und führe ihn im Terminal aus, um das Update durchzuf�
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>Belassen Sie dies bei der Standardeinstellung, wenn Sie nicht wissen, was Sie tun sollen. Muss mit &quot;http(s)://&quot; beginnen.</value>
+        <value>Belassen Sie dies bei der Standardeinstellung, wenn Sie nicht wissen, was Sie tun sollen. Muss mit "http(s)://" beginnen.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
         <value>API-URL</value>

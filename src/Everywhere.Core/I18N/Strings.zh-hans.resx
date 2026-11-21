@@ -251,11 +251,11 @@
         <value>推理强度 (reasoning_effort)</value>
     </data>
     <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
-    <value>请求遇到可恢复错误时的最大重试次数。0 表示关闭，-1 表示持续重试，直到手动停止。</value>
-  </data>
+        <value>请求遇到可恢复错误时的最大重试次数。0 表示关闭，-1 表示持续重试，直到手动停止。</value>
+    </data>
     <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
-    <value>请求重试次数</value>
-  </data>
+        <value>请求重试次数</value>
+    </data>
     <data name="Assistant_RequestTimeoutSeconds_Description" xml:space="preserve">
         <value>设置请求模型返回内容的等待时间，单位为秒。对于速度较慢的模型（如思考模型和本地模型），可考虑适当延长时间。</value>
     </data>
@@ -803,83 +803,83 @@
         <value>使用工具强化助手能力</value>
     </data>
     <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
-    <value>助手 API 标识</value>
-  </data>
+        <value>助手 API 标识</value>
+    </data>
     <data name="ChatErrorDetails_Category" xml:space="preserve">
-    <value>错误类别</value>
-  </data>
+        <value>错误类别</value>
+    </data>
     <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
-    <value>连接错误代码</value>
-  </data>
+        <value>连接错误代码</value>
+    </data>
     <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
-    <value>诊断信息</value>
-  </data>
+        <value>诊断信息</value>
+    </data>
     <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
-    <value>异常消息</value>
-  </data>
+        <value>异常消息</value>
+    </data>
     <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
-    <value>异常类型</value>
-  </data>
+        <value>异常类型</value>
+    </data>
     <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
-    <value>结束原因</value>
-  </data>
+        <value>结束原因</value>
+    </data>
     <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
-    <value>网关 HTTP 状态</value>
-  </data>
+        <value>网关 HTTP 状态</value>
+    </data>
     <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
-    <value>HTTP {0}</value>
-  </data>
+        <value>HTTP {0}</value>
+    </data>
     <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
-    <value>HTTP 状态</value>
-  </data>
+        <value>HTTP 状态</value>
+    </data>
     <data name="ChatErrorDetails_Parameter" xml:space="preserve">
-    <value>被拒绝的参数</value>
-  </data>
+        <value>被拒绝的参数</value>
+    </data>
     <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
-    <value>服务原始结束原因</value>
-  </data>
+        <value>服务原始结束原因</value>
+    </data>
     <data name="ChatErrorDetails_Recovery" xml:space="preserve">
-    <value>恢复策略</value>
-  </data>
+        <value>恢复策略</value>
+    </data>
     <data name="ChatErrorDetails_RequestId" xml:space="preserve">
-    <value>请求 ID</value>
-  </data>
+        <value>请求 ID</value>
+    </data>
     <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
-    <value>原始响应内容</value>
-  </data>
+        <value>原始响应内容</value>
+    </data>
     <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
-    <value>服务建议的重试等待时间</value>
-  </data>
+        <value>服务建议的重试等待时间</value>
+    </data>
     <data name="ChatErrorDetails_Rule" xml:space="preserve">
-    <value>分类规则</value>
-  </data>
+        <value>分类规则</value>
+    </data>
     <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
-    <value>服务代码</value>
-  </data>
+        <value>服务代码</value>
+    </data>
     <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
-    <value>服务返回的信息</value>
-  </data>
+        <value>服务返回的信息</value>
+    </data>
     <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
-    <value>服务类型</value>
-  </data>
+        <value>服务类型</value>
+    </data>
     <data name="ChatErrorDetails_SocketError" xml:space="preserve">
-    <value>套接字错误</value>
-  </data>
+        <value>套接字错误</value>
+    </data>
     <data name="ChatErrorDetails_Source" xml:space="preserve">
-    <value>证据来源</value>
-  </data>
+        <value>证据来源</value>
+    </data>
     <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
-    <value>调用堆栈</value>
-  </data>
+        <value>调用堆栈</value>
+    </data>
     <data name="ChatErrorDetails_Technical" xml:space="preserve">
-    <value>技术详情</value>
-  </data>
+        <value>技术详情</value>
+    </data>
     <data name="ChatErrorDetails_Timeout" xml:space="preserve">
-    <value>超时阶段</value>
-  </data>
+        <value>超时阶段</value>
+    </data>
     <data name="ChatErrorDetails_Truncated" xml:space="preserve">
-    <value>诊断内容已截断</value>
-  </data>
+        <value>诊断内容已截断</value>
+    </data>
     <data name="ChatFunctionPermissions_ClipboardAccess" xml:space="preserve">
         <value>操作剪切板</value>
     </data>
@@ -1325,20 +1325,20 @@
         <value>正在处理</value>
     </data>
     <data name="ChatRequest_CopyDetails" xml:space="preserve">
-    <value>复制详情</value>
-  </data>
+        <value>复制详情</value>
+    </data>
     <data name="ChatRequest_ErrorDetails" xml:space="preserve">
-    <value>错误详情</value>
-  </data>
+        <value>错误详情</value>
+    </data>
     <data name="ChatRequest_RetryCount" xml:space="preserve">
-    <value>正在重试 {0}/{1}</value>
-  </data>
+        <value>正在重试 {0}/{1}</value>
+    </data>
     <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
-    <value>正在重试 {0}</value>
-  </data>
+        <value>正在重试 {0}</value>
+    </data>
     <data name="ChatRequest_Stopped" xml:space="preserve">
-    <value>已停止</value>
-  </data>
+        <value>已停止</value>
+    </data>
     <data name="ChatService_Error_CustomAssistantNotSelected" xml:space="preserve">
         <value>请在左下角选择一个助手。如果没有，请在设置中配置。</value>
     </data>
@@ -1430,11 +1430,11 @@
         <value>空间已足够，正在等待再次同步。</value>
     </data>
     <data name="ChatSyncListRow_StartingStatus_Text" xml:space="preserve">
-    <value>正在开始同步</value>
-  </data>
+        <value>正在开始同步</value>
+    </data>
     <data name="ChatSyncListRow_StoppingStatus_Text" xml:space="preserve">
-    <value>正在停止同步</value>
-  </data>
+        <value>正在停止同步</value>
+    </data>
     <data name="ChatSyncListRow_SyncedStatus_Text" xml:space="preserve">
         <value>已同步</value>
     </data>
@@ -1454,8 +1454,8 @@
         <value>本机聊天仍可使用。刷新同步状态后，再开始同步。</value>
     </data>
     <data name="ChatSyncPage_CloudSizeSortComboBoxItem_Content" xml:space="preserve">
-    <value>云端大小</value>
-  </data>
+        <value>云端大小</value>
+    </data>
     <data name="ChatSyncPage_CloudStorageTextBlock_Text" xml:space="preserve">
         <value>云空间</value>
     </data>
@@ -1472,8 +1472,8 @@
         <value>参与同步 ({0})</value>
     </data>
     <data name="ChatSyncPage_RecentSortComboBoxItem_Content" xml:space="preserve">
-    <value>最近修改</value>
-  </data>
+        <value>最近修改</value>
+    </data>
     <data name="ChatSyncPage_ReleaseSpaceToast_Result" xml:space="preserve">
         <value>已将 {0} 个聊天改为仅本地。</value>
     </data>
@@ -1919,8 +1919,8 @@
         <value>取消</value>
     </data>
     <data name="Common_CloudNotConfigured" xml:space="preserve">
-    <value>此构建未配置官方云服务。</value>
-  </data>
+        <value>此构建未配置官方云服务。</value>
+    </data>
     <data name="Common_Comma" xml:space="preserve">
         <value>，</value>
     </data>
@@ -1928,8 +1928,8 @@
         <value>复制</value>
     </data>
     <data name="Common_CopyFailed" xml:space="preserve">
-    <value>复制失败</value>
-  </data>
+        <value>复制失败</value>
+    </data>
     <data name="Common_CopyLink" xml:space="preserve">
         <value>复制链接</value>
     </data>
@@ -1979,8 +1979,8 @@
         <value>打开链接</value>
     </data>
     <data name="Common_ProxyTunnelRejected" xml:space="preserve">
-    <value>代理服务器拒绝建立连接，请检查代理设置和认证信息。</value>
-  </data>
+        <value>代理服务器拒绝建立连接，请检查代理设置和认证信息。</value>
+    </data>
     <data name="Common_Refresh" xml:space="preserve">
         <value>刷新</value>
     </data>
@@ -2435,26 +2435,26 @@
         <value>思考级别</value>
     </data>
     <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
-    <value>身份验证失败，请检查认证设置或重新登录。</value>
-  </data>
+        <value>身份验证失败，请检查认证设置或重新登录。</value>
+    </data>
     <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
-    <value>API 密钥无效或已失效，请检查并更新服务的 API 密钥。</value>
-  </data>
+        <value>API 密钥无效或已失效，请检查并更新服务的 API 密钥。</value>
+    </data>
     <data name="HandledChatException_ContentBlocked" xml:space="preserve">
         <value>服务依据内容政策拦截了此次请求或回复。</value>
     </data>
     <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>服务因不支持该语言而中止了回复。</value>
-  </data>
+        <value>服务因不支持该语言而中止了回复。</value>
+    </data>
     <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>服务因复述限制中止了回复。</value>
-  </data>
+        <value>服务因复述限制中止了回复。</value>
+    </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
         <value>聊天内容超出了当前助手的上下文容量。</value>
     </data>
     <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>服务暂停了生成，需要当前尚不支持的继续方式。</value>
-  </data>
+        <value>服务暂停了生成，需要当前尚不支持的继续方式。</value>
+    </data>
     <data name="HandledChatException_EmptyResponse" xml:space="preserve">
         <value>服务提供商返回了空响应，通常意味着存在网络或服务问题。</value>
     </data>
@@ -2465,17 +2465,17 @@
         <value>当前助手不支持此功能。</value>
     </data>
     <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>回复达到生成长度限制，未能完整生成。</value>
-  </data>
+        <value>回复达到生成长度限制，未能完整生成。</value>
+    </data>
     <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>回复在生成过程中达到上下文窗口上限，未能完整生成。</value>
-  </data>
+        <value>回复在生成过程中达到上下文窗口上限，未能完整生成。</value>
+    </data>
     <data name="HandledChatException_ImageNotSupport" xml:space="preserve">
         <value>当前助手不支持图片输入。</value>
     </data>
     <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>服务中止了回复或报告响应未完成。</value>
-  </data>
+        <value>服务中止了回复或报告响应未完成。</value>
+    </data>
     <data name="HandledChatException_InvalidApiKey" xml:space="preserve">
         <value>身份验证失败，请检查 API 密钥或重新登录。</value>
     </data>
@@ -2483,8 +2483,8 @@
         <value>当前助手不可用，请检查服务和助手设置。</value>
     </data>
     <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
-    <value>当前服务无法使用所选助手，请检查助手设置及访问权限。</value>
-  </data>
+        <value>当前服务无法使用所选助手，请检查助手设置及访问权限。</value>
+    </data>
     <data name="HandledChatException_InvalidEndpoint" xml:space="preserve">
         <value>提供的服务端点无效。</value>
     </data>
@@ -2495,8 +2495,8 @@
         <value>请求包含无效或不受支持的设置。</value>
     </data>
     <data name="HandledChatException_InvalidResponse" xml:space="preserve">
-    <value>服务返回的内容无效，无法完成此次请求。</value>
-  </data>
+        <value>服务返回的内容无效，无法完成此次请求。</value>
+    </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>signature 是某些思考模型的私有数据，Everywhere 无法解码。在带有思考内容的上下文中切换不同提供商的模型可能导致此问题，开启一个新的聊天可以解决此问题。</value>
     </data>
@@ -2507,8 +2507,8 @@
         <value>连接服务时发生中断或未能建立连接。</value>
     </data>
     <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
-    <value>代理服务器拒绝建立连接，请检查代理设置和认证信息。</value>
-  </data>
+        <value>代理服务器拒绝建立连接，请检查代理设置和认证信息。</value>
+    </data>
     <data name="HandledChatException_OperationCanceled" xml:space="preserve">
         <value>操作已取消。</value>
     </data>
@@ -2549,8 +2549,8 @@
         <value>请求未能完成。</value>
     </data>
     <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
-    <value>当前助手不支持工具调用，请检查配置或更换助手。</value>
-  </data>
+        <value>当前助手不支持工具调用，请检查配置或更换助手。</value>
+    </data>
     <data name="HandledFunctionInvokingException_ArgumentError" xml:space="preserve">
         <value>模型为参数“{0}”提供了无效值，这可能是由模型幻觉导致的。</value>
     </data>
@@ -3114,6 +3114,511 @@
     <data name="Modalities_Video" xml:space="preserve">
         <value>视频</value>
     </data>
+    <data name="ModPage_ConfirmCascadeDisable_DialogTitle" xml:space="preserve">
+        <value>停用关联模组</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeDisable_Message" xml:space="preserve">
+        <value>以下已启用的模组依赖于 {0}，停用它也将一并停用：
+
+{1}</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_DialogTitle" xml:space="preserve">
+        <value>启用依赖模组</value>
+    </data>
+    <data name="ModPage_ConfirmCascadeEnable_Message" xml:space="preserve">
+        <value>“{0}”依赖以下 {2} 个已停用模组：
+
+{1}
+
+继续操作将同时启用它们。</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_AcceptButton" xml:space="preserve">
+        <value>同意并安装</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_DialogTitle" xml:space="preserve">
+        <value>确认安装模组</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_EnableDependenciesHeader" xml:space="preserve">
+        <value>以下已停用的依赖模组也将一并启用：</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicenseEntry" xml:space="preserve">
+        <value>{0} v{1}（{2}）</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_LicensesHeader" xml:space="preserve">
+        <value>需要同意以下许可证协议：</value>
+    </data>
+    <data name="ModPage_ConfirmInstall_PackagesHeader" xml:space="preserve">
+        <value>将安装或更新以下模组包：</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_DialogTitle" xml:space="preserve">
+        <value>回滚模组</value>
+    </data>
+    <data name="ModPage_ConfirmRollback_Message" xml:space="preserve">
+        <value>确定将 {0} 回滚到上一版本 {1} 吗？</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DeleteDataCheckBox" xml:space="preserve">
+        <value>同时删除该模组保存的数据</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DependentsWarning" xml:space="preserve">
+        <value>以下关联模组依赖于它，也将一并卸载：
+{0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_DialogTitle" xml:space="preserve">
+        <value>卸载 {0}</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_Message" xml:space="preserve">
+        <value>确定要卸载 {0} 吗？</value>
+    </data>
+    <data name="ModPage_ConfirmUninstall_RemoveOrphansCheckBox" xml:space="preserve">
+        <value>同时清理不再需要的自动安装依赖（{0}）</value>
+    </data>
+    <data name="ModPage_Diagnostic_Conflict" xml:space="preserve">
+        <value>模组或程序集冲突</value>
+    </data>
+    <data name="ModPage_Diagnostic_DependencyFailed" xml:space="preserve">
+        <value>所需依赖模组不可用</value>
+    </data>
+    <data name="ModPage_Diagnostic_Generic" xml:space="preserve">
+        <value>模组运行异常（{0}）</value>
+    </data>
+    <data name="ModPage_Diagnostic_IncompatibleHost" xml:space="preserve">
+        <value>与当前 Everywhere 版本不兼容</value>
+    </data>
+    <data name="ModPage_Diagnostic_InstallationMissing" xml:space="preserve">
+        <value>模组文件缺失或已损坏</value>
+    </data>
+    <data name="ModPage_Diagnostic_LoadFailed" xml:space="preserve">
+        <value>模组加载失败</value>
+    </data>
+    <data name="ModPage_Diagnostic_LocalDirectoryIssue" xml:space="preserve">
+        <value>本地开发目录异常</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModInitializeFailed" xml:space="preserve">
+        <value>模组初始化失败</value>
+    </data>
+    <data name="ModPage_Diagnostic_ModRetirementFailed" xml:space="preserve">
+        <value>停用模组时发生异常</value>
+    </data>
+    <data name="ModPage_Diagnostic_PendingUnload" xml:space="preserve">
+        <value>等待重启释放资源</value>
+    </data>
+    <data name="ModPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>请在左侧选择一个模组，或导入本地模组包</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Description" xml:space="preserve">
+        <value>可添加自定义模组源，或直接导入本地 .zip 模组包 / 开发目录</value>
+    </data>
+    <data name="ModPage_EmptyDiscover_Title" xml:space="preserve">
+        <value>暂无可用的远端模组</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Description" xml:space="preserve">
+        <value>可前往“发现”页获取模组，或导入本地 .zip 模组包 / 文件夹</value>
+    </data>
+    <data name="ModPage_EmptyInstalled_Title" xml:space="preserve">
+        <value>尚未安装任何模组</value>
+    </data>
+    <data name="ModPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>启用或停用此模组</value>
+    </data>
+    <data name="ModPage_Error_DependenciesUnsatisfied_DialogTitle" xml:space="preserve">
+        <value>无法解析模组依赖</value>
+    </data>
+    <data name="ModPage_Error_DependencyConflict_Header" xml:space="preserve">
+        <value>所选模组存在无法满足的依赖关系或版本冲突：</value>
+    </data>
+    <data name="ModPage_Error_MissingDependencies_Header" xml:space="preserve">
+        <value>未能在已启用的模组源中找到以下必需依赖项：</value>
+    </data>
+    <data name="ModPage_FilterButton_ToolTip" xml:space="preserve">
+        <value>筛选与排序</value>
+    </data>
+    <data name="ModPage_FilterMenu_Reset" xml:space="preserve">
+        <value>重置筛选</value>
+    </data>
+    <data name="ModPage_FilterMenu_SortHeader" xml:space="preserve">
+        <value>排序方式</value>
+    </data>
+    <data name="ModPage_Filter_AllCategories" xml:space="preserve">
+        <value>全部分类</value>
+    </data>
+    <data name="ModPage_Filter_AllSources" xml:space="preserve">
+        <value>全部源</value>
+    </data>
+    <data name="ModPage_ImportButton_ToolTip" xml:space="preserve">
+        <value>导入本地模组</value>
+    </data>
+    <data name="ModPage_ImportDirectoryPicker_Title" xml:space="preserve">
+        <value>选择模组目录</value>
+    </data>
+    <data name="ModPage_ImportDirectory_MenuItem" xml:space="preserve">
+        <value>导入本地目录...</value>
+    </data>
+    <data name="ModPage_ImportZipPicker_Title" xml:space="preserve">
+        <value>选择模组包 (.zip)</value>
+    </data>
+    <data name="ModPage_ImportZip_MenuItem" xml:space="preserve">
+        <value>导入模组包 (.zip)...</value>
+    </data>
+    <data name="ModPage_IncompatibleBadge" xml:space="preserve">
+        <value>不兼容</value>
+    </data>
+    <data name="ModPage_Incompatible_Platform" xml:space="preserve">
+        <value>不支持当前系统平台（{0}）。</value>
+    </data>
+    <data name="ModPage_Incompatible_Version" xml:space="preserve">
+        <value>与当前 Everywhere 版本不兼容（当前版本 {0}，Mod API {1}）。</value>
+    </data>
+    <data name="ModPage_InstallButton_Content" xml:space="preserve">
+        <value>安装</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Confirm" xml:space="preserve">
+        <value>开始使用</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendBody" xml:space="preserve">
+        <value>已启用的模组会将工具、命令或配置注册到应用中；停用或卸载时会自动撤回，无法热卸载的更改会在重启后生效。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_ExtendTitle" xml:space="preserve">
+        <value>按需扩展能力</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Introduction" xml:space="preserve">
+        <value>模组可以扩展 Everywhere 的本地工具、集成能力与界面设置。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Note" xml:space="preserve">
+        <value>模组系统目前处于实验阶段，接口与行为在后续版本中可能调整。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityBody" xml:space="preserve">
+        <value>模组代码直接运行在 Everywhere 进程内，拥有与当前系统用户相同的权限。请仅安装并启用来自可信来源的模组。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SecurityTitle" xml:space="preserve">
+        <value>进程内运行与安全边界</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesBody" xml:space="preserve">
+        <value>你可以在“发现”中浏览并安装官方或第三方模组源中的模组，也可以直接导入本地压缩包或开发目录。</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_SourcesTitle" xml:space="preserve">
+        <value>多源发现与本地导入</value>
+    </data>
+    <data name="ModPage_IntroductionDialog_Title" xml:space="preserve">
+        <value>欢迎使用模组</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Empty" xml:space="preserve">
+        <value>该模组未附带许可证正文文档。</value>
+    </data>
+    <data name="ModPage_LicenseDialog_ThirdPartySection" xml:space="preserve">
+        <value>第三方许可声明</value>
+    </data>
+    <data name="ModPage_LicenseDialog_Title" xml:space="preserve">
+        <value>许可证 - {0}</value>
+    </data>
+    <data name="ModPage_Metadata_ApiVersion" xml:space="preserve">
+        <value>API 兼容</value>
+    </data>
+    <data name="ModPage_Metadata_Author" xml:space="preserve">
+        <value>作者</value>
+    </data>
+    <data name="ModPage_Metadata_CardTitle" xml:space="preserve">
+        <value>详情信息</value>
+    </data>
+    <data name="ModPage_Metadata_Category" xml:space="preserve">
+        <value>分类</value>
+    </data>
+    <data name="ModPage_Metadata_DependenciesHeader" xml:space="preserve">
+        <value>依赖项</value>
+    </data>
+    <data name="ModPage_Metadata_DependencyOptional" xml:space="preserve">
+        <value>{0}（可选）</value>
+    </data>
+    <data name="ModPage_Metadata_Homepage" xml:space="preserve">
+        <value>主页</value>
+    </data>
+    <data name="ModPage_Metadata_Id" xml:space="preserve">
+        <value>标识</value>
+    </data>
+    <data name="ModPage_Metadata_License" xml:space="preserve">
+        <value>许可证</value>
+    </data>
+    <data name="ModPage_Metadata_LocalPath" xml:space="preserve">
+        <value>本地路径</value>
+    </data>
+    <data name="ModPage_Metadata_PackageSize" xml:space="preserve">
+        <value>包大小</value>
+    </data>
+    <data name="ModPage_Metadata_PublishedAt" xml:space="preserve">
+        <value>发布时间</value>
+    </data>
+    <data name="ModPage_Metadata_Repository" xml:space="preserve">
+        <value>源码仓库</value>
+    </data>
+    <data name="ModPage_Metadata_ResourcesHeader" xml:space="preserve">
+        <value>资源</value>
+    </data>
+    <data name="ModPage_Metadata_Source" xml:space="preserve">
+        <value>来源</value>
+    </data>
+    <data name="ModPage_Metadata_TagsHeader" xml:space="preserve">
+        <value>分类与标签</value>
+    </data>
+    <data name="ModPage_Metadata_Version" xml:space="preserve">
+        <value>版本</value>
+    </data>
+    <data name="ModPage_Metadata_ViewLicense" xml:space="preserve">
+        <value>查看许可证</value>
+    </data>
+    <data name="ModPage_Notice_TechnicalDetails" xml:space="preserve">
+        <value>技术详情</value>
+    </data>
+    <data name="ModPage_OpenLocalFolderButton_ToolTip" xml:space="preserve">
+        <value>打开模组目录</value>
+    </data>
+    <data name="ModPage_ProgressToast_Installing" xml:space="preserve">
+        <value>正在安装 {0}...</value>
+    </data>
+    <data name="ModPage_ProgressToast_Updating" xml:space="preserve">
+        <value>正在更新 {0}...</value>
+    </data>
+    <data name="ModPage_Readme_Empty" xml:space="preserve">
+        <value>该模组未提供说明文档。</value>
+    </data>
+    <data name="ModPage_RefreshButton_ToolTip" xml:space="preserve">
+        <value>刷新模组目录</value>
+    </data>
+    <data name="ModPage_ReloadLocalButton_Content" xml:space="preserve">
+        <value>重载</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionDisable" xml:space="preserve">
+        <value>重启后停用</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUninstall" xml:space="preserve">
+        <value>重启后卸载</value>
+    </data>
+    <data name="ModPage_RestartDialog_ActionUpdate" xml:space="preserve">
+        <value>更新至 v{0}</value>
+    </data>
+    <data name="ModPage_RestartDialog_DiagnosticsHeader" xml:space="preserve">
+        <value>技术详情</value>
+    </data>
+    <data name="ModPage_RestartDialog_Explanation" xml:space="preserve">
+        <value>部分模组在停用、更新或卸载时未能立即释放全部资源。为保证运行稳定，当前会话已暂停继续修改模组，待处理的变更将在重启 Everywhere 后自动生效。</value>
+    </data>
+    <data name="ModPage_RestartDialog_PendingModsHeader" xml:space="preserve">
+        <value>等待重启生效的变更：</value>
+    </data>
+    <data name="ModPage_RestartDialog_RestartButton" xml:space="preserve">
+        <value>重启 Everywhere</value>
+    </data>
+    <data name="ModPage_RestartDialog_SaveWorkWarning" xml:space="preserve">
+        <value>重启前请先保存正在进行的对话或工作内容。</value>
+    </data>
+    <data name="ModPage_RestartDialog_Title" xml:space="preserve">
+        <value>重启 Everywhere 以应用模组变更</value>
+    </data>
+    <data name="ModPage_RestartRequired_Description" xml:space="preserve">
+        <value>部分模组仍在占用资源，待处理的变更将在重启后生效。</value>
+    </data>
+    <data name="ModPage_RestartRequired_Title" xml:space="preserve">
+        <value>需要重启以完成变更</value>
+    </data>
+    <data name="ModPage_RollbackButton_Content" xml:space="preserve">
+        <value>回滚 ({0})</value>
+    </data>
+    <data name="ModPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>搜索模组...</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Detail" xml:space="preserve">
+        <value>此模组未提供适用于当前系统平台的版本。</value>
+    </data>
+    <data name="ModPage_SkipReason_UnsupportedPlatform_Title" xml:space="preserve">
+        <value>当前平台不受支持</value>
+    </data>
+    <data name="ModPage_Sort_Default" xml:space="preserve">
+        <value>默认排序</value>
+    </data>
+    <data name="ModPage_Source_BuiltIn" xml:space="preserve">
+        <value>内置</value>
+    </data>
+    <data name="ModPage_Source_LocalDir" xml:space="preserve">
+        <value>本地目录</value>
+    </data>
+    <data name="ModPage_Source_LocalZip" xml:space="preserve">
+        <value>本地包</value>
+    </data>
+    <data name="ModPage_Source_Official" xml:space="preserve">
+        <value>官方</value>
+    </data>
+    <data name="ModPage_SourcesButton_ToolTip" xml:space="preserve">
+        <value>管理模组源</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddButton" xml:space="preserve">
+        <value>添加源</value>
+    </data>
+    <data name="ModPage_SourcesDialog_AddHeader" xml:space="preserve">
+        <value>添加模组源</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BrowseFolder_ToolTip" xml:space="preserve">
+        <value>选择本地目录</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInAlwaysEnabled_ToolTip" xml:space="preserve">
+        <value>内置模组源始终保持启用</value>
+    </data>
+    <data name="ModPage_SourcesDialog_BuiltInSubtitle" xml:space="preserve">
+        <value>随 Everywhere 内置的模组</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DeleteConfirmation" xml:space="preserve">
+        <value>移除此模组源？</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Description" xml:space="preserve">
+        <value>解析模组与依赖时按从上到下的优先级顺序查找，可拖动调整顺序。</value>
+    </data>
+    <data name="ModPage_SourcesDialog_DragToReorder" xml:space="preserve">
+        <value>拖动以调整优先级</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdHint" xml:space="preserve">
+        <value>仅支持小写字母、数字、点、连字符或下划线；留空时自动生成。</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdLabel" xml:space="preserve">
+        <value>自定义标识（可选）</value>
+    </data>
+    <data name="ModPage_SourcesDialog_IdPlaceholder" xml:space="preserve">
+        <value>可选自定义 ID（如 my-feed）</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsCountBadge" xml:space="preserve">
+        <value>{0} 个镜像</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsLabel" xml:space="preserve">
+        <value>镜像地址（可选）</value>
+    </data>
+    <data name="ModPage_SourcesDialog_MirrorsPlaceholder" xml:space="preserve">
+        <value>可选镜像地址（多个用逗号分隔）</value>
+    </data>
+    <data name="ModPage_SourcesDialog_SignedBadge" xml:space="preserve">
+        <value>已签名</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Title" xml:space="preserve">
+        <value>模组源管理</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Toggle_ToolTip" xml:space="preserve">
+        <value>启用或停用此模组源</value>
+    </data>
+    <data name="ModPage_SourcesDialog_TrustButton" xml:space="preserve">
+        <value>信任并添加</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UnsignedBadge" xml:space="preserve">
+        <value>未签名</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmMessage" xml:space="preserve">
+        <value>此模组源（{0}）未经数字签名校验，来自不受信任源的模组可在设备上执行任意代码。确定信任并添加此模组源吗？</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UntrustedConfirmTitle" xml:space="preserve">
+        <value>信任未签名的模组源？</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlLabel" xml:space="preserve">
+        <value>索引地址或本地目录</value>
+    </data>
+    <data name="ModPage_SourcesDialog_UrlPlaceholder" xml:space="preserve">
+        <value>输入索引地址 (https://.../index.json) 或本地目录路径</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_InvalidId" xml:space="preserve">
+        <value>自定义标识须以小写字母或数字开头和结尾，且仅包含 a-z、0-9、.、- 或 _。</value>
+    </data>
+    <data name="ModPage_SourcesDialog_Validation_UrlRequired" xml:space="preserve">
+        <value>请输入索引地址或选择本地目录。</value>
+    </data>
+    <data name="ModPage_Status_Active" xml:space="preserve">
+        <value>已激活</value>
+    </data>
+    <data name="ModPage_Status_Error" xml:space="preserve">
+        <value>错误</value>
+    </data>
+    <data name="ModPage_Status_Inactive" xml:space="preserve">
+        <value>已停用</value>
+    </data>
+    <data name="ModPage_Status_Loading" xml:space="preserve">
+        <value>加载中</value>
+    </data>
+    <data name="ModPage_Status_PendingRestart" xml:space="preserve">
+        <value>待重启生效</value>
+    </data>
+    <data name="ModPage_Status_Skipped" xml:space="preserve">
+        <value>已跳过</value>
+    </data>
+    <data name="ModPage_Tab_Discover_Header" xml:space="preserve">
+        <value>发现</value>
+    </data>
+    <data name="ModPage_Tab_Installed_Header" xml:space="preserve">
+        <value>已安装</value>
+    </data>
+    <data name="ModPage_Tab_Overview_Header" xml:space="preserve">
+        <value>概览</value>
+    </data>
+    <data name="ModPage_Tab_Settings_Header" xml:space="preserve">
+        <value>设置</value>
+    </data>
+    <data name="ModPage_Title" xml:space="preserve">
+        <value>模组</value>
+    </data>
+    <data name="ModPage_Toast_CatalogRefreshFailed" xml:space="preserve">
+        <value>刷新模组目录失败</value>
+    </data>
+    <data name="ModPage_Toast_OperationCompletedWithErrors" xml:space="preserve">
+        <value>操作已完成，但部分模组存在异常</value>
+    </data>
+    <data name="ModPage_Toast_OperationFailed" xml:space="preserve">
+        <value>模组操作失败</value>
+    </data>
+    <data name="ModPage_ToolTip_AutoDependency" xml:space="preserve">
+        <value>作为其他模组的依赖项自动安装</value>
+    </data>
+    <data name="ModPage_ToolTip_ChannelAvailable" xml:space="preserve">
+        <value>提供 {0} 渠道版本 (v{1})</value>
+    </data>
+    <data name="ModPage_UninstallButton_Content" xml:space="preserve">
+        <value>卸载</value>
+    </data>
+    <data name="ModPage_UpdateAvailableBadge" xml:space="preserve">
+        <value>有更新</value>
+    </data>
+    <data name="ModPage_UpdateButton_Content" xml:space="preserve">
+        <value>更新到 {0}</value>
+    </data>
+    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
+        <value>官方内置</value>
+    </data>
+    <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
+        <value>已签名 ({0})</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalArchive" xml:space="preserve">
+        <value>本地压缩包</value>
+    </data>
+    <data name="ModPage_VerificationBadge_LocalDirectory" xml:space="preserve">
+        <value>本地开发目录</value>
+    </data>
+    <data name="ModPage_VerificationBadge_OfficialSigned" xml:space="preserve">
+        <value>官方认证</value>
+    </data>
+    <data name="ModPage_VerificationBadge_UnsignedSource" xml:space="preserve">
+        <value>未签名 ({0})</value>
+    </data>
+    <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
+        <value>随 Everywhere 官方发行版内置</value>
+    </data>
+    <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
+        <value>已通过模组源“{0}”公钥签名验证 (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_LocalArchive" xml:space="preserve">
+        <value>由本地压缩包导入（未经仓库签名验证）</value>
+    </data>
+    <data name="ModPage_Verification_LocalDirectory" xml:space="preserve">
+        <value>由本地开发目录导入（未经仓库签名验证）</value>
+    </data>
+    <data name="ModPage_Verification_OfficialSigned" xml:space="preserve">
+        <value>已通过 Everywhere 官方仓库签名验证 (ECDSA P-256)</value>
+    </data>
+    <data name="ModPage_Verification_UnsignedSource" xml:space="preserve">
+        <value>来自未签名的模组源“{0}”（仅校验 SHA-256 摘要）</value>
+    </data>
+    <data name="ModPage_ViewDetailsButton_Content" xml:space="preserve">
+        <value>查看详情</value>
+    </data>
     <data name="ModelProviderSchema_Anthropic" xml:space="preserve">
         <value>Anthropic</value>
     </data>
@@ -3294,7 +3799,9 @@
     <data name="PresetModelProvider_ZhipuInternational" xml:space="preserve">
         <value>Z.AI</value>
     </data>
-    <data name="PresetModelSelector_Unlisted" xml:space="preserve"><value>当前目录未收录此模型，已保留其保存的配置。</value></data>
+    <data name="PresetModelSelector_Unlisted" xml:space="preserve">
+        <value>当前目录未收录此模型，已保留其保存的配置。</value>
+    </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>预览: {0}</value>
     </data>
@@ -3952,11 +4459,8 @@
     <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
         <value>重新扫描技能</value>
     </data>
-      <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
         <value>无法重新扫描技能。</value>
-    </data>
-    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>技能已重新扫描。</value>
     </data>
     <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>搜索技能...</value>
@@ -4294,56 +4798,56 @@
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
         <value>当聊天所选的助手通过“指派新助手”工具委派常规任务时，默认由它在独立上下文中处理并返回结果。“自动选择”使用聊天所选的助手。</value>
     </data>
-  <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
         <value>默认子助手</value>
     </data>
-  <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>供主助手按需调用的视觉专家。当主助手认为有必要时，会通过"指派新助手"工具将图片交由它分析。请确保所选模型具备视觉识别能力。</value>
     </data>
-  <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>图像理解子助手</value>
     </data>
-  <data name="SystemAssistantSettings_TitleGeneration_Desription" xml:space="preserve">
+    <data name="SystemAssistantSettings_TitleGeneration_Desription" xml:space="preserve">
         <value>配置用于聊天标题自动命名的助手。</value>
     </data>
-  <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
         <value>标题生成</value>
     </data>
-  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
         <value>选择负责“帮我批准”的助手，此助手必须要支持工具调用。“自动选择”使用聊天所选的助手。</value>
     </data>
-  <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
         <value>工具审批</value>
     </data>
-  <data name="SystemAssistant_AutoSelectToggle_Content" xml:space="preserve">
+    <data name="SystemAssistant_AutoSelectToggle_Content" xml:space="preserve">
         <value>自动选择</value>
     </data>
-  <data name="TemporaryChatMode_Always" xml:space="preserve">
+    <data name="TemporaryChatMode_Always" xml:space="preserve">
         <value>总是</value>
     </data>
-  <data name="TemporaryChatMode_Never" xml:space="preserve">
+    <data name="TemporaryChatMode_Never" xml:space="preserve">
         <value>从不</value>
     </data>
-  <data name="TemporaryChatMode_RememberLast" xml:space="preserve">
+    <data name="TemporaryChatMode_RememberLast" xml:space="preserve">
         <value>记住上次</value>
     </data>
-  <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
         <value>自定义终端可执行文件的路径，只支持 PowerShell、zsh 和 bash。如果留空则会自动检测。</value>
     </data>
-  <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
         <value>终端路径</value>
     </data>
-  <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
+    <data name="TerminalUpdate_DialogTitle" xml:space="preserve">
         <value>更新 Everywhere</value>
     </data>
-  <data name="TerminalUpdate_Introduction" xml:space="preserve">
+    <data name="TerminalUpdate_Introduction" xml:space="preserve">
         <value>当前系统不支持软件内更新。
 请复制下方命令，在终端中运行即可更新。</value>
     </data>
-  <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
+    <data name="TerminalUpdate_Website_Alternative" xml:space="preserve">
         <value>或者，从 </value>
     </data>
-  <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
+    <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>官网下载</value>
     </data>
   <data name="TerminalView_Signal" xml:space="preserve">
@@ -4352,94 +4856,94 @@
   <data name="TerminalView_Stopped" xml:space="preserve">
     <value>命令已停止</value>
   </data>
-  <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>命令于 {0} 开始执行，{1} 秒后失败，退出代码为 {2}</value>
     </data>
-  <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>命令于 {0} 开始执行，{1} 秒后成功完成</value>
     </data>
-  <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>终端已不再可用</value>
     </data>
-  <data name="TextDifferenceEditor_AcceptAllButton_Content" xml:space="preserve">
+    <data name="TextDifferenceEditor_AcceptAllButton_Content" xml:space="preserve">
         <value>全部接受</value>
     </data>
-  <data name="TextDifferenceEditor_AcceptButton_Content" xml:space="preserve">
+    <data name="TextDifferenceEditor_AcceptButton_Content" xml:space="preserve">
         <value>接受</value>
     </data>
-  <data name="TextDifferenceEditor_CommentButton_Content" xml:space="preserve">
+    <data name="TextDifferenceEditor_CommentButton_Content" xml:space="preserve">
         <value>添加批注</value>
     </data>
-  <data name="TextDifferenceEditor_CommentTextBox_PlaceholderText" xml:space="preserve">
+    <data name="TextDifferenceEditor_CommentTextBox_PlaceholderText" xml:space="preserve">
         <value>在当前行添加批注来引导助手…</value>
     </data>
-  <data name="TextDifferenceEditor_ConfirmButton_Content" xml:space="preserve">
+    <data name="TextDifferenceEditor_ConfirmButton_Content" xml:space="preserve">
         <value>确认</value>
     </data>
-  <data name="TextDifferenceEditor_ConfirmButton_ToolTip" xml:space="preserve">
+    <data name="TextDifferenceEditor_ConfirmButton_ToolTip" xml:space="preserve">
         <value>应用已接受的修改并继续</value>
     </data>
-  <data name="TextDifferenceEditor_LoadErrorTextBlock_Text" xml:space="preserve">
+    <data name="TextDifferenceEditor_LoadErrorTextBlock_Text" xml:space="preserve">
         <value>无法加载详细差异预览。</value>
     </data>
-  <data name="TextDifferenceEditor_OmittedLineButton_Content" xml:space="preserve">
+    <data name="TextDifferenceEditor_OmittedLineButton_Content" xml:space="preserve">
         <value>{0} 行未修改内容</value>
     </data>
-  <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
+    <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
         <value>点击展开</value>
     </data>
-  <data name="TextDifferenceEditor_RejectAllButton_Content" xml:space="preserve">
+    <data name="TextDifferenceEditor_RejectAllButton_Content" xml:space="preserve">
         <value>全部拒绝</value>
     </data>
-  <data name="TextDifferenceEditor_RejectButton_Content" xml:space="preserve">
+    <data name="TextDifferenceEditor_RejectButton_Content" xml:space="preserve">
         <value>拒绝</value>
     </data>
-  <data name="TextDifferenceEditor_WindowTitle" xml:space="preserve">
+    <data name="TextDifferenceEditor_WindowTitle" xml:space="preserve">
         <value>审阅更改</value>
     </data>
-  <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
+    <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
         <value>新增 {0} 行</value>
     </data>
-  <data name="TextDifferenceSummaryView_CreateHeader" xml:space="preserve">
+    <data name="TextDifferenceSummaryView_CreateHeader" xml:space="preserve">
         <value>新建 {0}</value>
     </data>
-  <data name="TextDifferenceSummaryView_DeleteHeader" xml:space="preserve">
+    <data name="TextDifferenceSummaryView_DeleteHeader" xml:space="preserve">
         <value>删除 {0}</value>
     </data>
-  <data name="TextDifferenceSummaryView_MoveAndUpdateHeader" xml:space="preserve">
+    <data name="TextDifferenceSummaryView_MoveAndUpdateHeader" xml:space="preserve">
         <value>移动并修改 {0} → {1}</value>
     </data>
-  <data name="TextDifferenceSummaryView_MoveHeader" xml:space="preserve">
+    <data name="TextDifferenceSummaryView_MoveHeader" xml:space="preserve">
         <value>移动 {0} → {1}</value>
     </data>
-  <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
+    <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
         <value>删除 {0} 行</value>
     </data>
-  <data name="TextDifferenceSummaryView_ReviewChangesButton_Content" xml:space="preserve">
+    <data name="TextDifferenceSummaryView_ReviewChangesButton_Content" xml:space="preserve">
         <value>审阅差异</value>
     </data>
-  <data name="TextDifferenceSummaryView_UpdateHeader" xml:space="preserve">
+    <data name="TextDifferenceSummaryView_UpdateHeader" xml:space="preserve">
         <value>修改 {0}</value>
     </data>
-  <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
+    <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
         <value>添加应用</value>
     </data>
-  <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
+    <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
         <value>按 Bundle ID 添加…</value>
     </data>
-  <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
+    <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
         <value>按进程名添加…</value>
     </data>
-  <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
+    <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
         <value>应用程序</value>
     </data>
-  <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
+    <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
         <value>精确匹配应用的 Bundle ID，包括不同位置的同标识应用副本。区分大小写，不支持通配符。</value>
     </data>
-  <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
+    <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
         <value>选择程序…</value>
     </data>
-  <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
+    <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
         <value>Everywhere 内置了一些兼容规则，避免在部分应用中模拟复制。这些规则不影响通过辅助功能直接读取文字。</value>
     </data>
     <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
@@ -4943,19 +5447,19 @@
     <data name="WebSearchEngineProvider_SearchEngineId_Description" xml:space="preserve">
         <value>提供可编程搜索引擎 ID，详情请参考文档。</value>
     </data>
-  <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
+    <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
         <value>搜索引擎 ID</value>
     </data>
-  <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>选择用于网络搜索引擎的服务提供商。</value>
     </data>
-  <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
         <value>网络搜索引擎</value>
     </data>
-  <data name="WelcomeViewModel_ValidateApiKey_FailedToast_Title" xml:space="preserve">
+    <data name="WelcomeViewModel_ValidateApiKey_FailedToast_Title" xml:space="preserve">
         <value>校验失败</value>
     </data>
-  <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
+    <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
         <value>在此处输入 API 密钥...</value>
     </data>
     <data name="WelcomeView_AssistantStep_Advanced_Message1" xml:space="preserve">
@@ -5061,7 +5565,6 @@
     <data name="WelcomeView_SoftLoginStep_Message1" xml:space="preserve">
         <value>为了方便你立即开始体验，我为你准备了一些免费额度。</value>
     </data>
-
     <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
         <value>我要自己配置模型</value>
     </data>

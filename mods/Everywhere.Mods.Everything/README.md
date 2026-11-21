@@ -1,7 +1,5 @@
 # Everything search mod
 
-[简体中文](README.zh-Hans.md)
-
 Search local files and folders through Everything from Everywhere's chat tools.
 This mod is built into the Windows x64 distribution via `EmbeddedModSource` (`builtin`) and targets **Windows x64**. Other platforms report `Skipped` / `UnsupportedPlatform`.
 

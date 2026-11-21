@@ -84,6 +84,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                     ViewImageAsync,
                     ChatFunctionPermissions.FileRead,
                     TablerIconKind.Photo,
+                    supportsParallelInvoke: true,
                     requiredModalities: Modalities.Image));
         });
     }

@@ -121,6 +121,8 @@ public static class ServiceExtensions
                 .AddSingleton<IMainViewNavigationItem, ChatPluginPage>()
                 .AddSingleton<SkillPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, SkillPage>()
+                .AddSingleton<ModPageViewModel>()
+                .AddSingleton<IMainViewNavigationItem, ModPage>()
                 .AddTransient<IMainViewNavigationItem, SettingsPage>()
                 .AddTransient<WelcomeFlow>()
                 .AddSingleton<OobeCoordinator>()

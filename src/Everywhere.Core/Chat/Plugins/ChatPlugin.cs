@@ -34,7 +34,7 @@ public abstract class ChatPlugin : ObservableObject, IChatPluginKey, IDisposable
     public virtual TablerIconKind? Icon => null;
 
     /// <summary>
-    /// Gets the URI or base64 data of the icon.
+    /// Gets the icon URI (such as <c>http</c>, <c>https</c>, <c>file</c>, <c>avares</c>, or <c>data:</c>) or raw SVG markup.
     /// </summary>
     [JsonIgnore]
     public virtual string? BeautifulIcon => null;

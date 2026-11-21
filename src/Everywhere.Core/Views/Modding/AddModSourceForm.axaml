@@ -1,0 +1,43 @@
+<UserControl
+  x:Class="Everywhere.Views.Modding.AddModSourceForm" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:modding="clr-namespace:Everywhere.Views.Modding"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" x:DataType="modding:AddModSourceForm">
+  <StackPanel
+    Width="480" Spacing="12">
+    <TextBox
+      shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_UrlLabel}}"
+      shadui:ElementAssist.FocusOnLoad="True"
+      PlaceholderText="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_UrlPlaceholder}}"
+      Text="{Binding UrlOrPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+      <TextBox.InnerRightContent>
+        <Button
+          Classes="Ghost Compact"
+          shadui:ButtonAssist.Icon="{TablerIconContent FolderOpen}"
+          shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
+          Command="{Binding BrowseFolderCommand}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_BrowseFolder_ToolTip}}"/>
+      </TextBox.InnerRightContent>
+    </TextBox>
+
+    <TextBox
+      Classes="Clearable"
+      shadui:ControlAssist.Hint="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_IdHint}}"
+      shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_IdLabel}}"
+      PlaceholderText="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_IdPlaceholder}}"
+      Text="{Binding CustomId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+    <TextBox
+      Classes="Clearable"
+      shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_MirrorsLabel}}"
+      PlaceholderText="{I18N {x:Static LocaleKey.ModPage_SourcesDialog_MirrorsPlaceholder}}"
+      Text="{Binding Mirrors, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+    <shadui:Toast
+      Title="{I18N {x:Static LocaleKey.Common_Error}}"
+      HorizontalAlignment="Stretch" CanDismiss="False"
+      CanDismissByClicking="False"
+      Content="{Binding ErrorMessage}"
+      IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+      Notification="Error"/>
+  </StackPanel>
+</UserControl>

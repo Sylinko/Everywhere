@@ -158,6 +158,11 @@ public sealed record ModSummary
     public ModLicense? License { get; init; }
 
     /// <summary>
+    /// Gets the universal or platform-selected entry declaration from <c>mod.json</c>, when available.
+    /// </summary>
+    public ModEntry? Entry { get; init; }
+
+    /// <summary>
     /// Gets whether a single prior installation slot is retained for rollback.
     /// </summary>
     public bool HasRollback { get; init; }
@@ -171,6 +176,11 @@ public sealed record ModSummary
     /// Gets a deferred cold-start mutation queued when hot unloading required a restart.
     /// </summary>
     public ModPendingOperation? PendingOperation { get; init; }
+
+    /// <summary>
+    /// Gets whether this mod has a pending update, removal, or disablement waiting for application restart.
+    /// </summary>
+    public bool IsPendingRestart { get; init; }
 
     /// <summary>
     /// Gets the tracked unpacked development directory when imported from <see cref="ModStateRecord.LocalDirectorySourceId"/>.

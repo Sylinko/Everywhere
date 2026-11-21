@@ -59,7 +59,8 @@
   </UserControl.Styles>
 
   <shadui:NavigationView
-    Padding="24,0,24,20" HeaderMaxWidth="1000"
+    x:Name="RootNavigationView" Padding="24,0,24,20"
+    HeaderMaxWidth="1000"
     IsEnabled="{Binding !SkillManager.IsRefreshing}"
     PageTransition="{x:Null}"
     PaneWidth="400"
@@ -117,10 +118,13 @@
         <Button
           Classes="Ghost Compact" Grid.Row="0"
           Grid.Column="1" HorizontalAlignment="Right"
-          shadui:ButtonAssist.Icon="{TablerIconContent Refresh}"
-          shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
           Command="{Binding RefreshCommand}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_RescanButton_ToolTip}}"/>
+          ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_RescanButton_ToolTip}}">
+          <TablerIcon
+            Classes.Spinning="{Binding RefreshCommand.IsRunning}"
+            Kind="Refresh"
+            Size="{DynamicResource FontSizeM}"/>
+        </Button>
 
         <ScrollViewer
           Grid.Row="1" Grid.Column="0"
@@ -214,48 +218,86 @@
     </shadui:NavigationView.PaneContent>
 
     <shadui:NavigationView.Header>
-      <Grid
+      <DockPanel
         Height="36" Margin="0,14,0,14"
-        ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+        HorizontalSpacing="8"
         IsVisible="{Binding SelectedSkillWrapper, Converter={x:Static ObjectConverters.IsNotNull}}">
         <StackPanel
-          Grid.Column="0" VerticalAlignment="Center"
+          DockPanel.Dock="Right" VerticalAlignment="Center"
           Orientation="Horizontal" Spacing="8">
+          <Button
+            Classes="Secondary"
+            shadui:ButtonAssist.Icon="{TablerIconContent FolderOpen}"
+            Command="{Binding OpenSelectedSkillFolderCommand}"
+            Content="{I18N {x:Static LocaleKey.SkillPage_OpenButton_Content}}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_OpenFileLocationButton_ToolTip}}"/>
+        </StackPanel>
+
+        <DockPanel
+          HorizontalAlignment="Left" HorizontalSpacing="8">
+          <StackPanel
+            DockPanel.Dock="Right" VerticalAlignment="Center"
+            Orientation="Horizontal" Spacing="6">
+            <ToggleSwitch
+              VerticalAlignment="Center"
+              IsChecked="{Binding SelectedSkillWrapper.Skill.IsEnabled, Mode=TwoWay, FallbackValue={x:False}}"
+              IsEnabled="{Binding SelectedSkillWrapper.Skill.IsValid, FallbackValue={x:False}}"
+              IsVisible="{Binding #RootNavigationView.IsCompact}"
+              ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_EnableSwitch_ToolTip}}"/>
+
+            <shadui:Badge
+              Background="{DynamicResource SuccessColor60}"
+              Content="{I18N {x:Static LocaleKey.SkillPage_Status_Enabled}}"
+              Foreground="{DynamicResource BadgeForegroundColor}">
+              <shadui:Badge.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding Path="!#RootNavigationView.IsCompact"/>
+                  <Binding
+                    FallbackValue="{x:False}"
+                    Path="SelectedSkillWrapper?.Skill.IsValid"
+                    TargetNullValue="{x:False}"/>
+                  <Binding
+                    FallbackValue="{x:False}"
+                    Path="SelectedSkillWrapper?.Skill.IsEnabled"
+                    TargetNullValue="{x:False}"/>
+                </MultiBinding>
+              </shadui:Badge.IsVisible>
+            </shadui:Badge>
+
+            <shadui:Badge
+              Background="{DynamicResource SecondaryColor}"
+              Content="{I18N {x:Static LocaleKey.SkillPage_Status_Disabled}}"
+              Foreground="{DynamicResource SecondaryForegroundColor}">
+              <shadui:Badge.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding Path="!#RootNavigationView.IsCompact"/>
+                  <Binding
+                    FallbackValue="{x:False}"
+                    Path="SelectedSkillWrapper?.Skill.IsValid"
+                    TargetNullValue="{x:False}"/>
+                  <Binding
+                    FallbackValue="{x:False}"
+                    Path="!SelectedSkillWrapper?.Skill.IsEnabled"
+                    TargetNullValue="{x:False}"/>
+                </MultiBinding>
+              </shadui:Badge.IsVisible>
+            </shadui:Badge>
+
+            <shadui:Badge
+              Background="{DynamicResource ErrorColor60}"
+              Content="{I18N {x:Static LocaleKey.SkillPage_Status_Error}}"
+              Foreground="{DynamicResource BadgeForegroundColor}"
+              IsVisible="{Binding !SelectedSkillWrapper?.Skill.IsValid, TargetNullValue={x:False}}"/>
+          </StackPanel>
+
           <TextBlock
-            Classes="h1"
+            Classes="h1" VerticalAlignment="Center"
             Text="{Binding SelectedSkillWrapper?.Skill.Name}"
             TextTrimming="CharacterEllipsis"
             ToolTip.Tip="{Binding SelectedSkillWrapper?.Skill.Name}"/>
-
-          <shadui:Badge
-            VerticalAlignment="Center"
-            Background="{DynamicResource SuccessColor60}"
-            Content="{I18N {x:Static LocaleKey.SkillPage_Status_Enabled}}"
-            Foreground="{DynamicResource BadgeForegroundColor}"
-            IsVisible="{Binding SelectedSkillWrapper?.Skill.IsEnabled, TargetNullValue={x:False}}"/>
-          <shadui:Badge
-            VerticalAlignment="Center"
-            Background="{DynamicResource SecondaryColor}"
-            Content="{I18N {x:Static LocaleKey.SkillPage_Status_Disabled}}"
-            Foreground="{DynamicResource SecondaryForegroundColor}"
-            IsVisible="{Binding !SelectedSkillWrapper?.Skill.IsEnabled, TargetNullValue={x:False}}"/>
-          <shadui:Badge
-            VerticalAlignment="Center"
-            Background="{DynamicResource ErrorColor60}"
-            Content="{I18N {x:Static LocaleKey.SkillPage_Status_Error}}"
-            Foreground="{DynamicResource BadgeForegroundColor}"
-            IsVisible="{Binding !SelectedSkillWrapper?.Skill.IsValid, TargetNullValue={x:False}}"/>
-        </StackPanel>
-
-        <Button
-          Classes="Secondary" Grid.Column="2"
-          VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{TablerIconContent FolderOpen}"
-          Command="{Binding OpenSelectedSkillFolderCommand}"
-          Content="{I18N {x:Static LocaleKey.SkillPage_OpenButton_Content}}"
-          CornerRadius="{DynamicResource FullCornerRadius}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_OpenFileLocationButton_ToolTip}}"/>
-      </Grid>
+        </DockPanel>
+      </DockPanel>
     </shadui:NavigationView.Header>
 
     <shadui:NavigationView.ContentTemplate>

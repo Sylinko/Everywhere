@@ -1,0 +1,28 @@
+<UserControl
+  x:Class="Everywhere.Views.Modding.ModUninstallConfirmForm" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:modding="clr-namespace:Everywhere.Views.Modding"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" x:DataType="modding:ModUninstallConfirmForm">
+  <StackPanel
+    MaxWidth="460" Spacing="12">
+    <TextBlock
+      Text="{Binding Preview.Message}"
+      TextWrapping="Wrap"/>
+
+    <shadui:Toast
+      Title="{I18N {x:Static LocaleKey.Common_Warning}}"
+      HorizontalAlignment="Stretch" CanDismiss="False"
+      CanDismissByClicking="False"
+      Content="{Binding Preview.DependentsWarning}"
+      IsVisible="{Binding Preview.HasDependentsWarning}"
+      Notification="Warning"/>
+
+    <CheckBox
+      Content="{I18N {x:Static LocaleKey.ModPage_ConfirmUninstall_DeleteDataCheckBox}}"
+      IsChecked="{Binding ShouldDeleteData, Mode=TwoWay}"/>
+
+    <CheckBox
+      Content="{Binding Preview.OrphansLabel}"
+      IsChecked="{Binding ShouldRemoveOrphans, Mode=TwoWay}"
+      IsVisible="{Binding Preview.HasOrphans}"/>
+  </StackPanel>
+</UserControl>

@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Avalonia.Input.Platform;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat.Plugins;
@@ -20,10 +21,10 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
 
     public ToolPluginPresentation? SelectedPlugin
     {
-        get;
+        get => _selectedPlugin;
         set
         {
-            if (!SetProperty(ref field, value)) return;
+            if (!SetProperty(ref _selectedPlugin, value)) return;
             OnPropertyChanged(nameof(SelectedNativePlugin));
             OnPropertyChanged(nameof(SelectedMcpPluginPresentation));
             OnPropertyChanged(nameof(SelectedMcpPlugin));
@@ -84,6 +85,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
     private readonly BindableList<IContentTabItem> _contentTabItems = [];
 
     private readonly IChatPluginManager _manager;
+    private ToolPluginPresentation? _selectedPlugin;
 
     public ChatPluginPageViewModel(IChatPluginManager manager, Settings settings)
     {
@@ -97,7 +99,14 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
             Disposable.Create(() =>
             {
                 ToolSettings.Plugins.CollectionChanged -= HandlePluginsChanged;
-                SelectedPlugin = null;
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    SelectedPlugin = null;
+                }
+                else
+                {
+                    _selectedPlugin = null;
+                }
             }));
     }
 

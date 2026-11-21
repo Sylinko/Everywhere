@@ -23,6 +23,12 @@ namespace Everywhere.Views;
 /// </summary>
 public class ChatLinkRenderer : MarkdownRenderer
 {
+    /// <summary>
+    /// Gets or sets whether local filesystem links are decorated, previewed, and actionable.
+    /// Third-party document surfaces such as Mod READMEs set this to <see langword="false"/> to allow web links only.
+    /// </summary>
+    public bool AllowLocalLinks { get; set; } = true;
+
     protected override Type StyleKeyOverride => typeof(MarkdownRenderer);
 
     private readonly Dictionary<Link, LinkDecoration> _decorations = new();
@@ -61,7 +67,7 @@ public class ChatLinkRenderer : MarkdownRenderer
                     return;
                 }
 
-                var target = ChatLinkTarget.Parse(href.OriginalString);
+                var target = ParseTarget(href.OriginalString);
                 if (target.Kind == ChatLinkKind.Unsupported)
                 {
                     if (_decorations.Remove(link, out var oldDecoration)) oldDecoration.Dispose();
@@ -155,6 +161,7 @@ public class ChatLinkRenderer : MarkdownRenderer
         {
             SetHoverBlock(block);
         }
+
         if (_popup is null)
         {
             StartHoverTimer();
@@ -173,10 +180,20 @@ public class ChatLinkRenderer : MarkdownRenderer
 
         e.Handled = true;
         ClosePreview();
+        var target = ParseTarget(address.OriginalString);
+        if (target.Kind == ChatLinkKind.Unsupported) return;
+
         if (_topLevel is not { } owner || owner.GetValue(ChatLinkInteraction.InteractionProperty) is not { } interaction) return;
 
-        var target = ChatLinkTarget.Parse(address.OriginalString);
         interaction.ExecuteAsync(owner, target, target.Kind == ChatLinkKind.Local ? ChatLinkAction.FollowLocalLink : ChatLinkAction.Open).Detach();
+    }
+
+    private ChatLinkTarget ParseTarget(string address)
+    {
+        var target = ChatLinkTarget.Parse(address);
+        return !AllowLocalLinks && target.Kind == ChatLinkKind.Local
+            ? new ChatLinkTarget(ChatLinkKind.Unsupported, address)
+            : target;
     }
 
     private void HandleLinkHoverChanged(object? sender, RoutedEventArgs e)
@@ -216,7 +233,7 @@ public class ChatLinkRenderer : MarkdownRenderer
             return;
         }
 
-        _menu = ChatLinkMenu.Create(owner, interaction);
+        _menu = ChatLinkMenu.Create(owner, interaction, AllowLocalLinks);
         _menu.DataContextChanged += (_, _) => ClosePreview();
         _menuValue?.Dispose();
         _menuValue = SetValue(LinkContextMenuProperty, _menu, BindingPriority.StyleTrigger);
@@ -231,7 +248,7 @@ public class ChatLinkRenderer : MarkdownRenderer
             return;
         }
 
-        var delay = TimeSpan.FromMilliseconds(ChatLinkTarget.Parse(address.OriginalString).Kind == ChatLinkKind.Web ? 300 : 500);
+        var delay = TimeSpan.FromMilliseconds(ParseTarget(address.OriginalString).Kind == ChatLinkKind.Web ? 300 : 500);
         _hoverDelay = DispatcherTimer.RunOnce(ShowHoveredLink, delay, DispatcherPriority.Default);
     }
 
@@ -262,7 +279,7 @@ public class ChatLinkRenderer : MarkdownRenderer
             return;
         }
 
-        var target = ChatLinkTarget.Parse(address.OriginalString);
+        var target = ParseTarget(address.OriginalString);
         if (target.Kind == ChatLinkKind.Unsupported) return;
 
         var anchor = geometry.Rects[0];
@@ -312,6 +329,7 @@ public class ChatLinkRenderer : MarkdownRenderer
             };
             popup.Child = tooltip;
         }
+
         topLevel.AddHandler(KeyDownEvent, HandlePreviewKey, RoutingStrategies.Tunnel);
         popup.IsOpen = true;
     }

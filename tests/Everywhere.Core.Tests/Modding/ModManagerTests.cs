@@ -309,6 +309,32 @@ public sealed class ModManagerTests
         await container.DisposeAsync();
     }
 
+    [Test]
+    public async Task SetEnabledAsync_WhenHotUnloadRequiresRestart_MarksDisabledModPendingRestart()
+    {
+        await using var harness = new Harness();
+        var modDir = Path.Combine(harness.Root, "dev", "acme.sticky");
+        WriteFixtureDirectory(
+            modDir,
+            "acme.sticky",
+            "1.0.0",
+            entryType: "Everywhere.Core.Tests.Modding.Fixtures.FailingStopMod");
+
+        await using var manager = harness.CreateManager();
+        await manager.InitializeAsync(CancellationToken.None);
+        Assert.That((await manager.ImportDirectoryAsync(modDir)).Status, Is.EqualTo(ModOperationStatus.Applied));
+
+        var disableResult = await manager.SetEnabledAsync("acme.sticky", isEnabled: false);
+        var summary = manager.InstalledMods.Single(m => m.Id == "acme.sticky");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(disableResult.Status, Is.EqualTo(ModOperationStatus.RestartRequired));
+            Assert.That(manager.IsRestartRequired, Is.True);
+            Assert.That(summary.IsEnabled, Is.False);
+            Assert.That(summary.IsPendingRestart, Is.True);
+        }
+    }
+
     private static EmbeddedModSource CreateEmbeddedSource(string id, Dictionary<string, byte[]> resources) =>
         new(
             id,
@@ -391,7 +417,8 @@ public sealed class ModManagerTests
         string id,
         string version,
         ModDependency[]? dependencies = null,
-        string readmeContent = "# Readme"
+        string readmeContent = "# Readme",
+        string entryType = "Everywhere.Core.Tests.Modding.Fixtures.CollectibleLifecycleMod"
     )
     {
         Directory.CreateDirectory(directory);
@@ -410,7 +437,7 @@ public sealed class ModManagerTests
             Entry = new UniversalModEntry
             {
                 Assembly = assemblyFileName,
-                Type = "Everywhere.Core.Tests.Modding.Fixtures.CollectibleLifecycleMod",
+                Type = entryType,
                 Assemblies = [assemblyFileName],
                 Framework = "net11.0",
                 ModApiVersion = "[1.0.0,2.0.0)",

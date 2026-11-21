@@ -134,7 +134,8 @@
   </UserControl.Styles>
 
   <shadui:NavigationView
-    Padding="24,0,24,20" HeaderMaxWidth="1000"
+    x:Name="RootNavigationView" Padding="24,0,24,20"
+    HeaderMaxWidth="1000"
     PageTransition="{x:Null}"
     PaneWidth="320" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
     SelectedItem="{Binding SelectedPlugin, Mode=TwoWay}">
@@ -258,28 +259,38 @@
           MaxWidth="1000" Margin="0,12,0,0"
           ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,*"
           RowSpacing="8">
-          <Image
+          <Panel
             Grid.Row="0" Grid.Column="0"
             Width="64" Height="64"
-            md:AsyncImageLoader.SizeToContent="Manual"
-            md:AsyncImageLoader.Source="{Binding Plugin.BeautifulIcon}"
-            IsVisible="{Binding Plugin.BeautifulIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
-            Stretch="Uniform"/>
-          <TablerIcon
-            Grid.Row="0" Grid.Column="0"
-            VerticalAlignment="Top"
-            IsVisible="{Binding Plugin.BeautifulIcon, Converter={x:Static ObjectConverters.IsNull}}"
-            Kind="{Binding Plugin.Icon, FallbackValue=Hammer}"
-            Size="64"/>
+            VerticalAlignment="Top">
+            <Image
+              x:Name="BeautifulIconImage" Width="64"
+              Height="64" md:AsyncImageLoader.SizeToContent="Manual"
+              md:AsyncImageLoader.Source="{Binding Plugin.BeautifulIcon}"
+              Stretch="Uniform"/>
+            <TablerIcon
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              IsVisible="{Binding #BeautifulIconImage.Source, Converter={x:Static ObjectConverters.IsNull}}"
+              Kind="{Binding Plugin.Icon, FallbackValue=Hammer}"
+              Size="64"/>
+          </Panel>
 
           <StackPanel
             Grid.Row="0" Grid.Column="1"
             Margin="12,0,0,0" Orientation="Vertical"
             Spacing="2">
-            <TextBlock
-              Classes="h3"
-              Text="{Binding Plugin.HeaderKey^, FallbackValue={x:Null}}"
-              TextTrimming="CharacterEllipsis"/>
+            <DockPanel
+              HorizontalAlignment="Left" HorizontalSpacing="8">
+              <ToggleSwitch
+                DockPanel.Dock="Right" VerticalAlignment="Center"
+                IsChecked="{Binding IsEnabled}"
+                IsEnabled="{Binding CanEdit}"
+                IsVisible="{Binding #RootNavigationView.IsCompact}"/>
+              <TextBlock
+                Classes="h3" VerticalAlignment="Center"
+                Text="{Binding Plugin.HeaderKey^, FallbackValue={x:Null}}"
+                TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
 
             <ScrollViewer
               MaxHeight="80" HorizontalScrollBarVisibility="Disabled">

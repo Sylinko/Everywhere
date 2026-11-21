@@ -28,6 +28,15 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
     }
 
     /// <summary>
+    /// Gets or sets whether the first-visit modding introduction dialog has been shown locally.
+    /// </summary>
+    public bool HasShownModdingIntroduction
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
+    /// <summary>
     /// Used to popup welcome dialog on first launch and update.
     /// </summary>
     public string? PreviousLaunchVersion

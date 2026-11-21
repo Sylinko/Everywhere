@@ -48,7 +48,6 @@ public sealed class TrimmingStackPanel : StackPanel
     public static readonly StyledProperty<int> MinimumTrailingVisibleItemsProperty =
         AvaloniaProperty.Register<TrimmingStackPanel, int>(
             nameof(MinimumTrailingVisibleItems),
-            0,
             validate: value => value >= 0);
 
     private readonly List<Control> _visibleChildren = [];

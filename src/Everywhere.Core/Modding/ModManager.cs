@@ -67,6 +67,7 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
     private readonly Dictionary<string, EmbeddedModSource> _embeddedSources = new(StringComparer.Ordinal);
     private readonly Dictionary<string, IModRepositorySource> _runtimeSources = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<ModDiagnostic>> _modDiagnostics = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _pendingRestartModIds = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _operation = new(1, 1);
 
     private ModEngine? _engine;
@@ -551,6 +552,12 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
             {
                 var applyResult = await _engine.ApplyAsync(BuildDesiredDefinitionsLocked(), cancellationToken).ConfigureAwait(false);
                 RecordApplyResult("disable", applyResult);
+                if (applyResult.Status == ModApplyStatus.RestartRequired)
+                {
+                    _pendingRestartModIds.Add(modId);
+                    _pendingRestartModIds.UnionWith(dependents);
+                }
+
                 RefreshSnapshotsLocked();
                 result = FromApplyResult(applyResult);
             }
@@ -2130,9 +2137,11 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
                     Homepage = manifest?.Homepage,
                     Repository = manifest?.Repository,
                     License = manifest?.License,
+                    Entry = manifest?.Entry,
                     HasRollback = record.PreviousInstallation is not null,
                     PreviousVersion = record.PreviousInstallation?.Version,
                     PendingOperation = record.PendingOperation,
+                    IsPendingRestart = record.PendingOperation is not null || _pendingRestartModIds.Contains(modId),
                     LocalDirectoryPath = record.LocalDirectoryPath,
                     PreferredChannel = record.PreferredChannel,
                     PinnedVersion = record.PinnedVersion,
@@ -2154,6 +2163,13 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
         if (result.Status == ModApplyStatus.RestartRequired)
         {
             Volatile.Write(ref _restartDiagnostics, [.. result.Diagnostics]);
+            foreach (var diagnostic in result.Diagnostics)
+            {
+                if (diagnostic.ModId is { Length: > 0 } diagnosticModId)
+                {
+                    _pendingRestartModIds.Add(diagnosticModId);
+                }
+            }
         }
 
         foreach (var diagnostic in result.Diagnostics)
