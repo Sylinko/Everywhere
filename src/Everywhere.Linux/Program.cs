@@ -1,7 +1,4 @@
 ﻿using Avalonia;
-using Avalonia.Controls;
-using Everywhere.AI;
-using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -16,9 +13,9 @@ using Everywhere.Linux.Interop;
 using Everywhere.Linux.Platform;
 using Everywhere.Linux.ProcessIsolation;
 using Everywhere.ProcessIsolation.Activation;
-using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
+using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Everywhere.TextSelection;
@@ -93,37 +90,40 @@ public static class Program
         if (role == ProcessRole.Automation)
         {
             return await ProcessRoleHostRunner.RunAsync(
-                role,
-                args,
-                peerVerifier,
-                static () => LinuxDesktopServices.Create().CreateAutomationHostSession()).ConfigureAwait(false);
+                    role,
+                    args,
+                    peerVerifier,
+                    static () => LinuxDesktopServices.Create().CreateAutomationHostSession())
+                .ConfigureAwait(false);
         }
 
-        // Retain the endpoint claim until application and DI cleanup complete.
-        await using var activationServer = ApplicationActivationEntrance.TryCreateServer(args, peerVerifier);
+        // Claim before runtime initialization; Entrance disposes services and the lock before running post-exit hooks.
+        var activationServer = ApplicationActivationEntrance.TryCreateServer(args, peerVerifier);
         if (activationServer is null)
         {
             return await ApplicationActivationEntrance.SendToPrimaryAsync(args, peerVerifier).ConfigureAwait(false);
         }
 
-        Entrance.Initialize();
-        return await RunMainAsync(args, activationServer).ConfigureAwait(false);
+        await using (Entrance.Initialize(activationServer))
+        {
+            return await RunMainAsync(args, activationServer).ConfigureAwait(false);
+        }
     }
 
-    private static async Task<int> RunMainAsync(string[] args, ApplicationActivationServer activationServer)
+    private static Task<int> RunMainAsync(string[] args, ApplicationActivationServer activationServer)
     {
         var serviceProvider = ServiceLocator.Build(x => LinuxDesktopServices.AddServices(x)
 
-        #region Basic
+                #region Basic
 
                 .AddApplicationLogging()
                 .AddSingleton(activationServer)
-                .AddSingleton<Everywhere.ProcessIsolation.Rpc.INamedPipePeerVerifier, LinuxNamedPipePeerVerifier>()
+                .AddSingleton<INamedPipePeerVerifier, LinuxNamedPipePeerVerifier>()
                 .AddProcessIsolation()
                 .AddSingleton<LinuxWindowHelper>()
                 .AddSingleton<IWindowHelper>(sp => sp.GetRequiredService<LinuxWindowHelper>())
-                .AddSingleton(sp => sp.GetRequiredService<LinuxDesktopServices>()
-                    .CreateScreenSelectionService(sp.GetRequiredService<INativeHelper>()))
+                .AddSingleton(sp =>
+                    sp.GetRequiredService<LinuxDesktopServices>().CreateScreenSelectionService(sp.GetRequiredService<INativeHelper>()))
                 .AddSingleton<INativeHelper, LinuxNativeHelper>()
                 .AddSingleton<ILinkFileOperations, LinkFileOperations>()
                 .AddSingleton(sp => sp.GetRequiredService<LinuxDesktopServices>().CreateOverlayInputWatcher())
@@ -138,57 +138,36 @@ public static class Program
                 .AddChatEssentials()
                 .AddTextSelection()
 
-        #endregion
+                #endregion
 
-        #region Chat Plugins
+                #region Chat Plugins
 
                 .AddTransient<BuiltInChatPlugin, FdFindPlugin>()
 
-        #endregion
+                #endregion
 
-        #region Strategy Engine
+                #region Strategy Engine
 
                 .AddStrategyEngine()
 
-        #endregion
+                #endregion
 
-        #region Initialize
+                #region Initialize
 
                 .AddAsyncInitializer<ChatWindowInitializer>()
                 .AddAsyncInitializer<SoftwareUpdaterInitializer>()
 
-        #endregion
+            #endregion
+
         );
 
-        try
-        {
-            return BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
-        }
-        finally
-        {
-            // Keep the shared token source alive until every host service has been disposed.
-            using var app = Application.Current as App;
-            try
-            {
-                // Also drain startup when the desktop loop throws instead of returning normally.
-                if (app is not null)
-                {
-                    await app.WaitForShutdownAsync().ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                // Enter disposal on a worker as well: ConfigureAwait(false) on this caller cannot
-                // prevent a service's own awaits from capturing Avalonia's stopped context.
-                await Task.Run(async () => await serviceProvider.DisposeAsync().ConfigureAwait(false)).ConfigureAwait(false);
-            }
-        }
+        return BuildAvaloniaApp(serviceProvider).RunClassicDesktopAsync(args);
     }
 
     private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider)
     {
         var desktop = serviceProvider.GetRequiredService<LinuxDesktopServices>();
-        var builder = AppBuilder.Configure(() => new App(serviceProvider)).UsePlatformDetect();
+        var builder = App.CreateBuilder(serviceProvider).UsePlatformDetect();
         if (desktop.Kind != LinuxDesktopKind.X11)
         {
             builder = builder.UseWaylandWithFallback();
@@ -210,11 +189,9 @@ public static class Program
         }
 
         return builder.AfterPlatformServicesSetup(_ =>
-            {
-                BetterBclLauncher.Shared = new LinuxDesktopLauncher(BetterBclLauncher.Shared);
-                serviceProvider.GetRequiredService<LinuxDesktopServices>().InstallWindowingPlatform();
-            })
-            .WithInterFont()
-            .LogToTrace();
+        {
+            BetterBclLauncher.Shared = new LinuxDesktopLauncher(BetterBclLauncher.Shared);
+            serviceProvider.GetRequiredService<LinuxDesktopServices>().InstallWindowingPlatform();
+        });
     }
 }

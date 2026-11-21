@@ -1,5 +1,4 @@
 ﻿using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Platform;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
@@ -73,30 +72,34 @@ public static class Program
         // Retain the previous named-object claim for direct executable and LaunchAgent starts.
         // Do not acquire the mutex: the claim must outlive UI and asynchronous DI cleanup
         // without being tied to the creating thread. Native application events handle activation.
-        using var instanceClaim = new Mutex(false, ApplicationInstanceName, out var isPrimary);
+        var instanceClaim = new Mutex(false, ApplicationInstanceName, out var isPrimary);
         if (!isPrimary)
         {
+            instanceClaim.Dispose();
+
             // Bundle activation is delivered by native events; direct secondary starts simply exit.
             Console.WriteLine("Everywhere is already running.");
             return 0;
         }
 
-        Entrance.Initialize();
-        try
+        using (Entrance.Initialize(instanceClaim))
         {
-            return RunMainAsync(args, peerVerifier).GetAwaiter().GetResult();
-        }
-        finally
-        {
-            // Managed lifetime shutdown does not necessarily raise AppDelegate.WillTerminate.
-            // Keep native callback release on the process main thread, after asynchronous DI cleanup.
-            // The Apple host can detach CoreCLR's main thread before native static destructors run;
-            // relying only on ProcessExit lets those destructors call back into a detached runtime.
-            // https://github.com/AvaloniaUI/Avalonia/issues/22062
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (AvaloniaLocator.Current.GetService<IWindowingPlatform>() is IDisposable platform)
+            try
             {
-                platform.Dispose();
+                return RunMain(args, peerVerifier);
+            }
+            finally
+            {
+                // Managed lifetime shutdown does not necessarily raise AppDelegate.WillTerminate.
+                // Keep native callback release on the process main thread, after asynchronous DI cleanup.
+                // The Apple host can detach CoreCLR's main thread before native static destructors run;
+                // relying only on ProcessExit lets those destructors call back into a detached runtime.
+                // https://github.com/AvaloniaUI/Avalonia/issues/22062
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                if (AvaloniaLocator.Current.GetService<IWindowingPlatform>() is IDisposable platform)
+                {
+                    platform.Dispose();
+                }
             }
         }
     }
@@ -158,7 +161,7 @@ public static class Program
     /// Keeps the full Avalonia/Core startup state machine out of early Host and
     /// controller dispatch so those paths do not resolve the production graph.
     /// </summary>
-    private static async Task<int> RunMainAsync(string[] args, INamedPipePeerVerifier peerVerifier)
+    private static int RunMain(string[] args, INamedPipePeerVerifier peerVerifier)
     {
         if (!NSThread.IsMain)
         {
@@ -214,33 +217,7 @@ public static class Program
 
         );
 
-        try
-        {
-            return BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
-        }
-        finally
-        {
-            // Keep the shared token source alive until every host service has been disposed.
-            using var app = Application.Current as App;
-            try
-            {
-                // Also drain startup when the desktop loop throws instead of returning normally.
-                if (app is not null)
-                {
-                    await app.WaitForShutdownAsync().ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                // Enter disposal on a worker as well: ConfigureAwait(false) on this caller cannot
-                // prevent a service's own awaits from capturing Avalonia's stopped context.
-                await Task.Run(async () => await serviceProvider.DisposeAsync().ConfigureAwait(false)).ConfigureAwait(false);
-            }
-        }
-    }
-
-    private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
-        AppBuilder.Configure(() => new App(serviceProvider))
+        return App.CreateBuilder(serviceProvider)
             .UsePlatformDetect()
             .With(
                 new AvaloniaNativePlatformOptions
@@ -254,6 +231,6 @@ public static class Program
                     ShowInDock = false,
                     DisableAvaloniaAppDelegate = true
                 })
-            .WithInterFont()
-            .LogToTrace();
+            .RunClassicDesktop(args);
+    }
 }

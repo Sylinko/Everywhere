@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
@@ -35,10 +37,144 @@ public partial class App : IDisposable
     private bool _isShutdownRequested;
 
     /// <summary>
-    /// Requests application cancellation and closes the desktop loop. Final cleanup belongs
-    /// to the platform entry point, not the requesting component or the UI dispatcher.
+    /// Creates an <see cref="AppBuilder"/> configured with <see cref="App"/>, fonts, and tracing.
     /// </summary>
-    public void Shutdown(int exitCode = 0)
+    public static AppBuilder CreateBuilder(IServiceProvider serviceProvider) =>
+        AppBuilder.Configure(() => new App(serviceProvider)).WithInterFont().LogToTrace();
+
+    internal static async Task<int> RunClassicDesktopCoreAsync(AppBuilder builder, string[] args)
+    {
+        try
+        {
+            try
+            {
+                return builder.StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+            }
+            finally
+            {
+                await CompleteDesktopShutdownAsync(Current as App).ConfigureAwait(false);
+            }
+        }
+        catch
+        {
+            Entrance.RegisterExitedCallback(null);
+            throw;
+        }
+    }
+
+    private static async Task CompleteDesktopShutdownAsync(App? app)
+    {
+        // Keep the shared token source alive until every host service has been disposed.
+        using (app)
+        {
+            try
+            {
+                // Also drain startup when the desktop loop throws instead of returning normally.
+                if (app is not null)
+                {
+                    await app.WaitForShutdownAsync().ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                await ServiceLocator.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Requests application shutdown and relaunches a fresh process with the supplied
+    /// command-line arguments once all single-instance locks and host resources are released.
+    /// </summary>
+    public void Restart(params IReadOnlyList<string> arguments)
+    {
+        Shutdown(onExited: TryRelaunchCurrentProcess);
+
+        // Launches a fresh instance of the current executable or macOS app bundle. Callers invoke this
+        // only after single-instance locks and host resources are completely released.
+        void TryRelaunchCurrentProcess()
+        {
+            var processPath = Environment.ProcessPath;
+            if (string.IsNullOrWhiteSpace(processPath))
+            {
+                Log.Logger.Error("Cannot restart Everywhere because Environment.ProcessPath is unavailable.");
+                return;
+            }
+
+            try
+            {
+                if (OperatingSystem.IsMacOS() && TryGetMacAppBundlePath(processPath) is { } bundlePath)
+                {
+                    var macStartInfo = new ProcessStartInfo("open") { UseShellExecute = false };
+                    macStartInfo.ArgumentList.Add("-n");
+                    macStartInfo.ArgumentList.Add(bundlePath);
+                    if (arguments is { Count: > 0 })
+                    {
+                        macStartInfo.ArgumentList.Add("--args");
+                        foreach (var argument in arguments)
+                        {
+                            macStartInfo.ArgumentList.Add(argument);
+                        }
+                    }
+
+                    using var macProcess = Process.Start(macStartInfo);
+                    return;
+                }
+
+                var startInfo = new ProcessStartInfo(processPath)
+                {
+                    UseShellExecute = false,
+                    WorkingDirectory = Path.GetDirectoryName(processPath) ?? AppContext.BaseDirectory
+                };
+                if (string.Equals(Path.GetFileNameWithoutExtension(processPath), "dotnet", StringComparison.OrdinalIgnoreCase) &&
+                    Assembly.GetEntryAssembly()?.Location is { Length: > 0 } entryAssembly)
+                {
+                    startInfo.ArgumentList.Add(entryAssembly);
+                }
+
+                if (arguments is { Count: > 0 })
+                {
+                    foreach (var argument in arguments)
+                    {
+                        startInfo.ArgumentList.Add(argument);
+                    }
+                }
+
+                using var process = Process.Start(startInfo);
+            }
+            catch (Exception exception)
+            {
+                Log.Logger.Error(exception, "Failed to relaunch Everywhere after restart request.");
+            }
+        }
+
+        static string? TryGetMacAppBundlePath(string executablePath)
+        {
+            var macOsDirectory = Path.GetDirectoryName(Path.GetFullPath(executablePath));
+            if (!string.Equals(Path.GetFileName(macOsDirectory), "MacOS", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            var contentsDirectory = Path.GetDirectoryName(macOsDirectory);
+            if (!string.Equals(Path.GetFileName(contentsDirectory), "Contents", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            var bundleDirectory = Path.GetDirectoryName(contentsDirectory);
+            return bundleDirectory is { Length: > 0 } && bundleDirectory.EndsWith(".app", StringComparison.OrdinalIgnoreCase)
+                ? bundleDirectory
+                : null;
+        }
+    }
+
+    /// <summary>
+    /// Requests application cancellation and closes the desktop loop. Host cleanup and optional
+    /// post-exit callback execution belong to <see cref="AppBuilderExtensions.RunClassicDesktopAsync"/>
+    /// and <see cref="Entrance"/>.
+    /// </summary>
+    public void Shutdown(int exitCode = 0, Action? onExited = null)
     {
         Dispatcher.UIThread.PostOnDemand(() =>
         {
@@ -48,6 +184,7 @@ public partial class App : IDisposable
             }
 
             _isShutdownRequested = true;
+            Entrance.RegisterExitedCallback(onExited);
             _lifetime.Cancel();
             TrayIcon.SetIcons(this, null);
 
@@ -86,8 +223,7 @@ public partial class App : IDisposable
     }
 
     /// <summary>
-    /// Called once by the platform entry point after the desktop loop ends. Cancellation also
-    /// covers a loop that throws; the observed application task completes before DI disposal.
+    /// Cancels the application lifetime and waits for background application tasks to drain before DI disposal.
     /// </summary>
     public Task WaitForShutdownAsync()
     {
@@ -96,8 +232,7 @@ public partial class App : IDisposable
     }
 
     /// <summary>
-    /// Releases the application cancellation source. The platform calls this after waiting for
-    /// the application task and disposing host services; it does not initiate another shutdown.
+    /// Releases the application cancellation source after waiting for application tasks and disposing host services.
     /// </summary>
     public void Dispose() => _lifetime.Dispose();
 
@@ -169,15 +304,16 @@ public partial class App : IDisposable
     private Task PublishReadyAsync(CancellationToken cancellationToken)
     {
         return Dispatcher.UIThread.InvokeAsync(
-            () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                RecordAppLaunchMetric();
-                TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
-                ShowMainWindowOnNeeded();
-            },
-            DispatcherPriority.Normal,
-            cancellationToken).GetTask();
+                () =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    RecordAppLaunchMetric();
+                    TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
+                    ShowMainWindowOnNeeded();
+                },
+                DispatcherPriority.Normal,
+                cancellationToken)
+            .GetTask();
     }
 
     /// <summary>
@@ -277,17 +413,42 @@ public partial class App : IDisposable
                 };
 
                 await Dispatcher.UIThread.InvokeAsync(
-                    () =>
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        WeakReferenceMessenger.Default.Send(message);
-                    },
-                    DispatcherPriority.Normal,
-                    cancellationToken).GetTask().ConfigureAwait(false);
+                        () =>
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            WeakReferenceMessenger.Default.Send(message);
+                        },
+                        DispatcherPriority.Normal,
+                        cancellationToken)
+                    .GetTask()
+                    .ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
         }
+    }
+}
+
+/// <summary>
+/// Provides desktop lifetime runners for <see cref="AppBuilder"/> instances created by <see cref="App.CreateBuilder"/>.
+/// </summary>
+public static class AppBuilderExtensions
+{
+    extension(AppBuilder builder)
+    {
+        /// <summary>
+        /// Starts the classic desktop lifetime, drains shutdown and host services, and forwards any
+        /// registered post-exit callback to <see cref="Entrance"/>.
+        /// </summary>
+        public Task<int> RunClassicDesktopAsync(string[] args) =>
+            App.RunClassicDesktopCoreAsync(builder, args);
+
+        /// <summary>
+        /// Synchronously starts the classic desktop lifetime on the calling main thread, drains
+        /// shutdown and host services, and forwards any registered post-exit callback to <see cref="Entrance"/>.
+        /// </summary>
+        public int RunClassicDesktop(string[] args) =>
+            App.RunClassicDesktopCoreAsync(builder, args).GetAwaiter().GetResult();
     }
 }

@@ -1,18 +1,27 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 
 namespace Everywhere.Core.Tests.Common;
 
 public class AppLifetimeTests
 {
+    private static readonly string[] ExpectedCallbackCalls = ["first"];
+    private static readonly string[] ExpectedRestartArguments = ["--ui", "--first"];
+
     [AvaloniaTest]
     public async Task Initializers_AfterPreviousGroupCompletes_ResolveNextGroupAndPreserveSingletonOwnership()
     {
@@ -185,6 +194,128 @@ public class AppLifetimeTests
         }
     }
 
+    [AvaloniaTest]
+    public async Task Shutdown_WithOnExited_DrainsOnceIsolatesExceptionsAndIgnoresSubsequentRequests()
+    {
+        var previousLogger = Log.Logger;
+        using var sink = new CollectingSink();
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Sink(sink)
+            .CreateLogger();
+
+        var services = CreateServices()
+            .AddApplicationLogging()
+            .BuildServiceProvider();
+        var app = new App(services);
+        var calls = new List<string>();
+
+        try
+        {
+            await using (services)
+            {
+                services.GetRequiredService<ILoggerFactory>().CreateLogger("test");
+                app.Shutdown(onExited: () =>
+                {
+                    calls.Add("first");
+                    throw new InvalidOperationException("Boom");
+                });
+                app.Shutdown(onExited: () => calls.Add("second"));
+                app.Shutdown();
+                Dispatcher.UIThread.RunJobs();
+
+                await CompleteDesktopShutdownAsync(null, app);
+            }
+
+            Assert.That(sink.IsDisposed, Is.False);
+            Assert.That<Action?>(GetEntranceOnExited(), Is.Not.Null);
+
+            CompleteEntranceProcessExit();
+
+            Assert.That(calls, Is.EqualTo(ExpectedCallbackCalls));
+            Assert.That(sink.IsDisposed, Is.True);
+            Assert.That(
+                sink.Events,
+                Has.One.Matches<LogEvent>(e =>
+                    e is not null &&
+                    e.Level == LogEventLevel.Error &&
+                    e.Exception is InvalidOperationException { Message: "Boom" }));
+            Assert.That<Action?>(GetEntranceOnExited(), Is.Null);
+
+            CompleteEntranceProcessExit();
+            Assert.That(calls, Is.EqualTo(ExpectedCallbackCalls));
+        }
+        finally
+        {
+            Entrance.RegisterExitedCallback(null);
+            Log.Logger = previousLogger;
+        }
+    }
+
+    [AvaloniaTest]
+    public async Task Restart_WithArguments_SchedulesRelaunchOnFirstRequestAndIgnoresDuplicateRestart()
+    {
+        var lifetime = Substitute.For<IClassicDesktopStyleApplicationLifetime>();
+        await using var services = CreateServices().BuildServiceProvider();
+        using var app = new App(services);
+        app.ApplicationLifetime = lifetime;
+
+        try
+        {
+            app.Restart("--ui", "--first");
+            app.Restart("--second");
+            Dispatcher.UIThread.RunJobs();
+
+            var scheduledCallback = GetEntranceOnExited();
+            Assert.That<Action?>(scheduledCallback, Is.Not.Null);
+            if (scheduledCallback is not null)
+            {
+                Assert.That(ExtractCapturedArguments(scheduledCallback), Is.EqualTo(ExpectedRestartArguments));
+            }
+
+            lifetime.Received(1).Shutdown();
+        }
+        finally
+        {
+            Entrance.RegisterExitedCallback(null);
+        }
+    }
+
+    private static Action? GetEntranceOnExited()
+    {
+        var field = typeof(Entrance).GetField("_onExited", BindingFlags.Static | BindingFlags.NonPublic) ??
+            throw new MissingFieldException(typeof(Entrance).FullName, "_onExited");
+        return (Action?)field.GetValue(null);
+    }
+
+    private static void CompleteEntranceProcessExit()
+    {
+        var method = typeof(Entrance).GetMethod("CompleteProcessExit", BindingFlags.Static | BindingFlags.NonPublic) ??
+            throw new MissingMethodException(typeof(Entrance).FullName, "CompleteProcessExit");
+        method.Invoke(null, null);
+    }
+
+    private static IReadOnlyList<string>? ExtractCapturedArguments(Action callback)
+    {
+        var target = callback.Target;
+        if (target is null)
+        {
+            return null;
+        }
+
+        foreach (var field in target.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+        {
+            if (field.GetValue(target) is IReadOnlyList<string> arguments)
+            {
+                return arguments;
+            }
+        }
+
+        return null;
+    }
+
+    [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "CompleteDesktopShutdownAsync")]
+    private static extern Task CompleteDesktopShutdownAsync(App? _, App? app);
+
     private static ServiceCollection CreateServices()
     {
         var services = new ServiceCollection();
@@ -242,5 +373,15 @@ public class AppLifetimeTests
             _probe.InitializedLater = this;
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class CollectingSink : ILogEventSink, IDisposable
+    {
+        public List<LogEvent> Events { get; } = [];
+        public bool IsDisposed { get; private set; }
+
+        public void Emit(LogEvent logEvent) => Events.Add(logEvent);
+
+        public void Dispose() => IsDisposed = true;
     }
 }

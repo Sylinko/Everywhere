@@ -25,4 +25,16 @@ public static class ServiceLocator
     {
         return (T)Resolve(typeof(T), key);
     }
+
+    internal static ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _serviceProvider, null) is not { } serviceProvider)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        // Enter disposal on a worker: ConfigureAwait(false) on callers cannot prevent a
+        // service's own awaits from capturing Avalonia's stopped dispatcher context.
+        return new ValueTask(Task.Run(async () => await serviceProvider.DisposeAsync().ConfigureAwait(false)));
+    }
 }

@@ -1,5 +1,4 @@
 ﻿using Avalonia;
-using Avalonia.Controls;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -55,8 +54,8 @@ public static class Program
                 RunAutomationHostAsync(args, peerVerifier)).ConfigureAwait(false);
         }
 
-        // Claim before runtime initialization and retain ownership through application and DI cleanup.
-        await using var activationServer = ApplicationActivationEntrance.TryCreateServer(args, peerVerifier);
+        // Claim before runtime initialization; Entrance disposes services and the lock before running post-exit hooks.
+        var activationServer = ApplicationActivationEntrance.TryCreateServer(args, peerVerifier);
         if (activationServer is null)
         {
             // Login startup must not activate an already running Main. Primary window policy is unchanged.
@@ -64,8 +63,10 @@ public static class Program
             return await ApplicationActivationEntrance.SendToPrimaryAsync(args, peerVerifier).ConfigureAwait(false);
         }
 
-        Entrance.Initialize();
-        return await RunMainAsync(args, hostsControlPlatform, peerVerifier, activationServer).ConfigureAwait(false);
+        await using (Entrance.Initialize(activationServer))
+        {
+            return await RunMainAsync(args, hostsControlPlatform, peerVerifier, activationServer).ConfigureAwait(false);
+        }
     }
 
     private static Task<int> RunAutomationHostAsync(string[] args, INamedPipePeerVerifier peerVerifier) => Task.Run(async () =>
@@ -93,11 +94,12 @@ public static class Program
             new WindowsTextSelectionMonitorFactory());
     }
 
-    private static async Task<int> RunMainAsync(
+    private static Task<int> RunMainAsync(
         string[] args,
         WindowsHostsControlPlatform hostsControlPlatform,
         INamedPipePeerVerifier peerVerifier,
-        ApplicationActivationServer activationServer)
+        ApplicationActivationServer activationServer
+    )
     {
         if (Thread.CurrentThread.GetApartmentState() != ApartmentState.STA)
         {
@@ -150,38 +152,11 @@ public static class Program
 
         );
 
-        try
-        {
-            RegisterUrlProtocol();
-
-            return BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
-        }
-        finally
-        {
-            // Keep the shared token source alive until every host service has been disposed.
-            using var app = Application.Current as App;
-            try
-            {
-                // Also drain startup when the desktop loop throws instead of returning normally.
-                if (app is not null)
-                {
-                    await app.WaitForShutdownAsync().ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                // Enter disposal on a worker as well: ConfigureAwait(false) on this caller cannot
-                // prevent a service's own awaits from capturing Avalonia's stopped context.
-                await Task.Run(async () => await serviceProvider.DisposeAsync().ConfigureAwait(false)).ConfigureAwait(false);
-            }
-        }
-    }
-
-    private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
-        AppBuilder.Configure(() => new App(serviceProvider))
+        RegisterUrlProtocol();
+        return App.CreateBuilder(serviceProvider)
             .UsePlatformDetect()
-            .WithInterFont()
-            .LogToTrace();
+            .RunClassicDesktopAsync(args);
+    }
 
     /// <summary>
     /// Register the "sylinko-everywhere" protocol handler in Registry

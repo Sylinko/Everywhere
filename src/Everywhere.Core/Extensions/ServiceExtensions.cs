@@ -45,7 +45,8 @@ public static class ServiceExtensions
 #if DEBUG
                 .SetMinimumLevel(LogLevel.Debug)
 #endif
-                .AddSerilog(dispose: true)
+                // Entrance owns the global Serilog logger and closes it after post-exit callbacks run.
+                .AddSerilog(dispose: false)
                 .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore", LogLevel.Warning));
 
         /// <summary>Registers Main's process-isolation lifecycle services.</summary>
