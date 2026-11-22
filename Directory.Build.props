@@ -14,6 +14,7 @@
 
   <PropertyGroup>
     <WarningsAsErrors>nullable</WarningsAsErrors>
+    <_BuiltInModPropertiesToRemove>TargetFramework;RuntimeIdentifier;RuntimeIdentifiers;SelfContained;PublishSelfContained;PublishAot;PublishTrimmed;PublishSingleFile;OutputPath;OutDir;BaseOutputPath;IntermediateOutputPath;BaseIntermediateOutputPath;MSBuildProjectExtensionsPath;PublishDir;Version;PackageVersion;AssemblyVersion;FileVersion;InformationalVersion;AssemblyName;RootNamespace</_BuiltInModPropertiesToRemove>
   </PropertyGroup>
 
   <ItemGroup>

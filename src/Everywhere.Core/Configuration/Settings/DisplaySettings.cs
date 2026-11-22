@@ -71,6 +71,7 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
         set
         {
             SystemAccentColors.ColorOverride = value;
+            Dispatcher.UIThread.PostOnDemand(() => AppearanceManager.Shared.UpdateAccentColor(value));
             OnPropertyChanged();
         }
     }

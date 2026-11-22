@@ -188,12 +188,24 @@
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\Everywhere.Modding.Sdk\Everywhere.Modding.Sdk.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      ExcludeAssets="all"
+                      GlobalPropertiesToRemove="$(_BuiltInModPropertiesToRemove)"/>
+    <ProjectReference Include="..\..\mods\Everywhere.Mods.Themes\Everywhere.Mods.Themes.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      ExcludeAssets="all"
+                      IsEverywhereBuiltInMod="true"
+                      GlobalPropertiesToRemove="$(_BuiltInModPropertiesToRemove)"/>
     <ProjectReference Include="..\Everywhere.ProcessIsolation\Everywhere.ProcessIsolation.csproj"/>
   </ItemGroup>
 
   <Import Project="..\Build.I18N.targets"/>
   <Import Project="..\Build.Watchdog.targets"/>
   <Import Project="..\Build.Modding.Hosting.targets"/>
+  <Import Project="..\Build.BuiltInMods.targets"/>
 
   <!--
     The Unix OfficeCLI apphost has no extension. The macOS SDK only places

@@ -1,0 +1,16 @@
+<UserControl
+  x:Class="Everywhere.Mods.Themes.Controls.CustomThemesActionControl" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:i18n="clr-namespace:Everywhere.Mods.Themes.I18N"
+  xmlns:local="clr-namespace:Everywhere.Mods.Themes.Controls" x:DataType="local:CustomThemesActionControl">
+  <StackPanel
+    Orientation="Horizontal" Spacing="8">
+    <Button
+      x:Name="OpenFolderButton" Classes="Secondary"
+      Click="HandleOpenFolderClick"
+      Content="{I18N {x:Static i18n:LocaleKey.Themes_CustomThemes_OpenFolderButton_Content}}"/>
+    <Button
+      x:Name="ReloadButton" Classes="Secondary"
+      Click="HandleReloadClick"
+      Content="{I18N {x:Static i18n:LocaleKey.Themes_CustomThemes_ReloadButton_Content}}"/>
+  </StackPanel>
+</UserControl>

@@ -12,6 +12,8 @@ using Everywhere.Mac.Common;
 using Everywhere.Mac.Interop;
 using Everywhere.Mac.ProcessIsolation;
 using Everywhere.Mac.ProcessIsolation.Input;
+using Everywhere.Modding;
+using Everywhere.Modding.Hosting.Sources;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
@@ -198,6 +200,11 @@ public static class Program
                 .AddCloudClient()
                 .AddChatEssentials()
                 .AddModding()
+                .AddSingleton<IModRepositorySource>(_ => EmbeddedModSource.FromAssembly(
+                    ModManager.BuiltInSourceId,
+                    typeof(Program).Assembly,
+                    "Everywhere.BuiltInMods",
+                    isSignatureRequired: false))
                 .AddStrategyEngine()
                 .AddTextSelection()
 

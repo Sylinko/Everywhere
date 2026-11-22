@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="Themes_LightTheme_Header" xml:space="preserve">
+    <value>浅色模式主题</value>
+  </data>
+  <data name="Themes_LightTheme_Description" xml:space="preserve">
+    <value>在浅色外观下使用的预设或自定义主题。</value>
+  </data>
+  <data name="Themes_DarkTheme_Header" xml:space="preserve">
+    <value>深色模式主题</value>
+  </data>
+  <data name="Themes_DarkTheme_Description" xml:space="preserve">
+    <value>在深色外观下使用的预设或自定义主题。</value>
+  </data>
+  <data name="Themes_ShouldOverrideAccentColor_Header" xml:space="preserve">
+    <value>使用全局强调色覆盖主题主色</value>
+  </data>
+  <data name="Themes_ShouldOverrideAccentColor_Description" xml:space="preserve">
+    <value>启用后，将使用显示设置中的强调色覆盖当前主题预设的主强调色。</value>
+  </data>
+  <data name="Themes_CustomThemes_Header" xml:space="preserve">
+    <value>自定义 JSON 主题</value>
+  </data>
+  <data name="Themes_CustomThemes_Description" xml:space="preserve">
+    <value>从模组数据目录加载 *.json 主题定义文件。</value>
+  </data>
+  <data name="Themes_CustomThemes_OpenFolderButton_Content" xml:space="preserve">
+    <value>打开目录</value>
+  </data>
+  <data name="Themes_CustomThemes_ReloadButton_Content" xml:space="preserve">
+    <value>重新加载</value>
+  </data>
+  <data name="Themes_DefaultLight_Name" xml:space="preserve">
+    <value>默认（浅色）</value>
+  </data>
+  <data name="Themes_DefaultDark_Name" xml:space="preserve">
+    <value>默认（深色）</value>
+  </data>
+</root>

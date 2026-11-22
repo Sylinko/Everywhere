@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Media;
+using ShadUI.Themes;
 
 namespace Everywhere.Views;
 
@@ -8,6 +9,19 @@ public sealed class AppearanceManager : ResourceDictionary
     public static AppearanceManager Shared => _shared ?? throw new InvalidOperationException("AppearanceManager is not initialized.");
 
     private static AppearanceManager? _shared;
+
+    /// <summary>
+    /// Raised when the effective global accent color changes via settings or OS platform settings.
+    /// </summary>
+    public event EventHandler<Color>? AccentColorChanged;
+
+    /// <summary>
+    /// Gets the current effective global accent color resolved from <see cref="SystemAccentColors.ColorOverride"/>
+    /// or the platform accent color.
+    /// </summary>
+    public Color EffectiveAccentColor { get; private set; } = Color.FromRgb(0, 120, 215);
+
+    private Application? _attachedApplication;
 
     public string? FontFamily
     {
@@ -64,5 +78,35 @@ public sealed class AppearanceManager : ResourceDictionary
         if (_shared is not null) throw new InvalidOperationException("AppearanceManager is already initialized.");
 
         _shared = this;
+    }
+
+    internal void Attach(Application application)
+    {
+        if (_attachedApplication is not null) return;
+
+        _attachedApplication = application;
+        if (application.PlatformSettings is { } platformSettings)
+        {
+            platformSettings.ColorValuesChanged += HandlePlatformColorValuesChanged;
+        }
+
+        UpdateAccentColor(SystemAccentColors.ColorOverride);
+    }
+
+    public void UpdateAccentColor(Color? overrideColor)
+    {
+        var effectiveColor = overrideColor
+            ?? _attachedApplication?.PlatformSettings?.GetColorValues().AccentColor1
+            ?? Color.FromRgb(0, 120, 215);
+
+        EffectiveAccentColor = effectiveColor;
+        // ShadUI omits PrimaryColor20; maintain it alongside SystemAccentColors so XAML views never fall back to transparent.
+        this["PrimaryColor20"] = new Color(51, effectiveColor.R, effectiveColor.G, effectiveColor.B);
+        AccentColorChanged?.Invoke(this, effectiveColor);
+    }
+
+    private void HandlePlatformColorValuesChanged(object? sender, Avalonia.Platform.PlatformColorValues e)
+    {
+        UpdateAccentColor(SystemAccentColors.ColorOverride);
     }
 }

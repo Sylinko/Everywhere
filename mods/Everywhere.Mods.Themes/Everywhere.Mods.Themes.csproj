@@ -1,0 +1,67 @@
+<Project>
+
+  <Import Project="../../src/Everywhere.Modding.Sdk/Sdk/Sdk.props"/>
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <Version>1.0.0</Version>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <EverywhereModToolsDirectory>$(MSBuildThisFileDirectory)../../src/Everywhere.Modding.Sdk/bin/$(Configuration)/net11.0</EverywhereModToolsDirectory>
+    <EverywhereHost Condition="'$(EverywhereHost)' == ''">$(MSBuildThisFileDirectory)../../src/Everywhere.Core/Everywhere.Core.csproj</EverywhereHost>
+    <EverywhereHostVersion Condition="'$(EverywhereHostVersion)' == ''">[0.9.0-0,)</EverywhereHostVersion>
+    <EverywhereModId>everywhere.themes</EverywhereModId>
+    <EverywhereModCategory>appearance</EverywhereModCategory>
+    <EverywhereModEntryType>Everywhere.Mods.Themes.ThemesMod</EverywhereModEntryType>
+    <EverywhereModAuthor>Sylinko Inc.</EverywhereModAuthor>
+    <EverywhereModIcon>Assets/Themes.svg</EverywhereModIcon>
+    <EverywhereModHomepage>https://everywhere.sylinko.com</EverywhereModHomepage>
+    <EverywhereModRepository>https://github.com/DearVa/Everywhere</EverywhereModRepository>
+    <EverywhereModRepositoryDirectory>mods/Everywhere.Mods.Themes</EverywhereModRepositoryDirectory>
+    <EverywhereModLicense>AGPL-3.0-only</EverywhereModLicense>
+    <EverywhereModLicenseFile>LICENSE</EverywhereModLicenseFile>
+    <EverywhereI18NNamespace>Everywhere.Mods.Themes.I18N</EverywhereI18NNamespace>
+    <RootNamespace>Everywhere.Mods.Themes</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EverywhereModLocalization Include="en">
+      <Name>Themes</Name>
+      <Description>Provides an extensible theme engine with built-in Catppuccin, Ayu, GitHub, Tokyo Night, Nord, Gruvbox, Everforest, and Dracula themes plus custom JSON support.</Description>
+      <Readme>README.md</Readme>
+    </EverywhereModLocalization>
+    <EverywhereModLocalization Include="zh-hans">
+      <Name>主题系统</Name>
+      <Description>提供可扩展的主题引擎，内置 Catppuccin、Ayu、GitHub、Tokyo Night、Nord、Gruvbox、Everforest 与 Dracula 等经典主题，并支持 JSON 自定义主题。</Description>
+      <Readme>README.zh-Hans.md</Readme>
+    </EverywhereModLocalization>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia"/>
+    <PackageReference Include="CommunityToolkit.Mvvm"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference
+      Include="../../src/Everywhere.Modding.Sdk/Everywhere.Modding.Sdk.csproj"
+      ReferenceOutputAssembly="false"
+      Private="false"
+      ExcludeAssets="all"
+      GlobalPropertiesToRemove="$(_EverywhereHostPropertiesToRemove);TargetFramework"/>
+    <ProjectReference
+      Include="../../src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj"
+      ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference
+      Include="../../src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj"
+      ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Everywhere.Mods.Themes.I18N"/>
+    <EmbeddedResource Include="Assets/Themes.svg"/>
+    <Content Include="../../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
+
+  <Import Project="../../src/Build.I18N.targets"/>
+  <Import Project="../../src/Everywhere.Modding.Sdk/Sdk/Sdk.targets"/>
+</Project>

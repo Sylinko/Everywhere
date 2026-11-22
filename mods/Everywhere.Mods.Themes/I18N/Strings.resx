@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="Themes_LightTheme_Header" xml:space="preserve">
+    <value>Light theme</value>
+  </data>
+  <data name="Themes_LightTheme_Description" xml:space="preserve">
+    <value>Preset or custom theme applied when Everywhere is in light mode.</value>
+  </data>
+  <data name="Themes_DarkTheme_Header" xml:space="preserve">
+    <value>Dark theme</value>
+  </data>
+  <data name="Themes_DarkTheme_Description" xml:space="preserve">
+    <value>Preset or custom theme applied when Everywhere is in dark mode.</value>
+  </data>
+  <data name="Themes_ShouldOverrideAccentColor_Header" xml:space="preserve">
+    <value>Override theme accent color</value>
+  </data>
+  <data name="Themes_ShouldOverrideAccentColor_Description" xml:space="preserve">
+    <value>Use the accent color configured in Display Settings instead of the active theme's primary color.</value>
+  </data>
+  <data name="Themes_CustomThemes_Header" xml:space="preserve">
+    <value>Custom JSON themes</value>
+  </data>
+  <data name="Themes_CustomThemes_Description" xml:space="preserve">
+    <value>Load *.json theme files from the mod data folder.</value>
+  </data>
+  <data name="Themes_CustomThemes_OpenFolderButton_Content" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="Themes_CustomThemes_ReloadButton_Content" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="Themes_DefaultLight_Name" xml:space="preserve">
+    <value>Default (Light)</value>
+  </data>
+  <data name="Themes_DefaultDark_Name" xml:space="preserve">
+    <value>Default (Dark)</value>
+  </data>
+</root>

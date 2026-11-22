@@ -1,0 +1,31 @@
+<UserControl
+  x:Class="Everywhere.Mods.Themes.Controls.ThemeSelectorControl" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Everywhere.Mods.Themes.Controls"
+  x:DataType="local:ThemeSelectorControl">
+  <ComboBox
+    x:Name="ThemeComboBox" MinWidth="240"
+    MinHeight="32" HorizontalAlignment="Left"
+    MaxDropDownHeight="360">
+    <ComboBox.ItemTemplate>
+      <DataTemplate x:DataType="local:ThemeOption">
+        <StackPanel
+          Orientation="Horizontal" Spacing="8">
+          <Border
+            Width="22" Height="22"
+            Background="{Binding BadgeBackground}"
+            BorderBrush="{Binding BadgeBorder}"
+            BorderThickness="1" CornerRadius="11">
+            <TextBlock
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              FontSize="10" FontWeight="SemiBold"
+              Foreground="{Binding BadgeForeground}"
+              Text="Aa"/>
+          </Border>
+          <TextBlock
+            VerticalAlignment="Center"
+            Text="{Binding DisplayNameKey^}"/>
+        </StackPanel>
+      </DataTemplate>
+    </ComboBox.ItemTemplate>
+  </ComboBox>
+</UserControl>

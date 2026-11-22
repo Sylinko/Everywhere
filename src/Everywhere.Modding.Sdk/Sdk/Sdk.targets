@@ -162,7 +162,11 @@
     <WriteLinesToFile File="$(_EverywhereLocalizationDirectory)/%(EverywhereModLocalization.Identity).readme.txt" Lines="@(EverywhereModLocalization->'%(Readme)')" Overwrite="true" Encoding="UTF-8"/>
     <Exec Command="dotnet &quot;$(EverywhereModToolsDirectory)/Everywhere.Modding.Sdk.dll&quot; pack &quot;$(_EverywherePackDirectory)&quot;"/>
     <ItemGroup>
-      <_EverywherePackOutput Include="$([System.IO.Path]::GetFullPath('$(EverywhereModPackagePath)'))"/>
+      <_EverywherePackOutput Include="$([System.IO.Path]::GetFullPath('$(EverywhereModPackagePath)'))">
+        <ModId>$(EverywhereModId)</ModId>
+        <ModCategory Condition="'$(EverywhereModCategory)' != ''">$(EverywhereModCategory)</ModCategory>
+        <ModCategory Condition="'$(EverywhereModCategory)' == ''">general</ModCategory>
+      </_EverywherePackOutput>
     </ItemGroup>
   </Target>
 </Project>

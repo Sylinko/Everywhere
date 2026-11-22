@@ -59,13 +59,13 @@ code {
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 0.9em;
   color: #08080B; /* ForegroundColor */
-  background-color: #454545; /* GhostColor */
+  background-color: #E6E3DC; /* GhostColor */
   padding: 2px 4px;
   border-radius: 4px;
 }
 pre {
-  background-color: #1A1A1A; /* DialogBackgroundColor */
-  border: 1px solid #E6E6E6; /* BorderColor */
+  background-color: #F5F3EE; /* DialogBackgroundColor */
+  border: 1px solid #D9D5CC; /* BorderColor */
   padding: 12px;
   border-radius: 6px;
   overflow: auto;
@@ -297,8 +297,8 @@ ul, ol { padding-left: 2em; }
 
     <Style Selector="^ md|MarkdownTextBlock">
       <Setter Property="FontFamily" Value="{DynamicResource CommonFontFamily}"/>
-      <Setter Property="SelectionBrush" Value="#0078D7"/>
-      <Setter Property="SelectionForegroundBrush" Value="#E5E5E5"/>
+      <Setter Property="SelectionBrush" Value="{DynamicResource PrimaryColor}"/>
+      <Setter Property="SelectionForegroundBrush" Value="{DynamicResource PrimaryForegroundColor}"/>
     </Style>
 
     <Style Selector="^ Border.Heading1Block">

@@ -77,6 +77,7 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
 
         // After this, ThemeChanged event from the system can be received
         _themeManager = new ThemeManager(this);
+        AppearanceManager.Shared.Attach(this);
 
         // Register to receive application commands
         // e.g. ShowMainWindow

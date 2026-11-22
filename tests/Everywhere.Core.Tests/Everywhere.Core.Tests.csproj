@@ -40,7 +40,29 @@
     <ProjectReference Include="..\..\src\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\..\src\Everywhere.Modding.Hosting\Everywhere.Modding.Hosting.csproj"/>
     <ProjectReference Include="..\..\src\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\..\mods\Everywhere.Mods.Themes\Everywhere.Mods.Themes.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      ExcludeAssets="all"
+                      IsEverywhereThemeModFixture="true"
+                      GlobalPropertiesToRemove="$(_BuiltInModPropertiesToRemove)"/>
   </ItemGroup>
+
+  <Target Name="PackThemesModForTests"
+          AfterTargets="Build"
+          DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <MSBuild Projects="@(_MSBuildProjectReferenceExistent)"
+             Targets="EverywherePack"
+             Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration);%(_MSBuildProjectReferenceExistent.SetPlatform);%(_MSBuildProjectReferenceExistent.SetTargetFramework)"
+             RemoveProperties="%(_MSBuildProjectReferenceExistent.GlobalPropertiesToRemove);$(_GlobalPropertiesToRemoveFromProjectReferences)"
+             Condition="'%(_MSBuildProjectReferenceExistent.IsEverywhereThemeModFixture)' == 'true'">
+      <Output TaskParameter="TargetOutputs" ItemName="_ThemesModTestPackage"/>
+    </MSBuild>
+    <Copy SourceFiles="@(_ThemesModTestPackage)"
+          DestinationFiles="$(OutDir)themes-mod/everywhere.themes.zip"
+          SkipUnchangedFiles="true"/>
+  </Target>
 
   <Import Project="..\..\src\Build.Patches.targets"/>
 

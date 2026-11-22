@@ -12,6 +12,8 @@ using Everywhere.Linux.Desktop;
 using Everywhere.Linux.Interop;
 using Everywhere.Linux.Platform;
 using Everywhere.Linux.ProcessIsolation;
+using Everywhere.Modding;
+using Everywhere.Modding.Hosting.Sources;
 using Everywhere.ProcessIsolation.Activation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
@@ -137,6 +139,11 @@ public static class Program
                 .AddCloudClient()
                 .AddChatEssentials()
                 .AddModding()
+                .AddSingleton<IModRepositorySource>(_ => EmbeddedModSource.FromAssembly(
+                    ModManager.BuiltInSourceId,
+                    typeof(Program).Assembly,
+                    "Everywhere.BuiltInMods",
+                    isSignatureRequired: false))
                 .AddTextSelection()
 
                 #endregion

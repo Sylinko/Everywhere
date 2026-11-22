@@ -51,6 +51,7 @@
     <Project Path="src/Everywhere.Modding.Packaging/Everywhere.Modding.Packaging.csproj" />
     <Project Path="src/Everywhere.Modding.Sdk/Everywhere.Modding.Sdk.csproj" />
     <Project Path="mods/Everywhere.Mods.Everything/Everywhere.Mods.Everything.csproj" />
+    <Project Path="mods/Everywhere.Mods.Themes/Everywhere.Mods.Themes.csproj" />
     <Project Path="mods/samples/Everywhere.Mods.Sample/Everywhere.Mods.Sample.csproj" />
   </Folder>
   <Folder Name="/patches/">
@@ -64,6 +65,7 @@
     <Project Path="patches/Everywhere.Patches.Anthropic/Everywhere.Patches.Anthropic.csproj" />
   </Folder>
   <Folder Name="/Targets/">
+    <File Path="src/Build.BuiltInMods.targets" />
     <File Path="src/Build.Generate.Cloud.targets" />
     <File Path="src/Build.Generate.Modding.targets" />
     <File Path="src/Build.Generate.Telemetry.targets" />
