@@ -1614,7 +1614,7 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
 
     private bool TryResolveHostCatalog([NotNullWhen(true)] out ModHostEnvironment? environment, [NotNullWhen(true)] out HostAssemblyCatalog? catalog)
     {
-        if (_options.HostEnvironment is { } explicitEnv && _options.HostAssemblyCatalog is { } explicitCatalog)
+        if (_options is { HostEnvironment: { } explicitEnv, HostAssemblyCatalog: { } explicitCatalog })
         {
             environment = explicitEnv;
             catalog = explicitCatalog;
@@ -2119,6 +2119,9 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
                 }
             }
 
+            var hasRollback = record.PreviousInstallation is { } previousSlot &&
+                _packageStore.TryOpen(_stateStore.ResolveSlotDirectory(previousSlot), out _);
+
             summaries.Add(
                 new ModSummary
                 {
@@ -2138,8 +2141,8 @@ public sealed class ModManager : IModManager, IAsyncInitializer, IAsyncDisposabl
                     Repository = manifest?.Repository,
                     License = manifest?.License,
                     Entry = manifest?.Entry,
-                    HasRollback = record.PreviousInstallation is not null,
-                    PreviousVersion = record.PreviousInstallation?.Version,
+                    HasRollback = hasRollback,
+                    PreviousVersion = hasRollback ? record.PreviousInstallation?.Version : null,
                     PendingOperation = record.PendingOperation,
                     IsPendingRestart = record.PendingOperation is not null || _pendingRestartModIds.Contains(modId),
                     LocalDirectoryPath = record.LocalDirectoryPath,

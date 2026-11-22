@@ -3580,9 +3580,6 @@
     <data name="ModPage_UpdateButton_Content" xml:space="preserve">
         <value>{0}(으)로 업데이트</value>
     </data>
-    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
-        <value>기본 제공</value>
-    </data>
     <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
         <value>서명됨 ({0})</value>
     </data>
@@ -3599,7 +3596,7 @@
         <value>서명되지 않음 ({0})</value>
     </data>
     <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
-        <value>공식 Everywhere 릴리스에 기본 포함됨</value>
+        <value>기본 제공</value>
     </data>
     <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
         <value>소스 "{0}" 공개 키 서명 검증됨 (ECDSA P-256)</value>

@@ -118,11 +118,7 @@ public sealed class ModStateStore
     public async Task<IReadOnlyList<ModDiagnostic>> ReconcileStartupAsync(CancellationToken cancellationToken = default)
     {
         var diagnostics = new List<ModDiagnostic>();
-        var isDirty = SweepRetiredDirectories();
-        if (SweepRetiredDataDirectories())
-        {
-            isDirty = true;
-        }
+        var isDirty = SweepRetiredDirectories() || SweepRetiredDataDirectories();
 
         foreach (var (modId, record) in State.Mods.ToArray())
         {
@@ -172,6 +168,14 @@ public sealed class ModStateStore
                         break;
                     }
                 }
+            }
+
+            if (record.PreviousInstallation is { } previousSlot &&
+                !_packageStore.TryOpen(ResolveRelativePackagePath(previousSlot.RelativeDirectory), out _))
+            {
+                RetireSlot(previousSlot);
+                record.PreviousInstallation = null;
+                isDirty = true;
             }
 
             if (record.LocalDirectoryPath is not { } devPath) continue;
@@ -298,9 +302,14 @@ public sealed class ModStateStore
 
             record.PendingOperation = null;
 
-            if (sourceId == ModStateRecord.LocalDirectorySourceId)
+            var canKeepPreviousActive = sourceId != ModStateRecord.LocalDirectorySourceId &&
+                record.ActiveInstallation is { } existingActive &&
+                !string.Equals(existingActive.RelativeDirectory, slot.RelativeDirectory, StringComparison.Ordinal) &&
+                _packageStore.TryOpen(ResolveRelativePackagePath(existingActive.RelativeDirectory), out _);
+
+            if (!canKeepPreviousActive)
             {
-                // Repeated dev rebuilds replace the active slot directly rather than filling the N=1 rollback slot.
+                // Repeated dev rebuilds and cache repairs replace the slot directly instead of keeping a dead/duplicate rollback.
                 RetireSlot(record.ActiveInstallation);
                 RetireSlot(record.PreviousInstallation);
                 record.PreviousInstallation = null;

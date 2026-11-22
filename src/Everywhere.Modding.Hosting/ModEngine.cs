@@ -319,7 +319,8 @@ public sealed class ModEngine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Releases assembly resources before removing registry ownership, then verifies collection through weak references.
+    /// Releases assembly resources, drains Avalonia UI and framework cleanup caches,
+    /// removes registry ownership, and verifies collection through weak references.
     /// </summary>
     private async Task<bool> ReleaseAsync(string[] names, List<ModDiagnostic> diagnostics)
     {
@@ -330,10 +331,24 @@ public sealed class ModEngine : IAsyncDisposable
             return false;
         }
 
-        var references = _registry.Release(names);
-        if (references.Length == 0) return true;
+        var initialSweep = await _registry.SweepAvaloniaAsync(names, _options.CallbackTimeout).ConfigureAwait(false);
+        if (!initialSweep.IsCompleted || initialSweep.Error is not null)
+        {
+            diagnostics.Add(Diagnostic(initialSweep.IsCompleted ? "AssemblyCleanupFailed" : "AssemblyCleanupTimedOut", initialSweep.Error ?? ""));
+            return false;
+        }
 
-        // Exit immediately when the first GC pass collects all contexts; retries only allow pending finalizers to drain.
+        var release = _registry.Release(names);
+        if (release.Error is not null)
+        {
+            diagnostics.Add(Diagnostic("AssemblyCleanupFailed", release.Error));
+        }
+
+        var references = release.Retirements;
+        if (references.Length == 0) return release.Error is null;
+
+        // Exit immediately when the first GC pass collects all contexts; retries pump the UI dispatcher,
+        // re-sweep Avalonia/weak caches, and allow pending finalizers to drain before re-collecting.
         for (var attempt = 0; attempt < _options.CollectionAttempts; attempt++)
         {
             GC.Collect();
@@ -343,7 +358,7 @@ public sealed class ModEngine : IAsyncDisposable
             if (references.All(reference => !reference.Context.IsAlive))
             {
                 foreach (var reference in references) reference.NativeLibraries.ReleaseAfterCollection();
-                return true;
+                return release.Error is null;
             }
 
             if (attempt + 1 < _options.CollectionAttempts)
@@ -351,6 +366,13 @@ public sealed class ModEngine : IAsyncDisposable
                 var multiplier = 1 << Math.Min(attempt, 4);
                 var delayMs = Math.Min(_options.CollectionDelay.TotalMilliseconds * multiplier, 250d);
                 await Task.Delay(TimeSpan.FromMilliseconds(delayMs)).ConfigureAwait(false);
+
+                var retrySweep = await AssemblyRegistry.SweepAliveAvaloniaAsync(references, _options.CallbackTimeout).ConfigureAwait(false);
+                if (!retrySweep.IsCompleted || retrySweep.Error is not null)
+                {
+                    diagnostics.Add(Diagnostic(retrySweep.IsCompleted ? "AssemblyCleanupFailed" : "AssemblyCleanupTimedOut", retrySweep.Error ?? ""));
+                    return false;
+                }
             }
         }
 

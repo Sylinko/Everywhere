@@ -3580,9 +3580,6 @@
     <data name="ModPage_UpdateButton_Content" xml:space="preserve">
         <value>Обновить до {0}</value>
     </data>
-    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
-        <value>Встроенный</value>
-    </data>
     <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
         <value>Подписано ({0})</value>
     </data>
@@ -3599,7 +3596,7 @@
         <value>Без подписи ({0})</value>
     </data>
     <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
-        <value>Встроен в официальный выпуск Everywhere</value>
+        <value>Встроенный</value>
     </data>
     <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
         <value>Проверено подписью открытого ключа источника «{0}» (ECDSA P-256)</value>

@@ -121,6 +121,44 @@ public sealed class ModManagerTests
     }
 
     [Test]
+    public async Task InitializeAsync_BuiltInCacheDeleted_ReinstallsWithoutPhantomRollback()
+    {
+        await using var harness = new Harness();
+        var zip100 = CreateFixtureZipBytes("acme.builtin", "1.0.0");
+        var resources = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["index.json"] = CreateDirectoryIndexBytes("builtin", ("acme.builtin", "1.0.0", "packages/acme.builtin-1.0.0.zip", zip100, true)),
+            ["packages/acme.builtin-1.0.0.zip"] = zip100
+        };
+        var builtInSource = CreateEmbeddedSource("builtin", resources);
+
+        await using (var manager1 = harness.CreateManager(builtInSources: [builtInSource]))
+        {
+            await manager1.InitializeAsync(CancellationToken.None);
+            Assert.That(manager1.InstalledMods.Single().HasRollback, Is.False);
+        }
+
+        // Simulate deleting the cached packages directory while keeping mods-state.json intact.
+        var packageStoreDirectory = Path.Combine(harness.Root, "cache", "packages");
+        Directory.Delete(packageStoreDirectory, recursive: true);
+        Directory.CreateDirectory(packageStoreDirectory);
+
+        await using (var manager2 = harness.CreateManager(builtInSources: [builtInSource]))
+        {
+            await manager2.InitializeAsync(CancellationToken.None);
+
+            var mod = manager2.InstalledMods.Single();
+            Assert.Multiple(() =>
+            {
+                Assert.That(mod.Version, Is.EqualTo("1.0.0"));
+                Assert.That(mod.HasRollback, Is.False);
+                Assert.That(mod.PreviousVersion, Is.Null);
+                Assert.That(mod.State, Is.EqualTo(ModState.Active));
+            });
+        }
+    }
+
+    [Test]
     public async Task OfficialSource_VisibilityReflectsConfiguredUrlAndPublicKey()
     {
         await using var harness = new Harness();

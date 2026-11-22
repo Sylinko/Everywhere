@@ -3580,9 +3580,6 @@
     <data name="ModPage_UpdateButton_Content" xml:space="preserve">
         <value>{0} に更新</value>
     </data>
-    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
-        <value>組み込み</value>
-    </data>
     <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
         <value>署名済み ({0})</value>
     </data>
@@ -3599,7 +3596,7 @@
         <value>未署名 ({0})</value>
     </data>
     <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
-        <value>公式の Everywhere リリースに同梱</value>
+        <value>組み込み</value>
     </data>
     <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
         <value>ソース "{0}" の公開鍵署名で検証済み (ECDSA P-256)</value>

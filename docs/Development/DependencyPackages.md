@@ -24,6 +24,34 @@ LiveMarkdown upgrade is prepared on main in `/Volumes/T7/Source/LiveMarkdown.Ava
 for the user to commit. The draft table and dated
 extraction checks below retain the original investigation context.
 
+## Sylinko/Avalonia (`Avalonia` 12.1.6) collectible unload & control retention fork
+
+`Avalonia` 12.1.6 (`Sylinko/Avalonia`, branch `sylinko/12.1.6` rebased atop `sylinko/native-panels-12.1.6`
+and upstream tag `12.1.6` `cf8e564674`) integrates both the collectible `AssemblyLoadContext` hot-unload
+cleanup subsystem (`Avalonia.CollectibleAssemblyCleanup` in `Avalonia.Base`, zero `Everywhere`
+dependencies) and the six cross-platform `Avalonia.Controls` retention fixes directly in Avalonia.
+`Everywhere.Core` wires `Avalonia.CollectibleAssemblyCleanup.SweepUI` and
+`Avalonia.CollectibleAssemblyCleanup.Sweep` directly via `ModEngineOptions.CleanupContextsAsync` in
+`ModManager` (dispatching `SweepUI` onto the Avalonia UI thread when needed). All Avalonia
+core/controls/native MonoMod donor projects (`Everywhere.Patches.Avalonia.Base`,
+`Everywhere.Patches.Avalonia.Controls`, and `Everywhere.Patches.Avalonia.Native`) are removed; only
+`Everywhere.Patches.Avalonia.Win32` remains on Windows.
+
+- **Local build & cache workflow**: Build `D:\Source\CSharp\Avalonia\scripts\sylinko\build-avalonia-package.ps1`
+  to pack the merged `Avalonia.{Version}.nupkg` + `.snupkg` into `artifacts\sylinko-avalonia\`.
+  Before installing a local build into the global NuGet cache (`D:\.nuget\packages\avalonia\12.1.6`),
+  keep an unmodified copy at `D:\.nuget\packages\avalonia\12.1.6.upstream-backup`.
+- **Feed publication & source mapping**: Register `bucket/avalonia/package.yml` in `Sylinko/nuget-feed`
+  (`allowOriginalPackageId: true`, matching `bucket/avalonia.native/package.yml`), run `.github/workflows/sylinko-avalonia.yml`
+  with `publish: true`, merge the manifest PR, and add `<package pattern="Avalonia" />` to the `sylinko`
+  mapping in `nuget.config` so CI restores directly from `https://nuget.sylinko.com/v3/index.json` without
+  polluting nuget.org resolution for upstream `Avalonia.*` satellite packages.
+- **Emergency hotfix version escape hatch**: Keep `PackageVersion = 12.1.6` locally and for initial
+  feed adoption (`AssemblyVersion = 12.1.6.0`). Because published NuGet versions and global caches are
+  immutable per `(id, version)`, a post-release fix before the next upstream release can pass
+  `package_version: '12.1.6.1'` while keeping `AssemblyVersion = 12.1.6.0` unchanged so transitive
+  precompiled dependencies remain binary-compatible.
+
 ## Package identity and versions
 
 | Producer repository | Package IDs | Local draft version |

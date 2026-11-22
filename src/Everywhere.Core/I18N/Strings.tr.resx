@@ -3580,9 +3580,6 @@ Devam ederseniz bunlar da etkinleştirilecektir.</value>
     <data name="ModPage_UpdateButton_Content" xml:space="preserve">
         <value>{0} sürümüne güncelle</value>
     </data>
-    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
-        <value>Yerleşik</value>
-    </data>
     <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
         <value>İmzalı ({0})</value>
     </data>
@@ -3599,7 +3596,7 @@ Devam ederseniz bunlar da etkinleştirilecektir.</value>
         <value>İmzasız ({0})</value>
     </data>
     <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
-        <value>Resmi Everywhere sürümüyle birlikte gelir</value>
+        <value>Yerleşik</value>
     </data>
     <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
         <value>"{0}" kaynağının açık anahtar imzasıyla doğrulandı (ECDSA P-256)</value>

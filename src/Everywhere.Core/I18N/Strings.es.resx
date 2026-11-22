@@ -3580,9 +3580,6 @@ Si continúas, también se activarán.</value>
     <data name="ModPage_UpdateButton_Content" xml:space="preserve">
         <value>Actualizar a {0}</value>
     </data>
-    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
-        <value>Integrado</value>
-    </data>
     <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
         <value>Firmado ({0})</value>
     </data>
@@ -3599,7 +3596,7 @@ Si continúas, también se activarán.</value>
         <value>Sin firmar ({0})</value>
     </data>
     <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
-        <value>Incluido en la versión oficial de Everywhere</value>
+        <value>Integrado</value>
     </data>
     <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
         <value>Verificado por firma de clave pública de la fuente "{0}" (ECDSA P-256)</value>

@@ -3580,9 +3580,6 @@ Continuing will also enable them.</value>
     <data name="ModPage_UpdateButton_Content" xml:space="preserve">
         <value>Update to {0}</value>
     </data>
-    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
-        <value>Built-in</value>
-    </data>
     <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
         <value>Signed ({0})</value>
     </data>
@@ -3599,7 +3596,7 @@ Continuing will also enable them.</value>
         <value>Unsigned ({0})</value>
     </data>
     <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
-        <value>Bundled with the official Everywhere release</value>
+        <value>Built-in</value>
     </data>
     <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
         <value>Verified by source "{0}" public-key signature (ECDSA P-256)</value>

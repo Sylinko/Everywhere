@@ -2475,8 +2475,9 @@ public sealed partial class ModPageViewModel : BusyViewModelBase
             {
                 case BuiltInSourceId:
                     VerificationIcon = TablerIconKind.RosetteDiscountCheck;
-                    VerificationBadgeKey = new DynamicLocaleKey(LocaleKey.ModPage_VerificationBadge_BuiltIn);
-                    VerificationTextKey = new DynamicLocaleKey(LocaleKey.ModPage_Verification_BuiltIn);
+                    var builtInKey = new DynamicLocaleKey(LocaleKey.ModPage_Verification_BuiltIn);
+                    VerificationBadgeKey = builtInKey;
+                    VerificationTextKey = builtInKey;
                     IsVerificationTrusted = true;
                     break;
                 case Modding.ModManager.OfficialSourceId when isSigned:

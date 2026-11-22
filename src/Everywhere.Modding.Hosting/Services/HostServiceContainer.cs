@@ -22,6 +22,7 @@ public sealed class HostServiceContainer : IKeyedServiceProvider, IDisposable, I
     /// </summary>
     public HostServiceContainer(IServiceCollection services)
     {
+        ModReflectionCache.EnsurePinned();
         var registrations = services.ToArray();
         _registrationSources = new HostRegistrationSources(registrations.Where(service => service.ServiceType.IsGenericTypeDefinition));
 

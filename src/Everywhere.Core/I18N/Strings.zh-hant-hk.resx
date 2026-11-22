@@ -3580,9 +3580,6 @@
     <data name="ModPage_UpdateButton_Content" xml:space="preserve">
         <value>更新至 {0}</value>
     </data>
-    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
-        <value>官方內置</value>
-    </data>
     <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
         <value>已簽署 ({0})</value>
     </data>
@@ -3599,7 +3596,7 @@
         <value>未簽署 ({0})</value>
     </data>
     <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
-        <value>隨 Everywhere 官方發行版內置</value>
+        <value>官方內置</value>
     </data>
     <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
         <value>已通過模組來源「{0}」公鑰簽署驗證 (ECDSA P-256)</value>

@@ -3580,9 +3580,6 @@
     <data name="ModPage_UpdateButton_Content" xml:space="preserve">
         <value>更新到 {0}</value>
     </data>
-    <data name="ModPage_VerificationBadge_BuiltIn" xml:space="preserve">
-        <value>官方内置</value>
-    </data>
     <data name="ModPage_VerificationBadge_CustomSigned" xml:space="preserve">
         <value>已签名 ({0})</value>
     </data>
@@ -3599,7 +3596,7 @@
         <value>未签名 ({0})</value>
     </data>
     <data name="ModPage_Verification_BuiltIn" xml:space="preserve">
-        <value>随 Everywhere 官方发行版内置</value>
+        <value>官方内置</value>
     </data>
     <data name="ModPage_Verification_CustomSigned" xml:space="preserve">
         <value>已通过模组源“{0}”公钥签名验证 (ECDSA P-256)</value>

@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Autofac"/>
     <PackageReference Include="Autofac.Extensions.DependencyInjection"/>
+    <PackageReference Include="Avalonia"/>
     <PackageReference Include="ZLinq"/>
   </ItemGroup>
 

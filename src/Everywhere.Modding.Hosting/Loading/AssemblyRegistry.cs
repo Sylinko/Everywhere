@@ -1,7 +1,10 @@
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
+using Avalonia;
+using Avalonia.Threading;
 using Everywhere.Modding.Abstractions;
 using Everywhere.Modding.Hosting.Lifecycle;
 using Everywhere.Modding.Hosting.Services;
@@ -125,13 +128,151 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
     }
 
     /// <summary>
+    /// Drains pending Avalonia UI work and sweeps UI and non-UI framework caches for retiring owners
+    /// after assembly resource disposal has finished and before owners are released.
+    /// </summary>
+    internal Task<ModActivation.CallbackResult> SweepAvaloniaAsync(string[] names, TimeSpan timeout)
+    {
+        if (!HasRetiringOwners(names))
+        {
+            return Task.FromResult(new ModActivation.CallbackResult(true, null));
+        }
+
+        return SweepContextsCoreAsync(
+            () => SweepOwners(names, CollectibleAssemblyCleanup.SweepUI),
+            () => SweepOwners(names, CollectibleAssemblyCleanup.Sweep),
+            timeout);
+    }
+
+    /// <summary>
+    /// Drains pending Avalonia UI work and re-sweeps UI and non-UI caches for any released contexts
+    /// whose <see cref="WeakReference"/> remains alive across GC retry attempts.
+    /// Strong <see cref="AssemblyLoadContext"/> references stay isolated inside non-inlined helpers.
+    /// </summary>
+    internal static Task<ModActivation.CallbackResult> SweepAliveAvaloniaAsync(
+        AssemblyRetirement[] references,
+        TimeSpan timeout
+    )
+    {
+        if (!HasAliveContexts(references))
+        {
+            return Task.FromResult(new ModActivation.CallbackResult(true, null));
+        }
+
+        return SweepContextsCoreAsync(
+            () => SweepRetirements(references, CollectibleAssemblyCleanup.SweepUI),
+            () => SweepRetirements(references, CollectibleAssemblyCleanup.Sweep),
+            timeout);
+    }
+
+    private static async Task<ModActivation.CallbackResult> SweepContextsCoreAsync(
+        Action sweepUi,
+        Action sweepNonUi,
+        TimeSpan timeout
+    )
+    {
+        using var timeoutCts = new CancellationTokenSource(timeout);
+        try
+        {
+            if (Application.Current is not null)
+            {
+                try
+                {
+                    await Dispatcher.UIThread
+                        .InvokeAsync(sweepUi, DispatcherPriority.ContextIdle, timeoutCts.Token)
+                        .GetTask()
+                        .WaitAsync(timeout, CancellationToken.None)
+                        .ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (!timeoutCts.IsCancellationRequested)
+                {
+                    sweepUi();
+                }
+            }
+            else
+            {
+                // Headless or uninitialized hosts without a message loop have no dispatcher pump to wait on.
+                sweepUi();
+            }
+
+            sweepNonUi();
+            return new ModActivation.CallbackResult(true, null);
+        }
+        catch (TimeoutException)
+        {
+            return new ModActivation.CallbackResult(false, "Avalonia context sweep timed out.");
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+        {
+            return new ModActivation.CallbackResult(false, "Avalonia context sweep timed out.");
+        }
+        catch (Exception exception)
+        {
+            return new ModActivation.CallbackResult(true, exception.ToString());
+        }
+    }
+
+    private bool HasRetiringOwners(string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (_owners.ContainsKey(name)) return true;
+        }
+
+        return false;
+    }
+
+    private static bool HasAliveContexts(AssemblyRetirement[] references)
+    {
+        foreach (var reference in references)
+        {
+            if (reference.Context.IsAlive) return true;
+        }
+
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void SweepOwners(string[] names, Action<IReadOnlySet<AssemblyLoadContext>> sweep)
+    {
+        var contexts = SnapshotContexts(names);
+        if (contexts.Count != 0) sweep(contexts);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void SweepRetirements(AssemblyRetirement[] references, Action<IReadOnlySet<AssemblyLoadContext>> sweep)
+    {
+        var contexts = SnapshotAliveContexts(references);
+        if (contexts.Count != 0) sweep(contexts);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static HashSet<AssemblyLoadContext> SnapshotAliveContexts(AssemblyRetirement[] references)
+    {
+        var contexts = new HashSet<AssemblyLoadContext>();
+        foreach (var reference in references)
+        {
+            if (reference.Context.Target is AssemblyLoadContext context)
+            {
+                contexts.Add(context);
+            }
+        }
+
+        return contexts;
+    }
+
+    /// <summary>
     /// Releases owners outside the collection loop's stack. No reflection objects escape this boundary.
     /// </summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal AssemblyRetirement[] Release(string[] names)
+    internal ReleaseResult Release(string[] names)
     {
-        var contexts = names.AsValueEnumerable().Where(_owners.ContainsKey).Select(AssemblyLoadContext (name) => _owners[name]).ToHashSet();
-        ModReflectionCache.Clear(contexts);
+        var contexts = SnapshotContexts(names);
+        List<string>? errors = null;
+
+        RunCleanupStep(() => ModReflectionCache.Clear(contexts), ref errors);
+        RunCleanupStep(() => RefreshTypeDescriptors(contexts), ref errors);
+
         var references = new List<AssemblyRetirement>();
 
         foreach (var name in names)
@@ -142,8 +283,40 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
             owner.Release();
         }
 
-        return [.. references];
+        return new ReleaseResult([.. references], errors is null ? null : string.Join(Environment.NewLine, errors));
     }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private HashSet<AssemblyLoadContext> SnapshotContexts(string[] names) =>
+        names.AsValueEnumerable().Where(_owners.ContainsKey).Select(AssemblyLoadContext (name) => _owners[name]).ToHashSet();
+
+    private static void RunCleanupStep(Action step, ref List<string>? errors)
+    {
+        try
+        {
+            step();
+        }
+        catch (Exception exception)
+        {
+            (errors ??= []).Add(exception.ToString());
+        }
+    }
+
+    private static void RefreshTypeDescriptors(HashSet<AssemblyLoadContext> contexts)
+    {
+        foreach (var context in contexts)
+        {
+            foreach (var assembly in context.Assemblies)
+            {
+                TypeDescriptor.Refresh(assembly);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Captures retired context tracking references alongside any synchronous framework cleanup error.
+    /// </summary>
+    internal sealed record ReleaseResult(AssemblyRetirement[] Retirements, string? Error);
 
     /// <summary>
     /// Rejects unsupported requests with FileLoadException, preventing fallback to unrelated Default copies.

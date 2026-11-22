@@ -244,7 +244,7 @@
     <Style Selector="TablerIcon.HeaderMetaIcon">
       <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
       <Style Selector="^.Trusted">
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
+        <Setter Property="Foreground" Value="{DynamicResource SuccessColor}"/>
       </Style>
       <Style Selector="^.Warning">
         <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
