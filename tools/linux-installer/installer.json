@@ -4,7 +4,7 @@
   "version": "0.2.3",
   "asset": {
     "url": "https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.py",
-    "size": 36560,
-    "sha256": "d01c05afd162e50a8ca7618d350ac0b3842c4bde1b31608c65c685148ca75940"
+    "size": 36565,
+    "sha256": "56c96775f2ba7a11e83d933f60c8def959bf6588f155a65fb6dcd39c21c4fdcb"
   }
 }
