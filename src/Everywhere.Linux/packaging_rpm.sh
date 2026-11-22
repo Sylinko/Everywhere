@@ -58,7 +58,7 @@ Name: everywhere
 Version: $rpm_version
 Release: 1
 Summary: Context-aware AI assistant for your desktop
-License: BUSL-1.1
+License: AGPL-3.0-only
 URL: https://everywhere.sylinko.com
 # Dependencies are explicit because the self-contained .NET payload includes
 # optional native backends that must not become unconditional requirements.

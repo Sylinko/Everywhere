@@ -4,6 +4,7 @@
     <RootNamespace>Everywhere.Common</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Description>Version comparison and compatibility ranges shared by Everywhere and its mod tools.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
 
 </Project>

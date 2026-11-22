@@ -213,8 +213,11 @@ Check our [Build Guide](docs/build.md) for detailed instructions on how to set u
 
 ## 📄 License
 
-This project is released under the [LICENSE](LICENSE) file.
-*For Third-Party dependencies and open-source component licenses, see [ThirdPartyNotices.txt](ThirdPartyNotices.txt).*
+- **Everywhere Application**: Released under the **GNU Affero General Public License v3.0 (`AGPL-3.0-only`)** — see [LICENSE](LICENSE).
+- **Mod Ecosystem Permission**: Independent third-party mods complying with the documented mod interface and platform integrity boundaries may be distributed under any license chosen by their authors under the **Mod Interface Additional Permission** (AGPLv3 Section 7) — see [EXCEPTIONS](EXCEPTIONS). Modding SDK and contract packages are licensed under **Apache-2.0**.
+- **Commercial Licensing**: Organizations requiring proprietary/closed-source distribution or custom commercial rights may obtain a commercial license from **Sylinko Inc.** by emailing [contact@sylinko.com](mailto:contact@sylinko.com).
+- **Brand & Artwork**: Official brand names, icons, and logos are excluded from open-source code licenses — see [TRADEMARK.md](TRADEMARK.md) for the reserved asset list and naming guidelines.
+- *For third-party dependencies and open-source component licenses, see [ThirdPartyNotices.txt](ThirdPartyNotices.txt).*
 
 ## 💖 Sponsor
 

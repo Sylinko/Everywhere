@@ -1,0 +1,48 @@
+Everywhere Mod Interface Additional Permission
+(Additional Permission under GNU Affero General Public License, Version 3, Section 7)
+
+Copyright (C) 2026 Sylinko Inc.
+
+As a special exception to the GNU Affero General Public License, Version 3
+("AGPL-3.0-only"), Sylinko Inc., as copyright holder of Everywhere, grants
+you additional permission to compile, link, load, and distribute an
+independent third-party software module ("Mod") for execution within
+Everywhere under any license terms of your choice (including permissive
+open-source or proprietary licenses), provided that all of the following
+conditions are met:
+
+1. Independent Module Boundary:
+   The Mod is an independent work that interacts with Everywhere solely
+   through Everywhere's documented mod loading mechanism and public host
+   or mod service interfaces, and does not modify, fork, or redistribute
+   the Everywhere host application itself.
+
+2. Platform Integrity and Security Boundaries:
+   The Mod does not modify, conceal, spoof, intercept, replace, disable,
+   circumvent, or degrade any of the following Everywhere subsystems or
+   elements—whether via non-public reflection, runtime IL patching,
+   dependency-injection replacement, host configuration tampering, traffic
+   interception, or UI occlusion:
+   (a) Account and Authentication subsystem (login workflows, OAuth
+       credentials and tokens, session state, device identifiers, and
+       account or license entitlement verification);
+   (b) Cloud Sync subsystem (synchronization transport, service endpoints,
+       quota enforcement, and user data synchronization integrity);
+   (c) Official Model Gateway (official preset model access, rate limiting,
+       billing and quota accounting, gateway routing, and upstream safety
+       headers);
+   (d) Mod Verification and Repository Trust controls (mod cryptographic
+       signature verification and official repository trust indicators);
+   (e) Official links, attribution, and sponsorship notices (built-in URLs,
+       references, or UI elements pointing to official Everywhere
+       repositories, websites, documentation, license or copyright notices,
+       or official sponsorship and donation channels).
+
+Scope:
+- This additional permission applies solely to qualifying independent Mods.
+- Modifications to, or derivative works of, the Everywhere host application
+  itself remain governed solely by AGPL-3.0-only (unless separately licensed
+  under a commercial agreement with Sylinko Inc.).
+- If you modify Everywhere itself, you may extend this exception to your
+  version of the code, but you are not obligated to do so. If you do not
+  wish to do so, delete this exception statement from your version.

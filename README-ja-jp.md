@@ -213,8 +213,11 @@
 
 ## 📄 ライセンス
 
-本プロジェクトは、[LICENSE](LICENSE) ファイルに基づき公開されています。
-*サードパーティ依存関係とオープンソースコンポーネントのライセンスについては、[ThirdPartyNotices.txt](ThirdPartyNotices.txt) を参照してください。*
+- **Everywhere 本体**: **GNU Affero General Public License v3.0 (`AGPL-3.0-only`)** の下で公開されています。詳細は [LICENSE](LICENSE) をご覧ください。
+- **Mod エコシステム追加許可**: 公開された Mod インターフェースおよびプラットフォーム整合性要件を満たす独立したサードパーティ製 Mod は、GNU AGPLv3 第 7 条に基づく **Mod Interface Additional Permission**（[EXCEPTIONS](EXCEPTIONS)）により、`Apache-2.0` や独自ライセンスを含む任意のライセンスで配布できます。Modding SDK および契約パッケージは **Apache-2.0** で提供されます。
+- **商用ライセンス**: クローズドソースでの商用配布や商用利用権が必要な場合は、[contact@sylinko.com](mailto:contact@sylinko.com) まで **Sylinko Inc.** にお問い合わせください。
+- **ブランド・ビジュアル資産**: 公式ブランド名およびロゴ・アイコン類はオープンソースコードライセンスの対象外です。対象資産一覧と命名ガイドラインは [TRADEMARK.md](TRADEMARK.md) をご覧ください。
+- *サードパーティ依存関係とオープンソースコンポーネントのライセンスについては、[ThirdPartyNotices.txt](ThirdPartyNotices.txt) を参照してください。*
 
 ## 💖 スポンサー
 
