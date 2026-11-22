@@ -122,12 +122,19 @@
       <Link>Assets\Skills\everywhere\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <LogicalName>skills/everywhere/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\..\3rd\skills\skills\everywhere-mod\**">
+      <Link>Assets\Skills\everywhere-mod\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <LogicalName>skills/everywhere-mod/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <Target Name="_ValidateEmbeddedSkills" BeforeTargets="CoreCompile">
     <Error
       Condition="!Exists('..\..\3rd\skills\skills\everywhere\SKILL.md')"
       Text="The built-in Everywhere skill submodule was not found at '..\..\3rd\skills\skills\everywhere\SKILL.md'. Run 'git submodule update --init --recursive'."/>
+    <Error
+      Condition="!Exists('..\..\3rd\skills\skills\everywhere-mod\SKILL.md')"
+      Text="The built-in Everywhere Mod skill submodule was not found at '..\..\3rd\skills\skills\everywhere-mod\SKILL.md'. Run 'git submodule update --init --recursive'."/>
   </Target>
 
   <ItemGroup>

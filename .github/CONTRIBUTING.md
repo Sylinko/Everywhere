@@ -29,6 +29,7 @@ without duplicating their contents.
 | Process boundaries and terminal integration  | [Process isolation](../docs/ProcessIsolation), [terminal](../docs/Terminal)                                                   |
 | Model requests and tool approval             | [LLM requests](../docs/LLMRequests), [tool approval](../docs/ToolApproval)                                                    |
 | Prompts, settings, and invocation strategies | [Prompt manager](../docs/PromptManager), [settings engine](../docs/SettingsEngine), [strategy engine](../docs/StrategyEngine) |
+| Modding SDK and extensions                   | [Modding](../docs/Modding.md)                                                                                                 |
 
 Read only the references relevant to your change. Some documents describe proposals, migration plans, or historical
 investigations; verify their assumptions against the current implementation and call sites. Update the relevant topic
