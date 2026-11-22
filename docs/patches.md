@@ -39,7 +39,7 @@ This evolution abandons runtime injection in favor of physically rewriting the t
 **Architectural Implementation:**
 
 1.  **The Weaving Tool:** We introduced a lightweight, cross-platform CLI tool (`Everywhere.BuildTask.Patcher`).
-2.  **Declarative Patching:** Patch logic is now written as standard C\# in isolated Donor projects (e.g., `Everywhere.Patches.Avalonia.Controls`). Instead of Harmony's Prefix/Postfix, we utilize `[MonoModPatch]` and `[MonoModReplace]` attributes. Private members are safely mapped using `extern` or private declarations, eliminating the need for `[UnsafeAccessor]` or reflection.
+2.  **Declarative Patching:** Patch logic is now written as standard C\# in isolated Donor projects (e.g., `Everywhere.Patches.AvaloniaEdit`). Instead of Harmony's Prefix/Postfix, we utilize `[MonoModPatch]` and `[MonoModReplace]` attributes. Private members are safely mapped using `extern` or private declarations, eliminating the need for `[UnsafeAccessor]` or reflection.
 3.  **Pipeline Interception:** [Build.Patches.targets](../src/Build.Patches.targets) runs after `ResolveAssemblyReferences`, consumes the canonical SDK-selected implementation DLLs from `RuntimeCopyLocalItems` and `RuntimePackAsset`, weaves the donor IL into intermediate output, and removes all matching copies from `ReferenceCopyLocalPaths` (including duplicate project-reference copies). It does not infer runtime paths from reference-assembly directory names, keeps `ReferencePath` unchanged for compilation, and replaces `ResolvedFileToPublish`, `RuntimeCopyLocalItems`, and `RuntimePackAsset` before publish postprocessing so ILLink processes the patched assemblies cleanly. Donor projects are build dependencies rather than runtime references.
 
 **Outcomes:**

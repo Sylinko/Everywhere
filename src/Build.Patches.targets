@@ -19,20 +19,6 @@
          output DLL paths are collected into @(PatchAssembly) via OutputItemType.
          PatchTargets metadata = semicolon-separated target assembly names to weave. -->
 
-    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Avalonia.Controls\Everywhere.Patches.Avalonia.Controls.csproj"
-                      ReferenceOutputAssembly="false"
-                      OutputItemType="PatchAssembly"
-                      PatchTargets="Avalonia.Controls"
-                      Condition="'$(IsMacOS)' == 'true'"
-                      GlobalPropertiesToRemove="RuntimeIdentifier" />
-
-    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Avalonia.Native\Everywhere.Patches.Avalonia.Native.csproj"
-                      ReferenceOutputAssembly="false"
-                      OutputItemType="PatchAssembly"
-                      PatchTargets="Avalonia.Native"
-                      Condition="'$(IsMacOS)' == 'true'"
-                      GlobalPropertiesToRemove="RuntimeIdentifier" />
-
     <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Avalonia.Win32\Everywhere.Patches.Avalonia.Win32.csproj"
                       ReferenceOutputAssembly="false"
                       OutputItemType="PatchAssembly"
