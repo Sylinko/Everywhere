@@ -83,7 +83,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_UpdateChannel_Header,
         LocaleKey.SoftwareSettings_UpdateChannel_Description)]
-    [SettingsItem(Group = LocaleKey.Common_Advanced)]
+    [SettingsItem(Group = LocaleKey.Common_Advanced, Classes = ["Segmented"])]
     public partial UpdateChannel UpdateChannel { get; set; } = UpdateChannel.Unknown;
 
     [ObservableProperty]

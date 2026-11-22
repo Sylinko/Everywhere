@@ -5032,10 +5032,10 @@
         <value>백그라운드 작업 관리</value>
     </data>
     <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
-        <value>대기열(현재 턴 완료 후)</value>
+        <value>대기열</value>
     </data>
     <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
-        <value>조향(다음 단계에 개입)</value>
+        <value>즉시 전송</value>
     </data>
     <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
         <value>대기</value>
@@ -5048,6 +5048,18 @@
     </data>
     <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
         <value>응답 중 기본 전송 방식</value>
+    </data>
+    <data name="ChatSendKeyMode_Enter" xml:space="preserve">
+        <value>Enter</value>
+    </data>
+    <data name="ChatSendKeyMode_CtrlEnter" xml:space="preserve">
+        <value>Ctrl+Enter</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Description" xml:space="preserve">
+        <value>채팅 입력창에서 메시지를 전송할 키를 선택합니다.</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
+        <value>메시지 전송</value>
     </data>
     <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
         <value>백그라운드에서 실행 중</value>

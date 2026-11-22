@@ -19,12 +19,23 @@ namespace Everywhere.Views;
 [TemplatePart("PART_AttachmentScrollViewer", typeof(ScrollViewer), IsRequired = true)]
 public sealed class ChatInputArea : TemplatedControl
 {
-    public static KeyboardShortcut SendShortcut { get; } = new(Key.Enter, KeyModifiers.None);
+    public static readonly StyledProperty<ChatSendKeyMode> SendKeyModeProperty =
+        AvaloniaProperty.Register<ChatInputArea, ChatSendKeyMode>(nameof(SendKeyMode));
 
-    public static KeyboardShortcut NewLineShortcut { get; } = new(Key.Enter, KeyModifiers.Shift);
+    public static readonly DirectProperty<ChatInputArea, KeyboardShortcut> SendShortcutProperty =
+        AvaloniaProperty.RegisterDirect<ChatInputArea, KeyboardShortcut>(
+            nameof(SendShortcut),
+            o => o.SendShortcut);
 
-    public static KeyboardShortcut OppositeModeShortcut { get; } =
-        new(Key.Enter, OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control);
+    public static readonly DirectProperty<ChatInputArea, KeyboardShortcut> NewLineShortcutProperty =
+        AvaloniaProperty.RegisterDirect<ChatInputArea, KeyboardShortcut>(
+            nameof(NewLineShortcut),
+            o => o.NewLineShortcut);
+
+    public static readonly DirectProperty<ChatInputArea, KeyboardShortcut> OppositeModeShortcutProperty =
+        AvaloniaProperty.RegisterDirect<ChatInputArea, KeyboardShortcut>(
+            nameof(OppositeModeShortcut),
+            o => o.OppositeModeShortcut);
 
     public static readonly StyledProperty<string?> TextProperty =
         AvaloniaProperty.Register<ChatInputArea, string?>(nameof(Text));
@@ -64,6 +75,30 @@ public sealed class ChatInputArea : TemplatedControl
 
     public static readonly StyledProperty<IDataTemplate?> LeadingContentTemplateProperty =
         ChatTextEditor.LeadingContentTemplateProperty.AddOwner<ChatInputArea>();
+
+    public ChatSendKeyMode SendKeyMode
+    {
+        get => GetValue(SendKeyModeProperty);
+        set => SetValue(SendKeyModeProperty, value);
+    }
+
+    public KeyboardShortcut SendShortcut
+    {
+        get;
+        private set => SetAndRaise(SendShortcutProperty, ref field, value);
+    } = ChatSendKeyMode.Enter.GetSendShortcut();
+
+    public KeyboardShortcut NewLineShortcut
+    {
+        get;
+        private set => SetAndRaise(NewLineShortcutProperty, ref field, value);
+    } = ChatSendKeyMode.Enter.GetNewLineShortcut();
+
+    public KeyboardShortcut OppositeModeShortcut
+    {
+        get;
+        private set => SetAndRaise(OppositeModeShortcutProperty, ref field, value);
+    } = ChatSendKeyMode.Enter.GetOppositeModeShortcut();
 
     public string? Text
     {
@@ -230,6 +265,19 @@ public sealed class ChatInputArea : TemplatedControl
 
     public void Focus() => _chatTextEditor?.Focus();
 
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == SendKeyModeProperty)
+        {
+            var mode = change.GetNewValue<ChatSendKeyMode>();
+            SendShortcut = mode.GetSendShortcut();
+            NewLineShortcut = mode.GetNewLineShortcut();
+            OppositeModeShortcut = mode.GetOppositeModeShortcut();
+        }
+    }
+
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         // Because this control is inherited from TextBox, it will receive pointer events and broke the MenuItem's pointer events.
@@ -272,24 +320,36 @@ public sealed class ChatInputArea : TemplatedControl
         {
             case Key.Enter:
             {
-                if (e.KeyModifiers == KeyModifiers.None)
-                {
-                    if (Command?.CanExecute(Text) is not true) break;
-
-                    Command.Execute(Text);
-                    e.Handled = true;
-                    break;
-                }
-
-                if (e.KeyModifiers.IsApplicationShortcutModifierOnly())
-                {
-                    if (AlternateCommand?.CanExecute(Text) is not true) break;
-
-                    AlternateCommand.Execute(Text);
-                    e.Handled = true;
-                }
+                HandleEnterKeyDown(e);
                 break;
             }
+        }
+    }
+
+    private void HandleEnterKeyDown(KeyEventArgs e)
+    {
+        var isCtrlEnterSend = SendKeyMode == ChatSendKeyMode.CtrlEnter;
+        var isSend = isCtrlEnterSend
+            ? e.KeyModifiers.IsApplicationShortcutModifierOnly()
+            : e.KeyModifiers == KeyModifiers.None;
+        if (isSend)
+        {
+            if (Command?.CanExecute(Text) is true)
+            {
+                Command.Execute(Text);
+                e.Handled = true;
+            }
+
+            return;
+        }
+
+        var isOpposite = isCtrlEnterSend
+            ? e.KeyModifiers.IsApplicationShortcutModifierOnly(KeyModifiers.Shift)
+            : e.KeyModifiers.IsApplicationShortcutModifierOnly();
+        if (isOpposite && AlternateCommand?.CanExecute(Text) is true)
+        {
+            AlternateCommand.Execute(Text);
+            e.Handled = true;
         }
     }
 }

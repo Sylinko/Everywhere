@@ -5032,10 +5032,10 @@
         <value>Управление фоновыми задачами</value>
     </data>
     <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
-        <value>Очередь (после завершения хода)</value>
+        <value>Очередь</value>
     </data>
     <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
-        <value>Направить (вмешаться на следующем шаге)</value>
+        <value>Отправить сразу</value>
     </data>
     <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
         <value>Очередь</value>
@@ -5048,6 +5048,18 @@
     </data>
     <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
         <value>Отправка сообщений во время ответа</value>
+    </data>
+    <data name="ChatSendKeyMode_Enter" xml:space="preserve">
+        <value>Enter</value>
+    </data>
+    <data name="ChatSendKeyMode_CtrlEnter" xml:space="preserve">
+        <value>Ctrl+Enter</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Description" xml:space="preserve">
+        <value>Выберите клавишу для отправки сообщения в поле ввода чата.</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
+        <value>Отправка сообщения</value>
     </data>
     <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
         <value>Выполняется в фоне</value>

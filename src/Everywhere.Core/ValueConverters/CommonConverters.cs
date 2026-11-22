@@ -68,6 +68,12 @@ public static class CommonConverters
             return itemsControl?.IndexFromContainer(itemContainer) ?? -1;
         });
 
+    /// <summary>
+    /// Returns true if an Avalonia <see cref="Classes"/> collection contains the specified class name parameter.
+    /// </summary>
+    public static IValueConverter ClassesContains { get; } = new FuncValueConverter<Classes?, object?, bool>(
+        convert: (classes, parameter) => classes is not null && parameter is string className && classes.Contains(className));
+
     public static IMultiValueConverter DefaultMultiValue { get; } = new DefaultMultiValueConverter();
 
     public static IMultiValueConverter AllEquals { get; } = new AllEqualsConverter();

@@ -1205,6 +1205,7 @@
                   PlaceholderText="{Binding ChatInputAreaWatermarkKey^}"
                   RemoveAttachmentCommand="{Binding RemoveAttachmentCommand}"
                   SelectedCustomAssistant="{Binding Settings.Model.SelectedCustomAssistant, Mode=TwoWay}"
+                  SendKeyMode="{Binding Settings.ChatWindow.SendKeyMode}"
                   Text="{Binding ChatInputAreaText, Mode=TwoWay}">
                   <v:ChatInputArea.Transitions>
                     <Transitions>
@@ -1421,10 +1422,10 @@
                                     IsVisible="{Binding PrimaryComposerMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:ChatComposerPrimaryMode.Send}}"
                                     Spacing="4">
                                     <v:KeyboardShortcutLabel
-                                      Shortcut="{x:Static v:ChatInputArea.SendShortcut}"
+                                      Shortcut="{Binding #ChatInputArea.SendShortcut}"
                                       Text="{I18N {x:Static LocaleKey.ChatInputArea_SendButton_ToolTip}}"/>
                                     <v:KeyboardShortcutLabel
-                                      Shortcut="{x:Static v:ChatInputArea.NewLineShortcut}"
+                                      Shortcut="{Binding #ChatInputArea.NewLineShortcut}"
                                       Text="{I18N {x:Static LocaleKey.ChatInputArea_NewLine_ToolTip}}"/>
                                   </StackPanel>
                                 </DataTemplate>
@@ -1438,10 +1439,10 @@
                                 <DataTemplate x:DataType="vm:ChatWindowViewModel">
                                   <StackPanel Spacing="4">
                                     <v:KeyboardShortcutLabel
-                                      Shortcut="{x:Static v:ChatInputArea.SendShortcut}"
+                                      Shortcut="{Binding #ChatInputArea.SendShortcut}"
                                       Text="{I18N {x:Static LocaleKey.ChatInputArea_Queue_ToolTip}}"/>
                                     <v:KeyboardShortcutLabel
-                                      Shortcut="{x:Static v:ChatInputArea.OppositeModeShortcut}"
+                                      Shortcut="{Binding #ChatInputArea.OppositeModeShortcut}"
                                       Text="{I18N {x:Static LocaleKey.ChatInputArea_Steer_ToolTip}}"/>
                                   </StackPanel>
                                 </DataTemplate>
@@ -1450,10 +1451,10 @@
                                 <DataTemplate x:DataType="vm:ChatWindowViewModel">
                                   <StackPanel Spacing="4">
                                     <v:KeyboardShortcutLabel
-                                      Shortcut="{x:Static v:ChatInputArea.SendShortcut}"
+                                      Shortcut="{Binding #ChatInputArea.SendShortcut}"
                                       Text="{I18N {x:Static LocaleKey.ChatInputArea_Steer_ToolTip}}"/>
                                     <v:KeyboardShortcutLabel
-                                      Shortcut="{x:Static v:ChatInputArea.OppositeModeShortcut}"
+                                      Shortcut="{Binding #ChatInputArea.OppositeModeShortcut}"
                                       Text="{I18N {x:Static LocaleKey.ChatInputArea_Queue_ToolTip}}"/>
                                   </StackPanel>
                                 </DataTemplate>

@@ -5032,10 +5032,10 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
         <value>Gestionar tareas en segundo plano</value>
     </data>
     <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
-        <value>En cola (al finalizar el turno)</value>
+        <value>En cola</value>
     </data>
     <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
-        <value>Dirigir (intervenir en el siguiente paso)</value>
+        <value>Enviar de inmediato</value>
     </data>
     <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
         <value>En cola</value>
@@ -5048,6 +5048,18 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
     </data>
     <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
         <value>Comportamiento de envío cuando está ocupado</value>
+    </data>
+    <data name="ChatSendKeyMode_Enter" xml:space="preserve">
+        <value>Intro</value>
+    </data>
+    <data name="ChatSendKeyMode_CtrlEnter" xml:space="preserve">
+        <value>Ctrl+Intro</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Description" xml:space="preserve">
+        <value>Elige qué tecla envía un mensaje en el cuadro de chat.</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
+        <value>Enviar mensaje</value>
     </data>
     <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
         <value>Ejecutándose en segundo plano</value>

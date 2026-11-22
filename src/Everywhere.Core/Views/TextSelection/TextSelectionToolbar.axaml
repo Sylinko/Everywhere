@@ -212,12 +212,14 @@
         <v:ConditionalContentControl.TrueContent>
           <DataTemplate>
             <v:ChatInputArea
-              Classes="Compact" MinWidth="360"
-              VerticalAlignment="Center" ClipToBounds="False"
+              x:Name="FreeformChatInputArea" Classes="Compact"
+              MinWidth="360" VerticalAlignment="Center"
+              ClipToBounds="False"
               Command="{Binding #Self.FreeformChatCommand}"
               CustomAssistantItemsSource="{Binding #Self.CustomAssistants}"
               PlaceholderText="{I18N {x:Static LocaleKey.TextSelectionToolbar_ChatInputArea_PlaceholderText}}"
               SelectedCustomAssistant="{Binding #Self.SelectedCustomAssistant, Mode=TwoWay}"
+              SendKeyMode="{Binding #Self.SendKeyMode}"
               Text="{Binding #Self.FreeformChatText, Mode=TwoWay}">
               <v:ChatInputArea.TrailingContent>
                 <Button
@@ -247,10 +249,10 @@
                   <ToolTip.Tip>
                     <StackPanel Spacing="4">
                       <v:KeyboardShortcutLabel
-                        Shortcut="{x:Static v:ChatInputArea.SendShortcut}"
+                        Shortcut="{Binding #FreeformChatInputArea.SendShortcut}"
                         Text="{I18N {x:Static LocaleKey.ChatInputArea_SendButton_ToolTip}}"/>
                       <v:KeyboardShortcutLabel
-                        Shortcut="{x:Static v:ChatInputArea.NewLineShortcut}"
+                        Shortcut="{Binding #FreeformChatInputArea.NewLineShortcut}"
                         Text="{I18N {x:Static LocaleKey.ChatInputArea_NewLine_ToolTip}}"/>
                     </StackPanel>
                   </ToolTip.Tip>

@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
+using Everywhere.Chat;
 using Everywhere.Configuration;
 using Everywhere.Utilities;
 using TextSelectionToolbarAction = Everywhere.TextSelection.TextSelectionToolbarAction;
@@ -45,6 +46,9 @@ public partial class TextSelectionToolbar : UserControl
 
     public static readonly StyledProperty<IRelayCommand<string>?> FreeformChatCommandProperty =
         AvaloniaProperty.Register<TextSelectionToolbar, IRelayCommand<string>?>(nameof(FreeformChatCommand));
+
+    public static readonly StyledProperty<ChatSendKeyMode> SendKeyModeProperty =
+        ChatInputArea.SendKeyModeProperty.AddOwner<TextSelectionToolbar>();
 
     /// <summary>
     /// Gets or sets the draft retained while switching modes within one selection.
@@ -126,6 +130,15 @@ public partial class TextSelectionToolbar : UserControl
     {
         get => GetValue(CanExcludeApplicationProperty);
         set => SetValue(CanExcludeApplicationProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets which key combination submits freeform chat input.
+    /// </summary>
+    public ChatSendKeyMode SendKeyMode
+    {
+        get => GetValue(SendKeyModeProperty);
+        set => SetValue(SendKeyModeProperty, value);
     }
 
     public ObservableCollection<TextSelectionToolbarAction> VisibleActions { get; } = [];

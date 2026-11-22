@@ -1,7 +1,14 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:c="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
-  xmlns:v="using:Everywhere.Views">
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <DataTemplate
+    x:Key="SettingsSelectionItemEntryTemplate" x:DataType="c:SettingsSelectionItem+Item">
+    <ContentControl
+      Content="{Binding Key^}"
+      ContentTemplate="{Binding ContentTemplate}"/>
+  </DataTemplate>
+
   <ControlTheme
     x:Key="{x:Type v:SettingsItemControl}"
     TargetType="v:SettingsItemControl">
@@ -180,26 +187,74 @@
                         </DataTemplate>
 
                         <DataTemplate DataType="c:SettingsSelectionItem">
-                          <ComboBox
-                            MinWidth="240" MinHeight="32"
-                            HorizontalAlignment="Left"
-                            shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                            ItemsSource="{Binding ItemsSource}"
-                            SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
-                            <ComboBox.Styles>
-                              <Style Selector="ComboBox.PresetModelProvider">
-                                <Setter Property="shadui:ControlAssist.MinHeight" Value="40"/>
-                                <Setter Property="MaxDropDownHeight" Value="480"/>
+                          <v:ConditionalContentControl
+                            Condition="{Binding Classes, Converter={x:Static vc:CommonConverters.ClassesContains}, ConverterParameter=Segmented}"
+                            ContentDataBinding="{Binding}"
+                            PageTransition="{x:Null}">
+                            <v:ConditionalContentControl.Styles>
+                              <Style Selector="v|ConditionalContentControl.Segmented">
+                                <Setter Property="Condition" Value="True"/>
                               </Style>
-                            </ComboBox.Styles>
-                            <ComboBox.ItemTemplate>
-                              <DataTemplate DataType="c:SettingsSelectionItem+Item">
-                                <ContentControl
-                                  Content="{Binding Key^}"
-                                  ContentTemplate="{Binding ContentTemplate}"/>
+                            </v:ConditionalContentControl.Styles>
+
+                            <v:ConditionalContentControl.FalseContent>
+                              <DataTemplate x:DataType="c:SettingsSelectionItem">
+                                <ComboBox
+                                  MinWidth="240" MinHeight="32"
+                                  HorizontalAlignment="Left"
+                                  shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
+                                  ItemTemplate="{StaticResource SettingsSelectionItemEntryTemplate}"
+                                  ItemsSource="{Binding ItemsSource}"
+                                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                                  <ComboBox.Styles>
+                                    <Style Selector="ComboBox.PresetModelProvider">
+                                      <Setter Property="shadui:ControlAssist.MinHeight" Value="40"/>
+                                      <Setter Property="MaxDropDownHeight" Value="480"/>
+                                    </Style>
+                                  </ComboBox.Styles>
+                                </ComboBox>
                               </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                          </ComboBox>
+                            </v:ConditionalContentControl.FalseContent>
+
+                            <v:ConditionalContentControl.TrueContent>
+                              <DataTemplate x:DataType="c:SettingsSelectionItem">
+                                <ListBox
+                                  Padding="3" HorizontalAlignment="Left"
+                                  shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
+                                  Background="{DynamicResource CardBackgroundColor}"
+                                  BorderBrush="{DynamicResource BorderColor}"
+                                  BorderThickness="1"
+                                  CornerRadius="{DynamicResource FullCornerRadius}"
+                                  ItemTemplate="{StaticResource SettingsSelectionItemEntryTemplate}"
+                                  ItemsSource="{Binding ItemsSource}"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                                  <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                      <StackPanel
+                                        Orientation="Horizontal" Spacing="2"/>
+                                    </ItemsPanelTemplate>
+                                  </ListBox.ItemsPanel>
+                                  <ListBox.ItemContainerTheme>
+                                    <ControlTheme
+                                      BasedOn="{StaticResource TabListBoxItemTheme}"
+                                      TargetType="ListBoxItem">
+                                      <Setter Property="CornerRadius" Value="{DynamicResource FullCornerRadius}"/>
+                                      <Setter Property="Padding" Value="12,5"/>
+                                      <Setter Property="Margin" Value="0"/>
+                                      <Setter Property="MinHeight" Value="28"/>
+                                      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                      <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                      <Setter Property="FontWeight" Value="Medium"/>
+                                      <Style Selector="^:selected">
+                                        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+                                      </Style>
+                                    </ControlTheme>
+                                  </ListBox.ItemContainerTheme>
+                                </ListBox>
+                              </DataTemplate>
+                            </v:ConditionalContentControl.TrueContent>
+                          </v:ConditionalContentControl>
                         </DataTemplate>
 
                         <DataTemplate DataType="c:SettingsTemplatedItem">

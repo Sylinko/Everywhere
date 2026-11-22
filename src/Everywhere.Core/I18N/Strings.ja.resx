@@ -5032,10 +5032,10 @@
         <value>バックグラウンドジョブの管理</value>
     </data>
     <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
-        <value>キュー（現在のターン完了後）</value>
+        <value>キュー</value>
     </data>
     <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
-        <value>ステア（次のステップへ割り込み）</value>
+        <value>今すぐ送信</value>
     </data>
     <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
         <value>キュー</value>
@@ -5048,6 +5048,18 @@
     </data>
     <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
         <value>応答中の既定送信動作</value>
+    </data>
+    <data name="ChatSendKeyMode_Enter" xml:space="preserve">
+        <value>Enter</value>
+    </data>
+    <data name="ChatSendKeyMode_CtrlEnter" xml:space="preserve">
+        <value>Ctrl+Enter</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Description" xml:space="preserve">
+        <value>チャット入力欄でメッセージを送信するキーを選択します。</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
+        <value>メッセージ送信</value>
     </data>
     <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
         <value>バックグラウンドで実行中</value>

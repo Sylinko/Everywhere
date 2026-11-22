@@ -5032,10 +5032,10 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Manage Background Jobs</value>
     </data>
     <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
-        <value>Queue (after current turn)</value>
+        <value>Queue</value>
     </data>
     <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
-        <value>Steer (interrupt next step)</value>
+        <value>Send Immediately</value>
     </data>
     <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
         <value>Queue</value>
@@ -5048,6 +5048,18 @@ My intelligence is powered by large language models, and I need your help to con
     </data>
     <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
         <value>Default Send Behavior When Busy</value>
+    </data>
+    <data name="ChatSendKeyMode_Enter" xml:space="preserve">
+        <value>Enter</value>
+    </data>
+    <data name="ChatSendKeyMode_CtrlEnter" xml:space="preserve">
+        <value>Ctrl+Enter</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Description" xml:space="preserve">
+        <value>Choose which key sends a message in the chat composer.</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
+        <value>Send message</value>
     </data>
     <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
         <value>Running in background</value>

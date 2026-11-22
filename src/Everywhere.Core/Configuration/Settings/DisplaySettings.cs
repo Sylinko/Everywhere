@@ -53,7 +53,7 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
     [DynamicLocaleKey(
         LocaleKey.DisplaySettings_Theme_Header,
         LocaleKey.DisplaySettings_Theme_Description)]
-    [SettingsItem(Group = "_")]
+    [SettingsItem(Group = "_", Classes = ["Segmented"])]
     public ThemeMode Theme
     {
         get;

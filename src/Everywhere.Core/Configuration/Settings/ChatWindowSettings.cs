@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics.Metrics;
+using Avalonia.Controls.Templates;
+using Avalonia.Layout;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
+using Everywhere.Views;
 using Lucide.Avalonia;
 
 namespace Everywhere.Configuration;
@@ -34,7 +37,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicLocaleKey(
         LocaleKey.ChatWindowSettings_TemporaryChatMode_Header,
         LocaleKey.ChatWindowSettings_TemporaryChatMode_Description)]
-    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior, Classes = ["Segmented"])]
     public partial TemporaryChatMode TemporaryChatMode { get; set; }
 
     /// <summary>
@@ -64,8 +67,21 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicLocaleKey(
         LocaleKey.ChatWindowSettings_BusySubmissionMode_Header,
         LocaleKey.ChatWindowSettings_BusySubmissionMode_Description)]
-    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior, Classes = ["Segmented"])]
     public partial ChatInputDeliveryMode BusySubmissionMode { get; set; } = ChatInputDeliveryMode.Queue;
+
+    /// <summary>
+    /// Selects which key combination submits messages in the chat composer.
+    /// </summary>
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.ChatWindowSettings_SendKeyMode_Header,
+        LocaleKey.ChatWindowSettings_SendKeyMode_Description)]
+    [SettingsItem(
+        Group = LocaleKey.ChatWindowSettings_Group_Behavior,
+        Classes = ["Segmented"],
+        Modifier = nameof(ApplySendKeyModeItemTemplate))]
+    public partial ChatSendKeyMode SendKeyMode { get; set; } = ChatSendKeyMode.Enter;
 
     /// <summary>
     /// When enabled, automatically add focused element as attachment when opening chat window.
@@ -104,7 +120,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicLocaleKey(
         LocaleKey.ChatWindowSettings_TurnNavigationMode_Header,
         LocaleKey.ChatWindowSettings_TurnNavigationMode_Description)]
-    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Display)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Display, Classes = ["Segmented"])]
     public partial ChatTurnNavigationMode TurnNavigationMode { get; set; } = ChatTurnNavigationMode.Fluid;
 
     [DynamicLocaleKey(
@@ -143,5 +159,26 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
         // TODO: make these ugly codes better
         _enableVisualElementPickAnimationGauge.Record(EnableVisualElementPickAnimation ? 1 : 0);
         _enableVisualContextAnimationGauge.Record(EnableVisualContextAnimation ? 1 : 0);
+    }
+
+    private static void ApplySendKeyModeItemTemplate(SettingsSelectionItem item)
+    {
+        item.ItemsSource = item.ItemsSource
+            .AsValueEnumerable()
+            .Select(entry => entry.Value is ChatSendKeyMode mode
+                ? entry with
+                {
+                    ContentTemplate = new FuncDataTemplate<string?>(
+                        (_, _) => new KeyboardShortcutPresenter
+                        {
+                            Padding = default,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Background = null,
+                            Shortcut = mode.GetSendShortcut()
+                        })
+                }
+                : entry)
+            .ToList();
     }
 }

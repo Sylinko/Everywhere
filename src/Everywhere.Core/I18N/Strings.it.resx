@@ -5032,10 +5032,10 @@ La mia intelligenza è fornita da un grande modello linguistico e ho bisogno del
         <value>Gestisci attività in background</value>
     </data>
     <data name="ChatBusySubmissionMode_Queue" xml:space="preserve">
-        <value>Coda (dopo il turno corrente)</value>
+        <value>In coda</value>
     </data>
     <data name="ChatBusySubmissionMode_Steer" xml:space="preserve">
-        <value>Indirizza (intervieni al passo successivo)</value>
+        <value>Invia subito</value>
     </data>
     <data name="ChatInputDeliveryMode_Queue" xml:space="preserve">
         <value>In coda</value>
@@ -5048,6 +5048,18 @@ La mia intelligenza è fornita da un grande modello linguistico e ho bisogno del
     </data>
     <data name="ChatWindowSettings_BusySubmissionMode_Header" xml:space="preserve">
         <value>Comportamento di invio quando occupato</value>
+    </data>
+    <data name="ChatSendKeyMode_Enter" xml:space="preserve">
+        <value>Invio</value>
+    </data>
+    <data name="ChatSendKeyMode_CtrlEnter" xml:space="preserve">
+        <value>Ctrl+Invio</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Description" xml:space="preserve">
+        <value>Scegli quale tasto invia un messaggio nella casella della chat.</value>
+    </data>
+    <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
+        <value>Invia messaggio</value>
     </data>
     <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
         <value>In esecuzione in background</value>

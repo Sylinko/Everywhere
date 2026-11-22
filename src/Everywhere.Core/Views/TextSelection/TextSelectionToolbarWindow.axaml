@@ -16,6 +16,7 @@
       CustomAssistants="{Binding #Self.Settings.Model.CustomAssistants}"
       FreeformChatCommand="{Binding #Self.SendFreeformChatCommand}"
       IsFreeformChatEnabled="{Binding #Self.Settings.TextSelection.IsFreeformChatEnabled}"
+      SendKeyMode="{Binding #Self.Settings.ChatWindow.SendKeyMode}"
       VisibleActionCount="{Binding #Self.Settings.TextSelection.VisibleActionCount}">
       <v:TextSelectionToolbar.Opacity>
         <MultiBinding Converter="{x:Static vc:DoubleConverters.Product}">
