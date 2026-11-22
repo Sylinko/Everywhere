@@ -11,12 +11,15 @@ public readonly record struct TerminalLine(long Id, string Text, long Revision);
 public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 {
     public const int DefaultMaxLines = 2000;
+    public const int DefaultPreviewLength = 1024;
+    private const int MaxColumns = 8192;
 
     private readonly Lock _lock = new();
     private readonly List<TerminalLine> _lines = [];
     private readonly StringBuilder _scratch = new();
     private int _updateDepth;
     private bool _hasPendingChange;
+    private bool _hasScrolledOff;
     private long _nextLineId;
     private long _nextRevision;
     private long _version;
@@ -80,6 +83,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
     public void Clear()
     {
         using var _ = BeginUpdate();
+        _hasScrolledOff = false;
 
         if (_lines.Count == 0)
         {
@@ -173,7 +177,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
         lock (_lock)
         {
             EnsureCurrentLine();
-            _cursorColumn = (_cursorColumn / 4 + 1) * 4;
+            _cursorColumn = Math.Min(MaxColumns, (_cursorColumn / 4 + 1) * 4);
         }
     }
 
@@ -190,7 +194,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
     {
         using var _ = BeginUpdate();
         EnsureCurrentLine();
-        _cursorLineIndex += Math.Max(count, 1);
+        _cursorLineIndex += Math.Min(Math.Max(count, 1), MaxLines - 1 - _cursorLineIndex);
         EnsureCurrentLine();
     }
 
@@ -199,7 +203,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
         lock (_lock)
         {
             EnsureCurrentLine();
-            _cursorColumn += Math.Max(count, 1);
+            _cursorColumn += Math.Min(Math.Max(count, 1), MaxColumns - _cursorColumn);
         }
     }
 
@@ -215,8 +219,8 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
     public void CursorPosition(int row = 1, int column = 1)
     {
         using var _ = BeginUpdate();
-        _cursorLineIndex = Math.Max(row, 1) - 1;
-        _cursorColumn = Math.Max(column, 1) - 1;
+        _cursorLineIndex = Math.Clamp(row, 1, MaxLines) - 1;
+        _cursorColumn = Math.Clamp(column, 1, MaxColumns + 1) - 1;
         EnsureCurrentLine();
     }
 
@@ -225,7 +229,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
         lock (_lock)
         {
             EnsureCurrentLine();
-            _cursorColumn = Math.Max(column, 1) - 1;
+            _cursorColumn = Math.Clamp(column, 1, MaxColumns + 1) - 1;
         }
     }
 
@@ -327,7 +331,9 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
             _scratch.Append(' ');
         }
 
+        count = Math.Min(count, MaxColumns - _cursorColumn);
         _scratch.Insert(_cursorColumn, new string(' ', count));
+        if (_scratch.Length > MaxColumns) _scratch.Length = MaxColumns;
         ReplaceLine(_cursorLineIndex, _scratch.ToString());
     }
 
@@ -336,6 +342,80 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
         lock (_lock)
         {
             return GetTextCore();
+        }
+    }
+
+    /// <summary>
+    /// Returns the last <paramref name="maxLength"/> UTF-16 code units of the rendered output
+    /// without copying the entire scrollback, prepending an omission marker if earlier text was dropped.
+    /// </summary>
+    public string GetPreview(int maxLength = DefaultPreviewLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
+
+        lock (_lock)
+        {
+            return GetTextCore(maxLength);
+        }
+    }
+
+    internal const string EarlierOutputOmittedPrefix = "[earlier output omitted]\n";
+
+    internal (string Text, bool IsOmitted) GetPreviewParts(int maxLength = DefaultPreviewLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
+
+        lock (_lock)
+        {
+            return GetTextPartsCore(maxLength);
+        }
+    }
+
+    internal static string StripOmissionPrefix(string text, out bool wasOmitted)
+    {
+        if (text.StartsWith(EarlierOutputOmittedPrefix, StringComparison.Ordinal))
+        {
+            wasOmitted = true;
+            return text[EarlierOutputOmittedPrefix.Length..];
+        }
+
+        wasOmitted = false;
+        return text;
+    }
+
+    /// <summary>
+    /// Truncates combined output to the trailing <paramref name="maxLength"/> UTF-16 code units
+    /// without splitting surrogate pairs, prepending an omission marker once when truncated.
+    /// </summary>
+    public static string TruncateTail(
+        string text,
+        int maxLength = DefaultPreviewLength,
+        bool hasEarlierOmission = false)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
+
+        if (string.IsNullOrEmpty(text))
+        {
+            return hasEarlierOmission ? "[earlier output omitted]" : string.Empty;
+        }
+
+        var skip = Math.Max(0, text.Length - maxLength);
+        var isOmitted = hasEarlierOmission || skip > 0;
+        if (skip > 0 && skip < text.Length && char.IsLowSurrogate(text[skip]))
+        {
+            skip++;
+        }
+
+        return isOmitted ? string.Concat(EarlierOutputOmittedPrefix, text.AsSpan(skip)) : text;
+    }
+
+    internal string GetCursorLineText()
+    {
+        lock (_lock)
+        {
+            return _cursorLineIndex >= 0 && _cursorLineIndex < _lines.Count
+                ? _lines[_cursorLineIndex].Text
+                : string.Empty;
         }
     }
 
@@ -399,9 +479,16 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    private string GetTextCore()
+    private string GetTextCore(int maxLength = int.MaxValue)
     {
-        if (_lines.Count == 0) return string.Empty;
+        var (text, isOmitted) = GetTextPartsCore(maxLength);
+        if (!isOmitted) return text;
+        return string.Concat(EarlierOutputOmittedPrefix, text);
+    }
+
+    private (string Text, bool IsOmitted) GetTextPartsCore(int maxLength)
+    {
+        if (_lines.Count == 0) return (string.Empty, false);
 
         var last = _lines.Count - 1;
         while (last >= 0 && _lines[last].Text.Length == 0)
@@ -409,16 +496,41 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
             last--;
         }
 
-        if (last < 0) return string.Empty;
+        if (last < 0) return (string.Empty, false);
 
-        var builder = new StringBuilder();
-        for (var i = 0; i <= last; i++)
+        var first = last;
+        var length = _lines[last].Text.Length;
+        while (first > 0 && length < maxLength)
         {
-            if (i > 0) builder.Append('\n');
-            builder.Append(_lines[i].Text);
+            length += 1 + _lines[--first].Text.Length;
         }
 
-        return builder.ToString();
+        var skip = Math.Max(0, length - maxLength);
+        var isOmitted = maxLength != int.MaxValue && (_hasScrolledOff || first > 0 || skip > 0);
+        if (skip > 0 && skip < _lines[first].Text.Length && char.IsLowSurrogate(_lines[first].Text[skip]))
+        {
+            skip++;
+        }
+
+        if (skip >= _lines[first].Text.Length && first < last)
+        {
+            first++;
+            skip = 0;
+        }
+
+        if (first == last && skip == 0)
+        {
+            return (_lines[first].Text, isOmitted);
+        }
+
+        var builder = new StringBuilder();
+        builder.Append(_lines[first].Text.AsSpan(skip));
+        for (var i = first + 1; i <= last; i++)
+        {
+            builder.Append('\n').Append(_lines[i].Text);
+        }
+
+        return (builder.ToString(), isOmitted);
     }
 
     private void WriteCore(char value)
@@ -492,8 +604,28 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     private void WriteText(ReadOnlySpan<char> text)
     {
-        if (text.Length == 0) return;
+        // Soft-wrap pathological single-line output so neither the screen nor its preview loses the trailing diagnostic.
+        while (!text.IsEmpty)
+        {
+            var count = Math.Min(text.Length, MaxColumns - _cursorColumn);
+            if (count > 0 && _cursorColumn + count == MaxColumns && char.IsHighSurrogate(text[count - 1]))
+            {
+                count--;
+            }
 
+            if (count == 0)
+            {
+                LineFeed();
+                continue;
+            }
+
+            WriteCells(text[..count]);
+            text = text[count..];
+        }
+    }
+
+    private void WriteCells(ReadOnlySpan<char> text)
+    {
         EnsureCurrentLine();
         var line = _lines[_cursorLineIndex].Text;
         _scratch.Clear();
@@ -574,7 +706,9 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     private void TrimToLimit()
     {
-        RemoveRange(0, Math.Max(0, _lines.Count - MaxLines));
+        if (_lines.Count <= MaxLines) return;
+        _hasScrolledOff = true;
+        RemoveRange(0, _lines.Count - MaxLines);
     }
 
     private void RemoveRange(int index, int count)

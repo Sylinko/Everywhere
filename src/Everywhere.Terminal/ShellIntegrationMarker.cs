@@ -28,7 +28,12 @@ public enum ShellIntegrationMarkerType
     /// <summary>
     /// E — CommandLine: emitted with the actual command text before execution.
     /// </summary>
-    CommandLine
+    CommandLine,
+
+    /// <summary>
+    /// P — Property: emitted with key=value shell metadata (e.g. IntegrationError).
+    /// </summary>
+    Property
 }
 
 /// <summary>
@@ -38,8 +43,10 @@ public enum ShellIntegrationMarkerType
 /// <param name="ExitCode">Exit code (only for D markers).</param>
 /// <param name="CommandLine">Command text (only for E markers).</param>
 /// <param name="Line">The logical cursor line where the marker was detected.</param>
+/// <param name="Property">Key-value payload (only for P markers).</param>
 public readonly record struct ShellIntegrationMarker(
     ShellIntegrationMarkerType Type,
     int? ExitCode = null,
     string? CommandLine = null,
-    int Line = -1);
+    int Line = -1,
+    string? Property = null);

@@ -1,3 +1,5 @@
+using Porta.Pty;
+
 namespace Everywhere.Terminal;
 
 /// <summary>
@@ -17,6 +19,10 @@ public sealed class TerminalRun(string commandLine, int maxOutputLines = Termina
     public string CommandLine { get; private set; } = commandLine;
 
     public int? ExitCode { get; private set; }
+
+    public PtyTermination? Termination { get; private set; }
+
+    public bool IsOutputIncomplete { get; private set; }
 
     public Task Completion => _completion.Task;
 
@@ -45,14 +51,14 @@ public sealed class TerminalRun(string commandLine, int maxOutputLines = Termina
         }
     }
 
-    internal void Complete(int? exitCode)
+    internal void Complete(int? exitCode, PtyTermination? termination = null, bool isOutputIncomplete = false)
     {
-        Finish(exitCode);
+        Finish(exitCode, termination, isOutputIncomplete);
     }
 
     internal void Timeout()
     {
-        Finish(ExitCode);
+        Finish(ExitCode, Termination, IsOutputIncomplete);
     }
 
     internal void Cancel()
@@ -75,7 +81,7 @@ public sealed class TerminalRun(string commandLine, int maxOutputLines = Termina
         _completion.TrySetException(exception);
     }
 
-    private void Finish(int? exitCode)
+    private void Finish(int? exitCode, PtyTermination? termination, bool isOutputIncomplete)
     {
         if (Interlocked.Exchange(ref _isFinished, 1) != 0)
         {
@@ -85,6 +91,8 @@ public sealed class TerminalRun(string commandLine, int maxOutputLines = Termina
         lock (_lock)
         {
             ExitCode = exitCode;
+            Termination = termination;
+            IsOutputIncomplete = isOutputIncomplete;
         }
 
         _completion.TrySetResult();

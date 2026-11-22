@@ -58,25 +58,42 @@
 
                   <v:ConditionalContentControl.FalseContent>
                     <DataTemplate>
-                      <Border Background="Transparent">
-                        <ToolTip.Tip>
-                          <I18N Key="{I18N {x:Static LocaleKey.TerminalView_ErrorToolTip_Tip}}">
-                            <Binding
-                              Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
-                              Path="$parent[v:TerminalView].State?.CreatedAt"/>
-                            <Binding
-                              Converter="{x:Static vc:CommonConverters.TimeSpanToSeconds}"
-                              ConverterParameter="N" Path="$parent[v:TerminalView].State?.Elapsed"/>
-                            <Binding
-                              Path="$parent[v:TerminalView].State?.ExitCode" TargetNullValue="null"/>
-                          </I18N>
-                        </ToolTip.Tip>
+                      <v:ConditionalContentControl Condition="{Binding $parent[v:TerminalView].State?.HasCustomFailureReason, TargetNullValue=False}">
+                        <v:ConditionalContentControl.TrueContent>
+                          <DataTemplate>
+                            <Border Background="Transparent" ToolTip.Tip="{Binding $parent[v:TerminalView].State?.FailureReasonKey^}">
+                              <LucideIcon
+                                Foreground="{DynamicResource ErrorColor60}"
+                                Kind="CircleX"
+                                Size="{DynamicResource FontSizeM}"/>
+                            </Border>
+                          </DataTemplate>
+                        </v:ConditionalContentControl.TrueContent>
 
-                        <LucideIcon
-                          Foreground="{DynamicResource ErrorColor60}"
-                          Kind="CircleX"
-                          Size="{DynamicResource FontSizeM}"/>
-                      </Border>
+                        <v:ConditionalContentControl.FalseContent>
+                          <DataTemplate>
+                            <Border Background="Transparent">
+                              <ToolTip.Tip>
+                                <I18N Key="{I18N {x:Static LocaleKey.TerminalView_ErrorToolTip_Tip}}">
+                                  <Binding
+                                    Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
+                                    Path="$parent[v:TerminalView].State?.CreatedAt"/>
+                                  <Binding
+                                    Converter="{x:Static vc:CommonConverters.TimeSpanToSeconds}"
+                                    ConverterParameter="N" Path="$parent[v:TerminalView].State?.Elapsed"/>
+                                  <Binding
+                                    Path="$parent[v:TerminalView].State?.ExitCode" TargetNullValue="null"/>
+                                </I18N>
+                              </ToolTip.Tip>
+
+                              <LucideIcon
+                                Foreground="{DynamicResource ErrorColor60}"
+                                Kind="CircleX"
+                                Size="{DynamicResource FontSizeM}"/>
+                            </Border>
+                          </DataTemplate>
+                        </v:ConditionalContentControl.FalseContent>
+                      </v:ConditionalContentControl>
                     </DataTemplate>
                   </v:ConditionalContentControl.FalseContent>
 

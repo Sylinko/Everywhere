@@ -4,6 +4,65 @@ namespace Everywhere.Terminal.Tests;
 public class TerminalLineBufferTests
 {
     [Test]
+    public void GetPreview_WhenSingleLineExceedsMaxColumns_SoftWrapsWithoutSplittingSurrogatePair()
+    {
+        var buffer = new TerminalLineBuffer();
+        buffer.Write(new string('x', 8191) + "🙂" + new string('y', 1017) + "failed");
+
+        var preview = buffer.GetPreview();
+
+        Assert.That(preview, Is.EqualTo("[earlier output omitted]\n" + new string('y', 1017) + "failed"));
+    }
+
+    [Test]
+    public void GetPreview_WhenCarriageReturnRedraws_ReturnsRenderedTailWithOmissionMarker()
+    {
+        var buffer = new TerminalLineBuffer(2);
+        buffer.Write("10%\r90%\ndone");
+        Assert.That(buffer.GetPreview(), Is.EqualTo("90%\ndone"));
+
+        buffer.Write("\nfinished");
+        Assert.That(buffer.GetPreview(), Is.EqualTo("[earlier output omitted]\ndone\nfinished"));
+    }
+
+    [Test]
+    public void GetPreview_WhenFirstIncludedLineIsCompletelySkipped_DoesNotEmitBlankLine()
+    {
+        var buffer = new TerminalLineBuffer();
+        buffer.Write("hello\n" + new string('a', 1023));
+
+        var preview = buffer.GetPreview();
+
+        Assert.That(preview, Is.EqualTo("[earlier output omitted]\n" + new string('a', 1023)));
+    }
+
+    [Test]
+    public void TruncateTail_WhenCombinedMultiRunExceedsLimit_CapsBodyTo1024CodeUnitsWithoutSplittingSurrogate()
+    {
+        var combined = new string('a', 900) + "\n" + "🙂" + new string('b', 1025);
+        var truncated = TerminalLineBuffer.TruncateTail(combined);
+        var body = truncated["[earlier output omitted]\n".Length..];
+
+        Assert.That(truncated, Does.StartWith("[earlier output omitted]\n"));
+        Assert.That(body.Length, Is.LessThanOrEqualTo(TerminalLineBuffer.DefaultPreviewLength));
+        Assert.That(char.IsLowSurrogate(body[0]), Is.False);
+        Assert.That(body, Is.EqualTo(new string('b', 1024)));
+    }
+
+    [Test]
+    public void TerminalParser_AnsiTrueColorColonSubParameters_DoesNotLeakIntoCapturedOutput()
+    {
+        var buffer = new TerminalLineBuffer();
+        var parser = new TerminalParser();
+        parser.BeginCapture(buffer);
+
+        parser.Feed("\e[38:2:255:128:0mCOLORED\e[0m\e[;31mRED\e[0m\e[<u\r\n");
+        parser.EndCapture();
+
+        Assert.That(buffer.GetText(), Is.EqualTo("COLOREDRED"));
+    }
+
+    [Test]
     public void Write_TextAndNewlines_CreatesStableLines()
     {
         var buffer = new TerminalLineBuffer();

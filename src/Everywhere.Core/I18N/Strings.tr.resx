@@ -4301,6 +4301,12 @@ Güncellemek için aşağıdaki komutu kopyalayıp terminalde çalıştırın.</
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>Resmî Siteden İndir</value>
     </data>
+    <data name="TerminalView_Signal" xml:space="preserve">
+        <value>{0} sinyali ile sonlandırıldı</value>
+    </data>
+    <data name="TerminalView_Stopped" xml:space="preserve">
+        <value>Komut durduruldu</value>
+    </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Komut {0} tarihinde başladı, {1} saniye sonra başarısız oldu, çıkış kodu {2}</value>
     </data>

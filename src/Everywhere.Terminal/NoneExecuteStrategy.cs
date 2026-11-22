@@ -1,5 +1,8 @@
 using System.Threading.Channels;
+using Everywhere.Common;
+using Everywhere.Extensions;
 using Microsoft.Extensions.Logging;
+using Porta.Pty;
 using ZLinq;
 
 namespace Everywhere.Terminal;
@@ -10,43 +13,69 @@ namespace Everywhere.Terminal;
 /// Uses Task.WhenAny pattern instead of CancellationToken-based polling to avoid
 /// deadlocks when an earlier phase has a pending read.
 /// </summary>
-public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
+public sealed partial class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
 {
     protected override IExecutionScope CreateExecutionScope(
         ChannelWriter<TerminalRun> writer,
         TerminalSession session,
         string script,
         ShellType shellType,
-        TimeSpan timeout,
+        TimeSpan? timeout,
         CancellationToken cancellationToken) =>
         new ExecutionScope(writer, session, script, shellType, timeout, logger, cancellationToken);
 
-    private sealed class ExecutionScope(
+    private sealed partial class ExecutionScope(
         ChannelWriter<TerminalRun> writer,
         TerminalSession session,
         string script,
         ShellType shellType,
-        TimeSpan timeout,
+        TimeSpan? timeout,
         ILogger logger,
         CancellationToken cancellationToken
     ) : IExecutionScope
     {
         public async Task ExecuteAsync()
         {
+            var shellKind = ShellIntegrationScript.GetShellKind(shellType, session.ShellPath);
             var run = new TerminalRun(script);
             writer.TryWrite(run);
 
             try
             {
-                var timedOut = await ExecuteWithCaptureAsync(run);
-                logger.LogDebug("[None] Captured output: {EscapeForLog}", OutputCleaner.EscapeForLog(run.OutputText));
-                logger.LogDebug("[None] Output length={Length}", run.OutputText.Length);
+                var (timedOut, reachedEndOfStream, termination, isOutputIncomplete) = await ExecuteWithCaptureAsync(run, shellKind);
+                LogNoneOutputLength(shellKind, run.OutputText.Length);
 
-                if (timedOut) run.Timeout();
-                else run.Complete(null);
+                if (timedOut)
+                {
+                    run.Timeout();
+                }
+                else if (termination is { } observedTermination)
+                {
+                    var exitCode = observedTermination.Kind == PtyTerminationKind.Exited
+                        ? observedTermination.Value
+                        : (int?)null;
+                    run.Complete(exitCode, observedTermination, isOutputIncomplete);
+                }
+                else if (reachedEndOfStream)
+                {
+                    var eofTermination = await session.TryObserveTerminationAsync(TimeSpan.FromSeconds(2), cancellationToken);
+                    var exitCode = eofTermination?.Kind == PtyTerminationKind.Exited
+                        ? eofTermination.Value.Value
+                        : (int?)null;
+                    run.Complete(exitCode, eofTermination);
+                }
+                else
+                {
+                    run.Complete(null);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
+                try { session.Pty.Kill(); }
+                catch
+                {
+                    // ignore
+                }
                 run.Cancel();
                 throw;
             }
@@ -57,18 +86,19 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
             }
         }
 
-        private async ValueTask<bool> ExecuteWithCaptureAsync(TerminalRun run)
+        private async ValueTask<(bool TimedOut, bool ReachedEndOfStream, PtyTermination? Termination, bool IsOutputIncomplete)>
+            ExecuteWithCaptureAsync(TerminalRun run, string shellKind)
         {
             try
             {
                 // Wait for terminal to become idle (quiet 200ms = idle, max wait 5s)
-                logger.LogDebug("[None] Waiting for initial idle...");
+                LogNoneWaitingForInitialIdle(shellKind);
                 await session.WaitForIdleAsync(
                     TimeSpan.FromSeconds(5),
                     TimeSpan.FromMilliseconds(200),
                     cancellationToken);
 
-                logger.LogDebug("[None] Sending Ctrl+C to cancel residual input");
+                LogNoneSendingCtrlC();
                 await session.WriteInputAsync("\x03"u8, cancellationToken);
 
                 // Brief wait for Ctrl+C echo to settle (quiet 200ms = idle, max wait 500ms)
@@ -77,30 +107,41 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
                     TimeSpan.FromMilliseconds(200),
                     cancellationToken);
 
-                logger.LogDebug("[None] Sending command (shellType={ShellType})", shellType);
+                LogNoneSendingCommand(shellKind, shellType);
                 session.Parser.BeginCapture(run.Output);
                 await SendCommandAsync();
 
-                logger.LogDebug("[None] Waiting for command output to start");
+                LogNoneWaitingForCommandOutputStart();
                 await WaitForCommandOutputStartAsync(run.Output);
 
-                logger.LogDebug("[None] Waiting for idle with prompt heuristics");
+                LogNoneWaitingForIdleWithPromptHeuristics();
                 var hasReceivedData = HasCapturedData(run.Output);
                 var consecutiveIdlePolls = 0;
                 const int pollIntervalMs = 150;
                 const int minIdlePolls = 4; // 4 x 150ms = 600ms idle
-                const int maxFallbackIdlePolls = 14; // ~2.1s - force exit if prompt regex never matches
+                const int maxFallbackIdlePolls = 200; // ~30s safety cap if an unrecognized prompt never matches
                 var timedOut = false;
+                var reachedEndOfStream = false;
+                PtyTermination? observedTermination = null;
+                var isOutputIncomplete = false;
 
-                using var timeoutCts = new CancellationTokenSource(timeout);
+                var effectiveTimeout = timeout ?? Timeout.InfiniteTimeSpan;
+                using var timeoutCts = effectiveTimeout == Timeout.InfiniteTimeSpan
+                    ? new CancellationTokenSource()
+                    : new CancellationTokenSource(effectiveTimeout);
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
                 var linkedToken = linkedCts.Token;
+                using var terminationObserveCts = CancellationTokenSource.CreateLinkedTokenSource(linkedToken);
+                var rootExitTask = session.Pty.WaitForTerminationAsync(terminationObserveCts.Token);
 
                 try
                 {
                     while (!linkedToken.IsCancellationRequested)
                     {
-                        var outcome = await session.ReadOrIdleAsync(TimeSpan.FromMilliseconds(pollIntervalMs), linkedToken);
+                        var (outcome, termination) = await session.ReadOrWaitAsync(
+                            TimeSpan.FromMilliseconds(pollIntervalMs),
+                            rootExitTask,
+                            linkedToken);
                         if (outcome == TerminalReadOutcome.Data)
                         {
                             consecutiveIdlePolls = 0;
@@ -108,11 +149,22 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
 
                             if (CheckForPrompt(run.Output))
                             {
-                                logger.LogDebug("[None] Prompt observed after receiving data");
+                                LogNonePromptObservedAfterData();
                             }
                         }
                         else if (outcome == TerminalReadOutcome.EndOfStream)
                         {
+                            reachedEndOfStream = true;
+                            break;
+                        }
+                        else if (outcome == TerminalReadOutcome.Terminated)
+                        {
+                            observedTermination = termination;
+                            isOutputIncomplete = !await session.DrainUntilEndOfStreamAsync(TimeSpan.FromSeconds(2), linkedToken);
+                            if (isOutputIncomplete)
+                            {
+                                LogNoneIncompleteOutputAfterTermination(shellKind);
+                            }
                             break;
                         }
                         else
@@ -125,15 +177,15 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
                             {
                                 if (CheckForPrompt(run.Output))
                                 {
-                                    logger.LogDebug("[None] Idle detected with prompt");
+                                    LogNoneIdleDetectedWithPrompt();
                                     break;
                                 }
 
-                                // Fallback: if terminal has been silent for ~2s without strict prompt match,
-                                // assume command is complete to prevent hanging.
+                                // Fallback: if terminal stays silent for ~30s without prompt match,
+                                // settle to prevent indefinite hangs on unrecognized prompts.
                                 if (consecutiveIdlePolls >= maxFallbackIdlePolls)
                                 {
-                                    logger.LogWarning("[None] Maximum idle threshold reached without strict prompt match. Assuming complete.");
+                                    LogNoneMaximumIdleThresholdReached(shellKind, shellType, run.Output.Count, session.BytesRead);
                                     break;
                                 }
                             }
@@ -143,7 +195,6 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
                 catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
                 {
                     timedOut = true;
-                    logger.LogWarning("[None] timeout reached");
                     try
                     {
                         session.Pty.Kill();
@@ -153,16 +204,28 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
                         // ignore
                     }
                 }
+                finally
+                {
+                    await terminationObserveCts.CancelAsync();
+                    rootExitTask.Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+                }
 
                 if (cancellationToken.IsCancellationRequested)
                 {
+                    try
+                    {
+                        session.Pty.Kill();
+                    }
+                    catch
+                    {
+                        // ignore
+                    }
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
                 if (timeoutCts.IsCancellationRequested && !timedOut)
                 {
                     timedOut = true;
-                    logger.LogWarning("[None] timeout reached");
                     try
                     {
                         session.Pty.Kill();
@@ -173,7 +236,12 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
                     }
                 }
 
-                return timedOut;
+                if (timedOut)
+                {
+                    LogNoneTimeoutReached(shellKind, shellType, run.Output.Count, session.BytesRead);
+                }
+
+                return (timedOut, reachedEndOfStream, observedTermination, isOutputIncomplete);
             }
             finally
             {
@@ -182,22 +250,14 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
         }
 
         /// <summary>
-        /// Check if the newest captured run lines look like a shell prompt.
-        /// This deliberately ignores the shared session screen so startup prompts
-        /// cannot complete a fallback command early.
+        /// Check if the active cursor line looks like a shell prompt.
+        /// Inspecting only the cursor line avoids treating completed stdout lines
+        /// (which moved the cursor onto a blank line below) as prompts.
         /// </summary>
         private static bool CheckForPrompt(TerminalLineBuffer output)
         {
-            for (var i = output.Count - 1; i >= 0 && i >= output.Count - 4; i--)
-            {
-                var line = output[i].Text;
-                if (!string.IsNullOrWhiteSpace(line) && OutputCleaner.IsShellPrompt(line))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            var cursorLine = output.GetCursorLineText();
+            return !string.IsNullOrWhiteSpace(cursorLine) && OutputCleaner.IsShellPrompt(cursorLine);
         }
 
         private static bool HasCapturedData(TerminalLineBuffer output)
@@ -269,5 +329,44 @@ public sealed class NoneExecuteStrategy(ILogger logger) : ExecuteStrategy
                 // Timeout while waiting for command output to start.
             }
         }
+
+        [LoggerMessage(LogLevel.Debug, "[None] Waiting for initial idle (shellKind={ShellKind})")]
+        partial void LogNoneWaitingForInitialIdle(string shellKind);
+
+        [LoggerMessage(LogLevel.Debug, "[None] Sending Ctrl+C to cancel residual input")]
+        partial void LogNoneSendingCtrlC();
+
+        [LoggerMessage(LogLevel.Debug, "[None] Sending command (shellKind={ShellKind}, shellType={ShellType})")]
+        partial void LogNoneSendingCommand(string shellKind, ShellType shellType);
+
+        [LoggerMessage(LogLevel.Debug, "[None] Waiting for command output to start")]
+        partial void LogNoneWaitingForCommandOutputStart();
+
+        [LoggerMessage(LogLevel.Debug, "[None] Waiting for idle with prompt heuristics")]
+        partial void LogNoneWaitingForIdleWithPromptHeuristics();
+
+        [LoggerMessage(LogLevel.Debug, "[None] Prompt observed after receiving data")]
+        partial void LogNonePromptObservedAfterData();
+
+        [LoggerMessage(LogLevel.Debug, "[None] Idle detected with prompt")]
+        partial void LogNoneIdleDetectedWithPrompt();
+
+        [LoggerMessage(
+            LogLevel.Warning,
+            "[None] PTY drain timed out after root process exited (shellKind={ShellKind}); output may be incomplete.")]
+        partial void LogNoneIncompleteOutputAfterTermination(string shellKind);
+
+        [LoggerMessage(
+            LogLevel.Warning,
+            "[None] Maximum idle threshold reached without strict prompt match (shellKind={ShellKind}, shellType={ShellType}, lineCount={LineCount}, bytesRead={BytesRead}). Assuming complete.")]
+        partial void LogNoneMaximumIdleThresholdReached(string shellKind, ShellType shellType, int lineCount, long bytesRead);
+
+        [LoggerMessage(
+            LogLevel.Warning,
+            "[None] Timeout reached (shellKind={ShellKind}, shellType={ShellType}, lineCount={LineCount}, bytesRead={BytesRead})")]
+        partial void LogNoneTimeoutReached(string shellKind, ShellType shellType, int lineCount, long bytesRead);
+
+        [LoggerMessage(LogLevel.Debug, "[None] Output length={Length} (shellKind={ShellKind})")]
+        partial void LogNoneOutputLength(string shellKind, int length);
     }
 }

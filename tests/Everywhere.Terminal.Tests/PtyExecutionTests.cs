@@ -157,7 +157,7 @@ public class PtyExecutionTests
     /// </summary>
     private static PtyOptions BuildShellIntegrationPtyOptions(string shellPath, ShellType shellType, string? cwd = null)
     {
-        var shellArgs = ShellIntegrationScript.BuildShellArgs(shellType);
+        var shellArgs = ShellIntegrationScript.BuildShellArgs(shellType, shellPath);
         if (shellArgs is null)
         {
             Assert.Ignore($"Shell integration script is not available for {shellType}");
@@ -604,6 +604,14 @@ public class PtyExecutionTests
         pty.ReaderStream.Returns(readerStream);
         pty.WriterStream.Returns(writerStream);
         pty.Pid.Returns(12345);
+        pty.WaitForTerminationAsync(Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var token = callInfo.Arg<CancellationToken>();
+                var tcs = new TaskCompletionSource<PtyTermination>(TaskCreationOptions.RunContinuationsAsynchronously);
+                token.Register(() => tcs.TrySetCanceled(token));
+                return tcs.Task;
+            });
         return (new TerminalSession(pty, TerminalDimensions.Default), writerStream);
     }
 
@@ -1100,6 +1108,76 @@ public class PtyExecutionTests
     }
 
     [Test]
+    public async Task RichStrategy_WhenRunningOutputEndsWithPercentBeforeSilentPeriod_WaitsForFinishedMarker()
+    {
+        await using var readerStream = new DelayedReadStream(
+            (
+                TimeSpan.Zero,
+                Encoding.UTF8.GetBytes(
+                    "\e]633;A\a\e]633;B\a\r\n" +
+                    "\e]633;E;long install\a" +
+                    "\e]633;C\a" +
+                    "50%\r\n")),
+            (
+                TimeSpan.FromMilliseconds(1000),
+                Encoding.UTF8.GetBytes(
+                    "FINISHED\r\n" +
+                    "\e]633;D;23\a" +
+                    "\e]633;A\a\e]633;B\a")));
+        var session = CreateMockPty(readerStream);
+
+        var strategy = new RichExecuteStrategy(_logger);
+        var result = await ExecuteSingleRunAsync(
+            strategy,
+            session,
+            "long install",
+            ShellType.PowerShell,
+            timeout: TimeSpan.FromSeconds(10),
+            cancellationToken: CancellationToken.None);
+
+        Assert.That(result.OutputText, Does.Contain("50%"));
+        Assert.That(result.OutputText, Does.Contain("FINISHED"));
+        Assert.That(result.ExitCode, Is.EqualTo(23));
+    }
+
+    [Test]
+    public async Task RichStrategy_WhenRootExitsWhileChildHoldsPtyOpen_DrainsAtMostTwoSecondsAndKeepsExitCode()
+    {
+        await using var readerStream = new HangingAfterChunkStream(Encoding.UTF8.GetBytes(
+            "\e]633;A\a\e]633;B\a\r\n" +
+            "\e]633;E;spawn child\a" +
+            "\e]633;C\a" +
+            "FINISHED\r\n"));
+        var writerStream = new MemoryStream();
+        var pty = Substitute.For<IPtyConnection>();
+        pty.ReaderStream.Returns(readerStream);
+        pty.WriterStream.Returns(writerStream);
+        pty.Pid.Returns(12345);
+        pty.WaitForTerminationAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(new PtyTermination(PtyTerminationKind.Exited, 23)));
+        var session = new TerminalSession(pty, TerminalDimensions.Default, "pwsh.exe");
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var result = await ExecuteSingleRunAsync(
+            new RichExecuteStrategy(_logger),
+            session,
+            "spawn child",
+            ShellType.PowerShell,
+            timeout: TimeSpan.FromSeconds(15),
+            cancellationToken: CancellationToken.None);
+        sw.Stop();
+        session.DiscardPendingRead();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(sw.Elapsed, Is.LessThan(TimeSpan.FromSeconds(4)));
+            Assert.That(result.ExitCode, Is.EqualTo(23));
+            Assert.That(result.IsOutputIncomplete, Is.True);
+            Assert.That(result.OutputText, Does.Contain("FINISHED"));
+        });
+    }
+
+    [Test]
     public async Task RichStrategy_FallbackOutput_UsesCommandStartBaseline()
     {
         var ptyData = "\r\nWrite-Host 'RESULT'\r\nRESULT\r\nPS C:\\test> "u8.ToArray();
@@ -1398,6 +1476,153 @@ public class PtyExecutionTests
             strategy,
             Is.TypeOf<NoneExecuteStrategy>(),
             "Should not detect Shell Integration and return NoneExecuteStrategy");
+    }
+
+    [Test]
+    public async Task DetectStrategy_WhenIntegrationErrorPropertyEmitted_FastFailsToNoneWithoutWaitingIdle()
+    {
+        var output = Encoding.UTF8.GetBytes("\e]633;P;IntegrationError=System.Management.Automation.PSSecurityException\aPS C:\\> ");
+        await using var readerStream = new DelayedReadStream(
+            (TimeSpan.Zero, output),
+            (TimeSpan.FromSeconds(5), []));
+        var session = CreateMockPty(readerStream);
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(
+            session,
+            ShellType.PowerShell,
+            _logger,
+            idleTimeout: TimeSpan.FromSeconds(3),
+            absoluteTimeout: TimeSpan.FromSeconds(10),
+            "powershell.exe",
+            CancellationToken.None);
+        stopwatch.Stop();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(strategy, Is.TypeOf<NoneExecuteStrategy>());
+            Assert.That(session.Parser.HasDetectedShellIntegration, Is.False);
+            Assert.That(stopwatch.Elapsed, Is.LessThan(TimeSpan.FromMilliseconds(500)));
+        });
+    }
+
+    [Test]
+    public async Task DetectStrategy_WhenColdStartIsSilentBeforeFirstByte_ContinuesWaitingPastIdleTimeout()
+    {
+        await using var readerStream = new DelayedReadStream(
+            (TimeSpan.FromMilliseconds(250), BuildRichSequence("prompt ready")));
+        var session = CreateMockPty(readerStream);
+
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(
+            session,
+            ShellType.PowerShell,
+            _logger,
+            idleTimeout: TimeSpan.FromMilliseconds(80),
+            absoluteTimeout: TimeSpan.FromSeconds(2),
+            "powershell.exe",
+            CancellationToken.None);
+
+        Assert.That(strategy, Is.TypeOf<RichExecuteStrategy>());
+    }
+
+    [Test]
+    public async Task RichStrategy_SingleLine_PowerShellWithoutBracketedPasteMode_SkipsBracketedPasteProbe()
+    {
+        var (session, writerStream) = CreateMockPty(BuildRichSequence("ok"));
+
+        var strategy = new RichExecuteStrategy(_logger);
+        await DrainExecuteAsync(
+            strategy,
+            session,
+            script: "Write-Output 'ok'",
+            ShellType.PowerShell,
+            timeout: TimeSpan.FromSeconds(10),
+            cancellationToken: CancellationToken.None);
+
+        var written = Encoding.UTF8.GetString(writerStream.ToArray());
+        Assert.That(written, Does.Contain("Write-Output 'ok'\r"));
+        Assert.That(written, Does.Not.Contain("\e[200~"));
+    }
+
+    [Test]
+    public async Task DetectAndExecute_RealWindowsPowerShellHosts_UseRichStrategy()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Ignore("Windows PowerShell host test only runs on Windows.");
+            return;
+        }
+
+        var hosts = new List<string>();
+        var legacyPs = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            @"WindowsPowerShell\v1.0\powershell.exe");
+        if (File.Exists(legacyPs)) hosts.Add(legacyPs);
+        if (FindInPath("pwsh.exe") is { } pwsh) hosts.Add(pwsh);
+        Assert.That(hosts, Is.Not.Empty);
+
+        foreach (var shellPath in hosts)
+        {
+            await AssertRichHostRunAsync(
+                shellPath,
+                script: "Write-Output 'SINGLE_OK'; cmd.exe /d /c \"exit 23\"",
+                expectedText: "SINGLE_OK",
+                expectedExitCode: 23);
+
+            await AssertRichHostRunAsync(
+                shellPath,
+                script: "cmd.exe /d /c \"exit 23\"; Write-Output 'RECOVERED_OK'",
+                expectedText: "RECOVERED_OK",
+                expectedExitCode: 0);
+
+            await AssertRichHostRunAsync(
+                shellPath,
+                script: "Write-Output '50%'; Start-Sleep -Seconds 2; Write-Output 'FINISHED'; cmd.exe /d /c \"exit 23\"",
+                expectedText: "FINISHED",
+                expectedExitCode: 23);
+
+            await AssertRichHostRunAsync(
+                shellPath,
+                script: "$first = 'MULTI_ONE'\n$second = 'MULTI_TWO'\nWrite-Output \"$first|$second\"",
+                expectedText: "MULTI_ONE|MULTI_TWO",
+                expectedExitCode: 0);
+        }
+
+        async Task AssertRichHostRunAsync(string shellPath, string script, string expectedText, int expectedExitCode)
+        {
+            var options = BuildShellIntegrationPtyOptions(shellPath, ShellType.PowerShell);
+            using var pty = await PtyProvider.SpawnAsync(options, CancellationToken.None);
+            try
+            {
+                var session = TerminalSession.FromPtyOptions(pty, options);
+                var strategy = await ExecuteStrategy.DetectStrategyAsync(
+                    session,
+                    ShellType.PowerShell,
+                    _logger,
+                    CancellationToken.None,
+                    shellPath);
+
+                Assert.That(strategy, Is.TypeOf<RichExecuteStrategy>(), $"Expected RichExecuteStrategy for {shellPath}");
+
+                var run = await ExecuteSingleRunAsync(
+                    strategy,
+                    session,
+                    script,
+                    ShellType.PowerShell,
+                    timeout: TimeSpan.FromSeconds(15),
+                    CancellationToken.None);
+                Assert.That(run.OutputText, Does.Contain(expectedText));
+                Assert.That(run.ExitCode, Is.EqualTo(expectedExitCode));
+            }
+            finally
+            {
+                try { pty.Kill(); }
+                catch
+                {
+                    // Ignore if shell already exited.
+                }
+            }
+        }
     }
 
     #endregion
@@ -1796,6 +2021,54 @@ public class PtyExecutionTests
             $"SECOND_OUT (at {idxSecond}) must appear before THIRD_OUT (at {idxThird})");
     }
 
+    [Test]
+    public async Task NoneStrategy_WhenRunningOutputEndsWithPercentBeforeSilentPeriod_DoesNotPrematurelyComplete()
+    {
+        await using var readerStream = new DelayedReadStream(
+            (TimeSpan.Zero, Encoding.UTF8.GetBytes("PS C:\\> ")),
+            (TimeSpan.FromMilliseconds(600), Encoding.UTF8.GetBytes("long install\r\n50%")),
+            (TimeSpan.FromMilliseconds(900), Encoding.UTF8.GetBytes("\r\nFINISHED\r\nPS C:\\> ")),
+            (TimeSpan.FromSeconds(10), []));
+        var session = CreateMockPty(readerStream);
+
+        var strategy = new NoneExecuteStrategy(_logger);
+        var result = await ExecuteSingleRunAsync(
+            strategy,
+            session,
+            script: "long install",
+            ShellType.PowerShell,
+            timeout: TimeSpan.FromSeconds(10),
+            cancellationToken: CancellationToken.None);
+
+        Assert.That(result.OutputText, Does.Contain("50%"));
+        Assert.That(result.OutputText, Does.Contain("FINISHED"));
+        Assert.That(result.ExitCode, Is.Null);
+    }
+
+    [Test]
+    public async Task NoneStrategy_WhenSilentPauseExceedsOldTwoSecondFallback_WaitsForPrompt()
+    {
+        await using var readerStream = new DelayedReadStream(
+            (TimeSpan.Zero, Encoding.UTF8.GetBytes("PS C:\\> ")),
+            (TimeSpan.FromMilliseconds(600), Encoding.UTF8.GetBytes("download\r\ndownloading\r\n")),
+            (TimeSpan.FromMilliseconds(2600), Encoding.UTF8.GetBytes("FINISHED\r\nPS C:\\> ")),
+            (TimeSpan.FromSeconds(10), []));
+        var session = CreateMockPty(readerStream);
+
+        var strategy = new NoneExecuteStrategy(_logger);
+        var result = await ExecuteSingleRunAsync(
+            strategy,
+            session,
+            script: "download",
+            ShellType.PowerShell,
+            timeout: TimeSpan.FromSeconds(10),
+            cancellationToken: CancellationToken.None);
+
+        Assert.That(result.OutputText, Does.Contain("downloading"));
+        Assert.That(result.OutputText, Does.Contain("FINISHED"));
+        Assert.That(result.ExitCode, Is.Null);
+    }
+
     #endregion
 
     private sealed class ChunkedReadStream(params byte[][] chunks) : Stream
@@ -1955,6 +2228,41 @@ public class PtyExecutionTests
         {
             throw new NotSupportedException();
         }
+    }
+
+    private sealed class HangingAfterChunkStream(byte[] initialChunk) : Stream
+    {
+        private bool _sentInitial;
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (!_sentInitial)
+            {
+                _sentInitial = true;
+                var len = Math.Min(initialChunk.Length, buffer.Length);
+                initialChunk.AsSpan(0, len).CopyTo(buffer.Span);
+                return len;
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+            return 0;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override void Flush() { }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
 }

@@ -1221,6 +1221,10 @@ public sealed partial class ChatService : IChatService
             x.GetRequiredService<ChatContext>().GenerationContext?.FunctionCallContext.Value ??
             FunctionCallContext.Current ??
             throw new InvalidOperationException($"No {nameof(IChatPluginUserInterface)} is available in current function call context."));
+        services.AddTransient<IChatPluginExecutionContext>(static x =>
+            x.GetRequiredService<ChatContext>().GenerationContext?.FunctionCallContext.Value ??
+            FunctionCallContext.Current ??
+            throw new InvalidOperationException($"No {nameof(IChatPluginExecutionContext)} is available in current function call context."));
         services.AddTransient<IStorageProvider>(_ =>
             _serviceProvider.GetService<ChatWindow>()?.StorageProvider ?? App.StorageProvider);
 

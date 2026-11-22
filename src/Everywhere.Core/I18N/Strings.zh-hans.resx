@@ -4299,6 +4299,12 @@
   <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>官网下载</value>
     </data>
+  <data name="TerminalView_Signal" xml:space="preserve">
+    <value>进程因信号 {0} 终止</value>
+  </data>
+  <data name="TerminalView_Stopped" xml:space="preserve">
+    <value>命令已停止</value>
+  </data>
   <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>命令于 {0} 开始执行，{1} 秒后失败，退出代码为 {2}</value>
     </data>

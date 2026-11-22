@@ -4301,6 +4301,12 @@ Copy the command below and run it in your terminal to update.</value>
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>official website</value>
     </data>
+    <data name="TerminalView_Signal" xml:space="preserve">
+        <value>Terminated by signal {0}</value>
+    </data>
+    <data name="TerminalView_Stopped" xml:space="preserve">
+        <value>Command stopped</value>
+    </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Command started at {0}, failed after {1} seconds with exit code {2}</value>
     </data>

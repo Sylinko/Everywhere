@@ -38,7 +38,7 @@ partial class ChatService
 
             foreach (var activeContext in snapshot)
             {
-                activeContext.TryRequestMoveToBackground();
+                activeContext.TryMoveToBackground();
             }
         }
 
@@ -170,8 +170,9 @@ partial class ChatService
 
                     foregroundRegistration = cancellationToken.Register(() =>
                     {
-                        if (!context.IsDetachedToBackground)
+                        if (context.TryCancelForeground())
                         {
+                            // ReSharper disable once AccessToDisposedClosure
                             jobCts.Cancel();
                         }
                     });
@@ -182,7 +183,7 @@ partial class ChatService
                     if (supportsBackgrounding)
                     {
                         var completedTask = await Task.WhenAny(executionTask, context.BackgroundMovedTask);
-                        if (completedTask != executionTask || context.IsDetachedToBackground)
+                        if (!executionTask.IsCompleted && (completedTask != executionTask || context.IsBackgrounded))
                         {
                             transferredToBackground = true;
                             await foregroundRegistration.DisposeAsync();
@@ -225,10 +226,12 @@ partial class ChatService
                                         binding.Plugin.Key,
                                         call.CallId,
                                         $"The tool call '{call.Name}' moved to background execution (job_id: {job.JobId}). You will receive a <background-job> notification when it completes, or you can use manage_background_jobs to inspect or stop it."));
-                                Finish(message);
+                                Finish(message, isForegroundCanceled: false);
                             });
                             return;
                         }
+
+                        context.TryCompleteForeground();
                     }
 
                     var result = await executionTask;
@@ -269,12 +272,12 @@ partial class ChatService
             }
         }
 
-        void Finish(FunctionCallChatMessage message)
+        void Finish(FunctionCallChatMessage message, bool isForegroundCanceled = true)
         {
             if (!message.IsBusy) return;
             message.FinishedAt = DateTimeOffset.UtcNow;
             message.IsBusy = false;
-            if (cancellationToken.IsCancellationRequested)
+            if (isForegroundCanceled && cancellationToken.IsCancellationRequested)
             {
                 message.ErrorMessageKey ??= new DynamicLocaleKey(LocaleKey.FriendlyExceptionMessage_OperationCanceled);
             }

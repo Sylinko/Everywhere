@@ -33,6 +33,7 @@ ESC ] 633 ; <marker> [ ; payload ] BEL
 | `E` | CommandLine | shell 报告即将执行的命令文本 |
 | `C` | CommandExecuted | 命令开始执行，后续输出属于 active run |
 | `D` | CommandFinished | 命令结束，可带退出码 |
+| `P` | Property | 元数据属性（例如 `IntegrationError=<TypeName>` 触发快速失败诊断） |
 
 典型 Rich 时序：
 
@@ -231,13 +232,13 @@ history -c 2>/dev/null || true
 
 ### PowerShell
 
-启动参数：
+启动参数（Windows PowerShell 5.1 额外带 `-ExecutionPolicy RemoteSigned` 以绕开客户端默认 `Restricted` 策略，并配合发布期递归签名；脚本加载失败时发出 `OSC 633;P;IntegrationError=<Exception>` 立即结束检测）：
 
 ```text
--NoProfile -NoLogo -NoExit -Command "try { . '<script>' } catch {}"
+[-ExecutionPolicy RemoteSigned] -NoProfile -NoLogo -NoExit -Command "try { . '<script>' } catch { [Console]::Write([string][char]0x1b + ']633;P;IntegrationError=' + $_.Exception.GetType().FullName + [char]7) }"
 ```
 
-PowerShell 不加载用户 profile，主要历史控制在 `shellIntegration.ps1` 中完成。
+PowerShell 不加载用户 profile，主要历史控制在 `shellIntegration.ps1` 中完成。`shellIntegration.ps1` 中的 PSReadLine 初始化包裹在 `try/catch` 中，避免宿主缺少 PSReadLine 时中断 `Prompt` 钩子安装。
 
 ### zsh
 
@@ -248,27 +249,26 @@ ZDOTDIR=<Everywhere writable terminal wrapper dir>
 USER_ZDOTDIR=<user home>
 ```
 
-wrapper `.zshrc`：
+wrapper `.zshrc`（先恢复 `ZDOTDIR` 并加载用户 `.zshrc`，最后再加载 `shellIntegration.zsh`；`EVERYWHERE_NONCE` 通过环境变量传递而不写入共享文件）：
 
 ```zsh
-export EVERYWHERE_NONCE='<nonce>'
-source '<shellIntegration.zsh>'
+if [ -n "${USER_ZDOTDIR:-}" ]; then ZDOTDIR="$USER_ZDOTDIR"; fi
 source '<user ~/.zshrc>'
+source '<shellIntegration.zsh>'
 ```
 
-因为用户 `.zshrc` 在集成脚本之后加载，history 与 prompt 相关设置可能被覆盖，所以集成脚本在 `precmd` 再次收束关键状态。
+`shellIntegration.zsh` 同时启用 `INTERACTIVE_COMMENTS` 并保留 `NO_BANG_HIST`。
 
 ### bash
 
-bash 使用 `--rcfile` 指向 wrapper `.bashrc`：
+bash 使用 `--rcfile` 指向 wrapper `.bashrc`（先加载用户 `.bashrc`，再加载 `shellIntegration.bash`）：
 
 ```bash
-export EVERYWHERE_NONCE='<nonce>'
+if [ -r '<user ~/.bashrc>' ]; then . '<user ~/.bashrc>'; fi
 source '<shellIntegration.bash>'
-source '<user ~/.bashrc>'
 ```
 
-同理，集成脚本必须在 prompt 路径重复禁用 history。
+`shellIntegration.bash` 兼容 Bash 5.1+ 数组型 `PROMPT_COMMAND`，并在保存原 `PROMPT_COMMAND` 与原有 `DEBUG` trap 后用 `__everywhere_in_prompt` 护栏防止提示符渲染期间误发 `E/C`。
 
 ## Bracketed paste
 

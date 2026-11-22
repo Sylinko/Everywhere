@@ -4301,6 +4301,12 @@
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>公式サイトからダウンロード</value>
     </data>
+    <data name="TerminalView_Signal" xml:space="preserve">
+        <value>シグナル {0} により終了しました</value>
+    </data>
+    <data name="TerminalView_Stopped" xml:space="preserve">
+        <value>コマンドを停止しました</value>
+    </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>コマンドは {0} にて実行を開始し、{1} 秒後に失敗しました。終了コードは {2} です</value>
     </data>

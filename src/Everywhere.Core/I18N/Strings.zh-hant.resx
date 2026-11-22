@@ -4301,6 +4301,12 @@
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>官網下載</value>
     </data>
+    <data name="TerminalView_Signal" xml:space="preserve">
+        <value>程序因訊號 {0} 終止</value>
+    </data>
+    <data name="TerminalView_Stopped" xml:space="preserve">
+        <value>命令已停止</value>
+    </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>命令於 {0} 開始執行，{1} 秒後失敗，退出代碼為 {2}</value>
     </data>

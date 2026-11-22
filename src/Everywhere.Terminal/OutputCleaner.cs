@@ -24,8 +24,19 @@ public static partial class OutputCleaner
         if (BashZshPromptRegex().IsMatch(line)) return true;
         // Cmd: C:\path>
         if (CmdPromptRegex().IsMatch(line)) return true;
-        // Generic: ends with $ or > or % (short lines only, to avoid false positives)
-        if (line.Length < 200 && (line.EndsWith('$') || line.EndsWith('>') || line.EndsWith('%'))) return true;
+        // Generic: ends with $, >, starship chevron, or % (excluding numeric percentages like "50%")
+        if (line.Length < 200)
+        {
+            var trimmed = line.TrimEnd();
+            if (trimmed.Length > 0 &&
+                (trimmed.EndsWith('$') ||
+                    trimmed.EndsWith('>') ||
+                    trimmed.EndsWith('\u276f') ||
+                    trimmed.EndsWith('%') && !(trimmed.Length >= 2 && char.IsAsciiDigit(trimmed[^2]))))
+            {
+                return true;
+            }
+        }
 
         return false;
     }

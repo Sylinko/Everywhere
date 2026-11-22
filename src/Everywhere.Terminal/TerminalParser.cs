@@ -17,7 +17,8 @@ public delegate void TerminalResponseHandler(string response);
 public sealed class TerminalParser(
     ShellIntegrationMarkerHandler? shellIntegrationMarkerHandler = null,
     TerminalResponseHandler? terminalResponseHandler = null,
-    TerminalDimensions? dimensions = null)
+    TerminalDimensions? dimensions = null
+)
 {
     public event ShellIntegrationMarkerHandler? ShellIntegrationMarkerReceived
     {
@@ -70,7 +71,8 @@ public sealed class TerminalParser(
 
     private int _currentParam = -1; // -1 means "no digits accumulated yet"
     private bool _csiPrivateParam; // '?' prefix
-    private char _csiPrefix; // '?', '>', '=' or '\0'
+    private bool _csiInSubParam; // ':' sub-parameter delimiter inside a parameter
+    private char _csiPrefix; // '?', '>', '=', '<' or '\0'
     // private char _csiIntermediate; // intermediate character (e.g. '!' for DECSTR)
 
     // OSC string accumulation
@@ -91,6 +93,7 @@ public sealed class TerminalParser(
     private TerminalLineBuffer? _captureBuffer;
     private IDisposable? _captureUpdateScope;
     private int _captureOriginY;
+    private readonly StringBuilder _capturedText = new();
     private int _feedDepth;
 
     private int CursorX { get; set; }
@@ -163,6 +166,7 @@ public sealed class TerminalParser(
             _highSurrogate = c;
             return;
         }
+
         if (char.IsLowSurrogate(c))
         {
             if (_highSurrogate != 0)
@@ -180,6 +184,7 @@ public sealed class TerminalParser(
                     _oscBuffer.Append(_highSurrogate);
                     _oscBuffer.Append(c);
                 }
+
                 _highSurrogate = '\0';
             }
 
@@ -199,6 +204,7 @@ public sealed class TerminalParser(
             {
                 _oscBuffer.Append(_highSurrogate);
             }
+
             _highSurrogate = '\0';
         }
 
@@ -236,6 +242,9 @@ public sealed class TerminalParser(
 
     private void HandleGround(char c)
     {
+        // Publish pending cells before any control (including ESC) changes the capture position.
+        if (c < ' ') FlushCapturedText();
+
         switch (c)
         {
             case '\e': // ESC
@@ -269,6 +278,7 @@ public sealed class TerminalParser(
                     WriteChar(c);
                     CaptureWrite(c);
                 }
+
                 break;
         }
     }
@@ -316,6 +326,7 @@ public sealed class TerminalParser(
                     CursorUp();
                     CaptureCursorUp();
                 }
+
                 _state = State.Ground;
                 break;
             case 'c': // RIS — Full Reset
@@ -342,13 +353,13 @@ public sealed class TerminalParser(
                 _currentParam = c - '0';
                 _state = State.CsiParam;
                 break;
-            case '?':
-                _csiPrivateParam = true;
-                _csiPrefix = c;
+            case ';':
+                _csiParams.Add(0);
+                _currentParam = -1;
                 _state = State.CsiParam;
                 break;
-            case '>' or '=':
-                // Secondary DA or other prefixed CSI
+            case '?' or '>' or '=' or '<':
+                // DEC private / secondary DA / Kitty protocol prefixed CSI
                 _csiPrivateParam = true;
                 _csiPrefix = c;
                 _state = State.CsiParam;
@@ -370,6 +381,7 @@ public sealed class TerminalParser(
                     // Invalid — return to ground
                     _state = State.Ground;
                 }
+
                 break;
             }
         }
@@ -381,13 +393,18 @@ public sealed class TerminalParser(
         {
             case >= '0' and <= '9':
             {
+                if (_csiInSubParam) break;
                 if (_currentParam < 0) _currentParam = 0;
                 _currentParam = _currentParam * 10 + (c - '0');
                 break;
             }
+            case ':':
+                _csiInSubParam = true;
+                break;
             case ';':
                 _csiParams.Add(_currentParam < 0 ? 0 : _currentParam);
                 _currentParam = -1;
+                _csiInSubParam = false;
                 break;
             default:
             {
@@ -398,6 +415,7 @@ public sealed class TerminalParser(
                     {
                         _csiParams.Add(_currentParam);
                     }
+
                     DispatchCsi(c);
                 }
                 else if (c >= 0x20 && c <= 0x2F)
@@ -410,6 +428,7 @@ public sealed class TerminalParser(
                     // Invalid — return to ground
                     _state = State.Ground;
                 }
+
                 break;
             }
         }
@@ -424,6 +443,7 @@ public sealed class TerminalParser(
             {
                 _csiParams.Add(_currentParam);
             }
+
             DispatchCsi(c);
         }
         else if (c < 0x20 || c > 0x2F)
@@ -575,6 +595,7 @@ public sealed class TerminalParser(
                     WriteChar(' ');
                     CursorX = savedX;
                 }
+
                 CaptureEraseChars(eraseCount);
                 break;
             case 'm': // SGR — Select Graphic Rendition (colors/styles) — ignore
@@ -587,6 +608,7 @@ public sealed class TerminalParser(
                 {
                     _terminalResponseHandler?.Invoke("\e[?1;0c");
                 }
+
                 break;
             case 'q': // DECSCUSR — Set Cursor Style — ignore
             case 'x': // DECREQTPARM — ignore
@@ -602,6 +624,7 @@ public sealed class TerminalParser(
                 {
                     _terminalResponseHandler?.Invoke($"\e[8;{_dimensions.Rows};{_dimensions.Columns}t");
                 }
+
                 break;
         }
     }
@@ -615,6 +638,7 @@ public sealed class TerminalParser(
                 // Secondary Device Attributes. Keep the identity conservative.
                 _terminalResponseHandler?.Invoke("\e[>0;0;0c");
             }
+
             return;
         }
 
@@ -644,6 +668,7 @@ public sealed class TerminalParser(
                         SetPrivateMode(mode, enabled);
                     }
                 }
+
                 break;
             }
             case 'J': // DECSED — Selective Erase in Display
@@ -659,6 +684,7 @@ public sealed class TerminalParser(
                 {
                     _terminalResponseHandler?.Invoke(BuildCursorPositionReport(isPrivate: true));
                 }
+
                 break;
             // Unknown private CSI — ignore
         }
@@ -691,12 +717,12 @@ public sealed class TerminalParser(
         var parts = content.Split(';');
         if (parts.Length < 2) return;
 
-        HasDetectedShellIntegration = true;
         var markerChar = parts[1];
         switch (markerChar)
         {
             case "A":
             {
+                HasDetectedShellIntegration = true;
                 _shellIntegrationMarkerHandler?.Invoke(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.PromptStart,
@@ -705,6 +731,7 @@ public sealed class TerminalParser(
             }
             case "B":
             {
+                HasDetectedShellIntegration = true;
                 _shellIntegrationMarkerHandler?.Invoke(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.CommandReady,
@@ -713,6 +740,7 @@ public sealed class TerminalParser(
             }
             case "C":
             {
+                HasDetectedShellIntegration = true;
                 _shellIntegrationMarkerHandler?.Invoke(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.CommandExecuted,
@@ -721,12 +749,14 @@ public sealed class TerminalParser(
             }
             case "D":
             {
+                HasDetectedShellIntegration = true;
                 // D may have an exit code: 633;D;<exitcode>
                 int? exitCode = null;
                 if (parts.Length >= 3 && int.TryParse(parts[2], out var code))
                 {
                     exitCode = code;
                 }
+
                 _shellIntegrationMarkerHandler?.Invoke(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.CommandFinished,
@@ -736,6 +766,7 @@ public sealed class TerminalParser(
             }
             case "E":
             {
+                HasDetectedShellIntegration = true;
                 // E has command text: 633;E;<command>[;<nonce>]
                 var cmdLine = parts.Length >= 3 ? DecodeOsc633Value(parts[2]) : null;
                 _shellIntegrationMarkerHandler?.Invoke(
@@ -743,6 +774,21 @@ public sealed class TerminalParser(
                         ShellIntegrationMarkerType.CommandLine,
                         CommandLine: cmdLine,
                         Line: CursorY));
+                break;
+            }
+            case "P":
+            {
+                var prop = parts.Length >= 3 ? DecodeOsc633Value(parts[2]) : null;
+                if (prop is not null && !prop.StartsWith("IntegrationError=", StringComparison.Ordinal))
+                {
+                    HasDetectedShellIntegration = true;
+                }
+
+                _shellIntegrationMarkerHandler?.Invoke(
+                    new ShellIntegrationMarker(
+                        ShellIntegrationMarkerType.Property,
+                        Line: CursorY,
+                        Property: prop));
                 break;
             }
         }
@@ -941,13 +987,26 @@ public sealed class TerminalParser(
 
     private void EndCaptureBatch()
     {
+        FlushCapturedText();
         _captureUpdateScope?.Dispose();
         _captureUpdateScope = null;
     }
 
     private void CaptureWrite(char value)
     {
-        _captureBuffer?.Write(value);
+        if (_captureBuffer is not null) _capturedText.Append(value);
+    }
+
+    // Apply consecutive printable text in one buffer edit, not one string allocation per cell.
+    private void FlushCapturedText()
+    {
+        if (_capturedText.Length == 0) return;
+        if (_captureBuffer is not null)
+        {
+            foreach (var chunk in _capturedText.GetChunks()) _captureBuffer.Write(chunk.Span);
+        }
+
+        _capturedText.Clear();
     }
 
     private void CaptureCarriageReturn()
@@ -1052,6 +1111,7 @@ public sealed class TerminalParser(
         _csiParams.Clear();
         _currentParam = -1;
         _csiPrivateParam = false;
+        _csiInSubParam = false;
         _csiPrefix = '\0';
         // _csiIntermediate = '\0';
     }

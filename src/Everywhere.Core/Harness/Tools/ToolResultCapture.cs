@@ -26,7 +26,7 @@ public static class ToolResultCapture
         object? value;
         switch (result.Result)
         {
-            case null or string or ChatFunctionResult or ChatAttachment or PromptNode:
+            case null or string or ChatFunctionResult or ChatAttachment or PromptNode or ToolContentResult:
             {
                 return result;
             }

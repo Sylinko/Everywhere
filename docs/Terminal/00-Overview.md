@@ -84,11 +84,13 @@ IAsyncEnumerable<TerminalRun> ExecuteAsync(
     TerminalSession session,
     string script,
     ShellType shellType,
-    TimeSpan timeout,
-    CancellationToken cancellationToken)
+    TimeSpan? timeout = null,
+    CancellationToken cancellationToken = default)
 ```
 
-调用方不需要先拿到额外的 `TerminalExecution` 或 `TerminalSubmissionResult`。枚举产生 `TerminalRun`，`TerminalRun.WaitAsync` 表示这个 run 已经完成。
+调用方不需要先拿到额外的 `TerminalExecution` 或 `TerminalSubmissionResult`。枚举产生 `TerminalRun`，`TerminalRun.WaitAsync` 表示这个 run 已经完成。`TerminalPlugin` 在命令获批并启动 PTY 后通过 `IChatPluginExecutionContext.BeginForegroundBudget` 启用 20 秒前台等待预算（不再施加 30 秒硬超时强杀）；超时未结束则由 `FunctionCallContext` 转入 Harness 后台任务，保持同一 PID、PTY 与实时终端交互直到完成或用户显式停止。
+
+`TerminalTelemetry`（`Everywhere.Terminal` `ActivitySource` 与 `Meter`）以及 `DetectStrategyAsync` 的 `Warning` 级结构化日志用于追踪 `pwsh` / `powershell` / `zsh` / `bash` 的策略命中、冷启动耗时与回落原因。
 
 ### TerminalRun
 
@@ -114,7 +116,7 @@ IAsyncEnumerable<TerminalRun> ExecuteAsync(
 
 它同时服务两类消费者：
 
-1. 模型输出：`GetText()`，会裁掉尾部空行。
+1. 模型输出：`GetText()` 供内部测试读取完整文本；`GetPreview()` 返回末尾最多 1,024 个 UTF-16 码元（发生裁剪时前置 `[earlier output omitted]`），供前台结果、后台实时查看与完成通知共用。
 2. UI 显示：`CopyLines(maxVisibleLines, out version)`，会返回稳定行快照并裁掉尾部 live empty line。
 
 ## 关键不变量

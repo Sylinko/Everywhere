@@ -1,16 +1,16 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Harness;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Watchdog;
-using Everywhere.Prompting;
 using Everywhere.Terminal;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
-using Everywhere.Harness;
 using Porta.Pty;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
@@ -22,10 +22,22 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 /// </summary>
 public sealed partial class TerminalPlugin : BuiltInChatPlugin
 {
+    /// <inheritdoc />
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Header);
+
+    /// <inheritdoc />
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Description);
+
+    /// <inheritdoc />
     public override LucideIconKind? Icon => LucideIconKind.SquareTerminal;
+
+    /// <inheritdoc />
     public override IReadOnlyList<SettingsItem> SettingsItems => _pluginSettings.SettingsItems;
+
+    /// <summary>
+    /// The maximum time to wait for a foreground command to complete before it is automatically backgrounded.
+    /// </summary>
+    public TimeSpan ForegroundBudget { get; init; } = TimeSpan.FromSeconds(20);
 
     private readonly TerminalPluginSettings _pluginSettings;
     private readonly IWatchdogManager _watchdogManager;
@@ -55,15 +67,27 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             return new ValueTask<IReadOnlyList<ChatFunction>>([]);
         }
 
+        var shellKind = ShellIntegrationScript.GetShellKind(shellType, shellPath);
+        var shellName = shellKind switch
+        {
+            "pwsh" => "pwsh",
+            "powershell" => "Windows PowerShell",
+            _ => shellType.ToString()
+        };
+        var chainHint = shellType switch
+        {
+            ShellType.PowerShell when shellKind != "pwsh" =>
+                "Use semicolons ; to chain commands on one line, NEVER use && even when asked explicitly. " +
+                "In PowerShell, use exit $LASTEXITCODE if you need to forward an exact native executable exit code.",
+            ShellType.PowerShell =>
+                "Prefer ; when chaining commands on one line (pwsh supports &&). " +
+                "In PowerShell, use exit $LASTEXITCODE if you need to forward an exact native executable exit code.",
+            _ => "Prefer ; when chaining commands on one line."
+        };
         var description =
-            $"Executes command in {shellType switch {
-                ShellType.PowerShell when shellPath.Contains("pwsh", StringComparison.OrdinalIgnoreCase) => "pwsh",
-                ShellType.PowerShell => "Windows PowerShell",
-                _ => shellType.ToString()
-            }} and obtains its output. The execution is hosted by PTY which is presented to user as an interactive terminal, allowing real-time output display. {shellType switch {
-            ShellType.PowerShell => "Use semicolons ; to chain commands on one line, NEVER use && even when asked explicitly",
-            _ => "Prefer ; when chaining commands on one line"
-        }}";
+            $"Executes command in {shellName} and obtains its output. " +
+            $"The execution is hosted by PTY which is presented to user as an interactive terminal, allowing real-time output display. " +
+            $"Long-running commands automatically continue as background jobs. {chainHint}";
 
         var runtimeFunction = new NativeChatFunction(
             ExecuteInTerminalAsync,
@@ -88,14 +112,16 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Header,
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Description)]
-    private async Task<string> ExecuteInTerminalAsync(
+    private async Task<ToolContentResult> ExecuteInTerminalAsync(
         [FromChatServices] IChatPluginUserInterface userInterface,
+        [FromChatServices] IChatPluginExecutionContext executionContext,
         [FromChatServices] ChatContext chatContext,
         [Description("A concise description for user, explaining what are you doing")] string description,
         [Description("Single or multi-line shell command")] string command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        _logger.LogDebug("Executing shell script with description: {Description}", description);
+        LogExecutingShellScript(description);
 
         if (string.IsNullOrWhiteSpace(command))
         {
@@ -111,7 +137,9 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new NotSupportedException(
-                    $"The configured shell '{shellPath}' is unavailable or unsupported. Supported shells are PowerShell (pwsh), Windows PowerShell (powershell), zsh, and bash. Ask the user to check the Terminal plugin's shell-path setting."),
+                    $"The configured shell '{shellPath}' is unavailable or unsupported. " +
+                    $"Supported shells are PowerShell (pwsh), Windows PowerShell (powershell), zsh, and bash. " +
+                    $"Ask the user to check the Terminal plugin's shell-path setting."),
                 LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell);
         }
 
@@ -138,8 +166,15 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage);
         }
 
+        var shellKind = ShellIntegrationScript.GetShellKind(shellType, shellPath);
+        // ReSharper disable once ExplicitCallerInfoArgument
+        using var executeActivity = TerminalTelemetry.ActivitySource.StartActivity("terminal.execute");
+        executeActivity?.SetTag("terminal.shell.kind", shellKind);
+        executeActivity?.SetTag("terminal.shell.type", shellType.ToString());
+        var startTimestamp = Stopwatch.GetTimestamp();
+
         var terminalDimensions = TerminalDimensions.Default;
-        var shellArgs = ShellIntegrationScript.BuildShellArgs(shellType);
+        var shellArgs = ShellIntegrationScript.BuildShellArgs(shellType, shellPath);
         var nonce = Guid.NewGuid().ToString("N")[..16];
         var environment = ShellIntegrationScript.BuildEnvironmentVariables(shellType, nonce);
         if (EnvironmentVariableUtilities.GetLatestPathVariable() is { Length: > 0 } latestPath)
@@ -160,26 +195,44 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         };
 
         var terminalRuns = new List<TerminalRun>();
-        using (var pty = await PtyProvider.SpawnAsync(options, cancellationToken))
+        var strategyName = "none";
+        var outcomeName = "unknown";
+        var errorType = "none";
+        var bracketedPasteEnabled = false;
+        IPtyConnection? pty = null;
+        TerminalSession? session = null;
+        IAsyncDisposable? watchdogRegistration = null;
+        try
         {
-            var session = TerminalSession.FromPtyOptions(pty, options);
-
-            await using var watchdogRegistration = await _watchdogManager.RegisterProcessAsync(pty.Pid);
+            pty = await PtyProvider.SpawnAsync(options, cancellationToken);
+            session = TerminalSession.FromPtyOptions(pty, options);
+            watchdogRegistration = await _watchdogManager.RegisterProcessAsync(pty.Pid);
+            using var foregroundBudget = executionContext.BeginForegroundBudget(ForegroundBudget);
 
             // Detect shell integration and choose strategy
             // If scripts are not available (shellArgs is null), skip detection and use None directly
             ExecuteStrategy strategy;
             if (shellArgs is null)
             {
-                _logger.LogDebug("Shell integration scripts not available for {ShellType}, using None strategy", shellType);
+                LogShellIntegrationScriptNotAvailable(shellKind, shellType);
+                TerminalTelemetry.StrategyDetections.Add(
+                    1,
+                    new TagList
+                    {
+                        { "shell.kind", shellKind },
+                        { "strategy", "none" },
+                        { "reason", "script_missing" },
+                        { "error.type", "none" }
+                    });
                 strategy = new NoneExecuteStrategy(_logger);
             }
             else
             {
-                strategy = await ExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, cancellationToken);
+                strategy = await ExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, cancellationToken, shellPath);
             }
 
-            var execution = strategy.ExecuteAsync(session, command, shellType, TimeSpan.FromSeconds(30), cancellationToken);
+            strategyName = strategy is RichExecuteStrategy ? "rich" : "none";
+            var execution = strategy.ExecuteAsync(session, command, shellType, timeout: null, cancellationToken);
             await foreach (var run in execution)
             {
                 terminalRuns.Add(run);
@@ -193,24 +246,142 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 }
                 finally
                 {
-                    await chatContext.DispatchAsync(() => displayBlock.Complete(run.ExitCode));
+                    await chatContext.DispatchAsync(() => displayBlock.Complete(
+                        run.ExitCode,
+                        run.Termination,
+                        cancellationToken.IsCancellationRequested));
                 }
             }
 
-            _logger.LogInformation("[PTY] After execute, IsBracketedPasteModeEnabled={IsEnabled}", session.Parser.IsBracketedPasteModeEnabled);
+            bracketedPasteEnabled = session.Parser.IsBracketedPasteModeEnabled;
+        }
+        catch (OperationCanceledException)
+        {
+            outcomeName = "canceled";
+            errorType = nameof(OperationCanceledException);
+            executeActivity?.SetTag("terminal.canceled", true);
+            if (pty is not null)
+            {
+                try { pty.Kill(); }
+                catch
+                {
+                    // Ignore kill errors during cancellation teardown.
+                }
+            }
+
+            throw;
+        }
+        catch (Exception ex)
+        {
+            outcomeName = pty is null ? "spawn_failed" : "error";
+            errorType = ex.GetType().Name;
+            executeActivity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            executeActivity?.SetTag("error.type", errorType);
+            throw;
+        }
+        finally
+        {
+            session?.DiscardPendingRead();
+            pty?.Dispose();
+            if (watchdogRegistration is not null)
+            {
+                await watchdogRegistration.DisposeAsync();
+            }
+
+            var isBackgrounded = executionContext.IsBackgrounded;
+            if (outcomeName == "unknown")
+            {
+                outcomeName = terminalRuns.AsValueEnumerable().Any(static r => r.Termination is { Kind: PtyTerminationKind.Signaled })
+                    ? "signaled"
+                    : terminalRuns.AsValueEnumerable().Any(static r => r.ExitCode is not null and not 0)
+                        ? "nonzero_exit"
+                        : "success";
+            }
+
+            var duration = Stopwatch.GetElapsedTime(startTimestamp);
+            executeActivity?.SetTag("terminal.strategy", strategyName);
+            executeActivity?.SetTag("terminal.outcome", outcomeName);
+            executeActivity?.SetTag("terminal.backgrounded", isBackgrounded);
+            executeActivity?.SetTag("terminal.run_count", terminalRuns.Count);
+            executeActivity?.SetTag("terminal.bracketed_paste", bracketedPasteEnabled);
+
+            TerminalTelemetry.Executions.Add(
+                1,
+                new TagList
+                {
+                    { "shell.kind", shellKind },
+                    { "strategy", strategyName },
+                    { "outcome", outcomeName },
+                    { "backgrounded", isBackgrounded },
+                    { "error.type", errorType }
+                });
+            TerminalTelemetry.ExecutionDuration.Record(
+                duration.TotalSeconds,
+                new TagList
+                {
+                    { "shell.kind", shellKind },
+                    { "strategy", strategyName },
+                    { "backgrounded", isBackgrounded }
+                });
         }
 
-        var outputs = terminalRuns.AsValueEnumerable().Select(run => run.OutputText.Trim()).ToArray();
-        var budgets = TokenBudget.Allocate(outputs.AsValueEnumerable().Select(TokenHelper.EstimateTokenCount).ToArray().AsSpan(), 40000);
+        var bodyBuilder = new StringBuilder();
+        var hasEarlierOmission = false;
+        var isOutputIncomplete = false;
+        foreach (var run in terminalRuns)
+        {
+            isOutputIncomplete |= run.IsOutputIncomplete;
+            var (runText, isRunOmitted) = run.Output.GetPreviewParts();
+            if (isRunOmitted)
+            {
+                hasEarlierOmission = true;
+            }
+
+            var trimmedRunText = runText.TrimEnd();
+            if (trimmedRunText.Length == 0) continue;
+
+            if (bodyBuilder.Length > 0)
+            {
+                bodyBuilder.Append('\n');
+            }
+
+            bodyBuilder.Append(trimmedRunText);
+        }
 
         var resultBuilder = new StringBuilder();
-        for (var i = 0; i < terminalRuns.Count; i++)
+        var boundedBody = TerminalLineBuffer.TruncateTail(
+            bodyBuilder.ToString(),
+            TerminalLineBuffer.DefaultPreviewLength,
+            hasEarlierOmission);
+        if (boundedBody.Length > 0)
         {
-            TokenHelper.OmitTo(outputs[i], resultBuilder, budgets[i]);
-            resultBuilder.AppendLine().Append("Exit code: ").AppendLine(terminalRuns[i].ExitCode?.ToString() ?? "N/A").AppendLine();
+            resultBuilder.AppendLine(boundedBody);
         }
 
-        return resultBuilder.TrimEnd().ToString();
+        var signaledTermination = terminalRuns.AsValueEnumerable()
+            .Where(static r => r.Termination is { Kind: PtyTerminationKind.Signaled })
+            .Select(static r => r.Termination)
+            .LastOrDefault();
+        var finalExitCode = terminalRuns.AsValueEnumerable()
+            .Select(static r => r.ExitCode)
+            .LastOrDefault(static code => code is not null);
+        var statusLine = signaledTermination is { Kind: PtyTerminationKind.Signaled } signaled
+            ? $"Terminated by signal: {signaled.Value}"
+            : finalExitCode is { } exitCode
+                ? $"Exit code: {exitCode}"
+                : "Exit code: N/A";
+        resultBuilder.AppendLine(statusLine);
+        if (isOutputIncomplete)
+        {
+            resultBuilder.AppendLine("[output may be incomplete: child process still holds PTY open]");
+        }
+
+        return new ToolContentResult
+        {
+            Blocks = [new ToolContentBlock.Text(resultBuilder.TrimEnd().ToString())],
+            IsError = terminalRuns.AsValueEnumerable().Any(static r =>
+                r.Termination is { Kind: PtyTerminationKind.Signaled } || r.ExitCode is not null and not 0)
+        };
     }
 
     /// <summary>
@@ -367,4 +538,10 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
 
     [GeneratedRegex(@"^(\d+(\.\d+)*)")]
     private static partial Regex VersionRegex();
+
+    [LoggerMessage(LogLevel.Debug, "Executing shell script with description: {Description}")]
+    partial void LogExecutingShellScript(string description);
+
+    [LoggerMessage(LogLevel.Warning, "Shell integration script not available for {ShellKind} ({ShellType}); falling back to None strategy.")]
+    partial void LogShellIntegrationScriptNotAvailable(string shellKind, ShellType shellType);
 }

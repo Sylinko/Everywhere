@@ -11,7 +11,7 @@ var execution = strategy.ExecuteAsync(
     session,
     command,
     shellType,
-    TimeSpan.FromSeconds(30),
+    timeout: null,
     cancellationToken);
 
 await foreach (var run in execution.WithCancellation(cancellationToken))
@@ -19,7 +19,7 @@ await foreach (var run in execution.WithCancellation(cancellationToken))
     terminalRuns.Add(run);
 
     var displayBlock = new ChatPluginTerminalDisplayBlock(shellType, run, session);
-    userInterface.DisplaySink.AppendBlock(displayBlock);
+    await userInterface.DisplaySink.AppendBlockAsync(displayBlock);
 
     try
     {
@@ -27,7 +27,7 @@ await foreach (var run in execution.WithCancellation(cancellationToken))
     }
     finally
     {
-        displayBlock.Complete(run.ExitCode);
+        await chatContext.DispatchAsync(() => displayBlock.Complete(run.ExitCode, run.Termination, cancellationToken.IsCancellationRequested));
     }
 }
 ```
@@ -217,10 +217,14 @@ D 才是 completion
 如果发送命令后一直没有 `C`：
 
 1. fallbackBuffer 会捕获发送后的终端画面。
-2. 当 prompt-like line 或 fallback idle threshold 出现时退出。
-3. 创建一个 synthetic `TerminalRun(script)`。
-4. `OutputCleaner.StripCommandEchoAndPrompt(rawOutput, script)` 清理 echo/prompt。
-5. `ExitCode = null`。
+2. 如果始终未出现 `C`，Rich 会在根进程退出（`WaitForTerminationAsync`）或读取 EOF/超时后收尾：
+
+1. EndCapture。
+2. 根进程已退出时最多排空 2 秒输出；若仍有子进程占着 PTY，保留已有退出码并标记输出可能不完整。
+3. 创建一个 synthetic `TerminalRun(script)`，通过 `OutputCleaner.StripCommandEchoAndPrompt(rawOutput, script)` 清理回显。
+4. 若未收到 `D;<code>` 且进程未以明确退出码结束，`ExitCode = null`。
+
+说明：Rich 在收到 `C` 后或等待命令完成期间绝不使用提示符正则或静默阈值提前判结束，只接受 `OSC 633;D`（配对后续 `A`/`B`）、根进程退出或显式超时/取消。
 
 典型触发原因：
 
@@ -258,7 +262,7 @@ None 模式无法通过 OSC marker 得知 shell 是否处于干净 prompt。启�
 
 ### Prompt heuristic
 
-None 用 `OutputCleaner.IsShellPrompt` 检查 `run.Output` 的最后几行。它不看 session startup output，避免启动 prompt 污染当前命令判断。
+None 用 `OutputCleaner.IsShellPrompt` 检查 `run.Output` 的当前活动光标行（`GetCursorLineText`）。它不看 session startup output，也不扫描已换行的历史 stdout，避免把 `50%` 等进度行误判为提示符；同时通过并发监听根进程退出（退出后最多排空 2 秒）获取显式 `exit` 的退出码，并在未匹配到提示符时保留 30 秒静默兜底阈值。
 
 ### None 的多行输入
 

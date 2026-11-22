@@ -124,9 +124,6 @@ public readonly record struct RequestConsentResult(bool IsAccepted, string? Reas
 /// </summary>
 public interface IChatPluginUserInterface
 {
-    /// <summary>Gets the approval mode captured when this invocation entered its consent boundary.</summary>
-    ToolApprovalMode ApprovalMode { get; }
-
     /// <summary>
     /// Gets a display sink for the plugin to output content to the user interface.
     /// </summary>
@@ -160,7 +157,8 @@ public interface IChatPluginUserInterface
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
         IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
         ToolApprovalScope? approvalScope = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Ask question and wait for answer.
@@ -170,7 +168,8 @@ public interface IChatPluginUserInterface
     /// <returns></returns>
     Task<IReadOnlyList<ChatPluginQuestionAnswer>> AskQuestionAsync(
         IReadOnlyList<ChatPluginQuestion> questions,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 }
 
 /// <summary>
@@ -202,7 +201,8 @@ public interface IChatPluginUserInterfaceBroker
         ChatPluginDisplayBlock? content,
         RequestConsentRememberMasks rememberMasks,
         IReadOnlyList<RequestConsentCustomOption>? customOptions,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken
+    );
 
     /// <summary>
     /// Shows a question dialog to the user and returns their answer.
@@ -212,5 +212,6 @@ public interface IChatPluginUserInterfaceBroker
     /// <returns></returns>
     Task<IReadOnlyList<ChatPluginQuestionAnswer>> HandleAskQuestionAsync(
         IReadOnlyList<ChatPluginQuestion> questions,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 }

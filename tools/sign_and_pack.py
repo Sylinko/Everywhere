@@ -32,17 +32,31 @@ def is_already_signed(target_path: str, signtool_exe: str) -> bool:
     # Return code 0 means the file is successfully verified (already signed)
     return result.returncode == 0
     
-def sign_worker(fingerprint: str, target_path: str, signtool_exe: str, max_retries: int = 3) -> str:
+def normalize_powershell_script(target_path: str) -> None:
+    """Ensure .ps1 scripts use UTF-8 with BOM and CRLF before Authenticode signing."""
+    with open(target_path, 'rb') as stream:
+        original_bytes = stream.read()
+
+    text = original_bytes.decode('utf-8-sig')
+    normalized_text = text.replace('\r\n', '\n').replace('\r', '\n').replace('\n', '\r\n')
+    normalized_bytes = normalized_text.encode('utf-8-sig')
+    if normalized_bytes != original_bytes:
+        with open(target_path, 'wb') as stream:
+            stream.write(normalized_bytes)
+
+
+def sign_worker(fingerprint: str, target_path: str, display_name: str, signtool_exe: str, max_retries: int = 3) -> str:
     """
     Worker function to sign a single file with verification and retry logic.
     Returns a status string indicating the result.
     """
-    filename = os.path.basename(target_path)
-    
     # Step 1: Check if the file is already signed
     if is_already_signed(target_path, signtool_exe):
-        return f"[SKIP] {filename} is already signed."
-    
+        return f"[SKIP] {display_name} is already signed."
+
+    if target_path.lower().endswith('.ps1'):
+        normalize_powershell_script(target_path)
+
     # Step 2: Attempt to sign the file with retries
     for attempt in range(max_retries):
         result = subprocess.run(
@@ -61,14 +75,14 @@ def sign_worker(fingerprint: str, target_path: str, signtool_exe: str, max_retri
 
         # Check for success criteria
         if result.returncode == 0 and result.stdout.count("Error") == 0 and result.stderr.count("Error") == 0:
-            return f"[SUCCESS] Signed: {filename}"
+            return f"[SUCCESS] Signed: {display_name}"
             
         # If failed and retries are left, wait briefly before retrying
         if attempt < max_retries - 1:
             time.sleep(2)
         else:
             raise RuntimeError(
-                f"[ERROR] Failed to sign {filename} after {max_retries} attempts.\n"
+                f"[ERROR] Failed to sign {display_name} after {max_retries} attempts.\n"
                 f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
             )
 
@@ -190,14 +204,18 @@ if __name__ == "__main__":
 
         print(f"Using configured certificate fingerprint: {fingerprint}")
 
-        # Phase 1: Sign all executables and libraries concurrently
-        print(f"\nPhase 1: Scanning and signing binaries in '{publish_path}'")
-        
-        files_to_process = [
-            os.path.join(publish_path, f)
-            for f in os.listdir(publish_path)
-            if f.lower().endswith(('.exe', '.dll'))
-        ]
+        # Phase 1: Sign all executables, libraries, and PowerShell integration scripts recursively
+        print(f"\nPhase 1: Scanning and signing binaries and scripts recursively in '{publish_path}'")
+
+        files_to_process = sorted(
+            (
+                (os.path.join(root, f), os.path.relpath(os.path.join(root, f), publish_path))
+                for root, _, files in os.walk(publish_path)
+                for f in files
+                if f.lower().endswith(('.exe', '.dll', '.ps1'))
+            ),
+            key=lambda item: item[1].lower()
+        )
         
         # Determine optimal thread count to prevent API rate limiting
         max_workers = 6 
@@ -205,17 +223,17 @@ if __name__ == "__main__":
         # Execute concurrent signing tasks
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_path = {
-                executor.submit(sign_worker, fingerprint, path, signtool_exe): path 
-                for path in files_to_process
+                executor.submit(sign_worker, fingerprint, path, rel_path, signtool_exe): rel_path
+                for path, rel_path in files_to_process
             }
             
             for future in concurrent.futures.as_completed(future_to_path):
-                path = future_to_path[future]
+                rel_path = future_to_path[future]
                 try:
                     result_msg = future.result()
                     print(result_msg)
                 except Exception as exc:
-                    print(f"\n[FATAL] Unhandled exception processing {os.path.basename(path)}: {exc}")
+                    print(f"\n[FATAL] Unhandled exception processing {rel_path}: {exc}")
                     raise
         
         # Phase 2: Inno signs both the installer and its embedded uninstaller.

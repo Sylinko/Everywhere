@@ -4301,6 +4301,12 @@
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>Скачать с официального сайта</value>
     </data>
+    <data name="TerminalView_Signal" xml:space="preserve">
+        <value>Завершено сигналом {0}</value>
+    </data>
+    <data name="TerminalView_Stopped" xml:space="preserve">
+        <value>Команда остановлена</value>
+    </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Команда начата в {0}, завершилась с ошибкой через {1} секунд, код выхода {2}</value>
     </data>

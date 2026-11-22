@@ -152,6 +152,13 @@ public class OutputCleanerTests
         Assert.That(OutputCleaner.IsShellPrompt(longLine), Is.False);
     }
 
+    [TestCase("50%")]
+    [TestCase("Downloading 100%")]
+    public void IsShellPrompt_PercentageProgressLine_ReturnsFalse(string line)
+    {
+        Assert.That(OutputCleaner.IsShellPrompt(line), Is.False);
+    }
+
     #endregion
 
     #region CleanOutput

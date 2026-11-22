@@ -7,16 +7,8 @@
 ### 终端相关测试
 
 ```bash
-dotnet test tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj --no-restore --filter "FullyQualifiedName~Everywhere.Core.Tests.Terminal"
-```
-
-当前基线：
-
-```text
-通过: 145
-跳过: 4
-失败: 0
-总计: 149
+dotnet test tests/Everywhere.Terminal.Tests/Everywhere.Terminal.Tests.csproj --no-restore
+dotnet test tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj --no-restore --filter "FullyQualifiedName~QueueAndSteerTests"
 ```
 
 ### TestApp 构建

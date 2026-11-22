@@ -144,8 +144,8 @@
   </ItemGroup>
   <ItemGroup Label="Sylinko forks">
     <PackageVersion Include="OfficeCLI" Version="999.20261111.7" />
-    <PackageVersion Include="Porta.Pty" Version="999.20261111.4" />
-    <PackageVersion Include="Porta.Pty.Native" Version="999.20261111.4" />
+    <PackageVersion Include="Porta.Pty" Version="999.20261121.5" />
+    <PackageVersion Include="Porta.Pty.Native" Version="999.20261121.5" />
     <PackageVersion Include="EverythingNetCore" Version="999.20261111.5" />
     <PackageVersion Include="MessagePack" Version="$(MessagePackVersion)" />
     <PackageVersion Include="MessagePack.Annotations" Version="$(MessagePackVersion)" />

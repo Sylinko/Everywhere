@@ -27,6 +27,19 @@ public sealed partial class ToolContentResult
     /// </summary>
     public string GetPublicText(IReadOnlyList<ToolResultFile> files)
     {
+        return FormatBlocks(files, includeErrorNotice: true);
+    }
+
+    /// <summary>
+    /// Renders text blocks and structured content for background job notifications without an appended export notice.
+    /// </summary>
+    public string FormatNotificationText(IReadOnlyList<ToolResultFile> files)
+    {
+        return FormatBlocks(files, includeErrorNotice: false);
+    }
+
+    private string FormatBlocks(IReadOnlyList<ToolResultFile> files, bool includeErrorNotice)
+    {
         var lines = new List<string>();
         foreach (var block in Blocks)
         {
@@ -60,7 +73,7 @@ public sealed partial class ToolContentResult
             lines.Add(structured.GetRawText());
         }
 
-        if (IsError is true)
+        if (includeErrorNotice && IsError is true)
         {
             lines.Add("The tool reported an error.");
         }

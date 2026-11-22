@@ -4301,6 +4301,12 @@ Kopiere den Befehl unten und führe ihn im Terminal aus, um das Update durchzuf�
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>Von der offiziellen Website herunterladen</value>
     </data>
+    <data name="TerminalView_Signal" xml:space="preserve">
+        <value>Durch Signal {0} beendet</value>
+    </data>
+    <data name="TerminalView_Stopped" xml:space="preserve">
+        <value>Befehl gestoppt</value>
+    </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Befehl begann um {0}, fehlgeschlagen nach {1} Sekunden, Rückgabewert: {2}</value>
     </data>

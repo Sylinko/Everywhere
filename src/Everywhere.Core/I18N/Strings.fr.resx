@@ -4301,6 +4301,12 @@ Copiez la commande ci-dessous et exécutez-la dans un terminal pour effectuer la
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>Télécharger depuis le site officiel</value>
     </data>
+    <data name="TerminalView_Signal" xml:space="preserve">
+        <value>Terminé par le signal {0}</value>
+    </data>
+    <data name="TerminalView_Stopped" xml:space="preserve">
+        <value>Commande arrêtée</value>
+    </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>La commande a commencé à s'exécuter à {0} et a échoué après {1} secondes, code de sortie {2}</value>
     </data>

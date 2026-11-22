@@ -1,8 +1,9 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using System.Text;
 using Everywhere.Chat.Links;
 using Everywhere.Terminal;
 using Lucide.Avalonia;
 using MessagePack;
+using Porta.Pty;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -48,6 +49,11 @@ public abstract partial class ChatPluginDisplayBlock
     /// Assigns descendant ownership or reconnects an explicit embedded-data durability bridge.
     /// </summary>
     protected virtual void OnOwnerChanged(ChatMessageNode? owner) { }
+
+    /// <summary>
+    /// Returns a bounded live output preview for an in-flight background job, or <see langword="null"/> if not applicable.
+    /// </summary>
+    public virtual string? ReadLiveOutput() => null;
 
     /// <summary>
     /// Signals changed values to a realized standalone block, such as consent or terminal status.
@@ -106,6 +112,23 @@ public sealed partial class ChatPluginContainerDisplayBlock : ChatPluginDisplayB
 
     public void Add(ChatPluginDisplayBlock block) => _displaySink.Add(block);
 
+    /// <inheritdoc />
+    public override string? ReadLiveOutput()
+    {
+        var builder = new StringBuilder();
+        foreach (var child in Children)
+        {
+            var text = child.ReadLiveOutput();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                if (builder.Length > 0) builder.Append('\n');
+                builder.Append(text);
+            }
+        }
+
+        return builder.Length > 0 ? builder.ToString() : null;
+    }
+
     public IEnumerator<ChatPluginDisplayBlock> GetEnumerator()
     {
         return _displaySink.GetEnumerator();
@@ -131,6 +154,9 @@ public sealed partial class ChatPluginTextDisplayBlock(string text, string? clas
 
     [Key(1)]
     public string? ClassName { get; } = className;
+
+    /// <inheritdoc />
+    public override string ReadLiveOutput() => Text;
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
@@ -303,7 +329,8 @@ public sealed partial class ChatPluginFileDifferenceDisplayBlock : ChatPluginDis
         TextDifference difference,
         string originalText,
         TextDifferenceReviewKind reviewKind,
-        string? sourcePath)
+        string? sourcePath
+    )
     {
         Difference = difference;
         OriginalText = originalText;
@@ -322,19 +349,18 @@ public sealed partial class ChatPluginFileDifferenceDisplayBlock : ChatPluginDis
         string? sourcePath,
         string? filePath,
         int addedLineCount,
-        int removedLineCount)
+        int removedLineCount
+    )
     {
         Difference = null;
         OriginalText = null;
         ReviewKind = reviewKind;
         SourcePath = sourcePath;
         FilePath = filePath ?? difference?.FilePath ?? sourcePath ?? string.Empty;
-        AddedLineCount = addedLineCount != 0 || difference is null ?
-            addedLineCount :
-            CountAddedLines(difference);
-        RemovedLineCount = removedLineCount != 0 || difference is null || originalText is null ?
-            removedLineCount :
-            CountRemovedLines(difference, originalText);
+        AddedLineCount = addedLineCount != 0 || difference is null ? addedLineCount : CountAddedLines(difference);
+        RemovedLineCount = removedLineCount != 0 || difference is null || originalText is null
+            ? removedLineCount
+            : CountRemovedLines(difference, originalText);
     }
 
     /// <summary>
@@ -414,6 +440,9 @@ public sealed partial class ChatPluginCodeBlockDisplayBlock(string code, string?
 
     [Key(1)]
     public string? Language { get; } = language;
+
+    /// <inheritdoc />
+    public override string ReadLiveOutput() => Code;
 }
 
 /// <summary>
@@ -448,6 +477,24 @@ public sealed partial class ChatPluginSubagentDisplayBlock : ChatPluginDisplayBl
         {
             HandleChildChanged(sender, EventArgs.Empty);
         }
+    }
+
+    /// <inheritdoc />
+    public override string? ReadLiveOutput()
+    {
+        var builder = new StringBuilder();
+        foreach (var node in ChatData.SelectedNodes)
+        {
+            if (node.Message is not AssistantChatMessage assistantMessage) continue;
+            var text = assistantMessage.ToString();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                if (builder.Length > 0) builder.Append('\n');
+                builder.Append(text);
+            }
+        }
+
+        return builder.Length > 0 ? builder.ToString() : null;
     }
 
     public void Dispose()
@@ -491,6 +538,13 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
     [IgnoreMember]
     public TimeSpan Elapsed => (FinishedAt ?? DateTimeOffset.UtcNow) - CreatedAt;
 
+    [Key(5)]
+    public IDynamicLocaleKey? FailureReasonKey
+    {
+        get;
+        private set => SetProperty(ref field, value);
+    }
+
     [IgnoreMember] private TerminalSession? _session;
 
     public ChatPluginTerminalDisplayBlock(ShellType shellType, TerminalRun run, TerminalSession session)
@@ -528,9 +582,20 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
         return _session?.WritePasteAsync(text, cancellationToken) ?? default;
     }
 
-    public void Complete(int? exitCode)
+    /// <inheritdoc />
+    public override string? ReadLiveOutput() => Run?.Output.GetPreview();
+
+    public void Complete(int? exitCode, PtyTermination? termination = null, bool isCancelled = false)
     {
         _session = null;
+        FailureReasonKey = termination switch
+        {
+            { Kind: PtyTerminationKind.Signaled } signal => new FormattedDynamicLocaleKey(
+                LocaleKey.TerminalView_Signal,
+                new DirectLocaleKey(signal.Value.ToString())),
+            _ when isCancelled => new DynamicLocaleKey(LocaleKey.TerminalView_Stopped),
+            _ => null
+        };
         ExitCode = exitCode;
         FinishedAt = DateTimeOffset.UtcNow;
     }

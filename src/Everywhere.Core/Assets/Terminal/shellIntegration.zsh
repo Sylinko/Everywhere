@@ -12,6 +12,7 @@ EVERYWHERE_SHELL_INTEGRATION=1
 
 __everywhere_disable_history() {
 	unsetopt BANG_HIST APPEND_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME SHARE_HISTORY 2>/dev/null
+	builtin setopt INTERACTIVE_COMMENTS 2>/dev/null
 	HISTFILE=/dev/null
 	HISTSIZE=0
 	SAVEHIST=0
@@ -25,6 +26,7 @@ unset EVERYWHERE_NONCE
 
 __everywhere_in_command_execution="1"
 __everywhere_current_command=""
+__everywhere_captured_status=""
 __everywhere_prior_prompt=""
 __everywhere_prior_rprompt=""
 __everywhere_prompt_end_armed=""
@@ -94,10 +96,14 @@ __everywhere_zle_line_init() {
 	__everywhere_prompt_end
 }
 
-__everywhere_precmd() {
-	__everywhere_disable_history
+__everywhere_capture_status() {
+	__everywhere_captured_status="$?"
+}
 
-	builtin local __everywhere_status="$?"
+__everywhere_precmd() {
+	builtin local __everywhere_status="${__everywhere_captured_status:-$?}"
+	__everywhere_captured_status=""
+	__everywhere_disable_history
 	if [ -z "${__everywhere_in_command_execution-}" ]; then
 		__everywhere_command_output_start
 	fi
@@ -126,7 +132,9 @@ __everywhere_zshaddhistory() {
 
 autoload -Uz add-zsh-hook
 autoload -Uz add-zle-hook-widget
+add-zsh-hook precmd __everywhere_capture_status
 add-zsh-hook precmd __everywhere_precmd
+precmd_functions=(__everywhere_capture_status ${precmd_functions:#__everywhere_capture_status})
 add-zsh-hook preexec __everywhere_preexec
 add-zsh-hook zshaddhistory __everywhere_zshaddhistory
 add-zle-hook-widget line-init __everywhere_zle_line_init

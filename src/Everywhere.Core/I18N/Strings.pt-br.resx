@@ -4301,6 +4301,12 @@ Copie o comando abaixo e execute-o no terminal para atualizar.</value>
     <data name="TerminalUpdate_Website_OpenDownload" xml:space="preserve">
         <value>Baixar no site oficial</value>
     </data>
+    <data name="TerminalView_Signal" xml:space="preserve">
+        <value>Encerrado pelo sinal {0}</value>
+    </data>
+    <data name="TerminalView_Stopped" xml:space="preserve">
+        <value>Comando interrompido</value>
+    </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>O comando foi iniciado em {0} e falhou após {1} segundos. Código de saída: {2}</value>
     </data>

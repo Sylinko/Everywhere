@@ -73,12 +73,26 @@ public sealed record ChatSubagentBlockState(ChatPluginSubagentDisplayBlock Block
 /// <summary>
 /// Command identity and terminal completion values; output and input stay on the live run.
 /// </summary>
-public sealed record ChatTerminalState(ShellType ShellType, string? Command, DateTimeOffset CreatedAt, DateTimeOffset? FinishedAt, int? ExitCode)
+public sealed record ChatTerminalState(
+    ShellType ShellType,
+    string? Command,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? FinishedAt,
+    int? ExitCode,
+    IDynamicLocaleKey? FailureReasonKey = null)
 {
+    public bool HasCustomFailureReason => FailureReasonKey is not null;
+
     public TimeSpan Elapsed => (FinishedAt ?? DateTimeOffset.UtcNow) - CreatedAt;
 
     public static ChatTerminalState Capture(ChatPluginTerminalDisplayBlock block)
     {
-        return new ChatTerminalState(block.ShellType, block.Command, block.CreatedAt, block.FinishedAt, block.ExitCode);
+        return new ChatTerminalState(
+            block.ShellType,
+            block.Command,
+            block.CreatedAt,
+            block.FinishedAt,
+            block.ExitCode,
+            block.FailureReasonKey);
     }
 }

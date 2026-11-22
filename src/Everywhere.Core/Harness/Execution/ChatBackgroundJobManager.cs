@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reactive.Disposables.Fluent;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -5,6 +6,7 @@ using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
+using Everywhere.Terminal;
 
 namespace Everywhere.Harness;
 
@@ -159,53 +161,43 @@ public sealed partial class ChatBackgroundJob : ObservableObject
         if (SourceMessage is null) return string.Empty;
 
         var live = new StringBuilder();
+        var hasEarlierOmission = false;
+        var hasTerminalBlock = false;
         foreach (var block in SourceMessage.DisplayBlocks)
         {
-            switch (block)
+            var text = block.ReadLiveOutput();
+            if (string.IsNullOrWhiteSpace(text)) continue;
+
+            if (block is ChatPluginTerminalDisplayBlock)
             {
-                case ChatPluginTerminalDisplayBlock { Run: { } run } terminalBlock:
+                hasTerminalBlock = true;
+                text = TerminalLineBuffer.StripOmissionPrefix(text, out var blockOmitted);
+                if (blockOmitted)
                 {
-                    if (!string.IsNullOrWhiteSpace(terminalBlock.Command))
-                    {
-                        live.AppendLine($"$ {terminalBlock.Command}");
-                    }
-
-                    live.AppendLine(run.OutputText);
-                    if (run.ExitCode is { } exitCode)
-                    {
-                        live.AppendLine($"Exit code: {exitCode}");
-                    }
-
-                    break;
-                }
-                case ChatPluginSubagentDisplayBlock subagentBlock:
-                {
-                    foreach (var node in subagentBlock.ChatData.SelectedNodes)
-                    {
-                        if (node.Message is not AssistantChatMessage assistantMessage) continue;
-                        var text = assistantMessage.ToString();
-                        if (!string.IsNullOrWhiteSpace(text))
-                        {
-                            live.AppendLine(text);
-                        }
-                    }
-
-                    break;
-                }
-                case ChatPluginTextDisplayBlock textBlock:
-                {
-                    live.AppendLine(textBlock.Text);
-                    break;
-                }
-                case ChatPluginCodeBlockDisplayBlock codeBlock:
-                {
-                    live.AppendLine(codeBlock.Code);
-                    break;
+                    hasEarlierOmission = true;
                 }
             }
+
+            var trimmedText = text.TrimEnd();
+            if (trimmedText.Length == 0) continue;
+
+            if (live.Length > 0)
+            {
+                live.Append('\n');
+            }
+
+            live.Append(trimmedText);
         }
 
-        return live.ToString().Trim();
+        if (live.Length == 0)
+        {
+            return hasEarlierOmission ? "[earlier output omitted]" : string.Empty;
+        }
+
+        var combined = live.ToString().Trim();
+        return hasTerminalBlock || hasEarlierOmission
+            ? TerminalLineBuffer.TruncateTail(combined, TerminalLineBuffer.DefaultPreviewLength, hasEarlierOmission)
+            : combined;
     }
 
     internal void MarkCompleted(bool isSuccess, string? output, string? errorMessage)
@@ -297,14 +289,20 @@ public sealed class ChatBackgroundJobManager : IDisposable
                     try
                     {
                         var result = await executionTask.ConfigureAwait(false);
-                        output = result.Record.Result?.ToString();
+                        var content = result.Record.Result as ToolContentResult;
+                        output = content?.FormatNotificationText(result.Record.Files) ?? result.Record.Result?.ToString();
                         if (result.Error is { } error)
                         {
-                            errorMessage = error.Message;
+                            errorMessage = stopCts.IsCancellationRequested ? "Stopped." : error.Message;
+                            var partial = job.ReadLiveOutput();
+                            if (!string.IsNullOrWhiteSpace(partial) || stopCts.IsCancellationRequested)
+                            {
+                                output = partial;
+                            }
                         }
                         else
                         {
-                            isSuccess = true;
+                            isSuccess = content?.IsError is not true;
                         }
                     }
                     catch (OperationCanceledException)
@@ -358,7 +356,7 @@ public sealed class ChatBackgroundJobManager : IDisposable
     /// <summary>
     /// Looks up a job by identifier.
     /// </summary>
-    public bool TryGetJob(string jobId, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ChatBackgroundJob? job)
+    public bool TryGetJob(string jobId, [NotNullWhen(true)] out ChatBackgroundJob? job)
     {
         using var scope = _sync.EnterScope();
         return _jobsById.TryGetValue(jobId, out job);

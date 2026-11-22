@@ -48,6 +48,204 @@ namespace Everywhere.Core.Tests.Harness;
 public sealed class QueueAndSteerTests
 {
     [AvaloniaTest]
+    public async Task Terminal_WhenForegroundBudgetExpires_DetachesPreservesInteractivePtyAndNotifiesFailureOnce()
+    {
+        var settings = new Settings(Substitute.For<IServiceProvider>());
+        var plugin = new TerminalPlugin(settings, Substitute.For<IWatchdogManager>(), NullLogger<TerminalPlugin>.Instance)
+        {
+            ForegroundBudget = TimeSpan.FromMilliseconds(300)
+        };
+        Assert.That(
+            new TerminalPlugin(settings, Substitute.For<IWatchdogManager>(), NullLogger<TerminalPlugin>.Instance).ForegroundBudget,
+            Is.EqualTo(TimeSpan.FromSeconds(20)));
+        using var harness = new TestChatHarness(plugin);
+        harness.Settings.Plugin.ToolEnablementRulesets[ToolSettingsKey.ForPlugin(plugin)] = true;
+
+        var command = OperatingSystem.IsWindows()
+            ? """"Write-Output ('x' * 3000); Write-Output "50% pid=$PID"; $answer = Read-Host; Write-Output "done=$answer FINISHED pid=$PID"; cmd.exe /d /c "exit 23" """"
+            : """printf '%03000d\n' 0; echo "50% pid=$$"; read answer; echo "done=$answer FINISHED pid=$$"; exit 23""";
+        harness.ConfigureHandler((n, _, _) => Task.FromResult(n == 1
+            ? CreateToolBatchSseResponse(("terminal-long", "execute_in_terminal", JsonSerializer.Serialize(new { description = "Install probe", command })))
+            : CreateTextSseResponse("Noted.")));
+
+        var root = harness.Root;
+        await harness.ChatService.SubmitMessageAsync(root, new UserChatMessage("Run the test command", []), harness.Assistant, ChatInputDeliveryMode.Queue);
+        ChatPluginTerminalDisplayBlock? block = null;
+        await WaitUntilAsync(() =>
+        {
+            var candidate = root.BackgroundJobs.ActiveJobs.SingleOrDefault();
+            block = candidate?.SourceMessage?.DisplayBlocks.OfType<ChatPluginTerminalDisplayBlock>().SingleOrDefault();
+            return block is not null;
+        }, TimeSpan.FromSeconds(15));
+        var job = root.BackgroundJobs.ActiveJobs.Single();
+        if (block is null) throw new InvalidOperationException("Expected terminal display block after detach.");
+
+        await WaitUntilAsync(() => job.ReadLiveOutput().Contains("50% pid=", StringComparison.Ordinal), TimeSpan.FromSeconds(10));
+        var progress = job.ReadLiveOutput();
+        Assert.That(progress, Does.StartWith("[earlier output omitted]"));
+        Assert.That(progress.Length, Is.LessThan(1100));
+        var match = System.Text.RegularExpressions.Regex.Match(progress, @"50% pid=(\d+)");
+        Assert.That(match.Success, Is.True);
+
+        await block.WriteInputAsync("resume\r");
+
+        await WaitUntilAsync(() => root.Data.SelectedNodes.Any(n => n.Message is BackgroundJobNotificationChatMessage), TimeSpan.FromSeconds(15));
+        await WaitUntilAsync(() => !root.IsTurnActive, TimeSpan.FromSeconds(10));
+        var note = root.Data.SelectedNodes.Select(n => n.Message).OfType<BackgroundJobNotificationChatMessage>().Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(note.IsSuccess, Is.False);
+            Assert.That(block.ExitCode, Is.EqualTo(23));
+            Assert.That(note.Output, Does.Contain($"done=resume FINISHED pid={match.Groups[1].Value}"));
+            Assert.That(note.Output, Does.Contain("Exit code: 23"));
+            Assert.That(note.Output, Does.Contain("[earlier output omitted]"));
+            Assert.That(note.Output, Does.Not.Contain("The tool reported an error."));
+            Assert.That(note.Output.Length, Is.LessThan(1100));
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task Terminal_WhenStoppedAfterDetach_KillsProcessMarksStoppedAndRetainsPartialOutput()
+    {
+        var settings = new Settings(Substitute.For<IServiceProvider>());
+        var plugin = new TerminalPlugin(settings, Substitute.For<IWatchdogManager>(), NullLogger<TerminalPlugin>.Instance)
+        {
+            ForegroundBudget = TimeSpan.FromMilliseconds(300)
+        };
+        using var harness = new TestChatHarness(plugin);
+        harness.Settings.Plugin.ToolEnablementRulesets[ToolSettingsKey.ForPlugin(plugin)] = true;
+        var command = OperatingSystem.IsWindows() ? """Write-Output "pid=$PID"; Start-Sleep -Seconds 90""" : """echo "pid=$$"; sleep 90""";
+        harness.ConfigureHandler((n, _, _) => Task.FromResult(n == 1
+            ? CreateToolBatchSseResponse(("terminal-stop", "execute_in_terminal", JsonSerializer.Serialize(new { description = "Stop probe", command })))
+            : CreateTextSseResponse("Noted.")));
+
+        var root = harness.Root;
+        await harness.ChatService.SubmitMessageAsync(root, new UserChatMessage("Run until stopped", []), harness.Assistant, ChatInputDeliveryMode.Queue);
+        ChatPluginTerminalDisplayBlock? block = null;
+        await WaitUntilAsync(() =>
+        {
+            var candidate = root.BackgroundJobs.ActiveJobs.SingleOrDefault();
+            block = candidate?.SourceMessage?.DisplayBlocks.OfType<ChatPluginTerminalDisplayBlock>().SingleOrDefault();
+            return block is not null;
+        }, TimeSpan.FromSeconds(15));
+        var job = root.BackgroundJobs.ActiveJobs.Single();
+        if (block is null) throw new InvalidOperationException("Expected terminal display block after detach.");
+
+        await WaitUntilAsync(() => System.Text.RegularExpressions.Regex.IsMatch(job.ReadLiveOutput(), @"pid=\d+"), TimeSpan.FromSeconds(10));
+        var match = System.Text.RegularExpressions.Regex.Match(job.ReadLiveOutput(), @"pid=(\d+)");
+        Assert.That(match.Success, Is.True);
+        using var process = System.Diagnostics.Process.GetProcessById(int.Parse(match.Groups[1].Value));
+
+        job.RequestStop();
+        await WaitUntilAsync(() => job.IsCompleted && !root.IsBusy && !root.IsTurnActive, TimeSpan.FromSeconds(10));
+        await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(job.IsSuccess, Is.False);
+            Assert.That(job.ErrorMessage, Is.EqualTo("Stopped."));
+            Assert.That(job.Output, Does.Contain(match.Value));
+            Assert.That(block.FailureReasonKey, Is.EqualTo(new DynamicLocaleKey(Everywhere.Core.I18N.LocaleKey.TerminalView_Stopped)));
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task InvokeFunctions_WhenForegroundCanceledAfterDetach_KeepsBackgroundJobAliveWithoutCanceledErrorOnMessage()
+    {
+        var raceTriggered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var toolRelease = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationToken capturedToolToken = default;
+        var didDetach = false;
+        var isBackgrounded = false;
+        RootChatContext? rootRef = null;
+
+        var plugin = new SteerTestPlugin(onConsentTool: async (_, execution, ct) =>
+        {
+            capturedToolToken = ct;
+            didDetach = execution.TryMoveToBackground();
+            isBackgrounded = execution.IsBackgrounded;
+            if (rootRef is null) throw new InvalidOperationException("RootChatContext was not initialized.");
+            rootRef.Cancel();
+            raceTriggered.TrySetResult();
+            return await toolRelease.Task.WaitAsync(ct);
+        });
+        using var harness = new TestChatHarness(extraPlugin: plugin);
+        harness.ConfigureHandler((n, _, _) => Task.FromResult(n == 1
+            ? CreateToolBatchSseResponse(("c-race", "consent_probe", "{}"))
+            : CreateTextSseResponse("Done.")));
+
+        var root = harness.Root;
+        rootRef = root;
+        await harness.ChatService.SubmitMessageAsync(root, new UserChatMessage("Start detach race", []), harness.Assistant, ChatInputDeliveryMode.Queue);
+        await raceTriggered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => root.BackgroundJobs.ActiveJobs.Count == 1 && !root.IsBusy, TimeSpan.FromSeconds(5));
+        Dispatcher.UIThread.RunJobs();
+
+        var job = root.BackgroundJobs.ActiveJobs.Single();
+        var callMessage = job.SourceMessage;
+        Assert.Multiple(() =>
+        {
+            Assert.That(didDetach, Is.True);
+            Assert.That(isBackgrounded, Is.True);
+            Assert.That(capturedToolToken.IsCancellationRequested, Is.False);
+            Assert.That(callMessage, Is.Not.Null);
+            if (callMessage is not null)
+            {
+                Assert.That(callMessage.ErrorMessageKey, Is.Null);
+            }
+        });
+
+        toolRelease.TrySetResult("bg survived cancel");
+        await WaitUntilAsync(() => job.IsCompleted && !root.IsTurnActive, TimeSpan.FromSeconds(5));
+        Assert.Multiple(() =>
+        {
+            Assert.That(job.IsSuccess, Is.True);
+            Assert.That(job.Output, Is.EqualTo("bg survived cancel"));
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task Subagent_WhenStoppedAfterDetach_RetainsPartialAssistantOutput()
+    {
+        var detachedReady = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var childData = new ChatData();
+        var userNode = childData.StartTurn(new UserChatMessage("Child prompt", []));
+        var childAssistant = new AssistantChatMessage();
+        childAssistant.AddSpan(new AssistantChatMessageTextSpan("partial subagent answer"));
+        childData.Append(userNode, childAssistant);
+
+        var plugin = new SteerTestPlugin(onConsentTool: async (ui, execution, ct) =>
+        {
+            await ui.DisplaySink.AppendSubagentAsync(childData);
+            using var budget = execution.BeginForegroundBudget(TimeSpan.FromMilliseconds(50));
+            detachedReady.TrySetResult();
+            await Task.Delay(Timeout.InfiniteTimeSpan, ct);
+            return "unreachable";
+        });
+        using var harness = new TestChatHarness(extraPlugin: plugin);
+        harness.ConfigureHandler((n, _, _) => Task.FromResult(n == 1
+            ? CreateToolBatchSseResponse(("c-sub", "consent_probe", "{}"))
+            : CreateTextSseResponse("Noted.")));
+
+        var root = harness.Root;
+        await harness.ChatService.SubmitMessageAsync(root, new UserChatMessage("Start subagent probe", []), harness.Assistant, ChatInputDeliveryMode.Queue);
+        await detachedReady.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => root.BackgroundJobs.ActiveJobs.Count == 1, TimeSpan.FromSeconds(5));
+
+        var job = root.BackgroundJobs.ActiveJobs.Single();
+        job.RequestStop();
+        await WaitUntilAsync(() => job.IsCompleted && !root.IsTurnActive, TimeSpan.FromSeconds(5));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(job.IsSuccess, Is.False);
+            Assert.That(job.ErrorMessage, Is.EqualTo("Stopped."));
+            Assert.That(job.Output, Does.Contain("partial subagent answer"));
+        });
+    }
+
+    [AvaloniaTest]
     public async Task SubmitMessage_WhenBusyAndQueued_DrainsSequentiallyWithPreservedPrefix()
     {
         using var harness = new TestChatHarness();
@@ -327,7 +525,7 @@ public sealed class QueueAndSteerTests
         var backgroundWakeDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var testPlugin = new SteerTestPlugin(
-            onConsentTool: async (ui, ct) =>
+            onConsentTool: async (ui, _, ct) =>
             {
                 consentRequested.TrySetResult();
                 var result = await ui.RequestConsentAsync(
@@ -436,7 +634,7 @@ public sealed class QueueAndSteerTests
             reviewDelegate,
             supportsBackgrounding: true);
 
-        Assert.That(functionContext.TryRequestMoveToBackground(), Is.True);
+        Assert.That(functionContext.TryMoveToBackground(), Is.True);
         await generation.DisposeAsync();
         Assert.That(generation.IsDisposed, Is.True);
 
@@ -554,7 +752,13 @@ public sealed class QueueAndSteerTests
         using var jobStopCts = new CancellationTokenSource();
         var ongoingJobTcs = new TaskCompletionSource<(ToolResultRecord Record, Exception? Error)>(TaskCreationOptions.RunContinuationsAsynchronously);
         var callMsg = new FunctionCallChatMessage(LucideIconKind.Terminal, new DirectLocaleKey("terminal"));
-        callMsg.DisplaySink.AppendBlock(new ChatPluginTextDisplayBlock("live line 1"));
+        var run1 = new Everywhere.Terminal.TerminalRun("cmd1");
+        run1.Output.ReplaceText(new string('a', 800));
+        var run2 = new Everywhere.Terminal.TerminalRun("cmd2");
+        run2.Output.ReplaceText(new string('b', 800));
+        var session = new Everywhere.Terminal.TerminalSession(Substitute.For<Porta.Pty.IPtyConnection>(), Everywhere.Terminal.TerminalDimensions.Default);
+        callMsg.DisplaySink.AppendBlock(new ChatPluginTerminalDisplayBlock(Everywhere.Terminal.ShellType.PowerShell, run1, session));
+        callMsg.DisplaySink.AppendBlock(new ChatPluginTerminalDisplayBlock(Everywhere.Terminal.ShellType.PowerShell, run2, session));
         var job = historyRoot.BackgroundJobs.RegisterDetachedJob(
             historyRoot,
             historyData.SelectedTurns.LastOrDefault(),
@@ -565,33 +769,45 @@ public sealed class QueueAndSteerTests
             jobStopCts,
             _ => { });
 
-        var runServices = new ServiceCollection()
-            .AddSingleton<ChatContext>(historyRoot)
-            .BuildServiceProvider();
-        var listText = await jobToolBinding!.Function.Function.InvokeAsync(
-            new Microsoft.Extensions.AI.AIFunctionArguments(new Dictionary<string, object?> { ["action"] = "list" })
-            {
-                Services = runServices
-            });
-        var outputText = await jobToolBinding.Function.Function.InvokeAsync(
-            new Microsoft.Extensions.AI.AIFunctionArguments(new Dictionary<string, object?> { ["action"] = "output", ["jobId"] = job.JobId })
-            {
-                Services = runServices
-            });
-        var stopText = await jobToolBinding.Function.Function.InvokeAsync(
-            new Microsoft.Extensions.AI.AIFunctionArguments(new Dictionary<string, object?> { ["action"] = "stop", ["jobId"] = job.JobId })
-            {
-                Services = runServices
-            });
-
-        Assert.Multiple(() =>
+        try
         {
-            Assert.That(listText?.ToString(), Does.Contain(job.JobId).And.Contain("running"));
-            Assert.That(outputText?.ToString(), Does.Contain("live line 1"));
-            Assert.That(stopText?.ToString(), Does.Contain("Stop requested"));
-            Assert.That(jobStopCts.IsCancellationRequested, Is.True);
-        });
-        ongoingJobTcs.TrySetCanceled(jobStopCts.Token);
+            var runServices = new ServiceCollection()
+                .AddSingleton<ChatContext>(historyRoot)
+                .BuildServiceProvider();
+            var listText = await jobToolBinding!.Function.Function.InvokeAsync(
+                new Microsoft.Extensions.AI.AIFunctionArguments(new Dictionary<string, object?> { ["action"] = "list" })
+                {
+                    Services = runServices
+                });
+            var outputText = await jobToolBinding.Function.Function.InvokeAsync(
+                new Microsoft.Extensions.AI.AIFunctionArguments(new Dictionary<string, object?> { ["action"] = "output", ["jobId"] = job.JobId })
+                {
+                    Services = runServices
+                });
+            var stopText = await jobToolBinding.Function.Function.InvokeAsync(
+                new Microsoft.Extensions.AI.AIFunctionArguments(new Dictionary<string, object?> { ["action"] = "stop", ["jobId"] = job.JobId })
+                {
+                    Services = runServices
+                });
+
+            var liveBody = job.ReadLiveOutput();
+            Assert.Multiple(() =>
+            {
+                Assert.That(listText?.ToString(), Does.Contain(job.JobId).And.Contain("running"));
+                Assert.That(liveBody, Does.StartWith("[earlier output omitted]\n"));
+                Assert.That(
+                    liveBody.Length,
+                    Is.LessThanOrEqualTo(Everywhere.Terminal.TerminalLineBuffer.DefaultPreviewLength + "[earlier output omitted]\n".Length));
+                Assert.That(outputText?.ToString(), Does.Contain("[earlier output omitted]\n"));
+                Assert.That(outputText?.ToString(), Does.Contain(new string('b', 800)));
+                Assert.That(stopText?.ToString(), Does.Contain("Stop requested"));
+                Assert.That(jobStopCts.IsCancellationRequested, Is.True);
+            });
+        }
+        finally
+        {
+            ongoingJobTcs.TrySetCanceled(jobStopCts.Token);
+        }
     }
 
     [AvaloniaTest]
@@ -728,8 +944,12 @@ public sealed class QueueAndSteerTests
             await harness.ChatService.SubmitMessageAsync(harness.Root, new UserChatMessage("Steer hint", []), harness.Assistant, ChatInputDeliveryMode.Steer),
             Is.True);
 
-        // Wait until foreground pauses while background job holds Turn 1 open.
-        await WaitUntilAsync(() => !harness.Root.IsBusy && harness.Root.HasActiveBackgroundJobsForCurrentTurn, TimeSpan.FromSeconds(5));
+        // Wait until foreground pauses and async presentation preheating publishes the waiting row.
+        await WaitUntilAsync(
+            () => !harness.Root.IsBusy &&
+                  harness.Root.HasActiveBackgroundJobsForCurrentTurn &&
+                  presentation.Rows.OfType<BackgroundJobWaitingPresentationRow>().Any(),
+            TimeSpan.FromSeconds(5));
         Dispatcher.UIThread.RunJobs();
         Assert.Multiple(() =>
         {
@@ -1010,12 +1230,12 @@ public sealed class QueueAndSteerTests
 
         private readonly Func<CancellationToken, Task<string>>? _onBackgroundTool;
         private readonly Func<string>? _onSerialTool;
-        private readonly Func<IChatPluginUserInterface, CancellationToken, Task<string>>? _onConsentTool;
+        private readonly Func<IChatPluginUserInterface, IChatPluginExecutionContext, CancellationToken, Task<string>>? _onConsentTool;
 
         public SteerTestPlugin(
             Func<CancellationToken, Task<string>>? onBackgroundTool = null,
             Func<string>? onSerialTool = null,
-            Func<IChatPluginUserInterface, CancellationToken, Task<string>>? onConsentTool = null) : base("steer_test")
+            Func<IChatPluginUserInterface, IChatPluginExecutionContext, CancellationToken, Task<string>>? onConsentTool = null) : base("steer_test")
         {
             _onBackgroundTool = onBackgroundTool;
             _onSerialTool = onSerialTool;
@@ -1048,8 +1268,9 @@ public sealed class QueueAndSteerTests
         [ChatFunction("consent_probe")]
         private Task<string> RunConsentProbeAsync(
             [FromChatServices] IChatPluginUserInterface ui,
+            [FromChatServices] IChatPluginExecutionContext execution,
             CancellationToken cancellationToken) =>
-            _onConsentTool is null ? Task.FromResult("ok") : _onConsentTool(ui, cancellationToken);
+            _onConsentTool is null ? Task.FromResult("ok") : _onConsentTool(ui, execution, cancellationToken);
     }
 
     private sealed class TestChatHarness : IDisposable

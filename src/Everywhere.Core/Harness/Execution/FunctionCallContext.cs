@@ -12,7 +12,7 @@ namespace Everywhere.Harness;
 /// Each live call owns its message, ambient services, and activity preview. Older
 /// messages can contain several same-name calls; they remain readable as recorded.
 /// </remarks>
-public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginDisplaySink, IAsyncDisposable
+public sealed class FunctionCallContext : IChatPluginExecutionContext, IChatPluginUserInterface, IChatPluginDisplaySink, IAsyncDisposable
 {
     private static readonly AsyncLocal<FunctionCallContext?> SCurrent = new();
 
@@ -37,9 +37,10 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
 
     public GenerationContext GenerationContext { get; }
 
-    /// <summary>
-    /// Gets the approval mode captured before this tool started.
-    /// </summary>
+    /// <inheritdoc />
+    public string InvocationId { get; }
+
+    /// <inheritdoc />
     public ToolApprovalMode ApprovalMode { get; }
 
     /// <summary>
@@ -52,11 +53,6 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     /// </summary>
     public ToolApprovalFailure? ApprovalFailure { get; private set; }
 
-    /// <summary>
-    /// Gets the stable tool-call ID used to isolate transient invocation state.
-    /// </summary>
-    public string InvocationId { get; }
-
     public ObservableToolRulesets ToolBypassApprovalRulesets { get; }
 
     public IChatPluginDisplaySink DisplaySink => this;
@@ -66,17 +62,13 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     /// </summary>
     public bool SupportsBackgrounding { get; }
 
-    /// <summary>
-    /// Gets whether this invocation has detached into background execution.
-    /// </summary>
-    public bool IsDetachedToBackground => Volatile.Read(ref _detachState) != 0;
+    /// <inheritdoc />
+    public bool IsBackgrounded => Volatile.Read(ref _detachState) == DetachStateDetached;
 
     /// <summary>
     /// Gets the execution-scoped cancellation token active for this invocation (still linked after background detach).
     /// </summary>
     public CancellationToken ExecutionCancellationToken { get; }
-
-    internal Task BackgroundMovedTask => _backgroundMovedTcs.Task;
 
     /// <summary>
     /// Gets whether the current function call may bypass approval.
@@ -105,6 +97,16 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
             return isSessionGranted;
         }
     }
+
+    /// <summary>
+    /// Gets a task that completes when this invocation has moved to background execution.
+    /// </summary>
+    public Task BackgroundMovedTask => _backgroundMovedTcs.Task;
+
+    private const int DetachStateForeground = 0;
+    private const int DetachStateDetached = 1;
+    private const int DetachStateForegroundCanceled = 2;
+    private const int DetachStateForegroundCompleted = 3;
 
     private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
     private readonly Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> _reviewAsync;
@@ -175,18 +177,46 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
         });
     }
 
-    /// <summary>
-    /// Requests moving this invocation into background execution if <see cref="SupportsBackgrounding"/> is enabled.
-    /// </summary>
-    public bool TryRequestMoveToBackground()
+    /// <inheritdoc />
+    public bool TryMoveToBackground()
     {
-        if (!SupportsBackgrounding || Interlocked.CompareExchange(ref _detachState, 1, 0) != 0)
+        if (!SupportsBackgrounding ||
+            Interlocked.CompareExchange(ref _detachState, DetachStateDetached, DetachStateForeground) != DetachStateForeground)
         {
             return false;
         }
 
         _backgroundMovedTcs.TrySetResult();
         return true;
+    }
+
+    internal bool TryCancelForeground() =>
+        Interlocked.CompareExchange(ref _detachState, DetachStateForegroundCanceled, DetachStateForeground) == DetachStateForeground;
+
+    internal bool TryCompleteForeground() =>
+        Interlocked.CompareExchange(ref _detachState, DetachStateForegroundCompleted, DetachStateForeground) == DetachStateForeground;
+
+    /// <inheritdoc />
+    public IDisposable BeginForegroundBudget(TimeSpan budget)
+    {
+        if (!SupportsBackgrounding || IsBackgrounded || budget == Timeout.InfiniteTimeSpan)
+        {
+            return Disposable.Empty;
+        }
+
+        if (budget <= TimeSpan.Zero)
+        {
+            TryMoveToBackground();
+            return Disposable.Empty;
+        }
+
+        var timerCts = new CancellationTokenSource(budget);
+        var registration = timerCts.Token.Register(() => TryMoveToBackground());
+        return Disposable.Create(() =>
+        {
+            registration.Dispose();
+            timerCts.Dispose();
+        });
     }
 
     /// <summary>
@@ -224,11 +254,11 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
 
         if (ApprovalMode == ToolApprovalMode.Auto)
         {
-            var review = await ReviewApprovalAsync(approvalScope, cancellationToken == default ? ExecutionCancellationToken : cancellationToken);
+            var review = await ReviewApprovalAsync(approvalScope, cancellationToken.CanBeCanceled ? cancellationToken : ExecutionCancellationToken);
             return review.IsAllowed ? RequestConsentResult.Accept : RequestConsentResult.Deny(review.FormatReason());
         }
 
-        var effectiveToken = cancellationToken == default ? ExecutionCancellationToken : cancellationToken;
+        var effectiveToken = cancellationToken.CanBeCanceled ? cancellationToken : ExecutionCancellationToken;
         var consentDecision = await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
             headerKey,
             content,
@@ -269,7 +299,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
         IReadOnlyList<ChatPluginQuestion> questions,
         CancellationToken cancellationToken = default)
     {
-        var effectiveToken = cancellationToken == default ? ExecutionCancellationToken : cancellationToken;
+        var effectiveToken = cancellationToken.CanBeCanceled ? cancellationToken : ExecutionCancellationToken;
         return await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleAskQuestionAsync(questions, effectiveToken));
     }
 
@@ -280,7 +310,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     /// </summary>
     public async Task<ToolApprovalResult> ReviewApprovalAsync(ToolApprovalScope? scope, CancellationToken cancellationToken)
     {
-        var shouldUpdatePreview = !IsDetachedToBackground;
+        var shouldUpdatePreview = !IsBackgrounded;
         ChatPluginActivityPreview? previousPreview = null;
         if (shouldUpdatePreview)
         {
@@ -307,7 +337,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
         }
         finally
         {
-            if (shouldUpdatePreview && !IsDetachedToBackground)
+            if (shouldUpdatePreview && !IsBackgrounded)
             {
                 await SetActivityPreviewAsync(previousPreview);
             }
@@ -320,7 +350,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     public async Task<T> WaitForUserInputAsync<T>(Func<Task<T>> interaction)
     {
         var enteredWait = false;
-        if (!IsDetachedToBackground)
+        if (!IsBackgrounded)
         {
             enteredWait = true;
             await ChatContext.DispatchAsync(_activityPresentationSlot.EnterUserInputWait);
@@ -353,7 +383,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IChatPluginD
     /// <inheritdoc />
     public Task SetActivityPreviewAsync(ChatPluginActivityPreview? preview)
     {
-        if (IsDetachedToBackground) return Task.CompletedTask;
+        if (IsBackgrounded) return Task.CompletedTask;
         return ChatContext.DispatchAsync(() => _activityPresentationSlot.Preview = preview);
     }
 
