@@ -110,6 +110,7 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
             {
                 lock (preset)
                 {
+                    preset.ApiKey = Guid.Empty;
                     preset.ProviderId = value.Id;
                     preset.Endpoint = value.Endpoint;
                     preset.Schema = value.Schema;
@@ -117,7 +118,9 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
                 }
             }
 
+            ObserveSelectedApiKey();
             OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedApiKey));
             OnPropertyChanged(nameof(DisplayProviderTemplate));
             OnPropertyChanged(nameof(HasTelemetryHeader));
             OnPropertyChanged(nameof(CanSelectCatalogModel));

@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
+using Avalonia.VisualTree;
 using SkiaSharp;
 
 namespace Everywhere.Views;
@@ -197,28 +198,45 @@ internal sealed class OobeShaderClock(Control owner, Action<double>? onStep = nu
 {
     public double ElapsedSeconds { get; private set; }
 
+    private readonly List<Visual> _observedAncestors = [];
     private TopLevel? _topLevel;
     private Window? _window;
     private bool _isRunning;
+    private int _generation;
     private TimeSpan? _lastFrameTime;
 
     public static float[] ColorComponents(Color color) => [color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f];
 
     public void Attach()
     {
+        Detach();
         _topLevel = TopLevel.GetTopLevel(owner);
         _window = _topLevel as Window;
         if (_window is not null) _window.PropertyChanged += HandleWindowChanged;
+        foreach (var ancestor in owner.GetVisualAncestors())
+        {
+            if (ReferenceEquals(ancestor, _window)) continue;
+            ancestor.PropertyChanged += HandleAncestorChanged;
+            _observedAncestors.Add(ancestor);
+        }
+
         Synchronize();
     }
 
     public void Detach()
     {
         if (_window is not null) _window.PropertyChanged -= HandleWindowChanged;
+        foreach (var ancestor in _observedAncestors)
+        {
+            ancestor.PropertyChanged -= HandleAncestorChanged;
+        }
+
+        _observedAncestors.Clear();
         _window = null;
         _topLevel = null;
         _isRunning = false;
         _lastFrameTime = null;
+        _generation++;
     }
 
     public void Synchronize()
@@ -227,13 +245,23 @@ internal sealed class OobeShaderClock(Control owner, Action<double>? onStep = nu
         {
             _isRunning = false;
             _lastFrameTime = null;
+            _generation++;
             return;
         }
 
         if (_isRunning) return;
         _isRunning = true;
         _lastFrameTime = null;
-        _topLevel?.RequestAnimationFrame(OnFrame);
+        var generation = ++_generation;
+        _topLevel?.RequestAnimationFrame(timestamp => OnFrame(timestamp, generation));
+    }
+
+    private void HandleAncestorChanged(object? sender, AvaloniaPropertyChangedEventArgs args)
+    {
+        if (args.Property == Visual.IsVisibleProperty)
+        {
+            Synchronize();
+        }
     }
 
     private void HandleWindowChanged(object? sender, AvaloniaPropertyChangedEventArgs args)
@@ -251,12 +279,14 @@ internal sealed class OobeShaderClock(Control owner, Action<double>? onStep = nu
         (_window is null || _window is { IsVisible: true, WindowState: not WindowState.Minimized }) &&
         (shouldRun is null || shouldRun());
 
-    private void OnFrame(TimeSpan timestamp)
+    private void OnFrame(TimeSpan timestamp, int generation)
     {
+        if (generation != _generation) return;
         if (!ShouldAnimate())
         {
             _isRunning = false;
             _lastFrameTime = null;
+            _generation++;
             return;
         }
 
@@ -274,6 +304,9 @@ internal sealed class OobeShaderClock(Control owner, Action<double>? onStep = nu
         _lastFrameTime = timestamp;
         onStep?.Invoke(dt);
         owner.InvalidateVisual();
-        _topLevel?.RequestAnimationFrame(OnFrame);
+        if (generation == _generation)
+        {
+            _topLevel?.RequestAnimationFrame(nextTimestamp => OnFrame(nextTimestamp, generation));
+        }
     }
 }

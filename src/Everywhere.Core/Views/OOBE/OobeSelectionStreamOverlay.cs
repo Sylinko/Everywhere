@@ -223,6 +223,7 @@ public sealed class OobeSelectionStreamOverlay : Control
         throw new InvalidOperationException("Failed to compile OOBE selection funnel shader: " + error));
 
     private readonly OobeShaderClock _clock;
+    private bool _isSelectionRequested;
     private bool _hasGeometry;
     private Point _lastStart;
     private Point _currentEnd;
@@ -257,6 +258,7 @@ public sealed class OobeSelectionStreamOverlay : Control
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        LayoutUpdated += HandleLayoutUpdated;
         UpdateTargetState();
         _clock.Attach();
     }
@@ -264,8 +266,17 @@ public sealed class OobeSelectionStreamOverlay : Control
     /// <inheritdoc />
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        LayoutUpdated -= HandleLayoutUpdated;
         _clock.Detach();
         base.OnDetachedFromVisualTree(e);
+    }
+
+    private void HandleLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (!_isSelectionRequested || _targetOpacity > 0f) return;
+
+        UpdateTargetState();
+        _clock.Synchronize();
     }
 
     /// <inheritdoc />
@@ -309,10 +320,11 @@ public sealed class OobeSelectionStreamOverlay : Control
 
     private void UpdateTargetState()
     {
-        _targetOpacity = !IsHoldFadeIn && !string.IsNullOrEmpty(TargetKey) ? 1f : 0f;
+        _isSelectionRequested = !IsHoldFadeIn && !string.IsNullOrEmpty(TargetKey);
 
-        if (_targetOpacity > 0f && TryResolveGeometry(out var start, out var end, out var halfWidth, out var cardA, out var cardB))
+        if (_isSelectionRequested && TryResolveGeometry(out var start, out var end, out var halfWidth, out var cardA, out var cardB))
         {
+            _targetOpacity = 1f;
             var isFreshFadeIn = !_hasGeometry || _opacity <= 0.004f;
             _lastStart = start;
             _cardRectA = cardA;
@@ -324,14 +336,19 @@ public sealed class OobeSelectionStreamOverlay : Control
                 _currentTargetHalfWidth = halfWidth;
             }
         }
+        else
+        {
+            _targetOpacity = 0f;
+        }
 
         InvalidateVisual();
     }
 
     private void StepAnimation(double dt)
     {
-        if (_targetOpacity > 0f && TryResolveGeometry(out var start, out var end, out var halfWidth, out var cardA, out var cardB))
+        if (_isSelectionRequested && TryResolveGeometry(out var start, out var end, out var halfWidth, out var cardA, out var cardB))
         {
+            _targetOpacity = 1f;
             var isFreshFadeIn = !_hasGeometry || _opacity <= 0.004f;
             _lastStart = start;
             _cardRectA = cardA;
@@ -350,6 +367,10 @@ public sealed class OobeSelectionStreamOverlay : Control
                     _currentEnd.Y + (end.Y - _currentEnd.Y) * posRate);
                 _currentTargetHalfWidth += (halfWidth - _currentTargetHalfWidth) * posRate;
             }
+        }
+        else
+        {
+            _targetOpacity = 0f;
         }
 
         if (dt > 0)

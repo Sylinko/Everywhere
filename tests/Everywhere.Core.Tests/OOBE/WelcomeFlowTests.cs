@@ -820,6 +820,33 @@ public sealed class WelcomeFlowTests
         Assert.That(flow.CurrentStep, Is.TypeOf<WelcomeSourceStep>());
     }
 
+    [AvaloniaTest]
+    public void SelectedPresetProvider_WhenProviderChanges_ClearsStoredApiKeySelection()
+    {
+        using var harness = new TestHarness();
+        using var flow = harness.CreateFlow();
+        var apiKey = new ApiKey { Name = "OpenAI Key", SecretKey = "secret-openai" };
+        harness.Settings.Model.ApiKeys.Add(apiKey);
+
+        flow.SelectSourceCommand.Execute(WelcomeModelSource.Own);
+        flow.SelectedPresetProvider = WelcomeFlow.PresetProviders.First(p => p.Id == "openai");
+        flow.SelectedApiKey = apiKey;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.That(flow.PresetConfiguration?.ApiKey, Is.EqualTo(apiKey.Id));
+        Assert.That(flow.SelectedApiKey, Is.SameAs(apiKey));
+
+        flow.SelectedPresetProvider = WelcomeFlow.PresetProviders.First(p => p.Id == "anthropic");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(flow.PresetConfiguration?.ProviderId, Is.EqualTo("anthropic"));
+            Assert.That(flow.PresetConfiguration?.ApiKey, Is.EqualTo(Guid.Empty));
+            Assert.That(flow.SelectedApiKey, Is.SameAs(ApiKey.Empty));
+        });
+    }
+
     private sealed class MessageRecorder<T>(Action onReceive) : IRecipient<T> where T : class
     {
         public void Receive(T message) => onReceive();
