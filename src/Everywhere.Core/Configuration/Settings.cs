@@ -17,6 +17,13 @@ public sealed partial class Settings(IServiceProvider serviceProvider) : Setting
     [ObservableProperty]
     public partial string? Version { get; set; }
 
+    /// <summary>
+    /// Highest completed onboarding capability version; zero records an unfinished run, even when
+    /// an assistant has already been saved.
+    /// </summary>
+    [ObservableProperty]
+    public partial int CompletedOobeVersion { get; set; }
+
     #region Common
 
     public CommonSettings Common { get; } = new(serviceProvider);

@@ -27,14 +27,12 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
 
     private readonly SourceList<NavigationBarItem> _itemsSource = new();
     private readonly IServiceProvider _serviceProvider;
-    private readonly Settings _settings;
 
     private bool _isFirstLoad = true;
 
-    public MainViewModel(IServiceProvider serviceProvider, Settings settings, PersistentState persistentState)
+    public MainViewModel(IServiceProvider serviceProvider, PersistentState persistentState)
     {
         _serviceProvider = serviceProvider;
-        _settings = settings;
         PersistentState = persistentState;
 
         Items = _itemsSource
@@ -62,7 +60,7 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
         if (_isFirstLoad)
         {
             _isFirstLoad = false;
-            ShowOobeDialogOnDemand();
+            ShowChangeLogOnDemand();
         }
 
         await base.ViewLoaded(cancellationToken);
@@ -151,32 +149,23 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
     }
 
     /// <summary>
-    /// Shows the OOBE dialog if the application is launched for the first time or after an update.
+    /// Shows release notes when launching an updated version, independent of onboarding versions.
     /// </summary>
-    private void ShowOobeDialogOnDemand()
+    private void ShowChangeLogOnDemand()
     {
-        if (_settings.Model.CustomAssistants.Count == 0)
+        var currentVersion = RuntimeConstants.Version;
+        if (!SemanticVersion.TryParse(PersistentState.PreviousLaunchVersion, out var previousVersion))
         {
-            DialogHost
-                .CreateCustomDialog(_serviceProvider.GetRequiredService<WelcomeView>())
-                .Show();
+            return;
         }
-        else
-        {
-            var currentVersion = RuntimeConstants.Version;
-            if (!SemanticVersion.TryParse(PersistentState.PreviousLaunchVersion, out var previousVersion))
-            {
-                previousVersion = new SemanticVersion(0);
-            }
 
-            if (previousVersion < currentVersion)
-            {
-                NavigateTo(_serviceProvider.GetRequiredService<ChangeLogView>());
-                ToastHost
-                    .CreateToast(LocaleKey.MainViewModel_UpgradeSuccessfulToast_Title.I18N())
-                    .WithDurationSeconds(5)
-                    .Show();
-            }
+        if (previousVersion < currentVersion)
+        {
+            NavigateTo(_serviceProvider.GetRequiredService<ChangeLogView>());
+            ToastHost
+                .CreateToast(LocaleKey.MainViewModel_UpgradeSuccessfulToast_Title.I18N())
+                .WithDurationSeconds(5)
+                .Show();
         }
     }
 

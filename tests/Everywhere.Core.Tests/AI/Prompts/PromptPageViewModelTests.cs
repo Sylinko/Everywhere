@@ -56,6 +56,9 @@ public sealed class PromptPageViewModelTests
 
         Assert.Multiple(() =>
         {
+            Assert.That(viewModel.FilteredPrompts[1].RenderedPreview, Does.Contain("Skill instructions"));
+            Assert.That(viewModel.FilteredPrompts[1].RenderedPreview, Does.Contain("Tail"));
+            Assert.That(viewModel.FilteredPrompts[1].RenderedPreview, Does.Not.Contain("{DefaultSystemPrompt}"));
             Assert.That(viewModel.RenderedPreview, Does.Contain("Skill instructions"));
             Assert.That(viewModel.RenderedPreview, Does.Contain("Tail"));
             Assert.That(viewModel.RenderedPreview, Does.Not.Contain("{SkillsPrompt}"));

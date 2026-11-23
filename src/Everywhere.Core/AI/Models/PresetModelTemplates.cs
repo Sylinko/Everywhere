@@ -32,7 +32,8 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_050_000,
                     OutputLimit = 128_000,
-                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"]
+                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"],
+                    IsDefault = true
                 },
                 new ModelDefinitionTemplate
                 {
@@ -43,8 +44,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_050_000,
                     OutputLimit = 128_000,
-                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"],
-                    IsDefault = true
+                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -191,7 +191,8 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
                     OutputLimit = 128_000,
-                    ReasoningEffortValues = ["low", "medium", "high", "xhigh", "max"]
+                    ReasoningEffortValues = ["low", "medium", "high", "xhigh", "max"],
+                    IsDefault = true
                 },
                 new ModelDefinitionTemplate
                 {
@@ -246,8 +247,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
                     OutputLimit = 128_000,
-                    ReasoningEffortValues = ["low", "medium", "high", "max"],
-                    IsDefault = true
+                    ReasoningEffortValues = ["low", "medium", "high", "max"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -795,7 +795,7 @@ public static class PresetModelTemplates
                     ModelId = "Qwen/Qwen3-8B",
                     Name = "Qwen/Qwen3-8B",
                     SupportsToolCall = true,
-                    IsDefault = true,
+                    IsDefault = false,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 131000,
@@ -818,7 +818,7 @@ public static class PresetModelTemplates
                     ModelId = "Qwen/Qwen3.5-397B-A17B",
                     Name = "Qwen3.5 397B-A17B",
                     SupportsToolCall = true,
-                    IsDefault = false,
+                    IsDefault = true,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 262144,
@@ -858,6 +858,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 205_000,
                     OutputLimit = 205_000,
+                    IsDefault = true
                 },
                 new ModelDefinitionTemplate
                 {
@@ -898,7 +899,6 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 131_000,
                     OutputLimit = 131_000,
-                    IsDefault = true,
                     Specializations = ModelSpecializations.TitleGeneration
                 }
             ]

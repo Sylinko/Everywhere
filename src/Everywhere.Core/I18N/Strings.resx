@@ -179,7 +179,7 @@
         <value>Context Length</value>
     </data>
     <data name="Assistant_Endpoint_Description" xml:space="preserve">
-        <value>Starts with http:// or https://. Add # at the end to prevent automatic version suffix.</value>
+        <value>Starts with http(s)://. Append # to disable automatic version path appending.</value>
     </data>
     <data name="Assistant_Endpoint_Header" xml:space="preserve">
         <value>URL</value>
@@ -5096,5 +5096,345 @@ My intelligence is powered by large language models, and I need your help to con
     </data>
     <data name="ChatWindow_PendingInputs_Withdraw_ToolTip" xml:space="preserve">
         <value>Withdraw back into input box</value>
+    </data>
+    <data name="PromptCreate_MorePreferences" xml:space="preserve">
+        <value>More preferences</value>
+    </data>
+    <data name="Oobe_Continue" xml:space="preserve">
+        <value>Continue</value>
+    </data>
+    <data name="Oobe_Next" xml:space="preserve">
+        <value>Next</value>
+    </data>
+    <data name="Oobe_Start" xml:space="preserve">
+        <value>Get started</value>
+    </data>
+    <data name="Oobe_Back" xml:space="preserve">
+        <value>Back</value>
+    </data>
+    <data name="Oobe_SetUpLater" xml:space="preserve">
+        <value>Set up later</value>
+    </data>
+    <data name="Oobe_Intro_Title" xml:space="preserve">
+        <value>Meet Everywhere</value>
+    </data>
+    <data name="Oobe_Intro_Description" xml:space="preserve">
+        <value>Your context-aware AI companion</value>
+    </data>
+    <data name="Oobe_Intro_FeatureVisualTitle" xml:space="preserve">
+        <value>Understand what's on screen</value>
+    </data>
+    <data name="Oobe_Intro_FeatureVisualDesc" xml:space="preserve">
+        <value>Let AI understand your active window and selected text without copy-pasting.</value>
+    </data>
+    <data name="Oobe_Intro_FeatureInstantTitle" xml:space="preserve">
+        <value>Bring up anytime, reply at once</value>
+    </data>
+    <data name="Oobe_Intro_FeatureInstantDesc" xml:space="preserve">
+        <value>Ask, translate, or rewrite right where you work without switching apps.</value>
+    </data>
+    <data name="Oobe_Intro_FeatureChoiceTitle" xml:space="preserve">
+        <value>No model lock-in</value>
+    </data>
+    <data name="Oobe_Intro_FeatureChoiceDesc" xml:space="preserve">
+        <value>Use Everywhere Cloud, your own API keys, or local models.</value>
+    </data>
+    <data name="Oobe_Source_Title" xml:space="preserve">
+        <value>Power up Everywhere</value>
+    </data>
+    <data name="Oobe_Source_Description" xml:space="preserve">
+        <value>Start instantly with Cloud, or connect your own providers. Switch anytime in Settings.</value>
+    </data>
+    <data name="Oobe_Source_Cloud" xml:space="preserve">
+        <value>Everywhere Cloud</value>
+    </data>
+    <data name="Oobe_Source_CloudDescription" xml:space="preserve">
+        <value>Log in for free trial credits. Zero-config access to mainstream models, upgrade anytime.</value>
+    </data>
+    <data name="Oobe_Source_Own" xml:space="preserve">
+        <value>Bring Your Own Key</value>
+    </data>
+    <data name="Oobe_Login_Title" xml:space="preserve">
+        <value>Connect to Everywhere Cloud</value>
+    </data>
+    <data name="Oobe_Login_Description" xml:space="preserve">
+        <value>Unlock cloud AI models. Includes free trial credits to start.</value>
+    </data>
+    <data name="Oobe_Login_SignIn" xml:space="preserve">
+        <value>Continue in Browser</value>
+    </data>
+    <data name="Oobe_Login_SignedIn" xml:space="preserve">
+        <value>Signed in</value>
+    </data>
+    <data name="Oobe_Configure_Title" xml:space="preserve">
+        <value>Pick your go-to model</value>
+    </data>
+    <data name="Oobe_Configure_Description" xml:space="preserve">
+        <value>Pick a model and run a quick check. You can switch anytime in chat.</value>
+    </data>
+    <data name="Oobe_Configure_OwnTitle" xml:space="preserve">
+        <value>Connect your model</value>
+    </data>
+    <data name="Oobe_Configure_TabBuiltIn" xml:space="preserve">
+        <value>Built-in Providers</value>
+    </data>
+    <data name="Oobe_Configure_TabCustomProtocol" xml:space="preserve">
+        <value>Custom Protocol</value>
+    </data>
+    <data name="Oobe_Configure_SwitchToCloud" xml:space="preserve">
+        <value>Prefer zero setup? Switch to Everywhere Cloud</value>
+    </data>
+    <data name="Oobe_TestConnection" xml:space="preserve">
+        <value>Test connection</value>
+    </data>
+    <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
+        <value>Select a model</value>
+    </data>
+    <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
+        <value>Context window</value>
+    </data>
+    <data name="Oobe_Configure_OutputLabel" xml:space="preserve">
+        <value>Max output</value>
+    </data>
+    <data name="Oobe_Configure_CapVision" xml:space="preserve">
+        <value>Vision</value>
+    </data>
+    <data name="Oobe_Configure_CapPdf" xml:space="preserve">
+        <value>PDF</value>
+    </data>
+    <data name="Oobe_Configure_CapAudio" xml:space="preserve">
+        <value>Audio</value>
+    </data>
+    <data name="Oobe_Configure_CapVideo" xml:space="preserve">
+        <value>Video</value>
+    </data>
+    <data name="Oobe_Configure_CapTools" xml:space="preserve">
+        <value>Tools</value>
+    </data>
+    <data name="Oobe_Configure_SelectProviderFirstPlaceholder" xml:space="preserve">
+        <value>Choose a provider first</value>
+    </data>
+    <data name="Oobe_Configure_ModelIdPlaceholder" xml:space="preserve">
+        <value>Enter model ID (e.g. gpt-6-luna)</value>
+    </data>
+    <data name="Oobe_Configure_ContextPlaceholder" xml:space="preserve">
+        <value>e.g. 1048576</value>
+    </data>
+    <data name="Oobe_Configure_OutputPlaceholder" xml:space="preserve">
+        <value>e.g. 131072</value>
+    </data>
+    <data name="Oobe_Configure_ModalitiesLabel" xml:space="preserve">
+        <value>Modalities &amp; capabilities</value>
+    </data>
+    <data name="Oobe_Personalize_Title" xml:space="preserve">
+        <value>Make Everywhere yours</value>
+    </data>
+    <data name="Oobe_Personalize_Description" xml:space="preserve">
+        <value>Choose your everyday scenarios and tone—watch the live preview adapt in real time.</value>
+    </data>
+    <data name="Oobe_SavePreferences" xml:space="preserve">
+        <value>Save and continue</value>
+    </data>
+    <data name="Oobe_Personalize_ScenarioRequired" xml:space="preserve">
+        <value>Select at least one scenario above to continue.</value>
+    </data>
+    <data name="Oobe_Shortcut_Title" xml:space="preserve">
+        <value>Set your global shortcut</value>
+    </data>
+    <data name="Oobe_Shortcut_Description" xml:space="preserve">
+        <value>Bring up Everywhere in any app.</value>
+    </data>
+    <data name="Oobe_Shortcut_Skip" xml:space="preserve">
+        <value>Don't enable shortcut</value>
+    </data>
+    <data name="Oobe_Shortcut_Disabled" xml:space="preserve">
+        <value>Press a valid key combination to confirm, or choose "Don't enable shortcut" below.</value>
+    </data>
+    <data name="Oobe_TextSelection_Title" xml:space="preserve">
+        <value>Highlight and go, stay in flow</value>
+    </data>
+    <data name="Oobe_TextSelection_Description" xml:space="preserve">
+        <value>Select any text to pop up quick actions like translate or summarize.</value>
+    </data>
+    <data name="Oobe_TextSelection_Skip" xml:space="preserve">
+        <value>Don't enable selection</value>
+    </data>
+    <data name="Oobe_TextSelection_DemoParagraph" xml:space="preserve">
+        <value>Everywhere perceives context right where you work. Highlight this sentence to bring up the floating toolbar without screenshots or switching windows.</value>
+    </data>
+    <data name="Oobe_TextSelection_DemoHighlight" xml:space="preserve">
+        <value>Highlight this sentence to bring up the floating toolbar</value>
+    </data>
+    <data name="Oobe_TextSelection_ActionPreviewFormat" xml:space="preserve">
+        <value>{0} · "{1}"</value>
+    </data>
+    <data name="Oobe_TextSelection_PreviewReplyFormat" xml:space="preserve">
+        <value>Previewed "{0}" in-place on your selection — ready to copy, replace, or keep asking in real apps.</value>
+    </data>
+    <data name="Oobe_Finish_Title" xml:space="preserve">
+        <value>Everything is ready</value>
+    </data>
+    <data name="Oobe_Finish_Description" xml:space="preserve">
+        <value>Everywhere is ready to go. Review a few final preferences and jump right in.</value>
+    </data>
+    <data name="Oobe_StartUsing" xml:space="preserve">
+        <value>Start using Everywhere</value>
+    </data>
+    <data name="Oobe_Finish_DiagnosticTitle" xml:space="preserve">
+        <value>Share anonymous diagnostics</value>
+    </data>
+    <data name="Oobe_Finish_DiagnosticDescription" xml:space="preserve">
+        <value>Crash logs and performance metrics only. Chat content is never collected.</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Small" xml:space="preserve">
+        <value>Small</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Medium" xml:space="preserve">
+        <value>Medium</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Large" xml:space="preserve">
+        <value>Large</value>
+    </data>
+    <data name="Oobe_InvalidConfiguration" xml:space="preserve">
+        <value>Please complete all required model fields first.</value>
+    </data>
+    <data name="Oobe_LoginRequired" xml:space="preserve">
+        <value>Please sign in to your Everywhere account first.</value>
+    </data>
+    <data name="Oobe_ConfigurationChanged" xml:space="preserve">
+        <value>Configuration changed while testing. Please test again.</value>
+    </data>
+    <data name="Oobe_LoginFailed" xml:space="preserve">
+        <value>Sign in failed. Please try again.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Default" xml:space="preserve">
+        <value>Can you help me organize what is currently on my screen?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Programming" xml:space="preserve">
+        <value>Help me simplify this async state transition without breaking cancellation.</value>
+    </data>
+    <data name="Oobe_Preview_Question_CodeReview" xml:space="preserve">
+        <value>Review this diff for potential lifetime leaks or subtle regressions.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Writing" xml:space="preserve">
+        <value>Tighten this announcement paragraph so the key takeaway lands immediately.</value>
+    </data>
+    <data name="Oobe_Preview_Question_DataAnalysis" xml:space="preserve">
+        <value>Summarize the anomaly in these Q3 latency percentiles.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Learning" xml:space="preserve">
+        <value>Explain how event bubbling works here using an intuitive mental model.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Translation" xml:space="preserve">
+        <value>Translate this release note cleanly while keeping technical terms natural.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Product" xml:space="preserve">
+        <value>Distill these customer notes into three clear product priorities.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Troubleshooting" xml:space="preserve">
+        <value>This service timed out after 30s—what is the fastest way to isolate the cause?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Research" xml:space="preserve">
+        <value>Compare the tradeoffs between these two papers concisely.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_ConciseDirect_Concise" xml:space="preserve">
+        <value>Done. Core bottleneck removed; next step ready below.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_ConciseDirect_Rich" xml:space="preserve">
+        <value>Here is the direct answer first: collapse the duplicate branch, guard cancellation early, and keep state updates synchronous on the UI thread.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Socratic_Concise" xml:space="preserve">
+        <value>Consider which invariant owns the token—should the caller or child cancel first?</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Socratic_Rich" xml:space="preserve">
+        <value>Look closely at the ownership boundary: if this step owns the cancellation scope, what happens when the parent closes mid-flight? Let's trace that together.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Formal_Concise" xml:space="preserve">
+        <value>Summary completed. Key findings and recommended action items follow.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Formal_Rich" xml:space="preserve">
+        <value>Please find the structured assessment below, beginning with primary findings followed by recommended next steps for verification.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Creative_Concise" xml:space="preserve">
+        <value>A sharper angle: lead with the outcome, then reveal the craft behind it.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Creative_Rich" xml:space="preserve">
+        <value>Picture opening right on the moment of clarity—we can trim the preamble, elevate the contrast, and give the idea room to breathe.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Friendly_Concise" xml:space="preserve">
+        <value>Happy to help! Here is a clean path forward you can try right away.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Friendly_Rich" xml:space="preserve">
+        <value>Happy to walk through this with you! Everything here is already close—just one small adjustment makes the flow feel noticeably smoother.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Professional_Concise" xml:space="preserve">
+        <value>Clear takeaway: keep the contract explicit and isolate side effects cleanly.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Professional_Rich" xml:space="preserve">
+        <value>Here is a clear, practical breakdown based on your current context, keeping structure concise while highlighting key edge cases.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_DetailedWrap" xml:space="preserve">
+        <value>{0}
+
+{1}</value>
+    </data>
+    <data name="Oobe_Preview_DetailedAddendum" xml:space="preserve">
+        <value>+ Includes step-by-step rationale, edge cases, and concrete next actions.</value>
+    </data>
+    <data name="Oobe_Preview_GreetingWrap" xml:space="preserve">
+        <value>Hi {0} — {1}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProfessionalWrap" xml:space="preserve">
+        <value>From a practical, risk-aware angle, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProgrammingWrap" xml:space="preserve">
+        <value>Focusing on code structure and maintainability, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_WritingWrap" xml:space="preserve">
+        <value>Focusing on clarity, flow, and voice, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_TranslationWrap" xml:space="preserve">
+        <value>Preserving exact meaning and natural phrasing, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ResearchWrap" xml:space="preserve">
+        <value>Separating verified evidence from inference, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_LearningWrap" xml:space="preserve">
+        <value>Unpacking the core intuition step by step, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProductWrap" xml:space="preserve">
+        <value>Balancing user value and execution context, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_ConclusionFirstWrap" xml:space="preserve">
+        <value>Conclusion: Lock down the primary path before handling edge branches.
+
+{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_StepByStepWrap" xml:space="preserve">
+        <value>{0}
+
+1. Confirm active context and constraints
+2. Apply the core change cleanly
+3. Verify edge cases and results</value>
+    </data>
+    <data name="Oobe_Preview_Organization_KeyPointsWrap" xml:space="preserve">
+        <value>{0}
+
+• Key point: Anchor on the core goal
+• Key point: Trim redundant complexity</value>
+    </data>
+    <data name="Oobe_Preview_Organization_CompareOptionsWrap" xml:space="preserve">
+        <value>{0}
+
+Option A: Lighter change, faster to ship
+Option B: Clearer boundary, easier to maintain</value>
+    </data>
+    <data name="Oobe_Preview_Organization_ExamplesFirstWrap" xml:space="preserve">
+        <value>Example: Pair a concrete input/output case first, then explain why.
+
+{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_NaturalWrap" xml:space="preserve">
+        <value>Thinking through it conversationally — {0}</value>
     </data>
 </root>

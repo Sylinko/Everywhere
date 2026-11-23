@@ -1,0 +1,113 @@
+<UserControl
+  x:Class="Everywhere.Views.AssistantPreview" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DesignHeight="132"
+  d:DesignWidth="230" ClipToBounds="True"
+  mc:Ignorable="d">
+  <Panel Background="Transparent">
+    <!--  Stationary background application window  -->
+    <Border
+      Margin="14,22,48,0" Padding="11,10,11,8"
+      Background="{DynamicResource OobeStageWellBrush}"
+      BorderBrush="{DynamicResource OobeHairlineBrush}"
+      BorderThickness="1,1,1,0" CornerRadius="10,10,0,0">
+      <StackPanel Spacing="7">
+        <StackPanel
+          Orientation="Horizontal" Spacing="3.5">
+          <Ellipse
+            Width="4" Height="4"
+            Fill="{DynamicResource OobeIntroMiniLineSoftBrush}"/>
+          <Ellipse
+            Width="4" Height="4"
+            Fill="{DynamicResource OobeIntroMiniLineSoftBrush}"/>
+          <Ellipse
+            Width="4" Height="4"
+            Fill="{DynamicResource OobeIntroMiniLineSoftBrush}"/>
+        </StackPanel>
+        <Border
+          Width="78" Height="5"
+          HorizontalAlignment="Left"
+          Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+          CornerRadius="2.5"/>
+        <Border
+          Width="56" Height="5"
+          HorizontalAlignment="Left"
+          Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+          CornerRadius="2.5"/>
+        <Border
+          Width="68" Height="5"
+          HorizontalAlignment="Left"
+          Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+          CornerRadius="2.5"/>
+      </StackPanel>
+    </Border>
+
+    <!--  Localized soft-pink illumination emitted from the floating assistant overlay  -->
+    <Ellipse
+      Width="166" Height="118"
+      Margin="0,10,6,0" HorizontalAlignment="Right"
+      VerticalAlignment="Top"
+      Fill="{DynamicResource OobeIntroPinkGlowBrush}"
+      IsHitTestVisible="False"/>
+
+    <!--  Positioning slot guarantees Composition Offset animates cleanly around (0,0,0)  -->
+    <Panel Margin="42,14,14,0">
+      <Border
+        x:Name="AssistantOverlay" Padding="11,9"
+        VerticalAlignment="Top"
+        Background="{DynamicResource OobeNodeSurfaceBrush}"
+        BorderBrush="#52F056B8" BorderThickness="1"
+        CornerRadius="11">
+        <StackPanel Spacing="8">
+          <!--  Assistant header  -->
+          <StackPanel
+            VerticalAlignment="Center" Orientation="Horizontal"
+            Spacing="6">
+            <Ellipse
+              Width="7.5" Height="7.5"
+              VerticalAlignment="Center"
+              Fill="{DynamicResource OobeBrandPinkBrush}"/>
+            <Border
+              Width="38" Height="4"
+              VerticalAlignment="Center"
+              Background="{DynamicResource OobeIntroMiniLineBrush}"
+              CornerRadius="2"/>
+          </StackPanel>
+
+          <!--  Wrapper keeps QuestionBubble's local Composition Offset at (0,0,0)  -->
+          <Panel HorizontalAlignment="Right">
+            <Border
+              x:Name="QuestionBubble" Padding="7,4.5"
+              Background="{DynamicResource OobePinkHoverTintBrush}"
+              BorderBrush="#3DF056B8" BorderThickness="1"
+              CornerRadius="8,8,2,8">
+              <Border
+                Width="52" Height="3.5"
+                Background="{DynamicResource OobeIntroMiniLineBrush}"
+                CornerRadius="1.75"/>
+            </Border>
+          </Panel>
+
+          <!--  Gradual streaming reply lines  -->
+          <StackPanel Spacing="5.5">
+            <Border
+              x:Name="ReplyLine1" Width="110"
+              Height="4.5" HorizontalAlignment="Left"
+              Background="{DynamicResource OobeIntroPinkReplyBrush}"
+              CornerRadius="2.25"/>
+            <Border
+              x:Name="ReplyLine2" Width="92"
+              Height="4.5" HorizontalAlignment="Left"
+              Background="{DynamicResource OobeIntroMiniLineBrush}"
+              CornerRadius="2.25"/>
+            <Border
+              x:Name="ReplyLine3" Width="62"
+              Height="4.5" HorizontalAlignment="Left"
+              Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+              CornerRadius="2.25"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Panel>
+  </Panel>
+</UserControl>

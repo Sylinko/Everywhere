@@ -1,0 +1,780 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI">
+  <!--
+    Dedicated ControlThemes for the unified WYSIWYG OOBE configuration card.
+    Scoped exclusively to OOBE so main application SettingsItem controls remain untouched.
+  -->
+
+  <!--  Ghost Pill ComboBox (Preset Provider Selector & Advanced Schema Selector)  -->
+  <ControlTheme
+    x:Key="OobePillComboBoxTheme" TargetType="ComboBox">
+    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Margin" Value="-8,0,0,0"/>
+    <Setter Property="FontSize" Value="13.5"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="Padding" Value="8,5,10,5"/>
+    <Setter Property="FocusAdorner" Value="{x:Null}"/>
+    <Setter Property="MaxDropDownHeight" Value="380"/>
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <VirtualizingStackPanel Margin="3"/>
+      </ItemsPanelTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DataValidationErrors>
+          <Panel>
+            <Border
+              x:Name="BackgroundBorder" MinHeight="32"
+              Padding="{TemplateBinding Padding}"
+              Background="{TemplateBinding Background}"
+              BorderBrush="{TemplateBinding BorderBrush}"
+              BorderThickness="{TemplateBinding BorderThickness}"
+              CornerRadius="{TemplateBinding CornerRadius}">
+              <Border.Transitions>
+                <Transitions>
+                  <BrushTransition
+                    Easing="CubicEaseOut" Property="Background"
+                    Duration="0:0:0.14"/>
+                  <BrushTransition
+                    Easing="CubicEaseOut" Property="BorderBrush"
+                    Duration="0:0:0.14"/>
+                </Transitions>
+              </Border.Transitions>
+
+              <Grid
+                ColumnDefinitions="*,Auto" ColumnSpacing="7">
+                <StackPanel
+                  x:Name="PlaceholderPanel" Grid.Column="0"
+                  Orientation="Horizontal" Spacing="8">
+                  <StackPanel.IsVisible>
+                    <Binding
+                      Converter="{x:Static ObjectConverters.IsNull}"
+                      Path="SelectionBoxItem"
+                      RelativeSource="{RelativeSource TemplatedParent}"/>
+                  </StackPanel.IsVisible>
+
+                  <LucideIcon
+                    x:Name="PlaceholderIcon" VerticalAlignment="Center"
+                    Opacity="0.72" Size="16"/>
+
+                  <TextBlock
+                    x:Name="PlaceholderTextBlock" VerticalAlignment="Center"
+                    Opacity="0.68"
+                    Text="{TemplateBinding PlaceholderText}"
+                    TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+
+                <ContentControl
+                  Grid.Column="0"
+                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                  Content="{TemplateBinding SelectionBoxItem}"
+                  ContentTemplate="{TemplateBinding ItemTemplate}"
+                  Foreground="{TemplateBinding Foreground}"
+                  TextBlock.FontSize="{TemplateBinding FontSize}"
+                  TextBlock.FontWeight="{TemplateBinding FontWeight}"
+                  TextBlock.Foreground="{TemplateBinding Foreground}">
+                  <ContentControl.IsVisible>
+                    <Binding
+                      Converter="{x:Static ObjectConverters.IsNotNull}"
+                      Path="SelectionBoxItem"
+                      RelativeSource="{RelativeSource TemplatedParent}"/>
+                  </ContentControl.IsVisible>
+                </ContentControl>
+
+                <LucideIcon
+                  x:Name="ChevronIcon" Grid.Column="1"
+                  VerticalAlignment="Center"
+                  Foreground="{TemplateBinding Foreground}"
+                  Kind="ChevronDown" RenderTransform="rotate(0deg)"
+                  RenderTransformOrigin="50%,50%">
+                  <LucideIcon.Transitions>
+                    <Transitions>
+                      <TransformOperationsTransition
+                        Easing="CubicEaseOut" Property="RenderTransform"
+                        Duration="0:0:0.16"/>
+                    </Transitions>
+                  </LucideIcon.Transitions>
+                </LucideIcon>
+
+                <Popup
+                  x:Name="PART_Popup" Grid.Column="0"
+                  MinWidth="{Binding #BackgroundBorder.Bounds.Width}"
+                  MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                  IsLightDismissEnabled="True"
+                  IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
+                  PlacementTarget="{Binding #BackgroundBorder}"
+                  ShouldUseOverlayLayer="True" VerticalOffset="6"
+                  WindowManagerAddShadowHint="False">
+                  <LayoutTransformControl
+                    x:Name="LayoutTransform" RenderTransformOrigin="50%, 0%">
+                    <shadui:SmoothBorder
+                      MinWidth="220"
+                      Margin="{DynamicResource PopupCompactShadowMargin}"
+                      Background="{DynamicResource PopupBackgroundColor}"
+                      BorderBrush="{DynamicResource BorderColor}"
+                      BorderThickness="{DynamicResource PopupBorderThickness}"
+                      BoxShadow="{DynamicResource Shadow}"
+                      CornerRadius="14">
+                      <DockPanel>
+                        <ContentPresenter
+                          DockPanel.Dock="Bottom"
+                          Content="{TemplateBinding shadui:ControlAssist.Footer}"/>
+                        <ScrollViewer
+                          HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                          VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                          <ItemsPresenter
+                            x:Name="PART_ItemsPresenter"
+                            ItemsPanel="{TemplateBinding ItemsPanel}">
+                            <ItemsPresenter.Styles>
+                              <Style Selector="ComboBoxItem">
+                                <Setter Property="FontSize" Value="13.5"/>
+                                <Setter Property="FontWeight" Value="Medium"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+                              </Style>
+                            </ItemsPresenter.Styles>
+                          </ItemsPresenter>
+                        </ScrollViewer>
+                      </DockPanel>
+                    </shadui:SmoothBorder>
+                  </LayoutTransformControl>
+                </Popup>
+              </Grid>
+            </Border>
+          </Panel>
+        </DataValidationErrors>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^ /template/ LucideIcon#PlaceholderIcon">
+      <Setter Property="IsVisible" Value="False"/>
+    </Style>
+
+    <Style Selector="^ /template/ LucideIcon#ChevronIcon">
+      <Setter Property="Size" Value="14"/>
+      <Setter Property="Opacity" Value="0.65"/>
+    </Style>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Style Selector="^ /template/ Border#BackgroundBorder">
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="^:dropdownopen">
+      <Style Selector="^ /template/ Border#BackgroundBorder">
+        <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor75}"/>
+      </Style>
+      <Style Selector="^ /template/ LucideIcon#ChevronIcon">
+        <Setter Property="RenderTransform" Value="rotate(180deg)"/>
+        <Setter Property="Opacity" Value="1"/>
+      </Style>
+      <Style Selector="^ /template/ LayoutTransformControl#LayoutTransform">
+        <Style.Animations>
+          <Animation
+            Easing="CubicEaseOut" FillMode="Forward"
+            Duration="0:0:0.14">
+            <KeyFrame Cue="0%">
+              <Setter Property="TranslateTransform.Y" Value="-8"/>
+              <Setter Property="Opacity" Value="0"/>
+            </KeyFrame>
+            <KeyFrame Cue="100%">
+              <Setter Property="TranslateTransform.Y" Value="0"/>
+              <Setter Property="Opacity" Value="1"/>
+            </KeyFrame>
+          </Animation>
+        </Style.Animations>
+      </Style>
+    </Style>
+
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.5"/>
+    </Style>
+  </ControlTheme>
+
+  <!--  Hero Title-Sized Model ComboBox (Preset & Cloud Routes)  -->
+  <ControlTheme
+    x:Key="OobeHeroModelComboBoxTheme" TargetType="ComboBox">
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Margin" Value="-10,0,-10,0"/>
+    <Setter Property="FontSize" Value="21"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="10,6"/>
+    <Setter Property="FocusAdorner" Value="{x:Null}"/>
+    <Setter Property="MaxDropDownHeight" Value="380"/>
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <VirtualizingStackPanel
+          Margin="4" Grid.IsSharedSizeScope="True"/>
+      </ItemsPanelTemplate>
+    </Setter>
+    <Setter Property="ItemContainerTheme">
+      <ControlTheme
+        BasedOn="{StaticResource {x:Type ComboBoxItem}}"
+        TargetType="ComboBoxItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+      </ControlTheme>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DataValidationErrors>
+          <Panel>
+            <Border
+              x:Name="BackgroundBorder" MinHeight="46"
+              Padding="{TemplateBinding Padding}"
+              Background="{TemplateBinding Background}"
+              BorderBrush="{TemplateBinding BorderBrush}"
+              BorderThickness="{TemplateBinding BorderThickness}"
+              CornerRadius="{TemplateBinding CornerRadius}">
+              <Border.Transitions>
+                <Transitions>
+                  <BrushTransition
+                    Easing="CubicEaseOut" Property="Background"
+                    Duration="0:0:0.14"/>
+                  <BrushTransition
+                    Easing="CubicEaseOut" Property="BorderBrush"
+                    Duration="0:0:0.14"/>
+                </Transitions>
+              </Border.Transitions>
+
+              <Grid
+                ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <TextBlock
+                  x:Name="PlaceholderTextBlock" Grid.Column="0"
+                  VerticalAlignment="Center" FontSize="18"
+                  FontWeight="Medium" Opacity="0.48"
+                  Text="{TemplateBinding PlaceholderText}"
+                  TextTrimming="CharacterEllipsis">
+                  <TextBlock.IsVisible>
+                    <Binding
+                      Converter="{x:Static ObjectConverters.IsNull}"
+                      Path="SelectionBoxItem"
+                      RelativeSource="{RelativeSource TemplatedParent}"/>
+                  </TextBlock.IsVisible>
+                </TextBlock>
+
+                <ContentControl
+                  Grid.Column="0"
+                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                  Content="{TemplateBinding SelectionBoxItem}"
+                  ContentTemplate="{TemplateBinding ItemTemplate}"
+                  Foreground="{TemplateBinding Foreground}"
+                  TextBlock.FontSize="{TemplateBinding FontSize}"
+                  TextBlock.FontWeight="{TemplateBinding FontWeight}"
+                  TextBlock.Foreground="{TemplateBinding Foreground}">
+                  <ContentControl.IsVisible>
+                    <Binding
+                      Converter="{x:Static ObjectConverters.IsNotNull}"
+                      Path="SelectionBoxItem"
+                      RelativeSource="{RelativeSource TemplatedParent}"/>
+                  </ContentControl.IsVisible>
+                </ContentControl>
+
+                <LucideIcon
+                  x:Name="ChevronIcon" Grid.Column="1"
+                  VerticalAlignment="Center"
+                  Foreground="{DynamicResource MutedColor}"
+                  Kind="ChevronDown" RenderTransform="rotate(0deg)"
+                  RenderTransformOrigin="50%,50%" Size="17">
+                  <LucideIcon.Transitions>
+                    <Transitions>
+                      <TransformOperationsTransition
+                        Easing="CubicEaseOut" Property="RenderTransform"
+                        Duration="0:0:0.16"/>
+                    </Transitions>
+                  </LucideIcon.Transitions>
+                </LucideIcon>
+
+                <Popup
+                  x:Name="PART_Popup" Grid.Column="0"
+                  MinWidth="{Binding #BackgroundBorder.Bounds.Width}"
+                  MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                  IsLightDismissEnabled="True"
+                  IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
+                  PlacementTarget="{Binding #BackgroundBorder}"
+                  ShouldUseOverlayLayer="True" VerticalOffset="6"
+                  WindowManagerAddShadowHint="False">
+                  <LayoutTransformControl
+                    x:Name="LayoutTransform" RenderTransformOrigin="50%, 0%">
+                    <shadui:SmoothBorder
+                      MinWidth="{Binding #BackgroundBorder.Bounds.Width}"
+                      Margin="{DynamicResource PopupCompactShadowMargin}"
+                      Background="{DynamicResource PopupBackgroundColor}"
+                      BorderBrush="{DynamicResource BorderColor}"
+                      BorderThickness="{DynamicResource PopupBorderThickness}"
+                      BoxShadow="{DynamicResource Shadow}"
+                      CornerRadius="14" Grid.IsSharedSizeScope="True">
+                      <ScrollViewer
+                        HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                        VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                        <ItemsPresenter
+                          x:Name="PART_ItemsPresenter"
+                          ItemsPanel="{TemplateBinding ItemsPanel}"/>
+                      </ScrollViewer>
+                    </shadui:SmoothBorder>
+                  </LayoutTransformControl>
+                </Popup>
+              </Grid>
+            </Border>
+          </Panel>
+        </DataValidationErrors>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Style Selector="^ /template/ Border#BackgroundBorder">
+        <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+      </Style>
+    </Style>
+
+    <Style Selector="^:dropdownopen">
+      <Style Selector="^ /template/ Border#BackgroundBorder">
+        <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor75}"/>
+      </Style>
+      <Style Selector="^ /template/ LucideIcon#ChevronIcon">
+        <Setter Property="RenderTransform" Value="rotate(180deg)"/>
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+      </Style>
+      <Style Selector="^ /template/ LayoutTransformControl#LayoutTransform">
+        <Style.Animations>
+          <Animation
+            Easing="CubicEaseOut" FillMode="Forward"
+            Duration="0:0:0.14">
+            <KeyFrame Cue="0%">
+              <Setter Property="TranslateTransform.Y" Value="-8"/>
+              <Setter Property="Opacity" Value="0"/>
+            </KeyFrame>
+            <KeyFrame Cue="100%">
+              <Setter Property="TranslateTransform.Y" Value="0"/>
+              <Setter Property="Opacity" Value="1"/>
+            </KeyFrame>
+          </Animation>
+        </Style.Animations>
+      </Style>
+    </Style>
+
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.48"/>
+    </Style>
+
+    <Style Selector="^:error /template/ Border#BackgroundBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource ErrorColor}"/>
+    </Style>
+  </ControlTheme>
+
+  <!--  Underlined Inline Field TextBox (URL & Model ID Inputs)  -->
+  <ControlTheme
+    x:Key="OobeInlineFieldTextBoxTheme" TargetType="TextBox">
+    <Setter Property="FontSize" Value="13.5"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Cursor" Value="IBeam"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource OobeFieldUnderlineBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,1.5"/>
+    <Setter Property="Padding" Value="2,4,2,5"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="SelectionBrush" Value="{DynamicResource PrimaryColor}"/>
+    <Setter Property="SelectionForegroundBrush" Value="{DynamicResource PrimaryForegroundColor}"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="FocusAdorner" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DataValidationErrors Focusable="False">
+          <Border
+            x:Name="UnderlineBorder"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="BorderBrush"
+                  Duration="0:0:0.16"/>
+              </Transitions>
+            </Border.Transitions>
+            <ScrollViewer
+              x:Name="PART_ScrollViewer" MinHeight="28"
+              HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+              VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+              <Panel x:Name="TextContainer">
+                <TextBlock
+                  x:Name="PlaceholderText"
+                  Margin="{TemplateBinding Padding}"
+                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                  Opacity="0.45"
+                  Text="{TemplateBinding PlaceholderText}"
+                  TextAlignment="{TemplateBinding TextAlignment}">
+                  <TextBlock.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <Binding
+                        Converter="{x:Static StringConverters.IsNullOrEmpty}"
+                        ElementName="PART_TextPresenter" Path="PreeditText"/>
+                      <Binding
+                        Converter="{x:Static StringConverters.IsNullOrEmpty}"
+                        Path="Text"
+                        RelativeSource="{RelativeSource TemplatedParent}"/>
+                    </MultiBinding>
+                  </TextBlock.IsVisible>
+                </TextBlock>
+
+                <TextPresenter
+                  x:Name="PART_TextPresenter"
+                  Margin="{TemplateBinding Padding}"
+                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                  CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                  CaretBrush="{TemplateBinding CaretBrush}"
+                  CaretIndex="{TemplateBinding CaretIndex}"
+                  SelectionBrush="{TemplateBinding SelectionBrush}"
+                  SelectionEnd="{TemplateBinding SelectionEnd}"
+                  SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                  SelectionStart="{TemplateBinding SelectionStart}"
+                  Text="{TemplateBinding Text, Mode=TwoWay}"/>
+              </Panel>
+            </ScrollViewer>
+          </Border>
+        </DataValidationErrors>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#UnderlineBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource MutedColor}"/>
+    </Style>
+
+    <Style Selector="^:focus /template/ Border#UnderlineBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+    </Style>
+
+    <Style Selector="^:error /template/ Border#UnderlineBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource ErrorColor}"/>
+    </Style>
+  </ControlTheme>
+
+  <!--  Editable Bento Metric Number Box With Clear Bottom Underline  -->
+  <ControlTheme
+    x:Key="OobeInlineTokenTextBoxTheme" TargetType="TextBox">
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Cursor" Value="IBeam"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource OobeFieldUnderlineBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,1.5"/>
+    <Setter Property="Padding" Value="0,1,0,4"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="SelectionBrush" Value="{DynamicResource PrimaryColor}"/>
+    <Setter Property="SelectionForegroundBrush" Value="{DynamicResource PrimaryForegroundColor}"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="FocusAdorner" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border
+          x:Name="UnderlineBorder"
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}">
+          <Border.Transitions>
+            <Transitions>
+              <BrushTransition
+                Easing="CubicEaseOut" Property="BorderBrush"
+                Duration="0:0:0.16"/>
+            </Transitions>
+          </Border.Transitions>
+          <ScrollViewer
+            x:Name="PART_ScrollViewer" MinHeight="26"
+            HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+            <Panel x:Name="TextContainer">
+              <TextBlock
+                x:Name="PlaceholderText"
+                Margin="{TemplateBinding Padding}"
+                VerticalAlignment="Center" FontSize="15"
+                FontWeight="Medium" Opacity="0.45"
+                Text="{TemplateBinding PlaceholderText}">
+                <TextBlock.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding
+                      Converter="{x:Static StringConverters.IsNullOrEmpty}"
+                      ElementName="PART_TextPresenter" Path="PreeditText"/>
+                    <Binding
+                      Converter="{x:Static StringConverters.IsNullOrEmpty}"
+                      Path="Text"
+                      RelativeSource="{RelativeSource TemplatedParent}"/>
+                  </MultiBinding>
+                </TextBlock.IsVisible>
+              </TextBlock>
+
+              <TextPresenter
+                x:Name="PART_TextPresenter"
+                Margin="{TemplateBinding Padding}"
+                VerticalAlignment="Center"
+                CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                CaretBrush="{TemplateBinding CaretBrush}"
+                CaretIndex="{TemplateBinding CaretIndex}"
+                SelectionBrush="{TemplateBinding SelectionBrush}"
+                SelectionEnd="{TemplateBinding SelectionEnd}"
+                SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                SelectionStart="{TemplateBinding SelectionStart}"
+                Text="{TemplateBinding Text, Mode=TwoWay}"/>
+            </Panel>
+          </ScrollViewer>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#UnderlineBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource MutedColor}"/>
+    </Style>
+
+    <Style Selector="^:focus /template/ Border#UnderlineBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+    </Style>
+  </ControlTheme>
+
+  <!--  Ghost Inline API Key Selector (Shared Across Preset & Advanced)  -->
+  <ControlTheme
+    x:Key="OobeInlineComboBoxTheme"
+    BasedOn="{StaticResource OobePillComboBoxTheme}"
+    TargetType="ComboBox">
+    <Setter Property="Margin" Value="-8,0,-10,0"/>
+    <Setter Property="FontSize" Value="13.5"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="Padding" Value="8,5,10,5"/>
+
+    <Style Selector="^ /template/ LucideIcon#ChevronIcon">
+      <Setter Property="Size" Value="17"/>
+      <Setter Property="Opacity" Value="0.62"/>
+    </Style>
+
+    <Style Selector="^:pointerover /template/ Border#BackgroundBorder">
+      <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="^:dropdownopen /template/ Border#BackgroundBorder">
+      <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor75}"/>
+    </Style>
+  </ControlTheme>
+
+  <!--  Interactive Capability Toggle Pill (Matches Read-Only CapBadge Grammar)  -->
+  <ControlTheme
+    x:Key="OobeCapToggleTheme" TargetType="ToggleButton">
+    <Setter Property="WindowDecorationProperties.ElementRole" Value="User"/>
+    <Setter Property="CornerRadius" Value="999"/>
+    <Setter Property="Padding" Value="10,5"/>
+    <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource OobeFieldBorderBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="RenderTransform" Value="scale(1)"/>
+    <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border
+          x:Name="RootBorder"
+          Padding="{TemplateBinding Padding}"
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}"
+          CornerRadius="{TemplateBinding CornerRadius}">
+          <Border.Transitions>
+            <Transitions>
+              <BrushTransition
+                Easing="CubicEaseOut" Property="Background"
+                Duration="0:0:0.16"/>
+              <BrushTransition
+                Easing="CubicEaseOut" Property="BorderBrush"
+                Duration="0:0:0.16"/>
+            </Transitions>
+          </Border.Transitions>
+          <ContentPresenter
+            x:Name="PART_ContentPresenter" HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Content="{TemplateBinding Content}"
+            ContentTemplate="{TemplateBinding ContentTemplate}"
+            Opacity="0.68"
+            TextBlock.FontSize="{TemplateBinding FontSize}"
+            TextBlock.FontWeight="{TemplateBinding FontWeight}"
+            TextBlock.Foreground="{TemplateBinding Foreground}"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition
+          Easing="CubicEaseOut" Property="RenderTransform"
+          Duration="0:0:0.14"/>
+      </Transitions>
+    </Setter>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeFieldUnderlineBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="0.95"/>
+      </Style>
+    </Style>
+
+    <Style Selector="^:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <Style Selector="^:pressed">
+      <Setter Property="RenderTransform" Value="scale(0.96)"/>
+    </Style>
+
+    <Style Selector="^.Lead:checked">
+      <Setter Property="Background" Value="{DynamicResource PrimaryColor10}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
+    </Style>
+
+    <Style Selector="^.Cyan:checked">
+      <Setter Property="Background" Value="{DynamicResource OobeBrandCyanTintBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandCyanBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource OobeBrandCyanBrush}"/>
+    </Style>
+
+    <Style Selector="^.Gold:checked">
+      <Setter Property="Background" Value="{DynamicResource OobeBrandGoldTintBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandGoldBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource OobeBrandGoldBrush}"/>
+    </Style>
+
+    <Style Selector="^.Orange:checked">
+      <Setter Property="Background" Value="{DynamicResource OobeOwnHoverTintBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeOwnAccentBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource OobeOwnAccentBrush}"/>
+    </Style>
+
+    <Style Selector="^.Pink:checked">
+      <Setter Property="Background" Value="{DynamicResource OobeBrandPinkTintBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandPinkBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource OobeBrandPinkBrush}"/>
+    </Style>
+
+    <Style Selector="^.Primary:checked">
+      <Setter Property="Background" Value="{DynamicResource PrimaryColor10}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
+    </Style>
+  </ControlTheme>
+
+  <!--  Segmented 3-Column Track Buttons (Shared by Personalize, Prompt Recipe & Finish Stages)  -->
+  <ControlTheme
+    x:Key="OobeSegmentChipTheme" TargetType="Button">
+    <Setter Property="WindowDecorationProperties.ElementRole" Value="User"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="9"/>
+    <Setter Property="Padding" Value="10,7"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="FocusAdorner" Value="{x:Null}"/>
+    <Setter Property="RenderTransform" Value="scale(1)"/>
+    <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border
+          x:Name="SegmentBorder"
+          Padding="{TemplateBinding Padding}"
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}"
+          CornerRadius="{TemplateBinding CornerRadius}">
+          <Border.Transitions>
+            <Transitions>
+              <BrushTransition
+                Easing="CubicEaseOut" Property="Background"
+                Duration="0:0:0.16"/>
+              <BrushTransition
+                Easing="CubicEaseOut" Property="BorderBrush"
+                Duration="0:0:0.16"/>
+            </Transitions>
+          </Border.Transitions>
+          <ContentPresenter
+            x:Name="PART_ContentPresenter" HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Content="{TemplateBinding Content}"
+            ContentTemplate="{TemplateBinding ContentTemplate}"
+            Opacity="0.76"
+            TextBlock.FontSize="{TemplateBinding FontSize}"
+            TextBlock.FontWeight="{TemplateBinding FontWeight}"
+            TextBlock.Foreground="{TemplateBinding Foreground}"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition
+          Easing="CubicEaseOut" Property="RenderTransform"
+          Duration="0:0:0.14"/>
+      </Transitions>
+    </Setter>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Background" Value="{DynamicResource OobeSubtleSurfaceBrush}"/>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="0.98"/>
+      </Style>
+    </Style>
+
+    <Style Selector="^:pressed">
+      <Setter Property="RenderTransform" Value="scale(0.97)"/>
+    </Style>
+
+    <Style Selector="^.Selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <Style Selector="^.OobeFinishSegment.Selected">
+      <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeChipPurpleBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

@@ -1,0 +1,61 @@
+<UserControl
+  x:Class="Everywhere.Views.WelcomeStageView" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  d:DesignHeight="540" d:DesignWidth="440"
+  x:DataType="vm:WelcomeFlow" ClipToBounds="False"
+  mc:Ignorable="d">
+  <UserControl.Styles>
+    <Style Selector="Border.StudioCard">
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="18"/>
+      <Setter Property="Padding" Value="24"/>
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer
+    HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+    <StackPanel
+      VerticalAlignment="Center" Spacing="28">
+      <Border
+        x:Name="SplitCompanionAnchorSpacer" Height="64"
+        IsHitTestVisible="False"/>
+
+      <!--  Stage 4: Personalize Floating Evy Overlay Preview  -->
+      <Border
+        x:Name="MiniChatCard" Classes="StudioCard"
+        Padding="22,20" CornerRadius="20"
+        IsVisible="{Binding $parent[v:WelcomeView].DisplayedStep, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type vm:WelcomePersonalizationStep}}">
+        <StackPanel Spacing="14">
+          <!--  User Query Bubble (Frosted Floating Surface)  -->
+          <Border
+            MaxWidth="320" Padding="14,10"
+            HorizontalAlignment="Right"
+            Background="{DynamicResource OobeElevatedSurfaceBrush}"
+            BorderBrush="{DynamicResource OobeHairlineBrush}"
+            BorderThickness="1" CornerRadius="16,16,5,16">
+            <TextBlock
+              LineHeight="20"
+              Text="{Binding PreviewQuestionKey^}"
+              TextWrapping="Wrap"/>
+          </Border>
+
+          <!--  Evy Live Reply Surface  -->
+          <Border
+            Padding="15,13"
+            Background="{DynamicResource OobeStageWellBrush}"
+            BorderBrush="{DynamicResource OobeHairlineBrush}"
+            BorderThickness="1" CornerRadius="6,16,16,16">
+            <TextBlock
+              LineHeight="21"
+              Text="{Binding PreviewReplyKey^}"
+              TextWrapping="Wrap"/>
+          </Border>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

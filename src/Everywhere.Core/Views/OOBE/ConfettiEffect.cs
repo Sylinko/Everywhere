@@ -138,6 +138,11 @@ public class ConfettiEffect : Canvas
 
     #endregion
 
+    static ConfettiEffect()
+    {
+        IsHitTestVisibleProperty.OverrideDefaultValue<ConfettiEffect>(false);
+    }
+
     /// <summary>
     /// Starts the confetti animation.
     /// </summary>
@@ -166,11 +171,20 @@ public class ConfettiEffect : Canvas
     }
 
     /// <summary>
-    /// Stops the confetti animation and cleans up resources.
+    /// Stops the confetti animation and clears active particles.
     /// </summary>
     public void Stop()
     {
         _isRunning = false;
+        _particles.Clear();
+        Children.Clear();
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        Stop();
+        base.OnDetachedFromVisualTree(e);
     }
 
     /// <summary>

@@ -40,18 +40,22 @@
                 x:Name="PART_EyesContainer" Margin="0,0,0,2"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 Focusable="False">
-                <Image
-                  x:Name="PART_Eyes" Width="18"
-                  Height="18">
-                  <Image.Source>
-                    <DrawingImage>
-                      <DrawingImage.Drawing>
-                        <GeometryDrawing
-                          Brush="#FF000000" Geometry="F1 M612,440C612,471 624,496 651,496 678,496 689,471 689,440 689,409 677,384 651,384 625,384 612,409 612,440z M430,440C430,471 418,496 391,496 364,496 353,471 353,440 353,409 365,384 391,384 417,384 430,409 430,440z"/>
-                      </DrawingImage.Drawing>
-                    </DrawingImage>
-                  </Image.Source>
-                </Image>
+                <Panel x:Name="PART_IdleGazeLayer">
+                  <Panel x:Name="PART_PointerGazeLayer">
+                    <Image
+                      x:Name="PART_Eyes" Width="18"
+                      Height="18" RenderTransformOrigin="50%,50%">
+                      <Image.Source>
+                        <DrawingImage>
+                          <DrawingImage.Drawing>
+                            <GeometryDrawing
+                              Brush="#FF000000" Geometry="F1 M612,440C612,471 624,496 651,496 678,496 689,471 689,440 689,409 677,384 651,384 625,384 612,409 612,440z M430,440C430,471 418,496 391,496 364,496 353,471 353,440 353,409 365,384 391,384 417,384 430,409 430,440z"/>
+                          </DrawingImage.Drawing>
+                        </DrawingImage>
+                      </Image.Source>
+                    </Image>
+                  </Panel>
+                </Panel>
               </Decorator>
 
               <TextBlock
@@ -68,49 +72,71 @@
     </Setter>
 
     <Style Selector="^:idle">
+      <Style Selector="^ /template/ Panel#PART_IdleGazeLayer">
+        <Style.Animations>
+          <Animation
+            Easing="CubicEaseInOut" IterationCount="INFINITE"
+            Duration="0:0:10">
+            <KeyFrame Cue="0%">
+              <Setter Property="TranslateTransform.X" Value="0"/>
+              <Setter Property="TranslateTransform.Y" Value="0"/>
+            </KeyFrame>
+            <KeyFrame Cue="4%">
+              <Setter Property="TranslateTransform.X" Value="1.2"/>
+              <Setter Property="TranslateTransform.Y" Value="-0.6"/>
+            </KeyFrame>
+            <KeyFrame Cue="12%">
+              <Setter Property="TranslateTransform.X" Value="1.2"/>
+              <Setter Property="TranslateTransform.Y" Value="-0.6"/>
+            </KeyFrame>
+            <KeyFrame Cue="18%">
+              <Setter Property="TranslateTransform.X" Value="-1.2"/>
+              <Setter Property="TranslateTransform.Y" Value="-0.6"/>
+            </KeyFrame>
+            <KeyFrame Cue="28%">
+              <Setter Property="TranslateTransform.X" Value="-1.2"/>
+              <Setter Property="TranslateTransform.Y" Value="-0.6"/>
+            </KeyFrame>
+            <KeyFrame Cue="34%">
+              <Setter Property="TranslateTransform.X" Value="0"/>
+              <Setter Property="TranslateTransform.Y" Value="0"/>
+            </KeyFrame>
+            <KeyFrame Cue="100%">
+              <Setter Property="TranslateTransform.X" Value="0"/>
+              <Setter Property="TranslateTransform.Y" Value="0"/>
+            </KeyFrame>
+          </Animation>
+        </Style.Animations>
+      </Style>
+
       <Style Selector="^ /template/ Image#PART_Eyes">
         <Style.Animations>
           <Animation
             Easing="QuarticEaseInOut" IterationCount="INFINITE"
             Duration="0:0:10">
             <KeyFrame Cue="0%">
-              <Setter Property="Margin" Value="0,0,0,0"/>
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="0.03%">
-              <Setter Property="Margin" Value="2,0,0,4"/>
-            </KeyFrame>
-            <KeyFrame Cue="0.4%">
-              <Setter Property="Margin" Value="2,0,0,4"/>
-            </KeyFrame>
-            <KeyFrame Cue="0.46%">
-              <Setter Property="Margin" Value="-2,0,0,4"/>
-            </KeyFrame>
-            <KeyFrame Cue="1%">
-              <Setter Property="Margin" Value="-2,0,0,4"/>
+            <KeyFrame Cue="19%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.06%">
+            <KeyFrame Cue="19.8%">
               <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.12%">
+            <KeyFrame Cue="20.6%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.3%">
+            <KeyFrame Cue="22.2%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.36%">
+            <KeyFrame Cue="23%">
               <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.42%">
+            <KeyFrame Cue="23.8%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-              <Setter Property="Margin" Value="-2,0,0,4"/>
             </KeyFrame>
-            <KeyFrame Cue="3%">
-              <Setter Property="Margin" Value="-2,0,0,4"/>
-            </KeyFrame>
-            <KeyFrame Cue="4%">
-              <Setter Property="Margin" Value="0,0,0,0"/>
+            <KeyFrame Cue="100%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
           </Animation>
         </Style.Animations>
@@ -118,49 +144,71 @@
     </Style>
 
     <Style Selector="^:thinking">
-      <Style Selector="^:not(:looking) /template/ Image#PART_Eyes">
+      <Style Selector="^:not(:looking) /template/ Panel#PART_IdleGazeLayer">
+        <Style.Animations>
+          <Animation
+            Easing="CubicEaseInOut" IterationCount="INFINITE"
+            Duration="0:0:4">
+            <KeyFrame Cue="0%">
+              <Setter Property="TranslateTransform.X" Value="0"/>
+              <Setter Property="TranslateTransform.Y" Value="0"/>
+            </KeyFrame>
+            <KeyFrame Cue="10%">
+              <Setter Property="TranslateTransform.X" Value="1.2"/>
+              <Setter Property="TranslateTransform.Y" Value="-0.6"/>
+            </KeyFrame>
+            <KeyFrame Cue="24%">
+              <Setter Property="TranslateTransform.X" Value="1.2"/>
+              <Setter Property="TranslateTransform.Y" Value="-0.6"/>
+            </KeyFrame>
+            <KeyFrame Cue="36%">
+              <Setter Property="TranslateTransform.X" Value="-1.2"/>
+              <Setter Property="TranslateTransform.Y" Value="-0.6"/>
+            </KeyFrame>
+            <KeyFrame Cue="52%">
+              <Setter Property="TranslateTransform.X" Value="-1.2"/>
+              <Setter Property="TranslateTransform.Y" Value="-0.6"/>
+            </KeyFrame>
+            <KeyFrame Cue="64%">
+              <Setter Property="TranslateTransform.X" Value="0"/>
+              <Setter Property="TranslateTransform.Y" Value="0"/>
+            </KeyFrame>
+            <KeyFrame Cue="100%">
+              <Setter Property="TranslateTransform.X" Value="0"/>
+              <Setter Property="TranslateTransform.Y" Value="0"/>
+            </KeyFrame>
+          </Animation>
+        </Style.Animations>
+      </Style>
+
+      <Style Selector="^ /template/ Image#PART_Eyes">
         <Style.Animations>
           <Animation
             Easing="QuarticEaseInOut" IterationCount="INFINITE"
             Duration="0:0:4">
             <KeyFrame Cue="0%">
-              <Setter Property="Margin" Value="0,0,0,0"/>
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="0.3%">
-              <Setter Property="Margin" Value="2,0,0,4"/>
-            </KeyFrame>
-            <KeyFrame Cue="6%">
-              <Setter Property="Margin" Value="2,0,0,4"/>
-            </KeyFrame>
-            <KeyFrame Cue="6.3%">
-              <Setter Property="Margin" Value="-2,0,0,4"/>
-            </KeyFrame>
-            <KeyFrame Cue="12%">
-              <Setter Property="Margin" Value="-2,0,0,4"/>
+            <KeyFrame Cue="14%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-            </KeyFrame>
-            <KeyFrame Cue="12.6%">
-              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
-            </KeyFrame>
-            <KeyFrame Cue="13.2%">
-              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-            </KeyFrame>
-            <KeyFrame Cue="14.3%">
-              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-            </KeyFrame>
-            <KeyFrame Cue="14.9%">
-              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
             </KeyFrame>
             <KeyFrame Cue="15.5%">
+              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
+            </KeyFrame>
+            <KeyFrame Cue="17%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-              <Setter Property="Margin" Value="-2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="20%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="21.5%">
+              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
             </KeyFrame>
             <KeyFrame Cue="23%">
-              <Setter Property="Margin" Value="-2,0,0,4"/>
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="28%">
-              <Setter Property="Margin" Value="0,0,0,0"/>
+            <KeyFrame Cue="100%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
           </Animation>
         </Style.Animations>
@@ -197,22 +245,28 @@
           <Animation
             Easing="QuarticEaseInOut" IterationCount="INFINITE"
             Duration="0:0:10">
-            <KeyFrame Cue="1%">
+            <KeyFrame Cue="0%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.06%">
+            <KeyFrame Cue="19%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="19.8%">
               <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.12%">
+            <KeyFrame Cue="20.6%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.3%">
+            <KeyFrame Cue="22.2%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.36%">
+            <KeyFrame Cue="23%">
               <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
             </KeyFrame>
-            <KeyFrame Cue="1.42%">
+            <KeyFrame Cue="23.8%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="100%">
               <Setter Property="ScaleTransform.ScaleY" Value="1"/>
             </KeyFrame>
           </Animation>

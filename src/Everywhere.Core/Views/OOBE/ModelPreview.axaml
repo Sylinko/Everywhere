@@ -1,0 +1,103 @@
+<UserControl
+  x:Class="Everywhere.Views.ModelPreview" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia" d:DesignHeight="132"
+  d:DesignWidth="230" ClipToBounds="True"
+  mc:Ignorable="d">
+  <Panel Background="Transparent">
+    <!--  Localized neutral-violet illumination emitted behind the active selector item  -->
+    <Ellipse
+      Width="168" Height="114"
+      HorizontalAlignment="Center" VerticalAlignment="Center"
+      Fill="{DynamicResource OobeIntroVioletGlowBrush}"
+      IsHitTestVisible="False"/>
+
+    <!--  Miniature model picker dropdown frame  -->
+    <Border
+      Margin="18,18,18,0" Padding="6"
+      VerticalAlignment="Top"
+      Background="{DynamicResource OobeNodeSurfaceBrush}"
+      BorderBrush="{DynamicResource OobeHairlineBrush}"
+      BorderThickness="1" CornerRadius="12">
+      <Panel>
+        <!--  Positioning host keeps SelectionHighlight relative offset at (0,0,0)  -->
+        <Panel VerticalAlignment="Top">
+          <Border
+            x:Name="SelectionHighlight" Height="28"
+            HorizontalAlignment="Stretch" VerticalAlignment="Top"
+            Background="{DynamicResource OobeIntroVioletPillBrush}"
+            BorderBrush="{DynamicResource OobeIntroVioletBorderBrush}"
+            BorderThickness="1" CornerRadius="8"/>
+        </Panel>
+
+        <!--  Stationary brand logos & model rows; the purple selection pill slides onto option 1  -->
+        <StackPanel Spacing="4">
+          <Grid
+            Height="28" Margin="9,0"
+            ColumnDefinitions="Auto,*" ColumnSpacing="9">
+            <shadui:ThemeToggleBlock
+              Grid.Column="0" Width="13"
+              Height="13" VerticalAlignment="Center">
+              <shadui:ThemeToggleBlock.DarkContent>
+                <ControlTemplate>
+                  <svg:Svg
+                    Width="13" Height="13"
+                    Css=":nth-child(0) { font-size: 1px }" Path="avares://Everywhere.Core/Assets/Icons/openai-dark.svg"/>
+                </ControlTemplate>
+              </shadui:ThemeToggleBlock.DarkContent>
+              <shadui:ThemeToggleBlock.LightContent>
+                <ControlTemplate>
+                  <svg:Svg
+                    Width="13" Height="13"
+                    Css=":nth-child(0) { font-size: 1px }" Path="avares://Everywhere.Core/Assets/Icons/openai-light.svg"/>
+                </ControlTemplate>
+              </shadui:ThemeToggleBlock.LightContent>
+            </shadui:ThemeToggleBlock>
+            <Border
+              Grid.Column="1" Width="66"
+              Height="4.5" HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Background="{DynamicResource OobeIntroMiniLineBrush}"
+              CornerRadius="2.25"/>
+          </Grid>
+
+          <Grid
+            Height="28" Margin="9,0"
+            ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
+            <svg:Svg
+              Grid.Column="0" Width="13"
+              Height="13" VerticalAlignment="Center"
+              Css=":nth-child(0) { font-size: 1px }" Path="avares://Everywhere.Core/Assets/Icons/gemini-color.svg"/>
+            <Border
+              Grid.Column="1" Width="54"
+              Height="4.5" HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Background="{DynamicResource OobeIntroMiniLineBrush}"
+              CornerRadius="2.25"/>
+            <LucideIcon
+              x:Name="CheckOption1" Grid.Column="2"
+              VerticalAlignment="Center"
+              Foreground="{DynamicResource OobeIntroVioletAccentBrush}"
+              Kind="Check" Size="12"/>
+          </Grid>
+
+          <Grid
+            Height="28" Margin="9,0"
+            ColumnDefinitions="Auto,*" ColumnSpacing="9">
+            <svg:Svg
+              Grid.Column="0" Width="13"
+              Height="13" VerticalAlignment="Center"
+              Css=":nth-child(0) { font-size: 1px }" Path="avares://Everywhere.Core/Assets/Icons/deepseek-color.svg"/>
+            <Border
+              Grid.Column="1" Width="74"
+              Height="4.5" HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+              CornerRadius="2.25"/>
+          </Grid>
+        </StackPanel>
+      </Panel>
+    </Border>
+  </Panel>
+</UserControl>

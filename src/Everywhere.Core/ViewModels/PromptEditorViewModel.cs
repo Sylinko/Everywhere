@@ -339,23 +339,7 @@ public sealed partial class PromptEditorViewModel(
         await ExecuteBusyTaskAsync(
             async cancellationToken =>
             {
-                var draft = CreateSaveDraft();
-                var savedPrompt = EditingPromptId is { } promptId ?
-                    await promptService.UpdatePromptAsync(
-                        promptId,
-                        new PromptUpdateRequest(
-                            draft.Template,
-                            draft.Name,
-                            draft.MetadataPayload,
-                            draft.Source),
-                        cancellationToken) :
-                    await promptService.CreatePromptAsync(
-                        new PromptCreateRequest(
-                            draft.Template,
-                            draft.Name,
-                            draft.Source,
-                            draft.MetadataPayload),
-                        cancellationToken);
+                var savedPrompt = await SavePromptAsync(cancellationToken);
 
                 if (savedPrompt is null)
                 {
@@ -382,6 +366,42 @@ public sealed partial class PromptEditorViewModel(
                     .DismissOnClick()
                     .ShowError();
             }));
+    }
+
+    /// <summary>
+    /// Saves the current prompt draft without triggering page navigation. Embedded onboarding
+    /// flows own their busy state, error feedback, and step progression while retaining the
+    /// created prompt identity so retries update the same record idempotently.
+    /// </summary>
+    public async Task<PromptDefinition?> SavePromptAsync(CancellationToken cancellationToken)
+    {
+        var draft = CreateSaveDraft();
+        var savedPrompt = EditingPromptId is { } promptId ?
+            await promptService.UpdatePromptAsync(
+                promptId,
+                new PromptUpdateRequest(
+                    draft.Template,
+                    draft.Name,
+                    draft.MetadataPayload,
+                    draft.Source),
+                cancellationToken) :
+            await promptService.CreatePromptAsync(
+                new PromptCreateRequest(
+                    draft.Template,
+                    draft.Name,
+                    draft.Source,
+                    draft.MetadataPayload),
+                cancellationToken);
+
+        if (savedPrompt is null) return null;
+
+        _originalName = savedPrompt.Name;
+        _originalTemplate = savedPrompt.Template;
+        _originalSource = savedPrompt.Source;
+        _originalMetadataPayload = ClonePayload(savedPrompt.MetadataPayload);
+        EditingPromptId = savedPrompt.Id;
+        NotifySaveStateChanged();
+        return savedPrompt;
     }
 
     [RelayCommand]

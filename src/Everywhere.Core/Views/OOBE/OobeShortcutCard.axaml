@@ -1,0 +1,279 @@
+<UserControl
+  x:Class="Everywhere.Views.OobeShortcutCard" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:v="clr-namespace:Everywhere.Views"
+  d:DesignWidth="400" x:Name="CardHost"
+  MaxWidth="400" HorizontalAlignment="Stretch"
+  VerticalAlignment="Top" x:DataType="v:OobeShortcutCard"
+  ClipToBounds="False" mc:Ignorable="d">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <!--  Borderless Clear Button Without Hover Background  -->
+      <ControlTheme
+        x:Key="OobeQuietClearButtonTheme" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="Opacity" Value="0.6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Transitions">
+          <Transitions>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="Opacity"
+              Duration="0:0:0.14"/>
+          </Transitions>
+        </Setter>
+        <Setter Property="Template">
+          <ControlTemplate TargetType="Button">
+            <Border
+              Padding="{TemplateBinding Padding}"
+              Background="Transparent">
+              <ContentPresenter
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Content="{TemplateBinding Content}"/>
+            </Border>
+          </ControlTemplate>
+        </Setter>
+
+        <Style Selector="^:pointerover">
+          <Setter Property="Opacity" Value="1"/>
+        </Style>
+
+        <Style Selector="^:pressed">
+          <Setter Property="Opacity" Value="0.8"/>
+          <Setter Property="RenderTransform" Value="scale(0.92)"/>
+        </Style>
+      </ControlTheme>
+
+      <!--  Standalone Frosted Keycap Recorder Theme Without Card Chrome or Hover Fill  -->
+      <ControlTheme
+        x:Key="OobeShortcutInputBoxTheme" TargetType="v:KeyboardShortcutInputBox">
+        <Setter Property="Focusable" Value="True"/>
+        <Setter Property="Template">
+          <ControlTemplate TargetType="v:KeyboardShortcutInputBox">
+            <Border
+              x:Name="PART_InputBox" MinHeight="62"
+              Padding="18,12"
+              Background="{DynamicResource OobeSurfaceBrush}"
+              BorderBrush="{DynamicResource OobeCardBorderBrush}"
+              BorderThickness="1" CornerRadius="18"
+              Cursor="Hand">
+              <Border.Transitions>
+                <Transitions>
+                  <BrushTransition
+                    Easing="CubicEaseOut" Property="BorderBrush"
+                    Duration="0:0:0.16"/>
+                </Transitions>
+              </Border.Transitions>
+              <Grid
+                ColumnDefinitions="28,*,28" ColumnSpacing="10">
+                <LucideIcon
+                  x:Name="ShortcutPrefixIcon" Grid.Column="0"
+                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                  Foreground="{DynamicResource MutedColor}"
+                  IsHitTestVisible="False" Kind="Keyboard"
+                  Opacity="0.6"
+                  Size="{DynamicResource FontSizeL}"/>
+
+                <!--  Centered Watermarks / Borderless Shortcut Display  -->
+                <Panel
+                  Grid.Column="1" HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+                  <Panel
+                    HorizontalAlignment="Center" IsHitTestVisible="False"
+                    IsVisible="{Binding DisplayShortcut.IsEmpty, RelativeSource={RelativeSource TemplatedParent}}">
+                    <TextBlock
+                      Classes="Muted" VerticalAlignment="Center"
+                      FontSize="13.5"
+                      IsVisible="{Binding !IsRecording, RelativeSource={RelativeSource TemplatedParent}}"
+                      Text="{I18N {x:Static LocaleKey.KeyboardShortcutInputBox_PlaceholderText}}"/>
+                    <StackPanel
+                      x:Name="PART_RecordingIndicator" VerticalAlignment="Center"
+                      IsVisible="{Binding IsRecording, RelativeSource={RelativeSource TemplatedParent}}"
+                      Orientation="Horizontal" Spacing="8">
+                      <Ellipse
+                        x:Name="RecordingDot1" Width="7"
+                        Height="7"
+                        Fill="{DynamicResource PrimaryColor}"
+                        RenderTransformOrigin="50%,50%"/>
+                      <Ellipse
+                        x:Name="RecordingDot2" Width="7"
+                        Height="7"
+                        Fill="{DynamicResource PrimaryColor}"
+                        RenderTransformOrigin="50%,50%"/>
+                      <Ellipse
+                        x:Name="RecordingDot3" Width="7"
+                        Height="7"
+                        Fill="{DynamicResource PrimaryColor}"
+                        RenderTransformOrigin="50%,50%"/>
+                    </StackPanel>
+                  </Panel>
+
+                  <v:KeyboardShortcutPresenter
+                    Padding="0" HorizontalAlignment="Center"
+                    VerticalAlignment="Center" Background="Transparent"
+                    BorderBrush="{x:Null}"
+                    BorderThickness="0" FontSize="17"
+                    FontWeight="SemiBold"
+                    IsVisible="{Binding !DisplayShortcut.IsEmpty, RelativeSource={RelativeSource TemplatedParent}}"
+                    Shortcut="{TemplateBinding DisplayShortcut}"/>
+                </Panel>
+
+                <!--  Subtle Right-Aligned Clear Button Without Hover Background  -->
+                <Button
+                  x:Name="PART_ClearButton" Grid.Column="2"
+                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                  Focusable="False"
+                  IsVisible="{Binding !DisplayShortcut.IsEmpty, RelativeSource={RelativeSource TemplatedParent}}"
+                  Theme="{StaticResource OobeQuietClearButtonTheme}">
+                  <LucideIcon
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="X"
+                    Size="{DynamicResource FontSizeL}"/>
+                </Button>
+              </Grid>
+            </Border>
+          </ControlTemplate>
+        </Setter>
+
+        <Style Selector="^:pointerover /template/ Border#PART_InputBox">
+          <Setter Property="BorderBrush" Value="{DynamicResource OobeFieldUnderlineBrush}"/>
+        </Style>
+
+        <Style Selector="^[IsRecording=True] /template/ Border#PART_InputBox">
+          <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+        </Style>
+
+        <Style Selector="^[IsRecording=True] /template/ LucideIcon#ShortcutPrefixIcon">
+          <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
+          <Setter Property="Opacity" Value="1"/>
+        </Style>
+
+        <Style Selector="^[IsRecording=True] /template/ Ellipse#RecordingDot1">
+          <Style.Animations>
+            <Animation
+              Easing="CubicEaseInOut" IterationCount="INFINITE"
+              Duration="0:0:1.2">
+              <KeyFrame Cue="0%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+              <KeyFrame Cue="25%">
+                <Setter Property="Opacity" Value="1"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="1.15"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="1.15"/>
+              </KeyFrame>
+              <KeyFrame Cue="55%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+              <KeyFrame Cue="100%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+            </Animation>
+          </Style.Animations>
+        </Style>
+
+        <Style Selector="^[IsRecording=True] /template/ Ellipse#RecordingDot2">
+          <Style.Animations>
+            <Animation
+              Easing="CubicEaseInOut" IterationCount="INFINITE"
+              Duration="0:0:1.2">
+              <KeyFrame Cue="0%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+              <KeyFrame Cue="20%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+              <KeyFrame Cue="45%">
+                <Setter Property="Opacity" Value="1"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="1.15"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="1.15"/>
+              </KeyFrame>
+              <KeyFrame Cue="75%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+              <KeyFrame Cue="100%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+            </Animation>
+          </Style.Animations>
+        </Style>
+
+        <Style Selector="^[IsRecording=True] /template/ Ellipse#RecordingDot3">
+          <Style.Animations>
+            <Animation
+              Easing="CubicEaseInOut" IterationCount="INFINITE"
+              Duration="0:0:1.2">
+              <KeyFrame Cue="0%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+              <KeyFrame Cue="40%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+              <KeyFrame Cue="65%">
+                <Setter Property="Opacity" Value="1"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="1.15"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="1.15"/>
+              </KeyFrame>
+              <KeyFrame Cue="95%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+              <KeyFrame Cue="100%">
+                <Setter Property="Opacity" Value="0.35"/>
+                <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+              </KeyFrame>
+            </Animation>
+          </Style.Animations>
+        </Style>
+
+        <Style Selector="^:disabled /template/ Border#PART_InputBox">
+          <Setter Property="Opacity" Value="0.45"/>
+          <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
+      </ControlTheme>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <StackPanel Spacing="12">
+    <v:KeyboardShortcutInputBox
+      x:Name="ShortcutInputBox" HorizontalAlignment="Stretch"
+      IsEnabled="{Binding #CardHost.Flow?.IsNotBusy, FallbackValue=True}"
+      Shortcut="{Binding #CardHost.Flow?.Settings.Shortcut.ChatWindow.Main, Mode=TwoWay}"
+      Theme="{StaticResource OobeShortcutInputBoxTheme}"/>
+
+    <!--  Inline Quiet Whisper When Cleared  -->
+    <StackPanel
+      x:Name="ShortcutDisabledHint" HorizontalAlignment="Center"
+      IsVisible="{Binding !#CardHost.Flow?.HasValidShortcut, FallbackValue=False}"
+      Orientation="Horizontal" Spacing="7">
+      <LucideIcon
+        VerticalAlignment="Center"
+        Foreground="{DynamicResource MutedColor}"
+        Kind="CircleAlert" Size="13.5"/>
+      <TextBlock
+        Classes="Muted Caption" VerticalAlignment="Center"
+        Text="{I18N {x:Static LocaleKey.Oobe_Shortcut_Disabled}}"
+        TextAlignment="Center" TextWrapping="Wrap"/>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

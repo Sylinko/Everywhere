@@ -1,0 +1,612 @@
+<UserControl
+  x:Class="Everywhere.Views.PromptRecipeEditor" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
+  HorizontalAlignment="Stretch" VerticalAlignment="Top"
+  x:DataType="vm:PromptEditorViewModel" ClipToBounds="False">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/OOBE/WelcomePalette.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/OOBE/OobeCardControls.axaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <Style Selector="Border.PersonaGlassCard">
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="20"/>
+      <Setter Property="Padding" Value="22,20"/>
+    </Style>
+
+    <!--  Tactile Borderless Frosted Chips for Scenarios, Tone, Persona & Organization  -->
+    <Style Selector="Button.OobeRecipeChip">
+      <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="11,6.5"/>
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="FocusAdorner" Value="{x:Null}"/>
+      <Setter Property="RenderTransform" Value="scale(1)"/>
+      <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border
+            x:Name="ChipBorder"
+            Padding="{TemplateBinding Padding}"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            CornerRadius="{TemplateBinding CornerRadius}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="Background"
+                  Duration="0:0:0.16"/>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="BorderBrush"
+                  Duration="0:0:0.16"/>
+              </Transitions>
+            </Border.Transitions>
+            <ContentPresenter
+              x:Name="PART_ContentPresenter" HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Content="{TemplateBinding Content}"
+              ContentTemplate="{TemplateBinding ContentTemplate}"
+              Opacity="0.82"
+              TextBlock.FontSize="{TemplateBinding FontSize}"
+              TextBlock.FontWeight="{TemplateBinding FontWeight}"
+              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition
+            Easing="CubicEaseOut" Property="RenderTransform"
+            Duration="0:0:0.14"/>
+        </Transitions>
+      </Setter>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeFieldUnderlineBrush}"/>
+        <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Opacity" Value="1"/>
+        </Style>
+      </Style>
+
+      <Style Selector="^:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.96)"/>
+      </Style>
+
+      <Style Selector="^.Selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="1"/>
+      </Style>
+    </Style>
+
+    <!--  Per-Option Multi-Color Accent Palette (Shared Across Chips & Segmented Track)  -->
+    <Style Selector="Button.accent-blue">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipBlueBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeChipBlueTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipBlueBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipBlueBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-cyan">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeBrandCyanBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandCyanTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandCyanBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeBrandCyanBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-purple">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-indigo">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipIndigoBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeChipIndigoTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipIndigoBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipIndigoBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-pink">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeBrandPinkBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandPinkTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandPinkBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeBrandPinkBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-orange">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipOrangeBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeChipOrangeTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipOrangeBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipOrangeBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-gold">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeBrandGoldBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandGoldTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandGoldBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeBrandGoldBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-green">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipGreenBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeChipGreenTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipGreenBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipGreenBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-teal">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipTealBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeChipTealTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipTealBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipTealBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.accent-red">
+      <Style Selector="^ LucideIcon#OptionIcon">
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipRedBrush}"/>
+      </Style>
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeChipRedTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipRedBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipRedBrush}"/>
+      </Style>
+    </Style>
+
+    <!--  Seamless Ghost Disclosure Toggle for Optional Preferences  -->
+    <Style Selector="ToggleButton.OobeDisclosureToggle">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="6,6"/>
+      <Setter Property="Margin" Value="-6,0"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+      <Setter Property="FocusAdorner" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border
+            x:Name="DisclosureBorder"
+            Padding="{TemplateBinding Padding}"
+            Background="{TemplateBinding Background}"
+            CornerRadius="{TemplateBinding CornerRadius}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="Background"
+                  Duration="0:0:0.14"/>
+              </Transitions>
+            </Border.Transitions>
+            <ContentPresenter
+              x:Name="PART_ContentPresenter"
+              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+              VerticalContentAlignment="Center"
+              Content="{TemplateBinding Content}"
+              ContentTemplate="{TemplateBinding ContentTemplate}"
+              Opacity="0.78"
+              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^ LucideIcon#DisclosureChevron">
+        <Setter Property="RenderTransform" Value="rotate(0deg)"/>
+        <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+        <Setter Property="Transitions">
+          <Transitions>
+            <TransformOperationsTransition
+              Easing="CubicEaseOut" Property="RenderTransform"
+              Duration="0:0:0.18"/>
+          </Transitions>
+        </Setter>
+      </Style>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
+        <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Opacity" Value="1"/>
+        </Style>
+      </Style>
+
+      <Style Selector="^:checked LucideIcon#DisclosureChevron">
+        <Setter Property="RenderTransform" Value="rotate(180deg)"/>
+      </Style>
+
+      <Style Selector="^:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="1"/>
+      </Style>
+    </Style>
+  </UserControl.Styles>
+
+  <Border
+    Classes="PersonaGlassCard"
+    DataContext="{Binding #Self.Editor}">
+    <StackPanel Spacing="18">
+      <!--  1. Work Scenarios (Multi-Select Multi-Color Chips, up to 3)  -->
+      <StackPanel Spacing="10">
+        <StackPanel
+          Orientation="Horizontal" Spacing="7">
+          <LucideIcon
+            VerticalAlignment="Center"
+            Foreground="{DynamicResource MutedColor}"
+            Kind="Briefcase" Size="14"/>
+          <TextBlock
+            VerticalAlignment="Center" FontSize="13"
+            FontWeight="SemiBold"
+            Text="{I18N {x:Static LocaleKey.PromptCreate_ScenarioLabel}}"/>
+        </StackPanel>
+
+        <ItemsControl ItemsSource="{Binding ScenarioOptions}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel
+                ItemSpacing="7" LineSpacing="7"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:PromptRecipeOptionItem">
+              <Button
+                Classes="OobeRecipeChip"
+                v:PromptRecipeEditor.OptionAccentId="{Binding Id}"
+                Classes.Selected="{Binding IsSelected}"
+                Command="{Binding #Self.Editor?.ToggleScenarioCommand, FallbackValue={x:Null}}"
+                CommandParameter="{Binding}">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <LucideIcon
+                    x:Name="OptionIcon" VerticalAlignment="Center"
+                    Kind="{Binding Icon}"
+                    Size="13.5"/>
+                  <TextBlock
+                    VerticalAlignment="Center"
+                    Text="{Binding NameKey^}"/>
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <StackPanel
+          x:Name="ScenarioRequiredHint" Margin="2,-2,0,0"
+          IsVisible="{Binding #Self.ShowScenarioRequiredHint}"
+          Orientation="Horizontal" Spacing="6">
+          <LucideIcon
+            VerticalAlignment="Center"
+            Foreground="{DynamicResource OobeBrandPinkBrush}"
+            Kind="CircleAlert" Size="13"/>
+          <TextBlock
+            Classes="Caption" VerticalAlignment="Center"
+            Foreground="{DynamicResource OobeBrandPinkBrush}"
+            Text="{I18N {x:Static LocaleKey.Oobe_Personalize_ScenarioRequired}}"
+            TextWrapping="Wrap"/>
+        </StackPanel>
+      </StackPanel>
+
+      <!--  2. Tone and Style (Single-Select Multi-Color Chips)  -->
+      <StackPanel Spacing="10">
+        <StackPanel
+          Orientation="Horizontal" Spacing="7">
+          <LucideIcon
+            VerticalAlignment="Center"
+            Foreground="{DynamicResource MutedColor}"
+            Kind="AudioLines" Size="14"/>
+          <TextBlock
+            VerticalAlignment="Center" FontSize="13"
+            FontWeight="SemiBold"
+            Text="{I18N {x:Static LocaleKey.PromptCreate_ToneLabel}}"/>
+        </StackPanel>
+
+        <ItemsControl ItemsSource="{Binding ToneOptions}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel
+                ItemSpacing="7" LineSpacing="7"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:PromptRecipeOptionItem">
+              <Button
+                Classes="OobeRecipeChip"
+                v:PromptRecipeEditor.OptionAccentId="{Binding Id}"
+                Classes.Selected="{Binding IsSelected}"
+                Command="{Binding #Self.Editor?.SelectToneCommand, FallbackValue={x:Null}}"
+                CommandParameter="{Binding}">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <LucideIcon
+                    x:Name="OptionIcon" VerticalAlignment="Center"
+                    Kind="{Binding Icon}"
+                    Size="13.5"/>
+                  <TextBlock
+                    VerticalAlignment="Center"
+                    Text="{Binding NameKey^}"/>
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!--  3. Answer Detail (3-Column Tactile Segmented Track)  -->
+      <StackPanel Spacing="10">
+        <StackPanel
+          Orientation="Horizontal" Spacing="7">
+          <LucideIcon
+            VerticalAlignment="Center"
+            Foreground="{DynamicResource MutedColor}"
+            Kind="ListFilter" Size="14"/>
+          <TextBlock
+            VerticalAlignment="Center" FontSize="13"
+            FontWeight="SemiBold"
+            Text="{I18N {x:Static LocaleKey.PromptCreate_DetailLabel}}"/>
+        </StackPanel>
+
+        <Border
+          Padding="4"
+          Background="{DynamicResource OobeStageWellBrush}"
+          BorderBrush="{DynamicResource OobeHairlineBrush}"
+          BorderThickness="1" CornerRadius="12">
+          <ItemsControl ItemsSource="{Binding DetailOptions}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid
+                  ColumnSpacing="4" Columns="3"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:PromptRecipeOptionItem">
+                <Button
+                  v:PromptRecipeEditor.OptionAccentId="{Binding Id}"
+                  Classes.Selected="{Binding IsSelected}"
+                  Command="{Binding #Self.Editor?.SelectDetailCommand, FallbackValue={x:Null}}"
+                  CommandParameter="{Binding}"
+                  Theme="{StaticResource OobeSegmentChipTheme}">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="6">
+                    <LucideIcon
+                      x:Name="OptionIcon" VerticalAlignment="Center"
+                      Kind="{Binding Icon}"
+                      Size="13.5"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Text="{Binding NameKey^}"/>
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Border>
+      </StackPanel>
+
+      <!--  4. Seamless Ghost Disclosure for Optional Preferences  -->
+      <StackPanel Spacing="0">
+        <ToggleButton
+          x:Name="MorePreferencesToggle" Classes="OobeDisclosureToggle">
+          <Grid
+            ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+            <LucideIcon
+              Grid.Column="0" VerticalAlignment="Center"
+              Kind="SlidersHorizontal" Size="14"/>
+            <TextBlock
+              Grid.Column="1" VerticalAlignment="Center"
+              FontSize="13" FontWeight="Medium"
+              Text="{I18N {x:Static LocaleKey.PromptCreate_MorePreferences}}"/>
+            <LucideIcon
+              x:Name="DisclosureChevron" Grid.Column="2"
+              VerticalAlignment="Center" Kind="ChevronDown"
+              Size="15"/>
+          </Grid>
+        </ToggleButton>
+
+        <v:ContentSizeTransitionPanel
+          x:Name="OptionalPreferencesPanel" AnimateContentSize="True"
+          ClipToBounds="True" ContentSizeTransitionDuration="0:0:0.22"
+          ContentSizeTransitionEasing="CubicEaseOut">
+          <ContentPresenter
+            x:Name="OptionalPreferencesPresenter" HorizontalContentAlignment="Stretch">
+            <StackPanel
+              Margin="0,14,0,0"
+              IsVisible="{Binding #MorePreferencesToggle.IsChecked}"
+              Spacing="16">
+              <!--  Prompt Name (Underlined Field, Prompt Management Only)  -->
+              <StackPanel
+                IsVisible="{Binding !#Self.IsPersonalization}"
+                Spacing="6">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <LucideIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="TextInitial" Size="13.5"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Text="{I18N {x:Static LocaleKey.PromptEditor_NameLabel}}"/>
+                </StackPanel>
+                <TextBox
+                  x:Name="PromptNameBox"
+                  PlaceholderText="{I18N {x:Static LocaleKey.PromptEditor_NamePlaceholder}}"
+                  Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                  Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+              </StackPanel>
+
+              <!--  Persona  -->
+              <StackPanel Spacing="8">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <LucideIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="UserCheck" Size="13.5"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Text="{I18N {x:Static LocaleKey.PromptCreate_PersonaLabel}}"/>
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding PersonaOptions}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel
+                        ItemSpacing="7" LineSpacing="7"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PromptRecipeOptionItem">
+                      <Button
+                        Classes="OobeRecipeChip"
+                        v:PromptRecipeEditor.OptionAccentId="{Binding Id}"
+                        Classes.Selected="{Binding IsSelected}"
+                        Command="{Binding #Self.Editor?.SelectPersonaCommand, FallbackValue={x:Null}}"
+                        CommandParameter="{Binding}">
+                        <TextBlock Text="{Binding NameKey^}"/>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <!--  Preferred User Name (Underlined Field)  -->
+              <StackPanel Spacing="6">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <LucideIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="MessageCircleQuestionMark" Size="13.5"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Text="{I18N {x:Static LocaleKey.PromptCreate_PreferredUserNameLabel}}"/>
+                </StackPanel>
+                <TextBox
+                  x:Name="PreferredUserNameBox"
+                  PlaceholderText="{I18N {x:Static LocaleKey.PromptCreate_PreferredUserNamePlaceholder}}"
+                  Text="{Binding PreferredUserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                  Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+              </StackPanel>
+
+              <!--  Organization  -->
+              <StackPanel Spacing="8">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <LucideIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="LayoutList" Size="13.5"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Text="{I18N {x:Static LocaleKey.PromptCreate_OrganizationLabel}}"/>
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding OrganizationOptions}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel
+                        ItemSpacing="7" LineSpacing="7"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PromptRecipeOptionItem">
+                      <Button
+                        Classes="OobeRecipeChip"
+                        v:PromptRecipeEditor.OptionAccentId="{Binding Id}"
+                        Classes.Selected="{Binding IsSelected}"
+                        Command="{Binding #Self.Editor?.SelectOrganizationCommand, FallbackValue={x:Null}}"
+                        CommandParameter="{Binding}">
+                        <StackPanel
+                          Orientation="Horizontal" Spacing="6">
+                          <LucideIcon
+                            x:Name="OptionIcon" VerticalAlignment="Center"
+                            Kind="{Binding Icon}"
+                            Size="13"/>
+                          <TextBlock
+                            VerticalAlignment="Center"
+                            Text="{Binding NameKey^}"/>
+                        </StackPanel>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <!--  Additional Requirements (Underlined Multiline Field)  -->
+              <StackPanel Spacing="6">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <LucideIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="PenLine" Size="13.5"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Text="{I18N {x:Static LocaleKey.PromptCreate_AdditionalRequirementsLabel}}"/>
+                </StackPanel>
+                <TextBox
+                  x:Name="AdditionalRequirementsBox" MinHeight="44"
+                  MaxHeight="108" AcceptsReturn="True"
+                  PlaceholderText="{I18N {x:Static LocaleKey.PromptCreate_AdditionalRequirementsPlaceholder}}"
+                  Text="{Binding AdditionalRequirements, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                  TextWrapping="Wrap"
+                  Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+              </StackPanel>
+            </StackPanel>
+          </ContentPresenter>
+        </v:ContentSizeTransitionPanel>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>
