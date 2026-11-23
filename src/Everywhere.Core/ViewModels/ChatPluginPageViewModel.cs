@@ -105,12 +105,18 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
                 try
                 {
                     await Task.Run(() => _manager.StartMcpClientAsync(plugin, progress, token), token);
+                    token.ThrowIfCancellationRequested();
                 }
-                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                catch (Exception ex) when (token.IsCancellationRequested)
                 {
                     createdPlugin = null;
                     await _manager.RemoveMcpPluginAsync(plugin);
-                    throw;
+                    if (ex is OperationCanceledException)
+                    {
+                        throw;
+                    }
+
+                    token.ThrowIfCancellationRequested();
                 }
                 catch (Exception ex)
                 {
