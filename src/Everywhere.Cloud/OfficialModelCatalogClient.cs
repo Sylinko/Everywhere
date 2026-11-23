@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Everywhere.AI;
@@ -33,12 +34,11 @@ internal sealed partial class OfficialModelCatalogClient(IHttpClientFactory http
             throw CreateHttpException(response, payload?.ToString());
         }
 
-        if (payload is null)
-        {
-            throw new HttpRequestException(HttpRequestError.InvalidResponse, statusCode: response.StatusCode);
-        }
-
-        return payload.EnsureData().AsValueEnumerable().Select(model => model.ToOfficialModelDefinition()).ToArray();
+        return (payload ?? throw new HttpRequestException(HttpRequestError.InvalidResponse, statusCode: response.StatusCode))
+            .EnsureData()
+            .AsValueEnumerable()
+            .Select(model => model.ToOfficialModelDefinition())
+            .ToArray();
     }
 
     private static ModelCatalogHttpException CreateHttpException(HttpResponseMessage response, string? message = null)
@@ -66,7 +66,8 @@ internal sealed partial class OfficialModelCatalogClient(IHttpClientFactory http
         [property: JsonPropertyName("limit")] CloudModelLimitInfo LimitInfo,
         [property: JsonPropertyName("pricing")] CloudModelPricing Pricing,
         [property: JsonPropertyName("quotaLimited")] bool IsQuotaLimited,
-        [property: JsonPropertyName("schema")] string Schema
+        [property: JsonPropertyName("schema")] string Schema,
+        [property: JsonPropertyName("reasoningOptions")] IReadOnlyList<CloudReasoningOption>? ReasoningOptions = null
     )
     {
         public OfficialModelDefinition ToOfficialModelDefinition()
@@ -76,9 +77,9 @@ internal sealed partial class OfficialModelCatalogClient(IHttpClientFactory http
                 ModelId = ModelId,
                 Name = Name,
                 SupportsToolCall = SupportsToolCall,
-                KnowledgeCutoff = DateOnly.TryParse(KnowledgeCutoff, out var knowledgeDate) ? knowledgeDate : null,
-                ReleaseDate = DateOnly.TryParse(ReleaseDate, out var releaseDate) ? releaseDate : null,
-                DeprecationDate = DateOnly.TryParse(DeprecationDate, out var deprecationDate) ? deprecationDate : null,
+                KnowledgeCutoff = ParseDate(KnowledgeCutoff),
+                ReleaseDate = ParseDate(ReleaseDate),
+                DeprecationDate = ParseDate(DeprecationDate),
                 InputModalities = ConvertModalities(Modalities.Input),
                 OutputModalities = ConvertModalities(Modalities.Output),
                 Specializations = ConvertSpecializations(Specializations),
@@ -87,48 +88,83 @@ internal sealed partial class OfficialModelCatalogClient(IHttpClientFactory http
                 IconUrl = Icon,
                 DescriptionKey = DescriptionKey,
                 Pricing = ConvertPricing(Pricing),
-                IsQuotaLimited = IsQuotaLimited
+                IsQuotaLimited = IsQuotaLimited,
+                ReasoningEffortValues = [.. ConvertReasoningEffortValues(ReasoningOptions)]
             };
             return new OfficialModelDefinition(model, ConvertSchema(Schema, ModelId));
         }
 
+        private static DateOnly? ParseDate(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            return DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? date : null;
+        }
+
+        private static string[] ConvertReasoningEffortValues(IReadOnlyList<CloudReasoningOption>? options)
+        {
+            if (options is null) return [];
+
+            string[]? result = null;
+            foreach (var option in options)
+            {
+                if (!string.Equals(option.Type, "effort", StringComparison.Ordinal) || option.Values is null) continue;
+
+                var values = option.Values
+                    .AsValueEnumerable()
+                    .Where(static value => !string.IsNullOrWhiteSpace(value))
+                    .Select(static value => value.Trim())
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+                if (values.Length == 0) continue;
+
+                if (result is null) result = values;
+                else if (!result.SequenceEqual(values, StringComparer.Ordinal)) return [];
+            }
+
+            return result ?? [];
+        }
+
         private static Modalities ConvertModalities(IReadOnlyList<string> modalityStrings) =>
-            modalityStrings.AsValueEnumerable().Aggregate(
-                AI.Modalities.None,
-                (current, modality) => current | modality.ToLower() switch
-                {
-                    "text" => AI.Modalities.Text,
-                    "image" => AI.Modalities.Image,
-                    "audio" => AI.Modalities.Audio,
-                    "video" => AI.Modalities.Video,
-                    "pdf" => AI.Modalities.Pdf,
-                    _ => AI.Modalities.None
-                });
+            modalityStrings.AsValueEnumerable()
+                .Aggregate(
+                    AI.Modalities.None,
+                    (current, modality) => current | modality.ToLowerInvariant() switch
+                    {
+                        "text" => AI.Modalities.Text,
+                        "image" => AI.Modalities.Image,
+                        "audio" => AI.Modalities.Audio,
+                        "video" => AI.Modalities.Video,
+                        "pdf" => AI.Modalities.Pdf,
+                        _ => AI.Modalities.None
+                    });
 
         private static ModelSpecializations ConvertSpecializations(IReadOnlyList<string>? specializationStrings)
         {
             if (specializationStrings is null) return ModelSpecializations.Default;
 
-            return specializationStrings.AsValueEnumerable().Aggregate(
-                ModelSpecializations.Default,
-                (current, specialization) => current | specialization.ToLower() switch
-                {
-                    "title-generation" => ModelSpecializations.TitleGeneration,
-                    "context-compression" => ModelSpecializations.ContextCompression,
-                    "image-understanding" => ModelSpecializations.ImageUnderstanding,
-                    _ => ModelSpecializations.Default
-                });
+            return specializationStrings.AsValueEnumerable()
+                .Aggregate(
+                    ModelSpecializations.Default,
+                    (current, specialization) => current | specialization.ToLowerInvariant() switch
+                    {
+                        "title-generation" => ModelSpecializations.TitleGeneration,
+                        "context-compression" => ModelSpecializations.ContextCompression,
+                        "image-understanding" => ModelSpecializations.ImageUnderstanding,
+                        _ => ModelSpecializations.Default
+                    });
         }
 
         private static ModelPricing ConvertPricing(CloudModelPricing pricing)
         {
             const double CreditsMultiplier = 0.01d; // Convert from "per MTokens" to "per Token"
-            var tiers = pricing.AsValueEnumerable().Select(tier => new PricingTier(
-                tier.Threshold,
-                new TokenPricing(
-                    tier.Pricing.Input * CreditsMultiplier,
-                    tier.Pricing.Output * CreditsMultiplier,
-                    tier.Pricing.CachedInput * CreditsMultiplier))).ToArray();
+            var tiers = pricing.AsValueEnumerable()
+                .Select(tier => new PricingTier(
+                    tier.Threshold,
+                    new TokenPricing(
+                        tier.Pricing.Input * CreditsMultiplier,
+                        tier.Pricing.Output * CreditsMultiplier,
+                        tier.Pricing.CachedInput * CreditsMultiplier)))
+                .ToArray();
             return new ModelPricing(tiers, ModelPricingUnit.MCreditPerMToken);
         }
 
@@ -153,6 +189,11 @@ internal sealed partial class OfficialModelCatalogClient(IHttpClientFactory http
         [property: JsonPropertyName("context")] int Context,
         [property: JsonPropertyName("input")] int Input = 0,
         [property: JsonPropertyName("output")] int Output = 0
+    );
+
+    private sealed record CloudReasoningOption(
+        [property: JsonPropertyName("type")] string? Type,
+        [property: JsonPropertyName("values")] IReadOnlyList<string>? Values = null
     );
 
     private sealed record CloudTokenPricing(

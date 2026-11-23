@@ -324,6 +324,100 @@ public class OfficialModelDefinitionTests
         }
     }
 
+    [Test]
+    public async Task CatalogClient_WhenReasoningOptionsReturned_MapsEffortValuesAndIgnoresToggle()
+    {
+        const string json = """
+        {
+          "success": true,
+          "data": [
+            {
+              "id": "anthropic/claude-haiku-5-5",
+              "name": "Claude Haiku 5.5",
+              "icon": "claude",
+              "description": null,
+              "toolCall": true,
+              "knowledge": "2026-06",
+              "releaseDate": "2026-10-07",
+              "deprecationDate": null,
+              "modalities": { "input": [ "text" ], "output": [ "text" ] },
+              "specializations": null,
+              "limit": { "context": 1000000, "output": 128000 },
+              "pricing": [],
+              "quotaLimited": true,
+              "schema": "anthropic",
+              "reasoningOptions": [
+                { "type": "toggle" },
+                { "type": "effort", "values": [ "low", "medium", "low", " high " ] }
+              ]
+            },
+            {
+              "id": "moonshotai/kimi-k2.6",
+              "name": "Kimi K2.6",
+              "icon": "kimi",
+              "description": null,
+              "toolCall": true,
+              "knowledge": "2025-01",
+              "releaseDate": "2026-04-20",
+              "deprecationDate": null,
+              "modalities": { "input": [ "text" ], "output": [ "text" ] },
+              "specializations": null,
+              "limit": { "context": 262144, "output": 262144 },
+              "pricing": [],
+              "quotaLimited": true,
+              "schema": "openai",
+              "reasoningOptions": [
+                { "type": "toggle" }
+              ]
+            },
+            {
+              "id": "openai/legacy-no-reasoning-options",
+              "name": "Legacy",
+              "icon": "openai",
+              "description": null,
+              "toolCall": true,
+              "knowledge": null,
+              "releaseDate": null,
+              "deprecationDate": null,
+              "modalities": { "input": [ "text" ], "output": [ "text" ] },
+              "specializations": null,
+              "limit": { "context": 128000, "output": 16384 },
+              "pricing": [],
+              "quotaLimited": false,
+              "schema": "openai-responses"
+            }
+          ]
+        }
+        """;
+        var httpFactory = Substitute.For<IHttpClientFactory>();
+        httpFactory.CreateClient(Arg.Any<string>()).Returns(_ =>
+            new HttpClient(new CatalogResponseHandler(json)) { BaseAddress = new Uri("https://cloud.invalid") });
+
+        var clientType = typeof(OfficialModelProvider).Assembly.GetType("Everywhere.Cloud.OfficialModelCatalogClient", throwOnError: true)!;
+        var client = (ModelCatalogHttpClient<OfficialModelDefinition[]>)Activator.CreateInstance(
+            clientType,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            null,
+            [httpFactory],
+            null)!;
+
+        var fetched = await client.FetchAsync();
+        var modified = (ModelCatalogFetchResult<OfficialModelDefinition[]>.Modified)fetched;
+
+        var haiku = modified.Catalog.Single(static m => m.Model.ModelId == "anthropic/claude-haiku-5-5").Model;
+        var kimi = modified.Catalog.Single(static m => m.Model.ModelId == "moonshotai/kimi-k2.6").Model;
+        var legacy = modified.Catalog.Single(static m => m.Model.ModelId == "openai/legacy-no-reasoning-options").Model;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(haiku.ReasoningEffortValues.ToArray(), Is.EqualTo(new[] { "low", "medium", "high" }));
+            Assert.That(haiku.KnowledgeCutoff, Is.EqualTo(new DateOnly(2026, 6, 1)));
+            Assert.That(haiku.ReleaseDate, Is.EqualTo(new DateOnly(2026, 10, 7)));
+            Assert.That(kimi.ReasoningEffortValues.ToArray(), Is.Empty);
+            Assert.That(legacy.ReasoningEffortValues.ToArray(), Is.Empty);
+        }
+    }
+
     private sealed class CatalogResponseHandler(string json) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
