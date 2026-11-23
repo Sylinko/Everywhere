@@ -37,12 +37,14 @@ public interface IChatPluginManager
     Task UpdateMcpPluginAsync(McpChatPlugin mcpChatPlugin, McpTransportConfiguration configuration);
 
     /// <summary>
-    /// Creates a new MCP client based on the provided configuration. If it's a local client, it will start the local server process.
+    /// Creates and starts the MCP client (and local server process if applicable), reporting optional
+    /// localized startup status updates such as stdio stderr progress.
     /// </summary>
-    /// <param name="mcpChatPlugin"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task StartMcpClientAsync(McpChatPlugin mcpChatPlugin, CancellationToken cancellationToken);
+    Task StartMcpClientAsync(
+        McpChatPlugin mcpChatPlugin,
+        IProgress<IDynamicLocaleKey>? progress = null,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Stops and disposes the MCP client. If it's a local client, it will stop the local server process.
@@ -78,7 +80,8 @@ public interface IChatPluginManager
         ChatContext chatContext,
         ChatMessageNode ownerNode,
         IToolRulesets? toolRulesets,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken
+    );
 }
 
 /// <summary>
@@ -97,10 +100,16 @@ public interface IChatPluginScope
     IReadOnlyList<AIFunctionDeclaration> Declarations { get; }
 
     /// <summary>
+    /// Gets keyed non-persistent runtime reminders produced while building this scope.
+    /// </summary>
+    IReadOnlyList<ContextTransientReminder> TransientReminders { get; }
+
+    /// <summary>
     /// Resolves the advertised name to its captured invocation target, or suggests available names.
     /// </summary>
     bool TryGetBinding(
         string functionName,
         [NotNullWhen(true)] out ToolBinding? binding,
-        [NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames);
+        [NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames
+    );
 }

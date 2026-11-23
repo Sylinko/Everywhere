@@ -767,7 +767,7 @@
         <value>Araç çağrısı hazırlanıyor</value>
     </data>
     <data name="ChatContext_BusyMessage_StartingMcp" xml:space="preserve">
-        <value>MCP Başlatılıyor</value>
+        <value>{0} başlatılıyor</value>
     </data>
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Tarih</value>
@@ -3036,6 +3036,9 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     </data>
     <data name="McpTransportConfigurationForm_WorkingDirectoryTextBox_Label" xml:space="preserve">
         <value>Çalışma Dizini</value>
+    </data>
+    <data name="McpTransportConfigurationForm_VerifyingStatus_Text" xml:space="preserve">
+        <value>MCP sunucu bağlantısı doğrulanıyor...</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP Sunucusu</value>

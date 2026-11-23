@@ -767,7 +767,7 @@
         <value>准备工具调用</value>
     </data>
     <data name="ChatContext_BusyMessage_StartingMcp" xml:space="preserve">
-        <value>正在启动 MCP</value>
+        <value>正在启动 {0}</value>
     </data>
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>日期</value>
@@ -3036,6 +3036,9 @@
     </data>
     <data name="McpTransportConfigurationForm_WorkingDirectoryTextBox_Label" xml:space="preserve">
         <value>工作目录</value>
+    </data>
+    <data name="McpTransportConfigurationForm_VerifyingStatus_Text" xml:space="preserve">
+        <value>正在验证 MCP 服务连接…</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP 服务器</value>

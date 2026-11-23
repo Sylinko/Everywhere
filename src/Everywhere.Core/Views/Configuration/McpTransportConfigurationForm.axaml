@@ -12,199 +12,241 @@
     <Setter Property="Width" Value="640"/>
     <Setter Property="Template">
       <ControlTemplate TargetType="v:McpTransportConfigurationForm">
-        <ScrollViewer
-          Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled">
-          <StackPanel
-            Margin="0,0,12,0" Spacing="8">
-            <TextBox
-              Classes="Clearable"
-              shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_NameTextBox_Label}}"
-              MaxLines="2"
-              Text="{Binding Configuration.Name, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-              TextWrapping="Wrap"/>
-            <TextBox
-              shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_DescriptionTextBox_Label}}"
-              shadui:ControlAssist.MinHeight="72" AcceptsReturn="True"
-              MaxLines="5"
-              Text="{Binding Configuration.Description, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-              TextWrapping="Wrap"/>
+        <DockPanel
+          Margin="24" VerticalSpacing="16">
+          <TextBlock
+            DockPanel.Dock="Top"
+            FontSize="{DynamicResource FontSizeXl}"
+            FontWeight="Bold"
+            IsVisible="{TemplateBinding Title, Converter={x:Static ObjectConverters.IsNotNull}}"
+            Text="{TemplateBinding Title}"
+            TextTrimming="CharacterEllipsis">
+            <Interaction.Behaviors>
+              <shadui:TextTrimmedToolTipBehavior/>
+            </Interaction.Behaviors>
+          </TextBlock>
+
+          <DockPanel
+            DockPanel.Dock="Bottom" HorizontalSpacing="12">
+            <StackPanel
+              DockPanel.Dock="Right" Orientation="Horizontal"
+              Spacing="8">
+              <Button
+                x:Name="PART_CancelButton" Classes="Outline"
+                MinWidth="80"
+                Content="{I18N {x:Static LocaleKey.Common_Cancel}}"/>
+              <Button
+                x:Name="PART_PrimaryButton" Classes="Primary"
+                MinWidth="80"
+                shadui:ButtonAssist.ShowProgress="{TemplateBinding IsVerifying}"
+                shadui:ElementAssist.FocusOnLoad="True"
+                Content="{I18N {x:Static LocaleKey.Common_OK}}"
+                IsEnabled="{TemplateBinding IsVerifying, Converter={x:Static BoolConverters.Not}}"/>
+            </StackPanel>
 
             <TextBlock
-              Classes="Caption"
-              Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_SchemeTabControl_Label}}"/>
-            <TabControl SelectedIndex="{TemplateBinding SelectedTabIndex, Mode=TwoWay}">
-              <TabItem Header="Stdio">
-                <StackPanel Spacing="8">
-                  <TextBox
-                    shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_CommandTextBox_Label}}"
-                    MaxLines="3"
-                    Text="{Binding StdioConfiguration.Command, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-                    TextWrapping="Wrap"/>
-                  <TextBlock
-                    Classes="Caption"
-                    Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_ArgumentsTextBox_Label}}"/>
-                  <shadui:DataList
-                    Classes="Draggable"
-                    AddCommand="{Binding StdioConfiguration.AddEmptyArgumentCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                    ItemsSource="{Binding StdioConfiguration.Arguments, RelativeSource={RelativeSource TemplatedParent}}"
-                    RemoveCommand="{Binding StdioConfiguration.RemoveArgumentCommand, RelativeSource={RelativeSource TemplatedParent}}">
-                    <shadui:DataList.ItemTemplate>
-                      <DataTemplate>
-                        <DataTemplate.DataType>
-                          <x:Type
-                            x:TypeArguments="sys:String" TypeName="common:BindingWrapper"/>
-                        </DataTemplate.DataType>
+              Classes="Muted" VerticalAlignment="Center"
+              IsVisible="{TemplateBinding IsVerifying}"
+              Text="{Binding VerificationStatusKey^, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"
+              TextTrimming="CharacterEllipsis"
+              ToolTip.Tip="{Binding VerificationStatusKey^, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+          </DockPanel>
 
-                        <Grid
-                          ColumnDefinitions="Auto,*" ColumnSpacing="4">
-                          <Interaction.Behaviors>
-                            <KeyGestureTrigger
-                              Gesture="Enter" MarkAsHandled="True">
-                              <InvokeCommandAction
-                                Command="{Binding $parent[v:McpTransportConfigurationForm].StdioConfiguration.AddEmptyArgumentCommand}"
-                                CommandParameter="{Binding $parent[shadui:DataListItem], Converter={x:Static vc:CommonConverters.IndexFromContainer}}"/>
-                            </KeyGestureTrigger>
-                          </Interaction.Behaviors>
+          <ScrollViewer
+            Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
+            IsEnabled="{TemplateBinding IsVerifying, Converter={x:Static BoolConverters.Not}}">
+            <StackPanel
+              Margin="0,0,12,0" Spacing="8">
+              <TextBox
+                Classes="Clearable"
+                shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_NameTextBox_Label}}"
+                MaxLines="2"
+                Text="{Binding Configuration.Name, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap"/>
+              <TextBox
+                shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_DescriptionTextBox_Label}}"
+                shadui:ControlAssist.MinHeight="72" AcceptsReturn="True"
+                MaxLines="5"
+                Text="{Binding Configuration.Description, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap"/>
 
-                          <LucideIcon
-                            Grid.Column="0" VerticalAlignment="Center"
-                            Foreground="{DynamicResource MutedColor}"
-                            Kind="GripVertical"
-                            Size="{DynamicResource FontSizeL}"/>
-                          <TextBox
-                            Grid.Column="1"
-                            PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_ValueTextBox_PlaceholderText}}"
-                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+              <TextBlock
+                Classes="Caption"
+                Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_SchemeTabControl_Label}}"/>
+              <TabControl SelectedIndex="{TemplateBinding SelectedTabIndex, Mode=TwoWay}">
+                <TabItem Header="Stdio">
+                  <StackPanel Spacing="8">
+                    <TextBox
+                      shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_CommandTextBox_Label}}"
+                      MaxLines="3"
+                      Text="{Binding StdioConfiguration.Command, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                      TextWrapping="Wrap"/>
+                    <TextBlock
+                      Classes="Caption"
+                      Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_ArgumentsTextBox_Label}}"/>
+                    <shadui:DataList
+                      Classes="Draggable"
+                      AddCommand="{Binding StdioConfiguration.AddEmptyArgumentCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                      ItemsSource="{Binding StdioConfiguration.Arguments, RelativeSource={RelativeSource TemplatedParent}}"
+                      RemoveCommand="{Binding StdioConfiguration.RemoveArgumentCommand, RelativeSource={RelativeSource TemplatedParent}}">
+                      <shadui:DataList.ItemTemplate>
+                        <DataTemplate>
+                          <DataTemplate.DataType>
+                            <x:Type
+                              x:TypeArguments="sys:String" TypeName="common:BindingWrapper"/>
+                          </DataTemplate.DataType>
+
+                          <Grid
+                            ColumnDefinitions="Auto,*" ColumnSpacing="4">
                             <Interaction.Behaviors>
-                              <AutoFocusBehavior/>
+                              <KeyGestureTrigger
+                                Gesture="Enter" MarkAsHandled="True">
+                                <InvokeCommandAction
+                                  Command="{Binding $parent[v:McpTransportConfigurationForm].StdioConfiguration.AddEmptyArgumentCommand}"
+                                  CommandParameter="{Binding $parent[shadui:DataListItem], Converter={x:Static vc:CommonConverters.IndexFromContainer}}"/>
+                              </KeyGestureTrigger>
                             </Interaction.Behaviors>
-                          </TextBox>
-                        </Grid>
-                      </DataTemplate>
-                    </shadui:DataList.ItemTemplate>
-                  </shadui:DataList>
-                  <TextBox
-                    shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_WorkingDirectoryTextBox_Label}}"
-                    MaxLines="3"
-                    Text="{Binding StdioConfiguration.WorkingDirectory, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-                    TextWrapping="Wrap">
-                    <TextBox.InnerRightContent>
-                      <Button
-                        Classes="Ghost Compact"
-                        shadui:ButtonAssist.Icon="{LucideIconContent FolderPen}"
-                        shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
-                        Command="{Binding $parent[v:McpTransportConfigurationForm].BrowseWorkingDirectory}"/>
-                    </TextBox.InnerRightContent>
-                  </TextBox>
-                  <TextBlock
-                    Classes="Caption"
-                    Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_EnvironmentVariablesDataList_Label}}"/>
-                  <shadui:DataList
-                    AddCommand="{Binding StdioConfiguration.AddEmptyEnvironmentVariableCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                    ItemsSource="{Binding StdioConfiguration.EnvironmentVariables, RelativeSource={RelativeSource TemplatedParent}}"
-                    RemoveCommand="{Binding StdioConfiguration.RemoveEnvironmentVariableCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <shadui:DataList.ItemTemplate>
-                      <DataTemplate>
-                        <DataTemplate.DataType>
-                          <x:Type
-                            x:TypeArguments="sys:String,sys:String" TypeName="common:ObservableKeyValuePair"/>
-                        </DataTemplate.DataType>
-                        <Grid
-                          ColumnDefinitions="*,4*" ColumnSpacing="4">
-                          <Interaction.Behaviors>
-                            <KeyGestureTrigger
-                              Gesture="Enter" MarkAsHandled="True">
-                              <InvokeCommandAction
-                                Command="{Binding $parent[v:McpTransportConfigurationForm].StdioConfiguration.AddEmptyEnvironmentVariableCommand}"
-                                CommandParameter="{Binding $parent[shadui:DataListItem], Converter={x:Static vc:CommonConverters.IndexFromContainer}}"/>
-                            </KeyGestureTrigger>
-                          </Interaction.Behaviors>
 
-                          <TextBox
-                            Grid.Column="0" AcceptsReturn="False"
-                            PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_KeyTextBox_PlaceholderText}}"
-                            Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <LucideIcon
+                              Grid.Column="0" VerticalAlignment="Center"
+                              Foreground="{DynamicResource MutedColor}"
+                              Kind="GripVertical"
+                              Size="{DynamicResource FontSizeL}"/>
+                            <TextBox
+                              Grid.Column="1"
+                              PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_ValueTextBox_PlaceholderText}}"
+                              Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                              <Interaction.Behaviors>
+                                <AutoFocusBehavior/>
+                              </Interaction.Behaviors>
+                            </TextBox>
+                          </Grid>
+                        </DataTemplate>
+                      </shadui:DataList.ItemTemplate>
+                    </shadui:DataList>
+                    <TextBox
+                      shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_WorkingDirectoryTextBox_Label}}"
+                      MaxLines="3"
+                      Text="{Binding StdioConfiguration.WorkingDirectory, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                      TextWrapping="Wrap">
+                      <TextBox.InnerRightContent>
+                        <Button
+                          Classes="Ghost Compact"
+                          shadui:ButtonAssist.Icon="{LucideIconContent FolderPen}"
+                          shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
+                          Command="{Binding $parent[v:McpTransportConfigurationForm].BrowseWorkingDirectory}"/>
+                      </TextBox.InnerRightContent>
+                    </TextBox>
+                    <TextBlock
+                      Classes="Caption"
+                      Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_EnvironmentVariablesDataList_Label}}"/>
+                    <shadui:DataList
+                      AddCommand="{Binding StdioConfiguration.AddEmptyEnvironmentVariableCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                      ItemsSource="{Binding StdioConfiguration.EnvironmentVariables, RelativeSource={RelativeSource TemplatedParent}}"
+                      RemoveCommand="{Binding StdioConfiguration.RemoveEnvironmentVariableCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                      <shadui:DataList.ItemTemplate>
+                        <DataTemplate>
+                          <DataTemplate.DataType>
+                            <x:Type
+                              x:TypeArguments="sys:String,sys:String" TypeName="common:ObservableKeyValuePair"/>
+                          </DataTemplate.DataType>
+                          <Grid
+                            ColumnDefinitions="*,4*" ColumnSpacing="4">
                             <Interaction.Behaviors>
-                              <AutoFocusBehavior/>
+                              <KeyGestureTrigger
+                                Gesture="Enter" MarkAsHandled="True">
+                                <InvokeCommandAction
+                                  Command="{Binding $parent[v:McpTransportConfigurationForm].StdioConfiguration.AddEmptyEnvironmentVariableCommand}"
+                                  CommandParameter="{Binding $parent[shadui:DataListItem], Converter={x:Static vc:CommonConverters.IndexFromContainer}}"/>
+                              </KeyGestureTrigger>
                             </Interaction.Behaviors>
-                          </TextBox>
-                          <TextBox
-                            Grid.Column="1" MaxLines="3"
-                            PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText}}"
-                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            TextWrapping="Wrap"/>
-                        </Grid>
-                      </DataTemplate>
-                    </shadui:DataList.ItemTemplate>
-                  </shadui:DataList>
-                </StackPanel>
-              </TabItem>
-              <TabItem Header="HTTP">
-                <StackPanel Spacing="8">
-                  <TextBox
-                    shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_EndpointTextBox_Label}}"
-                    Text="{Binding HttpConfiguration.Endpoint, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"/>
-                  <TextBlock
-                    Classes="Caption"
-                    Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_TransportModeComboBox_Label}}"/>
-                  <ComboBox
-                    x:DataType="plugins:HttpMcpTransportConfiguration"
-                    ItemsSource="{Binding Converter={x:Static vc:CommonConverters.EnumTypeToValues}, Source={x:Type mcp:HttpTransportMode}}"
-                    SelectedItem="{Binding HttpConfiguration.TransportMode, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
-                    <ComboBox.ItemTemplate>
-                      <DataTemplate>
-                        <TextBlock Text="{Binding Converter={x:Static vc:CommonConverters.EnumI18N}}"/>
-                      </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                  </ComboBox>
-                  <TextBlock
-                    Classes="Caption"
-                    Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_HeadersDataList_Label}}"/>
-                  <shadui:DataList
-                    AddCommand="{Binding HttpConfiguration.AddEmptyHeaderCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                    ItemsSource="{Binding HttpConfiguration.Headers, RelativeSource={RelativeSource TemplatedParent}}"
-                    RemoveCommand="{Binding HttpConfiguration.RemoveHeaderCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <shadui:DataList.ItemTemplate>
-                      <DataTemplate>
-                        <DataTemplate.DataType>
-                          <x:Type
-                            x:TypeArguments="sys:String,sys:String" TypeName="common:ObservableKeyValuePair"/>
-                        </DataTemplate.DataType>
-                        <Grid
-                          ColumnDefinitions="*,4*" ColumnSpacing="4">
-                          <Interaction.Behaviors>
-                            <KeyGestureTrigger
-                              Gesture="Enter" MarkAsHandled="True">
-                              <InvokeCommandAction
-                                Command="{Binding $parent[v:McpTransportConfigurationForm].HttpConfiguration.AddEmptyHeaderCommand}"
-                                CommandParameter="{Binding $parent[shadui:DataListItem], Converter={x:Static vc:CommonConverters.IndexFromContainer}}"/>
-                            </KeyGestureTrigger>
-                          </Interaction.Behaviors>
 
-                          <TextBox
-                            Grid.Column="0" AcceptsReturn="False"
-                            PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_KeyTextBox_PlaceholderText}}"
-                            Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox
+                              Grid.Column="0" AcceptsReturn="False"
+                              PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_KeyTextBox_PlaceholderText}}"
+                              Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                              <Interaction.Behaviors>
+                                <AutoFocusBehavior/>
+                              </Interaction.Behaviors>
+                            </TextBox>
+                            <TextBox
+                              Grid.Column="1" MaxLines="3"
+                              PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText}}"
+                              Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              TextWrapping="Wrap"/>
+                          </Grid>
+                        </DataTemplate>
+                      </shadui:DataList.ItemTemplate>
+                    </shadui:DataList>
+                  </StackPanel>
+                </TabItem>
+                <TabItem Header="HTTP">
+                  <StackPanel Spacing="8">
+                    <TextBox
+                      shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_EndpointTextBox_Label}}"
+                      Text="{Binding HttpConfiguration.Endpoint, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock
+                      Classes="Caption"
+                      Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_TransportModeComboBox_Label}}"/>
+                    <ComboBox
+                      x:DataType="plugins:HttpMcpTransportConfiguration"
+                      ItemsSource="{Binding Converter={x:Static vc:CommonConverters.EnumTypeToValues}, Source={x:Type mcp:HttpTransportMode}}"
+                      SelectedItem="{Binding HttpConfiguration.TransportMode, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                      <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding Converter={x:Static vc:CommonConverters.EnumI18N}}"/>
+                        </DataTemplate>
+                      </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <TextBlock
+                      Classes="Caption"
+                      Text="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_HeadersDataList_Label}}"/>
+                    <shadui:DataList
+                      AddCommand="{Binding HttpConfiguration.AddEmptyHeaderCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                      ItemsSource="{Binding HttpConfiguration.Headers, RelativeSource={RelativeSource TemplatedParent}}"
+                      RemoveCommand="{Binding HttpConfiguration.RemoveHeaderCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                      <shadui:DataList.ItemTemplate>
+                        <DataTemplate>
+                          <DataTemplate.DataType>
+                            <x:Type
+                              x:TypeArguments="sys:String,sys:String" TypeName="common:ObservableKeyValuePair"/>
+                          </DataTemplate.DataType>
+                          <Grid
+                            ColumnDefinitions="*,4*" ColumnSpacing="4">
                             <Interaction.Behaviors>
-                              <AutoFocusBehavior/>
+                              <KeyGestureTrigger
+                                Gesture="Enter" MarkAsHandled="True">
+                                <InvokeCommandAction
+                                  Command="{Binding $parent[v:McpTransportConfigurationForm].HttpConfiguration.AddEmptyHeaderCommand}"
+                                  CommandParameter="{Binding $parent[shadui:DataListItem], Converter={x:Static vc:CommonConverters.IndexFromContainer}}"/>
+                              </KeyGestureTrigger>
                             </Interaction.Behaviors>
-                          </TextBox>
-                          <TextBox
-                            Grid.Column="1" MaxLines="3"
-                            PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_ValueTextBox_PlaceholderText}}"
-                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            TextWrapping="Wrap"/>
-                        </Grid>
-                      </DataTemplate>
-                    </shadui:DataList.ItemTemplate>
-                  </shadui:DataList>
-                </StackPanel>
-              </TabItem>
-            </TabControl>
-          </StackPanel>
-        </ScrollViewer>
+
+                            <TextBox
+                              Grid.Column="0" AcceptsReturn="False"
+                              PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_KeyTextBox_PlaceholderText}}"
+                              Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                              <Interaction.Behaviors>
+                                <AutoFocusBehavior/>
+                              </Interaction.Behaviors>
+                            </TextBox>
+                            <TextBox
+                              Grid.Column="1" MaxLines="3"
+                              PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_ValueTextBox_PlaceholderText}}"
+                              Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              TextWrapping="Wrap"/>
+                          </Grid>
+                        </DataTemplate>
+                      </shadui:DataList.ItemTemplate>
+                    </shadui:DataList>
+                  </StackPanel>
+                </TabItem>
+              </TabControl>
+            </StackPanel>
+          </ScrollViewer>
+        </DockPanel>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

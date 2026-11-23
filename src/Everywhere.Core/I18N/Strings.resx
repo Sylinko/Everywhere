@@ -767,7 +767,7 @@
         <value>Preparing tool call</value>
     </data>
     <data name="ChatContext_BusyMessage_StartingMcp" xml:space="preserve">
-        <value>Starting MCP</value>
+        <value>Starting {0}</value>
     </data>
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Date</value>
@@ -3036,6 +3036,9 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="McpTransportConfigurationForm_WorkingDirectoryTextBox_Label" xml:space="preserve">
         <value>Working Directory</value>
+    </data>
+    <data name="McpTransportConfigurationForm_VerifyingStatus_Text" xml:space="preserve">
+        <value>Verifying MCP server connection...</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP Server</value>

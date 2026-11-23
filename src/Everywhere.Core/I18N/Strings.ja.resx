@@ -767,7 +767,7 @@
         <value>ツール呼び出しの準備中</value>
     </data>
     <data name="ChatContext_BusyMessage_StartingMcp" xml:space="preserve">
-        <value>MCPを開始しています</value>
+        <value>{0} を開始しています</value>
     </data>
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>日付</value>
@@ -3036,6 +3036,9 @@
     </data>
     <data name="McpTransportConfigurationForm_WorkingDirectoryTextBox_Label" xml:space="preserve">
         <value>作業ディレクトリ</value>
+    </data>
+    <data name="McpTransportConfigurationForm_VerifyingStatus_Text" xml:space="preserve">
+        <value>MCP サーバーへの接続を確認しています...</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCPサーバー</value>
