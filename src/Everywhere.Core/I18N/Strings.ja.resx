@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Japanese (日本語) -->
 <root>
     <resheader name="resmimetype">
@@ -5096,5 +5096,345 @@
     </data>
     <data name="ChatWindow_PendingInputs_Withdraw_ToolTip" xml:space="preserve">
         <value>入力欄へ戻して編集</value>
+    </data>
+    <data name="PromptCreate_MorePreferences" xml:space="preserve">
+        <value>その他の設定</value>
+    </data>
+    <data name="Oobe_Continue" xml:space="preserve">
+        <value>続行</value>
+    </data>
+    <data name="Oobe_Next" xml:space="preserve">
+        <value>次へ</value>
+    </data>
+    <data name="Oobe_Start" xml:space="preserve">
+        <value>設定を開始</value>
+    </data>
+    <data name="Oobe_Back" xml:space="preserve">
+        <value>戻る</value>
+    </data>
+    <data name="Oobe_SetUpLater" xml:space="preserve">
+        <value>後で設定</value>
+    </data>
+    <data name="Oobe_Intro_Title" xml:space="preserve">
+        <value>Everywhere をはじめよう</value>
+    </data>
+    <data name="Oobe_Intro_Description" xml:space="preserve">
+        <value>いつでも使える、状況を理解する AI アシスタント</value>
+    </data>
+    <data name="Oobe_Intro_FeatureVisualTitle" xml:space="preserve">
+        <value>目の前の内容を理解</value>
+    </data>
+    <data name="Oobe_Intro_FeatureVisualDesc" xml:space="preserve">
+        <value>何度もコピー＆ペーストすることなく、現在のウィンドウや選択した内容を AI が理解します。</value>
+    </data>
+    <data name="Oobe_Intro_FeatureInstantTitle" xml:space="preserve">
+        <value>いつでも呼び出して、すぐに応答</value>
+    </data>
+    <data name="Oobe_Intro_FeatureInstantDesc" xml:space="preserve">
+        <value>アプリを切り替えずに、質問や翻訳、文章の書き換えができます。</value>
+    </data>
+    <data name="Oobe_Intro_FeatureChoiceTitle" xml:space="preserve">
+        <value>モデルを自由に選択</value>
+    </data>
+    <data name="Oobe_Intro_FeatureChoiceDesc" xml:space="preserve">
+        <value>Everywhere Cloud、自分の API、またはローカルモデルを利用できます。</value>
+    </data>
+    <data name="Oobe_Source_Title" xml:space="preserve">
+        <value>Everywhere で AI を使う</value>
+    </data>
+    <data name="Oobe_Source_Description" xml:space="preserve">
+        <value>すぐに使い始めるか、お使いのモデルサービスに接続できます。設定はいつでも変更できます。</value>
+    </data>
+    <data name="Oobe_Source_Cloud" xml:space="preserve">
+        <value>Everywhere Cloud</value>
+    </data>
+    <data name="Oobe_Source_CloudDescription" xml:space="preserve">
+        <value>ログインすると無料利用枠が使えます。設定不要で主要モデルに接続でき、必要に応じてサブスクリプションに登録できます。</value>
+    </data>
+    <data name="Oobe_Source_Own" xml:space="preserve">
+        <value>自分の API／ローカルモデル</value>
+    </data>
+    <data name="Oobe_Login_Title" xml:space="preserve">
+        <value>Everywhere Cloud に接続</value>
+    </data>
+    <data name="Oobe_Login_Description" xml:space="preserve">
+        <value>ログインするとクラウドモデルを利用できます。新規ユーザーには無料利用枠が付与されます。</value>
+    </data>
+    <data name="Oobe_Login_SignIn" xml:space="preserve">
+        <value>ブラウザーでログイン</value>
+    </data>
+    <data name="Oobe_Login_SignedIn" xml:space="preserve">
+        <value>ログイン済み</value>
+    </data>
+    <data name="Oobe_Configure_Title" xml:space="preserve">
+        <value>よく使うモデルを選択</value>
+    </data>
+    <data name="Oobe_Configure_Description" xml:space="preserve">
+        <value>よく使うモデルを選んで接続をテストしましょう。チャット中にいつでも切り替えられます。</value>
+    </data>
+    <data name="Oobe_Configure_OwnTitle" xml:space="preserve">
+        <value>モデル接続を設定</value>
+    </data>
+    <data name="Oobe_Configure_TabBuiltIn" xml:space="preserve">
+        <value>主要プロバイダーに接続</value>
+    </data>
+    <data name="Oobe_Configure_TabCustomProtocol" xml:space="preserve">
+        <value>カスタムプロトコルで接続</value>
+    </data>
+    <data name="Oobe_Configure_SwitchToCloud" xml:space="preserve">
+        <value>手動設定を避けたい場合は、Everywhere Cloud に切り替え</value>
+    </data>
+    <data name="Oobe_TestConnection" xml:space="preserve">
+        <value>接続をテスト</value>
+    </data>
+    <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
+        <value>モデルを選択</value>
+    </data>
+    <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
+        <value>コンテキストウィンドウ</value>
+    </data>
+    <data name="Oobe_Configure_OutputLabel" xml:space="preserve">
+        <value>最大出力</value>
+    </data>
+    <data name="Oobe_Configure_CapVision" xml:space="preserve">
+        <value>画像認識</value>
+    </data>
+    <data name="Oobe_Configure_CapPdf" xml:space="preserve">
+        <value>PDF</value>
+    </data>
+    <data name="Oobe_Configure_CapAudio" xml:space="preserve">
+        <value>音声</value>
+    </data>
+    <data name="Oobe_Configure_CapVideo" xml:space="preserve">
+        <value>動画</value>
+    </data>
+    <data name="Oobe_Configure_CapTools" xml:space="preserve">
+        <value>ツール呼び出し</value>
+    </data>
+    <data name="Oobe_Configure_SelectProviderFirstPlaceholder" xml:space="preserve">
+        <value>先にモデルプロバイダーを選択してください</value>
+    </data>
+    <data name="Oobe_Configure_ModelIdPlaceholder" xml:space="preserve">
+        <value>モデル ID を入力（例：gpt-6-luna）</value>
+    </data>
+    <data name="Oobe_Configure_ContextPlaceholder" xml:space="preserve">
+        <value>例：1048576</value>
+    </data>
+    <data name="Oobe_Configure_OutputPlaceholder" xml:space="preserve">
+        <value>例：131072</value>
+    </data>
+    <data name="Oobe_Configure_ModalitiesLabel" xml:space="preserve">
+        <value>モダリティと機能</value>
+    </data>
+    <data name="Oobe_Personalize_Title" xml:space="preserve">
+        <value>アシスタントの設定をカスタマイズ</value>
+    </data>
+    <data name="Oobe_Personalize_Description" xml:space="preserve">
+        <value>よく使うシーン、口調、詳しさを選ぶと、右側のプレビューにすぐ反映されます。</value>
+    </data>
+    <data name="Oobe_SavePreferences" xml:space="preserve">
+        <value>保存して続行</value>
+    </data>
+    <data name="Oobe_Personalize_ScenarioRequired" xml:space="preserve">
+        <value>続行するには、よく使うシーンを1つ以上選択してください。</value>
+    </data>
+    <data name="Oobe_Shortcut_Title" xml:space="preserve">
+        <value>呼び出しショートカットを設定</value>
+    </data>
+    <data name="Oobe_Shortcut_Description" xml:space="preserve">
+        <value>どのアプリを使っていても、ショートカットキーでいつでも呼び出せます。</value>
+    </data>
+    <data name="Oobe_Shortcut_Skip" xml:space="preserve">
+        <value>ショートカットを有効にしない</value>
+    </data>
+    <data name="Oobe_Shortcut_Disabled" xml:space="preserve">
+        <value>有効なショートカットキーの組み合わせを押して確定するか、下の「ショートカットを有効にしない」をクリックしてスキップしてください。</value>
+    </data>
+    <data name="Oobe_TextSelection_Title" xml:space="preserve">
+        <value>テキストを選ぶだけで、作業に集中</value>
+    </data>
+    <data name="Oobe_TextSelection_Description" xml:space="preserve">
+        <value>任意のテキストを選択するとフローティングツールバーが表示され、翻訳や要約をすぐに利用できます。</value>
+    </data>
+    <data name="Oobe_TextSelection_Skip" xml:space="preserve">
+        <value>テキスト選択を有効にしない</value>
+    </data>
+    <data name="Oobe_TextSelection_DemoParagraph" xml:space="preserve">
+        <value>Everywhereは、画面に表示されている内容を即座に理解します。この文をマウスで選択するだけで、スクリーンショットを撮ったりウィンドウを切り替えたりすることなく、フローティングツールバーがすぐに表示されます。</value>
+    </data>
+    <data name="Oobe_TextSelection_DemoHighlight" xml:space="preserve">
+        <value>この文をマウスで選択するだけ</value>
+    </data>
+    <data name="Oobe_TextSelection_ActionPreviewFormat" xml:space="preserve">
+        <value>{0} · 「{1}」</value>
+    </data>
+    <data name="Oobe_TextSelection_PreviewReplyFormat" xml:space="preserve">
+        <value>選択したテキストをもとに「{0}」をその場で実演しました。実際の利用時は、コピーしたり、元の文章と置き換えたり、続けて質問したりできます。</value>
+    </data>
+    <data name="Oobe_Finish_Title" xml:space="preserve">
+        <value>準備完了</value>
+    </data>
+    <data name="Oobe_Finish_Description" xml:space="preserve">
+        <value>Everywhereを使う準備ができました。以下の基本設定を確認すれば、いつでも使い始められます。</value>
+    </data>
+    <data name="Oobe_StartUsing" xml:space="preserve">
+        <value>Everywhereを使い始める</value>
+    </data>
+    <data name="Oobe_Finish_DiagnosticTitle" xml:space="preserve">
+        <value>匿名の診断データを送信</value>
+    </data>
+    <data name="Oobe_Finish_DiagnosticDescription" xml:space="preserve">
+        <value>クラッシュログとパフォーマンスデータのみを収集して、使いやすさの向上に役立てます。会話や画面の内容は一切収集しません。</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Small" xml:space="preserve">
+        <value>小</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Medium" xml:space="preserve">
+        <value>中</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Large" xml:space="preserve">
+        <value>大</value>
+    </data>
+    <data name="Oobe_InvalidConfiguration" xml:space="preserve">
+        <value>モデルの設定をすべて入力してください。</value>
+    </data>
+    <data name="Oobe_LoginRequired" xml:space="preserve">
+        <value>先にEverywhereアカウントにログインしてください。</value>
+    </data>
+    <data name="Oobe_ConfigurationChanged" xml:space="preserve">
+        <value>テスト中に設定が変更されました。接続テストをやり直してください。</value>
+    </data>
+    <data name="Oobe_LoginFailed" xml:space="preserve">
+        <value>ログインに失敗しました。もう一度お試しください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_Default" xml:space="preserve">
+        <value>現在の画面に表示されている重要なポイントを整理してください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_Programming" xml:space="preserve">
+        <value>この非同期の状態遷移ロジックを簡潔にしつつ、キャンセル通知が無視されないようにしてください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_CodeReview" xml:space="preserve">
+        <value>この変更をレビューして、ライフサイクル上のリソースリークや見つけにくいデグレードがないか確認してください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_Writing" xml:space="preserve">
+        <value>このリリースノートを推敲して、最初の一文で読者の興味を引けるようにしてください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_DataAnalysis" xml:space="preserve">
+        <value>第3四半期のこのレイテンシー分位データに見られる異常な傾向を要約してください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_Learning" xml:space="preserve">
+        <value>ここでのイベントバブリングの仕組みを、直感的な思考モデルで説明してください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_Translation" xml:space="preserve">
+        <value>この更新履歴を自然な中文に翻訳し、一般的な技術用語はそのままにしてください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_Product" xml:space="preserve">
+        <value>これらのユーザーフィードバックを、明確で実行可能な3つの製品優先事項にまとめてください。</value>
+    </data>
+    <data name="Oobe_Preview_Question_Troubleshooting" xml:space="preserve">
+        <value>サービスが30秒後にタイムアウトしました。ネットワークの問題か、下流の処理の停滞かを最速で特定するにはどうすればよいですか？</value>
+    </data>
+    <data name="Oobe_Preview_Question_Research" xml:space="preserve">
+        <value>この2本の論文について、アーキテクチャ上のトレードオフの主な違いを簡潔に比較してください。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_ConciseDirect_Concise" xml:space="preserve">
+        <value>完了しました。主なボトルネックは解消されました。以下の結論に沿って進められます。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_ConciseDirect_Rich" xml:space="preserve">
+        <value>結論から言うと、重複する分岐を統合し、キャンセルトークンを早めに確認して、UIスレッド上の状態更新の一貫性を保ちます。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Socratic_Concise" xml:space="preserve">
+        <value>まず責任範囲を確認しましょう。このライフサイクルは、呼び出し元と子タスクのどちらが解放するのが安全でしょうか？</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Socratic_Rich" xml:space="preserve">
+        <value>所有権の境界をたどってみましょう。現在のステップがキャンセル範囲を保持している場合、ウィンドウが早期に閉じられると、連鎖的なクリーンアップはどのように実行されるでしょうか？一緒に考えてみましょう。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Formal_Concise" xml:space="preserve">
+        <value>分析の概要がまとまりました。主な調査結果と推奨事項を以下に示します。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Formal_Rich" xml:space="preserve">
+        <value>以下に構造化した評価結果を示します。まず重要な所見を列挙し、続いて推奨する検証・最適化手順を記載します。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Creative_Concise" xml:space="preserve">
+        <value>もっと印象的な導入に変えてみましょう。まず結果を示し、そのあとに工夫の裏側を展開します。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Creative_Rich" xml:space="preserve">
+        <value>最も印象的な瞬間から始めてみましょう。長い前置きを省き、中心となる対比を際立たせれば、要点がひと目で伝わります。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Friendly_Concise" xml:space="preserve">
+        <value>もちろんです！使いやすくて安心できる調整案をまとめました。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Friendly_Rich" xml:space="preserve">
+        <value>一緒に問題を整理できてうれしいです！全体としてはすでに安定しているので、少し調整するだけで、ぐっとスムーズになります。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Professional_Concise" xml:space="preserve">
+        <value>要点：契約を明確に保ち、副作用の処理は境界層に集約します。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Professional_Rich" xml:space="preserve">
+        <value>現在のコンテキストをもとに、実用的な分析案をまとめました。構造上の要点を明確にしつつ、重要な境界条件も考慮しています。</value>
+    </data>
+    <data name="Oobe_Preview_Reply_DetailedWrap" xml:space="preserve">
+        <value>{0}
+
+{1}</value>
+    </data>
+    <data name="Oobe_Preview_DetailedAddendum" xml:space="preserve">
+        <value>+ 段階的な推論の根拠、境界ケースの説明、具体的な次のステップも含みます。</value>
+    </data>
+    <data name="Oobe_Preview_GreetingWrap" xml:space="preserve">
+        <value>こんにちは、{0}：{1}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProfessionalWrap" xml:space="preserve">
+        <value>実際の導入とリスク管理の観点から、{0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProgrammingWrap" xml:space="preserve">
+        <value>コード構造と保守性の観点から、{0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_WritingWrap" xml:space="preserve">
+        <value>表現の明確さと文章のリズムに注目して、{0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_TranslationWrap" xml:space="preserve">
+        <value>原文の意味を正確に保ち、自然な表現を心がけて、{0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ResearchWrap" xml:space="preserve">
+        <value>検証済みの根拠と妥当な推論を分けて、{0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_LearningWrap" xml:space="preserve">
+        <value>直感的な考え方で核心となる概念を分解し、{0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProductWrap" xml:space="preserve">
+        <value>ユーザー価値と事業推進のペースを踏まえて、{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_ConclusionFirstWrap" xml:space="preserve">
+        <value>結論：まず主要な流れを押さえ、境界となる分岐を整理します。
+
+{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_StepByStepWrap" xml:space="preserve">
+        <value>{0}
+
+1. 現在のコンテキストと制約条件を確認する
+2. 主要な流れに沿って中核部分を調整する
+3. 重要な境界条件と最終結果を確認する</value>
+    </data>
+    <data name="Oobe_Preview_Organization_KeyPointsWrap" xml:space="preserve">
+        <value>{0}
+
+• ポイント 1：まず中核となる目標を明確にする
+• ポイント 2：不要な分岐や詳細を簡潔にする</value>
+    </data>
+    <data name="Oobe_Preview_Organization_CompareOptionsWrap" xml:space="preserve">
+        <value>{0}
+
+案 A：変更が少なく、すばやく導入できます
+案 B：境界条件がより安定し、長期的な保守に適しています</value>
+    </data>
+    <data name="Oobe_Preview_Organization_ExamplesFirstWrap" xml:space="preserve">
+        <value>例：まず典型的な入力と期待される結果を並べて示し、その後に仕組みを説明します。
+
+{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_NaturalWrap" xml:space="preserve">
+        <value>この考え方に沿って、直感的に話してみましょう——{0}</value>
     </data>
 </root>
