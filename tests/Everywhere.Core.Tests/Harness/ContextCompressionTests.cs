@@ -6,6 +6,7 @@ using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Chat;
 using Everywhere.Chat.Permissions;
+using Everywhere.Chat.Plugins;
 using Everywhere.Core.I18N;
 using Everywhere.Harness;
 using Everywhere.I18N;
@@ -414,7 +415,7 @@ public sealed class ContextCompressionTests
                 new MEAI.ChatMessage(MEAI.ChatRole.System, "Locked initial system prompt"),
                 new MEAI.ChatMessage(MEAI.ChatRole.User, "First request")
             ],
-            lockedTools,
+            new DeclarationPluginScope(lockedTools),
             identity,
             DateTimeOffset.UtcNow);
 
@@ -535,7 +536,7 @@ public sealed class ContextCompressionTests
                 new MEAI.ChatMessage(MEAI.ChatRole.System, "Locked prompt"),
                 new MEAI.ChatMessage(MEAI.ChatRole.User, "Oldest request")
             ],
-            lockedTools,
+            new DeclarationPluginScope(lockedTools),
             new ContextPrefixIdentity("openai", "gpt-5", true, null, trimmedUserNode.Id),
             DateTimeOffset.UtcNow);
 
@@ -714,6 +715,24 @@ public sealed class ContextCompressionTests
         foreach (var update in updates)
         {
             yield return update;
+        }
+    }
+
+    private sealed class DeclarationPluginScope(IReadOnlyList<MEAI.AIFunctionDeclaration> declarations) : IChatPluginScope
+    {
+        public IReadOnlyList<ChatPluginSnapshot> Plugins => [];
+        public IReadOnlyList<MEAI.AIFunctionDeclaration> Declarations { get; } = declarations;
+        public IReadOnlyList<ContextTransientReminder> TransientReminders => [];
+
+        public bool TryGetBinding(
+            string functionName,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ToolBinding? binding,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out IReadOnlyList<string>? similarFunctionNames
+        )
+        {
+            binding = null;
+            similarFunctionNames = [];
+            return false;
         }
     }
 

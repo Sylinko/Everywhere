@@ -718,13 +718,12 @@ public sealed class QueueAndSteerTests
             NullLogger<TerminalPlugin>.Instance);
         settings.Plugin.ToolEnablementRulesets[ToolSettingsKey.ForPlugin(terminal)] = true;
 
-        var pluginManager = new ChatPluginManager(
+        await using var pluginManager = new ChatPluginManager(
             services,
             [essential, terminal],
             settings,
             Substitute.For<IRuntimeManager>(),
             NullLogger<ChatPluginManager>.Instance);
-        using var releasePluginManager = Disposable.Create(pluginManager.Dispose);
 
         var scope = await pluginManager.CreateScopeAsync(
             new AdvancedAssistantConfiguration { ModelId = "test", SupportsToolCall = true },
@@ -1345,7 +1344,6 @@ public sealed class QueueAndSteerTests
                 Settings,
                 Substitute.For<IRuntimeManager>(),
                 NullLogger<ChatPluginManager>.Instance);
-            _disposables.Add(Disposable.Create(Plugins.Dispose));
 
             ContextManager = new ChatContextManager(Settings, storage, NullLogger<ChatContextManager>.Instance);
 
@@ -1401,6 +1399,7 @@ public sealed class QueueAndSteerTests
 
         public void Dispose()
         {
+            Plugins.DisposeAsync().AsTask().GetAwaiter().GetResult();
             ContextManager.DisposeAsync().AsTask().GetAwaiter().GetResult();
             _disposables.Dispose();
             _clientConnection.DisposeAsync().AsTask().GetAwaiter().GetResult();

@@ -63,12 +63,14 @@ public sealed class ContextPrefixStateTests
         var prompt1 = BuildLongPrompt("skill-a", "/work/a", "2026-11-17");
         var prompt2 = BuildLongPrompt("skill-a, skill-b", "/work/b", "2026-11-18");
 
+        var scope = CreateScope(tools);
+
         var first = state.Apply(
             [
                 new ChatMessage(ChatRole.System, prompt1),
                 new ChatMessage(ChatRole.User, "Turn 1")
             ],
-            tools,
+            scope,
             identity,
             t0);
 
@@ -82,7 +84,7 @@ public sealed class ContextPrefixStateTests
                 new ChatMessage(ChatRole.Assistant, "Reply 1"),
                 new ChatMessage(ChatRole.User, "Turn 2")
             ],
-            tools,
+            scope,
             identity,
             t0.AddMinutes(2));
 
@@ -117,7 +119,7 @@ public sealed class ContextPrefixStateTests
                 new ChatMessage(ChatRole.Assistant, "Reply 2"),
                 new ChatMessage(ChatRole.User, "Turn 3")
             ],
-            tools,
+            scope,
             identity,
             t0.AddMinutes(4));
 
@@ -144,7 +146,7 @@ public sealed class ContextPrefixStateTests
                 new ChatMessage(ChatRole.Assistant, "Reply 3"),
                 new ChatMessage(ChatRole.User, "Turn 4")
             ],
-            tools,
+            scope,
             identity,
             t0.AddMinutes(5));
 
@@ -169,7 +171,7 @@ public sealed class ContextPrefixStateTests
 
         state.Apply(
             [new ChatMessage(ChatRole.System, systemPrompt), new ChatMessage(ChatRole.User, "U1")],
-            [alpha, beta, gamma],
+            CreateScope([alpha, beta, gamma]),
             identity,
             t0);
 
@@ -180,7 +182,7 @@ public sealed class ContextPrefixStateTests
                 new ChatMessage(ChatRole.Assistant, "A1"),
                 new ChatMessage(ChatRole.User, "U2")
             ],
-            [alpha, gamma],
+            CreateScope([alpha, gamma]),
             identity,
             t0.AddMinutes(1));
 
@@ -200,7 +202,7 @@ public sealed class ContextPrefixStateTests
                 new ChatMessage(ChatRole.Assistant, "A2"),
                 new ChatMessage(ChatRole.User, "U3")
             ],
-            [alpha, beta, gamma],
+            CreateScope([alpha, beta, gamma]),
             identity,
             t0.AddMinutes(2));
 
@@ -222,7 +224,7 @@ public sealed class ContextPrefixStateTests
 
         state.Apply(
             [new ChatMessage(ChatRole.System, "Prompt V1"), new ChatMessage(ChatRole.User, "U1")],
-            [CreateTool("alpha", "v1")],
+            CreateScope([CreateTool("alpha", "v1")]),
             identity,
             t0);
 
@@ -233,7 +235,7 @@ public sealed class ContextPrefixStateTests
                 new ChatMessage(ChatRole.Assistant, "A1"),
                 new ChatMessage(ChatRole.User, "U2")
             ],
-            [CreateTool("alpha", "v1"), CreateTool("beta")],
+            CreateScope([CreateTool("alpha", "v1"), CreateTool("beta")]),
             identity,
             t0.AddMinutes(1));
 
@@ -254,7 +256,7 @@ public sealed class ContextPrefixStateTests
                 new ChatMessage(ChatRole.Assistant, "A2"),
                 new ChatMessage(ChatRole.User, "U3")
             ],
-            [CreateTool("alpha", "v2"), CreateTool("beta")],
+            CreateScope([CreateTool("alpha", "v2"), CreateTool("beta")]),
             identity,
             t0.AddMinutes(2));
 
@@ -369,7 +371,7 @@ public sealed class ContextPrefixStateTests
 
         state.Apply(
             [new ChatMessage(ChatRole.System, "Prompt S0"), new ChatMessage(ChatRole.User, "U1")],
-            [alpha, beta],
+            CreateScope([alpha, beta]),
             identity,
             t0);
 
@@ -380,7 +382,7 @@ public sealed class ContextPrefixStateTests
                 new ChatMessage(ChatRole.Assistant, "A1"),
                 new ChatMessage(ChatRole.User, "U2")
             ],
-            [alpha],
+            CreateScope([alpha]),
             identity,
             t0.AddMinutes(2));
 
@@ -442,13 +444,12 @@ public sealed class ContextPrefixStateTests
         services.GetService(typeof(Settings)).Returns(settings);
         settings.Plugin.ApprovalMode = ToolApprovalMode.FullAccess;
         var probePlugin = new ProbePlugin();
-        var plugins = new ChatPluginManager(
+        await using var plugins = new ChatPluginManager(
             services,
             [probePlugin],
             settings,
             Substitute.For<IRuntimeManager>(),
             NullLogger<ChatPluginManager>.Instance);
-        using var releasePlugins = Disposable.Create(plugins.Dispose);
         await using var manager = new ChatContextManager(settings, storage, NullLogger<ChatContextManager>.Instance);
 
         var promptService = Substitute.For<IPromptService>();
@@ -626,6 +627,79 @@ public sealed class ContextPrefixStateTests
         }
     }
 
+    [Test]
+    public void Apply_WithTransientReminders_InjectsOnEpochResetDeduplicatesAndEmitsClearedNoticeOnRecovery()
+    {
+        var state = new ContextPrefixState(TimeSpan.FromMinutes(10));
+        var identity = new ContextPrefixIdentity("openai", "gpt-5", SupportsToolCall: true, null, null);
+        var t0 = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+
+        ContextTransientReminder[] active =
+        [
+            new("mcp.startup", "MCP 'broken' failed to start.", "MCP 'broken' recovered.")
+        ];
+
+        // Epoch reset with active reminder injects before trailing user message without altering InitialSystemPrompt.
+        var activeScope = CreateScope(transientReminders: active);
+        var turn1 = state.Apply(
+            [
+                new ChatMessage(ChatRole.System, "System"),
+                new ChatMessage(ChatRole.User, "Hello")
+            ],
+            activeScope,
+            identity,
+            t0);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(turn1.HasResetEpoch, Is.True);
+            Assert.That(turn1.History, Has.Count.EqualTo(3));
+            Assert.That(turn1.History[0].Text, Is.EqualTo("System"));
+            Assert.That(turn1.History[1].Role, Is.EqualTo(ChatRole.User));
+            Assert.That(turn1.History[1].Text, Does.Contain("<system-reminder>").And.Contain("MCP 'broken' failed to start."));
+            Assert.That(turn1.History[2].Text, Is.EqualTo("Hello"));
+        }
+
+        // Unchanged active reminder is deduplicated on Turn 2.
+        var turn2 = state.Apply(
+            [
+                new ChatMessage(ChatRole.System, "System"),
+                new ChatMessage(ChatRole.User, "Hello"),
+                new ChatMessage(ChatRole.Assistant, "Noted."),
+                new ChatMessage(ChatRole.User, "Retry")
+            ],
+            activeScope,
+            identity,
+            t0.AddMinutes(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(turn2.HasResetEpoch, Is.False);
+            Assert.That(turn2.History, Has.Count.EqualTo(5));
+            Assert.That(turn2.History[1].Text, Does.Contain("MCP 'broken' failed to start."));
+            Assert.That(turn2.History[4].Text, Is.EqualTo("Retry"));
+        }
+
+        // Clearing the key emits ClearedMessage once before the new user prompt.
+        var turn3 = state.Apply(
+            [
+                new ChatMessage(ChatRole.System, "System"),
+                new ChatMessage(ChatRole.User, "Hello"),
+                new ChatMessage(ChatRole.Assistant, "Noted."),
+                new ChatMessage(ChatRole.User, "Retry"),
+                new ChatMessage(ChatRole.Assistant, "Still broken."),
+                new ChatMessage(ChatRole.User, "Check again")
+            ],
+            currentScope: null,
+            identity,
+            t0.AddMinutes(2));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(turn3.HasResetEpoch, Is.False);
+            Assert.That(turn3.History, Has.Count.EqualTo(8));
+            Assert.That(turn3.History[6].Text, Does.Contain("MCP 'broken' recovered."));
+            Assert.That(turn3.History[7].Text, Is.EqualTo("Check again"));
+        }
+    }
+
     private static TestPluginScope CreateMcpScope(params McpChatPlugin[] plugins)
     {
         var pluginNames = new NumberedDeduplicator();
@@ -648,10 +722,22 @@ public sealed class ContextPrefixStateTests
         return new TestPluginScope(snapshots, [.. snapshots.SelectMany(static snapshot => snapshot.Bindings)]);
     }
 
-    private sealed class TestPluginScope(IReadOnlyList<ChatPluginSnapshot> plugins, IReadOnlyList<ToolBinding> bindings) : IChatPluginScope
+    private static TestPluginScope CreateScope(
+        IReadOnlyList<AIFunctionDeclaration>? declarations = null,
+        IReadOnlyList<ContextTransientReminder>? transientReminders = null
+    ) => new([], [], declarations ?? [], transientReminders ?? []);
+
+    private sealed class TestPluginScope(
+        IReadOnlyList<ChatPluginSnapshot> plugins,
+        IReadOnlyList<ToolBinding> bindings,
+        IReadOnlyList<AIFunctionDeclaration>? declarations = null,
+        IReadOnlyList<ContextTransientReminder>? transientReminders = null
+    ) : IChatPluginScope
     {
         public IReadOnlyList<ChatPluginSnapshot> Plugins { get; } = plugins;
-        public IReadOnlyList<AIFunctionDeclaration> Declarations { get; } = [.. bindings.Select(static binding => binding.Declaration)];
+        public IReadOnlyList<AIFunctionDeclaration> Declarations { get; } =
+            declarations ?? [.. bindings.Select(static binding => binding.Declaration)];
+        public IReadOnlyList<ContextTransientReminder> TransientReminders { get; } = transientReminders ?? [];
         private readonly Dictionary<string, ToolBinding> _bindings = bindings.ToDictionary(
             static binding => binding.Declaration.Name,
             StringComparer.Ordinal);

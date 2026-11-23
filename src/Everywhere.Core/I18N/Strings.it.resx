@@ -767,7 +767,7 @@
         <value>Preparazione alla chiamata degli strumenti</value>
     </data>
     <data name="ChatContext_BusyMessage_StartingMcp" xml:space="preserve">
-        <value>Avvio MCP</value>
+        <value>Avvio di {0}</value>
     </data>
     <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
         <value>Data</value>
@@ -3036,6 +3036,9 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     </data>
     <data name="McpTransportConfigurationForm_WorkingDirectoryTextBox_Label" xml:space="preserve">
         <value>Directory di lavoro</value>
+    </data>
+    <data name="McpTransportConfigurationForm_VerifyingStatus_Text" xml:space="preserve">
+        <value>Verifica della connessione al server MCP...</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>Server MCP</value>

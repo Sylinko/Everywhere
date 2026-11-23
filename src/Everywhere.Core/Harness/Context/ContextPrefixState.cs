@@ -22,6 +22,18 @@ public readonly record struct ContextPrefixIdentity(
 );
 
 /// <summary>
+/// Represents a keyed, non-persistent runtime reminder injected through <see cref="ContextPrefixState"/>.
+/// </summary>
+/// <param name="Key">Stable identifier used to deduplicate unchanged notices within an epoch.</param>
+/// <param name="Message">Reminder text emitted when added or modified.</param>
+/// <param name="ClearedMessage">Optional notice emitted once if this key disappears later in the same epoch.</param>
+public readonly record struct ContextTransientReminder(
+    string Key,
+    string Message,
+    string? ClearedMessage = null
+);
+
+/// <summary>
 /// Represents the effective wire history and tool catalog produced for one conversational request.
 /// </summary>
 public sealed record ContextPrefixResolution(
@@ -83,47 +95,19 @@ public sealed class ContextPrefixState
     }
 
     /// <summary>
-    /// Resolves the wire history and tool list for one conversational model request, locking or
-    /// resetting the active prefix epoch and injecting anchored <c>&lt;system-reminder&gt;</c> deltas
-    /// when system instructions or disabled tools change mid-epoch.
-    /// </summary>
-    [OverloadResolutionPriority(1)]
-    public ContextPrefixResolution Apply(
-        IList<ChatMessage> history,
-        IReadOnlyList<AIFunctionDeclaration>? currentTools,
-        ContextPrefixIdentity identity,
-        DateTimeOffset utcNow
-    ) =>
-        ApplyCore(history, currentTools, currentScope: null, identity, utcNow);
-
-    /// <summary>
-    /// Resolves the wire history and tool list for one conversational model request from a resolved
-    /// <see cref="IChatPluginScope"/>, including owning plugin identity in tool fingerprints so disabling
-    /// an earlier duplicate tool resets the epoch instead of letting a sibling silently inherit its name.
+    /// Resolves the wire history, tool list, and keyed non-persistent runtime reminders for one
+    /// conversational model request from a resolved <see cref="IChatPluginScope"/>.
     /// </summary>
     public ContextPrefixResolution Apply(
         IList<ChatMessage> history,
-        IChatPluginScope? currentScope,
-        ContextPrefixIdentity identity,
-        DateTimeOffset utcNow
-    ) =>
-        ApplyCore(
-            history,
-            currentScope?.Declarations is { Count: > 0 } declarations ? declarations : null,
-            currentScope,
-            identity,
-            utcNow);
-
-    private ContextPrefixResolution ApplyCore(
-        IList<ChatMessage> history,
-        IReadOnlyList<AIFunctionDeclaration>? currentTools,
         IChatPluginScope? currentScope,
         ContextPrefixIdentity identity,
         DateTimeOffset utcNow
     )
     {
         var (hasSystemHead, systemPrompt, capturedMessages, currentHashes) = CaptureHistory(history);
-        var activeTools = currentTools is { Count: > 0 } ? currentTools : null;
+        var activeTools = currentScope?.Declarations is { Count: > 0 } declarations ? declarations : null;
+        var currentReminders = NormalizeTransientReminders(currentScope?.TransientReminders);
 
         using var scope = _syncLock.EnterScope();
         if (_snapshot is null || ShouldResetEpoch(
@@ -146,6 +130,35 @@ public sealed class ContextPrefixState
                 currentHashes,
                 utcNow);
 
+            if (currentReminders.Count > 0)
+            {
+                var lines = currentReminders
+                    .OrderBy(static pair => pair.Key, StringComparer.Ordinal)
+                    .Select(static pair => pair.Value.Message)
+                    .ToList();
+                var anchorCount = capturedMessages.Length > 0 && capturedMessages[^1].Role == ChatRole.User
+                    ? capturedMessages.Length - 1
+                    : capturedMessages.Length;
+                _snapshot.Reminders.Add(
+                    new PrefixReminderEntry(
+                        anchorCount,
+                        FormatSystemReminder(lines),
+                        systemPrompt,
+                        EmptyStringSet.Instance,
+                        currentReminders));
+
+                var initialEffectiveHistory = BuildEffectiveHistory(
+                    hasSystemHead,
+                    _snapshot.InitialSystemPrompt,
+                    capturedMessages,
+                    _snapshot.Reminders,
+                    capturedMessages.Length);
+                return new ContextPrefixResolution(
+                    initialEffectiveHistory,
+                    lockedTools.Length > 0 ? [.. lockedTools] : null,
+                    HasResetEpoch: true);
+            }
+
             return new ContextPrefixResolution(
                 history,
                 lockedTools.Length > 0 ? [.. lockedTools] : null,
@@ -156,9 +169,12 @@ public sealed class ContextPrefixState
         // Drop any reminder whose anchor belongs to a pruned or edited branch suffix.
         snapshot.Reminders.RemoveAll(reminder => reminder.AfterMessageCount > commonPrefixLength);
 
-        var (effectiveSystemPrompt, effectiveDisabledTools) = snapshot.Reminders.Count > 0
-            ? (snapshot.Reminders[^1].AppliedSystemPrompt, snapshot.Reminders[^1].AppliedDisabledTools)
-            : (snapshot.InitialSystemPrompt, EmptyStringSet.Instance);
+        var (effectiveSystemPrompt, effectiveDisabledTools, effectiveReminders) = snapshot.Reminders.Count > 0
+            ? (
+                snapshot.Reminders[^1].AppliedSystemPrompt,
+                snapshot.Reminders[^1].AppliedDisabledTools,
+                snapshot.Reminders[^1].AppliedTransientReminders)
+            : (snapshot.InitialSystemPrompt, EmptyStringSet.Instance, EmptyReminderMap.Instance);
 
         var currentlyDisabledTools = ComputeDisabledToolNames(snapshot.LockedToolNames, activeTools);
         var deltaLines = BuildDeltaLines(
@@ -166,7 +182,9 @@ public sealed class ContextPrefixState
             effectiveSystemPrompt,
             snapshot.InitialSystemPrompt,
             currentlyDisabledTools,
-            effectiveDisabledTools);
+            effectiveDisabledTools,
+            currentReminders,
+            effectiveReminders);
 
         if (deltaLines.Count > 0)
         {
@@ -174,7 +192,8 @@ public sealed class ContextPrefixState
             var anchorCount = commonPrefixLength < capturedMessages.Length && capturedMessages[^1].Role == ChatRole.User
                 ? capturedMessages.Length - 1
                 : capturedMessages.Length;
-            snapshot.Reminders.Add(new PrefixReminderEntry(anchorCount, reminderText, systemPrompt, currentlyDisabledTools));
+            snapshot.Reminders.Add(
+                new PrefixReminderEntry(anchorCount, reminderText, systemPrompt, currentlyDisabledTools, currentReminders));
         }
 
         snapshot.LastRequestMessageHashes = currentHashes;
@@ -414,7 +433,9 @@ public sealed class ContextPrefixState
         string previousSystemPrompt,
         string initialSystemPrompt,
         HashSet<string> currentDisabledTools,
-        HashSet<string> previousDisabledTools
+        HashSet<string> previousDisabledTools,
+        Dictionary<string, ContextTransientReminder> currentReminders,
+        Dictionary<string, ContextTransientReminder> previousReminders
     )
     {
         var lines = new List<string>();
@@ -444,7 +465,57 @@ public sealed class ContextPrefixState
             lines.Add(promptDelta);
         }
 
+        AppendTransientReminderDeltas(lines, currentReminders, previousReminders);
+
         return lines;
+    }
+
+    private static Dictionary<string, ContextTransientReminder> NormalizeTransientReminders(
+        IReadOnlyList<ContextTransientReminder>? transientReminders
+    )
+    {
+        if (transientReminders is null || transientReminders.Count == 0)
+        {
+            return EmptyReminderMap.Instance;
+        }
+
+        Dictionary<string, ContextTransientReminder>? result = null;
+        foreach (var reminder in transientReminders)
+        {
+            if (string.IsNullOrWhiteSpace(reminder.Key) || string.IsNullOrWhiteSpace(reminder.Message))
+            {
+                continue;
+            }
+
+            result ??= new Dictionary<string, ContextTransientReminder>(StringComparer.Ordinal);
+            result[reminder.Key] = reminder;
+        }
+
+        return result ?? EmptyReminderMap.Instance;
+    }
+
+    private static void AppendTransientReminderDeltas(
+        List<string> lines,
+        Dictionary<string, ContextTransientReminder> currentReminders,
+        Dictionary<string, ContextTransientReminder> previousReminders
+    )
+    {
+        foreach (var pair in currentReminders.OrderBy(static entry => entry.Key, StringComparer.Ordinal))
+        {
+            if (!previousReminders.TryGetValue(pair.Key, out var previous) ||
+                !string.Equals(previous.Message, pair.Value.Message, StringComparison.Ordinal))
+            {
+                lines.Add(pair.Value.Message);
+            }
+        }
+
+        foreach (var pair in previousReminders.OrderBy(static entry => entry.Key, StringComparer.Ordinal))
+        {
+            if (!currentReminders.ContainsKey(pair.Key) && !string.IsNullOrWhiteSpace(pair.Value.ClearedMessage))
+            {
+                lines.Add(pair.Value.ClearedMessage);
+            }
+        }
     }
 
     private static string? BuildSystemPromptDelta(
@@ -772,13 +843,19 @@ public sealed class ContextPrefixState
         public static HashSet<string> Instance { get; } = new(0, StringComparer.Ordinal);
     }
 
+    private static class EmptyReminderMap
+    {
+        public static Dictionary<string, ContextTransientReminder> Instance { get; } = new(0, StringComparer.Ordinal);
+    }
+
     private sealed record ToolFingerprint(string? PluginKey, string Description, string SchemaRawText);
 
     private sealed record PrefixReminderEntry(
         int AfterMessageCount,
         string Content,
         string AppliedSystemPrompt,
-        HashSet<string> AppliedDisabledTools
+        HashSet<string> AppliedDisabledTools,
+        Dictionary<string, ContextTransientReminder> AppliedTransientReminders
     );
 
     private sealed class EpochSnapshot(
@@ -804,16 +881,10 @@ public sealed class ContextPrefixState
 
     private readonly record struct MessageHash(ulong High, ulong Low);
 
-    private struct DualFnv1aHasher
+    private struct DualFnv1aHasher()
     {
-        private ulong _h1;
-        private ulong _h2;
-
-        public DualFnv1aHasher()
-        {
-            _h1 = 14695981039346656037UL;
-            _h2 = 1099511628211UL ^ 0x9E3779B97F4A7C15UL;
-        }
+        private ulong _h1 = 14695981039346656037UL;
+        private ulong _h2 = 1099511628211UL ^ 0x9E3779B97F4A7C15UL;
 
         public void AddTag(byte tag)
         {

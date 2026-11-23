@@ -64,9 +64,8 @@ public sealed class ImageViewRecoveryTests
         var specializations = new AssistantSpecializationResolver(
             new AssistantCatalog(Substitute.For<IPresetModelProvider>(), Substitute.For<IOfficialModelProvider>()));
         using var essential = new EssentialPlugin(settings, specializations, blobStorage);
-        var pluginManager = new ChatPluginManager(
+        await using var pluginManager = new ChatPluginManager(
             serviceProvider, [essential], settings, Substitute.For<IRuntimeManager>(), NullLogger<ChatPluginManager>.Instance);
-        using var releasePlugins = Disposable.Create(pluginManager.Dispose);
         await using var manager = new ChatContextManager(settings, storage, NullLogger<ChatContextManager>.Instance);
         var root = manager.Current;
         var data = root.Data;
@@ -241,9 +240,8 @@ public sealed class ImageViewRecoveryTests
             settings,
             new AssistantSpecializationResolver(new AssistantCatalog(Substitute.For<IPresetModelProvider>(), Substitute.For<IOfficialModelProvider>())),
             Substitute.For<IBlobStorage>());
-        var manager = new ChatPluginManager(
+        await using var manager = new ChatPluginManager(
             provider, [essential], settings, Substitute.For<IRuntimeManager>(), NullLogger<ChatPluginManager>.Instance);
-        using var releasePlugins = Disposable.Create(manager.Dispose);
         await using var root = new RootChatContext(new ChatData(), null);
         var scope = await manager.CreateScopeAsync(
             new AdvancedAssistantConfiguration { InputModalities = Modalities.Text }, root, root.Data.RootNode, null, CancellationToken.None);

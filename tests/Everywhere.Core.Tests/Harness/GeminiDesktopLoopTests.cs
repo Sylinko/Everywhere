@@ -175,13 +175,12 @@ public sealed class GeminiDesktopLoopTests
         var specializations = new AssistantSpecializationResolver(
             new AssistantCatalog(Substitute.For<IPresetModelProvider>(), Substitute.For<IOfficialModelProvider>()));
         using var essential = new EssentialPlugin(settings, specializations, blobs);
-        var plugins = new ChatPluginManager(
+        await using var plugins = new ChatPluginManager(
             services,
             extraPlugin is null ? [essential] : [essential, extraPlugin],
             settings,
             Substitute.For<IRuntimeManager>(),
             NullLogger<ChatPluginManager>.Instance);
-        using var release = Disposable.Create(plugins.Dispose);
         configure?.Invoke(settings, plugins, services);
         await using var manager = new ChatContextManager(settings, storage, NullLogger<ChatContextManager>.Instance);
         var http = Substitute.For<IHttpClientFactory>();
@@ -240,7 +239,7 @@ public sealed class GeminiDesktopLoopTests
         var slot = Guid.NewGuid();
         var secrets = new Dictionary<(string, string), string> { [(ApiKey.ServiceName, slot.ToString("N"))] = "synthetic-mcp" };
         vault.Store.GetSecret(Arg.Any<string>(), Arg.Any<string>()).Returns(c => secrets.GetValueOrDefault((c.ArgAt<string>(0), c.ArgAt<string>(1))));
-        using var rpc = new McpServers();
+        using var rpc = new McpTestServer();
         var servers = new Dictionary<string, McpChatPlugin>();
         var approvalRules = default(ObservableToolRulesets);
         using var wire = new InteractionsServer(
@@ -296,7 +295,7 @@ public sealed class GeminiDesktopLoopTests
                     .Where(tool => tool.GetProperty("name").GetString()?.StartsWith("mcp__lookup_file", StringComparison.Ordinal) is true)
                     .ToArray();
                 Assert.That(declarations.Select(t => t.GetProperty("description").GetString()), Is.EqualTo(new[] { "first", "second" }));
-                Assert.That(JsonElement.DeepEquals(declarations[1].GetProperty("parameters"), McpServers.Schema), Is.True);
+                Assert.That(JsonElement.DeepEquals(declarations[1].GetProperty("parameters"), McpTestServer.Schema), Is.True);
                 Assert.That(rpc.Calls, Is.EqualTo(isAllowed ? new[] { ("second", "lookup.file", "rose") } : []));
                 Assert.That(approvalRules?.GetPluginRule(servers["first"]), Is.Null);
                 Assert.That(approvalRules?.GetPluginRule(servers["second"]), Is.EqualTo(isAllowed ? true : (bool?)null));
@@ -312,7 +311,7 @@ public sealed class GeminiDesktopLoopTests
                 Assert.That(
                     blocks.EnumerateArray().Select(block => block.GetProperty("type").GetString()),
                     Is.EqualTo(new[] { "text", "image", "text", "text" }));
-                Assert.That(blocks[1].GetProperty("data").GetString(), Is.EqualTo(McpServers.Image));
+                Assert.That(blocks[1].GetProperty("data").GetString(), Is.EqualTo(McpTestServer.Image));
                 Assert.That(blocks[3].GetProperty("text").GetString(), Does.Contain("score"));
                 Assert.That(reply.GetRawText(), Does.Not.Contain("private-marker"));
                 Assert.That(reply.GetProperty("is_error").GetBoolean(), Is.True);
@@ -371,9 +370,9 @@ public sealed class GeminiDesktopLoopTests
                     var evidence = input.EnumerateArray()
                         .Select(step => step.GetProperty("content"))
                         .Single(content => content[0].TryGetProperty("text", out var text) && text.GetString()!.Contains("prior_tool_result"));
-                    Assert.That(evidence[0].GetProperty("text").GetString(), Does.Not.Contain(McpServers.Image));
+                    Assert.That(evidence[0].GetProperty("text").GetString(), Does.Not.Contain(McpTestServer.Image));
                     Assert.That(evidence[2].GetProperty("type").GetString(), Is.EqualTo("image"));
-                    Assert.That(evidence[2].GetProperty("data").GetString(), Is.EqualTo(McpServers.Image));
+                    Assert.That(evidence[2].GetProperty("data").GetString(), Is.EqualTo(McpTestServer.Image));
                 }
                 else
                 {
@@ -407,62 +406,6 @@ public sealed class GeminiDesktopLoopTests
                     settings.Plugin.ToolEnablementRulesets[ToolSettingsKey.ForPlugin(plugin)] = true;
                 }
             });
-    }
-
-    private sealed class McpServers : HttpMessageHandler
-    {
-        public const string Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=";
-
-        public static JsonElement Schema { get; } = JsonSerializer.Deserialize<JsonElement>(
-            """{"type":"object","properties":{"query":{"$ref":"#/$defs/term"}},"required":["query"],"additionalProperties":false,"$defs":{"term":{"type":"string"}}}""");
-
-        public List<(string Server, string Name, string Argument)> Calls { get; } = [];
-
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            if (request.Method != HttpMethod.Post) return new HttpResponseMessage(HttpStatusCode.MethodNotAllowed);
-            using var doc = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
-            var message = doc.RootElement;
-            if (!message.TryGetProperty("id", out var id)) return new HttpResponseMessage(HttpStatusCode.Accepted);
-            var server = request.RequestUri!.Host.Split('.')[0];
-            var method = message.GetProperty("method").GetString();
-            var result = method switch
-            {
-                "server/discover" => new
-                {
-                    supportedVersions = new[] { "2026-07-28" },
-                    capabilities = new { tools = new { } },
-                    ttlMs = 0,
-                    cacheScope = "private"
-                },
-                "tools/list" => new { tools = new[] { new { name = "lookup.file", description = server, inputSchema = Schema } } },
-                "tools/call" => Call(server, message.GetProperty("params")),
-                _ => throw new AssertionException($"Unexpected MCP method: {method}")
-            };
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(new { jsonrpc = "2.0", id, result }), Encoding.UTF8, "application/json")
-            };
-        }
-
-        private object Call(string server, JsonElement args)
-        {
-            var name = args.GetProperty("name").GetString() ?? throw new AssertionException("MCP tool name is missing.");
-            var query = args.GetProperty("arguments").GetProperty("query").GetString() ?? throw new AssertionException("MCP query is missing.");
-            Calls.Add((server, name, query));
-            return new
-            {
-                content = new object[]
-                {
-                    new { type = "text", text = "found rose" },
-                    new { type = "image", mimeType = "image/png", data = Image },
-                    new { type = "text", text = "after image" }
-                },
-                isError = true,
-                structuredContent = new { score = 42 },
-                _meta = new { trace = "private-marker" }
-            };
-        }
     }
 
     [AvaloniaTest]
