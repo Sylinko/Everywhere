@@ -86,8 +86,25 @@ public sealed class AssistantCatalog(IPresetModelProvider presetModels, IOfficia
             configuration.Schema = provider.Schema;
 
             var models = presetModels.Catalog.GetModels(provider.Id);
-            configuration.Apply(models.FirstOrDefault(static model => model.IsDefault) ?? models.FirstOrDefault());
+            configuration.Apply(SelectPresetProviderDefaultModel(models));
         }
+    }
+
+    private static ModelDefinitionTemplate? SelectPresetProviderDefaultModel(IReadOnlyList<ModelDefinitionTemplate> models)
+    {
+        var defaultModel = models.FirstOrDefault(static model => model.IsDefault && model.DeprecationDate is null);
+        var newestGeneralModel = models.FirstOrDefault(static model =>
+            model.DeprecationDate is null &&
+            model.Specializations == ModelSpecializations.Default);
+        var newestModel = newestGeneralModel ?? models.FirstOrDefault(static model => model.DeprecationDate is null);
+        if (newestModel is null) return models.FirstOrDefault();
+        if (defaultModel is null) return newestModel;
+
+        // Live catalogs (such as models.dev) sort newest ReleaseDate first; prefer a newer live release
+        // over a hardcoded template default so newly launched generations are selected automatically.
+        return newestModel.ReleaseDate is { } newestDate && (defaultModel.ReleaseDate is not { } defaultDate || newestDate > defaultDate)
+            ? newestModel
+            : defaultModel;
     }
 
     public bool Synchronize(AssistantConfiguration configuration)

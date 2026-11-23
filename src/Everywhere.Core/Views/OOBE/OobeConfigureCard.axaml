@@ -1,0 +1,991 @@
+<UserControl
+  x:Class="Everywhere.Views.OobeConfigureCard" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions"
+  xmlns:ai="clr-namespace:Everywhere.AI" xmlns:c="clr-namespace:Everywhere.Configuration"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:sys="clr-namespace:System;assembly=System.Runtime" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  d:DesignWidth="560" x:Name="CardHost"
+  MaxWidth="540" HorizontalAlignment="Stretch"
+  VerticalAlignment="Top" x:DataType="v:OobeConfigureCard"
+  ClipToBounds="False" mc:Ignorable="d">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/OOBE/OobeCardControls.axaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <Style Selector="Border.WyCard">
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="20"/>
+      <Setter Property="Padding" Value="24,20"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <BrushTransition
+            Easing="CubicEaseOut" Property="BorderBrush"
+            Duration="0:0:0.22"/>
+        </Transitions>
+      </Setter>
+
+      <Style Selector="^.Verified">
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeSuccessBorderBrush}"/>
+      </Style>
+
+      <Style Selector="^.Testing">
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor75}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Border.OobeConnectionWell">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <Style Selector="Border.StageMetricWell">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="0,2"/>
+    </Style>
+
+    <Style Selector="Button#CatalogRefreshButton:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    </Style>
+
+    <Style Selector="Button.spinning LucideIcon">
+      <Style.Animations>
+        <Animation
+          IterationCount="Infinite" Duration="0:0:1">
+          <KeyFrame Cue="0%">
+            <Setter Property="RotateTransform.Angle" Value="0.0"/>
+          </KeyFrame>
+          <KeyFrame Cue="100%">
+            <Setter Property="RotateTransform.Angle" Value="-360.0"/>
+          </KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+
+    <Style Selector="Border.OobeModeSegmentedTrack">
+      <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="20"/>
+      <Setter Property="Padding" Value="4"/>
+    </Style>
+
+    <Style Selector="Button.OobeModeTab">
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="16"/>
+      <Setter Property="Padding" Value="16,6.5"/>
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="FocusAdorner" Value="{x:Null}"/>
+      <Setter Property="RenderTransform" Value="scale(1)"/>
+      <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border
+            x:Name="TabBorder"
+            Padding="{TemplateBinding Padding}"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            CornerRadius="{TemplateBinding CornerRadius}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="Background"
+                  Duration="0:0:0.16"/>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="BorderBrush"
+                  Duration="0:0:0.16"/>
+              </Transitions>
+            </Border.Transitions>
+            <ContentPresenter
+              x:Name="PART_ContentPresenter"
+              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+              Content="{TemplateBinding Content}"
+              ContentTemplate="{TemplateBinding ContentTemplate}"
+              Opacity="0.72"
+              TextBlock.FontSize="{TemplateBinding FontSize}"
+              TextBlock.FontWeight="{TemplateBinding FontWeight}"
+              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition
+            Easing="CubicEaseOut" Property="RenderTransform"
+            Duration="0:0:0.14"/>
+        </Transitions>
+      </Setter>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="{DynamicResource OobeSubtleSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Opacity" Value="0.96"/>
+        </Style>
+      </Style>
+
+      <Style Selector="^:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.985)"/>
+      </Style>
+
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Opacity" Value="1"/>
+        </Style>
+      </Style>
+
+      <Style Selector="^.Selected:pointerover">
+        <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.OobeSwitchToCloudLink">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="9"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="FocusAdorner" Value="{x:Null}"/>
+      <Setter Property="Opacity" Value="0.82"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border
+            x:Name="LinkBorder"
+            Padding="{TemplateBinding Padding}"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            CornerRadius="{TemplateBinding CornerRadius}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="Background"
+                  Duration="0:0:0.16"/>
+              </Transitions>
+            </Border.Transitions>
+            <ContentPresenter
+              x:Name="PART_ContentPresenter" HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Content="{TemplateBinding Content}"
+              ContentTemplate="{TemplateBinding ContentTemplate}"
+              TextBlock.FontSize="{TemplateBinding FontSize}"
+              TextBlock.FontWeight="{TemplateBinding FontWeight}"
+              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition
+            Easing="CubicEaseOut" Property="Opacity"
+            Duration="0:0:0.16"/>
+        </Transitions>
+      </Setter>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+      </Style>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid
+    VerticalAlignment="Top" x:DataType="vm:WelcomeFlow"
+    DataContext="{Binding #CardHost.Flow}"
+    IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}"
+    RowDefinitions="Auto,*,Auto">
+    <!--  Top Segmented Control (Centered Compact Capsule Outside Card)  -->
+    <Border
+      x:Name="ModeSegmentedTrack" Classes="OobeModeSegmentedTrack"
+      Grid.Row="0" Margin="0,0,0,14"
+      HorizontalAlignment="Center"
+      IsEnabled="{Binding IsNotBusy}"
+      IsVisible="{Binding !IsCloudSource}">
+      <Grid
+        ColumnDefinitions="Auto,Auto" ColumnSpacing="4">
+        <Button
+          x:Name="BuiltInProvidersTabButton" Classes="OobeModeTab"
+          Grid.Column="0"
+          Classes.Selected="{Binding !IsAdvancedMode}"
+          Command="{Binding SelectModeCommand}">
+          <Button.CommandParameter>
+            <sys:Boolean>False</sys:Boolean>
+          </Button.CommandParameter>
+          <StackPanel
+            Orientation="Horizontal" Spacing="7">
+            <LucideIcon
+              VerticalAlignment="Center" Kind="Boxes"
+              Size="14"/>
+            <TextBlock
+              VerticalAlignment="Center"
+              Text="{I18N {x:Static LocaleKey.Oobe_Configure_TabBuiltIn}}"/>
+          </StackPanel>
+        </Button>
+
+        <Button
+          x:Name="CustomProtocolTabButton" Classes="OobeModeTab"
+          Grid.Column="1"
+          Classes.Selected="{Binding IsAdvancedMode}"
+          Command="{Binding SelectModeCommand}">
+          <Button.CommandParameter>
+            <sys:Boolean>True</sys:Boolean>
+          </Button.CommandParameter>
+          <StackPanel
+            Orientation="Horizontal" Spacing="7">
+            <LucideIcon
+              VerticalAlignment="Center" Kind="SlidersHorizontal"
+              Size="14"/>
+            <TextBlock
+              VerticalAlignment="Center"
+              Text="{I18N {x:Static LocaleKey.Oobe_Configure_TabCustomProtocol}}"/>
+          </StackPanel>
+        </Button>
+      </Grid>
+    </Border>
+
+    <Panel
+      Grid.Row="1" VerticalAlignment="Top">
+      <Border
+        x:Name="ModelTelemetryCard" Classes="WyCard"
+        Padding="24,18"
+        Classes.Testing="{Binding IsTestingConnectivity}"
+        Classes.Verified="{Binding IsConnectivityChecked}">
+        <ScrollViewer
+          x:Name="CardContentScrollViewer" Margin="-10,-4,-14,-4"
+          Padding="10,4,14,4" HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <Interaction.Behaviors>
+            <in:ResetScrollBehavior ContentToken="{Binding IsAdvancedMode}"/>
+          </Interaction.Behaviors>
+          <StackPanel Spacing="13">
+            <!--  Top Identity Row  -->
+            <StackPanel
+              HorizontalAlignment="Left" VerticalAlignment="Center"
+              Orientation="Horizontal" Spacing="8">
+              <!--  Cloud Route Identity Badge  -->
+              <StackPanel
+                VerticalAlignment="Center"
+                IsVisible="{Binding IsCloudSource}"
+                Orientation="Horizontal" Spacing="8">
+                <Border
+                  Width="28" Height="28"
+                  Background="{DynamicResource OobeBrandCyanTintBrush}"
+                  CornerRadius="9">
+                  <LucideIcon
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Foreground="{DynamicResource OobeBrandCyanBrush}"
+                    Kind="Cloud" Size="15"/>
+                </Border>
+                <TextBlock
+                  VerticalAlignment="Center" FontSize="14"
+                  FontWeight="SemiBold"
+                  Text="{Binding DisplayProviderHost, FallbackValue='Everywhere Cloud'}"/>
+              </StackPanel>
+
+              <!--  Preset Route Inline Provider Selector Pill  -->
+              <ComboBox
+                x:Name="PresetProviderComboBox" VerticalAlignment="Center"
+                IsEnabled="{Binding IsNotBusy}"
+                IsVisible="{Binding IsPresetMode}"
+                ItemsSource="{x:Static vm:WelcomeFlow.PresetProviders}"
+                PlaceholderText="{I18N {x:Static LocaleKey.CustomAssistant_ModelProviderTemplate_Header}}"
+                SelectedItem="{Binding SelectedPresetProvider, Mode=TwoWay}"
+                Theme="{StaticResource OobePillComboBoxTheme}">
+                <ComboBox.Styles>
+                  <Style Selector="ComboBox /template/ LucideIcon#PlaceholderIcon">
+                    <Setter Property="IsVisible" Value="True"/>
+                    <Setter Property="Kind" Value="Boxes"/>
+                  </Style>
+                </ComboBox.Styles>
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="aai:ModelProviderTemplate">
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="8">
+                      <shadui:ThemeToggleBlock
+                        Width="18" Height="18"
+                        VerticalAlignment="Center">
+                        <shadui:ThemeToggleBlock.DarkContent>
+                          <ControlTemplate>
+                            <Image
+                              Width="18" Height="18"
+                              md:AsyncImageLoader.SizeToContent="Manual"
+                              md:AsyncImageLoader.Source="{Binding DarkIconUrl}"
+                              mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }"/>
+                          </ControlTemplate>
+                        </shadui:ThemeToggleBlock.DarkContent>
+                        <shadui:ThemeToggleBlock.LightContent>
+                          <ControlTemplate>
+                            <Image
+                              Width="18" Height="18"
+                              md:AsyncImageLoader.SizeToContent="Manual"
+                              md:AsyncImageLoader.Source="{Binding LightIconUrl}"
+                              mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }"/>
+                          </ControlTemplate>
+                        </shadui:ThemeToggleBlock.LightContent>
+                      </shadui:ThemeToggleBlock>
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{Binding DisplayNameKey^}"
+                        TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+
+              <!--  Advanced Route Ghost API Schema Selector  -->
+              <ComboBox
+                x:Name="AdvancedSchemaComboBox" VerticalAlignment="Center"
+                IsEnabled="{Binding IsNotBusy}"
+                IsVisible="{Binding IsAdvancedOwnMode}"
+                ItemsSource="{x:Static v:OobeConfigureCard.AvailableSchemas}"
+                SelectedItem="{Binding AdvancedConfiguration.Schema, Mode=TwoWay}"
+                Theme="{StaticResource OobePillComboBoxTheme}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="aai:ModelProviderSchema">
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Text="{Binding Converter={x:Static vc:CommonConverters.EnumI18N}}"
+                      TextTrimming="CharacterEllipsis"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+
+              <!--  Ghost Catalog Refresh Icon Button (Shared Across Cloud & Preset Routes)  -->
+              <Button
+                x:Name="CatalogRefreshButton" Classes="Ghost Muted"
+                Width="32" Height="32"
+                Padding="0" VerticalAlignment="Center"
+                Classes.spinning="{Binding IsCatalogRefreshing}"
+                Command="{Binding RefreshCatalogCommand}"
+                CornerRadius="9"
+                IsVisible="{Binding CanSelectCatalogModel}"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}">
+                <LucideIcon
+                  Kind="RefreshCcw" Size="14"/>
+              </Button>
+            </StackPanel>
+
+            <!--  Hero Model Selector (Cloud & Preset)  -->
+            <StackPanel
+              IsVisible="{Binding !IsAdvancedOwnMode}"
+              Spacing="6">
+              <!--  Cloud & Preset Hero Model ComboBox  -->
+              <ComboBox
+                x:Name="HeroModelComboBox"
+                Classes.awaitingProvider="{Binding !CanSelectCatalogModel}"
+                IsEnabled="{Binding CanSelectCatalogModel}"
+                ItemsSource="{Binding CatalogModels}"
+                PlaceholderText="{I18N {x:Static LocaleKey.Oobe_Configure_SelectModelPlaceholder}}"
+                SelectedItem="{Binding SelectedCatalogModel, Mode=TwoWay}"
+                Theme="{StaticResource OobeHeroModelComboBoxTheme}">
+                <ComboBox.Styles>
+                  <Style Selector="ComboBox.awaitingProvider">
+                    <Setter Property="PlaceholderText" Value="{I18N {x:Static LocaleKey.Oobe_Configure_SelectProviderFirstPlaceholder}}"/>
+                  </Style>
+                  <Style Selector="ComboBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                  </Style>
+                </ComboBox.Styles>
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="ai:AssistantCatalogItem">
+                    <Grid
+                      Margin="0,0,4,0" ColumnSpacing="4">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition
+                          Width="Auto" SharedSizeGroup="Badges"/>
+                      </Grid.ColumnDefinitions>
+
+                      <Border
+                        Grid.Column="0"
+                        Width="{DynamicResource FontSize2Xl}"
+                        Height="{DynamicResource FontSize2Xl}"
+                        Margin="0,0,6,0" VerticalAlignment="Center"
+                        Background="#333333" ClipToBounds="True"
+                        CornerRadius="{DynamicResource FullCornerRadius}"
+                        IsVisible="{Binding Model.IconUrl, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <Image
+                          Margin="3" md:AsyncImageLoader.SizeToContent="Manual"
+                          md:AsyncImageLoader.Source="{Binding Model.IconUrl}"
+                          mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }" Stretch="UniformToFill"/>
+                      </Border>
+
+                      <TextBlock
+                        Grid.Column="1" Margin="2,0,4,0"
+                        VerticalAlignment="Center"
+                        Text="{Binding Model.Name}"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTip.Tip="{Binding Model.DescriptionKey^, FallbackValue={x:Null}}"/>
+
+                      <LucideIcon
+                        Grid.Column="2" HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource WarningColor}"
+                        IsVisible="{Binding Model.DeprecationDate, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Kind="TriangleAlert"
+                        Size="{DynamicResource FontSizeL}"
+                        ToolTip.Placement="Top">
+                        <ToolTip.Tip>
+                          <I18N Key="{x:Static LocaleKey.OfficialModelDefinitionForm_DeprecationToast_Text}">
+                            <Binding
+                              Path="Model.DeprecationDate" StringFormat="{}{0:D}"/>
+                          </I18N>
+                        </ToolTip.Tip>
+                      </LucideIcon>
+
+                      <StackPanel
+                        Grid.Column="3" Margin="12,0,0,0"
+                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Orientation="Horizontal" Spacing="2">
+                        <StackPanel.Styles>
+                          <Style Selector="shadui|Badge">
+                            <Setter Property="Foreground" Value="{DynamicResource BadgeForegroundColor}"/>
+                            <Setter Property="Height" Value="{DynamicResource FontSizeXl}"/>
+                            <Setter Property="CornerRadius" Value="4"/>
+                            <Style Selector="^ LucideIcon">
+                              <Setter Property="Size" Value="{DynamicResource FontSizeL}"/>
+                            </Style>
+                          </Style>
+                        </StackPanel.Styles>
+
+                        <shadui:Badge
+                          Background="Chocolate"
+                          IsVisible="{Binding Model.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
+                          <LucideIcon Kind="Eye"/>
+                        </shadui:Badge>
+                        <shadui:Badge
+                          Background="CadetBlue"
+                          IsVisible="{Binding Model.SupportsToolCall}"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
+                          <LucideIcon Kind="Hammer"/>
+                        </shadui:Badge>
+                        <shadui:Badge
+                          Padding="6,0" Background="MediumSlateBlue"
+                          IsVisible="{Binding Model.ContextLimit, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=0}">
+                          <ToolTip.Tip>
+                            <TextBlock>
+                              <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
+                              <Run Text="{Binding Model.ContextLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+                              <LineBreak/>
+                              <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
+                              <Run Text="{Binding Model.OutputLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+                            </TextBlock>
+                          </ToolTip.Tip>
+
+                          <TextBlock
+                            FontSize="{DynamicResource FontSizeS}"
+                            FontWeight="Medium"
+                            Text="{Binding Model.ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}}"/>
+                        </shadui:Badge>
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+
+              <TextBlock
+                Classes="Caption" Margin="10,0,0,0"
+                Foreground="{DynamicResource WarningColor}"
+                IsVisible="{Binding IsSelectedCatalogModelUnlisted}"
+                Text="{I18N {x:Static LocaleKey.PresetModelSelector_Unlisted}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <!--  Unified Connection Fields (Cardless; Shared Label Column Alignment)  -->
+            <Border
+              x:Name="ConnectionWellBorder" Classes="OobeConnectionWell"
+              IsEnabled="{Binding IsNotBusy}"
+              IsVisible="{Binding !IsCloudSource}">
+              <StackPanel
+                Grid.IsSharedSizeScope="True" Spacing="10">
+                <!--  1. Advanced Endpoint Input + Aligned Normalized Preview  -->
+                <StackPanel
+                  IsVisible="{Binding IsAdvancedOwnMode}"
+                  Spacing="4">
+                  <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition
+                        Width="Auto" SharedSizeGroup="ConnectionFieldLabel"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel
+                      Grid.Column="0" VerticalAlignment="Center"
+                      Orientation="Horizontal" Spacing="7"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_Endpoint_Description}}">
+                      <LucideIcon
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource OobeBrandCyanBrush}"
+                        Kind="Globe" Size="14"/>
+                      <TextBlock
+                        Classes="Caption Muted" VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Text="{I18N {x:Static LocaleKey.Assistant_Endpoint_Header}}"/>
+                    </StackPanel>
+
+                    <TextBox
+                      x:Name="AdvancedEndpointBox" Grid.Column="1"
+                      PlaceholderText="{Binding AdvancedEndpointPlaceholder}"
+                      Text="{Binding AdvancedConfiguration.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+                  </Grid>
+
+                  <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition
+                        Width="Auto" SharedSizeGroup="ConnectionFieldLabel"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel
+                      Grid.Column="1" Orientation="Horizontal"
+                      Spacing="6">
+                      <LucideIcon
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource OobeBrandCyanBrush}"
+                        IsVisible="{Binding EndpointPreviewText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Kind="CornerDownRight" Opacity="0.8"
+                        Size="12"/>
+                      <TextBlock
+                        Classes="Caption Muted" VerticalAlignment="Center"
+                        IsVisible="{Binding EndpointPreviewText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Opacity="0.85"
+                        Text="{Binding EndpointPreviewText}"
+                        TextTrimming="CharacterEllipsis"/>
+                      <TextBlock
+                        Classes="Caption Muted" VerticalAlignment="Center"
+                        IsVisible="{Binding EndpointPreviewText, Converter={x:Static ObjectConverters.IsNull}}"
+                        Opacity="0.65"
+                        Text="{I18N {x:Static LocaleKey.Assistant_Endpoint_Description}}"
+                        TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+
+                <!--  2. Advanced Model ID Input  -->
+                <Grid
+                  ColumnSpacing="12"
+                  IsVisible="{Binding IsAdvancedOwnMode}">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition
+                      Width="Auto" SharedSizeGroup="ConnectionFieldLabel"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+
+                  <StackPanel
+                    Grid.Column="0" VerticalAlignment="Center"
+                    Orientation="Horizontal" Spacing="7"
+                    ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_ModelId_Description}}">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource OobeOwnAccentBrush}"
+                      Kind="Cpu" Size="14"/>
+                    <TextBlock
+                      Classes="Caption Muted" VerticalAlignment="Center"
+                      FontWeight="Medium"
+                      Text="{I18N {x:Static LocaleKey.Assistant_ModelId_Header}}"/>
+                  </StackPanel>
+
+                  <TextBox
+                    x:Name="AdvancedModelIdBox" Grid.Column="1"
+                    PlaceholderText="{I18N {x:Static LocaleKey.Oobe_Configure_ModelIdPlaceholder}}"
+                    Text="{Binding AdvancedConfiguration.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+                </Grid>
+
+                <!--  3. Ghost API Key Picker (Flush Right Edge Across Preset & Advanced)  -->
+                <Grid
+                  x:Name="ApiKeyRowGrid" ColumnSpacing="12">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition
+                      Width="Auto" SharedSizeGroup="ConnectionFieldLabel"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+
+                  <StackPanel
+                    Grid.Column="0" VerticalAlignment="Center"
+                    Orientation="Horizontal" Spacing="7"
+                    ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_ApiKey_Description}}">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource OobeBrandGoldBrush}"
+                      Kind="KeyRound" Size="14"/>
+                    <TextBlock
+                      Classes="Caption Muted" VerticalAlignment="Center"
+                      FontWeight="Medium"
+                      Text="{I18N {x:Static LocaleKey.Assistant_ApiKey_Header}}"/>
+                  </StackPanel>
+
+                  <ComboBox
+                    x:Name="InlineApiKeyComboBox" Grid.Column="1"
+                    HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding AvailableApiKeys}"
+                    MaxDropDownHeight="300"
+                    SelectedItem="{Binding SelectedApiKey, Mode=TwoWay}"
+                    Theme="{StaticResource OobeInlineComboBoxTheme}">
+                    <shadui:ControlAssist.Footer>
+                      <Border
+                        BorderBrush="{DynamicResource OobeHairlineBrush}"
+                        BorderThickness="0,1,0,0">
+                        <StackPanel
+                          Margin="4" Spacing="2">
+                          <Button
+                            Classes="Ghost Compact" Padding="10,6"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+                            BorderThickness="0"
+                            Command="{Binding #CardHost.AddApiKeyCommand}"
+                            Content="{I18N {x:Static LocaleKey.ApiKeyComboBox_AddApiKey}}"/>
+                          <Button
+                            Classes="Ghost Compact" Padding="10,6"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                            BorderThickness="0"
+                            Command="{Binding #CardHost.ManageApiKeyCommand}"
+                            Content="{I18N {x:Static LocaleKey.ApiKeyComboBox_ManageApiKey}}"/>
+                        </StackPanel>
+                      </Border>
+                    </shadui:ControlAssist.Footer>
+
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="c:ApiKey">
+                        <TextBlock
+                          Text="{Binding Name}"
+                          TextTrimming="CharacterEllipsis"/>
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <!--  Read-Only Metrics (Cardless; Preset Collapsed Until Model Selected; Cloud When Selected)  -->
+            <Grid
+              ColumnDefinitions="*,*" ColumnSpacing="18"
+              IsVisible="{Binding ShowTelemetryMetrics}">
+              <Border
+                Classes="StageMetricWell" Grid.Column="0"
+                IsVisible="{Binding ContextLimitText, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel Spacing="4">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="6">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource OobeBrandCyanBrush}"
+                      Kind="SquareMenu" Size="12"/>
+                    <TextBlock
+                      Classes="Caption Muted" VerticalAlignment="Center"
+                      Text="{I18N {x:Static LocaleKey.Oobe_Configure_ContextLabel}}"/>
+                  </StackPanel>
+                  <TextBlock
+                    FontSize="16" FontWeight="SemiBold"
+                    Text="{Binding ContextLimitText, FallbackValue=''}"/>
+                </StackPanel>
+              </Border>
+
+              <Border
+                Classes="StageMetricWell" Grid.Column="1"
+                IsVisible="{Binding OutputLimitText, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel Spacing="4">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="6">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource OobeBrandPinkBrush}"
+                      Kind="SquareArrowRightExit" Size="12"/>
+                    <TextBlock
+                      Classes="Caption Muted" VerticalAlignment="Center"
+                      Text="{I18N {x:Static LocaleKey.Oobe_Configure_OutputLabel}}"/>
+                  </StackPanel>
+                  <TextBlock
+                    FontSize="16" FontWeight="SemiBold"
+                    Text="{Binding OutputLimitText, FallbackValue=''}"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <!--  Interactive Editable Metrics & Capability Toggles (Advanced Mode)  -->
+            <StackPanel
+              IsEnabled="{Binding IsNotBusy}"
+              IsVisible="{Binding IsAdvancedOwnMode}"
+              Spacing="14">
+              <Grid
+                ColumnDefinitions="*,*" ColumnSpacing="18">
+                <Border
+                  Classes="StageMetricWell Interactive" Grid.Column="0">
+                  <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel
+                        Grid.Column="0" Orientation="Horizontal"
+                        Spacing="6"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Description}}">
+                        <LucideIcon
+                          VerticalAlignment="Center"
+                          Foreground="{DynamicResource OobeBrandCyanBrush}"
+                          Kind="SquareMenu" Size="12"/>
+                        <TextBlock
+                          Classes="Caption Muted" VerticalAlignment="Center"
+                          Text="{I18N {x:Static LocaleKey.Oobe_Configure_ContextLabel}}"/>
+                      </StackPanel>
+                      <TextBlock
+                        Classes="Caption" Grid.Column="1"
+                        VerticalAlignment="Center" FontWeight="SemiBold"
+                        Foreground="{DynamicResource OobeBrandCyanBrush}"
+                        IsVisible="{Binding ContextLimitText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Text="{Binding ContextLimitText}"/>
+                    </Grid>
+
+                    <TextBox
+                      x:Name="AdvancedContextLimitBox"
+                      PlaceholderText="{I18N {x:Static LocaleKey.Oobe_Configure_ContextPlaceholder}}"
+                      Text="{Binding AdvancedContextLimitText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      TextInput="TokenBox_OnTextInput"
+                      Theme="{StaticResource OobeInlineTokenTextBoxTheme}"/>
+                  </StackPanel>
+                </Border>
+
+                <Border
+                  Classes="StageMetricWell Interactive" Grid.Column="1">
+                  <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel
+                        Grid.Column="0" Orientation="Horizontal"
+                        Spacing="6"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Description}}">
+                        <LucideIcon
+                          VerticalAlignment="Center"
+                          Foreground="{DynamicResource OobeBrandPinkBrush}"
+                          Kind="SquareArrowRightExit" Size="12"/>
+                        <TextBlock
+                          Classes="Caption Muted" VerticalAlignment="Center"
+                          Text="{I18N {x:Static LocaleKey.Oobe_Configure_OutputLabel}}"/>
+                      </StackPanel>
+                      <TextBlock
+                        Classes="Caption" Grid.Column="1"
+                        VerticalAlignment="Center" FontWeight="SemiBold"
+                        Foreground="{DynamicResource OobeBrandPinkBrush}"
+                        IsVisible="{Binding OutputLimitText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Text="{Binding OutputLimitText}"/>
+                    </Grid>
+
+                    <TextBox
+                      x:Name="AdvancedOutputLimitBox"
+                      PlaceholderText="{I18N {x:Static LocaleKey.Oobe_Configure_OutputPlaceholder}}"
+                      Text="{Binding AdvancedOutputLimitText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      TextInput="TokenBox_OnTextInput"
+                      Theme="{StaticResource OobeInlineTokenTextBoxTheme}"/>
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <StackPanel Spacing="8">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6"
+                  ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_InputModalities_Description}}">
+                  <LucideIcon
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedColor}"
+                    Kind="Layers" Size="12"/>
+                  <TextBlock
+                    Classes="Caption Muted" VerticalAlignment="Center"
+                    Text="{I18N {x:Static LocaleKey.Oobe_Configure_ModalitiesLabel}}"/>
+                </StackPanel>
+
+                <WrapPanel
+                  ItemSpacing="7" LineSpacing="7">
+                  <ToggleButton
+                    Classes="Lead"
+                    IsChecked="{Binding SupportsTextInput, Mode=TwoWay}"
+                    Theme="{StaticResource OobeCapToggleTheme}">
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="5">
+                      <LucideIcon
+                        VerticalAlignment="Center" Kind="TextInitial"
+                        Size="12"/>
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{I18N {x:Static LocaleKey.Modalities_Text}}"/>
+                    </StackPanel>
+                  </ToggleButton>
+
+                  <ToggleButton
+                    Classes="Cyan"
+                    IsChecked="{Binding SupportsImageInput, Mode=TwoWay}"
+                    Theme="{StaticResource OobeCapToggleTheme}">
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="5">
+                      <LucideIcon
+                        VerticalAlignment="Center" Kind="Eye"
+                        Size="12"/>
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{I18N {x:Static LocaleKey.Oobe_Configure_CapVision}}"/>
+                    </StackPanel>
+                  </ToggleButton>
+
+                  <ToggleButton
+                    Classes="Gold"
+                    IsChecked="{Binding SupportsAudioInput, Mode=TwoWay}"
+                    Theme="{StaticResource OobeCapToggleTheme}">
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="5">
+                      <LucideIcon
+                        VerticalAlignment="Center" Kind="Volume2"
+                        Size="12"/>
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{I18N {x:Static LocaleKey.Oobe_Configure_CapAudio}}"/>
+                    </StackPanel>
+                  </ToggleButton>
+
+                  <ToggleButton
+                    Classes="Orange"
+                    IsChecked="{Binding SupportsVideoInput, Mode=TwoWay}"
+                    Theme="{StaticResource OobeCapToggleTheme}">
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="5">
+                      <LucideIcon
+                        VerticalAlignment="Center" Kind="Video"
+                        Size="12"/>
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{I18N {x:Static LocaleKey.Oobe_Configure_CapVideo}}"/>
+                    </StackPanel>
+                  </ToggleButton>
+
+                  <ToggleButton
+                    Classes="Pink"
+                    IsChecked="{Binding SupportsPdfInput, Mode=TwoWay}"
+                    Theme="{StaticResource OobeCapToggleTheme}">
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="5">
+                      <LucideIcon
+                        VerticalAlignment="Center" Kind="FileText"
+                        Size="12"/>
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{I18N {x:Static LocaleKey.Oobe_Configure_CapPdf}}"/>
+                    </StackPanel>
+                  </ToggleButton>
+
+                  <ToggleButton
+                    Classes="Primary"
+                    IsChecked="{Binding SupportsTools, Mode=TwoWay}"
+                    Theme="{StaticResource OobeCapToggleTheme}"
+                    ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Description}}">
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="5">
+                      <LucideIcon
+                        VerticalAlignment="Center" Kind="Wrench"
+                        Size="12"/>
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{I18N {x:Static LocaleKey.Oobe_Configure_CapTools}}"/>
+                    </StackPanel>
+                  </ToggleButton>
+                </WrapPanel>
+              </StackPanel>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+
+      <v:GlowBorderOverlay
+        x:Name="CardBorderGlow"
+        Classes.testing="{Binding IsTestingConnectivity}"
+        Classes.verified="{Binding IsConnectivityChecked}"
+        CornerRadius="20" IsHitTestVisible="False">
+        <v:GlowBorderOverlay.Styles>
+          <Style Selector="v|GlowBorderOverlay">
+            <Setter Property="AnimationRate" Value="0"/>
+            <Setter Property="GlowColor" Value="{DynamicResource PrimaryColor}"/>
+            <Setter Property="GlowOpacity" Value="0"/>
+          </Style>
+          <Style Selector="v|GlowBorderOverlay.verified">
+            <Setter Property="AnimationRate" Value="0"/>
+            <Setter Property="GlowColor" Value="{DynamicResource OobeAmbientSuccessGlowColor}"/>
+            <Setter Property="GlowOpacity" Value="0.45"/>
+          </Style>
+          <Style Selector="v|GlowBorderOverlay.testing">
+            <Setter Property="AnimationRate" Value="1.35"/>
+            <Setter Property="GlowColor" Value="{DynamicResource PrimaryColor}"/>
+            <Setter Property="GlowOpacity" Value="1"/>
+          </Style>
+        </v:GlowBorderOverlay.Styles>
+        <v:GlowBorderOverlay.Transitions>
+          <Transitions>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="GlowOpacity"
+              Duration="0:0:0.30"/>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="AnimationRate"
+              Duration="0:0:0.45"/>
+            <ColorTransition
+              Easing="CubicEaseOut" Property="GlowColor"
+              Duration="0:0:0.30"/>
+          </Transitions>
+        </v:GlowBorderOverlay.Transitions>
+      </v:GlowBorderOverlay>
+    </Panel>
+
+    <Button
+      x:Name="SwitchToCloudButton" Classes="OobeSwitchToCloudLink"
+      Grid.Row="2" Margin="0,12,0,0"
+      HorizontalAlignment="Center"
+      Command="{Binding SwitchToCloudCommand}"
+      IsEnabled="{Binding IsNotBusy}"
+      IsVisible="{Binding !IsCloudSource}">
+      <StackPanel
+        Orientation="Horizontal" Spacing="6">
+        <LucideIcon
+          VerticalAlignment="Center" Kind="Cloud"
+          Size="14"/>
+        <TextBlock
+          VerticalAlignment="Center"
+          Text="{I18N {x:Static LocaleKey.Oobe_Configure_SwitchToCloud}}"/>
+        <LucideIcon
+          VerticalAlignment="Center" Kind="ArrowUpRight"
+          Size="13"/>
+      </StackPanel>
+    </Button>
+  </Grid>
+</UserControl>

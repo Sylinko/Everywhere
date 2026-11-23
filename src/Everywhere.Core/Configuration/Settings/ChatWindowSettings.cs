@@ -91,7 +91,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
         LocaleKey.ChatWindowSettings_AutomaticallyAddElement_Header,
         LocaleKey.ChatWindowSettings_AutomaticallyAddElement_Description)]
     [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Attachment)]
-    public partial bool AutomaticallyAddElement { get; set; } = true;
+    public partial bool AutomaticallyAddElement { get; set; }
 
     /// <summary>
     /// When enabled, show chat statistics in the chat window.
@@ -101,7 +101,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
         LocaleKey.ChatWindowSettings_ShowChatStatistics_Header,
         LocaleKey.ChatWindowSettings_ShowChatStatistics_Description)]
     [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Display)]
-    public partial bool ShowChatStatistics { get; set; } = true;
+    public partial bool ShowChatStatistics { get; set; }
 
     /// <summary>
     /// Allows site icons for visible chat links and page previews on hover.

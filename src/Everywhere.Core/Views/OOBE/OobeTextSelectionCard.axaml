@@ -1,0 +1,82 @@
+<UserControl
+  x:Class="Everywhere.Views.OobeTextSelectionCard" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:v="clr-namespace:Everywhere.Views"
+  d:DesignWidth="560" x:Name="CardHost"
+  MaxWidth="560" HorizontalAlignment="Stretch"
+  VerticalAlignment="Top" x:DataType="v:OobeTextSelectionCard"
+  ClipToBounds="False" WindowDecorationProperties.ElementRole="User"
+  mc:Ignorable="d">
+  <UserControl.Styles>
+    <Style Selector="v|TextSelectionToolbar#DemoToolbar">
+      <Setter Property="Opacity" Value="0"/>
+      <Setter Property="IsHitTestVisible" Value="False"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition
+            Easing="CubicEaseOut" Property="Opacity"
+            Duration="0:0:0.15"/>
+        </Transitions>
+      </Setter>
+
+      <Style Selector="^.visible">
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="IsHitTestVisible" Value="True"/>
+      </Style>
+    </Style>
+  </UserControl.Styles>
+
+  <StackPanel
+    ClipToBounds="False" Spacing="12">
+    <!--  Single-Card Document Stage with Selection-Anchored Floating Toolbar  -->
+    <Panel
+      x:Name="DemoStagePanel" ClipToBounds="False">
+      <Border
+        x:Name="SampleDocumentCard" Margin="0,34,0,0"
+        Padding="24,22"
+        Background="{DynamicResource OobeSurfaceBrush}"
+        BorderBrush="{DynamicResource OobeHairlineBrush}"
+        BorderThickness="1" CornerRadius="20">
+        <SelectableTextBlock
+          x:Name="SampleDocumentText" Background="Transparent"
+          Cursor="Ibeam" FontSize="14.5"
+          LineHeight="26"
+          SelectionBrush="{DynamicResource PrimaryColor25}"
+          Text="{I18N {x:Static LocaleKey.Oobe_TextSelection_DemoParagraph}}"
+          TextWrapping="Wrap"/>
+      </Border>
+
+      <v:TextSelectionToolbar
+        x:Name="DemoToolbar" HorizontalAlignment="Left"
+        VerticalAlignment="Top" CanExcludeApplication="False"
+        IsFreeformChatEnabled="False" VisibleActionCount="4"
+        ZIndex="2"/>
+    </Panel>
+
+    <!--  Inline Action Feedback Below the Document Card  -->
+    <Grid
+      x:Name="ActionResultBanner" Margin="4,0"
+      VerticalAlignment="Center" ColumnDefinitions="Auto,*"
+      ColumnSpacing="8"
+      IsVisible="{Binding #CardHost.HasActionPreview}">
+      <v:IconPresenter
+        Grid.Column="0" VerticalAlignment="Top"
+        Background="{x:Null}"
+        FontSize="{DynamicResource FontSizeM}"
+        Foreground="{DynamicResource PrimaryColor}"
+        Icon="{Binding #CardHost.PreviewActionIcon}"
+        IconSize="{DynamicResource FontSizeM}"/>
+      <StackPanel
+        Grid.Column="1" Spacing="2">
+        <TextBlock
+          Classes="Caption" FontWeight="SemiBold"
+          Text="{Binding #CardHost.PreviewActionHeaderKey^, FallbackValue=''}"
+          TextTrimming="CharacterEllipsis"/>
+        <TextBlock
+          Classes="Caption Muted" LineHeight="18"
+          Text="{Binding #CardHost.PreviewActionBodyKey^, FallbackValue=''}"
+          TextWrapping="Wrap"/>
+      </StackPanel>
+    </Grid>
+  </StackPanel>
+</UserControl>

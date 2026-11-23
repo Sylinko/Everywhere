@@ -1,0 +1,15 @@
+<UserControl
+  x:Class="Everywhere.Views.OobePersonalizeCard" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:v="clr-namespace:Everywhere.Views"
+  d:DesignWidth="580" x:Name="CardHost"
+  HorizontalAlignment="Stretch" VerticalAlignment="Top"
+  x:DataType="v:OobePersonalizeCard" ClipToBounds="False"
+  mc:Ignorable="d">
+  <v:PromptRecipeEditor
+    x:Name="RecipeEditor"
+    Editor="{Binding #CardHost.Flow?.Personalization}"
+    IsEnabled="{Binding #CardHost.Flow?.IsNotBusy, FallbackValue=True}"
+    IsPersonalization="True"
+    ShowScenarioRequiredHint="{Binding #CardHost.Flow?.ShowScenarioRequiredHint, FallbackValue=False}"/>
+</UserControl>

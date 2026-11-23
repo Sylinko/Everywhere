@@ -1,372 +1,564 @@
 <UserControl
   x:Class="Everywhere.Views.WelcomeView" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ai="clr-namespace:Everywhere.AI"
-  xmlns:common="clr-namespace:Everywhere.Common" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
-  d:DesignHeight="450" d:DesignWidth="800"
-  x:DataType="vm:WelcomeViewModel" mc:Ignorable="d">
-  <Grid
-    Width="800" MinHeight="600"
-    Margin="0,0,0,16" ColumnDefinitions="Auto,*"
-    ColumnSpacing="8" RowSpacing="8">
-    <Grid.RowDefinitions>
-      <RowDefinition Height="44"/>
-      <RowDefinition/>
-      <RowDefinition MinHeight="200"/>
-    </Grid.RowDefinitions>
+  xmlns:motion="using:Motion.Avalonia" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  d:DesignHeight="810" d:DesignWidth="1180"
+  x:Name="ViewRoot" x:DataType="vm:OobeFlow"
+  ClipToBounds="False" mc:Ignorable="d">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/OOBE/WelcomePalette.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/OOBE/OobeCardControls.axaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
 
-    <v:Evy
-      Grid.Row="1" Grid.Column="0"
-      Width="48" Height="48"
-      Margin="24,8,4,-4" VerticalAlignment="Top"
-      IsThinking="{Binding IsBusy}"/>
+  <UserControl.Styles>
+    <Style Selector="Button, ToggleButton, TextBox, ToggleSwitch, ScrollBar, CheckBox, ComboBox, Slider, HyperlinkButton, Expander, v|KeyboardShortcutInputBox">
+      <Setter Property="WindowDecorationProperties.ElementRole" Value="User"/>
+    </Style>
 
-    <TransitioningContentControl
-      Grid.Row="1" Grid.Column="1"
-      Margin="0,8,24,0"
-      Content="{Binding CurrentStep}">
-      <TransitioningContentControl.Styles>
-        <Style Selector="ListBox.AssistantMessage">
-          <Style Selector="^ TextBlock">
-            <Setter Property="TextWrapping" Value="Wrap"/>
-          </Style>
+    <Style Selector="Border.ProgressDash">
+      <Setter Property="Width" Value="18"/>
+      <Setter Property="Height" Value="2.5"/>
+      <Setter Property="CornerRadius" Value="2"/>
+      <Setter Property="Background" Value="{DynamicResource OobeProgressTrackBrush}"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition
+            Easing="CubicEaseOut" Property="Width"
+            Duration="0:0:0.24"/>
+          <BrushTransition
+            Easing="CubicEaseOut" Property="Background"
+            Duration="0:0:0.24"/>
+        </Transitions>
+      </Setter>
 
-          <Style Selector="^ ScrollViewer">
-            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
-          </Style>
+      <Style Selector="^.Reached">
+        <Setter Property="Background" Value="{DynamicResource PrimaryColor75}"/>
+      </Style>
 
-          <Style Selector="^ HyperlinkButton">
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-          </Style>
+      <Style Selector="^.Current">
+        <Setter Property="Width" Value="38"/>
+        <Setter Property="Background" Value="{DynamicResource PrimaryColor}"/>
+      </Style>
+    </Style>
 
-          <Setter Property="BorderThickness" Value="0"/>
-          <Setter Property="ItemsPanel">
-            <Setter.Value>
-              <ItemsPanelTemplate>
-                <StackPanel
-                  Orientation="Vertical" Spacing="8"/>
-              </ItemsPanelTemplate>
-            </Setter.Value>
-          </Setter>
+    <!--  Kinetic Pill Action Buttons (No Glow, Hover-Reveal Directional Arrows)  -->
+    <Style Selector="Button.OobePrimaryPill">
+      <Setter Property="MinHeight" Value="44"/>
+      <Setter Property="MinWidth" Value="176"/>
+      <Setter Property="Padding" Value="28,0"/>
+      <Setter Property="CornerRadius" Value="22"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource PrimaryColor75}"/>
 
-          <Setter Property="ItemContainerTheme">
-            <Setter.Value>
-              <ControlTheme TargetType="ListBoxItem">
-                <Setter Property="Interaction.Behaviors">
-                  <BehaviorCollectionTemplate>
-                    <BehaviorCollection>
-                      <in:FadeInAnimationBehavior ItemDelayMultiplier="0:0:0.6"/>
-                    </BehaviorCollection>
-                  </BehaviorCollectionTemplate>
-                </Setter>
-                <Setter Property="IsVisible" Value="{Binding $self.Content.(Visual.IsVisible), FallbackValue=True}"/>
-                <Setter Property="Template">
-                  <Setter.Value>
-                    <ControlTemplate>
-                      <Border
-                        Padding="10,6" HorizontalAlignment="Left"
-                        Background="{DynamicResource BorderColor}"
-                        ClipToBounds="False" CornerRadius="8">
-                        <ContentControl
-                          ClipToBounds="False"
-                          Content="{TemplateBinding Content}"/>
-                      </Border>
-                    </ControlTemplate>
-                  </Setter.Value>
-                </Setter>
-              </ControlTheme>
-            </Setter.Value>
-          </Setter>
-        </Style>
-      </TransitioningContentControl.Styles>
+      <Style Selector="^ Panel#PrimaryArrowHost">
+        <Setter Property="Width" Value="0"/>
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Transitions">
+          <Transitions>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="Width"
+              Duration="0:0:0.18"/>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="Opacity"
+              Duration="0:0:0.16"/>
+            <ThicknessTransition
+              Easing="CubicEaseOut" Property="Margin"
+              Duration="0:0:0.18"/>
+          </Transitions>
+        </Setter>
+      </Style>
 
-      <TransitioningContentControl.PageTransition>
-        <CompositePageTransition>
-          <CrossFade
-            FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"
-            Duration="0:00:00.3"/>
-        </CompositePageTransition>
-      </TransitioningContentControl.PageTransition>
+      <Style Selector="^ LucideIcon#PrimaryArrowIcon">
+        <Setter Property="RenderTransform" Value="translateX(-6px)"/>
+        <Setter Property="Transitions">
+          <Transitions>
+            <TransformOperationsTransition
+              Easing="CubicEaseOut" Property="RenderTransform"
+              Duration="0:0:0.18"/>
+          </Transitions>
+        </Setter>
+      </Style>
 
-      <TransitioningContentControl.DataTemplates>
-        <DataTemplate DataType="vm:WelcomeViewModelIntroStep">
-          <ListBox Classes="AssistantMessage">
-            <TextBlock
-              Classes="Large"
-              Text="{I18N {x:Static LocaleKey.WelcomeView_IntroStep_Message1}}"/>
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_IntroStep_Message2}}"/>
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_IntroStep_Message3}}"/>
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_IntroStep_Message4}}"/>
-            <StackPanel
-              Orientation="Horizontal" Spacing="8">
-              <TextBlock
-                Margin="0,0,-8,0" VerticalAlignment="Center"
-                Text="{I18N {x:Static LocaleKey.WelcomeView_IntroStep_Message5}}"/>
-              <HyperlinkButton
-                VerticalAlignment="Center"
-                Content="{I18N {x:Static LocaleKey.WelcomeView_OfficialDocsHyperlinkButton_Content}}"
-                NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteUri}"
-                TextElement.Foreground="{DynamicResource InfoColor}"/>
-              <HyperlinkButton
-                VerticalAlignment="Center"
-                Content="{I18N {x:Static LocaleKey.WelcomeView_DiscordHyperlinkButton_Content}}"
-                NavigateUri="{x:Static common:LinkConstants.AkaDiscordUri}"
-                TextElement.Foreground="{DynamicResource InfoColor}"/>
-              <HyperlinkButton
-                VerticalAlignment="Center"
-                Content="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}"
-                NavigateUri="{x:Static common:LinkConstants.AkaQQGroupUri}"
-                TextElement.Foreground="{DynamicResource InfoColor}"/>
-            </StackPanel>
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_IntroStep_Message6}}"/>
-          </ListBox>
-        </DataTemplate>
+      <Style Selector="^:pointerover:not(.busy):not(:disabled) Panel#PrimaryArrowHost">
+        <Setter Property="Width" Value="16"/>
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="Margin" Value="8,0,0,0"/>
+      </Style>
 
-        <DataTemplate DataType="vm:WelcomeViewModelSoftLoginStep">
-          <ListBox Classes="AssistantMessage">
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_SoftLoginStep_Message1}}"/>
+      <Style Selector="^:pointerover:not(.busy):not(:disabled) LucideIcon#PrimaryArrowIcon">
+        <Setter Property="RenderTransform" Value="translateX(0px)"/>
+      </Style>
+    </Style>
 
-            <v:UserProfileCard
-              Width="240" Margin="8"
-              HorizontalAlignment="Left" ShowActionsButton="False"/>
-          </ListBox>
-        </DataTemplate>
+    <Style Selector="Button.OobeBackPill, Button.OobeSecondaryPill">
+      <Setter Property="MinHeight" Value="44"/>
+      <Setter Property="MinWidth" Value="120"/>
+      <Setter Property="Padding" Value="20,0"/>
+      <Setter Property="CornerRadius" Value="22"/>
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+    </Style>
 
-        <DataTemplate DataType="vm:WelcomeViewModelConfiguratorStep">
-          <ListBox Classes="AssistantMessage">
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_ConfiguratorStep_Message1}}"/>
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_ConfiguratorStep_Message2}}"/>
-            <v:AssistantConfiguratorSelector
-              Assistant="{Binding ViewModel.Assistant, Mode=OneTime}"
-              IsSettingsVisible="False"/>
-          </ListBox>
-        </DataTemplate>
+    <Style Selector="Button.OobeBackPill">
+      <Style Selector="^ Panel#BackArrowHost">
+        <Setter Property="Width" Value="0"/>
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Transitions">
+          <Transitions>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="Width"
+              Duration="0:0:0.18"/>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="Opacity"
+              Duration="0:0:0.16"/>
+            <ThicknessTransition
+              Easing="CubicEaseOut" Property="Margin"
+              Duration="0:0:0.18"/>
+          </Transitions>
+        </Setter>
+      </Style>
 
-        <DataTemplate DataType="vm:WelcomeViewModelHardLoginStep">
-          <ListBox Classes="AssistantMessage">
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_HardLoginStep_Message1}}"/>
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_HardLoginStep_Message2}}"/>
+      <Style Selector="^ LucideIcon#BackArrowIcon">
+        <Setter Property="RenderTransform" Value="translateX(6px)"/>
+        <Setter Property="Transitions">
+          <Transitions>
+            <TransformOperationsTransition
+              Easing="CubicEaseOut" Property="RenderTransform"
+              Duration="0:0:0.18"/>
+          </Transitions>
+        </Setter>
+      </Style>
 
-            <v:UserProfileCard
-              Width="240" Margin="8"
-              HorizontalAlignment="Left" ShowActionsButton="False"/>
-          </ListBox>
-        </DataTemplate>
+      <Style Selector="^:pointerover:not(:disabled) Panel#BackArrowHost">
+        <Setter Property="Width" Value="15"/>
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+      </Style>
 
-        <DataTemplate DataType="vm:WelcomeViewModelAssistantStep">
-          <Panel>
-            <ListBox
-              Classes="AssistantMessage"
-              IsVisible="{Binding ViewModel.Assistant.Configuration, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type ai:OfficialAssistantConfiguration}}">
-              <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Official_Message1}}"/>
-            </ListBox>
+      <Style Selector="^:pointerover:not(:disabled) LucideIcon#BackArrowIcon">
+        <Setter Property="RenderTransform" Value="translateX(0px)"/>
+      </Style>
+    </Style>
 
-            <ListBox
-              Classes="AssistantMessage"
-              IsVisible="{Binding ViewModel.Assistant.Configuration, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type ai:PresetAssistantConfiguration}}">
-              <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message1}}"/>
-              <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message2}}"/>
+    <!--  Centered Desktop Hero Anchor vs Asymmetric Split Studio  -->
+    <Style Selector="Grid#BodyGrid">
+      <Style Selector="^ &gt; Grid#LeftDecisionHost">
+        <Setter Property="Grid.Row" Value="0"/>
+        <Setter Property="Grid.Column" Value="0"/>
+        <Setter Property="Grid.ColumnSpan" Value="2"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="MaxWidth" Value="Infinity"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+      </Style>
+      <Style Selector="^ &gt; Grid#LeftDecisionHost Border#CompanionAnchorSpacer">
+        <Setter Property="Height" Value="68"/>
+        <Setter Property="IsVisible" Value="True"/>
+      </Style>
+      <Style Selector="^ &gt; Grid#LeftDecisionHost StackPanel#StepHeaderPanel">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="MaxWidth" Value="720"/>
+        <Setter Property="Margin" Value="0,16,0,26"/>
+        <Setter Property="Spacing" Value="14"/>
+      </Style>
+      <Style Selector="^ &gt; Grid#LeftDecisionHost TransitioningContentControl#DecisionView">
+        <Setter Property="MaxWidth" Value="720"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      </Style>
+      <Style Selector="^ &gt; Grid#LeftDecisionHost TextBlock#StepTitleText">
+        <Setter Property="TextAlignment" Value="Center"/>
+      </Style>
+      <Style Selector="^ &gt; Grid#LeftDecisionHost TextBlock#StepDescText">
+        <Setter Property="TextAlignment" Value="Center"/>
+        <Setter Property="MaxWidth" Value="620"/>
+      </Style>
+      <Style Selector="^ &gt; Grid#LeftDecisionHost ScrollViewer#DecisionScrollViewer">
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="Padding" Value="0,4,8,12"/>
+      </Style>
+      <Style Selector="^ &gt; StackPanel#FooterPanel">
+        <Setter Property="Grid.Row" Value="1"/>
+        <Setter Property="Grid.Column" Value="0"/>
+        <Setter Property="Grid.ColumnSpan" Value="2"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,10,0,48"/>
+      </Style>
+      <Style Selector="^ &gt; StackPanel#FooterPanel Grid#FooterActionsGrid">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+      </Style>
+
+      <Style Selector="^.split &gt; Grid#LeftDecisionHost">
+        <Setter Property="Grid.ColumnSpan" Value="1"/>
+        <Setter Property="Margin" Value="0,0,36,0"/>
+        <Setter Property="MaxWidth" Value="Infinity"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+      </Style>
+      <Style Selector="^.split &gt; Grid#LeftDecisionHost Border#CompanionAnchorSpacer">
+        <Setter Property="Height" Value="0"/>
+        <Setter Property="IsVisible" Value="False"/>
+      </Style>
+      <Style Selector="^.split &gt; Grid#LeftDecisionHost StackPanel#StepHeaderPanel">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="MaxWidth" Value="Infinity"/>
+        <Setter Property="Margin" Value="0,0,0,22"/>
+        <Setter Property="Spacing" Value="10"/>
+      </Style>
+      <Style Selector="^.split &gt; Grid#LeftDecisionHost TransitioningContentControl#DecisionView">
+        <Setter Property="MaxWidth" Value="Infinity"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      </Style>
+      <Style Selector="^.split &gt; Grid#LeftDecisionHost TextBlock#StepTitleText">
+        <Setter Property="TextAlignment" Value="Left"/>
+      </Style>
+      <Style Selector="^.split &gt; Grid#LeftDecisionHost TextBlock#StepDescText">
+        <Setter Property="TextAlignment" Value="Left"/>
+        <Setter Property="MaxWidth" Value="Infinity"/>
+      </Style>
+
+      <Style Selector="^.configureStep &gt; Grid#LeftDecisionHost">
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+      </Style>
+      <Style Selector="^.configureStep &gt; Grid#LeftDecisionHost StackPanel#StepHeaderPanel">
+        <Setter Property="Margin" Value="0,12,0,16"/>
+      </Style>
+      <Style Selector="^.configureStep &gt; Grid#LeftDecisionHost ScrollViewer#DecisionScrollViewer">
+        <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="Padding" Value="0,2,8,6"/>
+      </Style>
+    </Style>
+  </UserControl.Styles>
+
+  <Panel
+    Background="Transparent" ClipToBounds="False"
+    WindowDecorationProperties.ElementRole="TitleBar">
+    <v:WelcomeAmbientBackground
+      x:Name="WindowBackground"
+      AccentColor="{DynamicResource OobeAmbientAccentColor}"
+      BaseColor="{DynamicResource OobeAmbientBaseColor}"
+      CoolColor="{DynamicResource OobeAmbientCoolColor}"
+      IsHitTestVisible="False"
+      WarmColor="{DynamicResource OobeAmbientWarmColor}"/>
+
+    <Grid
+      Margin="36,24,36,28" ClipToBounds="False"
+      RowDefinitions="Auto,*" RowSpacing="10">
+
+      <!--  Top Header: Left-Aligned Progress Breadcrumbs + Quiet Skip Link  -->
+      <DockPanel
+        Grid.Row="0" LastChildFill="False">
+        <ItemsControl
+          DockPanel.Dock="Left" VerticalAlignment="Center"
+          ItemsSource="{Binding Progress}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
               <StackPanel
-                Orientation="Horizontal" Spacing="4">
-                <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message3}}"/>
-                <HyperlinkButton
-                  VerticalAlignment="Center"
-                  Content="{I18N {x:Static LocaleKey.WelcomeView_ModelProviderHyperlinkButton_Content}}"
-                  NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteDocsModelProviderUri}"
-                  TextElement.Foreground="{DynamicResource InfoColor}"/>
-              </StackPanel>
-              <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message4}}"/>
-              <TextBlock
-                IsVisible="{Binding ViewModel.IsConnectivityChecked}"
-                Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message5}}"/>
-            </ListBox>
+                VerticalAlignment="Center" Orientation="Horizontal"
+                Spacing="5"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:OobeProgressItem">
+              <Border
+                Classes="ProgressDash"
+                Classes.Current="{Binding IsCurrent}"
+                Classes.Reached="{Binding IsReached}"
+                ToolTip.Tip="{Binding TitleKey^}"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
 
-            <ListBox
-              Classes="AssistantMessage"
-              IsVisible="{Binding ViewModel.Assistant.Configuration, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type ai:AdvancedAssistantConfiguration}}">
-              <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Advanced_Message1}}"/>
-              <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Advanced_Message2}}"/>
-            </ListBox>
+        <Button
+          Classes="Ghost Compact" DockPanel.Dock="Right"
+          Padding="10,6" VerticalAlignment="Center"
+          Command="{Binding CloseCommand}"
+          Content="{I18N {x:Static LocaleKey.Oobe_SetUpLater}}"
+          CornerRadius="8" FontSize="12.5"
+          Foreground="{DynamicResource MutedColor}"/>
+      </DockPanel>
+
+      <!--  Workspace: Persistent Companion Orb + Adaptive Centered / Split Host + Bottom Footer  -->
+      <Grid
+        x:Name="BodyGrid" Grid.Row="1"
+        Classes.configureStep="{Binding #ViewRoot.IsConfigurePresented}"
+        Classes.split="{Binding #ViewRoot.IsSplitPresented}"
+        ClipToBounds="False" ColumnDefinitions="1.15*,0.85*"
+        RowDefinitions="*,Auto">
+
+        <!--  Evy -> Selected Choice Option Volumetric Funnel Halo  -->
+        <v:OobeSelectionStreamOverlay
+          x:Name="SelectionStreamOverlay" Grid.Row="0"
+          Grid.Column="0" Grid.ColumnSpan="2"
+          IsHitTestVisible="False"
+          PrimaryColor="{DynamicResource OobeBrandCyanColor}"
+          SecondaryColor="{DynamicResource OobeBrandPinkColor}"
+          SourceVisual="{Binding #CompanionEvy}"
+          TargetsRoot="{Binding #DecisionScrollViewer}"
+          TertiaryColor="{DynamicResource OobeBrandGoldColor}"
+          ZIndex="0"/>
+
+        <!--  Persistent Companion Orb + Animated Tricolor Halo Shader  -->
+        <motion:MotionPanel
+          x:Name="CompanionMotionPanel" Grid.Row="0"
+          Grid.Column="0" Grid.ColumnSpan="2"
+          VerticalAlignment="Stretch" ClipToBounds="False"
+          IsHitTestVisible="False" ZIndex="2">
+          <motion:MotionPanel.Motion>
+            <motion:StateMotion
+              Easing="CubicEaseInOut"
+              State="{Binding #ViewRoot.PresentedCompanionLayoutKey}"
+              Duration="0:0:0.42">
+              <motion:StateMotion.Edges>
+                <motion:MotionEdge
+                  From="hero" To="split"
+                  Duration="0:0:0"/>
+                <motion:MotionEdge
+                  From="choice" To="split"
+                  Duration="0:0:0"/>
+                <motion:MotionEdge
+                  From="split" To="hero"
+                  Duration="0:0:0"/>
+                <motion:MotionEdge
+                  From="split" To="choice"
+                  Duration="0:0:0"/>
+              </motion:StateMotion.Edges>
+
+              <motion:MotionState Key="hero">
+                <motion:MotionState.Template>
+                  <DataTemplate>
+                    <Panel>
+                      <motion:MotionSlot
+                        x:Name="EvyOrbSlot" Width="64"
+                        Height="64" HorizontalAlignment="Center"
+                        VerticalAlignment="Top" motion:Motion.Presence="1"
+                        RenderTransform="scale(1)" RenderTransformOrigin="50%,50%"/>
+                    </Panel>
+                  </DataTemplate>
+                </motion:MotionState.Template>
+              </motion:MotionState>
+
+              <motion:MotionState Key="choice">
+                <motion:MotionState.Template>
+                  <DataTemplate>
+                    <Panel>
+                      <motion:MotionSlot
+                        x:Name="EvyOrbSlot" Width="64"
+                        Height="64" HorizontalAlignment="Center"
+                        VerticalAlignment="Top" motion:Motion.Presence="1"
+                        RenderTransform="scale(1)" RenderTransformOrigin="50%,50%"/>
+                    </Panel>
+                  </DataTemplate>
+                </motion:MotionState.Template>
+              </motion:MotionState>
+
+              <motion:MotionState Key="split">
+                <motion:MotionState.Template>
+                  <DataTemplate>
+                    <Grid ColumnDefinitions="1.15*,0.85*">
+                      <motion:MotionSlot
+                        x:Name="EvyOrbSlot" Grid.Column="1"
+                        Width="64" Height="64"
+                        HorizontalAlignment="Center" VerticalAlignment="Top"
+                        motion:Motion.Presence="1" RenderTransform="scale(0.86)"
+                        RenderTransformOrigin="50%,50%"/>
+                    </Grid>
+                  </DataTemplate>
+                </motion:MotionState.Template>
+              </motion:MotionState>
+            </motion:StateMotion>
+          </motion:MotionPanel.Motion>
+
+          <Panel
+            x:Name="EvyOrbSlot" Width="64"
+            Height="64" ClipToBounds="False">
+            <Canvas
+              x:Name="CompanionYHost" Width="64"
+              Height="64" ClipToBounds="False">
+              <Canvas.RenderTransform>
+                <TranslateTransform/>
+              </Canvas.RenderTransform>
+
+              <v:OobeOrbHalo
+                x:Name="CompanionHalo" Canvas.Left="-64"
+                Canvas.Top="-64" Width="192"
+                Height="192" IsHitTestVisible="False"
+                IsSuccess="{Binding IsSuccessGlowActive}"
+                Opacity="0.95"
+                PrimaryColor="{DynamicResource OobeBrandCyanColor}"
+                SecondaryColor="{DynamicResource OobeBrandPinkColor}"
+                SuccessColor="{DynamicResource OobeAmbientSuccessGlowColor}"
+                TertiaryColor="{DynamicResource OobeBrandGoldColor}"/>
+
+              <v:Evy
+                x:Name="CompanionEvy" Width="64"
+                Height="64" IsIdleAnimationEnabled="True"
+                IsThinking="{Binding IsBusy}"/>
+            </Canvas>
           </Panel>
-        </DataTemplate>
+        </motion:MotionPanel>
 
-        <DataTemplate DataType="vm:WelcomeViewModelShortcutStep">
-          <ListBox Classes="AssistantMessage">
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_ShortcutStep_Message1}}"/>
-            <v:KeyboardShortcutInputBox
-              MinWidth="160" MinHeight="32"
-              Margin="-10,-6"
-              Background="{DynamicResource TransparentColor}"
-              BorderThickness="0"
-              Shortcut="{Binding ViewModel.Settings.Shortcut.ChatWindow.Main, Mode=TwoWay}"/>
+        <!--  Primary Content Host (Centered Hero/Choice in Fused Mode, Left Form in Split Mode)  -->
+        <Grid
+          x:Name="LeftDecisionHost" Grid.Row="0"
+          Grid.Column="0" ClipToBounds="False"
+          RowDefinitions="Auto,Auto,*" ZIndex="1">
+          <Grid.RenderTransform>
+            <TranslateTransform/>
+          </Grid.RenderTransform>
+          <Border
+            x:Name="CompanionAnchorSpacer" Grid.Row="0"
+            IsHitTestVisible="False"/>
+
+          <StackPanel
+            x:Name="StepHeaderPanel" Grid.Row="1">
             <TextBlock
-              Classes="Muted"
-              Text="{I18N {x:Static LocaleKey.WelcomeView_ShortcutStep_Message2}}"/>
-          </ListBox>
-        </DataTemplate>
-
-        <DataTemplate DataType="vm:WelcomeViewModelTelemetryStep">
-          <ListBox Classes="AssistantMessage">
-            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_TelemetryStep_Message1}}"/>
+              x:Name="StepTitleText"
+              FontSize="{DynamicResource FontSizeXl}"
+              Text="{Binding #ViewRoot.DisplayedStep?.TitleKey^, FallbackValue=''}"
+              TextWrapping="Wrap"/>
             <TextBlock
-              Classes="Muted"
-              Text="{I18N {x:Static LocaleKey.WelcomeView_TelemetryStep_Message2}}"/>
-          </ListBox>
-        </DataTemplate>
-      </TransitioningContentControl.DataTemplates>
-    </TransitioningContentControl>
+              x:Name="StepDescText" Classes="Muted"
+              FontSize="14"
+              IsVisible="{Binding #ViewRoot.DisplayedStep?.DescriptionKey, Converter={x:Static ObjectConverters.IsNotNull}}"
+              LineHeight="22"
+              Text="{Binding #ViewRoot.DisplayedStep?.DescriptionKey^, FallbackValue=''}"
+              TextWrapping="Wrap"/>
+          </StackPanel>
 
-    <TransitioningContentControl
-      Grid.Row="2" Grid.Column="0"
-      Grid.ColumnSpan="2" Margin="32,8,32,0"
-      Content="{Binding CurrentStep}"
-      IsTransitionReversed="{Binding IsPageTransitionReversed}">
-      <TransitioningContentControl.PageTransition>
-        <CompositePageTransition>
-          <PageSlide
-            Orientation="Horizontal" SlideInEasing="CubicEaseInOut"
-            SlideOutEasing="CubicEaseInOut" Duration="0:00:00.6"/>
-        </CompositePageTransition>
-      </TransitioningContentControl.PageTransition>
+          <ScrollViewer
+            x:Name="DecisionScrollViewer" Grid.Row="2"
+            Margin="0,0,-8,0" VerticalContentAlignment="Top"
+            ClipToBounds="True" HorizontalScrollBarVisibility="Disabled">
+            <Interaction.Behaviors>
+              <in:ResetScrollBehavior ContentToken="{Binding #ViewRoot.DisplayedStep}"/>
+            </Interaction.Behaviors>
+            <v:WelcomeDecisionView
+              x:Name="DecisionView"
+              Content="{Binding #ViewRoot.DisplayedStep}"
+              IsTransitionReversed="{Binding IsPageTransitionReversed}"/>
+          </ScrollViewer>
+        </Grid>
 
-      <TransitioningContentControl.DataTemplates>
-        <DataTemplate DataType="vm:WelcomeViewModelIntroStep">
-          <Button
-            Classes="Primary" VerticalAlignment="Bottom"
-            Command="{Binding MoveNextCommand}"
-            Content="{I18N {x:Static LocaleKey.WelcomeView_LetsStartButton_Content}}"/>
-        </DataTemplate>
+        <!--  Right Floating Studio (Shown Only on Split Steps)  -->
+        <ContentControl
+          x:Name="RightStudioHost" Grid.Row="0"
+          Grid.Column="1" Margin="0"
+          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+          Content="{Binding}"
+          IsVisible="{Binding #ViewRoot.IsSplitPresented}">
+          <ContentControl.DataTemplates>
+            <DataTemplate x:DataType="vm:WelcomeFlow">
+              <v:WelcomeStageView/>
+            </DataTemplate>
 
-        <DataTemplate DataType="vm:WelcomeViewModelSoftLoginStep">
+            <DataTemplate x:DataType="vm:OobeFlow">
+              <StackPanel
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Spacing="10">
+                <TextBlock
+                  Classes="h3" HorizontalAlignment="Center"
+                  Text="{Binding #ViewRoot.DisplayedStep?.TitleKey^, FallbackValue=''}"
+                  TextAlignment="Center" TextWrapping="Wrap"/>
+                <TextBlock
+                  Classes="Muted Caption" MaxWidth="340"
+                  HorizontalAlignment="Center"
+                  IsVisible="{Binding #ViewRoot.DisplayedStep?.DescriptionKey, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  Text="{Binding #ViewRoot.DisplayedStep?.DescriptionKey^, FallbackValue=''}"
+                  TextAlignment="Center" TextWrapping="Wrap"/>
+              </StackPanel>
+            </DataTemplate>
+          </ContentControl.DataTemplates>
+        </ContentControl>
+
+        <!--  Bottom-Anchored Kinetic Pill Actions  -->
+        <StackPanel
+          x:Name="FooterPanel" Grid.Row="1"
+          Grid.Column="0" Spacing="10">
+          <StackPanel
+            HorizontalAlignment="{Binding #StepHeaderPanel.HorizontalAlignment}"
+            IsVisible="{Binding ErrorKey, Converter={x:Static ObjectConverters.IsNotNull}}"
+            Orientation="Horizontal" Spacing="8">
+            <LucideIcon
+              VerticalAlignment="Center"
+              Foreground="{DynamicResource ErrorColor}"
+              Kind="CircleAlert" Size="15"/>
+            <TextBlock
+              Classes="Caption" VerticalAlignment="Center"
+              Foreground="{DynamicResource ErrorColor}"
+              Text="{Binding ErrorKey^, FallbackValue=''}"
+              TextWrapping="Wrap"/>
+          </StackPanel>
+
           <Grid
-            VerticalAlignment="Bottom" ColumnDefinitions="2*,*"
-            ColumnSpacing="8">
+            x:Name="FooterActionsGrid" ColumnDefinitions="Auto,Auto,*">
             <Button
-              Classes="Secondary" Grid.Column="0"
-              Command="{Binding ViewModel.MoveNextCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_SoftLoginStep_SkipButton_Content}}"/>
-            <Button
-              Classes="Primary" Grid.Column="1"
-              Command="{Binding ViewModel.MoveNextCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"
-              IsEnabled="{Binding ViewModel.CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-          </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="vm:WelcomeViewModelConfiguratorStep">
-          <Grid
-            VerticalAlignment="Bottom" ColumnDefinitions="*,4*"
-            ColumnSpacing="8">
-            <Button
-              Classes="Secondary" Grid.Column="0"
+              x:Name="BackActionButton" Classes="Secondary OobeBackPill"
+              Grid.Column="0" Margin="0,0,12,0"
               Command="{Binding MovePreviousCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_PreviousStepButton_Content}}"/>
-            <Button
-              Classes="Primary" Grid.Column="1"
-              Command="{Binding MoveNextCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"/>
-          </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="vm:WelcomeViewModelHardLoginStep">
-          <Grid
-            VerticalAlignment="Bottom" ColumnDefinitions="*,4*"
-            ColumnSpacing="8">
-            <Button
-              Classes="Secondary" Grid.Column="0"
-              Command="{Binding ViewModel.MovePreviousCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_PreviousStepButton_Content}}"/>
-            <Button
-              Classes="Primary" Grid.Column="1"
-              Command="{Binding ViewModel.MoveNextCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"
-              IsEnabled="{Binding ViewModel.CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-          </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="vm:WelcomeViewModelAssistantStep">
-          <Grid
-            VerticalAlignment="Bottom" ColumnDefinitions="*,4*"
-            ColumnSpacing="8" RowDefinitions="*,Auto"
-            RowSpacing="12">
-            <ScrollViewer
-              Grid.Row="0" Grid.Column="0"
-              Grid.ColumnSpan="2" HorizontalScrollBarVisibility="Disabled">
-              <v:SettingsItemsControl
-                IsEnabled="{Binding IsNotBusy}"
-                ItemsSource="{Binding ViewModel.Assistant.Configuration.SettingsItems}"/>
-            </ScrollViewer>
+              IsVisible="{Binding HasPreviousStep}">
+              <StackPanel
+                HorizontalAlignment="Center" Orientation="Horizontal">
+                <Panel
+                  x:Name="BackArrowHost" Height="15"
+                  VerticalAlignment="Center" ClipToBounds="True">
+                  <LucideIcon
+                    x:Name="BackArrowIcon" HorizontalAlignment="Left"
+                    VerticalAlignment="Center" Kind="ArrowLeft"
+                    Size="15"/>
+                </Panel>
+                <TextBlock
+                  VerticalAlignment="Center"
+                  Text="{I18N {x:Static LocaleKey.Oobe_Back}}"/>
+              </StackPanel>
+            </Button>
 
             <Button
-              Classes="Secondary" Grid.Row="1"
-              Grid.Column="0"
-              Command="{Binding MovePreviousCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_PreviousStepButton_Content}}"/>
+              x:Name="SecondaryActionButton" Classes="Secondary OobeSecondaryPill"
+              Grid.Column="1" Margin="0,0,12,0"
+              Command="{Binding SecondaryActionCommand}"
+              Content="{Binding CurrentStep?.SecondaryActionLabelKey^, FallbackValue=''}"
+              IsVisible="{Binding CurrentStep?.HasSecondaryAction, FallbackValue=False}"/>
+
             <Button
-              Classes="Primary" Grid.Row="1"
-              Grid.Column="1"
+              x:Name="PrimaryActionButton" Classes="Primary OobePrimaryPill"
+              Grid.Column="2"
               shadui:ButtonAssist.ShowProgress="{Binding IsBusy}"
-              Command="{Binding CheckConnectivityCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_CheckConnectivityButton_Content}}"
-              IsVisible="{Binding !ViewModel.IsConnectivityChecked}"/>
-            <Button
-              Classes="Primary" Grid.Row="1"
-              Grid.Column="1"
-              Command="{Binding ViewModel.MoveNextCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"
-              IsVisible="{Binding ViewModel.IsConnectivityChecked}"/>
+              Classes.busy="{Binding IsBusy}"
+              Command="{Binding ContinueCommand}">
+              <Grid ColumnDefinitions="*,Auto,Auto,*">
+                <TextBlock
+                  Grid.Column="1" VerticalAlignment="Center"
+                  FontWeight="SemiBold"
+                  Text="{Binding CurrentStep?.PrimaryLabelKey^, FallbackValue=''}"/>
+                <Panel
+                  x:Name="PrimaryArrowHost" Grid.Column="2"
+                  Height="16" VerticalAlignment="Center"
+                  ClipToBounds="True"
+                  IsVisible="{Binding !IsBusy}">
+                  <LucideIcon
+                    x:Name="PrimaryArrowIcon" HorizontalAlignment="Right"
+                    VerticalAlignment="Center" Kind="ArrowRight"
+                    Size="16"/>
+                </Panel>
+              </Grid>
+            </Button>
           </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="vm:WelcomeViewModelShortcutStep">
-          <Grid
-            VerticalAlignment="Bottom" ColumnDefinitions="*,4*"
-            ColumnSpacing="8" RowDefinitions="*,Auto"
-            RowSpacing="12">
-            <Button
-              Classes="Secondary" Grid.Row="1"
-              Grid.Column="0"
-              Command="{Binding ViewModel.MovePreviousCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_PreviousStepButton_Content}}"/>
-            <Button
-              Classes="Primary" Grid.Row="1"
-              Grid.Column="1"
-              Command="{Binding ViewModel.MoveNextCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"/>
-          </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="vm:WelcomeViewModelTelemetryStep">
-          <Grid
-            VerticalAlignment="Bottom" ColumnDefinitions="*,4*"
-            ColumnSpacing="8">
-            <Button
-              Classes="Secondary" Grid.Column="0"
-              Command="{Binding SendOnlyNecessaryTelemetryCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_SendOnlyNecessaryDataButton_Content}}"/>
-            <Button
-              Classes="Primary" Grid.Column="1"
-              Command="{Binding ViewModel.CloseCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_EnableTelemetryButton_Content}}"/>
-          </Grid>
-        </DataTemplate>
-      </TransitioningContentControl.DataTemplates>
-    </TransitioningContentControl>
-
-    <Button
-      Classes="Ghost" Grid.Row="0"
-      Grid.Column="1" Margin="4"
-      HorizontalAlignment="Right" VerticalAlignment="Top"
-      Command="{Binding CloseCommand}"
-      Content="{I18N {x:Static LocaleKey.WelcomeView_SkipButton_Content}}"
-      IsVisible="{Binding CanSkipAll}"/>
+        </StackPanel>
+      </Grid>
+    </Grid>
 
     <v:ConfettiEffect
-      x:Name="ConfettiEffect" Grid.Row="0"
-      Grid.RowSpan="3" Grid.Column="0"
-      Grid.ColumnSpan="2"/>
-  </Grid>
+      x:Name="ConfettiEffect" IsHitTestVisible="False"/>
+  </Panel>
 </UserControl>

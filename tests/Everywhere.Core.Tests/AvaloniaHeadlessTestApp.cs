@@ -1,6 +1,8 @@
+using System.Reflection;
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Themes.Simple;
+using Everywhere.Views;
 
 namespace Everywhere.Core.Tests;
 
@@ -12,9 +14,17 @@ public static class AvaloniaHeadlessTestApp
         var builder = AppBuilder.Configure<Application>()
             .AfterSetup(builder =>
             {
+                ResetAppearanceManager();
+                builder.Instance?.Resources.MergedDictionaries.Add(new AppearanceManager());
                 builder.Instance?.Styles.Add(new SimpleTheme());
             })
             .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = !shouldRender });
         return shouldRender ? builder.UseSkia() : builder;
+    }
+
+    private static void ResetAppearanceManager()
+    {
+        var field = typeof(AppearanceManager).GetField("_shared", BindingFlags.Static | BindingFlags.NonPublic);
+        field?.SetValue(null, null);
     }
 }

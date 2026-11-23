@@ -2,7 +2,6 @@
 using System.Diagnostics.Metrics;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
-using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -24,7 +23,7 @@ using ClassicDiagnostics.Avalonia;
 
 namespace Everywhere;
 
-public sealed partial class App(IServiceProvider serviceProvider) : Application, IRecipient<ApplicationMessage>
+public sealed partial class App(IServiceProvider serviceProvider) : Application, IRecipient<ApplicationMessage>, IOobeHost
 {
     public static string Version => RuntimeConstants.Version.ToString();
 
@@ -47,6 +46,7 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
     private readonly IKeyValueStorage _keyValueStorage = serviceProvider.GetRequiredService<IKeyValueStorage>();
     private readonly INativeHelper _nativeHelper = serviceProvider.GetRequiredService<INativeHelper>();
     private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
+    private readonly OobeCoordinator? _oobeCoordinator = serviceProvider.GetService<OobeCoordinator>();
 
     // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
     // arrive while the first error dialog is still open; without this guard every nested exception
@@ -75,27 +75,15 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
         this.AttachDevTools();
 #endif
 
-        Window.WindowClosedEvent.AddClassHandler<TransientWindow>(HandleTransientWindowClosed);
-
         // After this, ThemeChanged event from the system can be received
         _themeManager = new ThemeManager(this);
 
         // Register to receive application commands
         // e.g. ShowMainWindow
         WeakReferenceMessenger.Default.Register(this);
+        _oobeCoordinator?.AttachHost(this);
 
         InitializeMarkdown();
-    }
-
-    private void HandleTransientWindowClosed(TransientWindow sender, RoutedEventArgs args)
-    {
-        sender.Content = null;
-
-        if (sender.Content is { } content)
-        {
-            _transientWindows.Remove(content.GetType());
-            content.To<ISetLogicalParent>().SetParent(null);
-        }
     }
 
     private void InitializeErrorHandler()
@@ -225,10 +213,11 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
             previousVersion = new SemanticVersion(0);
         }
 
-        // If the --ui command line argument is present, show the main window.
-        if (Environment.GetCommandLineArgs().Contains("--ui") || previousVersion < currentVersion)
+        _oobeCoordinator?.AttachHost(this);
+        if (_oobeCoordinator?.TryShowPendingStartup() != true &&
+            (Environment.GetCommandLineArgs().Contains("--ui") || previousVersion < currentVersion))
         {
-            ShowWindow<MainView>();
+            ShowMainWindow();
         }
 
         persistentState.PreviousLaunchVersion = currentVersion.ToString();
@@ -236,47 +225,48 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
 
     private void ShowWindow<TContent>() where TContent : Control
     {
+        if (typeof(TContent) == typeof(MainView))
+        {
+            _oobeCoordinator?.AttachHost(this);
+            if (_oobeCoordinator?.TryShowPendingStartup() == true) return;
+        }
+
         if (_isShowWindowBusy) return;
+
         try
         {
             _isShowWindowBusy = true;
 
             var windowType = typeof(TContent);
-            _transientWindows.TryGetValue(windowType, out var window);
-
-            if (window is { IsLoaded: true })
+            if (_transientWindows.TryGetValue(windowType, out var window))
             {
-                if (window.WindowState is WindowState.Minimized)
+                if (window is { Content: not null })
                 {
-                    window.WindowState = WindowState.Normal;
+                    FocusWindow(window);
+                    return;
                 }
 
-                var topMost = window.Topmost;
-                window.Topmost = true;
-                window.Topmost = topMost;
-
-                window.Activate();
+                window.Close();
             }
-            else
+
+            var content = serviceProvider.GetRequiredService<TContent>();
+            content.To<ISetLogicalParent>().SetParent(null);
+            var createdWindow = new TransientWindow
             {
-                if (window is not null)
+                Content = content
+            };
+            _transientWindows[windowType] = createdWindow;
+            createdWindow.Closed += (_, _) =>
+            {
+                if (_transientWindows.TryGetValue(windowType, out var current) && ReferenceEquals(current, createdWindow))
                 {
-                    window.Content = null;
-                    window.Close();
+                    _transientWindows.Remove(windowType);
                 }
+            };
 
-                var content = serviceProvider.GetRequiredService<TContent>();
-                content.To<ISetLogicalParent>().SetParent(null);
-                window = new TransientWindow
-                {
-                    Content = content
-                };
-                _transientWindows[windowType] = window;
-
-                WindowPlacementAssist.Attach(window, _keyValueStorage, typeof(TContent).FullName ?? typeof(TContent).Name);
-                _windowHelper.InitializeWindow(window);
-                window.Show();
-            }
+            WindowPlacementAssist.Attach(createdWindow, _keyValueStorage, windowType.FullName ?? windowType.Name);
+            _windowHelper.InitializeWindow(createdWindow);
+            createdWindow.Show();
         }
         finally
         {
@@ -287,6 +277,29 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
     public void ShowMainWindow() => ShowWindow<MainView>();
 
     public void ShowDebugWindow() => ShowWindow<VisualTreeDebugger>();
+
+    bool IOobeHost.IsShuttingDown => _lifetime.IsCancellationRequested;
+
+    bool IOobeHost.TryHideMainWindow()
+    {
+        if (!_transientWindows.TryGetValue(typeof(MainView), out var mainWindow) || !mainWindow.IsVisible)
+        {
+            return false;
+        }
+
+        mainWindow.Hide();
+        return true;
+    }
+
+    private static void FocusWindow(Window window)
+    {
+        if (!window.IsVisible) window.Show();
+        if (window.WindowState == WindowState.Minimized) window.WindowState = WindowState.Normal;
+        var isTopmost = window.Topmost;
+        window.Topmost = true;
+        window.Topmost = isTopmost;
+        window.Activate();
+    }
 
     void IRecipient<ApplicationMessage>.Receive(ApplicationMessage message)
     {
@@ -304,7 +317,7 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
                     var mainView = serviceProvider.GetRequiredService<MainView>();
                     TerminalUpdateGuidance.ShowAsync(TopLevel.GetTopLevel(mainView)).Detach();
                 });
-                break;
+                return;
             }
             case ShowWindowMessage { Name: ShowWindowMessage.MainWindow } showWindowMessage:
             {
@@ -313,7 +326,10 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
                     if (_lifetime.IsCancellationRequested) return;
 
                     ShowWindow<MainView>();
-                    if (showWindowMessage.Route is not null) WeakReferenceMessenger.Default.Send(new MainViewNavigateMessage(showWindowMessage.Route));
+                    if (_oobeCoordinator?.IsActive != true && showWindowMessage.Route is not null)
+                    {
+                        WeakReferenceMessenger.Default.Send(new MainViewNavigateMessage(showWindowMessage.Route));
+                    }
                 });
                 break;
             }

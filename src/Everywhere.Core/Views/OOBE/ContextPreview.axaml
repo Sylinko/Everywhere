@@ -1,0 +1,123 @@
+<UserControl
+  x:Class="Everywhere.Views.ContextPreview" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DesignHeight="132"
+  d:DesignWidth="230" ClipToBounds="True"
+  mc:Ignorable="d">
+  <Panel Background="Transparent">
+    <!--  Localized cool-blue illumination emitted from the selection and toolbar  -->
+    <Ellipse
+      Width="164" Height="116"
+      Margin="18,14,0,0" HorizontalAlignment="Left"
+      VerticalAlignment="Top"
+      Fill="{DynamicResource OobeIntroBlueGlowBrush}"
+      IsHitTestVisible="False"/>
+
+    <!--  Miniature document context surface  -->
+    <Border
+      Margin="16,26,16,0" Padding="14,13,14,10"
+      Background="{DynamicResource OobeStageWellBrush}"
+      BorderBrush="{DynamicResource OobeHairlineBrush}"
+      BorderThickness="1,1,1,0" CornerRadius="11,11,0,0">
+      <StackPanel Spacing="9">
+        <!--  Quiet mini window dots  -->
+        <StackPanel
+          Orientation="Horizontal" Spacing="4">
+          <Ellipse
+            Width="4.5" Height="4.5"
+            Fill="{DynamicResource OobeIntroMiniLineSoftBrush}"/>
+          <Ellipse
+            Width="4.5" Height="4.5"
+            Fill="{DynamicResource OobeIntroMiniLineSoftBrush}"/>
+          <Ellipse
+            Width="4.5" Height="4.5"
+            Fill="{DynamicResource OobeIntroMiniLineSoftBrush}"/>
+        </StackPanel>
+
+        <!--  Skeleton text lines with animated blue selection highlight on line 2  -->
+        <StackPanel Spacing="8">
+          <Border
+            Width="148" Height="5.5"
+            HorizontalAlignment="Left"
+            Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+            CornerRadius="3"/>
+
+          <Panel
+            Width="156" Height="14"
+            HorizontalAlignment="Left">
+            <Border
+              x:Name="SelectionHighlight" Width="108"
+              Height="14" HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Background="{DynamicResource OobeCyanSelectedTintBrush}"
+              BorderBrush="{DynamicResource OobeBrandCyanBrush}"
+              BorderThickness="0,0,1.5,0" CornerRadius="3"/>
+            <Border
+              Width="136" Height="5.5"
+              HorizontalAlignment="Left" VerticalAlignment="Center"
+              Background="{DynamicResource OobeIntroMiniLineBrush}"
+              CornerRadius="3"/>
+          </Panel>
+
+          <Border
+            Width="116" Height="5.5"
+            HorizontalAlignment="Left"
+            Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+            CornerRadius="3"/>
+          <Border
+            Width="82" Height="5.5"
+            HorizontalAlignment="Left"
+            Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+            CornerRadius="3"/>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <!--  Floating mini action toolbar appearing next to the selection  -->
+    <Panel
+      x:Name="FloatingToolbarHost" Margin="0,24,18,0"
+      HorizontalAlignment="Right" VerticalAlignment="Top">
+      <Panel.RenderTransform>
+        <TranslateTransform Y="0"/>
+      </Panel.RenderTransform>
+      <Border
+        x:Name="FloatingToolbar" Height="24"
+        Padding="8,0"
+        Background="{DynamicResource OobeNodeSurfaceBrush}"
+        BorderBrush="{DynamicResource OobeBrandCyanBrush}"
+        BorderThickness="1" CornerRadius="12"
+        Opacity="1" RenderTransformOrigin="50%,80%">
+        <Border.RenderTransform>
+          <ScaleTransform ScaleX="1" ScaleY="1"/>
+        </Border.RenderTransform>
+        <StackPanel
+          VerticalAlignment="Center" Orientation="Horizontal"
+          Spacing="6">
+          <Ellipse
+            Width="5" Height="5"
+            VerticalAlignment="Center"
+            Fill="{DynamicResource OobeBrandCyanBrush}"/>
+          <Border
+            Width="15" Height="4"
+            VerticalAlignment="Center"
+            Background="{DynamicResource OobeIntroMiniLineBrush}"
+            CornerRadius="2"/>
+          <Border
+            Width="1" Height="10"
+            VerticalAlignment="Center"
+            Background="{DynamicResource OobeHairlineBrush}"/>
+          <Border
+            Width="14" Height="4"
+            VerticalAlignment="Center"
+            Background="{DynamicResource OobeIntroMiniLineBrush}"
+            CornerRadius="2"/>
+          <Border
+            Width="12" Height="4"
+            VerticalAlignment="Center"
+            Background="{DynamicResource OobeIntroMiniLineSoftBrush}"
+            CornerRadius="2"/>
+        </StackPanel>
+      </Border>
+    </Panel>
+  </Panel>
+</UserControl>

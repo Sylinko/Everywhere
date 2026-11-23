@@ -1,0 +1,963 @@
+<TransitioningContentControl
+  x:Class="Everywhere.Views.WelcomeDecisionView" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia" xmlns:motion="using:Motion.Avalonia"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" d:DesignHeight="420"
+  d:DesignWidth="640" HorizontalContentAlignment="Stretch"
+  VerticalContentAlignment="Top" ClipToBounds="False"
+  mc:Ignorable="d">
+  <TransitioningContentControl.PageTransition>
+    <in:OobeSlideFadeTransition
+      MaxSlideDistance="96" SlideWidthRatio="0.14"
+      Duration="0:0:0.24"/>
+  </TransitioningContentControl.PageTransition>
+
+  <TransitioningContentControl.Resources>
+    <DataTemplate
+      x:Key="OwnProviderAvatarItemTemplate" x:DataType="aai:ModelProviderTemplate">
+      <Border
+        Width="30" Height="30"
+        Margin="0,0,-8,0" Padding="6"
+        Background="{DynamicResource OobeAvatarSurfaceBrush}"
+        BorderThickness="0" CornerRadius="15"
+        ToolTip.Tip="{Binding DisplayNameKey^}">
+        <Border.Clip>
+          <CombinedGeometry GeometryCombineMode="Exclude">
+            <CombinedGeometry.Geometry1>
+              <EllipseGeometry
+                Center="15,15" RadiusX="15"
+                RadiusY="15"/>
+            </CombinedGeometry.Geometry1>
+            <CombinedGeometry.Geometry2>
+              <EllipseGeometry
+                Center="37,15" RadiusX="17.2"
+                RadiusY="17.2"/>
+            </CombinedGeometry.Geometry2>
+          </CombinedGeometry>
+        </Border.Clip>
+        <shadui:ThemeToggleBlock
+          HorizontalAlignment="Center" VerticalAlignment="Center">
+          <shadui:ThemeToggleBlock.DarkContent>
+            <ControlTemplate>
+              <Image
+                Width="17" Height="17"
+                md:AsyncImageLoader.SizeToContent="Manual"
+                md:AsyncImageLoader.Source="{Binding DarkIconUrl}"
+                mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }"/>
+            </ControlTemplate>
+          </shadui:ThemeToggleBlock.DarkContent>
+          <shadui:ThemeToggleBlock.LightContent>
+            <ControlTemplate>
+              <Image
+                Width="17" Height="17"
+                md:AsyncImageLoader.SizeToContent="Manual"
+                md:AsyncImageLoader.Source="{Binding LightIconUrl}"
+                mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }"/>
+            </ControlTemplate>
+          </shadui:ThemeToggleBlock.LightContent>
+        </shadui:ThemeToggleBlock>
+      </Border>
+    </DataTemplate>
+  </TransitioningContentControl.Resources>
+
+  <TransitioningContentControl.Styles>
+    <Style Selector="Button.DecisionTile">
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="VerticalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+      <Setter Property="CornerRadius" Value="16"/>
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <shadui:SmoothBorder
+            x:Name="PART_TileSurface"
+            Padding="{TemplateBinding Padding}"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            ClipToBounds="True"
+            CornerRadius="{TemplateBinding CornerRadius}"
+            Cursor="Hand" RenderTransform="scale(1, 1)"
+            RenderTransformOrigin="50%,50%"
+            TextElement.Foreground="{TemplateBinding Foreground}">
+            <shadui:SmoothBorder.Transitions>
+              <Transitions>
+                <TransformOperationsTransition
+                  Easing="CubicEaseOut" Property="RenderTransform"
+                  Duration="0:0:0.10"/>
+              </Transitions>
+            </shadui:SmoothBorder.Transitions>
+            <ContentPresenter
+              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+              Content="{TemplateBinding Content}"
+              ContentTemplate="{TemplateBinding ContentTemplate}"/>
+          </shadui:SmoothBorder>
+        </ControlTemplate>
+      </Setter>
+      <Setter Property="Transitions">
+        <Transitions>
+          <BrushTransition
+            Easing="CubicEaseOut" Property="Background"
+            Duration="0:0:0.16"/>
+          <BrushTransition
+            Easing="CubicEaseOut" Property="BorderBrush"
+            Duration="0:0:0.16"/>
+        </Transitions>
+      </Setter>
+
+      <Style Selector="^:pressed /template/ shadui|SmoothBorder#PART_TileSurface">
+        <Setter Property="RenderTransform" Value="scale(0.985, 0.985)"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.DecisionTile">
+      <Setter Property="Padding" Value="22,20"/>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource PrimaryColor10}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor75}"/>
+      </Style>
+
+      <Style Selector="^.Selected">
+        <Setter Property="Background" Value="{DynamicResource PrimaryColor10}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+      </Style>
+
+      <Style Selector="^.Selected:pointerover">
+        <Setter Property="Background" Value="{DynamicResource PrimaryColor25}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+      </Style>
+
+      <Style Selector="^.OwnTile">
+        <Style Selector="^:pointerover">
+          <Setter Property="Background" Value="{DynamicResource OobeOwnHoverTintBrush}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource OobeOwnAccentBrush}"/>
+        </Style>
+
+        <Style Selector="^.Selected">
+          <Setter Property="Background" Value="{DynamicResource OobeOwnSelectedTintBrush}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource OobeOwnAccentBrush}"/>
+        </Style>
+
+        <Style Selector="^.Selected:pointerover">
+          <Setter Property="Background" Value="{DynamicResource OobeOwnSelectedHoverTintBrush}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource OobeOwnAccentBrush}"/>
+        </Style>
+      </Style>
+    </Style>
+
+    <Style Selector="Border.IntroFeatureTile">
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BoxShadow" Value="0 0 0 0 #00000000"/>
+      <Setter Property="ClipToBounds" Value="True"/>
+      <Setter Property="CornerRadius" Value="16"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="WindowDecorationProperties.ElementRole" Value="User"/>
+      <Setter Property="RenderTransform" Value="translateY(0px) scale(1)"/>
+      <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <BrushTransition
+            Easing="CubicEaseOut" Property="Background"
+            Duration="0:0:0.20"/>
+          <BrushTransition
+            Easing="CubicEaseOut" Property="BorderBrush"
+            Duration="0:0:0.20"/>
+          <BoxShadowsTransition
+            Easing="CubicEaseOut" Property="BoxShadow"
+            Duration="0:0:0.22"/>
+          <TransformOperationsTransition
+            Easing="CubicEaseOut" Property="RenderTransform"
+            Duration="0:0:0.22"/>
+        </Transitions>
+      </Setter>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
+        <Setter Property="BoxShadow" Value="0 10 26 0 #26000000"/>
+        <Setter Property="RenderTransform" Value="translateY(-4px) scale(1.016)"/>
+      </Style>
+
+      <Style Selector="^.ContextTile:pointerover">
+        <Setter Property="BorderBrush" Value="#6638BDF8"/>
+      </Style>
+
+      <Style Selector="^.AssistantTile:pointerover">
+        <Setter Property="BorderBrush" Value="#66F056B8"/>
+      </Style>
+
+      <Style Selector="^.ModelTile:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeIntroVioletBorderBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Border.IntroFeatureStage">
+      <Setter Property="Height" Value="128"/>
+      <Setter Property="ClipToBounds" Value="True"/>
+      <Setter Property="Opacity" Value="0.92"/>
+      <Setter Property="RenderTransform" Value="scale(1)"/>
+      <Setter Property="RenderTransformOrigin" Value="50%,35%"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition
+            Easing="CubicEaseOut" Property="Opacity"
+            Duration="0:0:0.22"/>
+          <TransformOperationsTransition
+            Easing="CubicEaseOut" Property="RenderTransform"
+            Duration="0:0:0.24"/>
+        </Transitions>
+      </Setter>
+      <Setter Property="OpacityMask">
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+          <GradientStop Offset="0" Color="#FFFFFFFF"/>
+          <GradientStop Offset="0.68" Color="#FFFFFFFF"/>
+          <GradientStop Offset="1" Color="#00FFFFFF"/>
+        </LinearGradientBrush>
+      </Setter>
+    </Style>
+
+    <Style Selector="Border.IntroFeatureTile:pointerover Border.IntroFeatureStage">
+      <Setter Property="Opacity" Value="1"/>
+      <Setter Property="RenderTransform" Value="translateY(-2px) scale(1.028)"/>
+    </Style>
+
+    <Style Selector="ItemsControl.ProviderAvatarStrip">
+      <Setter Property="ClipToBounds" Value="False"/>
+      <Setter Property="ItemTemplate" Value="{StaticResource OwnProviderAvatarItemTemplate}"/>
+      <Setter Property="ItemsPanel">
+        <ItemsPanelTemplate>
+          <StackPanel
+            ClipToBounds="False" Orientation="Horizontal"/>
+        </ItemsPanelTemplate>
+      </Setter>
+    </Style>
+
+    <Style Selector="ItemsControl.ProviderAvatarStrip ItemsPresenter">
+      <Setter Property="ClipToBounds" Value="False"/>
+    </Style>
+
+    <Style Selector="ItemsControl.ProviderAvatarStrip ContentPresenter">
+      <Setter Property="ClipToBounds" Value="False"/>
+    </Style>
+
+    <Style Selector="Border.ProviderAvatarCounter">
+      <Setter Property="Width" Value="30"/>
+      <Setter Property="Height" Value="30"/>
+      <Setter Property="Background" Value="{DynamicResource OobeAvatarCounterBrush}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="15"/>
+    </Style>
+
+    <Style Selector="StackPanel.IntroFeatureBody">
+      <Setter Property="Margin" Value="20,4,20,18"/>
+      <Setter Property="VerticalAlignment" Value="Bottom"/>
+      <Setter Property="Spacing" Value="6"/>
+    </Style>
+
+    <Style Selector="Border.NeoCard">
+      <Setter Property="Padding" Value="20,18"/>
+      <Setter Property="CornerRadius" Value="16"/>
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style Selector="Border.PipelineNode">
+      <Setter Property="Padding" Value="10,9"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <!--  Stage 3-8 Redesigned Surface Grammar (Inspired by Pages 1-2, Isolated from Pages 1-2 Classes)  -->
+    <Style Selector="Border.OobeGlassCard">
+      <Setter Property="Padding" Value="24,22"/>
+      <Setter Property="CornerRadius" Value="18"/>
+      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style Selector="Border.OobeIconBadge">
+      <Setter Property="CornerRadius" Value="11"/>
+      <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+
+      <Style Selector="^.Cyan">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandCyanTintBrush}"/>
+      </Style>
+
+      <Style Selector="^.Pink">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandPinkTintBrush}"/>
+      </Style>
+
+      <Style Selector="^.Gold">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandGoldTintBrush}"/>
+      </Style>
+
+      <Style Selector="^.Success">
+        <Setter Property="Background" Value="{DynamicResource OobeSuccessTintBrush}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Border.OobeStatusPill">
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="11,5"/>
+      <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+
+      <Style Selector="^.Cyan">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandCyanTintBrush}"/>
+      </Style>
+
+      <Style Selector="^.Pink">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandPinkTintBrush}"/>
+      </Style>
+
+      <Style Selector="^.Gold">
+        <Setter Property="Background" Value="{DynamicResource OobeBrandGoldTintBrush}"/>
+      </Style>
+
+      <Style Selector="^.Success">
+        <Setter Property="Background" Value="{DynamicResource OobeSuccessTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeSuccessBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.OobeCapsuleAction">
+      <Setter Property="MinHeight" Value="44"/>
+      <Setter Property="Padding" Value="24,0"/>
+      <Setter Property="CornerRadius" Value="22"/>
+      <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource PrimaryColor75}"/>
+
+      <Style Selector="^.Secondary">
+        <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource OobeSurfaceBrush}"/>
+      </Style>
+
+      <Style Selector="^ Panel#ActionArrowHost">
+        <Setter Property="Width" Value="0"/>
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Transitions">
+          <Transitions>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="Width"
+              Duration="0:0:0.18"/>
+            <DoubleTransition
+              Easing="CubicEaseOut" Property="Opacity"
+              Duration="0:0:0.16"/>
+            <ThicknessTransition
+              Easing="CubicEaseOut" Property="Margin"
+              Duration="0:0:0.18"/>
+          </Transitions>
+        </Setter>
+      </Style>
+
+      <Style Selector="^ LucideIcon#ActionArrowIcon">
+        <Setter Property="RenderTransform" Value="translateX(-6px)"/>
+        <Setter Property="Transitions">
+          <Transitions>
+            <TransformOperationsTransition
+              Easing="CubicEaseOut" Property="RenderTransform"
+              Duration="0:0:0.18"/>
+          </Transitions>
+        </Setter>
+      </Style>
+
+      <Style Selector="^:pointerover:not(.busy):not(:disabled) Panel#ActionArrowHost">
+        <Setter Property="Width" Value="15"/>
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="Margin" Value="8,0,0,0"/>
+      </Style>
+
+      <Style Selector="^:pointerover:not(.busy):not(:disabled) LucideIcon#ActionArrowIcon">
+        <Setter Property="RenderTransform" Value="translateX(0px)"/>
+      </Style>
+    </Style>
+  </TransitioningContentControl.Styles>
+
+  <TransitioningContentControl.DataTemplates>
+    <!--  Stage 0: Intro (Interactive Miniature UI Previews with Unified Bottom Fade)  -->
+    <DataTemplate x:DataType="vm:WelcomeIntroStep">
+      <Grid
+        MinHeight="226" Margin="0,4,0,2"
+        ColumnDefinitions="*,*,*" ColumnSpacing="14">
+        <Border
+          Classes="IntroFeatureTile ContextTile" Grid.Column="0"
+          PointerEntered="HandleIntroTilePointerEntered">
+          <Grid RowDefinitions="Auto,*">
+            <Border
+              Classes="IntroFeatureStage" Grid.Row="0">
+              <v:ContextPreview/>
+            </Border>
+            <StackPanel
+              Classes="IntroFeatureBody" Grid.Row="1">
+              <TextBlock
+                FontSize="14.5" FontWeight="SemiBold"
+                Text="{I18N {x:Static LocaleKey.Oobe_Intro_FeatureVisualTitle}}"
+                TextWrapping="Wrap"/>
+              <TextBlock
+                Classes="Muted Caption" LineHeight="19.5"
+                Text="{I18N {x:Static LocaleKey.Oobe_Intro_FeatureVisualDesc}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border
+          Classes="IntroFeatureTile AssistantTile" Grid.Column="1"
+          PointerEntered="HandleIntroTilePointerEntered">
+          <Grid RowDefinitions="Auto,*">
+            <Border
+              Classes="IntroFeatureStage" Grid.Row="0">
+              <v:AssistantPreview/>
+            </Border>
+            <StackPanel
+              Classes="IntroFeatureBody" Grid.Row="1">
+              <TextBlock
+                FontSize="14.5" FontWeight="SemiBold"
+                Text="{I18N {x:Static LocaleKey.Oobe_Intro_FeatureInstantTitle}}"
+                TextWrapping="Wrap"/>
+              <TextBlock
+                Classes="Muted Caption" LineHeight="19.5"
+                Text="{I18N {x:Static LocaleKey.Oobe_Intro_FeatureInstantDesc}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border
+          Classes="IntroFeatureTile ModelTile" Grid.Column="2"
+          PointerEntered="HandleIntroTilePointerEntered">
+          <Grid RowDefinitions="Auto,*">
+            <Border
+              Classes="IntroFeatureStage" Grid.Row="0">
+              <v:ModelPreview/>
+            </Border>
+            <StackPanel
+              Classes="IntroFeatureBody" Grid.Row="1">
+              <TextBlock
+                FontSize="14.5" FontWeight="SemiBold"
+                Text="{I18N {x:Static LocaleKey.Oobe_Intro_FeatureChoiceTitle}}"
+                TextWrapping="Wrap"/>
+              <TextBlock
+                Classes="Muted Caption" LineHeight="19.5"
+                Text="{I18N {x:Static LocaleKey.Oobe_Intro_FeatureChoiceDesc}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+    </DataTemplate>
+
+    <!--  Stage 1: Model Source Selection (Dual-Accent Monoliths + Stacked Provider Avatars)  -->
+    <DataTemplate x:DataType="vm:WelcomeSourceStep">
+      <Grid
+        MinHeight="164" Margin="0,6,0,2"
+        ColumnDefinitions="*,*" ColumnSpacing="18">
+        <Button
+          x:Name="SourceCloudCard" Classes="DecisionTile CloudTile"
+          Grid.Column="0" MinHeight="156"
+          Classes.Selected="{Binding Flow.IsCloudSource}"
+          Command="{Binding Flow.SelectSourceCommand}"
+          CommandParameter="{x:Static vm:WelcomeModelSource.Cloud}"
+          IsEnabled="{Binding Flow.IsNotBusy}">
+          <Grid
+            RowDefinitions="Auto,*" RowSpacing="18">
+            <LucideIcon
+              Grid.Row="0" HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Foreground="{DynamicResource PrimaryColor}"
+              Kind="Cloud" Size="20"/>
+            <StackPanel
+              Grid.Row="1" VerticalAlignment="Bottom"
+              Spacing="6">
+              <TextBlock
+                FontSize="15.5" FontWeight="SemiBold"
+                Text="{I18N {x:Static LocaleKey.Oobe_Source_Cloud}}"/>
+              <TextBlock
+                Classes="Muted Caption" LineHeight="18.5"
+                Text="{I18N {x:Static LocaleKey.Oobe_Source_CloudDescription}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+          </Grid>
+        </Button>
+
+        <Button
+          x:Name="SourceOwnCard" Classes="DecisionTile OwnTile"
+          Grid.Column="1" MinHeight="156"
+          Classes.Selected="{Binding Flow.IsOwnSource}"
+          Command="{Binding Flow.SelectSourceCommand}"
+          CommandParameter="{x:Static vm:WelcomeModelSource.Own}"
+          IsEnabled="{Binding Flow.IsNotBusy}">
+          <Grid
+            RowDefinitions="Auto,*" RowSpacing="18">
+            <LucideIcon
+              Grid.Row="0" HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Foreground="{DynamicResource OobeOwnAccentBrush}"
+              Kind="Cpu" Size="20"/>
+            <StackPanel
+              Grid.Row="1" VerticalAlignment="Bottom"
+              Spacing="11">
+              <TextBlock
+                FontSize="15.5" FontWeight="SemiBold"
+                Text="{I18N {x:Static LocaleKey.Oobe_Source_Own}}"/>
+
+              <StackPanel
+                VerticalAlignment="Center" ClipToBounds="False"
+                Orientation="Horizontal">
+                <ItemsControl
+                  x:Name="OwnProviderAvatarItems" Classes="ProviderAvatarStrip"
+                  ItemsSource="{x:Static vm:WelcomeFlow.FeaturedOwnProviders}"/>
+
+                <Border
+                  x:Name="OwnProviderOverflowBadge" Classes="ProviderAvatarCounter">
+                  <TextBlock
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    FontSize="11" FontWeight="SemiBold"
+                    Foreground="{DynamicResource ForegroundLeadColor}"
+                    Text="{Binding Source=vm:WelcomeFlow.RemainingOwnProviderCount, StringFormat='+{0}'}"/>
+                </Border>
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+        </Button>
+      </Grid>
+    </DataTemplate>
+
+    <!--  Stage 2A: Everywhere Cloud Sign-in (Minimalist Ambient Orbital Constellation)  -->
+    <DataTemplate x:DataType="vm:WelcomeLoginStep">
+      <StackPanel
+        MaxWidth="520" HorizontalAlignment="Stretch"
+        Spacing="20">
+        <!--  Orbital Auth Constellation Floating Directly on Background  -->
+        <StackPanel
+          HorizontalAlignment="Center" Orientation="Horizontal"
+          Spacing="16">
+          <!--  Device Origin Node  -->
+          <Border
+            Width="42" Height="42"
+            VerticalAlignment="Center"
+            Background="{DynamicResource OobeSubtleSurfaceBrush}"
+            BorderBrush="{DynamicResource OobeSubtleBorderBrush}"
+            BorderThickness="1" CornerRadius="21">
+            <LucideIcon
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Foreground="{DynamicResource PrimaryColor}"
+              Kind="Laptop" Size="17"/>
+          </Border>
+
+          <!--  Left Dot Stream Bridge  -->
+          <StackPanel
+            VerticalAlignment="Center"
+            IsVisible="{Binding !Flow.IsSignedIn}"
+            Orientation="Horizontal" Spacing="7">
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Opacity="0.24"/>
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Opacity="0.5"/>
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Opacity="0.85"/>
+          </StackPanel>
+          <StackPanel
+            VerticalAlignment="Center"
+            IsVisible="{Binding Flow.IsSignedIn}"
+            Orientation="Horizontal" Spacing="7">
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource SuccessColor}"
+              Opacity="0.32"/>
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource SuccessColor}"
+              Opacity="0.62"/>
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource SuccessColor}"
+              Opacity="0.94"/>
+          </StackPanel>
+
+          <!--  Center Breathing Cloud Beacon  -->
+          <Panel
+            Width="104" Height="104"
+            VerticalAlignment="Center" ClipToBounds="False">
+            <motion:MotionPanel
+              x:Name="LoginOrbPulsePanel" Width="104"
+              Height="104" ClipToBounds="False"
+              IsHitTestVisible="False"
+              IsVisible="{Binding !Flow.IsSignedIn}">
+              <Interaction.Behaviors>
+                <in:OobeTimelineBehavior IsPlaying="{Binding !Flow.IsSignedIn}"/>
+              </Interaction.Behaviors>
+              <motion:MotionPanel.Motion>
+                <motion:TimelineMotion Loop="True">
+                  <motion:TimelineMotionKeyFrame KeyTime="0:0:0">
+                    <!--  ReSharper disable once Xaml.RedundantResource  -->
+                    <DataTemplate>
+                      <Panel>
+                        <motion:MotionSlot
+                          x:Name="LoginAuraRing" motion:Motion.Presence="0.32"
+                          RenderTransform="scale(0.76)" RenderTransformOrigin="50%,50%"/>
+                      </Panel>
+                    </DataTemplate>
+                  </motion:TimelineMotionKeyFrame>
+                  <motion:TimelineMotionKeyFrame
+                    Easing="CubicEaseInOut" KeyTime="0:0:1.3">
+                    <!--  ReSharper disable once Xaml.RedundantResource  -->
+                    <DataTemplate>
+                      <Panel>
+                        <motion:MotionSlot
+                          x:Name="LoginAuraRing" motion:Motion.Presence="0.88"
+                          RenderTransform="scale(0.98)" RenderTransformOrigin="50%,50%"/>
+                      </Panel>
+                    </DataTemplate>
+                  </motion:TimelineMotionKeyFrame>
+                  <motion:TimelineMotionKeyFrame
+                    Easing="CubicEaseInOut" KeyTime="0:0:2.6">
+                    <!--  ReSharper disable once Xaml.RedundantResource  -->
+                    <DataTemplate>
+                      <Panel>
+                        <motion:MotionSlot
+                          x:Name="LoginAuraRing" motion:Motion.Presence="0.32"
+                          RenderTransform="scale(0.76)" RenderTransformOrigin="50%,50%"/>
+                      </Panel>
+                    </DataTemplate>
+                  </motion:TimelineMotionKeyFrame>
+                </motion:TimelineMotion>
+              </motion:MotionPanel.Motion>
+
+              <Border
+                x:Name="LoginAuraRing"
+                Background="{DynamicResource OobeBrandCyanTintBrush}"
+                CornerRadius="52"/>
+            </motion:MotionPanel>
+
+            <Border
+              Width="60" Height="60"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Background="{DynamicResource OobeElevatedSurfaceBrush}"
+              BorderBrush="{DynamicResource OobeCardBorderBrush}"
+              BorderThickness="1" CornerRadius="30"
+              IsVisible="{Binding !Flow.IsSignedIn}">
+              <LucideIcon
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Foreground="{DynamicResource OobeBrandCyanBrush}"
+                Kind="Cloud" Size="25"/>
+            </Border>
+
+            <Border
+              Width="60" Height="60"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Background="{DynamicResource OobeSuccessTintBrush}"
+              BorderBrush="{DynamicResource OobeSuccessBorderBrush}"
+              BorderThickness="1" CornerRadius="30"
+              IsVisible="{Binding Flow.IsSignedIn}">
+              <LucideIcon
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Foreground="{DynamicResource SuccessColor}"
+                Kind="Cloud" Size="25"/>
+            </Border>
+          </Panel>
+
+          <!--  Right Dot Stream Bridge  -->
+          <StackPanel
+            VerticalAlignment="Center"
+            IsVisible="{Binding !Flow.IsSignedIn}"
+            Orientation="Horizontal" Spacing="7">
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Opacity="0.85"/>
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Opacity="0.5"/>
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Opacity="0.24"/>
+          </StackPanel>
+          <StackPanel
+            VerticalAlignment="Center"
+            IsVisible="{Binding Flow.IsSignedIn}"
+            Orientation="Horizontal" Spacing="7">
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource SuccessColor}"
+              Opacity="0.94"/>
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource SuccessColor}"
+              Opacity="0.62"/>
+            <Ellipse
+              Width="4.5" Height="4.5"
+              Fill="{DynamicResource SuccessColor}"
+              Opacity="0.32"/>
+          </StackPanel>
+
+          <!--  Cloud Auth Endpoint Node  -->
+          <Border
+            Width="42" Height="42"
+            VerticalAlignment="Center"
+            Background="{DynamicResource OobeSubtleSurfaceBrush}"
+            BorderBrush="{DynamicResource OobeSubtleBorderBrush}"
+            BorderThickness="1" CornerRadius="21">
+            <LucideIcon
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Foreground="{DynamicResource OobeBrandCyanBrush}"
+              Kind="Globe" Size="17"/>
+          </Border>
+        </StackPanel>
+
+        <!--  Signed-In Identity Capsule  -->
+        <Border
+          Padding="16,8" HorizontalAlignment="Center"
+          Background="{DynamicResource OobeSuccessTintBrush}"
+          BorderBrush="{DynamicResource OobeSuccessBorderBrush}"
+          BorderThickness="1" CornerRadius="999"
+          IsVisible="{Binding Flow.IsSignedIn}">
+          <StackPanel
+            Orientation="Horizontal" Spacing="10">
+            <StackPanel
+              Orientation="Horizontal" Spacing="6">
+              <LucideIcon
+                VerticalAlignment="Center"
+                Foreground="{DynamicResource SuccessColor}"
+                Kind="CheckCheck" Size="14"/>
+              <TextBlock
+                Classes="Caption" VerticalAlignment="Center"
+                FontWeight="SemiBold"
+                Foreground="{DynamicResource SuccessColor}"
+                Text="{I18N {x:Static LocaleKey.Oobe_Login_SignedIn}}"/>
+            </StackPanel>
+            <Border
+              Width="1" Height="14"
+              VerticalAlignment="Center"
+              Background="{DynamicResource OobeSuccessBorderBrush}"/>
+            <TextBlock
+              Classes="Caption" VerticalAlignment="Center"
+              FontWeight="SemiBold"
+              Text="{Binding Flow.CloudClient.UserProfile?.Name, FallbackValue=''}"
+              TextTrimming="CharacterEllipsis"/>
+            <TextBlock
+              Classes="Muted Caption" VerticalAlignment="Center"
+              Text="{Binding Flow.CloudClient.UserProfile?.Email, FallbackValue=''}"
+              TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </DataTemplate>
+
+    <!--  Stage 3: Model Configuration (Unified WYSIWYG Preview Card)  -->
+    <DataTemplate x:DataType="vm:WelcomeConfigurationStep">
+      <v:OobeConfigureCard
+        HorizontalAlignment="Stretch" VerticalAlignment="Top"
+        Flow="{Binding Flow}"/>
+    </DataTemplate>
+
+    <!--  Stage 4: Personalize Prompt Recipe (Split Studio Left)  -->
+    <DataTemplate x:DataType="vm:WelcomePersonalizationStep">
+      <v:OobePersonalizeCard Flow="{Binding Flow}"/>
+    </DataTemplate>
+
+    <!--  Stage 5: Centered Global Wake-Up Shortcut Card  -->
+    <DataTemplate x:DataType="vm:WelcomeShortcutStep">
+      <v:OobeShortcutCard Flow="{Binding Flow}"/>
+    </DataTemplate>
+
+    <!--  Stage 6: Interactive Text-Selection Demo & Enablement  -->
+    <DataTemplate x:DataType="vm:WelcomeTextSelectionStep">
+      <v:OobeTextSelectionCard Flow="{Binding Flow}"/>
+    </DataTemplate>
+
+    <!--  Stage 7: Finish (Quick Preferences & Telemetry Opt-In)  -->
+    <DataTemplate x:DataType="vm:WelcomeFinishStep">
+      <Border
+        Classes="OobeGlassCard" MaxWidth="560"
+        Padding="20,16" HorizontalAlignment="Stretch"
+        BorderThickness="0" CornerRadius="16">
+        <StackPanel Spacing="12">
+          <!--  Run at Startup  -->
+          <Grid
+            ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+            <Border
+              Classes="OobeIconBadge Gold" Grid.Column="0"
+              Width="36" Height="36"
+              VerticalAlignment="Center" CornerRadius="10">
+              <LucideIcon
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Foreground="{DynamicResource OobeBrandGoldBrush}"
+                Kind="Zap" Size="17"/>
+            </Border>
+            <StackPanel
+              Grid.Column="1" VerticalAlignment="Center"
+              Spacing="2">
+              <TextBlock
+                FontWeight="SemiBold"
+                Text="{I18N {x:Static LocaleKey.SoftwareSettings_IsStartupEnabled_Header}}"/>
+              <TextBlock
+                Classes="Muted Caption" LineHeight="18"
+                Text="{I18N {x:Static LocaleKey.SoftwareSettings_IsStartupEnabled_Description}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+            <ToggleSwitch
+              x:Name="StartupEnabledSwitch" Grid.Column="2"
+              VerticalAlignment="Center"
+              IsChecked="{Binding Flow.Settings.Common.IsStartupEnabled, Mode=TwoWay}"
+              IsEnabled="{Binding Flow.IsNotBusy}"/>
+          </Grid>
+
+          <Border
+            Height="1"
+            Background="{DynamicResource OobeHairlineBrush}"
+            Opacity="0.6"/>
+
+          <!--  Global Font Size (Maps to Settings Slider Stops 1, 2, 4)  -->
+          <Grid
+            ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+            <Border
+              Classes="OobeIconBadge Pink" Grid.Column="0"
+              Width="36" Height="36"
+              VerticalAlignment="Center" CornerRadius="10">
+              <LucideIcon
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Foreground="{DynamicResource OobeBrandPinkBrush}"
+                Kind="Type" Size="17"/>
+            </Border>
+            <StackPanel
+              Grid.Column="1" VerticalAlignment="Center"
+              Spacing="2">
+              <TextBlock
+                FontWeight="SemiBold"
+                Text="{I18N {x:Static LocaleKey.DisplaySettings_FontSize_Header}}"/>
+              <TextBlock
+                Classes="Muted Caption" LineHeight="18"
+                Text="{I18N {x:Static LocaleKey.DisplaySettings_FontSize_Description}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+            <Border
+              Grid.Column="2" Padding="3"
+              VerticalAlignment="Center"
+              Background="{DynamicResource OobeStageWellBrush}"
+              BorderBrush="{DynamicResource OobeHairlineBrush}"
+              BorderThickness="1" CornerRadius="11">
+              <UniformGrid
+                ColumnSpacing="3" Columns="3">
+                <Button
+                  x:Name="FontSizeSmallButton" Classes="OobeFinishSegment"
+                  Padding="12,5"
+                  Classes.Selected="{Binding Flow.IsFontSizeSmall}"
+                  Command="{Binding Flow.SelectFontSizeCommand}"
+                  Content="{I18N {x:Static LocaleKey.Oobe_Finish_FontSize_Small}}"
+                  IsEnabled="{Binding Flow.IsNotBusy}"
+                  Theme="{StaticResource OobeSegmentChipTheme}">
+                  <Button.CommandParameter>
+                    <x:Int32>-1</x:Int32>
+                  </Button.CommandParameter>
+                </Button>
+                <Button
+                  x:Name="FontSizeMediumButton" Classes="OobeFinishSegment"
+                  Padding="12,5"
+                  Classes.Selected="{Binding Flow.IsFontSizeMedium}"
+                  Command="{Binding Flow.SelectFontSizeCommand}"
+                  Content="{I18N {x:Static LocaleKey.Oobe_Finish_FontSize_Medium}}"
+                  IsEnabled="{Binding Flow.IsNotBusy}"
+                  Theme="{StaticResource OobeSegmentChipTheme}">
+                  <Button.CommandParameter>
+                    <x:Int32>0</x:Int32>
+                  </Button.CommandParameter>
+                </Button>
+                <Button
+                  x:Name="FontSizeLargeButton" Classes="OobeFinishSegment"
+                  Padding="12,5"
+                  Classes.Selected="{Binding Flow.IsFontSizeLarge}"
+                  Command="{Binding Flow.SelectFontSizeCommand}"
+                  Content="{I18N {x:Static LocaleKey.Oobe_Finish_FontSize_Large}}"
+                  IsEnabled="{Binding Flow.IsNotBusy}"
+                  Theme="{StaticResource OobeSegmentChipTheme}">
+                  <Button.CommandParameter>
+                    <x:Int32>2</x:Int32>
+                  </Button.CommandParameter>
+                </Button>
+              </UniformGrid>
+            </Border>
+          </Grid>
+
+          <Border
+            Height="1"
+            Background="{DynamicResource OobeHairlineBrush}"
+            Opacity="0.6"/>
+
+          <!--  Anonymous Diagnostics  -->
+          <Grid
+            ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+            <Border
+              Classes="OobeIconBadge Cyan" Grid.Column="0"
+              Width="36" Height="36"
+              VerticalAlignment="Center" CornerRadius="10">
+              <LucideIcon
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Foreground="{DynamicResource OobeBrandCyanBrush}"
+                Kind="Info" Size="17"/>
+            </Border>
+            <StackPanel
+              Grid.Column="1" VerticalAlignment="Center"
+              Spacing="2">
+              <TextBlock
+                FontWeight="SemiBold"
+                Text="{I18N {x:Static LocaleKey.Oobe_Finish_DiagnosticTitle}}"/>
+              <TextBlock
+                Classes="Muted Caption" LineHeight="18"
+                Text="{I18N {x:Static LocaleKey.Oobe_Finish_DiagnosticDescription}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+            <ToggleSwitch
+              x:Name="DiagnosticOptInSwitch" Grid.Column="2"
+              VerticalAlignment="Center"
+              IsChecked="{Binding Flow.Settings.Common.DiagnosticData, Mode=TwoWay}"
+              IsEnabled="{Binding Flow.IsNotBusy}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+
+    <!--  Extensible Fallback for Future OobeStep Subclasses  -->
+    <DataTemplate x:DataType="vm:OobeStep">
+      <Border
+        Classes="OobeGlassCard" MaxWidth="520"
+        HorizontalAlignment="Center">
+        <StackPanel Spacing="6">
+          <TextBlock
+            FontWeight="SemiBold"
+            Text="{Binding TitleKey^}"/>
+          <TextBlock
+            Classes="Muted Caption" LineHeight="19"
+            Text="{Binding DescriptionKey^}"
+            TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </TransitioningContentControl.DataTemplates>
+</TransitioningContentControl>

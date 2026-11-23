@@ -242,7 +242,11 @@ public sealed partial class PromptPageViewModel(
         _pendingRoutePromptId = null;
 
         var prompts = await promptService.ListPromptsAsync(cancellationToken);
-        _prompts.Reset(prompts.Select(static prompt => new PromptItem(prompt)));
+        var previewContext = CreatePromptContext();
+        _prompts.Reset(
+            prompts.Select(prompt => new PromptItem(
+                prompt,
+                PromptTemplateRenderer.Render(prompt.Template, PlaceholderSource, previewContext).TrimStart())));
         _hasLoadedPrompts = true;
 
         RefreshFilter(clearSelectionWhenHidden: false);
@@ -379,11 +383,13 @@ public sealed partial class PromptPageViewModel(
     private PromptPlaceholderContext CreatePromptContext() =>
         new(SkillsPromptResolver: () => skillPromptProvider.GetPrompt(ToolCallStatus.Enabled));
 
-    public sealed class PromptItem(PromptDefinition prompt)
+    public sealed class PromptItem(PromptDefinition prompt, string renderedPreview)
     {
         public Guid Id => prompt.Id;
 
         public string Template => prompt.Template;
+
+        public string RenderedPreview { get; } = renderedPreview;
 
         public bool IsDefault => prompt.IsDefault;
 
@@ -399,6 +405,7 @@ public sealed partial class PromptPageViewModel(
             PromptDisplayNameProvider.GetDisplayName(prompt),
             prompt.Name ?? string.Empty,
             prompt.Template,
+            renderedPreview,
             prompt.IsDefault ? LocaleKey.PromptPage_DefaultPrompt_DisplayName.I18N() : string.Empty,
             prompt.IsDefault ? LocaleKey.PromptPage_Source_BuiltInDefault.I18N() : ResolveSourceLabelOrFallback(prompt.Source),
             prompt.Source.ToString()

@@ -1,0 +1,290 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="{x:Static ThemeVariant.Light}">
+      <Color x:Key="OobeAmbientBaseColor">#F2F4F7FC</Color>
+      <Color x:Key="OobeAmbientCoolColor">#FFD8E6FF</Color>
+      <Color x:Key="OobeAmbientAccentColor">#FFE5E0FF</Color>
+      <Color x:Key="OobeAmbientWarmColor">#FFEFF4FB</Color>
+      <Color x:Key="OobeAmbientGlowColor">#3B82F6</Color>
+      <Color x:Key="OobeAmbientSuccessGlowColor">#10B981</Color>
+
+      <!--  Everywhere Brand Tricolor Tokens  -->
+      <Color x:Key="OobeBrandCyanColor">#38BDF8</Color>
+      <Color x:Key="OobeBrandPinkColor">#EC4899</Color>
+      <Color x:Key="OobeBrandGoldColor">#EAB308</Color>
+      <SolidColorBrush
+        x:Key="OobeBrandCyanBrush" Color="#0284C7"/>
+      <SolidColorBrush
+        x:Key="OobeBrandPinkBrush" Color="#DB2777"/>
+      <SolidColorBrush
+        x:Key="OobeBrandGoldBrush" Color="#CA8A04"/>
+      <SolidColorBrush
+        x:Key="OobeChipBlueBrush" Color="#2563EB"/>
+      <SolidColorBrush
+        x:Key="OobeChipPurpleBrush" Color="#7C3AED"/>
+      <SolidColorBrush
+        x:Key="OobeChipIndigoBrush" Color="#4F46E5"/>
+      <SolidColorBrush
+        x:Key="OobeChipOrangeBrush" Color="#EA580C"/>
+      <SolidColorBrush
+        x:Key="OobeChipGreenBrush" Color="#059669"/>
+      <SolidColorBrush
+        x:Key="OobeChipTealBrush" Color="#0D9488"/>
+      <SolidColorBrush
+        x:Key="OobeChipRedBrush" Color="#DC2626"/>
+
+      <!--  Own Model Card Orange Accent & Stacked Avatar Tokens  -->
+      <Color x:Key="OobeOwnAccentColor">#EA580C</Color>
+      <SolidColorBrush
+        x:Key="OobeOwnAccentBrush" Color="#EA580C"/>
+      <SolidColorBrush
+        x:Key="OobeOwnAccentForegroundBrush" Color="#FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeOwnHoverTintBrush" Color="#18EA580C"/>
+      <SolidColorBrush
+        x:Key="OobeOwnSelectedTintBrush" Color="#1FEA580C"/>
+      <SolidColorBrush
+        x:Key="OobeOwnSelectedHoverTintBrush" Color="#2AEA580C"/>
+      <SolidColorBrush
+        x:Key="OobeAvatarSurfaceBrush" Color="#FFF1F5F9"/>
+      <SolidColorBrush
+        x:Key="OobeAvatarCounterBrush" Color="#FFE2E8F0"/>
+
+      <SolidColorBrush
+        x:Key="OobeSurfaceBrush" Color="#CCFFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeElevatedSurfaceBrush" Color="#F0FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeSubtleSurfaceBrush" Color="#80E4EAF6"/>
+      <SolidColorBrush
+        x:Key="OobeCardBorderBrush" Color="#1A0F172A"/>
+      <SolidColorBrush
+        x:Key="OobeSubtleBorderBrush" Color="#100F172A"/>
+      <SolidColorBrush
+        x:Key="OobeProgressTrackBrush" Color="#200F172A"/>
+      <SolidColorBrush
+        x:Key="OobeHighlightTintBrush" Color="#1A3B82F6"/>
+
+      <!--  Stage 3-8 Semantic Tints, Frosted Wells & Hairlines  -->
+      <SolidColorBrush
+        x:Key="OobeBrandCyanTintBrush" Color="#160284C7"/>
+      <SolidColorBrush
+        x:Key="OobeBrandPinkTintBrush" Color="#14DB2777"/>
+      <SolidColorBrush
+        x:Key="OobeBrandGoldTintBrush" Color="#18CA8A04"/>
+      <SolidColorBrush
+        x:Key="OobeChipBlueTintBrush" Color="#162563EB"/>
+      <SolidColorBrush
+        x:Key="OobeChipPurpleTintBrush" Color="#167C3AED"/>
+      <SolidColorBrush
+        x:Key="OobeChipIndigoTintBrush" Color="#164F46E5"/>
+      <SolidColorBrush
+        x:Key="OobeChipOrangeTintBrush" Color="#16EA580C"/>
+      <SolidColorBrush
+        x:Key="OobeChipGreenTintBrush" Color="#16059669"/>
+      <SolidColorBrush
+        x:Key="OobeChipTealTintBrush" Color="#160D9488"/>
+      <SolidColorBrush
+        x:Key="OobeChipRedTintBrush" Color="#16DC2626"/>
+      <SolidColorBrush
+        x:Key="OobePinkHoverTintBrush" Color="#18DB2777"/>
+      <SolidColorBrush
+        x:Key="OobePinkSelectedTintBrush" Color="#1FDB2777"/>
+      <SolidColorBrush
+        x:Key="OobePinkSelectedHoverTintBrush" Color="#29DB2777"/>
+      <SolidColorBrush
+        x:Key="OobeCyanHoverTintBrush" Color="#180284C7"/>
+      <SolidColorBrush
+        x:Key="OobeCyanSelectedTintBrush" Color="#1F0284C7"/>
+      <SolidColorBrush
+        x:Key="OobeCyanSelectedHoverTintBrush" Color="#290284C7"/>
+      <SolidColorBrush
+        x:Key="OobeSuccessTintBrush" Color="#1610B981"/>
+      <SolidColorBrush
+        x:Key="OobeSuccessBorderBrush" Color="#4D10B981"/>
+      <SolidColorBrush
+        x:Key="OobeHairlineBrush" Color="#140F172A"/>
+      <SolidColorBrush
+        x:Key="OobeFieldBorderBrush" Color="#260F172A"/>
+      <SolidColorBrush
+        x:Key="OobeFieldUnderlineBrush" Color="#3B0F172A"/>
+      <SolidColorBrush
+        x:Key="OobeStageWellBrush" Color="#70E4EAF6"/>
+      <SolidColorBrush
+        x:Key="OobeNodeSurfaceBrush" Color="#FFF2F6FC"/>
+      <RadialGradientBrush x:Key="OobeIntroBlueGlowBrush" Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+        <GradientStop Offset="0" Color="#240284C7"/>
+        <GradientStop Offset="0.55" Color="#0C0284C7"/>
+        <GradientStop Offset="1" Color="#000284C7"/>
+      </RadialGradientBrush>
+      <RadialGradientBrush x:Key="OobeIntroPinkGlowBrush" Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+        <GradientStop Offset="0" Color="#20DB2777"/>
+        <GradientStop Offset="0.55" Color="#0ADB2777"/>
+        <GradientStop Offset="1" Color="#00DB2777"/>
+      </RadialGradientBrush>
+      <RadialGradientBrush x:Key="OobeIntroVioletGlowBrush" Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+        <GradientStop Offset="0" Color="#227C3AED"/>
+        <GradientStop Offset="0.55" Color="#0B7C3AED"/>
+        <GradientStop Offset="1" Color="#007C3AED"/>
+      </RadialGradientBrush>
+      <SolidColorBrush
+        x:Key="OobeIntroVioletAccentBrush" Color="#7C3AED"/>
+      <SolidColorBrush
+        x:Key="OobeIntroVioletPillBrush" Color="#1E7C3AED"/>
+      <SolidColorBrush
+        x:Key="OobeIntroVioletBorderBrush" Color="#4D7C3AED"/>
+      <SolidColorBrush
+        x:Key="OobeIntroMiniLineBrush" Color="#1D0F172A"/>
+      <SolidColorBrush
+        x:Key="OobeIntroMiniLineSoftBrush" Color="#110F172A"/>
+      <LinearGradientBrush x:Key="OobeIntroPinkReplyBrush" StartPoint="0%,50%" EndPoint="100%,50%">
+        <GradientStop Offset="0" Color="#99DB2777"/>
+        <GradientStop Offset="1" Color="#220F172A"/>
+      </LinearGradientBrush>
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="{x:Static ThemeVariant.Dark}">
+      <Color x:Key="OobeAmbientBaseColor">#EC111319</Color>
+      <Color x:Key="OobeAmbientCoolColor">#FF16284F</Color>
+      <Color x:Key="OobeAmbientAccentColor">#FF202D5E</Color>
+      <Color x:Key="OobeAmbientWarmColor">#FF171B26</Color>
+      <Color x:Key="OobeAmbientGlowColor">#5B8DEF</Color>
+      <Color x:Key="OobeAmbientSuccessGlowColor">#10B981</Color>
+
+      <!--  Everywhere Brand Tricolor Tokens  -->
+      <Color x:Key="OobeBrandCyanColor">#4DB8FF</Color>
+      <Color x:Key="OobeBrandPinkColor">#F056B8</Color>
+      <Color x:Key="OobeBrandGoldColor">#DCE65C</Color>
+      <SolidColorBrush
+        x:Key="OobeBrandCyanBrush" Color="#4DB8FF"/>
+      <SolidColorBrush
+        x:Key="OobeBrandPinkBrush" Color="#F056B8"/>
+      <SolidColorBrush
+        x:Key="OobeBrandGoldBrush" Color="#DCE65C"/>
+      <SolidColorBrush
+        x:Key="OobeChipBlueBrush" Color="#60A5FA"/>
+      <SolidColorBrush
+        x:Key="OobeChipPurpleBrush" Color="#A78BFA"/>
+      <SolidColorBrush
+        x:Key="OobeChipIndigoBrush" Color="#818CF8"/>
+      <SolidColorBrush
+        x:Key="OobeChipOrangeBrush" Color="#FB923C"/>
+      <SolidColorBrush
+        x:Key="OobeChipGreenBrush" Color="#34D399"/>
+      <SolidColorBrush
+        x:Key="OobeChipTealBrush" Color="#2DD4BF"/>
+      <SolidColorBrush
+        x:Key="OobeChipRedBrush" Color="#F87171"/>
+
+      <!--  Own Model Card Orange Accent & Stacked Avatar Tokens  -->
+      <Color x:Key="OobeOwnAccentColor">#FF8C24</Color>
+      <SolidColorBrush
+        x:Key="OobeOwnAccentBrush" Color="#FF8C24"/>
+      <SolidColorBrush
+        x:Key="OobeOwnAccentForegroundBrush" Color="#FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeOwnHoverTintBrush" Color="#14FF8C24"/>
+      <SolidColorBrush
+        x:Key="OobeOwnSelectedTintBrush" Color="#1EFF8C24"/>
+      <SolidColorBrush
+        x:Key="OobeOwnSelectedHoverTintBrush" Color="#2AFF8C24"/>
+      <SolidColorBrush
+        x:Key="OobeAvatarSurfaceBrush" Color="#FF2D313C"/>
+      <SolidColorBrush
+        x:Key="OobeAvatarCounterBrush" Color="#FF3C414F"/>
+
+      <SolidColorBrush
+        x:Key="OobeSurfaceBrush" Color="#0DFFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeElevatedSurfaceBrush" Color="#15FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeSubtleSurfaceBrush" Color="#08FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeCardBorderBrush" Color="#17FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeSubtleBorderBrush" Color="#0EFFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeProgressTrackBrush" Color="#24FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeHighlightTintBrush" Color="#1F5B8DEF"/>
+
+      <!--  Stage 3-8 Semantic Tints, Frosted Wells & Hairlines  -->
+      <SolidColorBrush
+        x:Key="OobeBrandCyanTintBrush" Color="#1C4DB8FF"/>
+      <SolidColorBrush
+        x:Key="OobeBrandPinkTintBrush" Color="#1CF056B8"/>
+      <SolidColorBrush
+        x:Key="OobeBrandGoldTintBrush" Color="#1CDCE65C"/>
+      <SolidColorBrush
+        x:Key="OobeChipBlueTintBrush" Color="#1F60A5FA"/>
+      <SolidColorBrush
+        x:Key="OobeChipPurpleTintBrush" Color="#1FA78BFA"/>
+      <SolidColorBrush
+        x:Key="OobeChipIndigoTintBrush" Color="#1F818CF8"/>
+      <SolidColorBrush
+        x:Key="OobeChipOrangeTintBrush" Color="#1FFB923C"/>
+      <SolidColorBrush
+        x:Key="OobeChipGreenTintBrush" Color="#1F34D399"/>
+      <SolidColorBrush
+        x:Key="OobeChipTealTintBrush" Color="#1F2DD4BF"/>
+      <SolidColorBrush
+        x:Key="OobeChipRedTintBrush" Color="#1FF87171"/>
+      <SolidColorBrush
+        x:Key="OobePinkHoverTintBrush" Color="#16F056B8"/>
+      <SolidColorBrush
+        x:Key="OobePinkSelectedTintBrush" Color="#22F056B8"/>
+      <SolidColorBrush
+        x:Key="OobePinkSelectedHoverTintBrush" Color="#2CF056B8"/>
+      <SolidColorBrush
+        x:Key="OobeCyanHoverTintBrush" Color="#164DB8FF"/>
+      <SolidColorBrush
+        x:Key="OobeCyanSelectedTintBrush" Color="#224DB8FF"/>
+      <SolidColorBrush
+        x:Key="OobeCyanSelectedHoverTintBrush" Color="#2C4DB8FF"/>
+      <SolidColorBrush
+        x:Key="OobeSuccessTintBrush" Color="#1A10B981"/>
+      <SolidColorBrush
+        x:Key="OobeSuccessBorderBrush" Color="#5210B981"/>
+      <SolidColorBrush
+        x:Key="OobeHairlineBrush" Color="#12FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeFieldBorderBrush" Color="#24FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeFieldUnderlineBrush" Color="#34FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeStageWellBrush" Color="#0AFFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeNodeSurfaceBrush" Color="#FF1C202B"/>
+      <RadialGradientBrush x:Key="OobeIntroBlueGlowBrush" Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+        <GradientStop Offset="0" Color="#2C38BDF8"/>
+        <GradientStop Offset="0.55" Color="#1038BDF8"/>
+        <GradientStop Offset="1" Color="#0038BDF8"/>
+      </RadialGradientBrush>
+      <RadialGradientBrush x:Key="OobeIntroPinkGlowBrush" Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+        <GradientStop Offset="0" Color="#2AF056B8"/>
+        <GradientStop Offset="0.55" Color="#0EF056B8"/>
+        <GradientStop Offset="1" Color="#00F056B8"/>
+      </RadialGradientBrush>
+      <RadialGradientBrush x:Key="OobeIntroVioletGlowBrush" Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+        <GradientStop Offset="0" Color="#2C8B5CF6"/>
+        <GradientStop Offset="0.55" Color="#108B5CF6"/>
+        <GradientStop Offset="1" Color="#008B5CF6"/>
+      </RadialGradientBrush>
+      <SolidColorBrush
+        x:Key="OobeIntroVioletAccentBrush" Color="#A78BFA"/>
+      <SolidColorBrush
+        x:Key="OobeIntroVioletPillBrush" Color="#2C8B5CF6"/>
+      <SolidColorBrush
+        x:Key="OobeIntroVioletBorderBrush" Color="#6B8B5CF6"/>
+      <SolidColorBrush
+        x:Key="OobeIntroMiniLineBrush" Color="#28FFFFFF"/>
+      <SolidColorBrush
+        x:Key="OobeIntroMiniLineSoftBrush" Color="#16FFFFFF"/>
+      <LinearGradientBrush x:Key="OobeIntroPinkReplyBrush" StartPoint="0%,50%" EndPoint="100%,50%">
+        <GradientStop Offset="0" Color="#99F056B8"/>
+        <GradientStop Offset="1" Color="#45FFFFFF"/>
+      </LinearGradientBrush>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

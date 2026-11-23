@@ -1,12 +1,17 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia.Animation;
+using Avalonia.Animation.Easings;
+using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
 
 namespace Everywhere.Views;
 
 [PseudoClasses(IdlePseudoClass, ThinkingPseudoClass, LookingPseudoClass)]
 [TemplatePart(Name = EyesContainerPartName, Type = typeof(Control), IsRequired = true)]
+[TemplatePart(Name = PointerGazeLayerPartName, Type = typeof(Control), IsRequired = true)]
 [TemplatePart(Name = EyesPartName, Type = typeof(Control), IsRequired = true)]
 public class Evy : TemplatedControl
 {
@@ -29,15 +34,19 @@ public class Evy : TemplatedControl
     }
 
     private const string EyesContainerPartName = "PART_EyesContainer";
+    private const string PointerGazeLayerPartName = "PART_PointerGazeLayer";
     private const string EyesPartName = "PART_Eyes";
 
     private const string IdlePseudoClass = ":idle";
     private const string ThinkingPseudoClass = ":thinking";
     private const string LookingPseudoClass = ":looking";
+    private const double MaxPointerGazeOffset = 1.6;
 
     private Control? _eyesContainer;
-    private Control? _eyes;
+    private Control? _pointerGazeLayer;
+    private TranslateTransform? _pointerGazeTransform;
     private TopLevel? _topLevel;
+    private bool _isPointerInWindow;
 
     public Evy()
     {
@@ -51,6 +60,11 @@ public class Evy : TemplatedControl
         if (ReferenceEquals(change.Property, IsIdleAnimationEnabledProperty) ||
             ReferenceEquals(change.Property, IsThinkingProperty))
         {
+            if (!IsIdleAnimationEnabled)
+            {
+                ResetPointerGaze();
+            }
+
             UpdatePseudoClass();
         }
     }
@@ -60,7 +74,30 @@ public class Evy : TemplatedControl
         base.OnApplyTemplate(e);
 
         _eyesContainer = e.NameScope.Get<Control>(EyesContainerPartName);
-        _eyes = e.NameScope.Get<Control>(EyesPartName);
+        _pointerGazeLayer = e.NameScope.Get<Control>(PointerGazeLayerPartName);
+        _ = e.NameScope.Get<Control>(EyesPartName);
+
+        // Drive pointer gaze exclusively through a layout-free render transform on a dedicated wrapper layer
+        // so mouse tracking never triggers Measure/Arrange feedback or fights idle keyframe animations.
+        _pointerGazeTransform = new TranslateTransform
+        {
+            Transitions =
+            [
+                new DoubleTransition
+                {
+                    Property = TranslateTransform.XProperty,
+                    Duration = TimeSpan.FromMilliseconds(75),
+                    Easing = new CubicEaseOut()
+                },
+                new DoubleTransition
+                {
+                    Property = TranslateTransform.YProperty,
+                    Duration = TimeSpan.FromMilliseconds(75),
+                    Easing = new CubicEaseOut()
+                }
+            ]
+        };
+        _pointerGazeLayer.RenderTransform = _pointerGazeTransform;
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -72,7 +109,7 @@ public class Evy : TemplatedControl
             _topLevel = topLevel;
             _topLevel.PointerEntered += HandleTopLevelPointerEntered;
             _topLevel.PointerExited += HandleTopLevelPointerExited;
-            _topLevel.PointerMoved += HandleTopLevelPointerMoved;
+            _topLevel.AddHandler(PointerMovedEvent, HandleTopLevelPointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
             UpdatePseudoClass();
         }
     }
@@ -85,50 +122,73 @@ public class Evy : TemplatedControl
         {
             _topLevel.PointerEntered -= HandleTopLevelPointerEntered;
             _topLevel.PointerExited -= HandleTopLevelPointerExited;
-            _topLevel.PointerMoved -= HandleTopLevelPointerMoved;
+            _topLevel.RemoveHandler(PointerMovedEvent, HandleTopLevelPointerMoved);
             _topLevel = null;
         }
+
+        _isPointerInWindow = false;
+        ResetPointerGaze();
+        UpdatePseudoClass();
     }
 
     private void HandleTopLevelPointerEntered(object? sender, PointerEventArgs e)
     {
+        _isPointerInWindow = true;
         UpdatePseudoClass();
+        LookAt(e);
     }
 
     private void HandleTopLevelPointerExited(object? sender, PointerEventArgs e)
     {
+        if (_topLevel is { IsPointerOver: true }) return;
+
+        _isPointerInWindow = false;
+        ResetPointerGaze();
         UpdatePseudoClass();
     }
 
     private void HandleTopLevelPointerMoved(object? sender, PointerEventArgs e)
     {
+        _isPointerInWindow = true;
+        UpdatePseudoClass();
         LookAt(e);
     }
 
     /// <summary>
-    /// Make Evy look at the given point.
+    /// Updates <see cref="Evy"/>'s gaze toward the pointer using a layout-free transform.
     /// </summary>
-    /// <remarks>
-    /// Adjusts the margin of the eyes image to simulate eye movement.
-    /// Left/right by left: [-2, 2], up/down by bottom: [2, -2].
-    /// </remarks>
     private void LookAt(PointerEventArgs e)
     {
-        if (_eyes is null) return;
+        if (!IsIdleAnimationEnabled || _eyesContainer is null) return;
+        LookAtEyesContainerPoint(e.GetPosition(_eyesContainer));
+    }
 
-        var point = e.GetPosition(_eyesContainer);
-        var centerX = _eyes.Bounds.Width / 2;
-        var centerY = _eyes.Bounds.Height / 2;
+    private void LookAtEyesContainerPoint(Point point)
+    {
+        if (_eyesContainer is null || _pointerGazeTransform is null) return;
 
-        // Use a polar coordinate system to limit the eye movement within a circle of radius 2.
-        var deltaX = point.X - centerX;
-        var deltaY = point.Y - centerY;
-        var angle = Math.Atan2(deltaY, deltaX);
-        var distance = Math.Min(2, Math.Sqrt(deltaX * deltaX + deltaY * deltaY) / 20); // Scale down the distance
-        var offsetX = distance * Math.Cos(angle);
-        var offsetY = distance * Math.Sin(angle);
+        var bounds = _eyesContainer.Bounds;
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-        _eyes.Margin = new Thickness(offsetX, 0, 0, -offsetY);
+        var deltaX = point.X - bounds.Width * 0.5;
+        var deltaY = point.Y - bounds.Height * 0.5;
+        var rawDistance = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+        if (rawDistance <= 0.001)
+        {
+            ResetPointerGaze();
+            return;
+        }
+
+        var scale = Math.Min(MaxPointerGazeOffset, rawDistance / 22.0) / rawDistance;
+        _pointerGazeTransform.X = deltaX * scale;
+        _pointerGazeTransform.Y = deltaY * scale;
+    }
+
+    private void ResetPointerGaze()
+    {
+        if (_pointerGazeTransform is null) return;
+        _pointerGazeTransform.X = 0d;
+        _pointerGazeTransform.Y = 0d;
     }
 
     private void UpdatePseudoClass()
@@ -136,10 +196,8 @@ public class Evy : TemplatedControl
         PseudoClasses.Set(ThinkingPseudoClass, IsThinking);
 
         var isIdleAnimationEnabled = IsIdleAnimationEnabled;
-        var isLooking = IsPointerOver || _topLevel is { IsPointerOver: true };
+        var isLooking = _isPointerInWindow || IsPointerOver || _topLevel is { IsPointerOver: true };
         PseudoClasses.Set(LookingPseudoClass, isIdleAnimationEnabled && isLooking);
         PseudoClasses.Set(IdlePseudoClass, isIdleAnimationEnabled && !isLooking);
-
-        // PseudoClasses.Set(":searching", true);
     }
 }
