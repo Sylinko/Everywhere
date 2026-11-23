@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Turkish (Turkey) -->
 <root>
     <resheader name="resmimetype">
@@ -5096,5 +5096,345 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     </data>
     <data name="ChatWindow_PendingInputs_Withdraw_ToolTip" xml:space="preserve">
         <value>Düzenlemek için giriş kutusuna geri al</value>
+    </data>
+    <data name="PromptCreate_MorePreferences" xml:space="preserve">
+        <value>Daha Fazla Tercih</value>
+    </data>
+    <data name="Oobe_Continue" xml:space="preserve">
+        <value>Devam</value>
+    </data>
+    <data name="Oobe_Next" xml:space="preserve">
+        <value>İleri</value>
+    </data>
+    <data name="Oobe_Start" xml:space="preserve">
+        <value>Kurulumu Başlat</value>
+    </data>
+    <data name="Oobe_Back" xml:space="preserve">
+        <value>Geri</value>
+    </data>
+    <data name="Oobe_SetUpLater" xml:space="preserve">
+        <value>Daha Sonra Ayarla</value>
+    </data>
+    <data name="Oobe_Intro_Title" xml:space="preserve">
+        <value>Everywhere ile Tanışın</value>
+    </data>
+    <data name="Oobe_Intro_Description" xml:space="preserve">
+        <value>Her an yardıma hazır, bağlamı anlayan yapay zekâ asistanı</value>
+    </data>
+    <data name="Oobe_Intro_FeatureVisualTitle" xml:space="preserve">
+        <value>Ekranınızdakileri Anlar</value>
+    </data>
+    <data name="Oobe_Intro_FeatureVisualDesc" xml:space="preserve">
+        <value>Sürekli kopyalayıp yapıştırmaya gerek kalmadan yapay zekânın etkin pencereyi ve seçili içeriği anlamasını sağlayın.</value>
+    </data>
+    <data name="Oobe_Intro_FeatureInstantTitle" xml:space="preserve">
+        <value>Anında Açın, Hemen Yanıt Alın</value>
+    </data>
+    <data name="Oobe_Intro_FeatureInstantDesc" xml:space="preserve">
+        <value>Uygulamalar arasında geçiş yapmadan soru sorun, çeviri yapın veya metinleri yeniden yazın.</value>
+    </data>
+    <data name="Oobe_Intro_FeatureChoiceTitle" xml:space="preserve">
+        <value>Model Seçimi Size Kalmış</value>
+    </data>
+    <data name="Oobe_Intro_FeatureChoiceDesc" xml:space="preserve">
+        <value>Everywhere Cloud'u, kendi API'nizi veya yerel modelleri kullanın.</value>
+    </data>
+    <data name="Oobe_Source_Title" xml:space="preserve">
+        <value>Everywhere için Yapay Zekâyı Etkinleştirin</value>
+    </data>
+    <data name="Oobe_Source_Description" xml:space="preserve">
+        <value>Hemen kullanmaya başlayın veya kendi model hizmetinize bağlanın. Bu seçimi daha sonra ayarlardan değiştirebilirsiniz.</value>
+    </data>
+    <data name="Oobe_Source_Cloud" xml:space="preserve">
+        <value>Everywhere Cloud</value>
+    </data>
+    <data name="Oobe_Source_CloudDescription" xml:space="preserve">
+        <value>Giriş yaparak ücretsiz deneme kredisi kazanın. Yapılandırma gerektirmeden önde gelen modellere bağlanın ve ihtiyacınıza göre abone olun.</value>
+    </data>
+    <data name="Oobe_Source_Own" xml:space="preserve">
+        <value>Kendi API'niz / Yerel Model</value>
+    </data>
+    <data name="Oobe_Login_Title" xml:space="preserve">
+        <value>Everywhere Cloud'a Bağlanın</value>
+    </data>
+    <data name="Oobe_Login_Description" xml:space="preserve">
+        <value>Bulut modellerini etkinleştirmek için giriş yapın. Yeni kullanıcılara ücretsiz deneme kredisi verilir.</value>
+    </data>
+    <data name="Oobe_Login_SignIn" xml:space="preserve">
+        <value>Tarayıcıda Giriş Yap</value>
+    </data>
+    <data name="Oobe_Login_SignedIn" xml:space="preserve">
+        <value>Giriş Yapıldı</value>
+    </data>
+    <data name="Oobe_Configure_Title" xml:space="preserve">
+        <value>Ana Modelinizi Seçin</value>
+    </data>
+    <data name="Oobe_Configure_Description" xml:space="preserve">
+        <value>Sık kullanacağınız bir model seçip hızlıca test edin. Daha sonra sohbet sırasında istediğiniz zaman model değiştirebilirsiniz.</value>
+    </data>
+    <data name="Oobe_Configure_OwnTitle" xml:space="preserve">
+        <value>Model Bağlantısını Yapılandırın</value>
+    </data>
+    <data name="Oobe_Configure_TabBuiltIn" xml:space="preserve">
+        <value>Önde Gelen Platformlara Doğrudan Bağlantı</value>
+    </data>
+    <data name="Oobe_Configure_TabCustomProtocol" xml:space="preserve">
+        <value>Özel Protokol Bağlantısı</value>
+    </data>
+    <data name="Oobe_Configure_SwitchToCloud" xml:space="preserve">
+        <value>Elle yapılandırmak istemiyor musunuz? Everywhere Cloud'a geçin</value>
+    </data>
+    <data name="Oobe_TestConnection" xml:space="preserve">
+        <value>Bağlantıyı Test Et</value>
+    </data>
+    <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
+        <value>Bir model seçin</value>
+    </data>
+    <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
+        <value>Bağlam Penceresi</value>
+    </data>
+    <data name="Oobe_Configure_OutputLabel" xml:space="preserve">
+        <value>Maksimum Çıktı</value>
+    </data>
+    <data name="Oobe_Configure_CapVision" xml:space="preserve">
+        <value>Görsel</value>
+    </data>
+    <data name="Oobe_Configure_CapPdf" xml:space="preserve">
+        <value>PDF</value>
+    </data>
+    <data name="Oobe_Configure_CapAudio" xml:space="preserve">
+        <value>Ses</value>
+    </data>
+    <data name="Oobe_Configure_CapVideo" xml:space="preserve">
+        <value>Video</value>
+    </data>
+    <data name="Oobe_Configure_CapTools" xml:space="preserve">
+        <value>Araç Kullanımı</value>
+    </data>
+    <data name="Oobe_Configure_SelectProviderFirstPlaceholder" xml:space="preserve">
+        <value>Önce bir model sağlayıcısı seçin</value>
+    </data>
+    <data name="Oobe_Configure_ModelIdPlaceholder" xml:space="preserve">
+        <value>Model kimliğini girin (ör. gpt-6-luna)</value>
+    </data>
+    <data name="Oobe_Configure_ContextPlaceholder" xml:space="preserve">
+        <value>Örnek: 1048576</value>
+    </data>
+    <data name="Oobe_Configure_OutputPlaceholder" xml:space="preserve">
+        <value>Örnek: 131072</value>
+    </data>
+    <data name="Oobe_Configure_ModalitiesLabel" xml:space="preserve">
+        <value>Modaliteler ve Yetenekler</value>
+    </data>
+    <data name="Oobe_Personalize_Title" xml:space="preserve">
+        <value>Asistan Tercihlerinizi Belirleyin</value>
+    </data>
+    <data name="Oobe_Personalize_Description" xml:space="preserve">
+        <value>Sık kullandığınız senaryoları, tonu ve ayrıntı düzeyini seçin. Sağdaki önizleme değişiklikleri anında yansıtır.</value>
+    </data>
+    <data name="Oobe_SavePreferences" xml:space="preserve">
+        <value>Kaydet ve Devam Et</value>
+    </data>
+    <data name="Oobe_Personalize_ScenarioRequired" xml:space="preserve">
+        <value>Devam etmek için lütfen en az 1 sık kullanılan senaryo seçin.</value>
+    </data>
+    <data name="Oobe_Shortcut_Title" xml:space="preserve">
+        <value>Kısayol Tuşunu Ayarlayın</value>
+    </data>
+    <data name="Oobe_Shortcut_Description" xml:space="preserve">
+        <value>Kısayol tuşuna basarak asistanı istediğiniz uygulamada açın.</value>
+    </data>
+    <data name="Oobe_Shortcut_Skip" xml:space="preserve">
+        <value>Kısayol Tuşunu Etkinleştirme</value>
+    </data>
+    <data name="Oobe_Shortcut_Disabled" xml:space="preserve">
+        <value>Onaylamak için geçerli bir kısayol tuşu kombinasyonuna basın veya atlamak için aşağıdaki “Kısayolu etkinleştirme” seçeneğine tıklayın.</value>
+    </data>
+    <data name="Oobe_TextSelection_Title" xml:space="preserve">
+        <value>Seç, hemen kullan; odağını koru</value>
+    </data>
+    <data name="Oobe_TextSelection_Description" xml:space="preserve">
+        <value>Herhangi bir metni seçerek araç çubuğunu açın; çeviri ve özet tek adımda.</value>
+    </data>
+    <data name="Oobe_TextSelection_Skip" xml:space="preserve">
+        <value>Metin seçimini etkinleştirme</value>
+    </data>
+    <data name="Oobe_TextSelection_DemoParagraph" xml:space="preserve">
+        <value>Everywhere, ekranda görüntülediğiniz bağlamı anında anlayabilir. Bu cümleyi fareyle seçmeniz yeterli; ekran görüntüsü almanız veya pencere değiştirmeniz gerekmez. Araç çubuğu hemen açılır ve size yardımcı olur.</value>
+    </data>
+    <data name="Oobe_TextSelection_DemoHighlight" xml:space="preserve">
+        <value>Bu cümleyi fareyle seçmeniz yeterli</value>
+    </data>
+    <data name="Oobe_TextSelection_ActionPreviewFormat" xml:space="preserve">
+        <value>{0} · “{1}”</value>
+    </data>
+    <data name="Oobe_TextSelection_PreviewReplyFormat" xml:space="preserve">
+        <value>Seçilen metin üzerinde “{0}” demosu tamamlandı. Gerçek kullanımda sonucu doğrudan kopyalayabilir, orijinal metnin yerine koyabilir veya ek sorular sorabilirsiniz.</value>
+    </data>
+    <data name="Oobe_Finish_Title" xml:space="preserve">
+        <value>Her şey hazır</value>
+    </data>
+    <data name="Oobe_Finish_Description" xml:space="preserve">
+        <value>Everywhere kullanıma hazır. Başlamak için aşağıdaki temel tercihleri onaylayın.</value>
+    </data>
+    <data name="Oobe_StartUsing" xml:space="preserve">
+        <value>Everywhere'i kullanmaya başla</value>
+    </data>
+    <data name="Oobe_Finish_DiagnosticTitle" xml:space="preserve">
+        <value>Anonim tanılama verilerini gönder</value>
+    </data>
+    <data name="Oobe_Finish_DiagnosticDescription" xml:space="preserve">
+        <value>Deneyimi iyileştirmek için yalnızca kilitlenme günlükleri ve performans verileri toplanır; konuşmalarınız veya ekran içeriğiniz kesinlikle toplanmaz.</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Small" xml:space="preserve">
+        <value>Küçük</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Medium" xml:space="preserve">
+        <value>Orta</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Large" xml:space="preserve">
+        <value>Büyük</value>
+    </data>
+    <data name="Oobe_InvalidConfiguration" xml:space="preserve">
+        <value>Önce model yapılandırma bilgilerini eksiksiz doldurun.</value>
+    </data>
+    <data name="Oobe_LoginRequired" xml:space="preserve">
+        <value>Önce Everywhere hesabınızda oturum açın.</value>
+    </data>
+    <data name="Oobe_ConfigurationChanged" xml:space="preserve">
+        <value>Test sırasında yapılandırma değişti. Lütfen bağlantıyı yeniden test edin.</value>
+    </data>
+    <data name="Oobe_LoginFailed" xml:space="preserve">
+        <value>Oturum açılamadı. Lütfen tekrar deneyin.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Default" xml:space="preserve">
+        <value>Geçerli ekranda gösterilen önemli noktaları düzenlememe yardım et.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Programming" xml:space="preserve">
+        <value>İptal sinyalinin yutulmadığından emin olarak bu asenkron durum geçişi mantığını basitleştirmeme yardım et.</value>
+    </data>
+    <data name="Oobe_Preview_Question_CodeReview" xml:space="preserve">
+        <value>Bu değişikliği inceleyip yaşam döngüsü sızıntısı veya fark edilmesi zor bir gerileme olup olmadığını kontrol eder misin?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Writing" xml:space="preserve">
+        <value>Bu sürüm notlarını, temel özellikleri ilk cümlede öne çıkaracak şekilde iyileştirmeme yardım et.</value>
+    </data>
+    <data name="Oobe_Preview_Question_DataAnalysis" xml:space="preserve">
+        <value>Üçüncü çeyreğe ait bu gecikme yüzdelik dilimi verilerindeki sıra dışı eğilimleri özetler misin?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Learning" xml:space="preserve">
+        <value>Buradaki olay kabarcıklanma mekanizmasını sezgisel bir düşünme modeliyle açıklar mısın?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Translation" xml:space="preserve">
+        <value>Bu değişiklik günlüğünü yaygın teknik terimleri koruyarak doğal bir Türkçeye çevir.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Product" xml:space="preserve">
+        <value>Bu kullanıcı geri bildirimlerini açık ve uygulanabilir 3 ürün önceliğine dönüştür.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Troubleshooting" xml:space="preserve">
+        <value>Hizmet 30 saniye sonra zaman aşımına uğradı. Sorunun ağdan mı yoksa alt sistemdeki bir tıkanıklıktan mı kaynaklandığını en hızlı nasıl bulabilirim?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Research" xml:space="preserve">
+        <value>Bu iki makalenin mimari tercihleri arasındaki temel farkları kısaca karşılaştır.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_ConciseDirect_Concise" xml:space="preserve">
+        <value>Tamamlandı. Temel darboğaz giderildi; aşağıdaki sonuçlara göre doğrudan ilerleyebilirsiniz.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_ConciseDirect_Rich" xml:space="preserve">
+        <value>Sonuç: Yinelenen dalları birleştirin, iptal belirtecini erkenden kontrol edin ve kullanıcı arayüzü iş parçacığındaki durum güncellemelerinin tutarlı olmasını sağlayın.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Socratic_Concise" xml:space="preserve">
+        <value>Önce sınırı netleştirelim: Bu yaşam döngüsünü çağıranın mı yoksa alt görevin mi sonlandırması daha güvenli?</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Socratic_Rich" xml:space="preserve">
+        <value>Sahiplik sınırlarından ilerleyebiliriz: Geçerli adım iptal kapsamını elinde tutuyorsa pencere erken kapandığında nasıl bir zincirleme temizlik gerçekleşir? Gelin birlikte çıkaralım.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Formal_Concise" xml:space="preserve">
+        <value>Analiz özeti tamamlandı. Temel bulgular ve önerilen önlemler aşağıda sunulmuştur.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Formal_Rich" xml:space="preserve">
+        <value>Yapılandırılmış değerlendirme aşağıdadır: Önce temel gözlemler, ardından önerilen doğrulama ve iyileştirme adımları sıralanmıştır.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Creative_Concise" xml:space="preserve">
+        <value>Daha çarpıcı bir başlangıç deneyin: Önce sonucu verin, sonra ardındaki yaratıcılığı anlatın.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Creative_Rich" xml:space="preserve">
+        <value>En etkileyici andan doğrudan başlayın: Uzun girişleri çıkarın, temel karşıtlığı belirginleştirin ve ana fikri ilk bakışta görünür kılın.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Friendly_Concise" xml:space="preserve">
+        <value>Elbette! Kullanışlı ve güvenilir bir düzenleme planı hazırladım.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Friendly_Rich" xml:space="preserve">
+        <value>Bu konuyu birlikte ele almak güzel! Genel olarak her şey yolunda; küçük bir ayarlamayla deneyim çok daha akıcı hâle gelir.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Professional_Concise" xml:space="preserve">
+        <value>Temel sonuç: Sözleşmeleri açık tutun ve yan etkileri tek bir yerde, sınır katmanında yönetin.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Professional_Rich" xml:space="preserve">
+        <value>Mevcut bağlama göre uygulanabilir bir çözüm planı hazırladım. Bu plan, yapısal netliği korurken kritik sınır koşullarını da dikkate alıyor.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_DetailedWrap" xml:space="preserve">
+        <value>{0}
+
+{1}</value>
+    </data>
+    <data name="Oobe_Preview_DetailedAddendum" xml:space="preserve">
+        <value>+ Ayrıca adım adım gerekçelendirme, sınır durumlarına ilişkin açıklamalar ve somut sonraki adımlar da sunulur.</value>
+    </data>
+    <data name="Oobe_Preview_GreetingWrap" xml:space="preserve">
+        <value>Merhaba, {0}: {1}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProfessionalWrap" xml:space="preserve">
+        <value>Uygulama ve risk kontrolü açısından bakıldığında, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProgrammingWrap" xml:space="preserve">
+        <value>Kod yapısı ve sürdürülebilirlik açısından bakıldığında, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_WritingWrap" xml:space="preserve">
+        <value>İfade netliğine ve metnin akışına odaklanarak, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_TranslationWrap" xml:space="preserve">
+        <value>Özgün anlamı doğru ve doğal bir dille aktararak, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ResearchWrap" xml:space="preserve">
+        <value>Doğrulanmış bulguları makul çıkarımlardan ayırarak, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_LearningWrap" xml:space="preserve">
+        <value>Temel kavramları sezgisel bir yaklaşımla açıklayın, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProductWrap" xml:space="preserve">
+        <value>Kullanıcı değerini ve işin ilerleme temposunu dikkate alarak, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_ConclusionFirstWrap" xml:space="preserve">
+        <value>Sonuç: Önce ana akışı belirleyin, ardından sınır durumlarını netleştirin.
+
+{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_StepByStepWrap" xml:space="preserve">
+        <value>{0}
+
+1. Mevcut bağlamı ve kısıtlamaları doğrulayın
+2. Ana akışa göre temel düzenlemeleri yapın
+3. Kritik sınırları ve nihai sonucu kontrol edin</value>
+    </data>
+    <data name="Oobe_Preview_Organization_KeyPointsWrap" xml:space="preserve">
+        <value>{0}
+
+• Önemli nokta 1: Önce temel hedefi netleştirin
+• Önemli nokta 2: Gereksiz dalları ve ayrıntıları sadeleştirin</value>
+    </data>
+    <data name="Oobe_Preview_Organization_CompareOptionsWrap" xml:space="preserve">
+        <value>{0}
+
+Seçenek A: Daha az değişiklik gerektirir, hızlıca uygulamaya almak için uygundur
+Seçenek B: Sınır durumlarını daha iyi ele alır, uzun vadeli bakım için uygundur</value>
+    </data>
+    <data name="Oobe_Preview_Organization_ExamplesFirstWrap" xml:space="preserve">
+        <value>Örnek: Önce tipik girdileri ve beklenen sonuçları yan yana listeleyin, ardından çalışma ilkesini açıklayın.
+
+{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_NaturalWrap" xml:space="preserve">
+        <value>Bu düşünce çizgisini izleyerek doğal bir şekilde konuşalım — {0}</value>
     </data>
 </root>

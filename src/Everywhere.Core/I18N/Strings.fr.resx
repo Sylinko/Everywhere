@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- French (Français) -->
 <root>
     <resheader name="resmimetype">
@@ -5096,5 +5096,345 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
     </data>
     <data name="ChatWindow_PendingInputs_Withdraw_ToolTip" xml:space="preserve">
         <value>Remettre dans le champ de saisie</value>
+    </data>
+    <data name="PromptCreate_MorePreferences" xml:space="preserve">
+        <value>Plus de préférences</value>
+    </data>
+    <data name="Oobe_Continue" xml:space="preserve">
+        <value>Continuer</value>
+    </data>
+    <data name="Oobe_Next" xml:space="preserve">
+        <value>Suivant</value>
+    </data>
+    <data name="Oobe_Start" xml:space="preserve">
+        <value>Commencer la configuration</value>
+    </data>
+    <data name="Oobe_Back" xml:space="preserve">
+        <value>Précédent</value>
+    </data>
+    <data name="Oobe_SetUpLater" xml:space="preserve">
+        <value>Configurer plus tard</value>
+    </data>
+    <data name="Oobe_Intro_Title" xml:space="preserve">
+        <value>Découvrez Everywhere</value>
+    </data>
+    <data name="Oobe_Intro_Description" xml:space="preserve">
+        <value>Votre assistant IA contextuel, toujours à portée de main</value>
+    </data>
+    <data name="Oobe_Intro_FeatureVisualTitle" xml:space="preserve">
+        <value>Comprend ce qui est à l’écran</value>
+    </data>
+    <data name="Oobe_Intro_FeatureVisualDesc" xml:space="preserve">
+        <value>Plus besoin de copier-coller sans cesse : l’IA comprend la fenêtre active et le contenu sélectionné.</value>
+    </data>
+    <data name="Oobe_Intro_FeatureInstantTitle" xml:space="preserve">
+        <value>Disponible à tout moment, réponse immédiate</value>
+    </data>
+    <data name="Oobe_Intro_FeatureInstantDesc" xml:space="preserve">
+        <value>Sans changer d’application, posez une question, traduisez ou reformulez en un instant.</value>
+    </data>
+    <data name="Oobe_Intro_FeatureChoiceTitle" xml:space="preserve">
+        <value>Choisissez votre modèle</value>
+    </data>
+    <data name="Oobe_Intro_FeatureChoiceDesc" xml:space="preserve">
+        <value>Utilisez Everywhere Cloud, votre propre API ou un modèle local.</value>
+    </data>
+    <data name="Oobe_Source_Title" xml:space="preserve">
+        <value>Activez l’IA dans Everywhere</value>
+    </data>
+    <data name="Oobe_Source_Description" xml:space="preserve">
+        <value>Utilisez l’application dès maintenant ou connectez votre propre service de modèles. Vous pourrez modifier ce choix à tout moment dans les paramètres.</value>
+    </data>
+    <data name="Oobe_Source_Cloud" xml:space="preserve">
+        <value>Everywhere Cloud</value>
+    </data>
+    <data name="Oobe_Source_CloudDescription" xml:space="preserve">
+        <value>Connectez-vous pour profiter d’un crédit d’essai gratuit. Accédez aux principaux modèles sans configuration et abonnez-vous selon vos besoins.</value>
+    </data>
+    <data name="Oobe_Source_Own" xml:space="preserve">
+        <value>Votre API / modèle local</value>
+    </data>
+    <data name="Oobe_Login_Title" xml:space="preserve">
+        <value>Connectez-vous à Everywhere Cloud</value>
+    </data>
+    <data name="Oobe_Login_Description" xml:space="preserve">
+        <value>Connectez-vous pour activer les modèles cloud. Les nouveaux utilisateurs bénéficient d’un crédit d’essai gratuit.</value>
+    </data>
+    <data name="Oobe_Login_SignIn" xml:space="preserve">
+        <value>Se connecter dans le navigateur</value>
+    </data>
+    <data name="Oobe_Login_SignedIn" xml:space="preserve">
+        <value>Connecté</value>
+    </data>
+    <data name="Oobe_Configure_Title" xml:space="preserve">
+        <value>Choisissez votre modèle principal</value>
+    </data>
+    <data name="Oobe_Configure_Description" xml:space="preserve">
+        <value>Choisissez un modèle que vous utilisez souvent et testez-le rapidement. Vous pourrez ensuite changer de modèle à tout moment dans une conversation.</value>
+    </data>
+    <data name="Oobe_Configure_OwnTitle" xml:space="preserve">
+        <value>Configurer la connexion à un modèle</value>
+    </data>
+    <data name="Oobe_Configure_TabBuiltIn" xml:space="preserve">
+        <value>Connexion directe aux principaux fournisseurs</value>
+    </data>
+    <data name="Oobe_Configure_TabCustomProtocol" xml:space="preserve">
+        <value>Connexion via un protocole personnalisé</value>
+    </data>
+    <data name="Oobe_Configure_SwitchToCloud" xml:space="preserve">
+        <value>Vous préférez éviter la configuration manuelle ? Passez à Everywhere Cloud</value>
+    </data>
+    <data name="Oobe_TestConnection" xml:space="preserve">
+        <value>Tester la connexion</value>
+    </data>
+    <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
+        <value>Sélectionner un modèle</value>
+    </data>
+    <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
+        <value>Fenêtre de contexte</value>
+    </data>
+    <data name="Oobe_Configure_OutputLabel" xml:space="preserve">
+        <value>Sortie maximale</value>
+    </data>
+    <data name="Oobe_Configure_CapVision" xml:space="preserve">
+        <value>Vision</value>
+    </data>
+    <data name="Oobe_Configure_CapPdf" xml:space="preserve">
+        <value>PDF</value>
+    </data>
+    <data name="Oobe_Configure_CapAudio" xml:space="preserve">
+        <value>Audio</value>
+    </data>
+    <data name="Oobe_Configure_CapVideo" xml:space="preserve">
+        <value>Vidéo</value>
+    </data>
+    <data name="Oobe_Configure_CapTools" xml:space="preserve">
+        <value>Appels d’outils</value>
+    </data>
+    <data name="Oobe_Configure_SelectProviderFirstPlaceholder" xml:space="preserve">
+        <value>Sélectionnez d’abord un fournisseur de modèles</value>
+    </data>
+    <data name="Oobe_Configure_ModelIdPlaceholder" xml:space="preserve">
+        <value>Saisissez l’ID du modèle (par exemple, gpt-6-luna)</value>
+    </data>
+    <data name="Oobe_Configure_ContextPlaceholder" xml:space="preserve">
+        <value>Par exemple : 1048576</value>
+    </data>
+    <data name="Oobe_Configure_OutputPlaceholder" xml:space="preserve">
+        <value>Par exemple : 131072</value>
+    </data>
+    <data name="Oobe_Configure_ModalitiesLabel" xml:space="preserve">
+        <value>Modalités et capacités</value>
+    </data>
+    <data name="Oobe_Personalize_Title" xml:space="preserve">
+        <value>Personnalisez votre assistant</value>
+    </data>
+    <data name="Oobe_Personalize_Description" xml:space="preserve">
+        <value>Choisissez vos usages courants, le ton et le niveau de détail. L’aperçu à droite reflète vos choix en temps réel.</value>
+    </data>
+    <data name="Oobe_SavePreferences" xml:space="preserve">
+        <value>Enregistrer et continuer</value>
+    </data>
+    <data name="Oobe_Personalize_ScenarioRequired" xml:space="preserve">
+        <value>Veuillez sélectionner au moins un usage courant pour continuer.</value>
+    </data>
+    <data name="Oobe_Shortcut_Title" xml:space="preserve">
+        <value>Configurer le raccourci d’activation</value>
+    </data>
+    <data name="Oobe_Shortcut_Description" xml:space="preserve">
+        <value>Appuyez sur le raccourci dans n’importe quelle application pour activer l’assistant à tout moment.</value>
+    </data>
+    <data name="Oobe_Shortcut_Skip" xml:space="preserve">
+        <value>Ne pas activer de raccourci</value>
+    </data>
+    <data name="Oobe_Shortcut_Disabled" xml:space="preserve">
+        <value>Appuyez sur une combinaison de touches valide pour confirmer, ou cliquez ci-dessous sur « Ne pas activer les raccourcis » pour passer cette étape.</value>
+    </data>
+    <data name="Oobe_TextSelection_Title" xml:space="preserve">
+        <value>À portée de sélection, sans perdre le fil</value>
+    </data>
+    <data name="Oobe_TextSelection_Description" xml:space="preserve">
+        <value>Sélectionnez du texte pour afficher une barre d’outils flottante et le traduire ou le résumer en un instant.</value>
+    </data>
+    <data name="Oobe_TextSelection_Skip" xml:space="preserve">
+        <value>Ne pas activer la sélection de texte</value>
+    </data>
+    <data name="Oobe_TextSelection_DemoParagraph" xml:space="preserve">
+        <value>Everywhere comprend instantanément le contexte de ce qui s’affiche à l’écran. Sélectionnez simplement cette phrase avec la souris : la barre d’outils flottante apparaît aussitôt, sans capture d’écran ni changement de fenêtre.</value>
+    </data>
+    <data name="Oobe_TextSelection_DemoHighlight" xml:space="preserve">
+        <value>Sélectionnez simplement cette phrase avec la souris</value>
+    </data>
+    <data name="Oobe_TextSelection_ActionPreviewFormat" xml:space="preserve">
+        <value>{0} · « {1} »</value>
+    </data>
+    <data name="Oobe_TextSelection_PreviewReplyFormat" xml:space="preserve">
+        <value>La démonstration de « {0} » a été effectuée directement à partir du texte sélectionné. En pratique, vous pourrez copier le résultat, remplacer le texte d’origine ou poser une question complémentaire.</value>
+    </data>
+    <data name="Oobe_Finish_Title" xml:space="preserve">
+        <value>Tout est prêt</value>
+    </data>
+    <data name="Oobe_Finish_Description" xml:space="preserve">
+        <value>Everywhere est prêt. Confirmez vos préférences de base ci-dessous pour commencer quand vous le souhaitez.</value>
+    </data>
+    <data name="Oobe_StartUsing" xml:space="preserve">
+        <value>Commencer à utiliser Everywhere</value>
+    </data>
+    <data name="Oobe_Finish_DiagnosticTitle" xml:space="preserve">
+        <value>Envoyer des données de diagnostic anonymes</value>
+    </data>
+    <data name="Oobe_Finish_DiagnosticDescription" xml:space="preserve">
+        <value>Seuls les journaux d’incident et les données de performance sont collectés pour améliorer votre expérience. Aucune conversation ni aucun contenu à l’écran n’est concerné.</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Small" xml:space="preserve">
+        <value>Petit</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Medium" xml:space="preserve">
+        <value>Moyen</value>
+    </data>
+    <data name="Oobe_Finish_FontSize_Large" xml:space="preserve">
+        <value>Grand</value>
+    </data>
+    <data name="Oobe_InvalidConfiguration" xml:space="preserve">
+        <value>Veuillez d’abord renseigner tous les paramètres du modèle.</value>
+    </data>
+    <data name="Oobe_LoginRequired" xml:space="preserve">
+        <value>Veuillez d’abord vous connecter à votre compte Everywhere.</value>
+    </data>
+    <data name="Oobe_ConfigurationChanged" xml:space="preserve">
+        <value>La configuration a changé pendant le test. Veuillez tester à nouveau la connexion.</value>
+    </data>
+    <data name="Oobe_LoginFailed" xml:space="preserve">
+        <value>Échec de la connexion. Veuillez réessayer.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Default" xml:space="preserve">
+        <value>Aide-moi à synthétiser les points importants affichés à l’écran.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Programming" xml:space="preserve">
+        <value>Aide-moi à simplifier cette logique de gestion des états asynchrones sans perdre les signaux d’annulation.</value>
+    </data>
+    <data name="Oobe_Preview_Question_CodeReview" xml:space="preserve">
+        <value>Peux-tu examiner ces modifications et repérer d’éventuelles fuites de ressources liées au cycle de vie ou des régressions discrètes ?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Writing" xml:space="preserve">
+        <value>Peux-tu améliorer ces notes de version pour que leur point fort accroche le lecteur dès la première phrase ?</value>
+    </data>
+    <data name="Oobe_Preview_Question_DataAnalysis" xml:space="preserve">
+        <value>Peux-tu résumer les tendances inhabituelles dans ces données de latence par percentile du troisième trimestre ?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Learning" xml:space="preserve">
+        <value>Peux-tu expliquer intuitivement le mécanisme de propagation des événements présenté ici ?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Translation" xml:space="preserve">
+        <value>Traduis ces notes de version en chinois naturel, en conservant les termes techniques courants.</value>
+    </data>
+    <data name="Oobe_Preview_Question_Product" xml:space="preserve">
+        <value>Peux-tu dégager de ces retours utilisateurs trois priorités produit claires et concrètes ?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Troubleshooting" xml:space="preserve">
+        <value>Le service expire au bout de 30 secondes. Quel est le moyen le plus rapide de déterminer si le problème vient du réseau ou d’un blocage en aval ?</value>
+    </data>
+    <data name="Oobe_Preview_Question_Research" xml:space="preserve">
+        <value>Compare brièvement les principales différences entre ces deux articles en matière de choix d’architecture.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_ConciseDirect_Concise" xml:space="preserve">
+        <value>C’est fait. Le principal goulot d’étranglement a été éliminé. Vous pouvez avancer en vous appuyant directement sur la conclusion ci-dessous.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_ConciseDirect_Rich" xml:space="preserve">
+        <value>En bref : fusionnez les branches redondantes, vérifiez le jeton d’annulation en amont et veillez à la cohérence des mises à jour d’état sur le thread de l’interface.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Socratic_Concise" xml:space="preserve">
+        <value>Commençons par clarifier les responsabilités : vaut-il mieux que l’appelant ou la tâche enfant libère cette ressource ?</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Socratic_Rich" xml:space="preserve">
+        <value>Examinons la question de la propriété : si l’étape en cours détient le périmètre d’annulation, que se passe-t-il lors du nettoyage en cascade si la fenêtre se ferme prématurément ? Réfléchissons-y ensemble.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Formal_Concise" xml:space="preserve">
+        <value>Résumé de l’analyse terminé. Vous trouverez ci-dessous les principales conclusions et les mesures recommandées.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Formal_Rich" xml:space="preserve">
+        <value>Voici une évaluation structurée : les observations clés sont présentées en premier, suivies des étapes de validation et d’optimisation recommandées.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Creative_Concise" xml:space="preserve">
+        <value>Pour une ouverture plus percutante : commencez par le résultat, puis dévoilez l’idée ingénieuse qui le sous-tend.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Creative_Rich" xml:space="preserve">
+        <value>Imaginez commencer par le moment le plus marquant : éliminez les longues préambules, renforcez le contraste central et faites ressortir l’essentiel au premier regard.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Friendly_Concise" xml:space="preserve">
+        <value>Bien sûr ! Je t’ai préparé une série d’ajustements simples et fiables.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Friendly_Rich" xml:space="preserve">
+        <value>Ravi de faire le point avec toi ! L’ensemble est déjà très solide ; un petit ajustement suffira à rendre l’expérience encore plus fluide.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Professional_Concise" xml:space="preserve">
+        <value>Conclusion : définissez clairement les contrats et centralisez les effets de bord à la couche frontière.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_Professional_Rich" xml:space="preserve">
+        <value>J’ai préparé une analyse pratique à partir du contexte actuel, qui met en évidence les éléments structurants tout en tenant compte des principaux cas limites.</value>
+    </data>
+    <data name="Oobe_Preview_Reply_DetailedWrap" xml:space="preserve">
+        <value>{0}
+
+{1}</value>
+    </data>
+    <data name="Oobe_Preview_DetailedAddendum" xml:space="preserve">
+        <value>+ Comprend également le raisonnement étape par étape, les cas limites et des recommandations concrètes pour la suite.</value>
+    </data>
+    <data name="Oobe_Preview_GreetingWrap" xml:space="preserve">
+        <value>Bonjour, {0} : {1}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProfessionalWrap" xml:space="preserve">
+        <value>Du point de vue de la mise en œuvre et de la maîtrise des risques, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProgrammingWrap" xml:space="preserve">
+        <value>En partant de la structure du code et de sa maintenabilité, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_WritingWrap" xml:space="preserve">
+        <value>En mettant l’accent sur la clarté et le rythme du texte, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_TranslationWrap" xml:space="preserve">
+        <value>En conciliant fidélité au sens d’origine et naturel de la formulation, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ResearchWrap" xml:space="preserve">
+        <value>En distinguant d’abord les éléments vérifiés des déductions plausibles, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_LearningWrap" xml:space="preserve">
+        <value>Décomposer les concepts clés de façon intuitive, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Persona_ProductWrap" xml:space="preserve">
+        <value>En tenant compte de la valeur utilisateur et du rythme d’avancement métier, {0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_ConclusionFirstWrap" xml:space="preserve">
+        <value>Conclusion : privilégier le parcours principal, puis traiter les cas limites.
+
+{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_StepByStepWrap" xml:space="preserve">
+        <value>{0}
+
+1. Confirmer le contexte actuel et les contraintes
+2. Effectuer les ajustements essentiels en suivant le parcours principal
+3. Vérifier les cas limites importants et le résultat final</value>
+    </data>
+    <data name="Oobe_Preview_Organization_KeyPointsWrap" xml:space="preserve">
+        <value>{0}
+
+• Point clé 1 : clarifier d’abord l’objectif principal
+• Point clé 2 : simplifier les branches et détails superflus</value>
+    </data>
+    <data name="Oobe_Preview_Organization_CompareOptionsWrap" xml:space="preserve">
+        <value>{0}
+
+Option A : moins de changements, idéale pour une mise en œuvre rapide
+Option B : des limites mieux définies, idéale pour une maintenance à long terme</value>
+    </data>
+    <data name="Oobe_Preview_Organization_ExamplesFirstWrap" xml:space="preserve">
+        <value>Exemple : commencez par mettre en regard les entrées types et les résultats attendus, puis expliquez le principe.
+
+{0}</value>
+    </data>
+    <data name="Oobe_Preview_Organization_NaturalWrap" xml:space="preserve">
+        <value>Dans cette logique, voyons ça de façon intuitive — {0}</value>
     </data>
 </root>
