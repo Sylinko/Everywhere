@@ -58,6 +58,7 @@ public class ConfettiEffect : Canvas
     private readonly CubicEaseIn _easeIn = new();
     private TimeSpan _startTime;
     private bool _isRunning;
+    private int _runToken;
 
     /// <summary>
     /// A predefined list of colors for the confetti particles.
@@ -154,6 +155,7 @@ public class ConfettiEffect : Canvas
         }
 
         _isRunning = true;
+        var runToken = ++_runToken;
         Children.Clear();
         _particles.Clear();
 
@@ -167,7 +169,7 @@ public class ConfettiEffect : Canvas
 
         _startTime = TimeSpan.Zero;
         // Request the first animation frame.
-        TopLevel.GetTopLevel(this)?.RequestAnimationFrame(OnFrame);
+        TopLevel.GetTopLevel(this)?.RequestAnimationFrame(time => OnFrame(time, runToken));
     }
 
     /// <summary>
@@ -176,6 +178,7 @@ public class ConfettiEffect : Canvas
     public void Stop()
     {
         _isRunning = false;
+        _runToken++;
         _particles.Clear();
         Children.Clear();
     }
@@ -191,9 +194,10 @@ public class ConfettiEffect : Canvas
     /// Called on each frame to update the animation.
     /// </summary>
     /// <param name="time">The current time provided by the animation system.</param>
-    private void OnFrame(TimeSpan time)
+    /// <param name="runToken">The run generation captured when this animation loop started.</param>
+    private void OnFrame(TimeSpan time, int runToken)
     {
-        if (!_isRunning) return;
+        if (!_isRunning || runToken != _runToken) return;
 
         // Initialize start time on the first frame.
         if (_startTime == TimeSpan.Zero)
@@ -257,7 +261,7 @@ public class ConfettiEffect : Canvas
         else
         {
             // Request the next animation frame.
-            TopLevel.GetTopLevel(this)?.RequestAnimationFrame(OnFrame);
+            TopLevel.GetTopLevel(this)?.RequestAnimationFrame(nextTime => OnFrame(nextTime, runToken));
         }
     }
 

@@ -181,9 +181,36 @@ public sealed class OobeCoordinator(
         {
             window.Closed -= HandleClosed;
             _activeWindow = null;
-            session.Dispose();
-            window.Close();
-            if (wasMainWindowVisible) _host?.ShowMainWindow();
+            try
+            {
+                session.Dispose();
+            }
+            catch
+            {
+                // Preserve the original Show/Initialize exception while completing rollback.
+            }
+
+            try
+            {
+                window.Close();
+            }
+            catch
+            {
+                // Preserve the original Show/Initialize exception while restoring the shell.
+            }
+
+            if (wasMainWindowVisible)
+            {
+                try
+                {
+                    _host?.ShowMainWindow();
+                }
+                catch
+                {
+                    // Preserve the original Show/Initialize exception during rollback.
+                }
+            }
+
             throw;
         }
 
@@ -209,7 +236,16 @@ public sealed class OobeCoordinator(
     /// </summary>
     public OobeSession CreateFlowSession(OobeFlow flow)
     {
-        var window = CreateWelcomeWindow(flow);
+        TransientWindow window;
+        try
+        {
+            window = CreateWelcomeWindow(flow);
+        }
+        catch
+        {
+            flow.Dispose();
+            throw;
+        }
 
         void HandleCloseRequested(object? sender, EventArgs args) => window.Close();
 

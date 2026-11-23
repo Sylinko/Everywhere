@@ -81,6 +81,11 @@ public sealed class AssistantCatalog(IPresetModelProvider presetModels, IOfficia
     {
         lock (configuration)
         {
+            if (configuration.ProviderId != provider.Id)
+            {
+                configuration.ApiKey = Guid.Empty;
+            }
+
             configuration.ProviderId = provider.Id;
             configuration.Endpoint = provider.Endpoint;
             configuration.Schema = provider.Schema;

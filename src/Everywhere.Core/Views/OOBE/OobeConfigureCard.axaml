@@ -778,7 +778,6 @@
                       x:Name="AdvancedContextLimitBox"
                       PlaceholderText="{I18N {x:Static LocaleKey.Oobe_Configure_ContextPlaceholder}}"
                       Text="{Binding AdvancedContextLimitText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                      TextInput="TokenBox_OnTextInput"
                       Theme="{StaticResource OobeInlineTokenTextBoxTheme}"/>
                   </StackPanel>
                 </Border>
@@ -811,7 +810,6 @@
                       x:Name="AdvancedOutputLimitBox"
                       PlaceholderText="{I18N {x:Static LocaleKey.Oobe_Configure_OutputPlaceholder}}"
                       Text="{Binding AdvancedOutputLimitText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                      TextInput="TokenBox_OnTextInput"
                       Theme="{StaticResource OobeInlineTokenTextBoxTheme}"/>
                   </StackPanel>
                 </Border>

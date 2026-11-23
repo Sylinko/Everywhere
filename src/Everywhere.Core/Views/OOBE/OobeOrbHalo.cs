@@ -210,7 +210,9 @@ public sealed class OobeOrbHalo : Control
             return;
         }
 
-        var step = dt > 0 ? Math.Min(1.0, dt * 3.0) : 1.0;
+        if (dt <= 0) return;
+
+        var step = Math.Min(1.0, dt * 3.0);
         _successMix += (target - _successMix) * step;
     }
 

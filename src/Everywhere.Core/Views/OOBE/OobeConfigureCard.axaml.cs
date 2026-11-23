@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using ShadUI;
@@ -38,6 +39,8 @@ public sealed partial class OobeConfigureCard : UserControl
     public OobeConfigureCard()
     {
         InitializeComponent();
+        AdvancedContextLimitBox.AddHandler(TextInputEvent, TokenBox_OnTextInput, RoutingStrategies.Tunnel);
+        AdvancedOutputLimitBox.AddHandler(TextInputEvent, TokenBox_OnTextInput, RoutingStrategies.Tunnel);
     }
 
     [RelayCommand]

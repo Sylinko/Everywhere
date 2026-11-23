@@ -256,17 +256,37 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
                 Content = content
             };
             _transientWindows[windowType] = createdWindow;
-            createdWindow.Closed += (_, _) =>
+            createdWindow.Closed += (_, _) => RemoveIfCurrent();
+
+            try
+            {
+                WindowPlacementAssist.Attach(createdWindow, _keyValueStorage, windowType.FullName ?? windowType.Name);
+                _windowHelper.InitializeWindow(createdWindow);
+                createdWindow.Show();
+            }
+            catch
+            {
+                RemoveIfCurrent();
+
+                try
+                {
+                    createdWindow.Close();
+                }
+                catch
+                {
+                    // Preserve the original window initialization/show error.
+                }
+
+                throw;
+            }
+
+            void RemoveIfCurrent()
             {
                 if (_transientWindows.TryGetValue(windowType, out var current) && ReferenceEquals(current, createdWindow))
                 {
                     _transientWindows.Remove(windowType);
                 }
-            };
-
-            WindowPlacementAssist.Attach(createdWindow, _keyValueStorage, windowType.FullName ?? windowType.Name);
-            _windowHelper.InitializeWindow(createdWindow);
-            createdWindow.Show();
+            }
         }
         finally
         {
