@@ -151,6 +151,8 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
                 await onConnecting();
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             await CloseConnectionAsync(_mcpClient);
 
             var isStdio = _transportConfiguration is StdioMcpTransportConfiguration;
@@ -273,38 +275,62 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
 
         for (var attempt = 0;; attempt++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var transport = CreateTransport();
             var clientOptions = CreateMcpClientOptions(isStdio, protocolVersion, probeTimeProvider);
 
             try
             {
                 var client = await McpClient.CreateAsync(transport, clientOptions, _loggerFactory, cancellationToken);
+                if (protocolVersion is not null)
+                {
+                    _preferredProtocolVersion = protocolVersion;
+                }
+
                 return (client, transport);
             }
             catch (Exception ex) when
                 (attempt == 0 &&
                  !cancellationToken.IsCancellationRequested &&
-                 protocolVersion is null &&
                  ShouldRetryWithJuly2026Protocol(ex))
             {
-                // TODO: WORKAROUND (ModelContextProtocol 2.4.0, upstream issue #1954-style race):
-                // If a stdio/HTTP server starts slower than DiscoverProbeTimeout (especially without emitting stderr),
-                // the SDK falls back to sending `initialize` on the same connection that already queued `server/discover`.
-                // Servers that lock onto 2026-07-28 upon seeing `server/discover` then reject `initialize` with -32022.
-                // Pin "2026-07-28" and disable DiscoverProbeTimeout for one immediate retry, and remember the preference.
-                // Re-check whether this workaround can be removed when upgrading ModelContextProtocol.
-                _preferredProtocolVersion = July2026ProtocolVersion;
-                protocolVersion = July2026ProtocolVersion;
-                if (isStdio)
+                if (protocolVersion is null)
                 {
-                    inactivityCts.CancelAfter(_stdioInactivityTimeout);
-                }
+                    // TODO: WORKAROUND (ModelContextProtocol 2.4.0, upstream issue #1954-style race):
+                    // If a stdio/HTTP server starts slower than DiscoverProbeTimeout (especially without emitting stderr),
+                    // the SDK falls back to sending `initialize` on the same connection that already queued `server/discover`.
+                    // Servers that lock onto 2026-07-28 upon seeing `server/discover` then reject `initialize` with -32022.
+                    // Pin "2026-07-28" and disable DiscoverProbeTimeout for one immediate retry; commit the pin only after retry succeeds.
+                    // Re-check whether this workaround can be removed when upgrading ModelContextProtocol.
+                    protocolVersion = July2026ProtocolVersion;
+                    if (isStdio)
+                    {
+                        inactivityCts.CancelAfter(_stdioInactivityTimeout);
+                    }
 
-                _logger.LogInformation(
-                    ex,
-                    "MCP server '{Name}' rejected fallback initialize handshake with UnsupportedProtocolVersion (-32022); retrying with protocol version {ProtocolVersion}.",
-                    _transportConfiguration.Name,
-                    protocolVersion);
+                    _logger.LogInformation(
+                        ex,
+                        "MCP server '{Name}' rejected fallback initialize handshake with UnsupportedProtocolVersion (-32022); retrying with protocol version {ProtocolVersion}.",
+                        _transportConfiguration.Name,
+                        protocolVersion);
+                }
+                else
+                {
+                    var rejectedProtocolVersion = protocolVersion;
+                    _preferredProtocolVersion = null;
+                    protocolVersion = null;
+                    if (isStdio)
+                    {
+                        inactivityCts.CancelAfter(_stdioInactivityTimeout);
+                    }
+
+                    _logger.LogInformation(
+                        ex,
+                        "MCP server '{Name}' rejected pinned protocol version {RejectedProtocolVersion} with UnsupportedProtocolVersion (-32022); retrying automatic protocol negotiation.",
+                        _transportConfiguration.Name,
+                        rejectedProtocolVersion);
+                }
             }
         }
     }

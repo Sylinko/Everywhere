@@ -78,14 +78,21 @@ internal static class McpTransportPreconditions
             return false;
         }
 
-        if (exception is ClientTransportClosedException)
+        if (exception is ClientTransportClosedException closedException)
         {
-            var displayName = string.IsNullOrWhiteSpace(stdio.Name) ? NormalizeCommand(stdio.Command) : stdio.Name;
+            var isCommandNotFound = IsWindowsCommandNotFound(closedException);
+            var targetName = isCommandNotFound
+                ? NormalizeCommand(stdio.Command)
+                : string.IsNullOrWhiteSpace(stdio.Name)
+                    ? NormalizeCommand(stdio.Command)
+                    : stdio.Name;
             handledException = new HandledException(
-                exception,
+                closedException,
                 new FormattedDynamicLocaleKey(
-                    LocaleKey.ChatPluginManager_Common_FailedToStartMcpPlugin,
-                    new DirectLocaleKey(displayName)),
+                    isCommandNotFound
+                        ? LocaleKey.ChatPluginManager_McpPluginCommandNotFound_StartFailure
+                        : LocaleKey.ChatPluginManager_Common_FailedToStartMcpPlugin,
+                    new DirectLocaleKey(targetName)),
                 showDetails: true);
             return true;
         }
@@ -107,6 +114,16 @@ internal static class McpTransportPreconditions
                 exception),
             messageKey);
         return true;
+    }
+
+    /// <summary>
+    /// OS specific heuristic to detect a Windows "command not found" error. This is a common failure mode when the user has not installed the required runtime for an MCP stdio plugin.
+    /// </summary>
+    /// <param name="exception"></param>
+    /// <returns></returns>
+    internal static bool IsWindowsCommandNotFound(ClientTransportClosedException exception)
+    {
+        return OperatingSystem.IsWindows() && exception.Details is StdioClientCompletionDetails { ExitCode: 9009 };
     }
 
     private static string NormalizeCommand(string command) => command.Trim().Trim('"');

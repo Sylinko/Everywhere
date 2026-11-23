@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Sockets;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
@@ -15,6 +17,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol;
+using ModelContextProtocol.Client;
 using ShadUI;
 
 namespace Everywhere.Chat.Plugins;
@@ -154,7 +158,19 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
 
         if (wasRunning)
         {
-            await StartMcpClientAsync(mcpChatPlugin, progress: null, CancellationToken.None);
+            try
+            {
+                await StartMcpClientAsync(
+                    mcpChatPlugin,
+                    requireRegistered: true,
+                    onConnecting: null,
+                    progress: null,
+                    CancellationToken.None);
+            }
+            catch (McpPluginRemovedException)
+            {
+                // Plugin was removed while the update lock was released before restarting.
+            }
         }
     }
 
@@ -212,6 +228,10 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
+            }
+            catch (Exception) when (cancellationToken.IsCancellationRequested)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
             }
             catch (Exception ex)
             {
@@ -354,7 +374,7 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
 
             if (startupErrors.TryGetValue(mcpPlugin.Id, out var startupError))
             {
-                failedReminders.Add((GetPluginDisplayName(mcpPlugin), startupError.Message));
+                failedReminders.Add((GetPluginDisplayName(mcpPlugin), FormatStartupFailureReminderReason(startupError)));
                 continue;
             }
 
@@ -398,8 +418,32 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
             new ContextTransientReminder(
                 McpStartupReminderKey,
                 message,
-                "All previously failing MCP plugins started cleanly and their tools are available again.")
+                "Previously reported MCP startup failures no longer apply to the current active toolset.")
         ];
+    }
+
+    private static string FormatStartupFailureReminderReason(HandledException startupError)
+    {
+        foreach (var error in startupError.Segregate())
+        {
+            switch (error)
+            {
+                case TimeoutException:
+                    return "startup timed out";
+                case ClientTransportClosedException closed when McpTransportPreconditions.IsWindowsCommandNotFound(closed):
+                    return "required command or runtime not found";
+                case ClientTransportClosedException:
+                    return "server process exited unexpectedly";
+                case Win32Exception or FileNotFoundException or DirectoryNotFoundException:
+                    return "required command or runtime not found";
+                case HttpRequestException or SocketException:
+                    return "connection failed";
+                case McpProtocolException:
+                    return "protocol handshake failed";
+            }
+        }
+
+        return "startup failed (check plugin settings for details)";
     }
 
     private async Task StartMcpForScopeAsync(
