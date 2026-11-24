@@ -1,11 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Reactive.Disposables.Fluent;
 using System.Text;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
-using Everywhere.Collections;
-using Everywhere.Common;
 using Everywhere.Terminal;
 
 namespace Everywhere.Harness;
@@ -13,7 +9,7 @@ namespace Everywhere.Harness;
 /// <summary>
 /// Tracks one detached tool invocation running in the background of a <see cref="RootChatContext"/>.
 /// </summary>
-public sealed partial class ChatBackgroundJob : ObservableObject
+public sealed class ChatBackgroundJob
 {
     /// <summary>
     /// Gets the short session-unique background job identifier (e.g. <c>bg-1</c>).
@@ -53,36 +49,43 @@ public sealed partial class ChatBackgroundJob : ObservableObject
     /// <summary>
     /// Gets when the job finished, or <see langword="null"/> while running.
     /// </summary>
-    [ObservableProperty]
-    public partial DateTimeOffset? FinishedAt { get; private set; }
+    public DateTimeOffset? FinishedAt { get; private set; }
 
     /// <summary>
     /// Gets whether execution has finished.
     /// </summary>
-    [ObservableProperty]
-    public partial bool IsCompleted { get; private set; }
+    public bool IsCompleted { get; private set; }
 
     /// <summary>
     /// Gets whether the job completed without throwing an error.
     /// </summary>
-    [ObservableProperty]
-    public partial bool IsSuccess { get; private set; }
+    public bool IsSuccess { get; private set; }
 
     /// <summary>
     /// Gets the final string output once completed.
     /// </summary>
-    [ObservableProperty]
-    public partial string? Output { get; private set; }
+    public string? Output { get; private set; }
 
     /// <summary>
     /// Gets the error message when <see cref="IsSuccess"/> is <see langword="false"/>.
     /// </summary>
-    [ObservableProperty]
-    public partial string? ErrorMessage { get; private set; }
+    public string? ErrorMessage { get; private set; }
 
     private readonly CancellationTokenSource _stopCts;
     private readonly Action<ChatBackgroundJob>? _onStopRequested;
     private int _turnHoldReleased;
+    private int _isAutoWakeSuppressed;
+    private int _isStopRequested;
+
+    /// <summary>
+    /// Gets whether cooperative cancellation has been requested for this background job.
+    /// </summary>
+    public bool IsStopRequested => Volatile.Read(ref _isStopRequested) != 0;
+
+    /// <summary>
+    /// Gets whether completion of this job should record its result without automatically waking the model.
+    /// </summary>
+    public bool IsAutoWakeSuppressed => Volatile.Read(ref _isAutoWakeSuppressed) != 0;
 
     /// <summary>
     /// Initializes a tracked background job.
@@ -116,15 +119,25 @@ public sealed partial class ChatBackgroundJob : ObservableObject
         }
 
         OwnerTurn?.DecrementActiveBackgroundJobs();
-        OwnerContext.NotifyTurnStateChanged();
+        OwnerContext.DispatchAsync(OwnerContext.NotifyTurnStateChanged).Detach();
     }
 
     /// <summary>
     /// Requests cooperative cancellation of this background job.
     /// </summary>
-    public void RequestStop()
+    public void RequestStop(bool shouldSuppressAutoWake = false)
     {
+        if (shouldSuppressAutoWake)
+        {
+            Interlocked.Exchange(ref _isAutoWakeSuppressed, 1);
+        }
+
         if (IsCompleted) return;
+        if (Interlocked.Exchange(ref _isStopRequested, 1) == 0)
+        {
+            OwnerTurn?.Invalidate();
+        }
+
         _onStopRequested?.Invoke(this);
         try
         {
@@ -216,16 +229,21 @@ public sealed partial class ChatBackgroundJob : ObservableObject
 public sealed class ChatBackgroundJobManager : IDisposable
 {
     /// <summary>
-    /// Gets the UI-thread-observed list of currently running background jobs.
+    /// Gets a snapshot of currently running background jobs in registration order.
     /// </summary>
-    public IReadOnlyBindableList<ChatBackgroundJob> ActiveJobs { get; }
+    public IReadOnlyList<ChatBackgroundJob> ActiveJobs
+    {
+        get
+        {
+            using var scope = _sync.EnterScope();
+            return _orderedJobs.AsValueEnumerable().Where(static j => !j.IsCompleted).ToArray();
+        }
+    }
 
     private readonly RootChatContext _root;
     private readonly Lock _sync = new();
     private readonly Dictionary<string, ChatBackgroundJob> _jobsById = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatBackgroundJob> _orderedJobs = [];
-    private readonly SourceList<ChatBackgroundJob> _activeJobsSource = new();
-    private readonly CompositeDisposable _disposables = new(2);
 
     private int _nextJobNumber;
     private bool _isDisposed;
@@ -236,11 +254,15 @@ public sealed class ChatBackgroundJobManager : IDisposable
     public ChatBackgroundJobManager(RootChatContext root)
     {
         _root = root;
-        ActiveJobs = _activeJobsSource
-            .Connect()
-            .ObserveOnAvaloniaDispatcher()
-            .BindEx(_disposables);
-        _activeJobsSource.DisposeWith(_disposables);
+    }
+
+    /// <summary>
+    /// Returns the currently running background jobs owned by <paramref name="turn"/> in registration order.
+    /// </summary>
+    public IReadOnlyList<ChatBackgroundJob> GetActiveTurnJobs(ChatTurn turn)
+    {
+        using var scope = _sync.EnterScope();
+        return _orderedJobs.AsValueEnumerable().Where(j => !j.IsCompleted && ReferenceEquals(j.OwnerTurn, turn)).ToArray();
     }
 
     /// <summary>
@@ -269,20 +291,20 @@ public sealed class ChatBackgroundJobManager : IDisposable
             stopCts,
             onStopRequested);
 
-        ownerTurn?.IncrementActiveBackgroundJobs();
         using (_sync.EnterScope())
         {
             ObjectDisposedException.ThrowIf(_isDisposed, this);
             _jobsById.Add(jobId, job);
             _orderedJobs.Add(job);
-            _activeJobsSource.Add(job);
         }
-        ownerContext.NotifyTurnStateChanged();
+
+        ownerTurn?.IncrementActiveBackgroundJobs();
+        ownerContext.DispatchAsync(ownerContext.NotifyTurnStateChanged).Detach();
 
         _root.StartBackgroundOperation(
                 async rootToken =>
                 {
-                    await using var linkedStop = rootToken.Register(job.RequestStop);
+                    await using var linkedStop = rootToken.Register(() => job.RequestStop());
                     var isSuccess = false;
                     string? errorMessage = null;
                     string? output;
@@ -321,10 +343,6 @@ public sealed class ChatBackgroundJobManager : IDisposable
                     }
 
                     job.MarkCompleted(isSuccess, output, errorMessage);
-                    using (_sync.EnterScope())
-                    {
-                        _activeJobsSource.Remove(job);
-                    }
 
                     try
                     {
@@ -342,6 +360,18 @@ public sealed class ChatBackgroundJobManager : IDisposable
             .Detach();
 
         return job;
+    }
+
+    /// <summary>
+    /// Gets whether any detached background job in this session is still running.
+    /// </summary>
+    public bool HasActiveJobs
+    {
+        get
+        {
+            using var scope = _sync.EnterScope();
+            return _orderedJobs.AsValueEnumerable().Any(static j => !j.IsCompleted);
+        }
     }
 
     /// <summary>
@@ -379,6 +409,24 @@ public sealed class ChatBackgroundJobManager : IDisposable
     }
 
     /// <summary>
+    /// Stops running background jobs belonging to <paramref name="context"/> (or all session jobs when <paramref name="context"/> is the root).
+    /// </summary>
+    public void StopContextJobs(ChatContext context, bool shouldSuppressAutoWake = false)
+    {
+        var isRoot = ReferenceEquals(context, _root);
+        ChatBackgroundJob[] running;
+        using (_sync.EnterScope())
+        {
+            running = _orderedJobs.AsValueEnumerable().Where(j => !j.IsCompleted && (isRoot || ReferenceEquals(j.OwnerContext, context))).ToArray();
+        }
+
+        foreach (var job in running)
+        {
+            job.RequestStop(shouldSuppressAutoWake);
+        }
+    }
+
+    /// <summary>
     /// Stops all currently running background jobs in this session.
     /// </summary>
     public void StopAll()
@@ -410,7 +458,5 @@ public sealed class ChatBackgroundJobManager : IDisposable
             _jobsById.Clear();
             _orderedJobs.Clear();
         }
-
-        _disposables.Dispose();
     }
 }

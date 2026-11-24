@@ -1318,9 +1318,6 @@
     <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
         <value>Tur tamamlandı</value>
     </data>
-    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
-        <value>{0} arka plan görevi bekleniyor…</value>
-    </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>Devam Ediyor</value>
     </data>
@@ -5099,11 +5096,11 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
         <value>Mesaj gönder</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_BackgroundJobRunning" xml:space="preserve">
         <value>Arka planda çalışıyor</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
-        <value>Bu arka plan görevini durdur</value>
+    <data name="ActivityMarker_CancelButton_ToolTip" xml:space="preserve">
+        <value>Bu etkinliği durdur</value>
     </data>
     <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
         <value>Temizle</value>

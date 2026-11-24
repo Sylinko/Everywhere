@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
+using Everywhere.Harness;
 using Tabler.Avalonia;
 
 namespace Everywhere.Views;
@@ -51,26 +54,54 @@ public class ChatMessagePresentationRow(ChatContext context, ChatMessageNode nod
 public sealed class PendingAssistantPresentationRow : ChatPresentationRow;
 
 /// <summary>
-/// Displays a lightweight activity marker when a turn stays open waiting for active background tasks.
+/// Projects one active detached background job as an inline timeline activity marker.
 /// </summary>
-public sealed partial class BackgroundJobWaitingPresentationRow(ChatTurn turn) : ActivityItemPresentationRow
+public sealed class BackgroundJobWaitingPresentationRow(ChatBackgroundJob job) : ActivityItemPresentationRow
 {
-    public override object Source => _turn;
+    public ChatBackgroundJob Job { get; } = job;
 
-    public override DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
+    public string Label => Job.Label;
 
-    public override DateTimeOffset? FinishedAt => null;
+    public override object Source => Job;
 
-    public override bool IsRunning => ActiveCount > 0;
+    public override DateTimeOffset CreatedAt => Job.StartedAt;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsRunning))]
-    public partial int ActiveCount { get; private set; }
+    public override DateTimeOffset? FinishedAt => _finishedAt;
 
-    private readonly ChatTurn _turn = turn;
+    public override bool IsRunning => _isRunning;
+
+    public override bool CanCancel => _isRunning && !_isStopRequested;
+
+    private DateTimeOffset? _finishedAt = job.FinishedAt;
+    private bool _isRunning = !job.IsCompleted;
+    private bool _isStopRequested = job.IsStopRequested;
 
     /// <inheritdoc />
-    public override void Refresh() => ActiveCount = _turn.ActiveBackgroundJobCount;
+    public override void Refresh()
+    {
+        var wasRunning = _isRunning;
+        var wasCanCancel = CanCancel;
+        _finishedAt = Job.FinishedAt;
+        _isRunning = !Job.IsCompleted;
+        _isStopRequested = Job.IsStopRequested;
+
+        if (wasRunning != _isRunning)
+        {
+            OnPropertyChanged(nameof(FinishedAt));
+            OnPropertyChanged(nameof(IsRunning));
+        }
+
+        if (wasCanCancel != CanCancel)
+        {
+            NotifyCancelCommandChanged();
+        }
+    }
+
+    protected override void CancelCore()
+    {
+        Job.RequestStop();
+        Refresh();
+    }
 }
 
 /// <summary>
@@ -99,12 +130,30 @@ public abstract partial class ActivityItemPresentationRow : ChatPresentationRow
     /// <summary>Gets whether the activity is blocked on explicit user interaction.</summary>
     public virtual bool IsWaitingForUserInput => false;
 
+    /// <summary>Gets whether this activity currently exposes an inline stop action.</summary>
+    public virtual bool CanCancel => false;
+
+    /// <summary>Gets the inline cancellation command when <see cref="CanCancel"/> is <see langword="true"/>.</summary>
+    public ICommand? CancelCommand => CanCancel ? _cancelCommand ??= new RelayCommand(CancelCore) : null;
+
     [ObservableProperty] public partial bool IsExpanded { get; set; }
+
+    private RelayCommand? _cancelCommand;
 
     /// <summary>
     /// Captures current activity values without changing identity or user expansion state.
     /// </summary>
     public abstract void Refresh();
+
+    protected virtual void CancelCore()
+    {
+    }
+
+    protected void NotifyCancelCommandChanged()
+    {
+        OnPropertyChanged(nameof(CanCancel));
+        OnPropertyChanged(nameof(CancelCommand));
+    }
 }
 
 /// <summary>Projects one reasoning span as a compact, independently expandable activity.</summary>
@@ -175,6 +224,8 @@ public sealed class FunctionCallActivityItemPresentationRow(
 
     public override bool IsWaitingForUserInput => State.IsWaitingForUserInput;
 
+    public override bool CanCancel => State.CanCancel;
+
     private ChatFunctionState _state = functionCall.Capture();
 
     /// <summary>
@@ -183,12 +234,20 @@ public sealed class FunctionCallActivityItemPresentationRow(
     public override void Refresh()
     {
         var wasRunning = IsRunning;
+        var wasCanCancel = CanCancel;
         SetProperty(ref _state, FunctionCall.Capture(), nameof(State));
         if (wasRunning != IsRunning)
         {
             OnPropertyChanged(nameof(IsRunning));
         }
+
+        if (wasCanCancel != CanCancel)
+        {
+            NotifyCancelCommandChanged();
+        }
     }
+
+    protected override void CancelCore() => FunctionCall.TryCancel();
 }
 
 /// <summary>
@@ -215,6 +274,8 @@ public sealed class BusyActivityItemPresentationRow(ChatBusyActivity activity) :
 
     public override bool IsRunning => FinishedAt is null;
 
+    public override bool CanCancel => _state.CanCancel;
+
     internal ChatMessageNode? Owner => Activity.Owner;
 
     internal AssistantChatMessageSpan? AnchorSpan => Activity.AnchorSpan;
@@ -230,13 +291,20 @@ public sealed class BusyActivityItemPresentationRow(ChatBusyActivity activity) :
             return;
         }
 
+        var wasCanCancel = CanCancel;
         _state = state;
         OnPropertyChanged(nameof(Icon));
         OnPropertyChanged(nameof(HeaderKey));
         OnPropertyChanged(nameof(SecondaryHeaderKey));
         OnPropertyChanged(nameof(FinishedAt));
         OnPropertyChanged(nameof(IsRunning));
+        if (wasCanCancel != CanCancel)
+        {
+            NotifyCancelCommandChanged();
+        }
     }
+
+    protected override void CancelCore() => Activity.TryCancel();
 }
 
 /// <summary>

@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
 using Everywhere.Collections;
+using Everywhere.Harness;
 using Everywhere.Utilities;
 using Serilog;
 
@@ -675,6 +676,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         private readonly Dictionary<ChatMessageNode, ProcessSummaryPresentationRow> _summaryRows = new(ReferenceEqualityComparer.Instance);
         private readonly Dictionary<ProcessSummaryPresentationRow, List<ChatPresentationRow>> _summaryContents = new();
         private readonly Dictionary<ChatBusyActivity, BusyActivityItemPresentationRow> _busyRows = new(ReferenceEqualityComparer.Instance);
+        private readonly Dictionary<ChatBackgroundJob, BackgroundJobWaitingPresentationRow> _backgroundJobWaitingRows = new(ReferenceEqualityComparer.Instance);
         private readonly Action _conversationStateChanged;
         private readonly ChatTurn? _turn;
         private readonly ChatContext _context;
@@ -687,8 +689,6 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         /// folded process summary or running-to-idle transition window so they avoid nested cards.
         /// </summary>
         private const int InlineActivityLimit = 1;
-
-        private BackgroundJobWaitingPresentationRow? _backgroundJobWaitingRow;
 
         private readonly SourceList<ChatPresentationRow> _visibleRows = new();
         private readonly Dictionary<ChatMessageNode, ChatMessagePresentationRow> _messageRows = new(ReferenceEqualityComparer.Instance);
@@ -705,6 +705,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         private IReadOnlyList<ChatMessageNode> _nodes = [];
         private IReadOnlyList<ChatPresentationRow> _projectedRows = [];
         private IReadOnlyList<BusyActivityItemPresentationRow> _busyActivities = [];
+        private IReadOnlyList<BackgroundJobWaitingPresentationRow> _backgroundJobWaitingActivities = [];
         private bool _isDisposed;
 
         // Only this ingress flag crosses threads. Rows, caches and collections remain UI-owned.
@@ -792,6 +793,26 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 {
                     row = new BusyActivityItemPresentationRow(activity);
                     _busyRows.Add(activity, row);
+                }
+
+                row.Refresh();
+                return row;
+            }).ToArray();
+
+            var activeBackgroundJobs = _turn is { HasActiveBackgroundJobs: true }
+                ? _context.Root.BackgroundJobs.GetActiveTurnJobs(_turn)
+                : [];
+            foreach (var removed in _backgroundJobWaitingRows.Keys.AsValueEnumerable().Except(activeBackgroundJobs).ToArray())
+            {
+                _backgroundJobWaitingRows.Remove(removed);
+            }
+
+            _backgroundJobWaitingActivities = activeBackgroundJobs.AsValueEnumerable().Select(job =>
+            {
+                if (!_backgroundJobWaitingRows.TryGetValue(job, out var row))
+                {
+                    row = new BackgroundJobWaitingPresentationRow(job);
+                    _backgroundJobWaitingRows.Add(job, row);
                 }
 
                 row.Refresh();
@@ -969,13 +990,10 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
             AssistantChatMessage[] turnAssistants,
             bool isLastSegment)
         {
-            var segmentAssistants = segmentNodes
-                .AsValueEnumerable()
-                .Where(static node => node.Message is AssistantChatMessage)
-                .ToArray();
+            var segmentAssistants = segmentNodes.AsValueEnumerable().Where(static node => node.Message is AssistantChatMessage).ToArray();
             var latestNode = segmentAssistants.LastOrDefault();
             var latest = latestNode?.Message as AssistantChatMessage;
-            var hasActiveBackgroundJobs = _turn?.HasActiveBackgroundJobs is true;
+            var hasActiveBackgroundJobs = _turn?.HasActiveBackgroundJobs is true || _backgroundJobWaitingActivities.Count > 0;
             var isForegroundBusy = isLastSegment && latest?.IsBusy is true;
             var isRunning = isLastSegment && (isForegroundBusy || hasActiveBackgroundJobs);
 
@@ -994,9 +1012,10 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 {
                     desired.Add(GetPendingRow(latestNode));
                 }
-                else if (!isForegroundBusy && hasActiveBackgroundJobs && _turn is not null)
+
+                if (_backgroundJobWaitingActivities.Count > 0)
                 {
-                    desired.Add(GetBackgroundJobWaitingRow(_turn));
+                    desired.AddRange(_backgroundJobWaitingActivities);
                 }
 
                 if (latestNode is not null)
@@ -1013,7 +1032,7 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
                 return;
             }
 
-            if (latest.IsCanceled)
+            if (latest.IsCanceled || isLastSegment && segmentNodes[^1].Message is BackgroundJobNotificationChatMessage)
             {
                 AppendCompletedProcess(segmentNodes[0], rows, desired);
                 if (isLastSegment)
@@ -1325,13 +1344,6 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
 
         private PendingAssistantPresentationRow GetPendingRow(ChatMessageNode node) =>
             _pendingRows.GetValueOrDefault(node) ?? (_pendingRows[node] = new PendingAssistantPresentationRow());
-
-        private BackgroundJobWaitingPresentationRow GetBackgroundJobWaitingRow(ChatTurn turn)
-        {
-            _backgroundJobWaitingRow ??= new BackgroundJobWaitingPresentationRow(turn);
-            _backgroundJobWaitingRow.Refresh();
-            return _backgroundJobWaitingRow;
-        }
 
         private TurnFooterPresentationRow GetFooterRow(
             ChatMessageNode assistantNode,

@@ -1069,51 +1069,6 @@
                 Margin="6,2" Padding="8,6"
                 Background="{DynamicResource LightCardBackgroundColor}"
                 CornerRadius="{DynamicResource XlCornerRadius}"
-                IsVisible="{Binding !!ChatContextManager.Current.Root.BackgroundJobs.ActiveJobs.Count}">
-                <StackPanel Spacing="4">
-                  <DockPanel HorizontalSpacing="6">
-                    <TablerIcon
-                      DockPanel.Dock="Left" VerticalAlignment="Center"
-                      Foreground="{DynamicResource MutedColor}"
-                      Kind="Stack2"
-                      Size="{DynamicResource FontSizeM}"/>
-                    <TextBlock
-                      Classes="Caption Muted" VerticalAlignment="Center"
-                      Text="{I18N {x:Static LocaleKey.ChatWindow_BackgroundJobs_Header}}"/>
-                  </DockPanel>
-
-                  <ItemsControl ItemsSource="{Binding ChatContextManager.Current.Root.BackgroundJobs.ActiveJobs}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="harness:ChatBackgroundJob">
-                        <DockPanel
-                          Margin="0,1" HorizontalSpacing="6"
-                          LastChildFill="True">
-                          <Button
-                            Classes="Ghost Compact" DockPanel.Dock="Right"
-                            Padding="2" VerticalAlignment="Center"
-                            Command="{Binding #Self.ViewModel.StopBackgroundJobCommand}"
-                            CommandParameter="{Binding}"
-                            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_BackgroundJobs_Stop_ToolTip}}">
-                            <TablerIcon
-                              Kind="X"
-                              Size="{DynamicResource FontSizeS}"/>
-                          </Button>
-                          <TextBlock
-                            Classes="Caption" VerticalAlignment="Center"
-                            MaxLines="1"
-                            Text="{Binding Label}"
-                            TextTrimming="CharacterEllipsis"/>
-                        </DockPanel>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </StackPanel>
-              </shadui:SmoothBorder>
-
-              <shadui:SmoothBorder
-                Margin="6,2" Padding="8,6"
-                Background="{DynamicResource LightCardBackgroundColor}"
-                CornerRadius="{DynamicResource XlCornerRadius}"
                 IsVisible="{Binding !!ChatContextManager.Current.PendingInputs.WaitingItems.Count}">
                 <StackPanel Spacing="4">
                   <DockPanel

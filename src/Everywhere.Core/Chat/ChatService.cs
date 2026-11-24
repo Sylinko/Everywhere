@@ -156,20 +156,17 @@ public sealed partial class ChatService : IChatService
 
         if (!chatContext.IsBusy)
         {
-            if (ShouldWaitForCurrentTurnBackgroundJobs(chatContext) && deliveryMode == ChatInputDeliveryMode.Steer)
+            message.DeliveryMode = null;
+            if (await SendMessageAsync(chatContext, message, customAssistant))
             {
-                if (await SendSteerInCurrentTurnAsync(chatContext, message, customAssistant))
-                {
-                    return true;
-                }
+                return true;
             }
-            else if (!ShouldWaitForCurrentTurnBackgroundJobs(chatContext))
+        }
+        else if (!chatContext.HasForegroundOperation && deliveryMode == ChatInputDeliveryMode.Steer)
+        {
+            if (await SendSteerInCurrentTurnAsync(chatContext, message, customAssistant))
             {
-                message.DeliveryMode = null;
-                if (await SendMessageAsync(chatContext, message, customAssistant))
-                {
-                    return true;
-                }
+                return true;
             }
         }
 
@@ -239,7 +236,7 @@ public sealed partial class ChatService : IChatService
     /// <inheritdoc />
     public bool CanResume(ChatContext chatContext)
     {
-        if (chatContext.IsTurnActive || chatContext.Data.IsDisposed)
+        if (chatContext.IsBusy || chatContext.Data.IsDisposed)
         {
             return false;
         }
@@ -266,7 +263,7 @@ public sealed partial class ChatService : IChatService
     /// <inheritdoc />
     public void Resume(ChatContext chatContext)
     {
-        if (chatContext.IsTurnActive || chatContext.Data.IsDisposed)
+        if (chatContext.IsBusy || chatContext.Data.IsDisposed)
         {
             return;
         }
@@ -420,7 +417,7 @@ public sealed partial class ChatService : IChatService
             throw new InvalidOperationException("Only assistant messages can be retried.");
         }
 
-        if (chatContext.IsTurnActive)
+        if (chatContext.IsBusy)
         {
             return;
         }
@@ -494,6 +491,11 @@ public sealed partial class ChatService : IChatService
             throw new InvalidOperationException("Only assistant messages can be continued.");
         }
 
+        if (chatContext.IsBusy)
+        {
+            return;
+        }
+
         EnsureDrainHook(chatContext);
         var chatData = node.Data;
         var customAssistant = _settings.Model.SelectedCustomAssistant;
@@ -538,6 +540,11 @@ public sealed partial class ChatService : IChatService
     public void CompactContext()
     {
         var chatContext = _chatContextManager.Current;
+        if (chatContext.IsBusy)
+        {
+            return;
+        }
+
         var chatData = chatContext.Data;
         var assistant = _settings.Model.SelectedCustomAssistant;
 
@@ -599,21 +606,14 @@ public sealed partial class ChatService : IChatService
             _logger.ToExceptionHandler());
     }
 
-    private readonly Dictionary<ChatContext, Action> _steerHooks = [];
-
     private void EnsureDrainHook(ChatContext chatContext)
     {
         chatContext.ForegroundOperationCompleted -= HandleForegroundOperationCompleted;
         chatContext.ForegroundOperationCompleted += HandleForegroundOperationCompleted;
-
-        if (_steerHooks.ContainsKey(chatContext))
-        {
-            return;
-        }
-
-        Action hook = () => TryAutoStartPendingDrain(chatContext);
-        _steerHooks.Add(chatContext, hook);
-        chatContext.PendingInputs.SteerRequested += hook;
+        chatContext.SteerRequested -= HandleSteerRequested;
+        chatContext.SteerRequested += HandleSteerRequested;
+        chatContext.Canceled -= HandleContextCanceled;
+        chatContext.Canceled += HandleContextCanceled;
     }
 
     private void HandleForegroundOperationCompleted(ChatContext chatContext)
@@ -621,42 +621,104 @@ public sealed partial class ChatService : IChatService
         TryAutoStartPendingDrain(chatContext);
     }
 
-    private static bool ShouldWaitForCurrentTurnBackgroundJobs(ChatContext chatContext) =>
-        chatContext.Data.SelectedTurns.LastOrDefault()?.HasActiveBackgroundJobs == true;
+    private void HandleSteerRequested(ChatContext chatContext)
+    {
+        TryAutoStartPendingDrain(chatContext);
+    }
+
+    private static void HandleContextCanceled(ChatContext chatContext)
+    {
+        var wakes = chatContext.PendingInputs.TakeAllWakeNotifications();
+        if (wakes.Count > 0)
+        {
+            AppendBackgroundJobNotificationsAsync(chatContext, wakes, onFinally: null)
+                .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+        }
+    }
 
     private void HandleBackgroundJobCompleted(ChatBackgroundJob job)
     {
-        var targetContext = job.OwnerContext.IsBusy ? job.OwnerContext : job.OwnerContext.Root;
+        var targetContext = job.OwnerContext.HasForegroundOperation ? job.OwnerContext : job.OwnerContext.Root;
         if (targetContext.Data.IsDisposed || !targetContext.Root.CanAcceptWork)
         {
             job.ReleaseTurnHold();
             return;
         }
 
+        var notification = new ChatBackgroundJobNotification(
+            job.JobId,
+            job.ToolName,
+            job.Label,
+            job.IsSuccess,
+            job.Output,
+            job.ErrorMessage,
+            job.FinishedAt ?? DateTimeOffset.UtcNow);
+        if (job.IsAutoWakeSuppressed)
+        {
+            AppendBackgroundJobNotificationsAsync(targetContext, [notification], job.ReleaseTurnHold)
+                .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+            return;
+        }
+
         EnsureDrainHook(targetContext);
-        targetContext.PendingInputs.EnqueueWakeNotification(
-            new ChatBackgroundJobNotification(
-                job.JobId,
-                job.ToolName,
-                job.Label,
-                job.IsSuccess,
-                job.Output,
-                job.ErrorMessage,
-                job.FinishedAt ?? DateTimeOffset.UtcNow));
+        targetContext.PendingInputs.EnqueueWakeNotification(notification);
 
         // Release the turn hold only after the wake notification is queued so Queue drain cannot race ahead.
         job.ReleaseTurnHold();
         TryAutoStartPendingDrain(targetContext);
     }
 
+    private static async Task AppendBackgroundJobNotificationsAsync(
+        ChatContext targetContext,
+        IReadOnlyList<ChatBackgroundJobNotification> notifications,
+        Action? onFinally
+    )
+    {
+        try
+        {
+            if (targetContext.Data.IsDisposed || !targetContext.Root.CanAcceptWork)
+            {
+                return;
+            }
+
+            await targetContext.DispatchAsync(() =>
+            {
+                if (targetContext.Data.IsDisposed || targetContext.Data.SelectedNodes.Count == 0)
+                {
+                    return;
+                }
+
+                var tail = targetContext.Data.SelectedNodes[^1];
+                targetContext.Data.RecordPathChoices(tail);
+                foreach (var wake in notifications)
+                {
+                    tail = targetContext.Data.Append(
+                        tail,
+                        new BackgroundJobNotificationChatMessage(
+                            wake.JobId,
+                            wake.ToolName,
+                            wake.Label,
+                            wake.IsSuccess,
+                            wake.Output ?? string.Empty,
+                            wake.ErrorMessage,
+                            wake.CreatedAt));
+                }
+            });
+        }
+        finally
+        {
+            onFinally?.Invoke();
+        }
+    }
+
     private void TryAutoStartPendingDrain(ChatContext chatContext)
     {
-        if (chatContext.IsBusy)
+        if (chatContext.HasForegroundOperation)
         {
             return;
         }
 
-        if (ShouldWaitForCurrentTurnBackgroundJobs(chatContext))
+        if (chatContext.HasActiveBackgroundJobsForCurrentTurn)
         {
             if (chatContext.PendingInputs.HasPendingInTurnWork)
             {
@@ -676,7 +738,7 @@ public sealed partial class ChatService : IChatService
 
     private bool StartPendingDrainOperation(ChatContext chatContext)
     {
-        var canStart = ShouldWaitForCurrentTurnBackgroundJobs(chatContext)
+        var canStart = chatContext.HasActiveBackgroundJobsForCurrentTurn
             ? chatContext.PendingInputs.HasPendingInTurnWork
             : chatContext.PendingInputs.HasPendingTurnWork;
         if (!canStart)
@@ -712,7 +774,7 @@ public sealed partial class ChatService : IChatService
                 }
             }
 
-            if (ShouldWaitForCurrentTurnBackgroundJobs(chatContext))
+            if (chatContext.HasActiveBackgroundJobsForCurrentTurn)
             {
                 break;
             }
@@ -1907,7 +1969,8 @@ public sealed partial class ChatService : IChatService
 
             error = ex;
             await AppendFallbackDisplayBlockAsync();
-            record = new ToolResultRecord(content.Name, pluginName, content.CallId, new PromptTokenLimit(4096, $"Error: {ex.Message}"));
+            var errorText = context.IsUserCanceled ? "Tool execution was canceled by the user." : $"Error: {ex.Message}";
+            record = new ToolResultRecord(content.Name, pluginName, content.CallId, new PromptTokenLimit(4096, errorText));
         }
         finally
         {

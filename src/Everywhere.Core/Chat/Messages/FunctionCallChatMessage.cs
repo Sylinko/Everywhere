@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Everywhere.Chat.Plugins;
 using Everywhere.Harness;
-using Everywhere.I18N;
 using Tabler.Avalonia;
 using MessagePack;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
@@ -146,6 +145,13 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         _activityPresentationSlots.AsValueEnumerable().Any(pair => pair.Value.IsWaitingForUserInput);
 
     /// <summary>
+    /// Gets whether any active tool invocation in this message currently supports individual user cancellation.
+    /// </summary>
+    [IgnoreMember]
+    [JsonIgnore]
+    public bool CanCancel => IsBusy && _activityPresentationSlots.AsValueEnumerable().Any(static pair => pair.Value.CanCancel);
+
+    /// <summary>
     /// Attachments associated with this action message. Used to provide additional context of a tool call result.
     /// </summary>
     [IgnoreMember]
@@ -245,8 +251,36 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
             isRunning ? null : FinishedAt,
             isRunning,
             IsWaitingForUserInput,
+            isRunning && CanCancel,
             DisplayBlocks,
             imageViews is null ? Array.Empty<ViewImageFunctionResult>() : imageViews);
+    }
+
+    /// <summary>
+    /// Requests user cancellation of the active foreground invocation(s) represented by this message.
+    /// </summary>
+    public bool TryCancel()
+    {
+        if (!IsBusy)
+        {
+            return false;
+        }
+
+        var hasCanceled = false;
+        foreach (var pair in _activityPresentationSlots)
+        {
+            if (pair.Value.TryCancel())
+            {
+                hasCanceled = true;
+            }
+        }
+
+        if (hasCanceled)
+        {
+            NotifyActivityPreviewChanged();
+        }
+
+        return hasCanceled;
     }
 
     private void HandleDisplayBlocksChanged(object? sender, EventArgs e) => NotifyChanged();
@@ -424,6 +458,12 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     {
         private ActivityPreviewSnapshot _snapshot = new(null, 0);
         private int _userInputWaitCount;
+        private Action? _cancelAction;
+
+        /// <summary>
+        /// Gets whether this invocation currently has an active user-cancellation callback.
+        /// </summary>
+        public bool CanCancel => Volatile.Read(ref _cancelAction) is not null;
 
         public ChatPluginActivityPreview? Preview
         {
@@ -442,6 +482,24 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         public bool IsWaitingForUserInput => Volatile.Read(ref _userInputWaitCount) > 0;
 
         public ActivityPreviewSnapshot Snapshot => Volatile.Read(ref _snapshot);
+
+        internal void SetCancelAction(Action cancelAction)
+        {
+            Volatile.Write(ref _cancelAction, cancelAction);
+            owner.NotifyActivityPreviewChanged();
+        }
+
+        internal bool TryCancel()
+        {
+            var action = Interlocked.Exchange(ref _cancelAction, null);
+            if (action is null)
+            {
+                return false;
+            }
+
+            action();
+            return true;
+        }
 
         /// <summary>
         /// Starts one invocation-local user interaction. Only the zero-to-one transition changes

@@ -37,6 +37,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol.Client;
 using NSubstitute;
 
 namespace Everywhere.Core.Tests.Harness;
@@ -90,7 +91,7 @@ public sealed class QueueAndSteerTests
         await block.WriteInputAsync("resume\r");
 
         await WaitUntilAsync(() => root.Data.SelectedNodes.Any(n => n.Message is BackgroundJobNotificationChatMessage), TimeSpan.FromSeconds(15));
-        await WaitUntilAsync(() => !root.IsTurnActive, TimeSpan.FromSeconds(10));
+        await WaitUntilAsync(() => !root.IsBusy, TimeSpan.FromSeconds(10));
         var note = root.Data.SelectedNodes.Select(n => n.Message).OfType<BackgroundJobNotificationChatMessage>().Single();
         Assert.Multiple(() =>
         {
@@ -137,7 +138,7 @@ public sealed class QueueAndSteerTests
         using var process = System.Diagnostics.Process.GetProcessById(int.Parse(match.Groups[1].Value));
 
         job.RequestStop();
-        await WaitUntilAsync(() => job.IsCompleted && !root.IsBusy && !root.IsTurnActive, TimeSpan.FromSeconds(10));
+        await WaitUntilAsync(() => job.IsCompleted && !root.IsBusy, TimeSpan.FromSeconds(10));
         await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
         Dispatcher.UIThread.RunJobs();
 
@@ -166,7 +167,7 @@ public sealed class QueueAndSteerTests
             didDetach = execution.TryMoveToBackground();
             isBackgrounded = execution.IsBackgrounded;
             if (rootRef is null) throw new InvalidOperationException("RootChatContext was not initialized.");
-            rootRef.Cancel();
+            rootRef.Root.CancelOperation(rootRef);
             raceTriggered.TrySetResult();
             return await toolRelease.Task.WaitAsync(ct);
         });
@@ -179,7 +180,7 @@ public sealed class QueueAndSteerTests
         rootRef = root;
         await harness.ChatService.SubmitMessageAsync(root, new UserChatMessage("Start detach race", []), harness.Assistant, ChatInputDeliveryMode.Queue);
         await raceTriggered.Task.WaitAsync(TimeSpan.FromSeconds(5));
-        await WaitUntilAsync(() => root.BackgroundJobs.ActiveJobs.Count == 1 && !root.IsBusy, TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => root.BackgroundJobs.ActiveJobs.Count == 1 && !root.HasForegroundOperation && root.IsBusy, TimeSpan.FromSeconds(5));
         Dispatcher.UIThread.RunJobs();
 
         var job = root.BackgroundJobs.ActiveJobs.Single();
@@ -197,7 +198,7 @@ public sealed class QueueAndSteerTests
         });
 
         toolRelease.TrySetResult("bg survived cancel");
-        await WaitUntilAsync(() => job.IsCompleted && !root.IsTurnActive, TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => job.IsCompleted && !root.IsBusy, TimeSpan.FromSeconds(5));
         Assert.Multiple(() =>
         {
             Assert.That(job.IsSuccess, Is.True);
@@ -235,7 +236,7 @@ public sealed class QueueAndSteerTests
 
         var job = root.BackgroundJobs.ActiveJobs.Single();
         job.RequestStop();
-        await WaitUntilAsync(() => job.IsCompleted && !root.IsTurnActive, TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => job.IsCompleted && !root.IsBusy, TimeSpan.FromSeconds(5));
 
         Assert.Multiple(() =>
         {
@@ -485,7 +486,8 @@ public sealed class QueueAndSteerTests
 
             // Steer user message & reply already committed while background job stays alive.
             Assert.That(root.BackgroundJobs.ActiveJobs, Has.Count.EqualTo(1));
-            Assert.That(root.IsBusy, Is.False);
+            Assert.That(root.HasForegroundOperation, Is.False);
+            Assert.That(root.IsBusy, Is.True);
             Assert.That(root.HasWork, Is.True);
             Assert.That(nodesDuringBg.Any(n => n.Message is UserChatMessage { Content: "Switch topic", DeliveryMode: ChatInputDeliveryMode.Steer }), Is.True);
             Assert.That(nodesDuringBg[^1].Message.ToString(), Is.EqualTo("Handled steer while bg runs."));
@@ -945,18 +947,19 @@ public sealed class QueueAndSteerTests
 
         // Wait until foreground pauses and async presentation preheating publishes the waiting row.
         await WaitUntilAsync(
-            () => !harness.Root.IsBusy &&
+            () => !harness.Root.HasForegroundOperation &&
                   harness.Root.HasActiveBackgroundJobsForCurrentTurn &&
                   presentation.Rows.OfType<BackgroundJobWaitingPresentationRow>().Any(),
             TimeSpan.FromSeconds(5));
         Dispatcher.UIThread.RunJobs();
         Assert.Multiple(() =>
         {
-            Assert.That(harness.Root.IsTurnActive, Is.True);
+            Assert.That(harness.Root.IsBusy, Is.True);
             Assert.That(harness.Root.Data.SelectedTurns, Has.Count.EqualTo(1));
             var waitingRow = presentation.Rows.OfType<BackgroundJobWaitingPresentationRow>().Single();
-            Assert.That(waitingRow.ActiveCount, Is.EqualTo(1));
+            Assert.That(waitingRow.Label, Is.Not.Empty);
             Assert.That(waitingRow.IsRunning, Is.True);
+            Assert.That(waitingRow.CanCancel, Is.True);
         });
 
         // Retrying while only a detached background job holds the turn open must be ignored.
@@ -980,7 +983,7 @@ public sealed class QueueAndSteerTests
         // Release background job -> Turn 1 wakes, finishes, THEN Queue launches Turn 2.
         toolRelease.TrySetResult("bg done");
         await turn2Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
-        await WaitUntilAsync(() => !harness.Root.IsTurnActive && harness.Root.Data.SelectedTurns.Count == 2, TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => !harness.Root.IsBusy && harness.Root.Data.SelectedTurns.Count == 2, TimeSpan.FromSeconds(5));
         await Task.Delay(500);
         Dispatcher.UIThread.RunJobs();
 
@@ -1046,7 +1049,7 @@ public sealed class QueueAndSteerTests
             Assert.That(
                 await harness.ChatService.SendMessageAsync(harness.Root, new UserChatMessage("Read the file", []), harness.Assistant),
                 Is.True);
-            await WaitUntilAsync(() => !harness.Root.IsTurnActive, TimeSpan.FromSeconds(5));
+            await WaitUntilAsync(() => !harness.Root.IsBusy, TimeSpan.FromSeconds(5));
 
             var toolMessage = harness.Root.Data.SelectedNodes
                 .Select(n => n.Message)
@@ -1112,9 +1115,9 @@ public sealed class QueueAndSteerTests
             await harness.ChatService.SubmitMessageAsync(harness.Root, new UserChatMessage("Steer hint", []), harness.Assistant, ChatInputDeliveryMode.Steer),
             Is.True);
 
-        await WaitUntilAsync(() => !harness.Root.IsBusy && harness.Root.HasActiveBackgroundJobsForCurrentTurn, TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => !harness.Root.HasForegroundOperation && harness.Root.HasActiveBackgroundJobsForCurrentTurn, TimeSpan.FromSeconds(5));
         toolRelease.TrySetResult("bg done");
-        await WaitUntilAsync(() => !harness.Root.IsTurnActive, TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => !harness.Root.IsBusy, TimeSpan.FromSeconds(5));
         await Task.Delay(300);
         Dispatcher.UIThread.RunJobs();
 
@@ -1124,7 +1127,7 @@ public sealed class QueueAndSteerTests
         Assert.That(originalFirstAssistant, Is.Not.SameAs(originalLastAssistant));
 
         harness.ChatService.Retry(harness.Root, originalLastAssistant);
-        await WaitUntilAsync(() => !harness.Root.IsTurnActive, TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => !harness.Root.IsBusy, TimeSpan.FromSeconds(5));
         Dispatcher.UIThread.RunJobs();
 
         var retriedTurn = harness.Root.Data.SelectedTurns.Single();
@@ -1170,6 +1173,331 @@ public sealed class QueueAndSteerTests
             var switchedBackFooter = presentation.Rows.OfType<TurnFooterPresentationRow>().Single();
             Assert.That(switchedBackFooter.Branch.Node, Is.SameAs(retriedAssistant));
             Assert.That(switchedBackFooter.Branch.ChoiceIndex, Is.EqualTo(1));
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task Cancel_WhenBackgroundJobsRunning_StopsJobsSuppressesWakeAndClearsIsBusy()
+    {
+        var toolStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var toolRelease = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var toolCanceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var plugin = new SteerTestPlugin(onConsentTool: async (_, execution, ct) =>
+        {
+            execution.TryMoveToBackground();
+            toolStarted.TrySetResult();
+            await using var reg = ct.Register(() => toolCanceled.TrySetResult());
+            return await toolRelease.Task.WaitAsync(ct);
+        });
+        using var harness = new TestChatHarness(extraPlugin: plugin);
+        harness.ConfigureHandler((n, _, _) => Task.FromResult(n switch
+        {
+            1 => CreateToolBatchSseResponse(("c-bg-cancel", "consent_probe", "{}")),
+            2 => CreateTextSseResponse("Started in background."),
+            _ => throw new AssertionException("Global Cancel must suppress the wake LLM request.")
+        }));
+
+        var root = harness.Root;
+        var presentation = root.Presentation;
+        await presentation.PrepareInitialWindowAsync();
+        await harness.ChatService.SubmitMessageAsync(
+            root,
+            new UserChatMessage("Run background tool", []),
+            harness.Assistant,
+            ChatInputDeliveryMode.Queue);
+
+        await toolStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => root.BackgroundJobs.ActiveJobs.Count == 1 && !root.HasForegroundOperation && root.IsBusy, TimeSpan.FromSeconds(5));
+        Assert.That(root.Data.Metadata.States.HasFlag(ChatContextMetadataStates.Busy), Is.True);
+
+        root.Cancel();
+
+        await toolCanceled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(
+            () => !root.IsBusy &&
+                  root.Data.SelectedNodes.Any(n => n.Message is BackgroundJobNotificationChatMessage) &&
+                  presentation.Rows.OfType<AssistantCanceledPresentationRow>().Any(),
+            TimeSpan.FromSeconds(5));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.IsBusy, Is.False);
+            Assert.That(root.Data.Metadata.States.HasFlag(ChatContextMetadataStates.Busy), Is.False);
+            Assert.That(root.BackgroundJobs.ActiveJobs, Is.Empty);
+            Assert.That(harness.Requests, Has.Count.EqualTo(2));
+            Assert.That(harness.ChatService.CanResume(root), Is.True);
+            Assert.That(presentation.Rows.OfType<AssistantCanceledPresentationRow>().Single().IsContinuationTarget, Is.True);
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task BackgroundJobWaitingRow_WhenCancelCommandExecuted_StopsOnlyTargetJobDisablesImmediatelyAndWakesModel()
+    {
+        var invocationCount = 0;
+        var jobsStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var jobACanceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var jobATeardownGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var jobBRelease = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var infiniteTcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var plugin = new SteerTestPlugin(onConsentTool: async (_, execution, ct) =>
+        {
+            var index = Interlocked.Increment(ref invocationCount);
+            execution.TryMoveToBackground();
+            if (index == 2) jobsStarted.TrySetResult();
+
+            if (index == 1)
+            {
+                await using var reg = ct.Register(() => jobACanceled.TrySetResult());
+                try
+                {
+                    return await infiniteTcs.Task.WaitAsync(ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    await jobATeardownGate.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                    throw;
+                }
+            }
+
+            return await jobBRelease.Task.WaitAsync(ct);
+        });
+        using var harness = new TestChatHarness(extraPlugin: plugin);
+        harness.ConfigureHandler((n, _, _) => Task.FromResult(n switch
+        {
+            1 => CreateToolBatchSseResponse(
+                ("c-wait-a", "consent_probe", """{"title":"Job Alpha"}"""),
+                ("c-wait-b", "consent_probe", """{"title":"Job Beta"}""")),
+            2 => CreateTextSseResponse("Started two jobs in background."),
+            3 => CreateTextSseResponse("Stopped Job Alpha as requested."),
+            _ => CreateTextSseResponse("Job Beta also completed.")
+        }));
+
+        var root = harness.Root;
+        var presentation = root.Presentation;
+        await harness.ChatService.SubmitMessageAsync(
+            root,
+            new UserChatMessage("Run two bg tasks", []),
+            harness.Assistant,
+            ChatInputDeliveryMode.Queue);
+
+        await jobsStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => !root.HasForegroundOperation && root.IsBusy, TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => presentation.Rows.OfType<BackgroundJobWaitingPresentationRow>().Count() == 2, TimeSpan.FromSeconds(5));
+
+        var waitingRows = presentation.Rows.OfType<BackgroundJobWaitingPresentationRow>().ToArray();
+        var rowA = waitingRows.Single(r => r.Label == "Job Alpha");
+        var rowB = waitingRows.Single(r => r.Label == "Job Beta");
+        Assert.Multiple(() =>
+        {
+            Assert.That(rowA.CancelCommand, Is.Not.Null);
+            Assert.That(rowB.CancelCommand, Is.Not.Null);
+        });
+
+        rowA.CancelCommand!.Execute(null);
+        await jobACanceled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Dispatcher.UIThread.RunJobs();
+
+        // While Job Alpha is still tearing down, repeated clicks are prevented and Job Beta remains unaffected.
+        Assert.Multiple(() =>
+        {
+            Assert.That(rowA.Job.IsStopRequested, Is.True);
+            Assert.That(rowA.CanCancel, Is.False);
+            Assert.That(rowA.CancelCommand, Is.Null);
+            Assert.That(rowB.Job.IsStopRequested, Is.False);
+            Assert.That(rowB.CanCancel, Is.True);
+            Assert.That(rowB.CancelCommand, Is.Not.Null);
+        });
+
+        jobATeardownGate.TrySetResult();
+        await WaitUntilAsync(() => harness.Requests.Count == 3 && !root.HasForegroundOperation && root.IsBusy, TimeSpan.FromSeconds(5));
+        Dispatcher.UIThread.RunJobs();
+
+        var remainingRows = presentation.Rows.OfType<BackgroundJobWaitingPresentationRow>().ToArray();
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.BackgroundJobs.ActiveJobs.Select(j => j.Label), Is.EqualTo(new[] { "Job Beta" }));
+            Assert.That(remainingRows, Has.Length.EqualTo(1));
+            Assert.That(remainingRows[0], Is.SameAs(rowB));
+            Assert.That(root.IsBusy, Is.True);
+        });
+
+        jobBRelease.TrySetResult("beta finished");
+        await WaitUntilAsync(() => !root.IsBusy && harness.Requests.Count == 4, TimeSpan.FromSeconds(5));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.BackgroundJobs.ActiveJobs, Is.Empty);
+            Assert.That(presentation.Rows.OfType<BackgroundJobWaitingPresentationRow>(), Is.Empty);
+            Assert.That(root.Data.SelectedNodes.Last().Message.ToString(), Is.EqualTo("Job Beta also completed."));
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task FunctionCallRow_WhenSingleToolCanceledInBatch_CancelsOnlyTargetToolAndContinuesTurn()
+    {
+        var toolAStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var toolBRelease = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var plugin = new SteerTestPlugin(
+            onBackgroundTool: async ct =>
+            {
+                toolAStarted.TrySetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, ct);
+                return "unexpected";
+            },
+            onConsentTool: async (_, _, ct) => await toolBRelease.Task.WaitAsync(ct));
+        using var harness = new TestChatHarness(extraPlugin: plugin);
+        harness.ConfigureHandler((n, _, _) => Task.FromResult(n == 1
+            ? CreateToolBatchSseResponse(
+                ("call-a", "bg_probe", """{"title":"slow-a"}"""),
+                ("call-b", "consent_probe", "{}"))
+            : CreateTextSseResponse("Finished with tool B.")));
+
+        var root = harness.Root;
+        var presentation = root.Presentation;
+        await harness.ChatService.SubmitMessageAsync(
+            root,
+            new UserChatMessage("Run two tools", []),
+            harness.Assistant,
+            ChatInputDeliveryMode.Queue);
+
+        await toolAStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() =>
+        {
+            var rows = presentation.Rows
+                .OfType<ActivityGroupPresentationRow>()
+                .SelectMany(static g => g.Items.OfType<FunctionCallActivityItemPresentationRow>())
+                .ToArray();
+            return rows.Length >= 2 && rows[0].CancelCommand is not null;
+        }, TimeSpan.FromSeconds(5));
+
+        var toolRows = presentation.Rows
+            .OfType<ActivityGroupPresentationRow>()
+            .SelectMany(static g => g.Items.OfType<FunctionCallActivityItemPresentationRow>())
+            .ToArray();
+        var rowA = toolRows.First(static r => r.FunctionCall.Calls.Length > 0 && r.FunctionCall.Calls[0].Id == "call-a");
+        var rowB = toolRows.First(static r => r.FunctionCall.Calls.Length > 0 && r.FunctionCall.Calls[0].Id == "call-b");
+
+        rowA.CancelCommand!.Execute(null);
+        await WaitUntilAsync(() => !rowA.IsRunning && rowA.CancelCommand is null, TimeSpan.FromSeconds(5));
+
+        Assert.That(rowB.IsRunning, Is.True);
+        toolBRelease.TrySetResult("b-ok");
+
+        await WaitUntilAsync(() => !root.IsBusy, TimeSpan.FromSeconds(5));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(rowA.FunctionCall.Results.Single().Result?.ToString(), Does.Contain("canceled by the user"));
+            Assert.That(rowB.FunctionCall.Results.Single().Result?.ToString(), Does.Contain("b-ok"));
+            Assert.That(harness.Requests, Has.Count.EqualTo(2));
+            Assert.That(root.Data.SelectedNodes.Last().Message.ToString(), Is.EqualTo("Finished with tool B."));
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task CreateScope_WhenSingleMcpStartupActivityCanceled_SkipsOnlyCanceledMcpAndRecordsReminder()
+    {
+        var slowListingStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var rpc = new McpTestServer
+        {
+            ToolListOverride = async (server, id, ct) =>
+            {
+                if (server == "slow")
+                {
+                    slowListingStarted.TrySetResult();
+                    await Task.Delay(Timeout.InfiniteTimeSpan, ct);
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new
+                        {
+                            jsonrpc = "2.0",
+                            id,
+                            result = new { tools = new[] { new { name = "lookup.file", description = server, inputSchema = McpTestServer.Schema } } }
+                        }),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            }
+        };
+
+        var services = Substitute.For<IServiceProvider>();
+        var settings = new Settings(services);
+        var http = Substitute.For<IHttpClientFactory>();
+        http.CreateClient(Arg.Any<string>()).Returns(_ => new HttpClient(rpc, false));
+        services.GetService(typeof(Settings)).Returns(settings);
+        services.GetService(typeof(IHttpClientFactory)).Returns(http);
+        services.GetService(typeof(IWatchdogManager)).Returns(Substitute.For<IWatchdogManager>());
+        services.GetService(typeof(IKeyValueStorage)).Returns(Substitute.For<IKeyValueStorage>());
+        services.GetService(typeof(IRuntimeManager)).Returns(Substitute.For<IRuntimeManager>());
+        services.GetService(typeof(ILoggerFactory)).Returns(NullLoggerFactory.Instance);
+
+        await using var pluginManager = new ChatPluginManager(
+            services,
+            [],
+            settings,
+            Substitute.For<IRuntimeManager>(),
+            NullLogger<ChatPluginManager>.Instance);
+
+        var fastPlugin = pluginManager.CreateMcpPlugin(
+            new HttpMcpTransportConfiguration
+            {
+                Name = "fast",
+                Endpoint = "https://fast.invalid/mcp",
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+        var slowPlugin = pluginManager.CreateMcpPlugin(
+            new HttpMcpTransportConfiguration
+            {
+                Name = "slow",
+                Endpoint = "https://slow.invalid/mcp",
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+        settings.Plugin.ToolEnablementRulesets[ToolSettingsKey.ForPlugin(fastPlugin)] = true;
+        settings.Plugin.ToolEnablementRulesets[ToolSettingsKey.ForPlugin(slowPlugin)] = true;
+
+        using var chatData = new ChatData();
+        var userNode = chatData.StartTurn(new UserChatMessage("Hi", []));
+        var assistantNode = chatData.Append(userNode, new AssistantChatMessage { IsBusy = true });
+        await using var root = new RootChatContext(chatData, null);
+        await root.Presentation.PrepareInitialWindowAsync();
+
+        var scopeTask = pluginManager.CreateScopeAsync(
+            new AdvancedAssistantConfiguration { ModelId = "test", SupportsToolCall = true },
+            root,
+            assistantNode,
+            null,
+            CancellationToken.None);
+
+        await slowListingStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        BusyActivityItemPresentationRow? slowRow = null;
+        await WaitUntilAsync(() =>
+        {
+            slowRow = root.Presentation.Rows
+                .OfType<ActivityGroupPresentationRow>()
+                .SelectMany(static g => g.Items.OfType<BusyActivityItemPresentationRow>())
+                .FirstOrDefault(r => r.CancelCommand is not null && r.HeaderKey.ToString()?.Contains("slow") == true);
+            return slowRow is not null;
+        }, TimeSpan.FromSeconds(5));
+
+        slowRow!.CancelCommand!.Execute(null);
+        var scope = await scopeTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(scope.Plugins.Any(p => p.Key == fastPlugin.Key && p.Functions.Count == 1), Is.True);
+            Assert.That(scope.Plugins.Any(p => p.Key == slowPlugin.Key), Is.False);
+            Assert.That(slowPlugin.Warnings, Is.Empty);
+            Assert.That(scope.TransientReminders, Has.Count.EqualTo(1));
+            Assert.That(scope.TransientReminders[0].Message, Does.Contain("slow: startup canceled by user"));
         });
     }
 
@@ -1268,8 +1596,9 @@ public sealed class QueueAndSteerTests
         private Task<string> RunConsentProbeAsync(
             [FromChatServices] IChatPluginUserInterface ui,
             [FromChatServices] IChatPluginExecutionContext execution,
-            CancellationToken cancellationToken) =>
-            _onConsentTool is null ? Task.FromResult("ok") : _onConsentTool(ui, execution, cancellationToken);
+            CancellationToken cancellationToken,
+            [System.ComponentModel.Description("Title")] string? title = null) =>
+            _onConsentTool is null ? Task.FromResult(title ?? "ok") : _onConsentTool(ui, execution, cancellationToken);
     }
 
     private sealed class TestChatHarness : IDisposable

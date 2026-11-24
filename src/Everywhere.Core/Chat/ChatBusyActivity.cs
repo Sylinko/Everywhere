@@ -38,6 +38,9 @@ public sealed class ChatBusyActivity : IBusyActivity
     /// <inheritdoc />
     public bool IsRunning => FinishedAt is null;
 
+    /// <inheritdoc />
+    public bool CanCancel => State.CanCancel;
+
     /// <summary>
     /// Gets the fixed placement owner. A null owner represents an unattached operation.
     /// </summary>
@@ -59,18 +62,22 @@ public sealed class ChatBusyActivity : IBusyActivity
     public ChatBusyActivityState State => Volatile.Read(ref _state);
 
     private ChatBusyActivityState _state;
+    private Action? _cancelAction;
 
     internal ChatBusyActivity(
         ChatMessageNode? owner,
         TablerIconKind icon,
         IDynamicLocaleKey headerKey,
         IDynamicLocaleKey? secondaryHeaderKey,
-        bool removeAfterCompletion)
+        bool removeAfterCompletion,
+        Action? cancelAction = null
+    )
     {
         Owner = owner;
         AnchorSpan = owner is { IsMessageLoaded: true, Message: AssistantChatMessage assistant } ? assistant.Items.LastOrDefault() : null;
         RemoveAfterCompletion = removeAfterCompletion;
-        _state = new ChatBusyActivityState(icon, headerKey, secondaryHeaderKey, null);
+        _cancelAction = cancelAction;
+        _state = new ChatBusyActivityState(icon, headerKey, secondaryHeaderKey, null, cancelAction is not null);
     }
 
     private void Update(Func<ChatBusyActivityState, ChatBusyActivityState> update)
@@ -83,11 +90,26 @@ public sealed class ChatBusyActivity : IBusyActivity
     }
 
     /// <inheritdoc />
+    public bool TryCancel()
+    {
+        var cancelAction = Interlocked.Exchange(ref _cancelAction, null);
+        if (cancelAction is null || !IsRunning)
+        {
+            return false;
+        }
+
+        Update(static state => state with { CanCancel = false });
+        cancelAction();
+        return true;
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
+        Interlocked.Exchange(ref _cancelAction, null);
         if (_state.FinishedAt is null)
         {
-            Volatile.Write(ref _state, _state with { FinishedAt = DateTimeOffset.UtcNow });
+            Volatile.Write(ref _state, _state with { FinishedAt = DateTimeOffset.UtcNow, CanCancel = false });
             Owner?.Turn?.CompleteActivity(this);
         }
     }
@@ -100,5 +122,6 @@ public sealed record ChatBusyActivityState(
     TablerIconKind Icon,
     IDynamicLocaleKey HeaderKey,
     IDynamicLocaleKey? SecondaryHeaderKey,
-    DateTimeOffset? FinishedAt
+    DateTimeOffset? FinishedAt,
+    bool CanCancel = false
 );

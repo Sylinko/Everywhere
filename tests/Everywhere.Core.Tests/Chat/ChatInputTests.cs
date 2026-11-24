@@ -417,7 +417,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         Assert.Multiple(() =>
         {
             Assert.That(composer.PrimaryComposerMode, Is.EqualTo(ChatComposerPrimaryMode.Send));
-            Assert.That(composer.IsTurnInactive, Is.True);
+            Assert.That(composer.IsNotBusy, Is.True);
             Assert.That(composer.RetryMessageNodeCommand.CanExecute(assistantNode), Is.True);
             Assert.That(composer.ContinueMessageNodeCommand.CanExecute(assistantNode), Is.True);
             Assert.That(composer.CompactContextCommand.CanExecute(null), Is.True);
@@ -433,7 +433,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         Assert.Multiple(() =>
         {
             Assert.That(composer.PrimaryComposerMode, Is.EqualTo(ChatComposerPrimaryMode.Queue));
-            Assert.That(composer.IsTurnInactive, Is.False);
+            Assert.That(composer.IsNotBusy, Is.False);
             Assert.That(composer.RetryMessageNodeCommand.CanExecute(assistantNode), Is.False);
             Assert.That(composer.ContinueMessageNodeCommand.CanExecute(assistantNode), Is.False);
             Assert.That(composer.CompactContextCommand.CanExecute(null), Is.False);

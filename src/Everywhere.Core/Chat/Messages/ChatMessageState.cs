@@ -91,6 +91,7 @@ public sealed record ChatFunctionState(
     DateTimeOffset? FinishedAt,
     bool IsRunning,
     bool IsWaitingForUserInput,
+    bool CanCancel,
     IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks,
     IReadOnlyList<ViewImageFunctionResult> ImageViews
 ) : ChatMessageState

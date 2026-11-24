@@ -18,7 +18,6 @@ using Everywhere.Cloud;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
-using Everywhere.Harness;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Automation;
@@ -73,26 +72,18 @@ public sealed partial class ChatWindowViewModel :
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNotBusy))]
+    [NotifyPropertyChangedFor(nameof(CanEdit))]
+    [NotifyPropertyChangedFor(nameof(CanSendMessage))]
     [NotifyPropertyChangedFor(nameof(HasDraftInput))]
     [NotifyPropertyChangedFor(nameof(CanSendDraft))]
+    [NotifyPropertyChangedFor(nameof(CanSendOppositeMode))]
     [NotifyPropertyChangedFor(nameof(CanResumeConversation))]
+    [NotifyPropertyChangedFor(nameof(PrimaryComposerMode))]
     [NotifyPropertyChangedFor(nameof(IsPrimaryButtonVisible))]
     [NotifyPropertyChangedFor(nameof(IsPrimaryButtonEnabled))]
     public partial bool IsBusy { get; private set; }
 
     public bool IsNotBusy => !IsBusy;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTurnInactive))]
-    [NotifyPropertyChangedFor(nameof(CanSendMessage))]
-    [NotifyPropertyChangedFor(nameof(CanSendOppositeMode))]
-    [NotifyPropertyChangedFor(nameof(CanEdit))]
-    [NotifyPropertyChangedFor(nameof(CanResumeConversation))]
-    [NotifyPropertyChangedFor(nameof(PrimaryComposerMode))]
-    [NotifyPropertyChangedFor(nameof(IsPrimaryButtonEnabled))]
-    public partial bool IsTurnActive { get; private set; }
-
-    public bool IsTurnInactive => !IsTurnActive;
 
     [ObservableProperty]
     public partial IReadOnlyList<Strategy>? StrategiesSnapshot { get; private set; }
@@ -113,7 +104,7 @@ public sealed partial class ChatWindowViewModel :
     /// </summary>
     public ChatMessageNode? EditingMessageNode => Input.Edit is { } edit ? ChatContextManager.Current.Data.FindNode(edit.NodeId) : null;
 
-    public bool CanEdit => !IsTurnActive && EditingMessageNode is null && CanChangeDraft;
+    public bool CanEdit => !IsBusy && EditingMessageNode is null && CanChangeDraft;
 
     public bool CanSendMessage => !IsBusy || EditingMessageNode is null;
 
@@ -124,16 +115,16 @@ public sealed partial class ChatWindowViewModel :
 
     public bool CanSendDraft => HasDraftInput && CanSendMessage && CanChangeDraft;
 
-    public bool CanSendOppositeMode => IsTurnActive && CanSendDraft;
+    public bool CanSendOppositeMode => IsBusy && CanSendDraft;
 
     public bool CanResumeConversation =>
-        !IsTurnActive &&
+        !IsBusy &&
         !HasDraftInput &&
         EditingMessageNode is null &&
         _chatService.CanResume(ChatContextManager.Current);
 
     public ChatComposerPrimaryMode PrimaryComposerMode =>
-        IsTurnActive ? Settings.ChatWindow.BusySubmissionMode == ChatInputDeliveryMode.Steer
+        IsBusy ? Settings.ChatWindow.BusySubmissionMode == ChatInputDeliveryMode.Steer
             ? ChatComposerPrimaryMode.Steer
             : ChatComposerPrimaryMode.Queue :
         CanResumeConversation ? ChatComposerPrimaryMode.Resume :
@@ -261,13 +252,6 @@ public sealed partial class ChatWindowViewModel :
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(HandleCurrentChatContextIsBusyChanged)
-        );
-        LifetimeDisposables.Add(
-            ChatContextManager.WhenValueChanged(x => x.Current)
-                .Select(context => context is { } runtime ? runtime.WhenValueChanged(x => x.IsTurnActive) : Observable.Return(false))
-                .Switch()
-                .ObserveOnAvaloniaDispatcher()
-                .Subscribe(HandleCurrentChatContextIsTurnActiveChanged)
         );
         LifetimeDisposables.Add(
             Settings.Model.WhenValueChanged(x => x.SelectedCustomAssistant)
@@ -738,7 +722,7 @@ public sealed partial class ChatWindowViewModel :
             {
                 isAccepted = await _chatService.EditAsync(destinationContext, editingMessageNode, userMessage);
             }
-            else if (destinationContext.IsTurnActive)
+            else if (destinationContext.IsBusy)
             {
                 isAccepted = await _chatService.SubmitMessageAsync(
                     destinationContext,
@@ -832,12 +816,6 @@ public sealed partial class ChatWindowViewModel :
         _chatService.ResumePendingInputs(ChatContextManager.Current);
     }
 
-    [RelayCommand]
-    private static void StopBackgroundJob(ChatBackgroundJob job)
-    {
-        job.RequestStop();
-    }
-
     [RelayCommand(CanExecute = nameof(CanEdit))]
     private void EditMessageNode(ChatMessageNode userChatMessageNode)
     {
@@ -853,20 +831,23 @@ public sealed partial class ChatWindowViewModel :
         Input.EndEdit();
     }
 
-    [RelayCommand(CanExecute = nameof(IsTurnInactive))]
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void RetryMessageNode(ChatMessageNode chatMessageNode)
     {
         _chatService.Retry(ChatContextManager.Current, chatMessageNode);
     }
 
-    [RelayCommand(CanExecute = nameof(IsTurnInactive))]
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void ContinueMessageNode(ChatMessageNode chatMessageNode)
     {
         _chatService.Continue(ChatContextManager.Current, chatMessageNode);
     }
 
-    [RelayCommand(CanExecute = nameof(IsTurnInactive))]
-    private void CompactContext() => _chatService.CompactContext();
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
+    private void CompactContext()
+    {
+        _chatService.CompactContext();
+    }
 
     [RelayCommand(CanExecute = nameof(IsBusy))]
     private void Cancel()
@@ -984,11 +965,6 @@ public sealed partial class ChatWindowViewModel :
         IsBusy = isBusy;
     }
 
-    private void HandleCurrentChatContextIsTurnActiveChanged(bool isTurnActive)
-    {
-        IsTurnActive = isTurnActive;
-    }
-
     private void UpdateCurrentContextUsageModel()
     {
         var assistant = Settings.Model.SelectedCustomAssistant;
@@ -1005,22 +981,11 @@ public sealed partial class ChatWindowViewModel :
         SendMessageOppositeModeCommand.NotifyCanExecuteChanged();
         PrimaryComposerActionCommand.NotifyCanExecuteChanged();
         ResumeConversationCommand.NotifyCanExecuteChanged();
-        CompactContextCommand.NotifyCanExecuteChanged();
-        RetryMessageNodeCommand.NotifyCanExecuteChanged();
-        ContinueMessageNodeCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnIsTurnActiveChanged(bool value)
-    {
-        SendMessageCommand.NotifyCanExecuteChanged();
-        SendMessageOppositeModeCommand.NotifyCanExecuteChanged();
-        PrimaryComposerActionCommand.NotifyCanExecuteChanged();
-        ResumeConversationCommand.NotifyCanExecuteChanged();
         EditMessageNodeCommand.NotifyCanExecuteChanged();
         CompactContextCommand.NotifyCanExecuteChanged();
         RetryMessageNodeCommand.NotifyCanExecuteChanged();
         ContinueMessageNodeCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
 
         UpdateWatermark(value, SelectedStrategy);
     }
@@ -1147,7 +1112,7 @@ public sealed partial class ChatWindowViewModel :
         OnPropertyChanged(nameof(EditingMessageNode));
         OnPropertyChanged(nameof(SelectedStrategy));
         NotifyDraftCommandsChanged();
-        UpdateWatermark(IsTurnActive, draft.SelectedStrategy);
+        UpdateWatermark(IsBusy, draft.SelectedStrategy);
     }
 
     private void NotifyDraftCommandsChanged()
@@ -1186,13 +1151,13 @@ public sealed partial class ChatWindowViewModel :
         {
             OnPropertyChanged(nameof(SelectedStrategy));
             NotifyComposerStateChanged();
-            UpdateWatermark(IsTurnActive, SelectedStrategy);
+            UpdateWatermark(IsBusy, SelectedStrategy);
         }
     }
 
-    private void UpdateWatermark(bool isTurnActive, Strategy? selectedStrategy)
+    private void UpdateWatermark(bool isBusy, Strategy? selectedStrategy)
     {
-        if (isTurnActive)
+        if (isBusy)
         {
             ChatInputAreaWatermarkKey = new DynamicLocaleKey(LocaleKey.ChatInputArea_Watermark_Busy);
         }

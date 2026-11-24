@@ -21,11 +21,13 @@ public abstract partial class ChatContext : ObservableObject
     protected ChatContext(
         ChatData data,
         ToolPatternRulesets? toolPatternRulesets,
-        GenerationApprovalState? inheritedApprovalState)
+        GenerationApprovalState? inheritedApprovalState
+    )
     {
         Data = data;
         Input = new ChatInputState(data.Metadata.Id);
         PendingInputs = new ChatPendingInputQueue(data.Metadata.Id);
+        PendingInputs.SteerRequested += HandlePendingSteerRequested;
         ToolPatternRulesets = toolPatternRulesets;
         InheritedApprovalState = inheritedApprovalState;
         Data.BranchChanged += HandleDataBranchChanged;
@@ -103,9 +105,13 @@ public abstract partial class ChatContext : ObservableObject
     public GenerationApprovalState? InheritedApprovalState { get; }
 
     /// <summary>
-    /// Gets whether this conversation currently owns an active foreground operation.
+    /// Gets whether this conversation currently owns an active foreground operation slot.
     /// </summary>
-    public bool IsBusy => Root.HasOperation(this);
+    internal bool HasForegroundOperation => Root.HasOperation(this);
+
+    internal long HardCancelEpoch => Volatile.Read(ref _hardCancelEpoch);
+
+    private long _hardCancelEpoch;
 
     /// <summary>
     /// Gets whether the latest turn on the selected branch still has running background jobs.
@@ -114,9 +120,9 @@ public abstract partial class ChatContext : ObservableObject
         Data.SelectedTurns.LastOrDefault()?.HasActiveBackgroundJobs == true;
 
     /// <summary>
-    /// Gets whether the active turn is still running either in the foreground or via detached background jobs.
+    /// Gets whether this conversation's active turn is currently running in the foreground or waiting on detached background jobs.
     /// </summary>
-    public bool IsTurnActive => IsBusy || HasActiveBackgroundJobsForCurrentTurn;
+    public bool IsBusy => HasForegroundOperation || HasActiveBackgroundJobsForCurrentTurn;
 
     /// <summary>
     /// Gets the stable UI-thread-owned projection. Runtime work never creates it implicitly.
@@ -158,7 +164,8 @@ public abstract partial class ChatContext : ObservableObject
     public async Task<bool> TryStartAsync<T>(
         Func<T> initialize,
         Func<T, CancellationToken, Task> execute,
-        IExceptionHandler exceptionHandler)
+        IExceptionHandler exceptionHandler
+    )
     {
         if (!Root.TryStartOperation(this, initialize, execute, out var initialized, out var operation))
         {
@@ -190,14 +197,27 @@ public abstract partial class ChatContext : ObservableObject
     internal event Action<ChatContext>? ForegroundOperationCompleted;
 
     /// <summary>
-    /// Requests cancellation of this conversation's current foreground operation.
+    /// Raised when the user explicitly cancels the conversation via <see cref="Cancel"/>.
+    /// </summary>
+    internal event Action<ChatContext>? Canceled;
+
+    /// <summary>
+    /// Raised when a steer message or upgrade is queued while foreground work is idle.
+    /// </summary>
+    internal event Action<ChatContext>? SteerRequested;
+
+    /// <summary>
+    /// Requests hard cancellation of this conversation's active foreground operation and detached background jobs.
     /// Auto-draining of remaining queued user messages is paused so pending inputs stay editable.
     /// The context remains available after that operation has finished its cleanup.
     /// </summary>
     public void Cancel()
     {
         PendingInputs.PauseDrain();
+        Interlocked.Increment(ref _hardCancelEpoch);
         Root.CancelOperation(this);
+        Root.BackgroundJobs.StopContextJobs(this, shouldSuppressAutoWake: true);
+        Canceled?.Invoke(this);
     }
 
     /// <summary>
@@ -247,20 +267,19 @@ public abstract partial class ChatContext : ObservableObject
         return Root.ApplyAsync(() => Data.SelectChild(parent, child));
     }
 
-    internal void NotifyOperationChanged()
-    {
-        OnPropertyChanged(nameof(IsBusy));
-        NotifyTurnStateChanged();
-        SetMetadataState(ChatContextMetadataStates.Busy, IsBusy);
-    }
+    internal void NotifyOperationChanged() => NotifyTurnStateChanged();
 
     internal void NotifyTurnStateChanged()
     {
+        OnPropertyChanged(nameof(HasForegroundOperation));
         OnPropertyChanged(nameof(HasActiveBackgroundJobsForCurrentTurn));
-        OnPropertyChanged(nameof(IsTurnActive));
+        OnPropertyChanged(nameof(IsBusy));
+        SetMetadataState(ChatContextMetadataStates.Busy, IsBusy);
     }
 
     private void HandleDataBranchChanged(object? sender, EventArgs e) => NotifyTurnStateChanged();
+
+    private void HandlePendingSteerRequested() => SteerRequested?.Invoke(this);
 
     internal void NotifyForegroundOperationCompleted() => ForegroundOperationCompleted?.Invoke(this);
 
@@ -329,6 +348,7 @@ public abstract partial class ChatContext : ObservableObject
     internal void ReleaseResources()
     {
         Data.BranchChanged -= HandleDataBranchChanged;
+        PendingInputs.SteerRequested -= HandlePendingSteerRequested;
         VisualState.Dispose();
         foreach (var item in PendingInputs.ReleaseAll())
         {

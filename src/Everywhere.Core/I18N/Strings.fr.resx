@@ -1318,9 +1318,6 @@
     <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
         <value>Tour terminé</value>
     </data>
-    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
-        <value>En attente de {0} tâche(s) en arrière-plan…</value>
-    </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>En cours</value>
     </data>
@@ -5099,11 +5096,11 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
     <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
         <value>Envoyer le message</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_BackgroundJobRunning" xml:space="preserve">
         <value>Exécution en arrière-plan</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
-        <value>Arrêter cette tâche en arrière-plan</value>
+    <data name="ActivityMarker_CancelButton_ToolTip" xml:space="preserve">
+        <value>Arrêter cette activité</value>
     </data>
     <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
         <value>Vider</value>

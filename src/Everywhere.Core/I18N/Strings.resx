@@ -1318,9 +1318,6 @@
     <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
         <value>Turn completed</value>
     </data>
-    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
-        <value>Waiting for {0} background task(s)...</value>
-    </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>In Progress</value>
     </data>
@@ -5099,11 +5096,11 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
         <value>Send message</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_BackgroundJobRunning" xml:space="preserve">
         <value>Running in background</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
-        <value>Stop this background job</value>
+    <data name="ActivityMarker_CancelButton_ToolTip" xml:space="preserve">
+        <value>Stop this activity</value>
     </data>
     <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
         <value>Clear</value>

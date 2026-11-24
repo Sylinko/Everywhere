@@ -13,7 +13,9 @@ partial class ChatData
         IDynamicLocaleKey headerKey,
         bool removeAfterCompletion,
         IDynamicLocaleKey? secondaryHeaderKey = null,
-        ChatMessage? owner = null)
+        ChatMessage? owner = null,
+        Action? cancelAction = null
+    )
     {
         var ownerNode = owner is null ? SelectedNodes.AsValueEnumerable().LastOrDefault() : owner.Owner;
         if (ownerNode?.Turn is null || !ReferenceEquals(ownerNode.Data, this) || IsDisposed)
@@ -21,7 +23,7 @@ partial class ChatData
             ownerNode = null;
         }
 
-        var activity = new ChatBusyActivity(ownerNode, icon, headerKey, secondaryHeaderKey, removeAfterCompletion);
+        var activity = new ChatBusyActivity(ownerNode, icon, headerKey, secondaryHeaderKey, removeAfterCompletion, cancelAction);
         ownerNode?.Turn?.AddActivity(activity);
         return activity;
     }

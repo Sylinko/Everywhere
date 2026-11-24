@@ -103,6 +103,11 @@ public sealed class FunctionCallContext : IChatPluginExecutionContext, IChatPlug
     /// </summary>
     public Task BackgroundMovedTask => _backgroundMovedTcs.Task;
 
+    /// <summary>
+    /// Gets whether this invocation was canceled individually via its UI activity marker.
+    /// </summary>
+    public bool IsUserCanceled => Volatile.Read(ref _isUserCanceled) != 0;
+
     private const int DetachStateForeground = 0;
     private const int DetachStateDetached = 1;
     private const int DetachStateForegroundCanceled = 2;
@@ -112,6 +117,7 @@ public sealed class FunctionCallContext : IChatPluginExecutionContext, IChatPlug
     private readonly Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> _reviewAsync;
     private readonly TaskCompletionSource _backgroundMovedTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private int _detachState;
+    private int _isUserCanceled;
 
     /// <summary>
     /// Creates the invocation and registers its presentation slot inside the root execution domain.
@@ -195,6 +201,16 @@ public sealed class FunctionCallContext : IChatPluginExecutionContext, IChatPlug
 
     internal bool TryCompleteForeground() =>
         Interlocked.CompareExchange(ref _detachState, DetachStateForegroundCompleted, DetachStateForeground) == DetachStateForeground;
+
+    internal void EnableUserCancellation(Action cancelExecution)
+    {
+        _activityPresentationSlot.SetCancelAction(() =>
+        {
+            if (!TryCancelForeground()) return;
+            Interlocked.Exchange(ref _isUserCanceled, 1);
+            cancelExecution();
+        });
+    }
 
     /// <inheritdoc />
     public IDisposable BeginForegroundBudget(TimeSpan budget)

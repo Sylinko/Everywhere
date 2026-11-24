@@ -428,6 +428,10 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
         {
             switch (error)
             {
+                case HandledException { InnerException: OperationCanceledException }:
+                case OperationCanceledException:
+                    return "startup canceled by user";
+                case HandledException { InnerException: TimeoutException }:
                 case TimeoutException:
                     return "startup timed out";
                 case ClientTransportClosedException closed when McpTransportPreconditions.IsWindowsCommandNotFound(closed):
@@ -456,6 +460,7 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
     )
     {
         IBusyActivity? activity = null;
+        using var mcpCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         try
         {
             await StartMcpClientAsync(
@@ -472,7 +477,18 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
                         TablerIconKind.Mcp,
                         headerKey,
                         removeAfterCompletion: true,
-                        owner: ownerNode.Message));
+                        owner: ownerNode.Message,
+                        cancelAction: () =>
+                        {
+                            try
+                            {
+                                // ReSharper disable once AccessToDisposedClosure
+                                mcpCts.Cancel();
+                            }
+                            catch (ObjectDisposedException)
+                            {
+                            }
+                        }));
                 },
                 new StartupStatusProgress(statusKey =>
                 {
@@ -482,11 +498,15 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
                             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
                     }
                 }),
-                cancellationToken);
+                mcpCts.Token);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
+        }
+        catch (OperationCanceledException ex)
+        {
+            startupErrors[mcpChatPlugin.Id] = ToHandledStartupException(mcpChatPlugin, ex);
         }
         catch (McpPluginRemovedException)
         {

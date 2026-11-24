@@ -25,4 +25,10 @@ public interface IBusyActivity : IDisposable
 
     /// <summary>Gets whether the operation can still receive updates.</summary>
     bool IsRunning { get; }
+
+    /// <summary>Gets whether this running activity supports user-initiated cancellation.</summary>
+    bool CanCancel { get; }
+
+    /// <summary>Requests cancellation of this individual activity if supported.</summary>
+    bool TryCancel();
 }

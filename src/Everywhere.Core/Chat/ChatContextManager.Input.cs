@@ -7,6 +7,7 @@ namespace Everywhere.Chat;
 
 partial class ChatContextManager
 {
+
     #region IAsyncInitializer
 
     /// <inheritdoc />
@@ -51,7 +52,7 @@ partial class ChatContextManager
         root.PendingInputs.Restore(
             snapshot.PendingInputs,
             ResolveCustomAssistant,
-            pauseDrain: !root.IsTurnActive);
+            pauseDrain: !root.IsBusy);
     }
 
     private CustomAssistant? ResolveCustomAssistant(Guid id) =>
@@ -80,9 +81,7 @@ partial class ChatContextManager
             return;
         }
 
-        var write = root.Data.Metadata.IsTemporary ?
-            new ChatInputWrite(null, []) :
-            ChatInputWrite.Capture(root.Input, root.PendingInputs);
+        var write = root.Data.Metadata.IsTemporary ? new ChatInputWrite(null, []) : ChatInputWrite.Capture(root.Input, root.PendingInputs);
         write = write with { IsNewChatDraft = ReferenceEquals(root, _newChatDraft) };
         lock (_pendingInputs)
         {

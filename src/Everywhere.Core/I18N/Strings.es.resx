@@ -1318,9 +1318,6 @@
     <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
         <value>Turno completado</value>
     </data>
-    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
-        <value>Esperando {0} tarea(s) en segundo plano…</value>
-    </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>En Progreso</value>
     </data>
@@ -5099,11 +5096,11 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
     <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
         <value>Enviar mensaje</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_BackgroundJobRunning" xml:space="preserve">
         <value>Ejecutándose en segundo plano</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
-        <value>Detener esta tarea en segundo plano</value>
+    <data name="ActivityMarker_CancelButton_ToolTip" xml:space="preserve">
+        <value>Detener esta actividad</value>
     </data>
     <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
         <value>Vaciar</value>

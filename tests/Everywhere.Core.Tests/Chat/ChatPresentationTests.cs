@@ -1488,7 +1488,7 @@ public class ChatPresentationTests
     }
 
     [AvaloniaTest]
-    public void ActivityTemplates_SecondaryHeadersAndBackgroundJobIcons_UseMutedAndNeutralColorsAndSingleLineLayout()
+    public async Task ActivityTemplates_SecondaryHeadersAndBackgroundJobIcons_UseMutedAndNeutralColorsAndSingleLineLayout()
     {
         var application = Application.Current ?? throw new InvalidOperationException("The test application is not initialized.");
         if (!application.Styles.OfType<ShadUI.ShadTheme>().Any())
@@ -1513,11 +1513,18 @@ public class ChatPresentationTests
                 output: "ok",
                 errorMessage: null,
                 DateTimeOffset.UtcNow));
-        var waitingData = new ChatData();
-        var waitingUserNode = waitingData.StartTurn(new UserChatMessage("Run bg", []));
-        var waitingTurn = waitingUserNode.Turn ?? throw new InvalidOperationException();
-        waitingTurn.IncrementActiveBackgroundJobs();
-        var waitingRow = new BackgroundJobWaitingPresentationRow(waitingTurn);
+        await using var waitingContext = Context(new UserChatMessage("Run bg", []));
+        var waitingTurn = waitingContext.Data.SelectedTurns[0];
+        using var waitingStopCts = new CancellationTokenSource();
+        var waitingJob = new ChatBackgroundJob(
+            "bg-1",
+            "execute_in_terminal",
+            "dotnet test",
+            waitingContext,
+            waitingTurn,
+            sourceMessage: null,
+            waitingStopCts);
+        var waitingRow = new BackgroundJobWaitingPresentationRow(waitingJob);
         waitingRow.Refresh();
         var waitingMarker = BuildActivityMarker(waitingRow);
         var bgMarker = BuildActivityMarker(bgRow);
@@ -1569,10 +1576,11 @@ public class ChatPresentationTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(waitingRow.ActiveCount, Is.EqualTo(1));
+                Assert.That(waitingRow.Label, Is.EqualTo("dotnet test"));
                 Assert.That(waitingRow.IsRunning, Is.True);
+                Assert.That(waitingRow.CanCancel, Is.True);
                 Assert.That(waitingMarker.IsExpandable, Is.False);
-                Assert.That(waitingMarker.IsSecondaryHeaderVisible, Is.False);
+                Assert.That(waitingMarker.IsSecondaryHeaderVisible, Is.True);
                 Assert.That(waitingMarker.IsRunning, Is.True);
                 Assert.That(waitingIcon.Kind, Is.EqualTo(TablerIconKind.Clock));
                 Assert.That(waitingMarker.GetVisualDescendants().OfType<ShadUI.Loading>(), Is.Empty);
@@ -1597,6 +1605,109 @@ public class ChatPresentationTests
                     Assert.That(s.X, Is.GreaterThan(h.X));
                     Assert.That(Math.Abs(s.Y - h.Y), Is.LessThan(8));
                 }
+            });
+        }
+        finally
+        {
+            hostWindow.Close();
+        }
+    }
+
+    [AvaloniaTest]
+    public async Task ActivityMarker_WhenCancelCommandPresent_ShowsStopButtonWithoutExpandingAndRespectsReadonly()
+    {
+        var user = new UserChatMessage("Work", []);
+        var assistant = new AssistantChatMessage { IsBusy = true };
+        await using var context = Context(user, assistant);
+
+        var cancelCount = 0;
+        var activity = context.Data.StartActivity(
+            TablerIconKind.Mcp,
+            new DirectLocaleKey("Starting MCP"),
+            removeAfterCompletion: false,
+            cancelAction: () => cancelCount++);
+        Dispatcher.UIThread.RunJobs();
+        await context.Presentation.PrepareInitialWindowAsync();
+
+        var group = context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
+        var busyRow = group.Items.OfType<BusyActivityItemPresentationRow>().Single();
+        Assert.That(busyRow.CancelCommand, Is.Not.Null);
+
+        var application = Application.Current ?? throw new InvalidOperationException("The test application is not initialized.");
+        if (!application.Styles.OfType<ShadUI.ShadTheme>().Any())
+        {
+            application.Styles.Add(new ShadUI.ShadTheme());
+        }
+
+        var marker = BuildActivityMarker(busyRow);
+        marker.IsExpandable = false;
+
+        var hostWindow = new Window
+        {
+            Width = 600,
+            Height = 200,
+            RequestedThemeVariant = ThemeVariant.Dark
+        };
+        hostWindow.Resources["FontSizeXs"] = 10d;
+        hostWindow.Resources["FontSizeS"] = 12.8d;
+        hostWindow.Resources["FontSizeM"] = 14d;
+        hostWindow.Resources["FontSizeL"] = 16d;
+        hostWindow.Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://Everywhere.Core/"))
+        {
+            Source = new Uri("avares://Everywhere.Core/Views/Controls/ConditionalContentControl.axaml")
+        });
+        hostWindow.Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://Everywhere.Core/"))
+        {
+            Source = new Uri("avares://Everywhere.Core/Views/Chat/ActivityMarker.axaml")
+        });
+        hostWindow.Content = new StackPanel
+        {
+            Children = { marker }
+        };
+
+        try
+        {
+            hostWindow.Show();
+            Dispatcher.UIThread.RunJobs();
+            hostWindow.UpdateLayout();
+
+            var cancelButton = marker.GetVisualDescendants().OfType<Button>().Single(static b => b.Name == "PART_CancelButton");
+            Assert.Multiple(() =>
+            {
+                Assert.That(marker.CanCancel, Is.True);
+                Assert.That(marker.Classes, Does.Contain(":interactive"));
+                Assert.That(marker.Classes, Does.Contain(":cancellable"));
+                Assert.That(cancelButton.IsVisible, Is.True);
+                Assert.That(ToolTip.GetTip(cancelButton), Is.EqualTo(Everywhere.Core.I18N.LocaleKey.ActivityMarker_CancelButton_ToolTip.I18N()));
+                Assert.That(marker.IsExpanded, Is.False);
+            });
+
+            marker.IsCancelEnabled = false;
+            Dispatcher.UIThread.RunJobs();
+            Assert.Multiple(() =>
+            {
+                Assert.That(marker.CanCancel, Is.False);
+                Assert.That(marker.Classes, Does.Not.Contain(":interactive"));
+                Assert.That(cancelButton.IsVisible, Is.False);
+            });
+
+            marker.IsCancelEnabled = true;
+            Dispatcher.UIThread.RunJobs();
+            Assert.That(marker.CanCancel, Is.True);
+
+            cancelButton.Command?.Execute(cancelButton.CommandParameter);
+            Dispatcher.UIThread.RunJobs();
+            busyRow.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(cancelCount, Is.EqualTo(1));
+                Assert.That(activity.CanCancel, Is.False);
+                Assert.That(busyRow.CancelCommand, Is.Null);
+                Assert.That(marker.CanCancel, Is.False);
+                Assert.That(marker.IsExpanded, Is.False);
+                Assert.That(cancelButton.IsVisible, Is.False);
             });
         }
         finally

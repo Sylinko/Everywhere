@@ -1318,9 +1318,6 @@
     <data name="ChatPresentationRowPresenter_TurnCompleted" xml:space="preserve">
         <value>輪次已完成</value>
     </data>
-    <data name="ChatPresentationRowPresenter_WaitingForBackgroundJobs" xml:space="preserve">
-        <value>正在等待 {0} 個背景任務完成…</value>
-    </data>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>進行中</value>
     </data>
@@ -5099,11 +5096,11 @@
     <data name="ChatWindowSettings_SendKeyMode_Header" xml:space="preserve">
         <value>傳送訊息</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Header" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_BackgroundJobRunning" xml:space="preserve">
         <value>背景執行中</value>
     </data>
-    <data name="ChatWindow_BackgroundJobs_Stop_ToolTip" xml:space="preserve">
-        <value>停止此背景工作</value>
+    <data name="ActivityMarker_CancelButton_ToolTip" xml:space="preserve">
+        <value>停止此項</value>
     </data>
     <data name="ChatWindow_PendingInputs_ClearButton" xml:space="preserve">
         <value>清空</value>

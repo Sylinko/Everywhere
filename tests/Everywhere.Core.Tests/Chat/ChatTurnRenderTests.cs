@@ -358,6 +358,63 @@ public sealed partial class ChatTurnRenderTests
         }
     }
 
+    [AvaloniaTest]
+    public async Task ActivityMarker_WhenItemsControlIsReadonly_DisablesNestedCancelButton()
+    {
+        var user = new UserChatMessage("Work", []);
+        var assistant = new AssistantChatMessage { IsBusy = true };
+        await using var context = new RootChatContext(new ChatData(), null);
+        context.Data.StartTurn(user);
+        context.Data.Append(assistant);
+        context.Data.StartActivity(
+            TablerIconKind.Mcp,
+            new DirectLocaleKey("Starting MCP"),
+            removeAfterCompletion: false,
+            owner: assistant,
+            cancelAction: static () => { });
+        Dispatcher.UIThread.RunJobs();
+        await context.Presentation.PrepareInitialWindowAsync();
+
+        var group = context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
+        group.IsExpanded = true;
+        var row = group.Items.OfType<BusyActivityItemPresentationRow>().Single();
+
+        var items = new ChatMessageItemsControl
+        {
+            ChatContext = context,
+            Margin = new Thickness(20)
+        };
+        var window = CreateWindow(new ScrollViewer { Content = items }, 720, 340);
+        try
+        {
+            window.Show();
+            SettleLayout(window);
+
+            var marker = items.GetVisualDescendants().OfType<ActivityMarker>().Single(control => ReferenceEquals(control.DataContext, row));
+            var cancelButton = marker.GetVisualDescendants().OfType<Button>().Single(static button => button.Name == "PART_CancelButton");
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(marker.IsCancelEnabled, Is.True);
+                Assert.That(marker.CanCancel, Is.True);
+                Assert.That(cancelButton.IsVisible, Is.True);
+            }
+
+            items.IsReadonly = true;
+            SettleLayout(window);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(marker.IsCancelEnabled, Is.False);
+                Assert.That(marker.CanCancel, Is.False);
+                Assert.That(cancelButton.IsVisible, Is.False);
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     private static Window CreateWindow(Control content, double width, double height)
     {
         var window = new Window { Width = width, Height = height };

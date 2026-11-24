@@ -14,7 +14,8 @@ partial class ChatService
         ChatContext chatContext,
         AssistantChatMessage assistant,
         ModelInvocationResult invocation,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var session = generationContext.Session;
         var scope = generationContext.PluginScope;
@@ -27,7 +28,7 @@ partial class ChatService
         var activeBackgroundLock = new Lock();
         var activeBackgroundableContexts = new List<FunctionCallContext>();
 
-        void HandleSteerRequested()
+        void HandleSteerRequestedInternal()
         {
             FunctionCallContext[] snapshot;
             using (activeBackgroundLock.EnterScope())
@@ -42,7 +43,8 @@ partial class ChatService
             }
         }
 
-        chatContext.PendingInputs.SteerRequested += HandleSteerRequested;
+        var hardCancelEpoch = chatContext.HardCancelEpoch;
+        chatContext.PendingInputs.SteerRequested += HandleSteerRequestedInternal;
         try
         {
             for (var start = 0; start < batch.Count;)
@@ -83,7 +85,7 @@ partial class ChatService
         }
         finally
         {
-            chatContext.PendingInputs.SteerRequested -= HandleSteerRequested;
+            chatContext.PendingInputs.SteerRequested -= HandleSteerRequestedInternal;
             await chatContext.DispatchAsync(() =>
             {
                 foreach (var item in batch)
@@ -126,9 +128,9 @@ partial class ChatService
                     await chatContext.DispatchAsync(() =>
                     {
                         message.Icon = TablerIconKind.X;
-                        var errorKey = scope is null ?
-                            LocaleKey.HandledFunctionInvokingException_FunctionCallingDisabled :
-                            LocaleKey.HandledFunctionInvokingException_FunctionNotFound;
+                        var errorKey = scope is null
+                            ? LocaleKey.HandledFunctionInvokingException_FunctionCallingDisabled
+                            : LocaleKey.HandledFunctionInvokingException_FunctionNotFound;
                         message.ErrorMessageKey = new FormattedDynamicLocaleKey(
                             errorKey,
                             new DirectLocaleKey(call.Name));
@@ -148,17 +150,32 @@ partial class ChatService
                 try
                 {
                     // The invocation captures approval mode on entry, not when the batch was registered.
-                    context = await chatContext.DispatchAsync(() => new FunctionCallContext(
-                        generationContext.Services,
-                        chatContext,
-                        binding,
-                        message,
-                        call,
-                        _settings.Plugin.ToolBypassApprovalRulesets,
-                        chatContext.GenerationContext ?? generationContext,
-                        ReviewToolApprovalAsync,
-                        supportsBackgrounding,
-                        jobCts.Token));
+                    context = await chatContext.DispatchAsync(() =>
+                    {
+                        var created = new FunctionCallContext(
+                            generationContext.Services,
+                            chatContext,
+                            binding,
+                            message,
+                            call,
+                            _settings.Plugin.ToolBypassApprovalRulesets,
+                            chatContext.GenerationContext ?? generationContext,
+                            ReviewToolApprovalAsync,
+                            supportsBackgrounding,
+                            jobCts.Token);
+                        created.EnableUserCancellation(() =>
+                        {
+                            try
+                            {
+                                // ReSharper disable once AccessToDisposedClosure
+                                jobCts.Cancel();
+                            }
+                            catch (ObjectDisposedException)
+                            {
+                            }
+                        });
+                        return created;
+                    });
 
                     if (supportsBackgrounding)
                     {
@@ -190,6 +207,7 @@ partial class ChatService
 
                             var activeContext = context;
                             var hasGenerationHold = generationContext.TryRetainBackgroundHold();
+
                             async Task<(ToolResultRecord Record, Exception? Error)> TrackDetachedExecutionAsync()
                             {
                                 try
@@ -216,6 +234,10 @@ partial class ChatService
                                 TrackDetachedExecutionAsync(),
                                 jobCts,
                                 HandleBackgroundJobCompleted);
+                            if (chatContext.HardCancelEpoch != hardCancelEpoch)
+                            {
+                                job.RequestStop(shouldSuppressAutoWake: true);
+                            }
 
                             await activeContext.DetachPresentationAsync();
                             await chatContext.DispatchAsync(() =>
@@ -288,7 +310,8 @@ partial class ChatService
         GenerationContext generationContext,
         ChatContext chatContext,
         AssistantChatMessage assistant,
-        ModelInvocationResult invocation)
+        ModelInvocationResult invocation
+    )
     {
         var (span, batch) = CreateToolBatch(generationContext.Session, generationContext.PluginScope, invocation.FunctionCalls);
         await chatContext.DispatchAsync(() =>
@@ -308,7 +331,8 @@ partial class ChatService
     private static Task MarkRemainingToolsSkippedAsync(
         ChatContext chatContext,
         List<ToolInvocation> batch,
-        int startIndex)
+        int startIndex
+    )
     {
         return chatContext.DispatchAsync(() =>
         {
@@ -326,7 +350,8 @@ partial class ChatService
     private static (AssistantChatMessageFunctionCallSpan Span, List<ToolInvocation> Batch) CreateToolBatch(
         ModelSession session,
         IChatPluginScope? scope,
-        IReadOnlyList<MEAI.FunctionCallContent> functionCalls)
+        IReadOnlyList<MEAI.FunctionCallContent> functionCalls
+    )
     {
         var span = new AssistantChatMessageFunctionCallSpan
         {

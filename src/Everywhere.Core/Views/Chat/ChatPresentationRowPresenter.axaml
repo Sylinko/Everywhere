@@ -49,10 +49,13 @@
 
         <DataTemplate x:DataType="v:BackgroundJobWaitingPresentationRow">
           <v:ActivityMarker
-            Margin="4,0" HorizontalSpacing="10"
+            Margin="4,0"
+            CancelCommand="{Binding CancelCommand}"
+            HorizontalSpacing="8"
+            IsCancelEnabled="{Binding !$parent[v:ChatMessageItemsControl].IsReadonly, FallbackValue=True}"
             IsExpandable="False"
             IsRunning="{Binding IsRunning}"
-            IsSecondaryHeaderVisible="False">
+            IsSecondaryHeaderVisible="{Binding Label, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
             <v:ActivityMarker.Icon>
               <TablerIcon
                 shadui:Timeline.Anchor="{Binding $self.Bounds, Converter={x:Static shadui:TimelineConverters.HalfRect}}"
@@ -63,15 +66,18 @@
             <v:ActivityMarker.Header>
               <TextBlock
                 VerticalAlignment="Center" MaxLines="1"
-                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
-                <TextBlock.Text>
-                  <I18N Key="{x:Static LocaleKey.ChatPresentationRowPresenter_WaitingForBackgroundJobs}">
-                    <Binding
-                      Mode="OneWay" Path="ActiveCount"/>
-                  </I18N>
-                </TextBlock.Text>
-              </TextBlock>
+                Text="{I18N {x:Static LocaleKey.ChatPresentationRowPresenter_BackgroundJobRunning}}"
+                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
             </v:ActivityMarker.Header>
+
+            <v:ActivityMarker.SecondaryHeader>
+              <TextBlock
+                Classes="Muted" VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeS}"
+                IsHitTestVisible="False" MaxLines="1"
+                Text="{Binding Label}"
+                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+            </v:ActivityMarker.SecondaryHeader>
           </v:ActivityMarker>
         </DataTemplate>
 
@@ -203,8 +209,9 @@
                 <v:ConditionalContentControl.TrueContent>
                   <DataTemplate x:DataType="v:ActivityGroupPresentationRow">
                     <ScrollViewer
-                      MaxHeight="320" Margin="0,8,0,0"
-                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+                      MaxHeight="320" Margin="-4,6,-4,-2"
+                      Padding="4,2" HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Hidden">
                       <Interaction.Behaviors>
                         <in:AutoScrollBehavior/>
                       </Interaction.Behaviors>
@@ -339,7 +346,10 @@
 
         <DataTemplate x:DataType="v:FunctionCallActivityItemPresentationRow">
           <v:ActivityMarker
-            Margin="4,0" HorizontalSpacing="8"
+            Margin="4,0"
+            CancelCommand="{Binding CancelCommand}"
+            HorizontalSpacing="8"
+            IsCancelEnabled="{Binding !$parent[v:ChatMessageItemsControl].IsReadonly, FallbackValue=True}"
             IsExpandable="{Binding State.HasDetails}"
             IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
             IsRunning="{Binding State.IsRunning}">
@@ -485,7 +495,10 @@
             They still use the same lightweight marker as persisted activities so their icon, title, shimmer, and Group timeline alignment remain visually consistent.
           -->
           <v:ActivityMarker
-            Margin="4,0" HorizontalSpacing="10"
+            Margin="4,0"
+            CancelCommand="{Binding CancelCommand}"
+            HorizontalSpacing="10"
+            IsCancelEnabled="{Binding !$parent[v:ChatMessageItemsControl].IsReadonly, FallbackValue=True}"
             IsExpandable="False"
             IsRunning="{Binding IsRunning}"
             IsSecondaryHeaderVisible="{Binding SecondaryHeaderKey, Converter={x:Static ObjectConverters.IsNotNull}}">

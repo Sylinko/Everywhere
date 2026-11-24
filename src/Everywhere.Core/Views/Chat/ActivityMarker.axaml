@@ -4,57 +4,97 @@
   <ControlTheme
     x:Key="{x:Type v:ActivityMarker}"
     TargetType="v:ActivityMarker">
+    <Setter Property="ClipToBounds" Value="False"/>
     <Setter Property="HorizontalSpacing" Value="4"/>
     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     <Setter Property="Template">
       <ControlTemplate>
         <DockPanel>
-          <ToggleButton
-            x:Name="PART_ToggleButton" Classes="NoScale"
-            DockPanel.Dock="Top" Padding="0"
-            HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-            shadui:ButtonAssist.CheckedBackground="Transparent"
-            shadui:ButtonAssist.CheckedForeground="{DynamicResource ForegroundColor}"
-            shadui:ButtonAssist.HoverBackground="Transparent" Background="Transparent"
-            BorderThickness="0" CornerRadius="0"
-            Foreground="{DynamicResource MutedColor}"
-            IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
-            IsHitTestVisible="{TemplateBinding IsExpandable}">
-            <DockPanel
-              x:Name="PART_HeaderPanel"
-              HorizontalSpacing="{TemplateBinding HorizontalSpacing}">
-              <ContentPresenter
-                DockPanel.Dock="Left" VerticalAlignment="Center"
-                Content="{TemplateBinding Icon}"
-                IsHitTestVisible="False"
-                IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+          <Border
+            x:Name="PART_HeaderBorder" DockPanel.Dock="Top"
+            Margin="-4,-2" Padding="4,2"
+            Background="Transparent"
+            CornerRadius="{DynamicResource MdCornerRadius}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="Background"
+                  Duration="0:0:0.15"/>
+              </Transitions>
+            </Border.Transitions>
 
-              <DockPanel
-                HorizontalAlignment="Left" VerticalAlignment="Center">
-                <ContentPresenter
-                  DockPanel.Dock="Left" HorizontalAlignment="Left"
-                  VerticalAlignment="Center" HorizontalContentAlignment="Left"
-                  Content="{TemplateBinding Header}"/>
+            <DockPanel HorizontalSpacing="4">
+              <Button
+                x:Name="PART_CancelButton" Classes="Ghost Minimal Muted NoScale"
+                DockPanel.Dock="Right" Padding="2"
+                VerticalAlignment="Center"
+                Command="{TemplateBinding CancelCommand}"
+                CommandParameter="{TemplateBinding CancelCommandParameter}"
+                CornerRadius="{DynamicResource FullCornerRadius}"
+                Focusable="False"
+                IsVisible="{TemplateBinding CanCancel}"
+                Opacity="0"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.ActivityMarker_CancelButton_ToolTip}}">
+                <Button.Transitions>
+                  <Transitions>
+                    <DoubleTransition
+                      Easing="CubicEaseOut" Property="Opacity"
+                      Duration="0:0:0.15"/>
+                  </Transitions>
+                </Button.Transitions>
+                <TablerIcon
+                  IsFilled="True" Kind="PlayerStop"
+                  Size="{DynamicResource FontSizeS}"/>
+              </Button>
 
-                <ContentPresenter
-                  Margin="6,0,0,0" VerticalAlignment="Center"
-                  ClipToBounds="False"
-                  Content="{TemplateBinding SecondaryHeader}"
-                  FontWeight="Light" Opacity="0.7">
-                  <ContentPresenter.IsVisible>
-                    <MultiBinding Converter="{x:Static BoolConverters.And}">
-                      <TemplateBinding Property="IsSecondaryHeaderVisible"/>
-                      <TemplateBinding
-                        Converter="{x:Static ObjectConverters.IsNotNull}"
-                        Property="SecondaryHeader"/>
-                    </MultiBinding>
-                  </ContentPresenter.IsVisible>
-                </ContentPresenter>
-              </DockPanel>
+              <ToggleButton
+                x:Name="PART_ToggleButton" Classes="NoScale"
+                Padding="0" HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                shadui:ButtonAssist.CheckedBackground="Transparent"
+                shadui:ButtonAssist.CheckedForeground="{DynamicResource ForegroundColor}"
+                shadui:ButtonAssist.HoverBackground="Transparent" Background="Transparent"
+                BorderThickness="0" CornerRadius="0"
+                Foreground="{DynamicResource MutedColor}"
+                IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
+                IsHitTestVisible="{TemplateBinding IsExpandable}">
+                <DockPanel
+                  x:Name="PART_HeaderPanel"
+                  HorizontalSpacing="{TemplateBinding HorizontalSpacing}">
+                  <ContentPresenter
+                    DockPanel.Dock="Left" VerticalAlignment="Center"
+                    Content="{TemplateBinding Icon}"
+                    IsHitTestVisible="False"
+                    IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                  <DockPanel
+                    HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <ContentPresenter
+                      DockPanel.Dock="Left" HorizontalAlignment="Left"
+                      VerticalAlignment="Center" HorizontalContentAlignment="Left"
+                      Content="{TemplateBinding Header}"/>
+
+                    <ContentPresenter
+                      Margin="6,0,0,0" VerticalAlignment="Center"
+                      ClipToBounds="False"
+                      Content="{TemplateBinding SecondaryHeader}"
+                      FontWeight="Light" Opacity="0.7">
+                      <ContentPresenter.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                          <TemplateBinding Property="IsSecondaryHeaderVisible"/>
+                          <TemplateBinding
+                            Converter="{x:Static ObjectConverters.IsNotNull}"
+                            Property="SecondaryHeader"/>
+                        </MultiBinding>
+                      </ContentPresenter.IsVisible>
+                    </ContentPresenter>
+                  </DockPanel>
+                </DockPanel>
+              </ToggleButton>
             </DockPanel>
-          </ToggleButton>
+          </Border>
 
           <Border
             x:Name="ContentBorder" Opacity="0.5"
@@ -88,6 +128,18 @@
         <Setter Property="Opacity" Value="1"/>
         <Setter Property="RenderTransform" Value="translateY(0)"/>
       </Style>
+    </Style>
+
+    <Style Selector="^:interactive /template/ Border#PART_HeaderBorder:pointerover">
+      <Setter Property="Background" Value="{DynamicResource GhostHoverColor50}"/>
+    </Style>
+
+    <Style Selector="^ /template/ Border#PART_HeaderBorder:pointerover Button#PART_CancelButton">
+      <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <Style Selector="^ /template/ Button#PART_CancelButton:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
     </Style>
 
     <!--

@@ -483,7 +483,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     internal void BeginDeletion()
     {
         using var scope = _lifetimeLock.EnterScope();
-        if (_foregroundOperations.Count > 0)
+        if (_foregroundOperations.Count > 0 || BackgroundJobs.HasActiveJobs)
         {
             throw new InvalidOperationException("A running conversation cannot be permanently deleted.");
         }

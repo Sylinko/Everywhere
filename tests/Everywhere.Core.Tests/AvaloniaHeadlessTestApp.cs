@@ -26,5 +26,8 @@ public static class AvaloniaHeadlessTestApp
     {
         var field = typeof(AppearanceManager).GetField("_shared", BindingFlags.Static | BindingFlags.NonPublic);
         field?.SetValue(null, null);
+
+        var accentField = typeof(ShadUI.Themes.SystemAccentColors).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
+        accentField?.SetValue(null, null);
     }
 }
