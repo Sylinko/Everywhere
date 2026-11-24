@@ -177,14 +177,14 @@
               <TablerIcon
                 Kind="Box"
                 Size="{DynamicResource FontSizeL}"/>
-              <TextBlock Text="{I18N {x:Static LocaleKey.ChatPluginPage_TabItem_BuiltIn_Header}}"/>
+              <TextBlock Text="{I18N {x:Static LocaleKey.ChatPluginPage_TabItem_Native_Header}}"/>
             </StackPanel>
           </TabItem.Header>
 
           <ListBox
             Classes="PluginListBox"
-            ItemsSource="{Binding ToolSettings.BuiltInPlugins}"
-            SelectedItem="{Binding SelectedBuiltInPlugin}"/>
+            ItemsSource="{Binding ToolSettings.NativePlugins}"
+            SelectedItem="{Binding SelectedNativePlugin}"/>
         </TabItem>
 
         <TabItem x:Name="McpTabItem">

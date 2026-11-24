@@ -16,7 +16,8 @@ partial class ChatService
     private async Task<ToolApprovalResult> ReviewToolApprovalAsync(
         FunctionCallContext context,
         ToolApprovalScope? scope,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var generationContext = context.GenerationContext;
         ModelSession? selectedSession = null;
@@ -31,7 +32,8 @@ partial class ChatService
             else if (session is null)
             {
                 var fallbackAssistant = generationContext.Assistant ??
-                    throw new InvalidOperationException("Cannot create an approval session after generation disposal without an assistant configuration.");
+                    throw new InvalidOperationException(
+                        "Cannot create an approval session after generation disposal without an assistant configuration.");
                 session = selectedSession = _modelSessionFactory.Create(fallbackAssistant);
             }
 
@@ -40,7 +42,7 @@ partial class ChatService
                 return ToolApprovalResult.Fail(ToolApprovalFailure.AssistantUnavailable, "The configured approval assistant does not support tools.");
             }
 
-            var filePlugin = _chatPluginManager.BuiltInPlugins.AsValueEnumerable().OfType<FileSystemPlugin>().First();
+            var filePlugin = _chatPluginManager.NativePlugins.AsValueEnumerable().OfType<FileSystemPlugin>().First();
             var reviewer = new ToolApprovalReviewer(this, context, session, filePlugin, _settings.SystemAssistant.AllowApprovalFileReads);
             var input = await BuildApprovalInputWithLimitAsync(context, scope, session.Configuration.ContextLimit, cancellationToken);
             return await reviewer.ReviewAsync(input, cancellationToken);
@@ -63,14 +65,14 @@ partial class ChatService
             var failure = handled
                 is HandledChatException.InvalidResponse
                 or HandledChatException.GenerationLimitExceeded
-                or HandledChatException.ContentBlocked ?
-                ToolApprovalFailure.InvalidResponse :
-                ToolApprovalFailure.ProviderError;
+                or HandledChatException.ContentBlocked
+                ? ToolApprovalFailure.InvalidResponse
+                : ToolApprovalFailure.ProviderError;
             return ToolApprovalResult.Fail(
                 failure,
-                handled is null ?
-                    $"The approval request failed ({ex.GetType().Name})." :
-                    $"The approval request failed: {handled.FriendlyMessageKey}");
+                handled is null
+                    ? $"The approval request failed ({ex.GetType().Name})."
+                    : $"The approval request failed: {handled.FriendlyMessageKey}");
         }
         finally
         {
@@ -82,7 +84,8 @@ partial class ChatService
         FunctionCallContext context,
         ToolApprovalScope? scope,
         int contextLimit,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var generation = context.GenerationContext;
         var historySelection = await ChatHistoryBuilder.SelectContextMessagesAsync(
@@ -99,9 +102,9 @@ partial class ChatService
             {
                 case UserChatMessage user:
                 {
-                    var content = user is UserStrategyChatMessage { Strategy.Body: { Length: > 0 } body } strategy ?
-                        generation.PromptRenderer.RenderStrategyUserPrompt(body, user.Content, strategy.PreprocessorResult) :
-                        user.Content;
+                    var content = user is UserStrategyChatMessage { Strategy.Body: { Length: > 0 } body } strategy
+                        ? generation.PromptRenderer.RenderStrategyUserPrompt(body, user.Content, strategy.PreprocessorResult)
+                        : user.Content;
                     history.Add(
                         new ToolApprovalHistoryEntry
                         {
@@ -216,7 +219,8 @@ partial class ChatService
             FunctionCallContext context,
             ModelSession session,
             FileSystemPlugin fileSystemPlugin,
-            bool canReadFiles)
+            bool canReadFiles
+        )
         {
             _owner = owner;
             _context = context;
@@ -227,33 +231,36 @@ partial class ChatService
 
             if (canReadFiles)
             {
-                AddTool(MEAI.AIFunctionFactory.Create(
-                    _tools.ReadAsync,
+                AddTool(
+                    MEAI.AIFunctionFactory.Create(
+                        _tools.ReadAsync,
+                        new MEAI.AIFunctionFactoryOptions
+                        {
+                            Name = "read_file",
+                            ExcludeResultSchema = true,
+                            MarshalResult = static (result, _, _) => ValueTask.FromResult(result)
+                        }));
+            }
+
+            AddTool(
+                MEAI.AIFunctionFactory.Create(
+                    ReviewTools.SubmitApproval,
                     new MEAI.AIFunctionFactoryOptions
                     {
-                        Name = "read_file",
+                        Name = "submit_approval",
                         ExcludeResultSchema = true,
                         MarshalResult = static (result, _, _) => ValueTask.FromResult(result)
                     }));
-            }
-
-            AddTool(MEAI.AIFunctionFactory.Create(
-                ReviewTools.SubmitApproval,
-                new MEAI.AIFunctionFactoryOptions
-                {
-                    Name = "submit_approval",
-                    ExcludeResultSchema = true,
-                    MarshalResult = static (result, _, _) => ValueTask.FromResult(result)
-                }));
 
             void AddTool(MEAI.AIFunction function)
             {
                 _executables[function.Name] = function;
-                _declarations.Add(MEAI.AIFunctionFactory.CreateDeclaration(
-                    function.Name,
-                    function.Description,
-                    function.JsonSchema,
-                    function.ReturnJsonSchema));
+                _declarations.Add(
+                    MEAI.AIFunctionFactory.CreateDeclaration(
+                        function.Name,
+                        function.Description,
+                        function.JsonSchema,
+                        function.ReturnJsonSchema));
             }
         }
 
@@ -406,7 +413,8 @@ partial class ChatService
         public async Task<bool> TrySubmitAsync(
             MEAI.ChatResponseUpdate update,
             IReadOnlyList<MEAI.FunctionCallContent> assembledCalls,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken
+        )
         {
             foreach (var call in update.Contents.OfType<MEAI.FunctionCallContent>())
             {
@@ -505,7 +513,8 @@ partial class ChatService
                 int offset = 1,
                 [Description("Maximum logical lines for text/PDF or bytes for binary files; binary data is returned as hexadecimal.")]
                 int limit = 2000,
-                CancellationToken cancellationToken = default)
+                CancellationToken cancellationToken = default
+            )
             {
                 ArgumentException.ThrowIfNullOrWhiteSpace(path);
                 if (!_hasReadRequests)
@@ -539,7 +548,8 @@ partial class ChatService
             public static ToolApprovalResult SubmitApproval(
                 [Description("Exactly allow or deny.")] string decision,
                 [Description("Briefly explain the relevant effects, authorization, or missing evidence.")]
-                string reason)
+                string reason
+            )
             {
                 if (string.IsNullOrWhiteSpace(reason))
                 {

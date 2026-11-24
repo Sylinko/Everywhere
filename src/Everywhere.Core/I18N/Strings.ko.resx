@@ -1282,8 +1282,8 @@
     <data name="ChatPluginPage_StopMcpPluginButton_Content" xml:space="preserve">
         <value>중지</value>
     </data>
-    <data name="ChatPluginPage_TabItem_BuiltIn_Header" xml:space="preserve">
-        <value>내장</value>
+    <data name="ChatPluginPage_TabItem_Native_Header" xml:space="preserve">
+        <value>앱 도구</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
         <value>도구</value>

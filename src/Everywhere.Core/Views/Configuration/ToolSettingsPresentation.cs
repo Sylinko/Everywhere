@@ -28,12 +28,14 @@ public sealed class ToolSettingsContext : IDisposable
         ObservableToolRulesets global,
         ObservableToolRulesets? overrides,
         ObservableToolRulesets? bypassApprovalRulesets,
-        bool isGlobal)
+        bool isGlobal
+    )
     {
         _global = global;
         _overrides = overrides;
         _bypassApprovalRulesets = bypassApprovalRulesets;
         _isGlobal = isGlobal;
+
         Subscribe(global);
         if (!ReferenceEquals(global, overrides)) Subscribe(overrides);
         Subscribe(bypassApprovalRulesets);
@@ -41,13 +43,13 @@ public sealed class ToolSettingsContext : IDisposable
 
     public static ToolSettingsContext CreateGlobal(
         ObservableToolRulesets enablement,
-        ObservableToolRulesets bypassApprovalRulesets) =>
-        new(enablement, enablement, bypassApprovalRulesets, isGlobal: true);
+        ObservableToolRulesets bypassApprovalRulesets
+    ) => new(enablement, enablement, bypassApprovalRulesets, isGlobal: true);
 
     public static ToolSettingsContext CreateAssistant(
         ObservableToolRulesets global,
-        ObservableToolRulesets? assistantOverrides) =>
-        new(global, assistantOverrides, bypassApprovalRulesets: null, isGlobal: false);
+        ObservableToolRulesets? assistantOverrides
+    ) => new(global, assistantOverrides, bypassApprovalRulesets: null, isGlobal: false);
 
     public void SetAssistantOverrides(ObservableToolRulesets? value)
     {
@@ -101,13 +103,17 @@ public sealed class ToolSettingsContext : IDisposable
     public void SetPluginBypassApproval(ChatPlugin plugin, bool value)
     {
         if (_bypassApprovalRulesets is not null)
+        {
             ToolBypassApprovalPolicy.SetPluginRule(_bypassApprovalRulesets, plugin, value);
+        }
     }
 
     public void SetFunctionBypassesApproval(ChatPlugin plugin, ChatFunction function, bool value)
     {
         if (_bypassApprovalRulesets is not null)
+        {
             ToolBypassApprovalPolicy.SetFunctionRule(_bypassApprovalRulesets, plugin, function, value);
+        }
     }
 
     public void Dispose()
@@ -168,7 +174,7 @@ public sealed class ToolSettingsPresentation : IDisposable
 {
     public IReadOnlyBindableList<ToolPluginPresentation> Plugins { get; }
 
-    public IReadOnlyBindableList<ToolPluginPresentation> BuiltInPlugins { get; }
+    public IReadOnlyBindableList<ToolPluginPresentation> NativePlugins { get; }
 
     public IReadOnlyBindableList<ToolPluginPresentation> McpPlugins { get; }
 
@@ -179,19 +185,20 @@ public sealed class ToolSettingsPresentation : IDisposable
     public ToolSettingsPresentation(IChatPluginManager manager, ToolSettingsContext context)
     {
         Context = context;
-        Plugins = manager.BuiltInPlugins
-            .ToObservableChangeSet<IReadOnlyBindableList<BuiltInChatPlugin>, BuiltInChatPlugin>()
+        Plugins = manager.NativePlugins
+            .ToObservableChangeSet<IReadOnlyBindableList<NativeChatPlugin>, NativeChatPlugin>()
             .Transform(ChatPlugin (plugin) => plugin)
-            .Or(manager.McpPlugins
-                .ToObservableChangeSet<IReadOnlyBindableList<McpChatPlugin>, McpChatPlugin>()
-                .Transform(ChatPlugin (plugin) => plugin))
+            .Or(
+                manager.McpPlugins
+                    .ToObservableChangeSet<IReadOnlyBindableList<McpChatPlugin>, McpChatPlugin>()
+                    .Transform(ChatPlugin (plugin) => plugin))
             .Transform(plugin => new ToolPluginPresentation(plugin, context))
             .DisposeMany()
             .BindEx(_disposables);
 
-        BuiltInPlugins = Plugins
+        NativePlugins = Plugins
             .ToObservableChangeSet<IReadOnlyBindableList<ToolPluginPresentation>, ToolPluginPresentation>()
-            .Filter(static presentation => presentation.Plugin is BuiltInChatPlugin)
+            .Filter(static presentation => presentation.Plugin is NativeChatPlugin)
             .BindEx(_disposables);
         McpPlugins = Plugins
             .ToObservableChangeSet<IReadOnlyBindableList<ToolPluginPresentation>, ToolPluginPresentation>()

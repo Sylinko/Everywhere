@@ -143,6 +143,29 @@ public sealed class BuiltInChatPluginSnapshot : NativeChatPluginSnapshot
 }
 
 /// <summary>
+/// Represents an immutable generation snapshot for a mod-supplied native plugin.
+/// </summary>
+public sealed class ModChatPluginSnapshot : NativeChatPluginSnapshot
+{
+    /// <summary>
+    /// Wire namespace prefix applied to mod-supplied tool declarations exposed to model providers.
+    /// </summary>
+    public const string NamespacePrefix = "mod__";
+
+    /// <summary>
+    /// Initializes a snapshot of a mod-supplied plugin using the <see cref="NamespacePrefix"/> wire namespace.
+    /// </summary>
+    public ModChatPluginSnapshot(
+        ModChatPlugin source,
+        NumberedDeduplicator pluginNameDeduplicator,
+        NumberedDeduplicator functionNameDeduplicator,
+        IReadOnlyList<ChatFunction> actualFunctions
+    ) : base(source, NamespacePrefix, pluginNameDeduplicator, functionNameDeduplicator, actualFunctions)
+    {
+    }
+}
+
+/// <summary>
 /// Represents an immutable generation snapshot for a Model Context Protocol (MCP) plugin.
 /// </summary>
 public sealed class McpChatPluginSnapshot : ChatPluginSnapshot

@@ -23,13 +23,13 @@ using ShadUI;
 
 namespace Everywhere.Chat.Plugins;
 
-public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
+public sealed partial class ChatPluginManager : IChatPluginManager, IAsyncDisposable
 {
     private const string McpRuntimeWarningKey = "mcp.runtime";
     private const string McpStartupWarningKey = "mcp.startup";
     private const string McpStartupReminderKey = "mcp.startup";
 
-    public IReadOnlyBindableList<BuiltInChatPlugin> BuiltInPlugins { get; }
+    public IReadOnlyBindableList<NativeChatPlugin> NativePlugins { get; }
 
     public IReadOnlyBindableList<McpChatPlugin> McpPlugins { get; }
 
@@ -42,7 +42,7 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
 
     private readonly ConcurrentDictionary<Guid, McpPluginSlot> _mcpPluginSlots = [];
     private readonly CompositeDisposable _disposables = new(3);
-    private readonly SourceList<BuiltInChatPlugin> _builtInPluginsSource = new();
+    private readonly SourceList<NativeChatPlugin> _nativePluginsSource = new();
     private readonly SourceList<McpChatPlugin> _mcpPluginsSource = new();
 
     private bool _isDisposed;
@@ -56,7 +56,7 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
     )
     {
         _serviceProvider = serviceProvider;
-        _builtInPluginsSource.AddRange(builtInPlugins);
+        _nativePluginsSource.AddRange(builtInPlugins);
         _settings = settings;
         _runtimeManager = runtimeManager;
         _keyValueStorage = serviceProvider.GetService<IKeyValueStorage>();
@@ -85,12 +85,12 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
         }
         _mcpPluginsSource.AddRange(mcpPlugins);
 
-        BuiltInPlugins = _builtInPluginsSource
+        NativePlugins = _nativePluginsSource
             .Connect()
             .Filter(static p => p is { IsVisible: true, HasVisibleFunctions: true })
             .ObserveOnAvaloniaDispatcher()
             .BindEx(_disposables);
-        _disposables.Add(_builtInPluginsSource);
+        _disposables.Add(_nativePluginsSource);
 
         McpPlugins = _mcpPluginsSource
             .Connect()
@@ -287,6 +287,7 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
         ClearCachedTools(mcpChatPlugin);
         _settings.Plugin.McpChatPlugins.Remove(mcpChatPlugin.Id);
         RemoveToolSettings(mcpChatPlugin.Key);
+        mcpChatPlugin.Dispose();
     }
 
     public RuntimeDependency? GetMissingRuntimeDependency(McpChatPlugin mcpChatPlugin)
@@ -310,19 +311,24 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
         CancellationToken cancellationToken
     )
     {
-        BuiltInChatPlugin[] builtInPlugins = [];
-        _builtInPluginsSource.Edit(list =>
-            builtInPlugins = [.. list.OrderBy(static plugin => plugin.Key, StringComparer.Ordinal)]);
+        NativeChatPlugin[] nativePlugins = [];
+        _nativePluginsSource.Edit(list =>
+            nativePlugins =
+            [
+                .. list
+                    .OrderBy(static plugin => plugin is BuiltInChatPlugin ? 0 : 1)
+                    .ThenBy(static plugin => plugin.Key, StringComparer.Ordinal)
+            ]);
 
         McpChatPlugin[] mcpPlugins = [];
         _mcpPluginsSource.Edit(list => mcpPlugins = [.. list]);
 
-        var enabledBuiltIns = new List<BuiltInChatPlugin>(builtInPlugins.Length);
-        foreach (var builtInPlugin in builtInPlugins)
+        var enabledNatives = new List<NativeChatPlugin>(nativePlugins.Length);
+        foreach (var nativePlugin in nativePlugins)
         {
-            if (IsPluginAllowed(builtInPlugin, toolRulesets))
+            if (IsPluginAllowed(nativePlugin, toolRulesets))
             {
-                enabledBuiltIns.Add(builtInPlugin);
+                enabledNatives.Add(nativePlugin);
             }
         }
 
@@ -352,16 +358,37 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
 
         var pluginNameDeduplicator = new NumberedDeduplicator();
         var functionNameDeduplicator = new NumberedDeduplicator();
-        var resultPlugins = new List<ChatPluginSnapshot>(enabledBuiltIns.Count + enabledMcps.Count);
+        var resultPlugins = new List<ChatPluginSnapshot>(enabledNatives.Count + enabledMcps.Count);
         var failedReminders = new List<(string Name, string Reason)>();
 
-        foreach (var builtInPlugin in enabledBuiltIns)
+        foreach (var nativePlugin in enabledNatives)
         {
-            var actualFunctions = FilterFunctions(builtInPlugin, configuration, toolRulesets);
-            if (actualFunctions.Length > 0)
+            ChatPluginRegistration? registration = null;
+            IDisposable? discovery = null;
+            if (nativePlugin is ModChatPlugin modPlugin &&
+                (!_registrations.TryGetValue(modPlugin, out registration) || !registration.TryEnterDiscovery(out discovery)))
             {
-                resultPlugins.Add(
-                    builtInPlugin.CreateSnapshot(pluginNameDeduplicator, functionNameDeduplicator, actualFunctions));
+                continue;
+            }
+
+            using (discovery)
+            {
+                var filteredFunctions = await FilterFunctionsAsync(nativePlugin, configuration, toolRulesets, cancellationToken);
+                ChatFunction[] actualFunctions;
+                if (registration is null)
+                {
+                    actualFunctions = filteredFunctions;
+                }
+                else if (!TryWrapModFunctions(registration, filteredFunctions, out actualFunctions))
+                {
+                    continue;
+                }
+
+                if (actualFunctions.Length > 0)
+                {
+                    resultPlugins.Add(
+                        nativePlugin.CreateSnapshot(pluginNameDeduplicator, functionNameDeduplicator, actualFunctions));
+                }
             }
         }
 
@@ -378,7 +405,7 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
                 continue;
             }
 
-            var actualFunctions = FilterFunctions(mcpPlugin, configuration, toolRulesets);
+            var actualFunctions = await FilterFunctionsAsync(mcpPlugin, configuration, toolRulesets, cancellationToken);
             resultPlugins.Add(mcpPlugin.CreateSnapshot(pluginNameDeduplicator, functionNameDeduplicator, actualFunctions));
         }
 
@@ -386,19 +413,42 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
         return new ChatPluginScope(resultPlugins, transientReminders);
     }
 
-    private ChatFunction[] FilterFunctions(
+    private async ValueTask<ChatFunction[]> FilterFunctionsAsync(
         ChatPlugin plugin,
         AssistantConfiguration configuration,
-        IToolRulesets? toolRulesets
+        IToolRulesets? toolRulesets,
+        CancellationToken cancellationToken
     )
     {
-        return plugin.GetChatFunctions()
+        return (await plugin.GetAvailableFunctionsAsync(cancellationToken))
             .AsValueEnumerable()
             .Where(function => configuration.InputModalities.HasFlag(function.RequiredModalities))
             .Where(function => toolRulesets?.GetFunctionRule(plugin, function) ??
                 _settings.Plugin.ToolEnablementRulesets.GetFunctionRule(plugin, function) ??
                 function.IsDefaultEnabled)
             .ToArray();
+    }
+
+    private static bool TryWrapModFunctions(
+        ChatPluginRegistration registration,
+        IEnumerable<ChatFunction> functions,
+        out ChatFunction[] wrappedFunctions
+    )
+    {
+        var list = new List<ChatFunction>();
+        foreach (var function in functions)
+        {
+            if (!registration.TryCreateFunction((NativeChatFunction)function, out var wrapped))
+            {
+                wrappedFunctions = [];
+                return false;
+            }
+
+            list.Add(wrapped);
+        }
+
+        wrappedFunctions = [.. list];
+        return true;
     }
 
     private static IReadOnlyList<ContextTransientReminder> BuildStartupFailureReminders(List<(string Name, string Reason)> failedPlugins)
@@ -622,10 +672,19 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
             slot.RequestShutdown();
         }
 
-        _mcpPluginsSource.Clear();
+        McpChatPlugin[] mcpPlugins = [];
+        _mcpPluginsSource.Edit(list =>
+        {
+            mcpPlugins = [.. list];
+            list.Clear();
+        });
         _disposables.Dispose();
 
         await Task.WhenAll(slots.Select(static slot => slot.DisposeAsync().AsTask()));
+        foreach (var mcpPlugin in mcpPlugins)
+        {
+            mcpPlugin.Dispose();
+        }
     }
 
     private void HandleRuntimeManagerStatusChanged(object? sender, EventArgs e)

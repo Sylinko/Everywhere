@@ -131,7 +131,7 @@ public sealed partial class ScopedToolProviderTests
     }
 
     [AvaloniaTest]
-    public void ToolBinding_FormatsMcpNamespacesSanitizesCharactersAndClampsTo64Chars()
+    public void ToolBinding_FormatsModAndMcpNamespacesSanitizesCharactersAndClampsTo64Chars()
     {
         var escapeMethod = typeof(ManagedMcpClient).GetMethod("EscapeToolName", BindingFlags.NonPublic | BindingFlags.Static)
             ?? throw new AssertionException("Missing ManagedMcpClient.EscapeToolName.");
@@ -139,6 +139,8 @@ public sealed partial class ScopedToolProviderTests
             ?? throw new AssertionException("EscapeToolName returned null."));
 
         using var builtIn = new SampleBuiltInPlugin();
+        using var modAlpha = new SampleModPlugin("alpha");
+        using var modBeta = new SampleModPlugin("beta");
         using var firstMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "first", Command = "npx" });
         using var secondMcp = new McpChatPlugin(new StdioMcpTransportConfiguration { Name = "second", Command = "npx" });
         var pluginDeduplicator = new NumberedDeduplicator();
@@ -149,6 +151,22 @@ public sealed partial class ScopedToolProviderTests
             deduplicator,
             [new NativeChatFunction((Func<string>)(static () => "ok"), ChatFunctionPermissions.None, functionName: "search_files")]);
         var builtInBinding = builtInSnapshot.Bindings[0];
+
+        var maxNativeName = "max_" + new string('m', NativeChatFunction.MaxNativeFunctionNameLength - 4);
+        var modAlphaSnapshot = modAlpha.CreateSnapshot(
+            pluginDeduplicator,
+            deduplicator,
+            [
+                new NativeChatFunction((Func<string>)(static () => "ok"), ChatFunctionPermissions.None, functionName: "search_files"),
+                new NativeChatFunction((Func<string>)(static () => "ok"), ChatFunctionPermissions.None, functionName: maxNativeName)
+            ]);
+        var modBetaSnapshot = modBeta.CreateSnapshot(
+            pluginDeduplicator,
+            deduplicator,
+            [new NativeChatFunction((Func<string>)(static () => "ok"), ChatFunctionPermissions.None, functionName: maxNativeName)]);
+        var modBinding = modAlphaSnapshot.Bindings[0];
+        var modCollision1 = modAlphaSnapshot.Bindings[1];
+        var modCollision2 = modBetaSnapshot.Bindings[0];
 
         var longRawName = "shared_" + new string('a', 60);
         var mcpFunction1 = new McpChatFunction(CreateManagedMcpTool(longRawName));
@@ -166,14 +184,22 @@ public sealed partial class ScopedToolProviderTests
             Assert.That(escaped, Is.EqualTo("fs_read_tool_v1___"));
             Assert.That(escapeMethod.Invoke(null, [""]), Is.EqualTo("tool"));
             Assert.That(builtInBinding.Plugin, Is.TypeOf<BuiltInChatPluginSnapshot>());
+            Assert.That(modBinding.Plugin, Is.TypeOf<ModChatPluginSnapshot>());
             Assert.That(mcpBinding1.Plugin, Is.TypeOf<McpChatPluginSnapshot>());
             Assert.That(builtInBinding.Declaration.Name, Is.EqualTo("search_files"));
+            Assert.That(modBinding.Declaration.Name, Is.EqualTo("mod__search_files"));
+            Assert.That(modCollision1.Declaration.Name, Is.EqualTo($"mod__{maxNativeName}"));
+            Assert.That(modCollision2.Declaration.Name, Is.EqualTo($"mod__{maxNativeName}_1"));
+            Assert.That(modCollision2.Declaration.Name, Has.Length.LessThanOrEqualTo(ToolBinding.MaxWireNameLength));
             Assert.That(mcpBinding1.Declaration.Name, Does.StartWith("mcp__shared_"));
             Assert.That(mcpBinding1.Declaration.Name, Has.Length.EqualTo(ToolBinding.MaxWireNameLength));
             Assert.That(mcpBinding2.Declaration.Name, Does.StartWith("mcp__shared_").And.EndWith("_1"));
             Assert.That(mcpBinding2.Declaration.Name, Has.Length.EqualTo(ToolBinding.MaxWireNameLength));
             Assert.That(mcpBinding2.Declaration.Name, Is.Not.EqualTo(mcpBinding1.Declaration.Name));
             Assert.That(dirtyBinding.Declaration.Name, Is.EqualTo("mcp__dir_open_item___"));
+            Assert.That(WireNameRegex().IsMatch(modBinding.Declaration.Name), Is.True);
+            Assert.That(WireNameRegex().IsMatch(modCollision1.Declaration.Name), Is.True);
+            Assert.That(WireNameRegex().IsMatch(modCollision2.Declaration.Name), Is.True);
             Assert.That(WireNameRegex().IsMatch(mcpBinding1.Declaration.Name), Is.True);
             Assert.That(WireNameRegex().IsMatch(mcpBinding2.Declaration.Name), Is.True);
             Assert.That(WireNameRegex().IsMatch(dirtyBinding.Declaration.Name), Is.True);
@@ -223,6 +249,12 @@ public sealed partial class ScopedToolProviderTests
         public override IDynamicLocaleKey DescriptionKey { get; } = new DirectLocaleKey("Built-in test plugin");
 
         public SampleBuiltInPlugin() : base("sample_builtin") { }
+    }
+
+    private sealed class SampleModPlugin(string name) : ModChatPlugin(name)
+    {
+        public override IDynamicLocaleKey HeaderKey { get; } = new DirectLocaleKey($"Mod ({name})");
+        public override IDynamicLocaleKey DescriptionKey { get; } = new DirectLocaleKey("Mod test plugin");
     }
 
     private sealed class RequestRecorder : HttpMessageHandler

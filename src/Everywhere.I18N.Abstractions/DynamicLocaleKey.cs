@@ -157,8 +157,11 @@ public sealed partial class DirectLocaleKey(object? key) : DynamicLocaleKey(key)
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
 public sealed partial class FormattedDynamicLocaleKey(object key, params IReadOnlyList<IDynamicLocaleKey?> args) : DynamicLocaleKey(key)
 {
+    /// <summary>
+    /// Copies collectible argument containers into host-owned storage so persisted locale keys do not pin mod ALCs.
+    /// </summary>
     [Key(1)]
-    private IReadOnlyList<IDynamicLocaleKey?> Args { get; } = args;
+    private IReadOnlyList<IDynamicLocaleKey?> Args { get; } = args.GetType().IsCollectible ? [.. args] : args;
 
     /// <summary>
     /// Creates a new instance of the <see cref="FormattedDynamicLocaleKey"/> class with the specified key and arguments.
@@ -226,8 +229,11 @@ public sealed partial class FormattedDynamicLocaleKey(object key, params IReadOn
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
 public sealed partial class AggregateDynamicLocaleKey(IReadOnlyList<IDynamicLocaleKey> keys, string separator = ", ") : IDynamicLocaleKey
 {
+    /// <summary>
+    /// Copies collectible key containers into host-owned storage so persisted locale keys do not pin mod ALCs.
+    /// </summary>
     [Key(0)]
-    private IReadOnlyList<IDynamicLocaleKey> Keys { get; } = keys;
+    private IReadOnlyList<IDynamicLocaleKey> Keys { get; } = keys.GetType().IsCollectible ? [.. keys] : keys;
 
     [Key(1)]
     private string Separator { get; } = separator;

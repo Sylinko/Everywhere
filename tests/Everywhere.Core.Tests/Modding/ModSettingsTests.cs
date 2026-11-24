@@ -22,6 +22,7 @@ namespace Everywhere.Core.Tests.Modding;
 /// <summary>
 /// Uses the real mod engine to check settings migration, UI retirement, and collectible ownership.
 /// </summary>
+[NonParallelizable]
 public sealed class ModSettingsTests
 {
     /// <summary>
