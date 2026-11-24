@@ -30,7 +30,10 @@
     <File Path="DATA_AND_PRIVACY.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
+    <File Path="EXCEPTIONS" />
     <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="LICENSE-COMMERCIAL.md" />
     <File Path="nuget.config" />
     <File Path="README-zh-cn.md" />
     <File Path="README.md" />

@@ -154,9 +154,11 @@
 
 ## 许可证
 
-- **Everywhere 主程序**：基于 **GNU Affero General Public License v3.0（`AGPL-3.0-only`）** 开源，详见 [LICENSE](LICENSE)。
-- **模组生态附加许可**：符合公开模组接口及平台完整性边界的独立第三方模组，可依据 GNU AGPLv3 第 7 条下的《模组接口附加许可》（见 [EXCEPTIONS](EXCEPTIONS)）采用作者自选的任意协议（含 `Apache-2.0`、MIT 或商业闭源协议）发布；Modding SDK 与契约库采用 **Apache-2.0** 许可。
-- **商业授权**：如需闭源商业分发或企业定制授权，请发送邮件至 [contact@sylinko.com](mailto:contact@sylinko.com) 联系 **Sylinko Inc.** 获取商业许可。
+Everywhere 采用 **双重许可（Dual-Licensed）**：遵循 **GNU Affero General Public License v3.0（`AGPL-3.0-only`）**，或向 **Sylinko Inc.** 获取**商业授权许可**：
+
+- **开源许可**：Everywhere 主程序基于 **GNU Affero General Public License v3.0（`AGPL-3.0-only`）** 开源，详见 [LICENSE](LICENSE)。
+- **商业授权**：如需闭源商业分发、企业定制条款或豁免 AGPLv3 开源义务，请参阅 [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) 并发送邮件至 [contact@sylinko.com](mailto:contact@sylinko.com) 联系 **Sylinko Inc.**。
+- **模组生态附加许可**：符合公开模组接口及平台完整性边界的独立第三方模组，可依据 GNU AGPLv3 第 7 条下的《模组接口附加许可》（见 [EXCEPTIONS](EXCEPTIONS)）采用作者自选的任意协议（含 `Apache-2.0`、MIT 或商业闭源协议）发布；指定的 Modding SDK、版本库与契约库采用 **Apache-2.0** 许可。
 - **品牌与视觉资产**：官方品牌名称、图标与徽标不包含在开源代码许可内，保留资产清单与命名规范见 [TRADEMARK.md](TRADEMARK.md)。
 - 第三方依赖与组件许可证详见 [ThirdPartyNotices.txt](ThirdPartyNotices.txt)。
 
