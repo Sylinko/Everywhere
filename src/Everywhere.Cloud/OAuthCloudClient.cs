@@ -75,9 +75,9 @@ public sealed partial class OAuthCloudClient :
     private readonly SemaphoreSlim _userDataLock = new(1, 1); // Prevent concurrent user data refreshes
 
     private static readonly CloudClientLoginStatus SignedOutStatus =
-        string.IsNullOrEmpty(CloudConstants.AccountBaseUrl) || string.IsNullOrEmpty(CloudConstants.ClientId) ?
-            CloudClientLoginStatus.NotConfigured :
-            CloudClientLoginStatus.NotLoggedIn;
+        string.IsNullOrEmpty(CloudConstants.AccountBaseUrl) || string.IsNullOrEmpty(CloudConstants.ClientId)
+            ? CloudClientLoginStatus.NotConfigured
+            : CloudClientLoginStatus.NotLoggedIn;
 
     public OAuthCloudClient(IHttpClientFactory httpClientFactory, ILogger<OAuthCloudClient> logger)
     {
@@ -112,8 +112,15 @@ public sealed partial class OAuthCloudClient :
             if (await TryGetExistingSessionTokenForLoginAsync(cancellationToken) != null)
             {
                 LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
-                await CompleteLoginAsync(false, cancellationToken);
-                return;
+                try
+                {
+                    await CompleteLoginAsync(false, cancellationToken);
+                    return;
+                }
+                catch (OAuthTokenRequestException ex) when (!_session.HasRefreshToken)
+                {
+                    _logger.LogInformation(ex, "Stored OAuth session was rejected while loading user profile. Proceeding to interactive login.");
+                }
             }
 
             if (SignedOutStatus == CloudClientLoginStatus.NotConfigured)
@@ -128,6 +135,7 @@ public sealed partial class OAuthCloudClient :
                     new DynamicLocaleKey(LocaleKey.OAuthCloudClient_CallbackRegistrationFailed));
             }
 
+            LastLoginErrorKey = null;
             LoginStatus = CloudClientLoginStatus.NotLoggedIn;
             using var flow = new InteractiveOAuthFlow(_httpClientFactory, cancellationToken);
             _activeAuthFlow = flow; // Expose to the message receiver for URL callbacks
@@ -228,6 +236,7 @@ public sealed partial class OAuthCloudClient :
             {
                 return; // A newer login or explicit logout superseded this queued invalidation.
             }
+
             ResetUserData();
             LoginStatus = CloudClientLoginStatus.LoginFailed;
             LastLoginErrorKey = errorKey;
@@ -366,7 +375,15 @@ public sealed partial class OAuthCloudClient :
 
                 if (tokenData is not null)
                 {
-                    await CompleteLoginAsync(true, cancellationToken);
+                    try
+                    {
+                        await CompleteLoginAsync(true, cancellationToken);
+                    }
+                    catch (OAuthTokenRequestException ex) when (!_session.HasRefreshToken)
+                    {
+                        _logger.LogInformation(ex, "Stored OAuth session was rejected during silent login. Local session cleared.");
+                    }
+
                     return;
                 }
             }
@@ -409,9 +426,9 @@ public sealed partial class OAuthCloudClient :
     )
     {
         /// <summary>
-        /// Checks if the token is expired or will expire within the next 10 seconds.
+        /// Checks if the token is expired or will expire within the next 60 seconds.
         /// </summary>
-        public bool IsTokenExpiredOrNearingExpiry => ExpiresAtTimestamp < DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 10;
+        public bool IsTokenExpiredOrNearingExpiry => ExpiresAtTimestamp < DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
 
         [JsonSerializable(typeof(TokenData))]
         public partial class TokenDataJsonSerializerContext : JsonSerializerContext;
@@ -496,7 +513,8 @@ public sealed partial class OAuthCloudClient :
             HttpStatusCode statusCode,
             string error,
             string errorDescription,
-            string? errorUri)
+            string? errorUri
+        )
         {
             var key = error switch
             {
@@ -517,7 +535,8 @@ public sealed partial class OAuthCloudClient :
             HttpStatusCode statusCode,
             string error,
             string errorDescription,
-            string? errorUri)
+            string? errorUri
+        )
         {
             var message = $"OAuth token request failed with {(int)statusCode} {statusCode}: {error}. {errorDescription}";
             return string.IsNullOrWhiteSpace(errorUri) ? message : $"{message} {errorUri}";
@@ -674,6 +693,8 @@ public sealed partial class OAuthCloudClient :
         }
     }
 
+    private readonly record struct TokenSnapshot(TokenData? TokenData, long Generation);
+
     /// <summary>
     /// Context responsible for long-lived session state, token persistence, and concurrency control for refreshing.
     /// Exposes methods to retrieve valid tokens without bleeding state logic to the main client.
@@ -791,7 +812,17 @@ public sealed partial class OAuthCloudClient :
             }
         }
 
-        private bool ClearRejectedSession(long expectedGeneration, string expectedRefreshToken, IDynamicLocaleKey errorKey)
+        public TokenSnapshot GetCurrentSnapshot()
+        {
+            return GetSnapshot();
+        }
+
+        public void InvalidateRejectedSession(long expectedGeneration, IDynamicLocaleKey errorKey)
+        {
+            ClearRejectedSession(expectedGeneration, expectedRefreshToken: null, errorKey);
+        }
+
+        private bool ClearRejectedSession(long expectedGeneration, string? expectedRefreshToken, IDynamicLocaleKey errorKey)
         {
             var cleared = ClearLocalSessionCore(expectedGeneration, expectedRefreshToken);
             if (cleared) onSessionInvalidated(errorKey);
@@ -800,25 +831,42 @@ public sealed partial class OAuthCloudClient :
 
         /// <summary>
         /// Ensures the current token data is valid. If it's nearing expiry, automatically triggers a refresh.
-        /// Returns the latest TokenData object, allowing callers to extract IdToken or AccessToken as needed.
+        /// Returns the latest <see cref="TokenData"/> object, allowing callers to extract IdToken or AccessToken as needed.
         /// </summary>
         public async Task<TokenData?> GetValidTokenDataAsync(bool throwOnError, CancellationToken cancellationToken)
         {
-            var snapshot = GetSnapshot();
-            if (snapshot.TokenData is null) return null;
-
-            // If token is still fresh, return it directly
-            if (!snapshot.TokenData.IsTokenExpiredOrNearingExpiry) return snapshot.TokenData;
-
-            // If it's expired or nearing expiry, attempt to refresh it
-            var refreshed = await TryRefreshAsync(throwOnError, cancellationToken);
-            return refreshed ? GetSnapshot().TokenData : null;
+            return (await GetValidTokenSnapshotAsync(throwOnError, cancellationToken)).TokenData;
         }
 
-        public async Task<bool> TryRefreshAsync(bool throwOnError, CancellationToken cancellationToken)
+        /// <summary>
+        /// Ensures the current token snapshot is valid and returns both the token data and its generation.
+        /// </summary>
+        public async Task<TokenSnapshot> GetValidTokenSnapshotAsync(bool throwOnError, CancellationToken cancellationToken)
         {
             var snapshot = GetSnapshot();
-            if (snapshot.TokenData is not { RefreshToken.Length: > 0 }) return false;
+            if (snapshot.TokenData is null) return snapshot;
+
+            // If token is still fresh, return it directly
+            if (!snapshot.TokenData.IsTokenExpiredOrNearingExpiry) return snapshot;
+
+            // If it's expired or nearing expiry, attempt to refresh it
+            var refreshed = await TryRefreshAsync(throwOnError, cancellationToken, snapshot.Generation);
+            return refreshed ? GetSnapshot() : new TokenSnapshot(null, snapshot.Generation);
+        }
+
+        public async Task<bool> TryRefreshAsync(
+            bool throwOnError,
+            CancellationToken cancellationToken,
+            long? expectedGeneration = null
+        )
+        {
+            var initialSnapshot = GetSnapshot();
+            if (expectedGeneration is { } expected && initialSnapshot.Generation != expected)
+            {
+                return initialSnapshot.TokenData is not null;
+            }
+
+            if (initialSnapshot.TokenData is not { RefreshToken.Length: > 0 }) return false;
 
             // Prevent concurrent refresh attempts (Double-check locking pattern)
             if (!await _refreshLock.WaitAsync(0, cancellationToken))
@@ -826,8 +874,9 @@ public sealed partial class OAuthCloudClient :
                 await _refreshLock.WaitAsync(cancellationToken);
                 _refreshLock.Release();
 
-                // Another thread might have completed the refresh while we were waiting
-                return GetSnapshot().TokenData is { IsTokenExpiredOrNearingExpiry: false };
+                // Only report success if another caller actually advanced the session to a new token.
+                var currentSnapshot = GetSnapshot();
+                return currentSnapshot.TokenData is not null && currentSnapshot.Generation != initialSnapshot.Generation;
             }
 
             long refreshGeneration = 0;
@@ -835,7 +884,12 @@ public sealed partial class OAuthCloudClient :
 
             try
             {
-                snapshot = GetSnapshot();
+                var snapshot = GetSnapshot();
+                if (expectedGeneration is { } expectedAfterLock && snapshot.Generation != expectedAfterLock)
+                {
+                    return snapshot.TokenData is not null;
+                }
+
                 if (snapshot.TokenData is not { RefreshToken.Length: > 0 } tokenData) return false;
 
                 refreshGeneration = snapshot.Generation;
@@ -889,11 +943,11 @@ public sealed partial class OAuthCloudClient :
             }
         }
 
-        private (TokenData? TokenData, long Generation) GetSnapshot()
+        private TokenSnapshot GetSnapshot()
         {
             lock (_stateGate)
             {
-                return (_tokenData, _generation);
+                return new TokenSnapshot(_tokenData, _generation);
             }
         }
 
@@ -955,7 +1009,8 @@ public sealed partial class OAuthCloudClient :
     private static async Task<TokenData> RequestTokenInternalAsync(
         IHttpClientFactory factory,
         Dictionary<string, string> parameters,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         using var httpClient = factory.CreateClient();
         var request = new HttpRequestMessage(HttpMethod.Post, TokenEndpoint)
@@ -985,9 +1040,9 @@ public sealed partial class OAuthCloudClient :
     {
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            // 1. Proactively get a valid token data and extract the IdToken (JWT)
-            var tokenData = await session.GetValidTokenDataAsync(false, cancellationToken);
-            var idToken = tokenData?.IdToken;
+            // 1. Proactively get a valid token snapshot and extract the IdToken (JWT)
+            var tokenSnapshot = await session.GetValidTokenSnapshotAsync(false, cancellationToken);
+            var idToken = tokenSnapshot.TokenData?.IdToken;
 
             if (string.IsNullOrEmpty(idToken))
             {
@@ -1013,10 +1068,11 @@ public sealed partial class OAuthCloudClient :
             try
             {
                 // The token may have been invalidated early. Refresh once, then use the latest JWT.
-                if (!await session.TryRefreshAsync(false, cancellationToken))
+                if (!await session.TryRefreshAsync(false, cancellationToken, tokenSnapshot.Generation))
                 {
                     return response;
                 }
+
                 newIdToken = session.CurrentIdToken;
                 if (string.IsNullOrEmpty(newIdToken))
                 {

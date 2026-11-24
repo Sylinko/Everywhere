@@ -1,5 +1,5 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using Avalonia.Threading;
 using Everywhere.Common;
 using Everywhere.Extensions;
@@ -21,6 +21,7 @@ partial class OAuthCloudClient
         {
             throw new InvalidDataException("The userinfo response did not contain an account subject.");
         }
+
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -36,20 +37,67 @@ partial class OAuthCloudClient
 
     private async Task<UserProfile> ReadUserProfileAsync(bool shouldThrowOnError, CancellationToken cancellationToken)
     {
-        var tokenData = await _session.GetValidTokenDataAsync(shouldThrowOnError, cancellationToken);
-        if (string.IsNullOrEmpty(tokenData?.AccessToken))
+        var snapshot = await _session.GetValidTokenSnapshotAsync(shouldThrowOnError, cancellationToken);
+        if (string.IsNullOrEmpty(snapshot.TokenData?.AccessToken))
         {
             throw new UserNotLoginException("Cannot refresh user profile without an access token.");
         }
 
         using var http = _httpClientFactory.CreateClient();
+        var response = await SendUserInfoRequestAsync(http, snapshot.TokenData.AccessToken, cancellationToken);
+        try
+        {
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                var firstBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                var firstError = OAuthTokenRequestException.FromResponse(response.StatusCode, firstBody);
+                LogReceived401FromUserinfo(firstError.Error);
+
+                response.Dispose();
+                response = null;
+
+                if (!await _session.TryRefreshAsync(shouldThrowOnError, cancellationToken, snapshot.Generation))
+                {
+                    throw firstError;
+                }
+
+                var refreshedSnapshot = _session.GetCurrentSnapshot();
+                if (string.IsNullOrEmpty(refreshedSnapshot.TokenData?.AccessToken))
+                {
+                    throw firstError;
+                }
+
+                response = await SendUserInfoRequestAsync(http, refreshedSnapshot.TokenData.AccessToken, cancellationToken);
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var retryBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                    var retryError = OAuthTokenRequestException.FromResponse(response.StatusCode, retryBody);
+                    LogRefreshedAccessTokenWasStillRejectedByUserinfoWith401(retryError);
+                    _session.InvalidateRejectedSession(refreshedSnapshot.Generation, retryError.FriendlyMessageKey);
+                    throw retryError;
+                }
+            }
+
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<UserProfile>(UserProfileJsonSerializerContext.Default.Options, cancellationToken)
+                ?? throw new InvalidDataException("The userinfo response did not contain a profile.");
+        }
+        finally
+        {
+            response?.Dispose();
+        }
+    }
+
+    private static async Task<HttpResponseMessage> SendUserInfoRequestAsync(
+        HttpClient http,
+        string accessToken,
+        CancellationToken cancellationToken
+    )
+    {
         using var request = new HttpRequestMessage(HttpMethod.Get, UserInfoEndpoint);
         // Better Auth userinfo requires the opaque access token, not the ID token used by service APIs.
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.AccessToken);
-        using var response = await http.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<UserProfile>(UserProfileJsonSerializerContext.Default.Options, cancellationToken)
-            ?? throw new InvalidDataException("The userinfo response did not contain a profile.");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        return await http.SendAsync(request, cancellationToken);
     }
 
     async Task ICloudClient.ReloadUserDataAsync(CancellationToken cancellationToken)
@@ -58,6 +106,7 @@ partial class OAuthCloudClient
         {
             return;
         }
+
         try
         {
             // Opening the flyout during initial subscription loading joins that request.
@@ -72,11 +121,13 @@ partial class OAuthCloudClient
                 await pending.WaitAsync(cancellationToken);
                 return;
             }
+
             var previous = UserProfile;
             if (previous is null || LoginStatus != CloudClientLoginStatus.LoggedIn)
             {
                 return;
             }
+
             var profile = await ReadUserProfileAsync(false, cancellationToken);
             var refresh = Task.CompletedTask;
             await Dispatcher.UIThread.InvokeAsync(() =>
@@ -86,6 +137,7 @@ partial class OAuthCloudClient
                 {
                     return;
                 }
+
                 UserProfile = profile;
                 refresh = StartSubscriptionRefresh(cancellationToken);
             });
@@ -121,7 +173,9 @@ partial class OAuthCloudClient
             using var http = _httpClientFactory.CreateClient(nameof(ICloudClient));
             using var response = await http.GetAsync(SubscriptionEndpoint, token);
             var payload = await ApiPayload<SubscriptionInformation>.EnsureSuccessFromHttpResponseJsonAsync(
-                response, SubscriptionInformationJsonSerializerContext.Default.ApiPayloadSubscriptionInformation.Options, token);
+                response,
+                SubscriptionInformationJsonSerializerContext.Default.ApiPayloadSubscriptionInformation.Options,
+                token);
             var subscription = payload.EnsureData();
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
@@ -174,4 +228,10 @@ partial class OAuthCloudClient
         SubscriptionErrorKey = null;
         UpdateNotifications();
     }
+
+    [LoggerMessage(LogLevel.Debug, "Received 401 from userinfo (error: {OAuthError}). Attempting to force refresh token.")]
+    partial void LogReceived401FromUserinfo(string oAuthError);
+
+    [LoggerMessage(LogLevel.Warning, "Refreshed access token was still rejected by userinfo with 401. Clearing local session.")]
+    partial void LogRefreshedAccessTokenWasStillRejectedByUserinfoWith401(OAuthTokenRequestException oAuthTokenRequestException);
 }
