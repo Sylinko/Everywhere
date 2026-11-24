@@ -271,10 +271,6 @@ public sealed partial class ChatContextManager :
                     if (message.Metadata.States.HasFlag(ChatContextMetadataStates.Busy))
                     {
                         _busyContexts.Add(message.Metadata.Id);
-                        if (_normalizedHistorySearchQuery is null)
-                        {
-                            AddRecentHistoryMetadata(message.Metadata);
-                        }
                     }
                     else
                     {
@@ -734,16 +730,9 @@ public sealed partial class ChatContextManager :
             return;
         }
 
-        if (IsEmptyDraft(previous))
+        if (IsEmptyDraft(previous) && !ReferenceEquals(previous, _newChatDraft))
         {
-            if (!ReferenceEquals(previous, _newChatDraft))
-            {
-                _metadataMap.TryRemove(previous.Data.Metadata.Id, out _);
-            }
-        }
-        else if (_normalizedHistorySearchQuery is null)
-        {
-            AddRecentHistoryMetadata(previous.Data.Metadata);
+            _metadataMap.TryRemove(previous.Data.Metadata.Id, out _);
         }
 
         // Current keeps a deleted root alive during preparation. Once bindings have moved,
@@ -1615,7 +1604,7 @@ public sealed partial class ChatContextManager :
     {
         var candidates = new Dictionary<Guid, ChatMetadata>();
         var current = Volatile.Read(ref _current);
-        if (current is not null && !IsEmptyDraft(current))
+        if (current is not null && CanSave(current.Data.Metadata, current))
         {
             var metadata = current.Data.Metadata;
             if (_metadataMap.TryGetValue(metadata.Id, out var canonical) &&
@@ -1630,7 +1619,7 @@ public sealed partial class ChatContextManager :
         {
             foreach (var reference in _roots.Values)
             {
-                if (reference.Target is not { } root || IsEmptyDraft(root))
+                if (reference.Target is not { Data.HasHistory: true } root)
                 {
                     continue;
                 }
@@ -1903,25 +1892,11 @@ public sealed partial class ChatContextManager :
 
     private void OnRootIdle(object? sender, EventArgs args)
     {
-        if (_isClosing || sender is not RootChatContext root)
-        {
-            return;
-        }
-
         // Short draft edits also raise Idle, but have no durable history to synchronize.
-        if (CanSave(root.Data.Metadata, root))
+        if (!_isClosing && sender is RootChatContext root && CanSave(root.Data.Metadata, root))
         {
             CompleteStableSaveAsync().Detach(_logger.ToExceptionHandler());
-            return;
         }
-
-        Dispatcher.UIThread.PostOnDemand(() =>
-        {
-            if (!_isClosing && !HasHistoryMembership(root.Data.Metadata))
-            {
-                RemoveHistoryMetadata(root.Data.Metadata);
-            }
-        });
     }
 
     private async Task CompleteStableSaveAsync()
@@ -2043,7 +2018,7 @@ public sealed partial class ChatContextManager :
     private bool HasHistoryMembership(ChatMetadata metadata) =>
         metadata.IsPersisted ||
         GetPendingSave(metadata.Id) is not null ||
-        FindRoot(metadata) is { } root && !IsEmptyDraft(root);
+        FindRoot(metadata) is { Data.HasHistory: true };
 
     private static bool IsEmptyDraft([NotNullWhen(true)] RootChatContext? chatContext)
     {

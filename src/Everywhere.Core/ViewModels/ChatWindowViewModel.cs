@@ -982,7 +982,6 @@ public sealed partial class ChatWindowViewModel :
     private void HandleCurrentChatContextIsBusyChanged(bool isBusy)
     {
         IsBusy = isBusy;
-        UpdateCurrentTitleKey();
     }
 
     private void HandleCurrentChatContextIsTurnActiveChanged(bool isTurnActive)
@@ -1084,7 +1083,7 @@ public sealed partial class ChatWindowViewModel :
             return new DirectLocaleKey(metadata.Topic);
         }
 
-        var hasStarted = context.IsBusy || context.Data.HasHistory || metadata.IsPersisted;
+        var hasStarted = context.Data.HasHistory || metadata.IsPersisted;
         return (hasStarted, metadata.IsTemporary) switch
         {
             (false, false) => NewChatTitleKey,
