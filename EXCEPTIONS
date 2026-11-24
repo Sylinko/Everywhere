@@ -1,11 +1,11 @@
 Everywhere Mod Interface Additional Permission
 (Additional Permission under GNU Affero General Public License, Version 3, Section 7)
 
-Copyright (C) 2026 Sylinko Inc.
+Copyright (c) 2026 The Everywhere Authors
 
 As a special exception to the GNU Affero General Public License, Version 3
-("AGPL-3.0-only"), Sylinko Inc., as copyright holder of Everywhere, grants
-you additional permission to compile, link, load, and distribute an
+("AGPL-3.0-only"), The Everywhere Authors, as copyright holders of Everywhere,
+grant you additional permission to compile, link, load, and distribute an
 independent third-party software module ("Mod") for execution within
 Everywhere under any license terms of your choice (including permissive
 open-source or proprietary licenses), provided that all of the following
@@ -42,7 +42,8 @@ Scope:
 - This additional permission applies solely to qualifying independent Mods.
 - Modifications to, or derivative works of, the Everywhere host application
   itself remain governed solely by AGPL-3.0-only (unless separately licensed
-  under a commercial agreement with Sylinko Inc.).
+  under a commercial agreement with the copyright holders or an authorized
+  commercial licensor).
 - If you modify Everywhere itself, you may extend this exception to your
   version of the code, but you are not obligated to do so. If you do not
   wish to do so, delete this exception statement from your version.

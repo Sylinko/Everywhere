@@ -41,4 +41,6 @@ When distributing a modified build or fork of Everywhere under `AGPL-3.0-only`, 
 
 ## Contact
 
-For brand permissions, partnership inquiries, or commercial licensing, please contact **Sylinko Inc.** at [contact@sylinko.com](mailto:contact@sylinko.com) or via [https://everywhere.sylinko.com](https://everywhere.sylinko.com).
+For brand permissions, trademark inquiries, or official Sylinko partnerships, please contact **Sylinko Inc.** at [contact@sylinko.com](mailto:contact@sylinko.com).
+
+For commercial software licensing inquiries, please refer to [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md).
