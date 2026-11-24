@@ -74,8 +74,6 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    IRelayCommand IChatContextManager.UpdateRecentHistoryCommand => UpdateRecentHistoryCommand;
-
     /// <inheritdoc />
     public IReadOnlyBindableList<ChatHistorySection> AllHistory { get; }
 
@@ -131,12 +129,10 @@ public sealed partial class ChatContextManager :
         {
             if (SetProperty(ref field, value))
             {
-                RestartHistoryMaterializationCore(resetRawHistory: true);
+                RestartHistoryMaterializationCore();
             }
         }
     }
-
-    private ICollection<ChatMetadata> LoadedMetadata => _metadataMap.Values;
 
     /// <summary>
     /// Signals eligible edits or completed root work. A connected sync session coalesces
@@ -149,13 +145,16 @@ public sealed partial class ChatContextManager :
     private CancellationTokenSource? _currentSwitchCancellation;
 
     private readonly ConcurrentDictionary<Guid, ChatMetadata> _metadataMap = [];
+    private const int DefaultHistoryPageSize = 100;
+
     private readonly SourceList<ChatMetadata> _materializedHistorySource = new();
     private readonly Subject<Unit> _historyRegrouper = new();
     private readonly IDisposable _historyConnection;
     private readonly SemaphoreSlim _historyLoadGate = new(1, 1);
     private readonly Lock _historyStateLock = new();
-    private readonly List<Guid> _historyScanIds = [];
-    private readonly HashSet<Guid> _rawHistoryIds = [];
+    private readonly List<HistoryCandidate> _storageHistoryCandidates = [];
+    private readonly HashSet<Guid> _storageHistoryIds = [];
+    private readonly List<HistoryCandidate> _localHistoryCandidates = [];
     private readonly HashSet<Guid> _materializedHistoryIds = [];
     private readonly HashSet<Guid> _busyContexts = [];
     private readonly HashSet<Guid> _notificationContexts = [];
@@ -186,10 +185,12 @@ public sealed partial class ChatContextManager :
     private CancellationTokenSource _historyGenerationCancellation = new();
     private string? _normalizedHistorySearchQuery;
     private ChatHistoryCursor? _storageCursor;
-    private int _historyScanIndex;
+    private int _storageScanIndex;
+    private int _localScanIndex;
     private int _historyGeneration;
     private int _activeHistorySessions;
-    private bool _rawHistoryExhausted;
+    private bool _storageHistoryExhausted;
+    private bool _hasCapturedLocalCandidates;
     private Task? _disposeTask;
 
     private volatile bool _isClosing;
@@ -270,6 +271,10 @@ public sealed partial class ChatContextManager :
                     if (message.Metadata.States.HasFlag(ChatContextMetadataStates.Busy))
                     {
                         _busyContexts.Add(message.Metadata.Id);
+                        if (_normalizedHistorySearchQuery is null)
+                        {
+                            AddRecentHistoryMetadata(message.Metadata);
+                        }
                     }
                     else
                     {
@@ -301,6 +306,11 @@ public sealed partial class ChatContextManager :
                         HandleInputChanged(root.Input, EventArgs.Empty);
                     }
 
+                    if (!HasHistoryMembership(message.Metadata))
+                    {
+                        return;
+                    }
+
                     if (message.PropertyName == nameof(ChatMetadata.IsTemporary) && HistoryView != ChatHistoryView.Temporary)
                     {
                         // Retention does not change membership or ordering in Recent/Archived.
@@ -316,7 +326,7 @@ public sealed partial class ChatContextManager :
                     if (_normalizedHistorySearchQuery is not null)
                     {
                         // Re-evaluate membership and search together, without a second restart in AddRecentHistoryMetadata.
-                        RestartHistoryMaterializationCore(resetRawHistory: true);
+                        RestartHistoryMaterializationCore();
                         return;
                     }
 
@@ -325,7 +335,7 @@ public sealed partial class ChatContextManager :
                         RemoveHistoryMetadata(message.Metadata);
                     }
 
-                    RestartHistoryMaterializationCore(resetRawHistory: true, preserveVisibleItems: true);
+                    RestartHistoryMaterializationCore(preserveVisibleItems: true);
                     AddRecentHistoryMetadata(message.Metadata);
                 });
                 break;
@@ -336,7 +346,7 @@ public sealed partial class ChatContextManager :
                 {
                     if (_isClosing) return;
                     _historyRegrouper.OnNext(Unit.Default);
-                    RestartHistoryMaterializationCore(resetRawHistory: true, preserveVisibleItems: true);
+                    RestartHistoryMaterializationCore(preserveVisibleItems: true);
                 });
                 break;
             }
@@ -349,7 +359,9 @@ public sealed partial class ChatContextManager :
                     CreateNewCommand.NotifyCanExecuteChanged();
                     // AutoRefresh handles timestamp ordering. Content matches refresh after saving;
                     // only a title change needs to re-evaluate this query immediately.
-                    if (message.PropertyName == nameof(ChatMetadata.Topic) && _normalizedHistorySearchQuery is not null)
+                    if (message.PropertyName == nameof(ChatMetadata.Topic) &&
+                        _normalizedHistorySearchQuery is not null &&
+                        HasHistoryMembership(message.Metadata))
                     {
                         RestartHistoryMaterializationCore();
                     }
@@ -374,13 +386,18 @@ public sealed partial class ChatContextManager :
             return;
         }
 
-        if (!QueueSave(message.Metadata))
+        if (!QueueSave(message.Metadata, out var isInitialSave))
         {
             return;
         }
 
         if (!_isClosing)
         {
+            if (isInitialSave)
+            {
+                AddRecentHistoryMetadata(metadata);
+            }
+
             _saveDebounceExecutor.Trigger();
             if (metadata.CaptureChanges().HasIndependentFields)
             {
@@ -561,8 +578,12 @@ public sealed partial class ChatContextManager :
 
     private static bool CanSave(ChatMetadata metadata, RootChatContext? root) => metadata.IsPersisted || root is { Data.HasHistory: true };
 
-    private bool QueueSave(ChatMetadata metadata)
+    private void QueueSave(ChatMetadata metadata) => QueueSave(metadata, out _);
+
+    private bool QueueSave(ChatMetadata metadata, out bool isInitialSave)
     {
+        isInitialSave = false;
+
         // Capture the owner at notification ingress, while the writer still holds it. A pending
         // or failed save must not rely on a later lookup through the manager's weak index.
         var root = FindRoot(metadata);
@@ -581,6 +602,7 @@ public sealed partial class ChatContextManager :
                 return false;
             }
 
+            isInitialSave = !metadata.IsPersisted && !_pendingSaves.ContainsKey(metadata.Id);
             if (_pendingSaves.TryGetValue(metadata.Id, out var pending))
             {
                 // Preserve initial ownership, including when the account changes during I/O.
@@ -650,9 +672,15 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    [RelayCommand]
-    private void UpdateRecentHistory() =>
-        Dispatcher.UIThread.PostOnDemand(() => RestartHistoryMaterializationCore(resetRawHistory: true));
+    /// <inheritdoc />
+    public void RefreshHistorySections() =>
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            if (!_isClosing)
+            {
+                _historyRegrouper.OnNext(Unit.Default);
+            }
+        });
 
     [MemberNotNull(nameof(_current))]
     private void CreateNew()
@@ -661,7 +689,6 @@ public sealed partial class ChatContextManager :
         if (IsEmptyDraft(_newChatDraft) && _metadataMap.ContainsKey(_newChatDraft.Data.Metadata.Id))
         {
             PublishCurrent(_newChatDraft);
-            AddRecentHistoryMetadata(_newChatDraft.Data.Metadata);
             return;
         }
 
@@ -677,7 +704,6 @@ public sealed partial class ChatContextManager :
         var root = CreateBlankRoot(isTemporary);
         _newChatDraft = root;
         PublishCurrent(root);
-        AddRecentHistoryMetadata(root.Data.Metadata);
     }
 
     /// <inheritdoc />
@@ -686,7 +712,6 @@ public sealed partial class ChatContextManager :
         CancelCurrentSwitch();
         var root = CreateBlankRoot(isTemporary);
         PublishCurrent(root);
-        AddRecentHistoryMetadata(root.Data.Metadata);
         return root;
     }
 
@@ -711,11 +736,14 @@ public sealed partial class ChatContextManager :
 
         if (IsEmptyDraft(previous))
         {
-            RemoveHistoryMetadata(previous.Data.Metadata);
             if (!ReferenceEquals(previous, _newChatDraft))
             {
                 _metadataMap.TryRemove(previous.Data.Metadata.Id, out _);
             }
+        }
+        else if (_normalizedHistorySearchQuery is null)
+        {
+            AddRecentHistoryMetadata(previous.Data.Metadata);
         }
 
         // Current keeps a deleted root alive during preparation. Once bindings have moved,
@@ -856,10 +884,7 @@ public sealed partial class ChatContextManager :
                 _commitGate.Release();
             }
         });
-        if (_current?.Data.Metadata.Id == metadata.Id)
-        {
-            await LoadRecentAsCurrentAsync();
-        }
+        await LeaveUnavailableChatAsync(metadata.Id).ConfigureAwait(false);
     }
 
     /// <summary>Whether stopping sync now could strand work not represented in the inventory.</summary>
@@ -995,7 +1020,7 @@ public sealed partial class ChatContextManager :
                 RemoveHistoryMetadata(removed);
             }
 
-            RestartHistoryMaterialization();
+            RestartHistoryMaterializationCore(preserveVisibleItems: true);
             QueueLeaveUnavailableChat(chatId);
         });
     }
@@ -1045,46 +1070,6 @@ public sealed partial class ChatContextManager :
         finally
         {
             _commitGate.Release();
-        }
-    }
-
-    /// <summary>
-    /// Loads the most recently modified chat data as current.
-    /// </summary>
-    private async Task LoadRecentAsCurrentAsync()
-    {
-        if (_isClosing) return;
-        using var cancellation = BeginCurrentSwitch();
-        var previous = _current;
-        try
-        {
-            var historyItem = LoadedMetadata
-                .AsValueEnumerable()
-                .Where(metadata => !metadata.IsArchived)
-                .OrderByDescending(metadata => metadata.DateModified)
-                .ThenByDescending(metadata => metadata.Id)
-                .FirstOrDefault();
-            var candidate = await _chatContextStorage.GetMostRecentChatMetadataAsync(cancellation.Token);
-            if (candidate is not null)
-            {
-                var canonical = _metadataMap.GetOrAdd(candidate.Id, candidate);
-                if (historyItem is null || canonical.DateModified > historyItem.DateModified ||
-                    canonical.DateModified == historyItem.DateModified && canonical.Id.CompareTo(historyItem.Id) > 0)
-                {
-                    historyItem = canonical;
-                }
-            }
-
-            cancellation.Token.ThrowIfCancellationRequested();
-            var next = historyItem is null ? null : await LoadChatContextAsync(historyItem.Id, cancellation.Token);
-            await PrepareAndPublishCurrentAsync(next, previous, cancellation);
-        }
-        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
-        {
-        }
-        finally
-        {
-            FinishCurrentSwitch(cancellation);
         }
     }
 
@@ -1205,6 +1190,11 @@ public sealed partial class ChatContextManager :
                 }
                 else
                 {
+                    if (_normalizedHistorySearchQuery is null && HasHistoryMembership(next.Data.Metadata))
+                    {
+                        AddRecentHistoryMetadata(next.Data.Metadata);
+                    }
+
                     PublishCurrent(next);
                 }
             },
@@ -1383,6 +1373,7 @@ public sealed partial class ChatContextManager :
                 }
 
                 int generation;
+                ChatHistoryView view;
                 string? query;
                 bool searchIncludesContent;
                 CancellationToken generationToken;
@@ -1390,6 +1381,7 @@ public sealed partial class ChatContextManager :
                 {
                     if (_isClosing) throw new OperationCanceledException();
                     generation = _historyGeneration;
+                    view = HistoryView;
                     query = _normalizedHistorySearchQuery;
                     searchIncludesContent = HistorySearchIncludesContent;
                     generationToken = _historyGenerationCancellation.Token;
@@ -1400,6 +1392,7 @@ public sealed partial class ChatContextManager :
                     return await LoadMoreHistoryCoreAsync(
                             count,
                             generation,
+                            view,
                             query,
                             searchIncludesContent,
                             generationToken,
@@ -1435,6 +1428,7 @@ public sealed partial class ChatContextManager :
     private async Task<IncrementalLoadResult> LoadMoreHistoryCoreAsync(
         int count,
         int generation,
+        ChatHistoryView view,
         string? query,
         bool searchIncludesContent,
         CancellationToken generationToken,
@@ -1444,12 +1438,35 @@ public sealed partial class ChatContextManager :
         using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(generationToken, callerToken);
         var cancellationToken = linkedCancellation.Token;
         var matches = new List<ChatMetadata>(count);
+        var matchedIds = new HashSet<Guid>();
         var pattern = query is null ? null : new TextSearchPattern(query);
-        int scanIndex;
+        int storageIndex;
+        int localIndex;
+        bool shouldCaptureLocalCandidates;
         lock (_historyStateLock)
         {
             ThrowIfHistoryGenerationChanged(generation, cancellationToken);
-            scanIndex = _historyScanIndex;
+            storageIndex = _storageScanIndex;
+            localIndex = _localScanIndex;
+            shouldCaptureLocalCandidates = !_hasCapturedLocalCandidates;
+        }
+
+        if (shouldCaptureLocalCandidates)
+        {
+            // Capture active and uncommitted chats before the first storage query of this generation.
+            // Because commits write SQLite before leaving _pendingSaves, every non-empty chat is seen
+            // in the local overlay, in SQLite, or in both (deduplicated by ID).
+            var localCandidates = CaptureLocalHistoryCandidates(view);
+            lock (_historyStateLock)
+            {
+                ThrowIfHistoryGenerationChanged(generation, cancellationToken);
+                if (!_hasCapturedLocalCandidates)
+                {
+                    _localHistoryCandidates.Clear();
+                    _localHistoryCandidates.AddRange(localCandidates);
+                    _hasCapturedLocalCandidates = true;
+                }
+            }
         }
 
         while (matches.Count < count)
@@ -1461,28 +1478,55 @@ public sealed partial class ChatContextManager :
             lock (_historyStateLock)
             {
                 ThrowIfHistoryGenerationChanged(generation, cancellationToken);
-                if (scanIndex < _historyScanIds.Count)
+                if (storageIndex >= _storageHistoryCandidates.Count && !_storageHistoryExhausted)
                 {
-                    candidateId = _historyScanIds[scanIndex++];
-                    if (_materializedHistoryIds.Contains(candidateId.Value))
+                    mustFetch = true;
+                }
+                else
+                {
+                    var hasStorage = storageIndex < _storageHistoryCandidates.Count;
+                    var hasLocal = localIndex < _localHistoryCandidates.Count;
+                    if (hasStorage && hasLocal)
+                    {
+                        var localCandidate = _localHistoryCandidates[localIndex];
+                        var storageCandidate = _storageHistoryCandidates[storageIndex];
+                        if (CompareHistoryCandidates(localCandidate, storageCandidate) <= 0)
+                        {
+                            candidateId = localCandidate.Id;
+                            localIndex++;
+                        }
+                        else
+                        {
+                            candidateId = storageCandidate.Id;
+                            storageIndex++;
+                        }
+                    }
+                    else if (hasLocal)
+                    {
+                        candidateId = _localHistoryCandidates[localIndex++].Id;
+                    }
+                    else if (hasStorage)
+                    {
+                        candidateId = _storageHistoryCandidates[storageIndex++].Id;
+                    }
+
+                    if (candidateId is { } selectedId &&
+                        (_materializedHistoryIds.Contains(selectedId) || !matchedIds.Add(selectedId)))
                     {
                         continue;
                     }
-                }
-                else if (!_rawHistoryExhausted)
-                {
-                    mustFetch = true;
                 }
             }
 
             if (mustFetch)
             {
-                await FetchRawHistoryPageAsync(Math.Max(count - matches.Count, 20), generation, cancellationToken).ConfigureAwait(false);
+                await FetchStorageHistoryPageAsync(Math.Max(count - matches.Count, DefaultHistoryPageSize), view, generation, cancellationToken)
+                    .ConfigureAwait(false);
                 continue;
             }
 
             if (candidateId is not { } id) break;
-            if (!_metadataMap.TryGetValue(id, out var metadata) || !MatchesHistoryView(metadata)) continue;
+            if (!_metadataMap.TryGetValue(id, out var metadata) || !MatchesHistoryView(metadata, view)) continue;
             if (await MatchesHistorySearchAsync(metadata, pattern, searchIncludesContent, cancellationToken).ConfigureAwait(false))
             {
                 matches.Add(metadata);
@@ -1493,7 +1537,9 @@ public sealed partial class ChatContextManager :
         lock (_historyStateLock)
         {
             ThrowIfHistoryGenerationChanged(generation, cancellationToken);
-            hasMoreItems = scanIndex < _historyScanIds.Count || !_rawHistoryExhausted;
+            hasMoreItems = storageIndex < _storageHistoryCandidates.Count ||
+                localIndex < _localHistoryCandidates.Count ||
+                !_storageHistoryExhausted;
         }
 
         return await Dispatcher.UIThread.InvokeAsync(
@@ -1505,7 +1551,7 @@ public sealed partial class ChatContextManager :
                     cancellationToken.ThrowIfCancellationRequested();
 
                     matches.RemoveAll(metadata =>
-                        !MatchesHistoryView(metadata) ||
+                        !MatchesHistoryView(metadata, view) ||
                         !_metadataMap.ContainsKey(metadata.Id) ||
                         !_materializedHistoryIds.Add(metadata.Id));
                     if (matches.Count > 0)
@@ -1514,8 +1560,9 @@ public sealed partial class ChatContextManager :
                     }
 
                     // Consuming candidates and publishing this page are one commit. Cancellation
-                    // before publication leaves the scan position available to the next request.
-                    _historyScanIndex = scanIndex;
+                    // before publication leaves the merge positions available to the next request.
+                    _storageScanIndex = storageIndex;
+                    _localScanIndex = localIndex;
                     HasMoreItems = hasMoreItems;
                     return new IncrementalLoadResult(matches.Count, hasMoreItems);
                 }
@@ -1524,8 +1571,9 @@ public sealed partial class ChatContextManager :
             cancellationToken);
     }
 
-    private async Task FetchRawHistoryPageAsync(
+    private async Task FetchStorageHistoryPageAsync(
         int count,
+        ChatHistoryView view,
         int generation,
         CancellationToken cancellationToken
     )
@@ -1533,13 +1581,14 @@ public sealed partial class ChatContextManager :
         ChatHistoryCursor? cursor;
         lock (_historyStateLock)
         {
+            ThrowIfHistoryGenerationChanged(generation, cancellationToken);
             cursor = _storageCursor;
         }
 
         var page = await _chatContextStorage.ReadHistoryPageAsync(
                 count,
                 cursor,
-                HistoryView,
+                view,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -1550,27 +1599,84 @@ public sealed partial class ChatContextManager :
             {
                 var canonical = _metadataMap.GetOrAdd(metadata.Id, metadata);
 
-                if (_rawHistoryIds.Add(canonical.Id) && MatchesHistoryView(canonical))
+                if (_storageHistoryIds.Add(canonical.Id) && MatchesHistoryView(canonical, view))
                 {
-                    _historyScanIds.Add(canonical.Id);
+                    // Keep the row's stored ordering key so the storage stream remains monotonic with its cursor.
+                    _storageHistoryCandidates.Add(new HistoryCandidate(canonical.Id, metadata.IsPinned, metadata.DateModified));
                 }
             }
 
             _storageCursor = page.NextCursor;
-            _rawHistoryExhausted = page.NextCursor is null;
-            IncludeCurrentHistoryCandidate();
+            _storageHistoryExhausted = page.NextCursor is null;
         }
     }
 
-    private void IncludeCurrentHistoryCandidate()
+    private List<HistoryCandidate> CaptureLocalHistoryCandidates(ChatHistoryView view)
     {
-        // Called under the history lock after the database prefix is complete. Local empty or
-        // not-yet-saved chats remain searchable, without letting cached rows precede unread pins.
-        if (_rawHistoryExhausted && _current is { } current && _metadataMap.ContainsKey(current.Data.Metadata.Id) &&
-            MatchesHistoryView(current.Data.Metadata) && _rawHistoryIds.Add(current.Data.Metadata.Id))
+        var candidates = new Dictionary<Guid, ChatMetadata>();
+        var current = Volatile.Read(ref _current);
+        if (current is not null && !IsEmptyDraft(current))
         {
-            _historyScanIds.Add(current.Data.Metadata.Id);
+            var metadata = current.Data.Metadata;
+            if (_metadataMap.TryGetValue(metadata.Id, out var canonical) &&
+                ReferenceEquals(canonical, metadata) &&
+                MatchesHistoryView(metadata, view))
+            {
+                candidates[metadata.Id] = metadata;
+            }
         }
+
+        using (_rootsLock.EnterScope())
+        {
+            foreach (var reference in _roots.Values)
+            {
+                if (reference.Target is not { } root || IsEmptyDraft(root))
+                {
+                    continue;
+                }
+
+                var metadata = root.Data.Metadata;
+                if (!metadata.IsPersisted &&
+                    _metadataMap.TryGetValue(metadata.Id, out var canonical) &&
+                    ReferenceEquals(canonical, metadata) &&
+                    MatchesHistoryView(metadata, view))
+                {
+                    candidates[metadata.Id] = metadata;
+                }
+            }
+        }
+
+        lock (_pendingSaves)
+        {
+            foreach (var pendingSave in _pendingSaves.Values)
+            {
+                var metadata = pendingSave.Metadata;
+                if (_metadataMap.TryGetValue(metadata.Id, out var canonical) &&
+                    ReferenceEquals(canonical, metadata) &&
+                    MatchesHistoryView(metadata, view))
+                {
+                    candidates[metadata.Id] = metadata;
+                }
+            }
+        }
+
+        var result = new List<HistoryCandidate>(candidates.Count);
+        foreach (var metadata in candidates.Values)
+        {
+            result.Add(new HistoryCandidate(metadata.Id, metadata.IsPinned, metadata.DateModified));
+        }
+
+        result.Sort(CompareHistoryCandidates);
+        return result;
+    }
+
+    private static int CompareHistoryCandidates(HistoryCandidate left, HistoryCandidate right)
+    {
+        var pinned = right.IsPinned.CompareTo(left.IsPinned);
+        if (pinned != 0) return pinned;
+
+        var modified = right.DateModified.CompareTo(left.DateModified);
+        return modified != 0 ? modified : right.Id.CompareTo(left.Id);
     }
 
     private async ValueTask<bool> MatchesHistorySearchAsync(
@@ -1611,35 +1717,30 @@ public sealed partial class ChatContextManager :
     private void RestartHistoryMaterialization() =>
         Dispatcher.UIThread.PostOnDemand(() => RestartHistoryMaterializationCore());
 
-    private void RestartHistoryMaterializationCore(bool resetRawHistory = false, bool preserveVisibleItems = false)
+    private void RestartHistoryMaterializationCore(bool preserveVisibleItems = false)
     {
         Dispatcher.UIThread.VerifyAccess();
         if (_isClosing) return;
 
         CancellationTokenSource previousCancellation;
-        bool hasMoreItems;
         lock (_historyStateLock)
         {
             _historyGeneration++;
             previousCancellation = _historyGenerationCancellation;
             _historyGenerationCancellation = new CancellationTokenSource();
 
-            if (resetRawHistory)
-            {
-                _rawHistoryIds.Clear();
-                _historyScanIds.Clear();
-                _storageCursor = null;
-                _rawHistoryExhausted = false;
-            }
-
-            IncludeCurrentHistoryCandidate();
-            _historyScanIndex = 0;
+            _storageHistoryIds.Clear();
+            _storageHistoryCandidates.Clear();
+            _localHistoryCandidates.Clear();
+            _storageCursor = null;
+            _storageHistoryExhausted = false;
+            _hasCapturedLocalCandidates = false;
+            _storageScanIndex = 0;
+            _localScanIndex = 0;
             if (!preserveVisibleItems)
             {
                 _materializedHistoryIds.Clear();
             }
-
-            hasMoreItems = _historyScanIds.Count > 0 || !_rawHistoryExhausted;
         }
 
         previousCancellation.Cancel();
@@ -1647,23 +1748,28 @@ public sealed partial class ChatContextManager :
         if (!preserveVisibleItems)
         {
             _materializedHistorySource.Clear();
-            if (_normalizedHistorySearchQuery is null && _current is { } current)
+            if (_normalizedHistorySearchQuery is null && _current is { } current && HasHistoryMembership(current.Data.Metadata))
             {
                 AddRecentHistoryMetadata(current.Data.Metadata);
             }
         }
 
-        HasMoreItems = hasMoreItems;
-
         // Wake the loader even when HasMoreItems stayed true. Query changes clear results;
-        // pinning changes retain the visible objects while restarting the raw ordering.
-        OnPropertyChanged(nameof(HasMoreItems));
+        // pinning and deletion retain visible objects while restarting the ordered merge.
+        if (HasMoreItems)
+        {
+            OnPropertyChanged(nameof(HasMoreItems));
+        }
+        else
+        {
+            HasMoreItems = true;
+        }
     }
 
     private void AddRecentHistoryMetadata(ChatMetadata metadata) =>
         Dispatcher.UIThread.PostOnDemand(() =>
         {
-            if (_isClosing || !_metadataMap.ContainsKey(metadata.Id)) return;
+            if (_isClosing || !_metadataMap.ContainsKey(metadata.Id) || !HasHistoryMembership(metadata)) return;
             if (!MatchesHistoryView(metadata))
             {
                 return;
@@ -1671,7 +1777,7 @@ public sealed partial class ChatContextManager :
 
             if (_normalizedHistorySearchQuery is not null)
             {
-                RestartHistoryMaterializationCore(resetRawHistory: true);
+                RestartHistoryMaterializationCore();
                 return;
             }
 
@@ -1712,9 +1818,11 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    private bool MatchesHistoryView(ChatMetadata metadata)
+    private bool MatchesHistoryView(ChatMetadata metadata) => MatchesHistoryView(metadata, HistoryView);
+
+    private static bool MatchesHistoryView(ChatMetadata metadata, ChatHistoryView view)
     {
-        return HistoryView switch
+        return view switch
         {
             ChatHistoryView.Archived => metadata.IsArchived,
             ChatHistoryView.Temporary => metadata is { IsArchived: false, IsTemporary: true },
@@ -1778,15 +1886,19 @@ public sealed partial class ChatContextManager :
         }
     }
 
-    private void QueueLeaveUnavailableChat(Guid chatId)
+    private void QueueLeaveUnavailableChat(Guid chatId) =>
+        Dispatcher.UIThread.PostOnDemand(() => LeaveUnavailableChatCore(chatId));
+
+    private Task LeaveUnavailableChatAsync(Guid chatId) =>
+        Dispatcher.UIThread.InvokeOnDemandAsync(() => LeaveUnavailableChatCore(chatId));
+
+    private void LeaveUnavailableChatCore(Guid chatId)
     {
-        Dispatcher.UIThread.PostOnDemand(() =>
+        Dispatcher.UIThread.VerifyAccess();
+        if (!_isClosing && _current?.Data.Metadata.Id == chatId && _currentSwitchCancellation is null)
         {
-            if (!_isClosing && _current?.Data.Metadata.Id == chatId && _currentSwitchCancellation is null)
-            {
-                LoadRecentAsCurrentAsync().Detach(_logger.ToExceptionHandler());
-            }
-        });
+            CreateNew();
+        }
     }
 
     private void OnRootIdle(object? sender, EventArgs args)
@@ -1882,6 +1994,8 @@ public sealed partial class ChatContextManager :
         }
     }
 
+    private readonly record struct HistoryCandidate(Guid Id, bool IsPinned, DateTimeOffset DateModified);
+
     private sealed record PendingSave(RootChatContext? Root, ChatMetadata Metadata, string? LocalAccountId);
 
     private sealed record PendingInput(RootChatContext Root, ChatInputWrite Write);
@@ -1911,6 +2025,11 @@ public sealed partial class ChatContextManager :
             owner.EndLoadSession();
         }
     }
+
+    private bool HasHistoryMembership(ChatMetadata metadata) =>
+        metadata.IsPersisted ||
+        GetPendingSave(metadata.Id) is not null ||
+        FindRoot(metadata) is { } root && !IsEmptyDraft(root);
 
     private static bool IsEmptyDraft([NotNullWhen(true)] RootChatContext? chatContext)
     {

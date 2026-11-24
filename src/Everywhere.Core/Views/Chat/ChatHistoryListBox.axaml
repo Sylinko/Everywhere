@@ -16,8 +16,8 @@
             EstimatedItemHeight="40"
             IsEnabled="{Binding #Self.ViewModel?.PersistentState.IsChatWindowHistoryOpened}"
             Loader="{Binding #Self.ViewModel?.ChatContextManager}"
-            MaximumLoadCount="100" OverscanItemCount="2"
-            PageSize="20"/>
+            MaximumLoadCount="200" OverscanItemCount="2"
+            PageSize="100"/>
         </Interaction.Behaviors>
         <ItemsPresenter
           x:Name="PART_ItemsPresenter"

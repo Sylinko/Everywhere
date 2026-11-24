@@ -778,8 +778,14 @@
     <data name="ChatContext_Metadata_Topic_Header" xml:space="preserve">
         <value>トピック</value>
     </data>
+    <data name="ChatContext_Metadata_Topic_New" xml:space="preserve">
+        <value>新しいチャット</value>
+    </data>
     <data name="ChatContext_Temporary" xml:space="preserve">
         <value>一時チャット</value>
+    </data>
+    <data name="ChatContext_Temporary_New" xml:space="preserve">
+        <value>新しい一時チャット</value>
     </data>
     <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
         <value>アシスタントの管理</value>

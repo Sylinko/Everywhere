@@ -19,9 +19,9 @@ public interface IChatContextManager : IIncrementalLoader
     ChatMetadata? CurrentMetadata { get; set; }
 
     /// <summary>
-    /// Gets the command that invalidates cached paging state and reloads history from the newest row.
+    /// Re-evaluates relative date sections for currently materialized history without clearing loaded rows.
     /// </summary>
-    IRelayCommand UpdateRecentHistoryCommand { get; }
+    void RefreshHistorySections();
 
     /// <summary>
     /// Gets the stable, dynamically grouped portion of history materialized so far.

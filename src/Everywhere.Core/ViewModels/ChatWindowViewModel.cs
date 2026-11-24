@@ -167,11 +167,22 @@ public sealed partial class ChatWindowViewModel :
     [ObservableProperty]
     public partial IDynamicLocaleKey ChatInputAreaWatermarkKey { get; private set; }
 
+    /// <summary>
+    /// Gets the localized or literal title displayed in the chat window title bar.
+    /// </summary>
+    [ObservableProperty]
+    public partial IDynamicLocaleKey CurrentTitleKey { get; private set; }
+
     public ISoftwareUpdater SoftwareUpdater { get; }
 
     private ChatInputState Input => ChatContextManager.Current.Input;
     private bool CanChangeDraft => !_submittingDrafts.Contains(Input.ActiveDraft);
     private SourceList<ChatAttachment> ChatAttachmentsSource => Input.ActiveDraft.AttachmentsSource;
+
+    private static readonly DynamicLocaleKey NewChatTitleKey = new(LocaleKey.ChatContext_Metadata_Topic_New);
+    private static readonly DynamicLocaleKey NewTemporaryChatTitleKey = new(LocaleKey.ChatContext_Temporary_New);
+    private static readonly DynamicLocaleKey DefaultChatTitleKey = new(LocaleKey.ChatContext_Metadata_Topic_Default);
+    private static readonly DynamicLocaleKey TemporaryChatTitleKey = new(LocaleKey.ChatContext_Temporary);
 
     private readonly IChatService _chatService;
     private readonly IScreenSelectionService _screenSelectionService;
@@ -229,6 +240,7 @@ public sealed partial class ChatWindowViewModel :
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
 
         ChatInputAreaWatermarkKey = _defaultWatermarkKey;
+        CurrentTitleKey = ResolveTitleKey(ChatContextManager.Current);
         LifetimeDisposables.Add(_inputSubscriptions);
         LifetimeDisposables.Add(_contextSubscriptions);
         LifetimeDisposables.Add(
@@ -274,17 +286,6 @@ public sealed partial class ChatWindowViewModel :
                 .Subscribe(_ => UpdateCurrentContextUsageModel())
         );
 
-        LifetimeDisposables.Add(
-            ChatContextManager.WhenValueChanged(manager => manager.Current)
-                .Select(context => context != null ? context.Data.WhenValueChanged(data => data.HasHistory) : Observable.Return(false))
-                .Switch()
-                .ObserveOnAvaloniaDispatcher()
-                .Subscribe(_ =>
-                {
-                    ToggleChatPinCommand.NotifyCanExecuteChanged();
-                    ArchiveChatCommand.NotifyCanExecuteChanged();
-                })
-        );
         LifetimeDisposables.Add(
             Settings.ChatWindow.WhenValueChanged(x => x.BusySubmissionMode)
                 .ObserveOnAvaloniaDispatcher()
@@ -981,6 +982,7 @@ public sealed partial class ChatWindowViewModel :
     private void HandleCurrentChatContextIsBusyChanged(bool isBusy)
     {
         IsBusy = isBusy;
+        UpdateCurrentTitleKey();
     }
 
     private void HandleCurrentChatContextIsTurnActiveChanged(bool isTurnActive)
@@ -1031,20 +1033,65 @@ public sealed partial class ChatWindowViewModel :
             if (ReferenceEquals(ChatContextManager.Current, context))
             {
                 NotifyComposerStateChanged();
+                UpdateCurrentTitleKey();
             }
         });
 
         void HandleBranchChanged(object? sender, EventArgs e) => HandleStateChanged();
 
+        void HandleMetadataPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(ChatMetadata.Topic) or nameof(ChatMetadata.IsTemporary))
+            {
+                Dispatcher.UIThread.PostOnDemand(() =>
+                {
+                    if (ReferenceEquals(ChatContextManager.Current, context))
+                    {
+                        UpdateCurrentTitleKey();
+                    }
+                });
+            }
+        }
+
         context.Data.BranchChanged += HandleBranchChanged;
         context.PendingInputs.DrainStateChanged += HandleStateChanged;
+        context.Data.Metadata.PropertyChanged += HandleMetadataPropertyChanged;
         _contextSubscriptions.Disposable = Disposable.Create(() =>
         {
             context.Data.BranchChanged -= HandleBranchChanged;
             context.PendingInputs.DrainStateChanged -= HandleStateChanged;
+            context.Data.Metadata.PropertyChanged -= HandleMetadataPropertyChanged;
         });
 
         NotifyComposerStateChanged();
+        UpdateCurrentTitleKey();
+    }
+
+    private void UpdateCurrentTitleKey()
+    {
+        var nextKey = ResolveTitleKey(ChatContextManager.Current);
+        if (CurrentTitleKey.GetType() != nextKey.GetType() || !Equals(CurrentTitleKey, nextKey))
+        {
+            CurrentTitleKey = nextKey;
+        }
+    }
+
+    private static IDynamicLocaleKey ResolveTitleKey(ChatContext context)
+    {
+        var metadata = context.Data.Metadata;
+        if (!string.IsNullOrWhiteSpace(metadata.Topic))
+        {
+            return new DirectLocaleKey(metadata.Topic);
+        }
+
+        var hasStarted = context.IsBusy || context.Data.HasHistory || metadata.IsPersisted;
+        return (hasStarted, metadata.IsTemporary) switch
+        {
+            (false, false) => NewChatTitleKey,
+            (false, true) => NewTemporaryChatTitleKey,
+            (true, false) => DefaultChatTitleKey,
+            (true, true) => TemporaryChatTitleKey
+        };
     }
 
     private void ObserveInput(ChatInputState input)

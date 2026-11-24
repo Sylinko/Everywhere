@@ -621,13 +621,6 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             return new ChatHistoryPage(rows.Take(take).ToArray(), next);
         }
 
-        public Task<ChatMetadata?> GetMostRecentChatMetadataAsync(CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(metadata.Where(item => !item.IsArchived)
-                .OrderByDescending(item => item.DateModified).ThenByDescending(item => item.Id).FirstOrDefault());
-        }
-
         public Task<ChatData> GetChatContextAsync(
             ChatMetadata metadata,
             CancellationToken cancellationToken = default)

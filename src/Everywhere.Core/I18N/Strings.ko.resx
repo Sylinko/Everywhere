@@ -778,8 +778,14 @@
     <data name="ChatContext_Metadata_Topic_Header" xml:space="preserve">
         <value>주제</value>
     </data>
+    <data name="ChatContext_Metadata_Topic_New" xml:space="preserve">
+        <value>새 채팅</value>
+    </data>
     <data name="ChatContext_Temporary" xml:space="preserve">
         <value>임시 채팅</value>
+    </data>
+    <data name="ChatContext_Temporary_New" xml:space="preserve">
+        <value>새 임시 채팅</value>
     </data>
     <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
         <value>어시스턴트 관리</value>

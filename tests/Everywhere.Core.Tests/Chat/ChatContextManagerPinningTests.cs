@@ -8,7 +8,7 @@ namespace Everywhere.Core.Tests.Chat;
 partial class ChatContextManagerIncrementalLoadingTests
 {
     [AvaloniaTest]
-    public async Task Organize_WhenNewEmptyChatFollowsExhaustedHistory_KeepsItSearchableWithoutSaving()
+    public async Task Organize_WhenNewEmptyChatFollowsExhaustedHistory_RemainsOutOfHistoryUntilFirstMessageStarts()
     {
         using var files = ChatTestDatabase.Create();
         var storage = new ChatTurnStorage(files.Factory);
@@ -21,7 +21,8 @@ partial class ChatContextManagerIncrementalLoadingTests
         manager.HistorySearchQuery = "needle";
         Assert.That(manager.HasMoreItems, Is.True);
         await session.LoadMoreAsync(1);
-        Assert.That(Flatten(manager).Single(), Is.SameAs(root.Data.Metadata));
+        Assert.That(manager.HasMoreItems, Is.False);
+        Assert.That(Flatten(manager), Is.Empty);
 
         await manager.SetPinnedAsync(root.Data.Metadata, true);
         await manager.ArchiveAsync(root.Data.Metadata);
@@ -31,6 +32,10 @@ partial class ChatContextManagerIncrementalLoadingTests
         Assert.That(root.Data.Metadata.IsArchived, Is.False);
 
         await root.DispatchAsync(() => root.Data.StartTurn(new UserChatMessage("first message", [])));
+        await PumpDispatcherAsync();
+        await session.LoadMoreAsync(1);
+        await PumpDispatcherAsync();
+        Assert.That(Flatten(manager).Single(), Is.SameAs(root.Data.Metadata));
         await manager.SetPinnedAsync(root.Data.Metadata, true);
         Assert.That((await storage.ReadHistoryPageAsync(1)).Items.Single().IsPinned, Is.True);
         Assert.That(manager.Current, Is.SameAs(root));
@@ -156,7 +161,7 @@ partial class ChatContextManagerIncrementalLoadingTests
     }
 
     [AvaloniaTest]
-    public async Task ArchiveCurrent_WhenOlderChatIsPinned_SelectsMostRecentChat()
+    public async Task ArchiveCurrent_WhenOlderChatsExist_SwitchesToEmptyNewChatDraft()
     {
         var recent = Metadata("recent", 1);
         var old = Metadata("old", 200);
@@ -168,6 +173,12 @@ partial class ChatContextManagerIncrementalLoadingTests
         var current = manager.Current;
         await current.DispatchAsync(() => current.Data.StartTurn(new UserChatMessage("archive me", [])));
         await manager.ArchiveAsync(current.Data.Metadata);
-        Assert.That(manager.Current.Data.Metadata, Is.SameAs(recent));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(manager.Current, Is.Not.SameAs(current));
+            Assert.That(manager.Current.Data.HasHistory, Is.False);
+            Assert.That(manager.Current.Data.Metadata.IsPersisted, Is.False);
+            Assert.That(manager.Current.Data.Metadata.Id, Is.Not.EqualTo(recent.Id).And.Not.EqualTo(old.Id));
+        }
     }
 }

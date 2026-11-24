@@ -136,6 +136,7 @@ public sealed partial class ChatWindow :
         WeakReferenceMessenger.Default.Register<ApplicationMessage>(this);
 
         settings.Model.PropertyChanged += HandleModelSettingsChanged;
+        persistentState.PropertyChanged += HandlePersistentStateChanged;
         _modelAvailabilityPresenter.SetAssistant(settings.Model.SelectedCustomAssistant);
     }
 
@@ -295,6 +296,14 @@ public sealed partial class ChatWindow :
     {
         if (e.PropertyName == nameof(ModelSettings.SelectedCustomAssistant))
             Dispatcher.PostOnDemand(() => _modelAvailabilityPresenter.SetAssistant(_settings.Model.SelectedCustomAssistant));
+    }
+
+    private void HandlePersistentStateChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PersistentState.IsChatWindowHistoryOpened) && _persistentState.IsChatWindowHistoryOpened)
+        {
+            ViewModel.ChatContextManager.RefreshHistorySections();
+        }
     }
 
     protected override void OnResized(WindowResizedEventArgs e)
@@ -577,6 +586,7 @@ public sealed partial class ChatWindow :
 
         DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
         _settings.Model.PropertyChanged -= HandleModelSettingsChanged;
+        _persistentState.PropertyChanged -= HandlePersistentStateChanged;
         ViewModel.CancelSyncDialogs();
         _inputNotificationPresenter.Dispose();
         _modelAvailabilityPresenter.Dispose();

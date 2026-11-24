@@ -127,12 +127,15 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         await previous.Presentation.PrepareInitialWindowAsync();
         using var history = manager.BeginLoadSession();
         await history.LoadMoreAsync(10);
-        var recentStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var otherStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         storage.ContextLoader = async (id, token) =>
         {
-            (id == recent.Id ? recentStarted : otherStarted).TrySetResult();
+            if (id == other.Id)
+            {
+                otherStarted.TrySetResult();
+            }
+
             await release.Task.WaitAsync(token);
             return storage.Contexts[id];
         };
@@ -152,26 +155,38 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         try
         {
             window.Show();
-            await manager.DeletePermanentlyAsync(previous.Data.Metadata).WaitAsync(TimeSpan.FromSeconds(5));
-            await recentStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
             if (shouldSelectOther)
             {
                 manager.CurrentMetadata = other;
                 await otherStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
             }
-            window.UpdateLayout();
-            Assert.That(scroll.Viewport.Height, Is.GreaterThan(0));
-            Assert.That(items.ChatContext, Is.SameAs(previous));
-            Assert.That(previous.Data.IsDisposed, Is.False);
-            Assert.That(Flatten(manager), Does.Not.Contain(previous.Data.Metadata));
-            window.Width++;
-            window.UpdateLayout();
 
-            release.SetResult();
-            var current = await published.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            window.UpdateLayout();
-            Assert.That(current.Data.Metadata.Id, Is.EqualTo(shouldSelectOther ? other.Id : recent.Id));
-            Assert.That(items.ChatContext, Is.SameAs(current));
+            await manager.DeletePermanentlyAsync(previous.Data.Metadata).WaitAsync(TimeSpan.FromSeconds(5));
+            if (shouldSelectOther)
+            {
+                window.UpdateLayout();
+                Assert.That(scroll.Viewport.Height, Is.GreaterThan(0));
+                Assert.That(items.ChatContext, Is.SameAs(previous));
+                Assert.That(previous.Data.IsDisposed, Is.False);
+                Assert.That(Flatten(manager), Does.Not.Contain(previous.Data.Metadata));
+                window.Width++;
+                window.UpdateLayout();
+
+                release.SetResult();
+                var current = await published.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                window.UpdateLayout();
+                Assert.That(current.Data.Metadata.Id, Is.EqualTo(other.Id));
+                Assert.That(items.ChatContext, Is.SameAs(current));
+            }
+            else
+            {
+                var current = await published.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                window.UpdateLayout();
+                Assert.That(current.Data.HasHistory, Is.False);
+                Assert.That(Flatten(manager), Does.Not.Contain(previous.Data.Metadata));
+                Assert.That(items.ChatContext, Is.SameAs(current));
+            }
+
             Assert.That(() => previous.Data.IsDisposed, Is.True.After(5000, 10));
         }
         finally

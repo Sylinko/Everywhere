@@ -108,20 +108,13 @@ partial class ChatWindowViewModel
         await ExecuteHistoryOperationAsync(() => ChatContextManager.RenameAsync(metadata, textBox.Text));
     }
 
-    private bool CanOrganizeChat(ChatMetadata metadata)
-    {
-        // Only the current draft can appear in history without any retained messages.
-        var current = ChatContextManager.Current.Data;
-        return !ReferenceEquals(current.Metadata, metadata) || current.HasHistory;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanOrganizeChat))]
+    [RelayCommand]
     private Task ToggleChatPinAsync(ChatMetadata metadata)
     {
         return ExecuteHistoryOperationAsync(() => ChatContextManager.SetPinnedAsync(metadata, !metadata.IsPinned));
     }
 
-    [RelayCommand(CanExecute = nameof(CanOrganizeChat))]
+    [RelayCommand]
     private async Task ArchiveChatAsync(ChatMetadata metadata)
     {
         if (ChatContextManager.HasRunningWork(metadata))
