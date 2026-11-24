@@ -410,6 +410,17 @@ partial class ChatContextManagerIncrementalLoadingTests
             await PumpDispatcherAsync();
 
             Assert.That(Flatten(manager), Does.Contain(workC.Data.Metadata));
+
+            admission.SetResult();
+            admission = null;
+            await pendingWork;
+            pendingWork = null;
+            await PumpDispatcherAsync();
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
+                static () => { },
+                Avalonia.Threading.DispatcherPriority.Background);
+
+            Assert.That(Flatten(manager), Does.Not.Contain(workC.Data.Metadata));
         }
         finally
         {
@@ -642,8 +653,68 @@ partial class ChatContextManagerIncrementalLoadingTests
     [AvaloniaTest]
     public async Task CommitReceivedSnapshot_WhenHistoryAlreadyExhausted_PublishesSyncedRecentChatImmediately()
     {
-        var existing = Metadata("Existing Chat", 5);
-        var innerStorage = new TestChatContextStorage([existing]);
+        var existing1 = Metadata("Existing Chat 1", 1);
+        var existing2 = Metadata("Existing Chat 2", 2);
+        var existing3 = Metadata("Existing Chat 3", 3);
+        var existing4 = Metadata("Existing Chat 4", 4);
+        var backingRows = new List<ChatMetadata> { existing1, existing2, existing3, existing4 };
+        var innerStorage = new TestChatContextStorage(backingRows);
+
+        var olderSyncedId = Guid.CreateVersion7();
+        var olderSyncedModified = DateTimeOffset.UtcNow.AddMinutes(-50);
+        var olderSyncedRow = new ChatV2Entity
+        {
+            Id = olderSyncedId,
+            Topic = "Older Synced Chat",
+            CreatedAt = olderSyncedModified,
+            UpdatedAt = olderSyncedModified
+        };
+        var storage = new InterceptingChatContextStorage(innerStorage)
+        {
+            OnMergeSnapshotAsync = () =>
+            {
+                backingRows.Add(ChatMetadataMapper.Materialize(olderSyncedRow));
+                return Task.FromResult<ReceivedChatCommit?>(new ReceivedChatCommit(olderSyncedRow, [], []));
+            }
+        };
+
+        await using var manager = CreateManager(storage);
+        using var session = manager.BeginLoadSession();
+        // Prefetch batch >= 4 exhausts storage internally, while returning 2 leaves HasMoreItems == true.
+        await session.LoadMoreAsync(2);
+        await PumpDispatcherAsync();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(manager.HasMoreItems, Is.True);
+            Assert.That(Flatten(manager).Select(item => item.Id), Is.EqualTo([existing1.Id, existing2.Id]));
+        }
+
+        using var olderSnapshot = CreateDownloadedSnapshot(olderSyncedId);
+        var olderCommitted = await manager.CommitReceivedSnapshotAsync("account-1", olderSnapshot, false, CancellationToken.None);
+        await PumpDispatcherAsync();
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
+            static () => { },
+            Avalonia.Threading.DispatcherPriority.Background);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(olderCommitted, Is.True);
+            Assert.That(manager.HasMoreItems, Is.True);
+            Assert.That(
+                Flatten(manager).Select(item => item.Id),
+                Is.EqualTo([existing1.Id, existing2.Id]));
+        }
+
+        await session.LoadMoreAsync(100);
+        await PumpDispatcherAsync();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(manager.HasMoreItems, Is.False);
+            Assert.That(
+                Flatten(manager).Select(item => item.Id),
+                Is.EqualTo([existing1.Id, existing2.Id, existing3.Id, existing4.Id, olderSyncedId]));
+        }
+
         var syncedId = Guid.CreateVersion7();
         var syncedModified = DateTimeOffset.UtcNow;
         var syncedRow = new ChatV2Entity
@@ -653,28 +724,13 @@ partial class ChatContextManagerIncrementalLoadingTests
             CreatedAt = syncedModified,
             UpdatedAt = syncedModified
         };
-        var storage = new InterceptingChatContextStorage(innerStorage)
+        storage.OnMergeSnapshotAsync = () =>
         {
-            OnMergeSnapshotAsync = () => Task.FromResult<ReceivedChatCommit?>(
-                new ReceivedChatCommit(syncedRow, [], []))
+            backingRows.Add(ChatMetadataMapper.Materialize(syncedRow));
+            return Task.FromResult<ReceivedChatCommit?>(new ReceivedChatCommit(syncedRow, [], []));
         };
 
-        await using var manager = CreateManager(storage);
-        using var session = manager.BeginLoadSession();
-        await session.LoadMoreAsync(100);
-        await PumpDispatcherAsync();
-        Assert.That(manager.HasMoreItems, Is.False);
-        Assert.That(Flatten(manager).Select(item => item.Id), Is.EqualTo([existing.Id]));
-
-        var head = new ChatSyncHead(syncedId.ToString("D"), 1, ChatSyncLifecycle.Active, 1, ChatSyncAvailability.Available, 0, 1);
-        using var snapshot = Activator.CreateInstance(
-                typeof(ChatSyncDownloadedSnapshot),
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-                null,
-                [head, 0L],
-                null) as ChatSyncDownloadedSnapshot
-            ?? throw new AssertionException("Missing ChatSyncDownloadedSnapshot constructor.");
-
+        using var snapshot = CreateDownloadedSnapshot(syncedId);
         var committed = await manager.CommitReceivedSnapshotAsync("account-1", snapshot, false, CancellationToken.None);
         await PumpDispatcherAsync();
         await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
@@ -684,7 +740,21 @@ partial class ChatContextManagerIncrementalLoadingTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(committed, Is.True);
-            Assert.That(Flatten(manager).Select(item => item.Id), Is.EqualTo([syncedId, existing.Id]));
+            Assert.That(
+                Flatten(manager).Select(item => item.Id),
+                Is.EqualTo([syncedId, existing1.Id, existing2.Id, existing3.Id, existing4.Id, olderSyncedId]));
+        }
+
+        static ChatSyncDownloadedSnapshot CreateDownloadedSnapshot(Guid chatId)
+        {
+            var head = new ChatSyncHead(chatId.ToString("D"), 1, ChatSyncLifecycle.Active, 1, ChatSyncAvailability.Available, 0, 1);
+            return Activator.CreateInstance(
+                    typeof(ChatSyncDownloadedSnapshot),
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                    null,
+                    [head, 0L],
+                    null) as ChatSyncDownloadedSnapshot
+                ?? throw new AssertionException("Missing ChatSyncDownloadedSnapshot constructor.");
         }
     }
 
@@ -729,7 +799,7 @@ partial class ChatContextManagerIncrementalLoadingTests
 
         public Func<Func<Task<ChatHistoryPage>>, Task<ChatHistoryPage>>? OnReadHistoryPageAsync { get; set; }
 
-        public Func<Task<ReceivedChatCommit?>>? OnMergeSnapshotAsync { get; init; }
+        public Func<Task<ReceivedChatCommit?>>? OnMergeSnapshotAsync { get; set; }
 
         public Task<ChatHistoryPage> ReadHistoryPageAsync(
             int take,

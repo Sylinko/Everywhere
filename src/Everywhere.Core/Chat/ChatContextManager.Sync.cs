@@ -203,7 +203,7 @@ partial class ChatContextManager
         lock (_historyStateLock)
         {
             var items = _materializedHistorySource.Items;
-            if (_storageHistoryExhausted)
+            if (!HasMoreItems)
             {
                 shouldAddMaterialized = true;
             }

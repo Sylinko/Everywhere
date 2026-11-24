@@ -1903,11 +1903,25 @@ public sealed partial class ChatContextManager :
 
     private void OnRootIdle(object? sender, EventArgs args)
     {
+        if (_isClosing || sender is not RootChatContext root)
+        {
+            return;
+        }
+
         // Short draft edits also raise Idle, but have no durable history to synchronize.
-        if (!_isClosing && sender is RootChatContext root && CanSave(root.Data.Metadata, root))
+        if (CanSave(root.Data.Metadata, root))
         {
             CompleteStableSaveAsync().Detach(_logger.ToExceptionHandler());
+            return;
         }
+
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            if (!_isClosing && !HasHistoryMembership(root.Data.Metadata))
+            {
+                RemoveHistoryMetadata(root.Data.Metadata);
+            }
+        });
     }
 
     private async Task CompleteStableSaveAsync()

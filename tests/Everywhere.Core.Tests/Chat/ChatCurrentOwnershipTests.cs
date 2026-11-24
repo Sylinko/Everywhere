@@ -162,6 +162,10 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             }
 
             await manager.DeletePermanentlyAsync(previous.Data.Metadata).WaitAsync(TimeSpan.FromSeconds(5));
+            await PumpDispatcherAsync();
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
+                static () => { },
+                Avalonia.Threading.DispatcherPriority.Background);
             if (shouldSelectOther)
             {
                 window.UpdateLayout();
