@@ -394,10 +394,12 @@ partial class ChatContextManagerIncrementalLoadingTests
             await PumpDispatcherAsync();
             Assert.That(Flatten(manager).Count(metadata => metadata.Id == tempA.Data.Metadata.Id), Is.EqualTo(1));
 
-            // Accepted work before its first turn is saved must also survive a history restart.
+            // Accepted work stays unexposed until it retains its first user node, while preserving root ownership.
             var workC = manager.CreateChat(isTemporary: false);
             admission = workC.TryDeferWorkWhenIdle() ?? throw new AssertionException("Expected an idle root.");
-            pendingWork = workC.ExecuteAsync(_ => Task.CompletedTask, CancellationToken.None);
+            pendingWork = workC.ExecuteAsync(
+                _ => workC.DispatchAsync(() => workC.Data.StartTurn(new UserChatMessage("work C first turn", []))),
+                CancellationToken.None);
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(workC.HasWork, Is.True);
@@ -409,7 +411,11 @@ partial class ChatContextManagerIncrementalLoadingTests
             await session.LoadMoreAsync(20);
             await PumpDispatcherAsync();
 
-            Assert.That(Flatten(manager), Does.Contain(workC.Data.Metadata));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(workC.Data.IsDisposed, Is.False);
+                Assert.That(Flatten(manager), Does.Not.Contain(workC.Data.Metadata));
+            }
 
             admission.SetResult();
             admission = null;
@@ -420,7 +426,7 @@ partial class ChatContextManagerIncrementalLoadingTests
                 static () => { },
                 Avalonia.Threading.DispatcherPriority.Background);
 
-            Assert.That(Flatten(manager), Does.Not.Contain(workC.Data.Metadata));
+            Assert.That(Flatten(manager), Does.Contain(workC.Data.Metadata));
         }
         finally
         {

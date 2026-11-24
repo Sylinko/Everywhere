@@ -35,7 +35,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         try
         {
             manager.CreateChat(isTemporary: false);
-            Assert.That(Flatten(manager), Contains.Item(root.Data.Metadata));
+            Assert.That(Flatten(manager), Does.Not.Contain(root.Data.Metadata));
             Assert.That(root.Data.IsDisposed, Is.False);
             cancellation.Cancel();
             admission.SetResult();
@@ -43,7 +43,12 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
             release.SetResult();
             await Assert.ThatAsync(() => work, Throws.InstanceOf<OperationCanceledException>());
             await manager.FlushPendingSavesAsync();
+            await PumpDispatcherAsync();
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
+                static () => { },
+                Avalonia.Threading.DispatcherPriority.Background);
             Assert.That(root.Data.Metadata.IsPersisted, Is.True);
+            Assert.That(Flatten(manager), Contains.Item(root.Data.Metadata));
         }
         finally
         {
