@@ -2986,8 +2986,25 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Ajouter</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>Êtes-vous sûr de vouloir supprimer ? Cette action est irréversible !</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>Sa suppression effacera la clé de cette configuration jusqu’à ce qu’une autre clé soit sélectionnée.
+
+Supprimer définitivement « {0} » ?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>Cette clé API est actuellement utilisée par 1 configuration :</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>Sa suppression effacera la clé de ces configurations jusqu’à ce qu’une autre clé soit sélectionnée.
+
+Supprimer définitivement « {0} » ?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>Cette clé API est actuellement utilisée par {0} configurations :</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>Supprimer définitivement « {0} » ?
+Cette action est irréversible.</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>Cette clé API est toujours utilisée par les configurations suivantes : {0}. Remplacez-la dans ces configurations avant de la supprimer.</value>

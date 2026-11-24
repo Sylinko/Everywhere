@@ -2986,8 +2986,25 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Hinzufügen</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>Sind Sie sicher, dass Sie löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden!</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>Beim Löschen wird der Schlüssel aus dieser Konfiguration entfernt, bis ein anderer Schlüssel ausgewählt wird.
+
+&quot;{0}&quot; dauerhaft löschen?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>Dieser API-Schlüssel wird derzeit von 1 Konfiguration verwendet:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>Beim Löschen wird der Schlüssel aus diesen Konfigurationen entfernt, bis ein anderer Schlüssel ausgewählt wird.
+
+&quot;{0}&quot; dauerhaft löschen?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>Dieser API-Schlüssel wird derzeit von {0} Konfigurationen verwendet:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>&quot;{0}&quot; dauerhaft löschen?
+Diese Aktion kann nicht rückgängig gemacht werden.</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>Dieser API-Schlüssel wird noch von folgenden Konfigurationen verwendet: {0}. Ändere zuerst den Schlüssel in diesen Konfigurationen und lösche ihn anschließend.</value>

@@ -2986,8 +2986,25 @@
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>追加</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>削除してもよろしいですか？この操作は元に戻せません！</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>削除すると、別のキーを選択するまでこの設定のキーはクリアされます。
+
+「{0}」を完全に削除しますか？</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>この API キーは現在 1 件の設定で使用されています：</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>削除すると、別のキーを選択するまでこれらの設定のキーはクリアされます。
+
+「{0}」を完全に削除しますか？</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>この API キーは現在 {0} 件の設定で使用されています：</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>「{0}」を完全に削除しますか？
+この操作は元に戻せません。</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>このAPIキーは次の設定で使用中です：{0}。削除する前に、これらの設定でキーを変更してください。</value>

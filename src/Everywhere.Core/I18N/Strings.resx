@@ -2986,8 +2986,25 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Add</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>Are you sure to delete? This action cannot be undone.</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>Deleting it will clear the key from that configuration until another key is selected.
+
+Delete &quot;{0}&quot; permanently?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>This API key is currently used by 1 configuration:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>Deleting it will clear the key from these configurations until another key is selected.
+
+Delete &quot;{0}&quot; permanently?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>This API key is currently used by {0} configurations:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>Delete &quot;{0}&quot; permanently?
+This action cannot be undone.</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>This API key is still used by: {0}. Choose another key in those configurations before deleting it.</value>

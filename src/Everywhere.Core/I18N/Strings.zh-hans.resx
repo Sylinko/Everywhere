@@ -2986,8 +2986,25 @@
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>添加</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>你确定要删除吗？此操作无法撤销！</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>删除后将清空该配置中的密钥，需重新选择后才能继续使用。
+
+仍要永久删除“{0}”吗？</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>当前 API 密钥正被以下 1 个配置使用：</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>删除后将清空这些配置中的密钥，需重新选择后才能继续使用。
+
+仍要永久删除“{0}”吗？</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>当前 API 密钥正被以下 {0} 个配置使用：</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>确定要永久删除“{0}”吗？
+此操作无法撤销。</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>此 API Key 仍被以下配置使用：{0}。请先在这些配置中更换密钥，再删除。</value>

@@ -2986,8 +2986,25 @@ Se continuar, a outra cópia encerrará o modo de serviço.</value>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Adicionar</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>Você tem certeza de que deseja excluir? Esta ação não pode ser desfeita!</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>Excluí-la limpará a chave dessa configuração até que outra chave seja selecionada.
+
+Excluir &quot;{0}&quot; permanentemente?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>Esta chave de API está atualmente em uso por 1 configuração:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>Excluí-la limpará a chave dessas configurações até que outra chave seja selecionada.
+
+Excluir &quot;{0}&quot; permanentemente?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>Esta chave de API está atualmente em uso por {0} configurações:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>Excluir &quot;{0}&quot; permanentemente?
+Esta ação não pode ser desfeita.</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>Esta chave de API ainda está sendo usada pelas seguintes configurações: {0}. Troque a chave nessas configurações antes de excluí-la.</value>

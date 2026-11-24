@@ -1,6 +1,82 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <DataTemplate
+    x:Key="DeleteApiKeyDialogContentTemplate"
+    x:DataType="v:ManageApiKeyForm+DeleteApiKeyDialogContent">
+    <StackPanel
+      MaxWidth="440" Spacing="10">
+      <TextBlock
+        Text="{Binding HeaderText}"
+        TextWrapping="Wrap"/>
+
+      <ScrollViewer
+        MaxHeight="160" HorizontalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding References}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel
+                ItemSpacing="6" LineSpacing="6"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="c:ApiKeyReference">
+              <shadui:SmoothBorder
+                Padding="4,3,10,3"
+                Background="{DynamicResource CardBackgroundColor}"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="1"
+                CornerRadius="{DynamicResource FullCornerRadius}">
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <Panel
+                    Width="{DynamicResource FontSizeXl}"
+                    Height="{DynamicResource FontSizeXl}"
+                    VerticalAlignment="Center">
+                    <v:IconPresenter
+                      FontSize="{DynamicResource FontSizeS}"
+                      Icon="{Binding Icon}"
+                      IconSize="{DynamicResource FontSizeM}"
+                      IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                      LineHeight="{DynamicResource FontSizeXl}"
+                      Size="{DynamicResource FontSizeXl}"/>
+                    <Border
+                      Width="{DynamicResource FontSizeXl}"
+                      Height="{DynamicResource FontSizeXl}"
+                      ClipToBounds="True"
+                      CornerRadius="{DynamicResource FullCornerRadius}"
+                      IsVisible="{Binding IconUrl, Converter={x:Static ObjectConverters.IsNotNull}}">
+                      <Image
+                        md:AsyncImageLoader.SizeToContent="Manual"
+                        md:AsyncImageLoader.Source="{Binding IconUrl}"
+                        mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }"
+                        Stretch="UniformToFill"/>
+                    </Border>
+                  </Panel>
+
+                  <TextBlock
+                    MaxWidth="180" VerticalAlignment="Center"
+                    Text="{Binding NameKey^}"
+                    TextTrimming="CharacterEllipsis">
+                    <Interaction.Behaviors>
+                      <shadui:TextTrimmedToolTipBehavior/>
+                    </Interaction.Behaviors>
+                  </TextBlock>
+                </StackPanel>
+              </shadui:SmoothBorder>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <TextBlock
+        Text="{Binding FooterText}"
+        TextWrapping="Wrap"/>
+    </StackPanel>
+  </DataTemplate>
+
   <ControlTheme
     x:Key="{x:Type v:ManageApiKeyForm}"
     TargetType="v:ManageApiKeyForm">
@@ -84,48 +160,14 @@
                           Size="{DynamicResource FontSizeL}"/>
                       </Button>
                       <Button
-                        x:Name="DeleteApiKeyButton" Classes="Ghost Compact Uniform"
+                        Classes="Ghost Compact Uniform"
+                        Command="{Binding $parent[v:ManageApiKeyForm].DeleteApiKeyCommand}"
+                        CommandParameter="{Binding}"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Delete}}">
                         <TablerIcon
                           Foreground="{DynamicResource DestructiveColor}"
                           Kind="Trash"
                           Size="{DynamicResource FontSizeL}"/>
-
-                        <Button.Flyout>
-                          <Flyout>
-                            <StackPanel
-                              Margin="6" Spacing="4">
-                              <TextBlock
-                                Margin="6,4"
-                                Text="{I18N {x:Static LocaleKey.ManageApiKeyForm_DeleteApiKey_Flyout_Content}}"/>
-                              <StackPanel
-                                HorizontalAlignment="Right" Orientation="Horizontal"
-                                Spacing="4">
-                                <Button
-                                  Classes="Secondary Compact" MinWidth="48"
-                                  Content="{I18N {x:Static LocaleKey.Common_Cancel}}">
-                                  <Interaction.Behaviors>
-                                    <ButtonClickEventTriggerBehavior>
-                                      <HideFlyoutAction Flyout="{Binding #DeleteApiKeyButton.Flyout}"/>
-                                    </ButtonClickEventTriggerBehavior>
-                                  </Interaction.Behaviors>
-                                </Button>
-                                <Button
-                                  Classes="Destructive Compact" MinWidth="48"
-                                  Content="{I18N {x:Static LocaleKey.Common_Yes}}">
-                                  <Interaction.Behaviors>
-                                    <ButtonClickEventTriggerBehavior>
-                                      <InvokeCommandAction
-                                        Command="{Binding $parent[v:ManageApiKeyForm].DeleteApiKeyCommand}"
-                                        CommandParameter="{Binding}"/>
-                                      <HideFlyoutAction Flyout="{Binding #DeleteApiKeyButton.Flyout}"/>
-                                    </ButtonClickEventTriggerBehavior>
-                                  </Interaction.Behaviors>
-                                </Button>
-                              </StackPanel>
-                            </StackPanel>
-                          </Flyout>
-                        </Button.Flyout>
                       </Button>
                     </StackPanel>
                   </DataTemplate>

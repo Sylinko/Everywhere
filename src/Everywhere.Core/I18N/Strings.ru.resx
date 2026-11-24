@@ -2986,8 +2986,25 @@
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Добавить</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>Вы уверены, что хотите удалить? Это действие нельзя отменить!</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>После удаления ключ будет очищен в этой конфигурации, пока вы не выберете другой.
+
+Удалить «{0}» навсегда?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>Этот API-ключ сейчас используется в 1 конфигурации:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>После удаления ключ будет очищен в этих конфигурациях, пока вы не выберете другой.
+
+Удалить «{0}» навсегда?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>Этот API-ключ сейчас используется в {0} конфигурациях:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>Удалить «{0}» навсегда?
+Это действие нельзя отменить.</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>Этот API-ключ используется в следующих конфигурациях: {0}. Сначала замените ключ в этих конфигурациях, а затем удалите его.</value>

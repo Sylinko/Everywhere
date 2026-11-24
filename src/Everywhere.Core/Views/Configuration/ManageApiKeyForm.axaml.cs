@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -119,13 +120,33 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
         _apiKeys.Add(form.ApiKey);
     }
 
+    /// <summary>
+    /// Presentation model for the delete-in-use confirmation dialog body.
+    /// </summary>
+    public sealed record DeleteApiKeyDialogContent(
+        string HeaderText,
+        IReadOnlyList<ApiKeyReference> References,
+        string FooterText);
+
     [RelayCommand]
-    private async Task DeleteApiKeyAsync(DataGridApiKeyModel model)
+    private async Task DeleteApiKeyAsync(DataGridApiKeyModel model, CancellationToken cancellationToken)
     {
+        var references = _settings.FindApiKeyReferences(_apiKeys, model.ApiKey);
+        var keyDisplayName = string.IsNullOrWhiteSpace(model.Name) ? model.ApiKey.Id.ToString() : model.Name;
+        var result = await DialogManager
+            .CreateDialog(
+                CreateDeleteConfirmationContent(keyDisplayName, references),
+                LocaleKey.Common_Warning.I18N(),
+                TopLevel.GetTopLevel(this))
+            .WithPrimaryButton(LocaleKey.Common_Delete.I18N(), buttonStyle: ButtonStyle.Destructive)
+            .WithCancelButton(LocaleKey.Common_Cancel.I18N())
+            .ShowAsync(cancellationToken);
+        if (result != DialogResult.Primary) return;
+
         IsEnabled = false;
         try
         {
-            await _settings.RemoveApiKeyAsync(_apiKeys, model.ApiKey);
+            await _settings.RemoveApiKeyAsync(_apiKeys, model.ApiKey, clearReferences: true);
         }
         catch (Exception exception)
         {
@@ -135,6 +156,30 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
         {
             IsEnabled = true;
         }
+    }
+
+    private object CreateDeleteConfirmationContent(string keyDisplayName, IReadOnlyList<ApiKeyReference> references)
+    {
+        if (references.Count == 0)
+        {
+            return LocaleKey.ManageApiKeyForm_DeleteApiKey_Dialog_Message.I18N().Format(keyDisplayName);
+        }
+
+        var (headerText, footerText) = references.Count == 1 ?
+            (
+                LocaleKey.ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header.I18N(),
+                LocaleKey.ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer.I18N().Format(keyDisplayName)
+            ) :
+            (
+                LocaleKey.ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header.I18N().Format(references.Count),
+                LocaleKey.ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer.I18N().Format(keyDisplayName)
+            );
+
+        return new ContentControl
+        {
+            Content = new DeleteApiKeyDialogContent(headerText, references, footerText),
+            ContentTemplate = this.FindResource("DeleteApiKeyDialogContentTemplate") as IDataTemplate
+        };
     }
 
     public void Dispose() => _itemsSourceSubscription.Dispose();

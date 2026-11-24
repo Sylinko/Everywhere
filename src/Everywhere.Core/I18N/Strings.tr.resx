@@ -2986,8 +2986,25 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Ekle</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>Silmek istediğinize emin misiniz? Bu işlem geri alınamaz!</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>Silinmesi, başka bir anahtar seçilene kadar bu yapılandırmadaki anahtarı temizler.
+
+&quot;{0}&quot; kalıcı olarak silinsin mi?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>Bu API anahtarı şu anda 1 yapılandırmada kullanılıyor:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>Silinmesi, başka bir anahtar seçilene kadar bu yapılandırmalardaki anahtarı temizler.
+
+&quot;{0}&quot; kalıcı olarak silinsin mi?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>Bu API anahtarı şu anda {0} yapılandırmada kullanılıyor:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>&quot;{0}&quot; kalıcı olarak silinsin mi?
+Bu işlem geri alınamaz.</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>Bu API anahtarı hâlâ şu yapılandırmalarda kullanılıyor: {0}. Anahtarı silmeden önce bu yapılandırmalarda değiştirin.</value>

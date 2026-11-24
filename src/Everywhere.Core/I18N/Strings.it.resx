@@ -2986,8 +2986,25 @@ Se continui, l'altra copia disattiverà la modalità servizio.</value>
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>Aggiungi</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>Sei sicuro di voler eliminare? Questa operazione non può essere annullata!</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>Eliminandola, la chiave verrà rimossa da tale configurazione finché non ne verrà selezionata un’altra.
+
+Eliminare definitivamente &quot;{0}&quot;?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>Questa chiave API è attualmente utilizzata da 1 configurazione:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>Eliminandola, la chiave verrà rimossa da queste configurazioni finché non ne verrà selezionata un’altra.
+
+Eliminare definitivamente &quot;{0}&quot;?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>Questa chiave API è attualmente utilizzata da {0} configurazioni:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>Eliminare definitivamente &quot;{0}&quot;?
+Questa azione non può essere annullata.</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>Questa chiave API è ancora utilizzata dalle seguenti configurazioni: {0}. Sostituiscila prima in queste configurazioni, poi elimina la chiave.</value>

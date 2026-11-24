@@ -2986,8 +2986,25 @@
     <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
         <value>추가</value>
     </data>
-    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
-        <value>삭제하시겠습니까? 이 작업은 취소할 수 없습니다!</value>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Footer" xml:space="preserve">
+        <value>삭제하면 다른 키를 선택할 때까지 이 구성의 키가 지워집니다.
+
+&quot;{0}&quot;을(를) 영구적으로 삭제하시겠습니까?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfiguration_Dialog_Header" xml:space="preserve">
+        <value>이 API 키는 현재 1개 구성에서 사용 중입니다:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Footer" xml:space="preserve">
+        <value>삭제하면 다른 키를 선택할 때까지 이러한 구성의 키가 지워집니다.
+
+&quot;{0}&quot;을(를) 영구적으로 삭제하시겠습니까?</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeyUsedByConfigurations_Dialog_Header" xml:space="preserve">
+        <value>이 API 키는 현재 {0}개 구성에서 사용 중입니다:</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Dialog_Message" xml:space="preserve">
+        <value>&quot;{0}&quot;을(를) 영구적으로 삭제하시겠습니까?
+이 작업은 되돌릴 수 없습니다.</value>
     </data>
     <data name="ManageApiKeyForm_KeyInUse" xml:space="preserve">
         <value>이 API 키는 다음 구성에서 사용 중입니다: {0}. 해당 구성에서 먼저 키를 변경한 다음 삭제하세요.</value>
