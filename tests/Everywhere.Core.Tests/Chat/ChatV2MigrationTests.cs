@@ -1,4 +1,4 @@
-﻿using Everywhere.Chat;
+using Everywhere.Chat;
 using Everywhere.Database;
 using MessagePack;
 using Microsoft.Data.Sqlite;
@@ -13,7 +13,7 @@ using Everywhere.ViewModels;
 using NSubstitute;
 using Everywhere.Chat.Plugins;
 using Everywhere.I18N;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using System.Text;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -303,7 +303,7 @@ public sealed class ChatV2MigrationTests
         var toolId = Guid.NewGuid();
         var child = new ChatData();
         child.StartTurn(new UserChatMessage("child", [new FileAttachment(new DirectLocaleKey("file"), "missing.txt", "child-file", "text/plain")]));
-        using var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("tool"));
+        using var tool = new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("tool"));
         tool.DisplaySink.AppendSubagent(child);
         var payload = MessagePackSerializer.Serialize<ChatMessage>(tool);
         await InsertChatAsync(source, chatId);

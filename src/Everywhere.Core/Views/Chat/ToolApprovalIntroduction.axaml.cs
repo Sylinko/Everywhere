@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using Everywhere.Chat.Permissions;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -25,29 +25,29 @@ public sealed partial class ToolApprovalIntroduction : UserControl
         Cards = isFullAccess ?
             [
                 Card(
-                    LucideIconKind.Folder,
+                    TablerIconKind.Folder,
                     LocaleKey.ToolApproval_FullAccessDialog_FilesTitle,
                     LocaleKey.ToolApproval_FullAccessDialog_FilesBody),
                 Card(
-                    LucideIconKind.Terminal,
+                    TablerIconKind.Terminal,
                     LocaleKey.ToolApproval_FullAccessDialog_TerminalTitle,
                     LocaleKey.ToolApproval_FullAccessDialog_TerminalBody),
                 Card(
-                    LucideIconKind.Globe,
+                    TablerIconKind.World,
                     LocaleKey.ToolApproval_FullAccessDialog_ConnectionsTitle,
                     LocaleKey.ToolApproval_FullAccessDialog_ConnectionsBody)
             ] :
             [
                 Card(
-                    LucideIconKind.Bot,
+                    TablerIconKind.Robot,
                     LocaleKey.ToolApproval_AutoDialog_ReviewerTitle,
                     LocaleKey.ToolApproval_AutoDialog_ReviewerBody),
                 Card(
-                    LucideIconKind.FileSearch,
+                    TablerIconKind.FileSearch,
                     LocaleKey.ToolApproval_AutoDialog_ContextTitle,
                     LocaleKey.ToolApproval_AutoDialog_ContextBody),
                 Card(
-                    LucideIconKind.ShieldCheck,
+                    TablerIconKind.ShieldCheck,
                     LocaleKey.ToolApproval_AutoDialog_DecisionTitle,
                     LocaleKey.ToolApproval_AutoDialog_DecisionBody)
             ];
@@ -55,9 +55,9 @@ public sealed partial class ToolApprovalIntroduction : UserControl
         DataContext = this;
     }
 
-    private static ToolApprovalIntroductionCard Card(LucideIconKind icon, string title, string body) =>
+    private static ToolApprovalIntroductionCard Card(TablerIconKind icon, string title, string body) =>
         new(icon, new DynamicLocaleKey(title), new DynamicLocaleKey(body));
 }
 
 /// <summary>One localized explanation card in a first-use approval dialog.</summary>
-public sealed record ToolApprovalIntroductionCard(LucideIconKind Icon, IDynamicLocaleKey TitleKey, IDynamicLocaleKey BodyKey);
+public sealed record ToolApprovalIntroductionCard(TablerIconKind Icon, IDynamicLocaleKey TitleKey, IDynamicLocaleKey BodyKey);

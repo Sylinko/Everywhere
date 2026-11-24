@@ -20,6 +20,7 @@
     <Project Path="3rd/ExpressionBinding.Avalonia/src/ExpressionBinding.Avalonia/ExpressionBinding.Avalonia.csproj" />
     <Project Path="3rd/Motion.Avalonia/src/Motion.Avalonia/Motion.Avalonia.csproj" />
     <Project Path="3rd/shad-ui/src/ShadUI/ShadUI.csproj" />
+    <Project Path="3rd/shad-ui/src/Tabler.Avalonia/Tabler.Avalonia.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitattributes" />

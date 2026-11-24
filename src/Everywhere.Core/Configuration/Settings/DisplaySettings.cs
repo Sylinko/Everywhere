@@ -1,9 +1,9 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Avalonia.Data;
 using Avalonia.Threading;
 using Everywhere.Common;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using ShadUI;
 using ShadUI.Themes;
@@ -17,7 +17,7 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
     public int Index => 1;
 
     [SettingsItemIgnore]
-    public LucideIconKind Icon => LucideIconKind.MonitorCog;
+    public TablerIconKind Icon => TablerIconKind.DeviceDesktop;
 
     [SettingsItemIgnore]
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Display_Header);

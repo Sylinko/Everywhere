@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
 using Avalonia.Platform.Storage;
@@ -20,7 +20,7 @@ using Everywhere.Storage;
 using Everywhere.StrategyEngine;
 using Everywhere.Utilities;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MEAI = Microsoft.Extensions.AI;
@@ -1108,7 +1108,7 @@ public sealed partial class ChatService : IChatService
         if (visualElementAttachments.Length == 0) return appendTailNode;
 
         var analyzingContextMessage = new ActionChatMessage(
-            LucideIconKind.TextSearch,
+            TablerIconKind.ListSearch,
             LocaleKey.ActionChatMessage_Header_AnalyzingContext)
         {
             IsBusy = true
@@ -1762,7 +1762,7 @@ public sealed partial class ChatService : IChatService
                             if (callingToolsActivity is null && hasFunctionCallUpdates)
                             {
                                 callingToolsActivity = chatData.StartActivity(
-                                    LucideIconKind.Hammer,
+                                    TablerIconKind.Hammer,
                                     new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_CallingTools),
                                     removeAfterCompletion: true,
                                     owner: assistantChatMessage);

@@ -1,4 +1,4 @@
-﻿using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -8,7 +8,7 @@ public interface IMainViewNavigationItem
 
     string RouteKey => GetType().Name;
 
-    LucideIconKind Icon { get; }
+    TablerIconKind Icon { get; }
 
     IDynamicLocaleKey TitleKey { get; }
 }

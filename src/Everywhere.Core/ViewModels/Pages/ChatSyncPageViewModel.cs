@@ -1,11 +1,11 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Cloud;
 using Everywhere.Utilities;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 
 namespace Everywhere.ViewModels;
@@ -25,8 +25,8 @@ public sealed partial class ChatSyncPageViewModel(
     /// </summary>
     public static IReadOnlyList<SortOption> SortOptions { get; } =
     [
-        new(LucideIconKind.Clock, new DynamicLocaleKey(LocaleKey.ChatSyncPage_RecentSortComboBoxItem_Content)),
-        new(LucideIconKind.Cloud, new DynamicLocaleKey(LocaleKey.ChatSyncPage_CloudSizeSortComboBoxItem_Content))
+        new(TablerIconKind.Clock, new DynamicLocaleKey(LocaleKey.ChatSyncPage_RecentSortComboBoxItem_Content)),
+        new(TablerIconKind.Cloud, new DynamicLocaleKey(LocaleKey.ChatSyncPage_CloudSizeSortComboBoxItem_Content))
     ];
 
     /// <summary>
@@ -502,5 +502,5 @@ public sealed partial class ChatSyncPageViewModel(
     /// <summary>
     /// Localized label and icon for one fixed sort choice.
     /// </summary>
-    public sealed record SortOption(LucideIconKind Icon, IDynamicLocaleKey LabelKey);
+    public sealed record SortOption(TablerIconKind Icon, IDynamicLocaleKey LabelKey);
 }

@@ -24,8 +24,9 @@
               <!--  Question text  -->
               <DockPanel
                 HorizontalSpacing="4" IsHitTestVisible="False">
-                <LucideIcon
-                  DockPanel.Dock="Left" Kind="CircleQuestionMark"
+                <TablerIcon
+                  DockPanel.Dock="Left" IsFilled="True"
+                  Kind="HelpCircle"
                   Size="{DynamicResource FontSizeL}"/>
 
                 <TextBlock TextWrapping="Wrap">

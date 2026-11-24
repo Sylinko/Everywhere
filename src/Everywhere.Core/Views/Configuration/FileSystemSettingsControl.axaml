@@ -27,7 +27,7 @@
                     </KeyGestureTrigger>
                   </Interaction.Behaviors>
 
-                  <LucideIcon
+                  <TablerIcon
                     Grid.Column="0" VerticalAlignment="Center"
                     Kind="GripVertical"
                     Size="{DynamicResource FontSizeXl}"/>

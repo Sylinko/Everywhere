@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.TextSelection;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using ShadUI;
 
@@ -22,7 +22,7 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     public int Index => 5;
 
     [SettingsItemIgnore]
-    public LucideIconKind Icon => LucideIconKind.TextSelect;
+    public TablerIconKind Icon => TablerIconKind.CursorText;
 
     [SettingsItemIgnore]
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_TextSelection_Header);

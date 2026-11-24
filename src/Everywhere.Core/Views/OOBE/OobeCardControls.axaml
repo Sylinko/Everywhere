@@ -62,7 +62,7 @@
                       RelativeSource="{RelativeSource TemplatedParent}"/>
                   </StackPanel.IsVisible>
 
-                  <LucideIcon
+                  <TablerIcon
                     x:Name="PlaceholderIcon" VerticalAlignment="Center"
                     Opacity="0.72" Size="16"/>
 
@@ -91,20 +91,20 @@
                   </ContentControl.IsVisible>
                 </ContentControl>
 
-                <LucideIcon
+                <TablerIcon
                   x:Name="ChevronIcon" Grid.Column="1"
                   VerticalAlignment="Center"
                   Foreground="{TemplateBinding Foreground}"
                   Kind="ChevronDown" RenderTransform="rotate(0deg)"
                   RenderTransformOrigin="50%,50%">
-                  <LucideIcon.Transitions>
+                  <TablerIcon.Transitions>
                     <Transitions>
                       <TransformOperationsTransition
                         Easing="CubicEaseOut" Property="RenderTransform"
                         Duration="0:0:0.16"/>
                     </Transitions>
-                  </LucideIcon.Transitions>
-                </LucideIcon>
+                  </TablerIcon.Transitions>
+                </TablerIcon>
 
                 <Popup
                   x:Name="PART_Popup" Grid.Column="0"
@@ -155,11 +155,11 @@
       </ControlTemplate>
     </Setter>
 
-    <Style Selector="^ /template/ LucideIcon#PlaceholderIcon">
+    <Style Selector="^ /template/ TablerIcon#PlaceholderIcon">
       <Setter Property="IsVisible" Value="False"/>
     </Style>
 
-    <Style Selector="^ /template/ LucideIcon#ChevronIcon">
+    <Style Selector="^ /template/ TablerIcon#ChevronIcon">
       <Setter Property="Size" Value="14"/>
       <Setter Property="Opacity" Value="0.65"/>
     </Style>
@@ -177,7 +177,7 @@
         <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor75}"/>
       </Style>
-      <Style Selector="^ /template/ LucideIcon#ChevronIcon">
+      <Style Selector="^ /template/ TablerIcon#ChevronIcon">
         <Setter Property="RenderTransform" Value="rotate(180deg)"/>
         <Setter Property="Opacity" Value="1"/>
       </Style>
@@ -294,20 +294,20 @@
                   </ContentControl.IsVisible>
                 </ContentControl>
 
-                <LucideIcon
+                <TablerIcon
                   x:Name="ChevronIcon" Grid.Column="1"
                   VerticalAlignment="Center"
                   Foreground="{DynamicResource MutedColor}"
                   Kind="ChevronDown" RenderTransform="rotate(0deg)"
                   RenderTransformOrigin="50%,50%" Size="17">
-                  <LucideIcon.Transitions>
+                  <TablerIcon.Transitions>
                     <Transitions>
                       <TransformOperationsTransition
                         Easing="CubicEaseOut" Property="RenderTransform"
                         Duration="0:0:0.16"/>
                     </Transitions>
-                  </LucideIcon.Transitions>
-                </LucideIcon>
+                  </TablerIcon.Transitions>
+                </TablerIcon>
 
                 <Popup
                   x:Name="PART_Popup" Grid.Column="0"
@@ -358,7 +358,7 @@
         <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor75}"/>
       </Style>
-      <Style Selector="^ /template/ LucideIcon#ChevronIcon">
+      <Style Selector="^ /template/ TablerIcon#ChevronIcon">
         <Setter Property="RenderTransform" Value="rotate(180deg)"/>
         <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
       </Style>
@@ -573,7 +573,7 @@
     <Setter Property="CornerRadius" Value="10"/>
     <Setter Property="Padding" Value="8,5,10,5"/>
 
-    <Style Selector="^ /template/ LucideIcon#ChevronIcon">
+    <Style Selector="^ /template/ TablerIcon#ChevronIcon">
       <Setter Property="Size" Value="17"/>
       <Setter Property="Opacity" Value="0.62"/>
     </Style>

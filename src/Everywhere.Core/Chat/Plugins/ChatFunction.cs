@@ -1,10 +1,10 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Reflection;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Harness;
 using Everywhere.Harness.Mcp;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat.Plugins;
@@ -18,7 +18,7 @@ public abstract class ChatFunction
 
     public virtual IDynamicLocaleKey DescriptionKey => new DirectLocaleKey(Function.Description);
 
-    public LucideIconKind? Icon { get; init; }
+    public TablerIconKind? Icon { get; init; }
 
     /// <summary>
     /// Gets the permissions required by this function.
@@ -135,7 +135,7 @@ public sealed class NativeChatFunction : ChatFunction
     public NativeChatFunction(
         Delegate method,
         ChatFunctionPermissions permissions,
-        LucideIconKind? icon = null,
+        TablerIconKind? icon = null,
         bool isDefaultEnabled = true,
         bool? isDefaultBypassApproval = null,
         bool canBypassApproval = true,

@@ -36,7 +36,7 @@
       </Style>
     </Style>
 
-    <Style Selector="LucideIcon">
+    <Style Selector="TablerIcon">
       <Setter Property="Size" Value="{DynamicResource FontSizeM}"/>
     </Style>
   </ListBox.Styles>
@@ -48,13 +48,13 @@
         Command="{Binding #Self.ViewModel?.RenameChatCommand}"
         CommandParameter="{Binding}"
         Header="{I18N {x:Static LocaleKey.ChatHistory_Rename_Header}}"
-        Icon="{LucideIconContent Pencil}"
+        Icon="{TablerIconContent Pencil}"
         IsVisible="{Binding !IsTemporary}"/>
       <MenuItem
         Command="{Binding #Self.ViewModel?.ToggleChatPinCommand}"
         CommandParameter="{Binding}"
         Header="{I18N {x:Static LocaleKey.ChatHistory_Pin}}"
-        Icon="{LucideIconContent Pin}">
+        Icon="{TablerIconContent Pin}">
         <MenuItem.IsVisible>
           <Binding Path="!IsPinned"/>
         </MenuItem.IsVisible>
@@ -63,7 +63,7 @@
         Command="{Binding #Self.ViewModel?.ToggleChatPinCommand}"
         CommandParameter="{Binding}"
         Header="{I18N {x:Static LocaleKey.ChatHistory_Unpin}}"
-        Icon="{LucideIconContent PinOff}">
+        Icon="{TablerIconContent PinnedOff}">
         <MenuItem.IsVisible>
           <Binding Path="IsPinned"/>
         </MenuItem.IsVisible>
@@ -74,12 +74,12 @@
         Command="{Binding #Self.ViewModel?.ExportMarkdownCommand}"
         CommandParameter="{Binding}"
         Header="{I18N {x:Static LocaleKey.ChatWindow_ChatHistory_ExportMarkdownMenuItem_Header}}"
-        Icon="{LucideIconContent Upload}"/>
+        Icon="{TablerIconContent Upload}"/>
       <MenuItem
         Command="{Binding #Self.ViewModel?.ManageChatSyncCommand}"
         CommandParameter="{Binding}"
         Header="{I18N {x:Static LocaleKey.ChatWindow_ManageChatSyncMenuItem_Header}}"
-        Icon="{LucideIconContent Cloud}">
+        Icon="{TablerIconContent Cloud}">
         <MenuItem.IsVisible>
           <MultiBinding Converter="{x:Static BoolConverters.And}">
             <Binding Path="!IsTemporary"/>
@@ -93,7 +93,7 @@
         CommandParameter="{Binding}"
         Foreground="{DynamicResource WarningColor}"
         Header="{I18N {x:Static LocaleKey.ChatHistory_Archive_Header}}"
-        Icon="{LucideIconContent Archive}">
+        Icon="{TablerIconContent Archive}">
         <MenuItem.IsVisible>
           <MultiBinding Converter="{x:Static BoolConverters.And}">
             <Binding Path="!IsArchived"/>
@@ -106,20 +106,20 @@
         CommandParameter="{Binding}"
         Foreground="{DynamicResource WarningColor}"
         Header="{I18N {x:Static LocaleKey.ChatHistory_Unarchive_Header}}"
-        Icon="{LucideIconContent ArchiveRestore}"
+        Icon="{TablerIconContent ArchiveRestore}"
         IsVisible="{Binding IsArchived}"/>
       <MenuItem
         Command="{Binding #Self.ViewModel?.PersistChatCommand}"
         CommandParameter="{Binding}"
         Header="{I18N {x:Static LocaleKey.ChatHistory_Persist}}"
-        Icon="{LucideIconContent Save}"
+        Icon="{TablerIconContent DeviceFloppy}"
         IsVisible="{Binding IsTemporary}"/>
       <MenuItem
         Command="{Binding #Self.ViewModel?.DeleteChatPermanentlyCommand}"
         CommandParameter="{Binding}"
         Foreground="{DynamicResource ErrorColor}"
         Header="{I18N {x:Static LocaleKey.ChatHistory_Delete_Header}}"
-        Icon="{LucideIconContent Trash2}"/>
+        Icon="{TablerIconContent Trash}"/>
     </MenuFlyout>
   </ListBox.Resources>
 
@@ -155,14 +155,14 @@
 
           <!--  Busy  -->
           <DataTemplate x:DataType="chat:ChatMetadata">
-            <LucideIcon
+            <TablerIcon
               Margin="0,0,8,0" HorizontalAlignment="Center"
               VerticalAlignment="Center"
               Foreground="{DynamicResource WarningColor60}"
               Kind="CircleDashed"
               Size="{DynamicResource FontSizeS}">
-              <LucideIcon.Styles>
-                <Style Selector="LucideIcon">
+              <TablerIcon.Styles>
+                <Style Selector="TablerIcon">
                   <Style.Animations>
                     <Animation
                       IterationCount="Infinite" Duration="0:0:1.8">
@@ -175,8 +175,8 @@
                     </Animation>
                   </Style.Animations>
                 </Style>
-              </LucideIcon.Styles>
-            </LucideIcon>
+              </TablerIcon.Styles>
+            </TablerIcon>
           </DataTemplate>
 
           <!--  HasNotification & Busy  -->
@@ -215,8 +215,9 @@
         <DockPanel
           Grid.Column="1" VerticalAlignment="Center"
           HorizontalSpacing="4">
-          <LucideIcon
+          <TablerIcon
             DockPanel.Dock="Left"
+            IsFilled="True"
             IsVisible="{Binding IsTemporary}"
             Kind="Ghost"
             Size="{DynamicResource FontSizeS}"
@@ -239,7 +240,7 @@
             <Button.IsVisible>
               <Binding Path="!IsPinned"/>
             </Button.IsVisible>
-            <LucideIcon Kind="Pin"/>
+            <TablerIcon Kind="Pin"/>
           </Button>
           <Button
             Classes="Compact Uniform" VerticalAlignment="Center"
@@ -249,7 +250,7 @@
             <Button.IsVisible>
               <Binding Path="IsPinned"/>
             </Button.IsVisible>
-            <LucideIcon Kind="PinOff"/>
+            <TablerIcon Kind="PinnedOff"/>
           </Button>
           <Button
             Classes="Compact Uniform" VerticalAlignment="Center"
@@ -262,7 +263,7 @@
                 <Binding Path="!IsTemporary"/>
               </MultiBinding>
             </Button.IsVisible>
-            <LucideIcon Kind="Archive"/>
+            <TablerIcon Kind="Archive"/>
           </Button>
           <Button
             Classes="Compact Uniform" VerticalAlignment="Center"
@@ -270,7 +271,7 @@
             CommandParameter="{Binding}"
             IsVisible="{Binding IsArchived}"
             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Unarchive_Header}}">
-            <LucideIcon Kind="ArchiveRestore"/>
+            <TablerIcon Kind="ArchiveRestore"/>
           </Button>
           <Button
             Classes="Compact Uniform" VerticalAlignment="Center"
@@ -278,7 +279,7 @@
             CommandParameter="{Binding}"
             IsVisible="{Binding IsTemporary}"
             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatHistory_Persist}}">
-            <LucideIcon Kind="Save"/>
+            <TablerIcon Kind="DeviceFloppy"/>
           </Button>
         </StackPanel>
       </Grid>

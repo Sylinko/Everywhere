@@ -1,4 +1,4 @@
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Chat;
 
@@ -9,7 +9,7 @@ namespace Everywhere.Chat;
 public interface IBusyActivity : IDisposable
 {
     /// <summary>Gets or sets the activity icon until the operation completes.</summary>
-    LucideIconKind Icon { get; set; }
+    TablerIconKind Icon { get; set; }
 
     /// <summary>Gets or sets the localized activity title until the operation completes.</summary>
     IDynamicLocaleKey HeaderKey { get; set; }

@@ -7,7 +7,7 @@ using Avalonia.Threading;
 using Avalonia.Xaml.Interactivity;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using ShadUI;
 
 namespace Everywhere.Interactions;
@@ -101,9 +101,9 @@ public sealed class CopiedButtonBehavior : Behavior<Button>
             {
                 _iconOverride = button.SetValue(
                     ButtonAssist.IconProperty,
-                    new LucideIcon
+                    new TablerIcon
                     {
-                        Kind = LucideIconKind.Check,
+                        Kind = TablerIconKind.Check,
                         Foreground = Brushes.Green
                     },
                     BindingPriority.Animation);

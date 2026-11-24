@@ -18,11 +18,11 @@
               <DockPanel
                 Background="Transparent"
                 ToolTip.Tip="{Binding ToolTip}">
-                <LucideIcon
+                <TablerIcon
                   DockPanel.Dock="Right" VerticalAlignment="Center"
                   Foreground="{DynamicResource WarningColor}"
                   IsVisible="{Binding HasWarning}"
-                  Kind="TriangleAlert"
+                  Kind="AlertTriangle"
                   Size="{DynamicResource FontSizeL}"/>
                 <TextBlock
                   VerticalAlignment="Center"

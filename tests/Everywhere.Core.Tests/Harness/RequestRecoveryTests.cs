@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Reflection;
 using Avalonia.Headless.NUnit;
@@ -175,7 +175,7 @@ public sealed class RequestRecoveryTests
         await using var runtime = new RootChatContext(data, null);
         var message = new AssistantChatMessage { IsBusy = true };
         message.AddSpan(new AssistantChatMessageTextSpan("committed"));
-        var tool = new FunctionCallChatMessage(Lucide.Avalonia.LucideIconKind.Hammer, new DirectLocaleKey("tool"));
+        var tool = new FunctionCallChatMessage(Tabler.Avalonia.TablerIconKind.Hammer, new DirectLocaleKey("tool"));
         tool.AddCall(new ToolCallRecord("read_file", null, "completed-call", null));
         tool.AddResult(new ToolResultRecord("read_file", null, "completed-call", "previous result"));
         var tools = new AssistantChatMessageFunctionCallSpan();

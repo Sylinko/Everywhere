@@ -2,6 +2,7 @@
   <Folder Name="/3rd/">
     <Project Path="3rd/ClassicDiagnostics.Avalonia/src/ClassicDiagnostics.Avalonia.csproj" />
     <Project Path="3rd/shad-ui/src/ShadUI/ShadUI.csproj" />
+    <Project Path="3rd/shad-ui/src/Tabler.Avalonia/Tabler.Avalonia.csproj" />
   </Folder>
   <Folder Name="/I18N/">
     <Project Path="src/Everywhere.I18N.Abstractions/Everywhere.I18N.Abstractions.csproj" />

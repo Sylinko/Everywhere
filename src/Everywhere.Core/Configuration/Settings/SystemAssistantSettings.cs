@@ -1,5 +1,5 @@
-﻿using Everywhere.AI;
-using Lucide.Avalonia;
+using Everywhere.AI;
+using Tabler.Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Everywhere.Configuration;
@@ -11,7 +11,7 @@ public sealed partial class SystemAssistantSettings(IServiceProvider serviceProv
     public int Index => 4;
 
     [SettingsItemIgnore]
-    public LucideIconKind Icon => LucideIconKind.Sparkles;
+    public TablerIconKind Icon => TablerIconKind.Sparkles;
 
     [SettingsItemIgnore]
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Header);

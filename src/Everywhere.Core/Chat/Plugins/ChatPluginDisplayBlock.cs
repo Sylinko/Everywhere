@@ -1,7 +1,7 @@
-﻿using System.Text;
+using System.Text;
 using Everywhere.Chat.Links;
 using Everywhere.Terminal;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using Porta.Pty;
 
@@ -246,7 +246,7 @@ public partial class ChatPluginFileReference(
     public bool IsDirectory { get; init; }
 
     [IgnoreMember]
-    public LucideIconKind Icon => ChatFileIcons.FromPath(FullPath, IsDirectory);
+    public TablerIconKind Icon => ChatFileIcons.FromPath(FullPath, IsDirectory);
 }
 
 /// <summary>

@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:ai="clr-namespace:Everywhere.AI;assembly=Everywhere.Core" xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions"
   xmlns:common="clr-namespace:Everywhere.Common" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
@@ -39,7 +39,7 @@
               <DockPanel
                 HorizontalSpacing="8" LastChildFill="True">
                 <DockPanel.Styles>
-                  <Style Selector="Button#RefreshButton[IsEnabled=False] LucideIcon">
+                  <Style Selector="Button#RefreshButton[IsEnabled=False] TablerIcon">
                     <Style.Animations>
                       <Animation
                         IterationCount="Infinite" Duration="0:0:1">
@@ -61,8 +61,8 @@
                   Command="{Binding RefreshCommand, RelativeSource={RelativeSource TemplatedParent}}"
                   IsEnabled="{Binding !OfficialModelProvider.IsRefreshing, RelativeSource={RelativeSource TemplatedParent}}"
                   ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}">
-                  <LucideIcon
-                    Kind="RefreshCcw"
+                  <TablerIcon
+                    Kind="Reload"
                     Size="{DynamicResource FontSizeL}"/>
                 </Button>
 
@@ -111,11 +111,12 @@
                           Text="{Binding Model.Name}"
                           TextTrimming="CharacterEllipsis"
                           ToolTip.Tip="{Binding Model.DescriptionKey^, FallbackValue={x:Null}}"/>
-                        <LucideIcon
+                        <TablerIcon
                           Grid.Column="2" HorizontalAlignment="Left"
                           Foreground="{DynamicResource WarningColor}"
+                          IsFilled="True"
                           IsVisible="{Binding Model.DeprecationDate, Converter={x:Static ObjectConverters.IsNotNull}}"
-                          Kind="TriangleAlert"
+                          Kind="AlertTriangle"
                           Size="{DynamicResource FontSizeL}"
                           ToolTip.Placement="Top">
                           <ToolTip.Tip>
@@ -124,7 +125,7 @@
                                 Path="Model.DeprecationDate" StringFormat="{}{0:D}"/>
                             </I18N>
                           </ToolTip.Tip>
-                        </LucideIcon>
+                        </TablerIcon>
 
                         <StackPanel
                           Grid.Column="3" Margin="16,0,0,0"
@@ -135,7 +136,7 @@
                               <Setter Property="Foreground" Value="{DynamicResource BadgeForegroundColor}"/>
                               <Setter Property="Height" Value="{DynamicResource FontSizeXl}"/>
                               <Setter Property="CornerRadius" Value="4"/>
-                              <Style Selector="^ LucideIcon">
+                              <Style Selector="^ TablerIcon">
                                 <Setter Property="Size" Value="{DynamicResource FontSizeL}"/>
                               </Style>
                             </Style>
@@ -145,13 +146,13 @@
                             Background="Chocolate"
                             IsVisible="{Binding Model.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
                             ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
-                            <LucideIcon Kind="Eye"/>
+                            <TablerIcon Kind="Eye"/>
                           </shadui:Badge>
                           <shadui:Badge
                             Background="CadetBlue"
                             IsVisible="{Binding Model.SupportsToolCall}"
                             ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
-                            <LucideIcon Kind="Hammer"/>
+                            <TablerIcon Kind="Tool"/>
                           </shadui:Badge>
                           <shadui:Badge
                             Padding="6,0" Background="MediumSlateBlue">
@@ -284,9 +285,9 @@
                       <StackPanel
                         Orientation="Horizontal" Spacing="4">
                         <TextBlock Text="{I18N {x:Static LocaleKey.OfficialAssistant_IsQuotaLimitFree_Header}}"/>
-                        <LucideIcon
+                        <TablerIcon
                           IsVisible="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"
-                          Kind="CircleQuestionMark"
+                          Kind="HelpCircle"
                           Size="{DynamicResource FontSizeS}"
                           ToolTip.Placement="Top"
                           ToolTip.Tip="{I18N {x:Static LocaleKey.OfficialAssistant_IsQuotaLimitFree_ToolTip}}"/>
@@ -342,9 +343,9 @@
                       <StackPanel
                         Orientation="Horizontal" Spacing="4">
                         <TextBlock Text="{Binding SelectedItem.ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
-                        <LucideIcon
+                        <TablerIcon
                           IsVisible="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"
-                          Kind="CircleQuestionMark"
+                          Kind="HelpCircle"
                           Size="{DynamicResource FontSizeS}"
                           ToolTip.Placement="Top">
                           <ToolTip.Tip>
@@ -356,7 +357,7 @@
                               <Run Text="{Binding SelectedItem.OutputLimit, RelativeSource={RelativeSource TemplatedParent}, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
                             </TextBlock>
                           </ToolTip.Tip>
-                        </LucideIcon>
+                        </TablerIcon>
                       </StackPanel>
                     </Border>
                     <Border
@@ -374,8 +375,8 @@
                       <StackPanel
                         Orientation="Horizontal" Spacing="4">
                         <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_OutputPrice_Header}}"/>
-                        <LucideIcon
-                          Kind="CircleQuestionMark"
+                        <TablerIcon
+                          Kind="HelpCircle"
                           Size="{DynamicResource FontSizeS}"
                           ToolTip.Placement="Top"
                           ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_OutputPrice_ToolTip}}"/>

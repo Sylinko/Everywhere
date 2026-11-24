@@ -75,7 +75,7 @@
               VerticalAlignment="Center"
               Background="{DynamicResource OobeIntroMiniLineBrush}"
               CornerRadius="2.25"/>
-            <LucideIcon
+            <TablerIcon
               x:Name="CheckOption1" Grid.Column="2"
               VerticalAlignment="Center"
               Foreground="{DynamicResource OobeIntroVioletAccentBrush}"

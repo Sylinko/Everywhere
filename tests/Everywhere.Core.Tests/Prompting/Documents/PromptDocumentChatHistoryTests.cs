@@ -3,7 +3,7 @@ using Everywhere.Chat;
 using Everywhere.Harness;
 using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using Microsoft.Extensions.AI;
 using NSubstitute;
@@ -28,7 +28,7 @@ public sealed class PromptDocumentChatHistoryTests
         var persistedResult = new ToolResultRecord(call.FunctionName, call.PluginName, call.Id, document);
         var bytes = MessagePackSerializer.Serialize(persistedResult);
         var result = MessagePackSerializer.Deserialize<ToolResultRecord>(bytes);
-        var functionMessage = new FunctionCallChatMessage(LucideIconKind.File, null);
+        var functionMessage = new FunctionCallChatMessage(TablerIconKind.File, null);
         functionMessage.AddCall(call);
         functionMessage.AddResult(result);
         var assistant = new AssistantChatMessage();
@@ -70,7 +70,7 @@ public sealed class PromptDocumentChatHistoryTests
         var persistedResult = new ToolResultRecord(call.FunctionName, call.PluginName, call.Id, node);
         var bytes = MessagePackSerializer.Serialize(persistedResult);
         var result = MessagePackSerializer.Deserialize<ToolResultRecord>(bytes);
-        var functionMessage = new FunctionCallChatMessage(LucideIconKind.File, null);
+        var functionMessage = new FunctionCallChatMessage(TablerIconKind.File, null);
         functionMessage.AddCall(call);
         functionMessage.AddResult(result);
         var assistant = new AssistantChatMessage();

@@ -76,7 +76,7 @@
         </Setter>
       </Style>
 
-      <Style Selector="^ LucideIcon#PrimaryArrowIcon">
+      <Style Selector="^ TablerIcon#PrimaryArrowIcon">
         <Setter Property="RenderTransform" Value="translateX(-6px)"/>
         <Setter Property="Transitions">
           <Transitions>
@@ -93,7 +93,7 @@
         <Setter Property="Margin" Value="8,0,0,0"/>
       </Style>
 
-      <Style Selector="^:pointerover:not(.busy):not(:disabled) LucideIcon#PrimaryArrowIcon">
+      <Style Selector="^:pointerover:not(.busy):not(:disabled) TablerIcon#PrimaryArrowIcon">
         <Setter Property="RenderTransform" Value="translateX(0px)"/>
       </Style>
     </Style>
@@ -129,7 +129,7 @@
         </Setter>
       </Style>
 
-      <Style Selector="^ LucideIcon#BackArrowIcon">
+      <Style Selector="^ TablerIcon#BackArrowIcon">
         <Setter Property="RenderTransform" Value="translateX(6px)"/>
         <Setter Property="Transitions">
           <Transitions>
@@ -146,7 +146,7 @@
         <Setter Property="Margin" Value="0,0,8,0"/>
       </Style>
 
-      <Style Selector="^:pointerover:not(:disabled) LucideIcon#BackArrowIcon">
+      <Style Selector="^:pointerover:not(:disabled) TablerIcon#BackArrowIcon">
         <Setter Property="RenderTransform" Value="translateX(0px)"/>
       </Style>
     </Style>
@@ -439,7 +439,8 @@
           <ScrollViewer
             x:Name="DecisionScrollViewer" Grid.Row="2"
             Margin="0,0,-8,0" VerticalContentAlignment="Top"
-            ClipToBounds="True" HorizontalScrollBarVisibility="Disabled">
+            ClipToBounds="True" HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="{Binding #ViewRoot.DisplayedStep?.DecisionScrollBarVisibility}">
             <Interaction.Behaviors>
               <in:ResetScrollBehavior ContentToken="{Binding #ViewRoot.DisplayedStep}"/>
             </Interaction.Behaviors>
@@ -489,10 +490,11 @@
             HorizontalAlignment="{Binding #StepHeaderPanel.HorizontalAlignment}"
             ColumnDefinitions="Auto,*" ColumnSpacing="8"
             IsVisible="{Binding ErrorKey, Converter={x:Static ObjectConverters.IsNotNull}}">
-            <LucideIcon
+            <TablerIcon
               Grid.Column="0" VerticalAlignment="Center"
               Foreground="{DynamicResource ErrorColor}"
-              Kind="CircleAlert" Size="15"/>
+              IsFilled="True" Kind="AlertCircle"
+              Size="15"/>
             <TextBlock
               Classes="Caption" Grid.Column="1"
               VerticalAlignment="Center"
@@ -513,7 +515,7 @@
                 <Panel
                   x:Name="BackArrowHost" Height="15"
                   VerticalAlignment="Center" ClipToBounds="True">
-                  <LucideIcon
+                  <TablerIcon
                     x:Name="BackArrowIcon" HorizontalAlignment="Left"
                     VerticalAlignment="Center" Kind="ArrowLeft"
                     Size="15"/>
@@ -547,7 +549,7 @@
                   Height="16" VerticalAlignment="Center"
                   ClipToBounds="True"
                   IsVisible="{Binding !IsBusy}">
-                  <LucideIcon
+                  <TablerIcon
                     x:Name="PrimaryArrowIcon" HorizontalAlignment="Right"
                     VerticalAlignment="Center" Kind="ArrowRight"
                     Size="16"/>

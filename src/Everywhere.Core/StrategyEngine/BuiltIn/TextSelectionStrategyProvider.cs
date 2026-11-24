@@ -1,6 +1,6 @@
 using Everywhere.Chat.Plugins;
 using Everywhere.StrategyEngine.Conditions;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.StrategyEngine.BuiltIn;
 
@@ -26,7 +26,7 @@ public sealed class TextSelectionStrategyProvider() : BuiltInStrategyProvider("t
             Id = "text-translate",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_TranslateCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_TranslateCommand_Description),
-            Icon = LucideIconKind.Languages,
+            Icon = TablerIconKind.Language,
             Priority = 100,
             Condition = BaseCondition,
             Body =
@@ -45,7 +45,7 @@ public sealed class TextSelectionStrategyProvider() : BuiltInStrategyProvider("t
             Id = "text-explain",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_ExplainCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_ExplainCommand_Description),
-            Icon = LucideIconKind.BookOpen,
+            Icon = TablerIconKind.Book2,
             Priority = 95,
             Condition = BaseCondition,
             Body =
@@ -66,7 +66,7 @@ public sealed class TextSelectionStrategyProvider() : BuiltInStrategyProvider("t
             Id = "text-summarize",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_SummarizeCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_SummarizeCommand_Description),
-            Icon = LucideIconKind.FileText,
+            Icon = TablerIconKind.FileText,
             Priority = 90,
             Condition = new TextCondition
             {
@@ -89,7 +89,7 @@ public sealed class TextSelectionStrategyProvider() : BuiltInStrategyProvider("t
             Id = "text-rewrite",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_RewriteCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_RewriteCommand_Description),
-            Icon = LucideIconKind.PenLine,
+            Icon = TablerIconKind.Writing,
             Priority = 85,
             Condition = BaseCondition,
             Body =
@@ -110,7 +110,7 @@ public sealed class TextSelectionStrategyProvider() : BuiltInStrategyProvider("t
             Id = "text-research",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_ResearchCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_ResearchCommand_Description),
-            Icon = LucideIconKind.Search,
+            Icon = TablerIconKind.Search,
             Priority = 80,
             Condition = BaseCondition,
             ToolPatternRulesets = new ToolPatternRulesets(1)
@@ -134,7 +134,7 @@ public sealed class TextSelectionStrategyProvider() : BuiltInStrategyProvider("t
             Id = "text-grammar",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_GrammarCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_GrammarCommand_Description),
-            Icon = LucideIconKind.SpellCheck,
+            Icon = TablerIconKind.TextSpellcheck,
             Priority = 75,
             Condition = BaseCondition,
             Body =

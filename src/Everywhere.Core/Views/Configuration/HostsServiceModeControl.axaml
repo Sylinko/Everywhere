@@ -9,11 +9,11 @@
     <Setter Property="Template">
       <ControlTemplate>
         <DockPanel HorizontalSpacing="8">
-          <LucideIcon
+          <TablerIcon
             DockPanel.Dock="Left" VerticalAlignment="Center"
             Foreground="{DynamicResource WarningColor}"
             IsVisible="{Binding Coordinator.ModeStatus?.RequiresAttention, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"
-            Kind="TriangleAlert"
+            Kind="AlertTriangle"
             Size="{DynamicResource FontSizeL}"
             ToolTip.Tip="{Binding Coordinator.ModeStatus?.State, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static v:HostsServiceModeControl.StateToolTipConverter}}"/>
 

@@ -1,6 +1,6 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Everywhere.Configuration;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views.Pages;
 
@@ -14,7 +14,7 @@ public sealed partial class SettingsCategoryPage : UserControl, IMainViewNavigat
 
     public string RouteKey => _settingsCategory.RouteKey;
 
-    public LucideIconKind Icon => _settingsCategory.Icon;
+    public TablerIconKind Icon => _settingsCategory.Icon;
 
     public IDynamicLocaleKey TitleKey => _settingsCategory.TitleKey;
 

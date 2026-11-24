@@ -7,7 +7,7 @@ using Avalonia.Media;
 using Everywhere.Common;
 using Everywhere.TextSelection;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -371,19 +371,19 @@ public sealed partial class OobeTextSelectionCard : UserControl
         new CustomTextSelectionToolbarAction
         {
             Name = LocaleKey.Strategy_BuiltIn_TextSelection_TranslateCommand_Name.I18N(),
-            Icon = LucideIconKind.Languages,
+            Icon = TablerIconKind.Language,
             Prompt = "Translate"
         },
         new CustomTextSelectionToolbarAction
         {
             Name = LocaleKey.Strategy_BuiltIn_TextSelection_ExplainCommand_Name.I18N(),
-            Icon = LucideIconKind.BookOpen,
+            Icon = TablerIconKind.Book2,
             Prompt = "Explain"
         },
         new CustomTextSelectionToolbarAction
         {
             Name = LocaleKey.Strategy_BuiltIn_TextSelection_SummarizeCommand_Name.I18N(),
-            Icon = LucideIconKind.FileText,
+            Icon = TablerIconKind.FileText,
             Prompt = "Summarize"
         }
     ];

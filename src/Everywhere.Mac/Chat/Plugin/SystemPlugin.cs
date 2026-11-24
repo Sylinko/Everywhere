@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Serialization;
@@ -7,7 +7,7 @@ using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Extensions;
 using Everywhere.Prompting;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 using Everywhere.Harness;
 
@@ -19,7 +19,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Description);
 
-    public override LucideIconKind? Icon => LucideIconKind.AppWindowMac;
+    public override TablerIconKind? Icon => TablerIconKind.BrandApple;
 
     private readonly ILogger<SystemPlugin> _logger;
 

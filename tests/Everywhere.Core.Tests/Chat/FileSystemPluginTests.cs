@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Avalonia.Platform.Storage;
 using Everywhere.Chat;
 using Everywhere.Chat.Permissions;
@@ -9,7 +9,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.I18N;
 using Everywhere.Prompting.Documents;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
@@ -74,8 +74,8 @@ public class FileSystemPluginTests
                 Assert.That(
                     File.ReadAllText(Path.Combine(destination, "nested", "content.txt")),
                     Is.EqualTo("content"));
-                Assert.That(preview.Source.Icon, Is.EqualTo(LucideIconKind.Folder));
-                Assert.That(preview.Destination.Icon, Is.EqualTo(LucideIconKind.Folder));
+                Assert.That(preview.Source.Icon, Is.EqualTo(TablerIconKind.Folder));
+                Assert.That(preview.Destination.Icon, Is.EqualTo(TablerIconKind.Folder));
             });
         }
         finally

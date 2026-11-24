@@ -56,7 +56,7 @@
     <Button
       Classes="Secondary" DockPanel.Dock="Bottom"
       HorizontalAlignment="Right"
-      shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+      shadui:ButtonAssist.Icon="{TablerIconContent Copy}"
       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
       Command="{Binding CopyDetailsCommand}"
       Content="{I18N {x:Static LocaleKey.ChatRequest_CopyDetails}}">

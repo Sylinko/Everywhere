@@ -28,7 +28,7 @@
           <DockPanel
             Margin="6,0" ClipToBounds="False"
             HorizontalSpacing="4" LastChildFill="True">
-            <LucideIcon
+            <TablerIcon
               DockPanel.Dock="Left" VerticalAlignment="Center"
               IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
               Kind="{Binding Icon}"
@@ -49,7 +49,7 @@
               VerticalAlignment="Center"
               Background="{DynamicResource TransparentColor}"
               BorderThickness="0" Focusable="False">
-              <LucideIcon
+              <TablerIcon
                 Foreground="{DynamicResource MutedColor}"
                 Kind="X"
                 Size="{DynamicResource FontSizeS}"/>

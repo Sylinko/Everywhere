@@ -1,4 +1,4 @@
-﻿using Avalonia.Headless.NUnit;
+using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Everywhere.Chat;
 using Everywhere.Cloud;
@@ -7,7 +7,7 @@ using Everywhere.I18N;
 using Everywhere.Storage;
 using Everywhere.Views;
 using LiveMarkdown.Avalonia;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using MessagePack;
@@ -214,7 +214,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
         var storage = new TestChatContextStorage([toolOnly, userMatch, laterMatch]);
         storage.Contexts[toolOnly.Id] = Data(
             toolOnly,
-            new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("Tool"))
+            new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("Tool"))
             {
                 Content = "needle"
             });
@@ -435,7 +435,7 @@ public sealed partial class ChatContextManagerIncrementalLoadingTests
     public async Task Contains_WhenOnlyToolContentMatches_ReturnsFalse()
     {
         using var data = Data(
-            new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("Tool"))
+            new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("Tool"))
             {
                 Content = "needle"
             });

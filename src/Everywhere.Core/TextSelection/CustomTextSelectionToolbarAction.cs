@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
 using Everywhere.StrategyEngine;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.TextSelection;
 
@@ -20,7 +20,7 @@ public sealed partial class CustomTextSelectionToolbarAction : TextSelectionTool
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DisplayIcon))]
-    public partial ColoredIcon Icon { get; set; } = LucideIconKind.Sparkles;
+    public partial ColoredIcon Icon { get; set; } = TablerIconKind.Sparkles;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsAvailable))]

@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
   <ControlTheme
@@ -16,7 +16,7 @@
               <Style Selector="^ StackPanel">
                 <Setter Property="Orientation" Value="Horizontal"/>
                 <Setter Property="Spacing" Value="4"/>
-                <Style Selector="^ LucideIcon">
+                <Style Selector="^ TablerIcon">
                   <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundColor}"/>
                   <Setter Property="Size" Value="{DynamicResource FontSizeL}"/>
                 </Style>
@@ -28,31 +28,31 @@
           </StackPanel.Styles>
           <shadui:Badge IsVisible="{TemplateBinding SupportsText}">
             <StackPanel>
-              <LucideIcon Kind="TextInitial"/>
+              <TablerIcon Kind="LetterCase"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.Modalities_Text}}"/>
             </StackPanel>
           </shadui:Badge>
           <shadui:Badge IsVisible="{TemplateBinding SupportsImage}">
             <StackPanel>
-              <LucideIcon Kind="Image"/>
+              <TablerIcon Kind="Photo"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.Modalities_Image}}"/>
             </StackPanel>
           </shadui:Badge>
           <shadui:Badge IsVisible="{TemplateBinding SupportsAudio}">
             <StackPanel>
-              <LucideIcon Kind="AudioWaveform"/>
+              <TablerIcon Kind="Waveform"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.Modalities_Audio}}"/>
             </StackPanel>
           </shadui:Badge>
           <shadui:Badge IsVisible="{TemplateBinding SupportsVideo}">
             <StackPanel>
-              <LucideIcon Kind="Video"/>
+              <TablerIcon Kind="Video"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.Modalities_Video}}"/>
             </StackPanel>
           </shadui:Badge>
           <shadui:Badge IsVisible="{TemplateBinding SupportsPdf}">
             <StackPanel>
-              <LucideIcon Kind="FileText"/>
+              <TablerIcon Kind="FileText"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.Modalities_Pdf}}"/>
             </StackPanel>
           </shadui:Badge>

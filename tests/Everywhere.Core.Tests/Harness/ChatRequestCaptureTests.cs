@@ -1,8 +1,8 @@
-﻿using Everywhere.AI;
+using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Harness;
 using Everywhere.I18N;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.AI;
 using NSubstitute;
 
@@ -19,7 +19,7 @@ public sealed class ChatRequestCaptureTests
             await File.WriteAllBytesAsync(path, [1, 2, 3]);
             var file = new FileAttachment(new DirectLocaleKey("image"), path, "test-image", "image/png", "from clipboard");
             var user = new UserChatMessage("Compare my image and the file from earlier.", [file]);
-            var legacyTool = new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("read_file"));
+            var legacyTool = new FunctionCallChatMessage(TablerIconKind.File, new DirectLocaleKey("read_file"));
             legacyTool.AddCall(new ToolCallRecord("read_file", null, "old-read", null));
             legacyTool.AddResult(new ToolResultRecord("read_file", null, "old-read", file));
             using var assistant = new AssistantChatMessage();
@@ -51,7 +51,7 @@ public sealed class ChatRequestCaptureTests
         var call = new ToolCallRecord("read", "files", "call-1", arguments);
         var result = new ToolResultRecord("read", "files", "call-1", "result");
         using var assistant = new AssistantChatMessage();
-        var function = new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("read"));
+        var function = new FunctionCallChatMessage(TablerIconKind.File, new DirectLocaleKey("read"));
         function.AddCall(call);
         function.AddResult(result);
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(function));

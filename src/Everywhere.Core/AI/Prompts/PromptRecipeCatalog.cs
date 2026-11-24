@@ -1,4 +1,4 @@
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.AI.Prompts;
 
@@ -46,41 +46,41 @@ public static class PromptRecipeCatalog
 
     public static IReadOnlyList<PromptRecipeOption> Scenarios { get; } =
     [
-        new("general-qa", LocaleKey.PromptRecipe_Scenario_GeneralQA, "General Q&A", LucideIconKind.MessageCircleQuestionMark),
-        new("programming-development", LocaleKey.PromptRecipe_Scenario_ProgrammingDevelopment, "Programming and development", LucideIconKind.Code),
-        new("code-review", LocaleKey.PromptRecipe_Scenario_CodeReview, "Code review", LucideIconKind.FileCode),
-        new("writing-editing", LocaleKey.PromptRecipe_Scenario_WritingEditing, "Writing and editing", LucideIconKind.PenLine),
-        new("data-analysis", LocaleKey.PromptRecipe_Scenario_DataAnalysis, "Data analysis", LucideIconKind.ChartBar),
-        new("learning-education", LocaleKey.PromptRecipe_Scenario_LearningEducation, "Learning and education", LucideIconKind.GraduationCap),
-        new("translation-language", LocaleKey.PromptRecipe_Scenario_TranslationLanguage, "Translation and language", LucideIconKind.Languages),
-        new("product-planning", LocaleKey.PromptRecipe_Scenario_ProductPlanning, "Product planning", LucideIconKind.Lightbulb),
-        new("troubleshooting", LocaleKey.PromptRecipe_Scenario_Troubleshooting, "Troubleshooting", LucideIconKind.Bug),
-        new("research-planning", LocaleKey.PromptRecipe_Scenario_ResearchPlanning, "Research and planning", LucideIconKind.Search)
+        new("general-qa", LocaleKey.PromptRecipe_Scenario_GeneralQA, "General Q&A", TablerIconKind.MessageCircleQuestion),
+        new("programming-development", LocaleKey.PromptRecipe_Scenario_ProgrammingDevelopment, "Programming and development", TablerIconKind.Code),
+        new("code-review", LocaleKey.PromptRecipe_Scenario_CodeReview, "Code review", TablerIconKind.FileCode),
+        new("writing-editing", LocaleKey.PromptRecipe_Scenario_WritingEditing, "Writing and editing", TablerIconKind.Writing),
+        new("data-analysis", LocaleKey.PromptRecipe_Scenario_DataAnalysis, "Data analysis", TablerIconKind.ChartBar),
+        new("learning-education", LocaleKey.PromptRecipe_Scenario_LearningEducation, "Learning and education", TablerIconKind.School),
+        new("translation-language", LocaleKey.PromptRecipe_Scenario_TranslationLanguage, "Translation and language", TablerIconKind.Language),
+        new("product-planning", LocaleKey.PromptRecipe_Scenario_ProductPlanning, "Product planning", TablerIconKind.Bulb),
+        new("troubleshooting", LocaleKey.PromptRecipe_Scenario_Troubleshooting, "Troubleshooting", TablerIconKind.Bug),
+        new("research-planning", LocaleKey.PromptRecipe_Scenario_ResearchPlanning, "Research and planning", TablerIconKind.Search)
     ];
 
     public static IReadOnlyList<PromptRecipeOption> Tones { get; } =
     [
-        new("professional-rigorous", LocaleKey.PromptRecipe_Tone_ProfessionalRigorous, "Be professional and rigorous.", LucideIconKind.ShieldCheck),
-        new("friendly-patient", LocaleKey.PromptRecipe_Tone_FriendlyPatient, "Be friendly, patient, and encouraging.", LucideIconKind.Heart),
-        new("concise-direct", LocaleKey.PromptRecipe_Tone_ConciseDirect, "Be concise and direct.", LucideIconKind.ListChecks),
+        new("professional-rigorous", LocaleKey.PromptRecipe_Tone_ProfessionalRigorous, "Be professional and rigorous.", TablerIconKind.ShieldCheck),
+        new("friendly-patient", LocaleKey.PromptRecipe_Tone_FriendlyPatient, "Be friendly, patient, and encouraging.", TablerIconKind.Heart),
+        new("concise-direct", LocaleKey.PromptRecipe_Tone_ConciseDirect, "Be concise and direct.", TablerIconKind.ListCheck),
         new(
             "socratic-guiding",
             LocaleKey.PromptRecipe_Tone_SocraticGuiding,
             "Guide the user with questions when that helps them think.",
-            LucideIconKind.MessageCircleQuestionMark),
-        new("formal-business", LocaleKey.PromptRecipe_Tone_FormalBusiness, "Use a formal business style.", LucideIconKind.Briefcase),
+            TablerIconKind.MessageCircleQuestion),
+        new("formal-business", LocaleKey.PromptRecipe_Tone_FormalBusiness, "Use a formal business style.", TablerIconKind.Briefcase),
         new(
             "creative-exploratory",
             LocaleKey.PromptRecipe_Tone_CreativeExploratory,
             "Be creative, exploratory, and open to alternatives.",
-            LucideIconKind.Sparkles)
+            TablerIconKind.Sparkles)
     ];
 
     public static IReadOnlyList<PromptRecipeOption> DetailLevels { get; } =
     [
-        new("concise", LocaleKey.PromptRecipe_Detail_Concise, "Use a concise level of detail.", LucideIconKind.TextInitial),
-        new("balanced", LocaleKey.PromptRecipe_Detail_Balanced, "Use a balanced level of detail.", LucideIconKind.List),
-        new("detailed", LocaleKey.PromptRecipe_Detail_Detailed, "Use detailed explanations when they are useful.", LucideIconKind.FileText)
+        new("concise", LocaleKey.PromptRecipe_Detail_Concise, "Use a concise level of detail.", TablerIconKind.LetterCase),
+        new("balanced", LocaleKey.PromptRecipe_Detail_Balanced, "Use a balanced level of detail.", TablerIconKind.List),
+        new("detailed", LocaleKey.PromptRecipe_Detail_Detailed, "Use detailed explanations when they are useful.", TablerIconKind.FileText)
     ];
 
     public static IReadOnlyList<PromptRecipeOption> Organizations { get; } =
@@ -89,37 +89,37 @@ public static class PromptRecipeCatalog
             "automatic",
             LocaleKey.PromptRecipe_Organization_Automatic,
             "Choose the clearest structure automatically. Use paragraphs, lists, steps, or tables when they improve readability.",
-            LucideIconKind.Settings2),
+            TablerIconKind.Settings2),
         new(
             "conclusion-first",
             LocaleKey.PromptRecipe_Organization_ConclusionFirst,
             "Start with the conclusion, then provide supporting details.",
-            LucideIconKind.ChevronsRight),
+            TablerIconKind.ChevronsRight),
         new(
             "step-by-step",
             LocaleKey.PromptRecipe_Organization_StepByStep,
             "Use step-by-step explanations when the task has a process.",
-            LucideIconKind.ListOrdered),
+            TablerIconKind.ListNumbers),
         new(
             "key-points",
             LocaleKey.PromptRecipe_Organization_KeyPoints,
             "Summarize with key points before adding details.",
-            LucideIconKind.ListChecks),
+            TablerIconKind.ListCheck),
         new(
             "compare-options",
             LocaleKey.PromptRecipe_Organization_CompareOptions,
             "Compare options clearly, including tradeoffs and recommendations.",
-            LucideIconKind.GitCompare),
+            TablerIconKind.GitCompare),
         new(
             "examples-first",
             LocaleKey.PromptRecipe_Organization_ExamplesFirst,
             "Lead with concrete examples when they make the answer easier to understand.",
-            LucideIconKind.FileText),
+            TablerIconKind.FileText),
         new(
             "natural-conversation",
             LocaleKey.PromptRecipe_Organization_NaturalConversation,
             "Reply in a natural conversational structure unless the user asks for a stricter format.",
-            LucideIconKind.MessageCircle)
+            TablerIconKind.MessageCircle)
     ];
 
     public static PromptRecipeSnapshot CreateDefaultSnapshot() => new()
@@ -228,10 +228,10 @@ public sealed record PromptRecipeOption(
     string Id,
     IDynamicLocaleKey NameKey,
     string TemplateFragment,
-    LucideIconKind? Icon = null
+    TablerIconKind? Icon = null
 )
 {
-    public PromptRecipeOption(string id, string nameKey, string templateFragment, LucideIconKind? icon = null)
+    public PromptRecipeOption(string id, string nameKey, string templateFragment, TablerIconKind? icon = null)
         : this(id, new DynamicLocaleKey(nameKey), templateFragment, icon)
     {
     }

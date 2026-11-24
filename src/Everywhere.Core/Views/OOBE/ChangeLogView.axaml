@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
   x:Class="Everywhere.Views.ChangeLogView" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:common="clr-namespace:Everywhere.Common"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -95,7 +95,7 @@
           <Button
             HorizontalAlignment="Stretch"
             shadui:ButtonAssist.HoverBackground="{DynamicResource SuccessColor20}"
-            shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Refresh}"
             Background="{DynamicResource SuccessColor60}"
             Command="{Binding PerformUpdateCommand}"
             Content="{Binding UpdateButtonContentKey^}"
@@ -122,18 +122,17 @@
         <HyperlinkButton NavigateUri="{Binding SelectedReleaseInfo.HtmlUrl, FallbackValue={x:Null}}">
           <StackPanel
             Orientation="Horizontal" Spacing="4">
-            <Image
-              Width="{DynamicResource FontSizeL}"
-              Height="{DynamicResource FontSizeL}"
-              Source="{StaticResource GitHubDrawingImage}"/>
+            <TablerIcon
+              IsFilled="True" Kind="BrandGithub"
+              Size="{DynamicResource FontSizeL}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.ChangeLogView_ViewOnGitHubHyperlinkButton_Content}}"/>
           </StackPanel>
         </HyperlinkButton>
         <HyperlinkButton NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteUri}">
           <StackPanel
             Orientation="Horizontal" Spacing="4">
-            <LucideIcon
-              Kind="BookOpen"
+            <TablerIcon
+              Kind="Book2"
               Size="{DynamicResource FontSizeL}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_OfficialDocsHyperlinkButton_Content}}"/>
           </StackPanel>
@@ -141,20 +140,18 @@
         <HyperlinkButton NavigateUri="{x:Static common:LinkConstants.AkaDiscordUri}">
           <StackPanel
             Orientation="Horizontal" Spacing="4">
-            <Image
-              Width="{DynamicResource FontSizeL}"
-              Height="{DynamicResource FontSizeL}"
-              Source="{StaticResource DiscordDrawingImage}"/>
+            <TablerIcon
+              IsFilled="True" Kind="BrandDiscord"
+              Size="{DynamicResource FontSizeL}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_DiscordHyperlinkButton_Content}}"/>
           </StackPanel>
         </HyperlinkButton>
         <HyperlinkButton NavigateUri="{x:Static common:LinkConstants.AkaQQGroupUri}">
           <StackPanel
             Orientation="Horizontal" Spacing="4">
-            <Image
-              Width="{DynamicResource FontSizeL}"
-              Height="{DynamicResource FontSizeL}"
-              Source="{StaticResource QQDrawingImage}"/>
+            <TablerIcon
+              Kind="BrandQq"
+              Size="{DynamicResource FontSizeL}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}"/>
           </StackPanel>
         </HyperlinkButton>

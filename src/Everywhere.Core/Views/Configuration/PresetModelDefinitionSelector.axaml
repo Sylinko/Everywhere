@@ -16,8 +16,8 @@
               Command="{Binding RefreshCommand, RelativeSource={RelativeSource TemplatedParent}}"
               IsEnabled="{Binding !Provider.IsRefreshing, RelativeSource={RelativeSource TemplatedParent}}"
               ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}">
-              <LucideIcon
-                Kind="RefreshCcw"
+              <TablerIcon
+                Kind="Reload"
                 Size="{DynamicResource FontSizeL}"/>
             </Button>
             <ComboBox

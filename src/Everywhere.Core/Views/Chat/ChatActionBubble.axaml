@@ -40,7 +40,7 @@
               IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}">
               <StackPanel
                 Orientation="Horizontal" Spacing="6">
-                <LucideIcon
+                <TablerIcon
                   Foreground="{DynamicResource ForegroundLeadColor}"
                   Kind="{TemplateBinding Icon}"
                   Size="{DynamicResource FontSizeL}"/>
@@ -68,20 +68,20 @@
                     </MultiBinding>
                   </TextBlock.IsVisible>
                 </TextBlock>
-                <LucideIcon
+                <TablerIcon
                   Margin="2,0,0,0" VerticalAlignment="Center"
                   Foreground="{DynamicResource ErrorColor}"
                   IsHitTestVisible="False" Kind="X"
                   Size="{DynamicResource FontSizeM}">
-                  <LucideIcon.IsVisible>
+                  <TablerIcon.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                       <TemplateBinding Property="IsError"/>
                       <TemplateBinding
                         Converter="{x:Static BoolConverters.Not}"
                         Property="IsBusy"/>
                     </MultiBinding>
-                  </LucideIcon.IsVisible>
-                </LucideIcon>
+                  </TablerIcon.IsVisible>
+                </TablerIcon>
               </StackPanel>
             </ToggleButton>
           </Border>

@@ -1,6 +1,6 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -86,13 +86,13 @@ public class ChatActionBubble : ContentControl
     /// <summary>
     /// Defines the <see cref="Icon"/> property.
     /// </summary>
-    public static readonly StyledProperty<LucideIconKind> IconProperty =
-        AvaloniaProperty.Register<ChatActionBubble, LucideIconKind>(nameof(Icon));
+    public static readonly StyledProperty<TablerIconKind> IconProperty =
+        AvaloniaProperty.Register<ChatActionBubble, TablerIconKind>(nameof(Icon));
 
     /// <summary>
     /// Gets or sets the icon to display in the action bubble header.
     /// </summary>
-    public LucideIconKind Icon
+    public TablerIconKind Icon
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);

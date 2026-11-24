@@ -23,7 +23,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="v:ToolApprovalIntroductionCard">
               <DockPanel HorizontalSpacing="12">
-                <LucideIcon
+                <TablerIcon
                   DockPanel.Dock="Left" VerticalAlignment="Center"
                   Kind="{Binding Icon}"
                   Size="{DynamicResource FontSizeXl}"/>

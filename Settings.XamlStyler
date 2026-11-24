@@ -36,7 +36,7 @@
     "ReorderCanvasChildren": false,
     "ReorderSetters": 0,
     "FormatMarkupExtension": true,
-    "NoNewLineMarkupExtensions": "x:Bind, Binding, ReflectionBinding, CompiledBinding, d:DesignInstance, I18N, ServiceLocator, TemplateBinding, OnPlatform, LucideIcon, LucideIconContent",
+    "NoNewLineMarkupExtensions": "x:Bind, Binding, ReflectionBinding, CompiledBinding, d:DesignInstance, I18N, ServiceLocator, TemplateBinding, OnPlatform, LucideIcon, LucideIconContent, TablerIcon, TablerOutlineIcon, TablerFilledIcon, TablerIconContent",
     "ThicknessSeparator": 2,
     "ThicknessAttributes": "Margin, Padding, BorderThickness, ThumbnailClipMargin",
     "FormatOnSave": true,

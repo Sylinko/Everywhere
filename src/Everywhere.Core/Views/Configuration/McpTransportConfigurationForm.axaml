@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:common="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions" xmlns:mcp="clr-namespace:ModelContextProtocol.Client;assembly=ModelContextProtocol.Core"
   xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
@@ -107,7 +107,7 @@
                               </KeyGestureTrigger>
                             </Interaction.Behaviors>
 
-                            <LucideIcon
+                            <TablerIcon
                               Grid.Column="0" VerticalAlignment="Center"
                               Foreground="{DynamicResource MutedColor}"
                               Kind="GripVertical"
@@ -132,7 +132,7 @@
                       <TextBox.InnerRightContent>
                         <Button
                           Classes="Ghost Compact"
-                          shadui:ButtonAssist.Icon="{LucideIconContent FolderPen}"
+                          shadui:ButtonAssist.Icon="{TablerIconContent FolderCog}"
                           shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                           Command="{Binding $parent[v:McpTransportConfigurationForm].BrowseWorkingDirectory}"/>
                       </TextBox.InnerRightContent>

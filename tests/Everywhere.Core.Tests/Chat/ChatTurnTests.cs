@@ -1,10 +1,10 @@
-﻿using Avalonia.Headless.NUnit;
+using Avalonia.Headless.NUnit;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Serialization;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 
 namespace Everywhere.Core.Tests.Chat;
@@ -105,7 +105,7 @@ public sealed class ChatTurnTests
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
         var revision = data.SelectedTurns.Single().Revision;
 
-        var activity = await Task.Run(() => data.StartActivity(LucideIconKind.Server, new DirectLocaleKey("Starting"), false));
+        var activity = await Task.Run(() => data.StartActivity(TablerIconKind.Server, new DirectLocaleKey("Starting"), false));
         await Task.Run(() =>
         {
             activity.HeaderKey = new DirectLocaleKey("Ready");
@@ -127,7 +127,7 @@ public sealed class ChatTurnTests
         using var data = new ChatData();
         data.StartTurn(new UserChatMessage("work", []));
         var assistant = new AssistantChatMessage();
-        var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("Tool"));
+        var tool = new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("Tool"));
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
         var node = data.Append(assistant);
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
@@ -151,7 +151,7 @@ public sealed class ChatTurnTests
         using var data = new ChatData();
         data.StartTurn(new UserChatMessage("work", []));
         var assistant = new AssistantChatMessage();
-        var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("Tool"));
+        var tool = new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("Tool"));
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
         var node = data.Append(assistant);
         var container = new ChatPluginContainerDisplayBlock();
@@ -174,7 +174,7 @@ public sealed class ChatTurnTests
         using var data = new ChatData();
         data.StartTurn(new UserChatMessage("parent", []));
         var assistant = new AssistantChatMessage();
-        var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("Child"));
+        var tool = new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("Child"));
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
         var node = data.Append(assistant);
         var child = new ChatData();
@@ -193,7 +193,7 @@ public sealed class ChatTurnTests
         data.PersistenceDirtyState.Acknowledge(data.PersistenceDirtyState.Capture());
         child.Metadata.Topic = "committed child title";
         Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
-        using var activity = child.StartActivity(LucideIconKind.Server, new DirectLocaleKey("Working"), true);
+        using var activity = child.StartActivity(TablerIconKind.Server, new DirectLocaleKey("Working"), true);
         Assert.That(data.PersistenceDirtyState.HasChanges, Is.False);
     }
 

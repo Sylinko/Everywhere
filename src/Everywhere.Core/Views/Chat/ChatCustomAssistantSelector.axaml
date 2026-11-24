@@ -109,7 +109,7 @@
                             DockPanel.Dock="Left"
                             Width="{DynamicResource LineHeightXl}"
                             VerticalAlignment="Center">
-                            <LucideIcon
+                            <TablerIcon
                               Kind="Settings"
                               Size="{DynamicResource FontSizeXl}"/>
                           </Border>
@@ -246,7 +246,7 @@
                                   Margin="4" VerticalAlignment="Center"
                                   Command="{Binding $parent[v:ChatCustomAssistantSelector].SetSelectedSettingsItemCommand}"
                                   CommandParameter="{Binding}">
-                                  <LucideIcon
+                                  <TablerIcon
                                     Margin="6" Kind="ChevronRight"
                                     Size="{DynamicResource FontSizeL}"/>
                                 </Button>
@@ -275,7 +275,7 @@
                           Command="{Binding $parent[v:ChatCustomAssistantSelector].SetSelectedSettingsItemCommand}"
                           CommandParameter="{x:Null}">
                           <DockPanel HorizontalSpacing="4">
-                            <LucideIcon
+                            <TablerIcon
                               DockPanel.Dock="Left" Margin="3,4,5,4"
                               Kind="ChevronLeft"
                               Size="{DynamicResource FontSize2Xl}"/>
@@ -336,7 +336,7 @@
                             Width="0.5" Margin="0,4"
                             Background="{DynamicResource BorderColor60}"
                             IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"/>
-                          <LucideIcon
+                          <TablerIcon
                             VerticalAlignment="Center"
                             Foreground="{DynamicResource MutedColor}"
                             IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
@@ -348,7 +348,7 @@
                             Width="0.5" Margin="0,4"
                             Background="{DynamicResource BorderColor60}"
                             IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsPdf}}"/>
-                          <LucideIcon
+                          <TablerIcon
                             VerticalAlignment="Center"
                             Foreground="{DynamicResource MutedColor}"
                             IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsPdf}}"
@@ -360,11 +360,11 @@
                             Width="0.5" Margin="0,4"
                             Background="{DynamicResource BorderColor60}"
                             IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsAudio}}"/>
-                          <LucideIcon
+                          <TablerIcon
                             VerticalAlignment="Center"
                             Foreground="{DynamicResource MutedColor}"
                             IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsAudio}}"
-                            Kind="AudioLines"
+                            Kind="WaveSine"
                             Size="{DynamicResource FontSizeL}"
                             ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsAudio_Header}}"/>
 
@@ -372,7 +372,7 @@
                             Width="0.5" Margin="0,4"
                             Background="{DynamicResource BorderColor60}"
                             IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsVideo}}"/>
-                          <LucideIcon
+                          <TablerIcon
                             VerticalAlignment="Center"
                             Foreground="{DynamicResource MutedColor}"
                             IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsVideo}}"
@@ -397,7 +397,7 @@
                           <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <LucideIcon
+                        <TablerIcon
                           Grid.Row="0" Grid.Column="0"
                           VerticalAlignment="Center" Kind="Brain"
                           Size="{DynamicResource FontSizeXl}"/>
@@ -447,9 +447,9 @@
                             Width="Auto" SharedSizeGroup="Chevron"/>
                         </Grid.ColumnDefinitions>
 
-                        <LucideIcon
+                        <TablerIcon
                           Grid.Column="0" VerticalAlignment="Center"
-                          Kind="Hammer"
+                          Kind="Tool"
                           Size="{DynamicResource FontSizeXl}"/>
 
                         <TextBlock
@@ -476,7 +476,7 @@
                           Classes="Ghost Compact NoPadding" Grid.Column="4"
                           HorizontalAlignment="Center" VerticalAlignment="Center"
                           HorizontalContentAlignment="Stretch">
-                          <LucideIcon
+                          <TablerIcon
                             Margin="6" Kind="ChevronRight"
                             Size="{DynamicResource FontSizeL}"/>
 
@@ -509,7 +509,7 @@
                               Width="Auto" SharedSizeGroup="Chevron"/>
                           </Grid.ColumnDefinitions>
 
-                          <LucideIcon
+                          <TablerIcon
                             Grid.Column="0" VerticalAlignment="Center"
                             Kind="Settings"
                             Size="{DynamicResource FontSizeXl}"/>
@@ -518,7 +518,7 @@
                             Grid.Column="1" VerticalAlignment="Center"
                             Text="{I18N {x:Static LocaleKey.Assistant_AdvancedSettings}}"/>
 
-                          <LucideIcon
+                          <TablerIcon
                             Grid.Column="2" Margin="0,6"
                             HorizontalAlignment="Center" VerticalAlignment="Center"
                             Kind="ChevronRight"
@@ -535,9 +535,9 @@
                                   <TextBlock
                                     DockPanel.Dock="Left" VerticalAlignment="Center"
                                     Text="{I18N {x:Static LocaleKey.CustomAssistant_VisualContextLengthLimit_Header}}"/>
-                                  <LucideIcon
+                                  <TablerIcon
                                     HorizontalAlignment="Left" VerticalAlignment="Center"
-                                    Kind="CircleQuestionMark"
+                                    Kind="HelpCircle"
                                     Size="{DynamicResource FontSizeS}"
                                     ToolTip.Placement="Right"
                                     ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_VisualContextLengthLimit_Description}}"/>
@@ -563,9 +563,9 @@
                                   <TextBlock
                                     DockPanel.Dock="Left" VerticalAlignment="Center"
                                     Text="{I18N {x:Static LocaleKey.CustomAssistant_MaxContextRounds_Header}}"/>
-                                  <LucideIcon
+                                  <TablerIcon
                                     HorizontalAlignment="Left" VerticalAlignment="Center"
-                                    Kind="CircleQuestionMark"
+                                    Kind="HelpCircle"
                                     Size="{DynamicResource FontSizeS}"
                                     ToolTip.Placement="Right"
                                     ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_MaxContextRounds_Description}}"/>
@@ -589,7 +589,7 @@
                               <Button
                                 Classes="Ghost LargeIcon" Margin="-6,0,-6,-4"
                                 Padding="6,4" HorizontalContentAlignment="Stretch"
-                                shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                                shadui:ButtonAssist.Icon="{TablerIconContent Settings}"
                                 Command="{Binding $parent[v:ChatCustomAssistantSelector].OpenSettingsCommand}"
                                 Content="{I18N {x:Static LocaleKey.ChatCustomAssistantSelector_MoreSettingsButton_Content}}"/>
                             </StackPanel>

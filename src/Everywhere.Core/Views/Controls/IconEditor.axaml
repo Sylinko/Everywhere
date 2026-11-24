@@ -1,8 +1,7 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:common="clr-namespace:Everywhere.Common" xmlns:shad="clr-namespace:ShadUI;assembly=ShadUI"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:shad="clr-namespace:ShadUI;assembly=ShadUI" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <Design.PreviewWith>
     <v:IconEditor
       Width="300" Height="500"/>
@@ -18,18 +17,24 @@
             <TabControl x:Name="PART_IconTypeTabControl">
               <shadui:TabControlAssist.HeaderContent>
                 <TextBox
-                  Classes="Compact" Margin="8,4,0,4"
-                  InnerLeftContent="{LucideIconContent Search, Size=12}"
+                  Classes="Compact" Margin="8,0,0,0"
+                  VerticalAlignment="Stretch"
+                  InnerLeftContent="{TablerIconContent Search,
+                                                       Size=12}"
                   PlaceholderText="{I18N {x:Static LocaleKey.IconEditor_SearchBox_PlaceholderText}}"
                   Text="{Binding $parent[v:IconEditor].QueryText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
               </shadui:TabControlAssist.HeaderContent>
 
               <TabItem
-                Header="Lucide"
-                Tag="{x:Static common:ColoredIconType.Lucide}">
+                x:Name="PART_OutlineTabItem" Padding="10,4">
+                <TabItem.Header>
+                  <TablerOutlineIcon
+                    Kind="Icons" Size="16"/>
+                </TabItem.Header>
                 <ListBox
-                  BorderThickness="0" CornerRadius="0"
-                  ItemsSource="{TemplateBinding LucideItemsSource}"
+                  x:Name="PART_OutlineListBox" BorderThickness="0"
+                  CornerRadius="0"
+                  ItemsSource="{TemplateBinding OutlineItemsSource}"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                   <Interaction.Behaviors>
                     <shad:FixSelectedItemBehavior SelectedItem="{Binding Icon.Kind, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
@@ -41,11 +46,13 @@
                     </ItemsPanelTemplate>
                   </ListBox.ItemsPanel>
                   <ListBox.ItemTemplate>
-                    <DataTemplate DataType="LucideIconKind">
+                    <DataTemplate DataType="TablerIconKind">
                       <Border Background="Transparent">
-                        <LucideIcon
+                        <TablerIcon
                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                          Kind="{Binding}"/>
+                          IsFilled="False"
+                          Kind="{Binding}"
+                          Size="24"/>
                       </Border>
                     </DataTemplate>
                   </ListBox.ItemTemplate>
@@ -53,8 +60,45 @@
               </TabItem>
 
               <TabItem
-                Header="Emoji"
-                Tag="{x:Static common:ColoredIconType.Text}">
+                x:Name="PART_FilledTabItem" Padding="10,4">
+                <TabItem.Header>
+                  <TablerFilledIcon
+                    Kind="Icons" Size="16"/>
+                </TabItem.Header>
+                <ListBox
+                  x:Name="PART_FilledListBox" BorderThickness="0"
+                  CornerRadius="0"
+                  ItemsSource="{TemplateBinding FilledItemsSource}"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                  <Interaction.Behaviors>
+                    <shad:FixSelectedItemBehavior SelectedItem="{Binding Icon.Kind, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                  </Interaction.Behaviors>
+                  <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <shadui:VirtualizingWrapPanel
+                        ItemHeight="48" ItemWidth="48"/>
+                    </ItemsPanelTemplate>
+                  </ListBox.ItemsPanel>
+                  <ListBox.ItemTemplate>
+                    <DataTemplate DataType="TablerIconKind">
+                      <Border Background="Transparent">
+                        <TablerIcon
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          IsFilled="True"
+                          Kind="{Binding}"
+                          Size="24"/>
+                      </Border>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </TabItem>
+
+              <TabItem
+                x:Name="PART_EmojiTabItem" Padding="10,4">
+                <TabItem.Header>
+                  <TextBlock
+                    FontSize="14" Text="😀"/>
+                </TabItem.Header>
                 <ListBox
                   BorderThickness="0" CornerRadius="0"
                   ItemsSource="{TemplateBinding EmojiItemsSource}"

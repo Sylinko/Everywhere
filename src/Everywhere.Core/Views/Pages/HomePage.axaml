@@ -63,8 +63,8 @@
           <HyperlinkButton.Content>
             <StackPanel
               Orientation="Horizontal" Spacing="6">
-              <LucideIcon
-                Kind="House" Size="15"/>
+              <TablerIcon
+                Kind="Home" Size="15"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.AboutPage_WelcomePage}}"/>
             </StackPanel>
           </HyperlinkButton.Content>
@@ -75,7 +75,7 @@
           <HyperlinkButton.Content>
             <StackPanel
               Orientation="Horizontal" Spacing="6">
-              <LucideIcon
+              <TablerIcon
                 Kind="Rocket" Size="15"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.AboutPage_WhatsNew}}"/>
             </StackPanel>
@@ -86,8 +86,9 @@
           <HyperlinkButton.Content>
             <StackPanel
               Orientation="Horizontal" Spacing="6">
-              <LucideIcon
-                Kind="Github" Size="15"/>
+              <TablerIcon
+                IsFilled="True" Kind="BrandGithub"
+                Size="15"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.AboutPage_GitHubRepo}}"/>
             </StackPanel>
           </HyperlinkButton.Content>
@@ -97,8 +98,8 @@
           <HyperlinkButton.Content>
             <StackPanel
               Orientation="Horizontal" Spacing="6">
-              <LucideIcon
-                Kind="CodeXml" Size="15"/>
+              <TablerIcon
+                Kind="SourceCode" Size="15"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.AboutPage_OpenSourceLicenses}}"/>
             </StackPanel>
           </HyperlinkButton.Content>
@@ -118,28 +119,28 @@
           Classes="Footer Icon"
           NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteUri}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.WelcomeView_OfficialDocsHyperlinkButton_Content}}">
-          <LucideIcon
+          <TablerIcon
             Foreground="{DynamicResource ForegroundColor}"
-            Kind="BookOpen"
+            Kind="Book2"
             Size="{DynamicResource FontSizeL}"/>
         </HyperlinkButton>
         <HyperlinkButton
           Classes="Footer Icon"
           NavigateUri="{x:Static common:LinkConstants.AkaDiscordUri}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.WelcomeView_DiscordHyperlinkButton_Content}}">
-          <Image
-            Width="{DynamicResource FontSizeL}"
-            Height="{DynamicResource FontSizeL}"
-            Source="{StaticResource DiscordDrawingImage}"/>
+          <TablerIcon
+            Foreground="{DynamicResource ForegroundColor}"
+            IsFilled="True" Kind="BrandDiscord"
+            Size="{DynamicResource FontSizeL}"/>
         </HyperlinkButton>
         <HyperlinkButton
           Classes="Footer Icon"
           NavigateUri="{x:Static common:LinkConstants.AkaQQGroupUri}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}">
-          <Image
-            Width="{DynamicResource FontSizeL}"
-            Height="{DynamicResource FontSizeL}"
-            Source="{StaticResource QQDrawingImage}"/>
+          <TablerIcon
+            Foreground="{DynamicResource ForegroundColor}"
+            Kind="BrandQq"
+            Size="{DynamicResource FontSizeL}"/>
         </HyperlinkButton>
       </StackPanel>
     </Grid>
@@ -240,7 +241,7 @@
             Classes="Primary" Grid.Row="0"
             Grid.RowSpan="3" Grid.Column="1"
             HorizontalAlignment="Right" VerticalAlignment="Bottom"
-            shadui:ButtonAssist.Icon="{LucideIconContent MessageCircle}"
+            shadui:ButtonAssist.Icon="{TablerIconContent MessageCircle, IsFilled=True}"
             Command="{Binding StartChatCommand}"
             Content="{I18N {x:Static LocaleKey.HomePage_StartChat}}"
             CornerRadius="{DynamicResource FullCornerRadius}"/>
@@ -266,9 +267,9 @@
             <StackPanel Spacing="8">
               <StackPanel
                 Orientation="Horizontal" Spacing="8">
-                <LucideIcon
+                <TablerIcon
                   Foreground="{DynamicResource MutedColor}"
-                  Kind="MessagesSquare" Size="16"/>
+                  Kind="Messages" Size="16"/>
                 <TextBlock
                   Classes="Muted Caption"
                   Text="{I18N {x:Static LocaleKey.HomePage_Topics}}"/>
@@ -293,7 +294,7 @@
             <StackPanel Spacing="8">
               <StackPanel
                 Orientation="Horizontal" Spacing="8">
-                <LucideIcon
+                <TablerIcon
                   Foreground="{DynamicResource MutedColor}"
                   Kind="GitBranch" Size="16"/>
                 <TextBlock
@@ -313,7 +314,7 @@
             <StackPanel Spacing="8">
               <StackPanel
                 Orientation="Horizontal" Spacing="8">
-                <LucideIcon
+                <TablerIcon
                   Foreground="{DynamicResource MutedColor}"
                   Kind="Coins" Size="16"/>
                 <TextBlock
@@ -349,9 +350,9 @@
                           TargetNullValue="0"/>
                       </I18N>
                     </ToolTip.Tip>
-                    <LucideIcon
+                    <TablerIcon
                       Foreground="{DynamicResource MutedColor}"
-                      Kind="ArrowDownToLine" Size="14"/>
+                      Kind="ArrowBarToDown" Size="14"/>
                     <TextBlock
                       FontWeight="SemiBold"
                       Text="{Binding Overview?.TokenSummary?.InputTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.HumanizeNumber}}"/>
@@ -367,9 +368,9 @@
                           TargetNullValue="0"/>
                       </I18N>
                     </ToolTip.Tip>
-                    <LucideIcon
+                    <TablerIcon
                       Foreground="{DynamicResource MutedColor}"
-                      Kind="ArrowUpFromLine" Size="14"/>
+                      Kind="ArrowBarUp" Size="14"/>
                     <TextBlock
                       FontWeight="SemiBold"
                       Text="{Binding Overview?.TokenSummary?.OutputTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.HumanizeNumber}}"/>
@@ -388,9 +389,9 @@
                           TargetNullValue="0"/>
                       </I18N>
                     </ToolTip.Tip>
-                    <LucideIcon
+                    <TablerIcon
                       Foreground="{DynamicResource MutedColor}"
-                      Kind="DatabaseZap" Size="14"/>
+                      Kind="DatabaseBolt" Size="14"/>
                     <TextBlock
                       FontWeight="SemiBold"
                       Text="{Binding Overview?.TokenSummary?.CachedInputHitRate, TargetNullValue=0, StringFormat='{}{0:P0}'}"/>
@@ -404,9 +405,9 @@
             <StackPanel Spacing="8">
               <StackPanel
                 Orientation="Horizontal" Spacing="8">
-                <LucideIcon
+                <TablerIcon
                   Foreground="{DynamicResource MutedColor}"
-                  Kind="ScanSearch" Size="16"/>
+                  Kind="ZoomScan" Size="16"/>
                 <TextBlock
                   Classes="Muted Caption"
                   Text="{I18N {x:Static LocaleKey.HomePage_VisualContext}}"/>

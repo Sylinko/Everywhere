@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
@@ -6,7 +6,7 @@ using Avalonia.Input;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat.Links;
 using LiveMarkdown.Avalonia;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -40,39 +40,39 @@ public static class ChatLinkMenu
         switch (target.Kind)
         {
             case ChatLinkKind.Local:
-                result.Add(MakeItem(LocaleKey.ChatLink_Reveal, ChatLinkAction.Reveal, LucideIconKind.FolderOpen));
+                result.Add(MakeItem(LocaleKey.ChatLink_Reveal, ChatLinkAction.Reveal, TablerIconKind.FolderOpen));
 
                 if (ChatLinkInteraction.IsExecutableExtension(target.Address))
                 {
-                    result.Add(MakeItem(LocaleKey.ChatLink_Run, ChatLinkAction.Open, LucideIconKind.AppWindow));
+                    result.Add(MakeItem(LocaleKey.ChatLink_Run, ChatLinkAction.Open, TablerIconKind.AppWindow));
                 }
                 else
                 {
-                    result.Add(MakeItem(LocaleKey.ChatLink_Open, ChatLinkAction.Open, LucideIconKind.ExternalLink));
+                    result.Add(MakeItem(LocaleKey.ChatLink_Open, ChatLinkAction.Open, TablerIconKind.ExternalLink));
                 }
 
                 result.Add(MakeItem(LocaleKey.ChatLink_OpenWith, ChatLinkAction.OpenWith));
                 result.Add(MakeItem(LocaleKey.ChatLink_SaveAs, ChatLinkAction.SaveAs));
                 result.Add(new Separator());
-                result.Add(MakeItem(LocaleKey.ChatLink_CopyPath, ChatLinkAction.CopyAddress, LucideIconKind.Copy));
+                result.Add(MakeItem(LocaleKey.ChatLink_CopyPath, ChatLinkAction.CopyAddress, TablerIconKind.Copy));
                 break;
             case ChatLinkKind.Web:
-                result.Add(MakeItem(LocaleKey.Common_OpenLink, ChatLinkAction.Open, LucideIconKind.ExternalLink));
+                result.Add(MakeItem(LocaleKey.Common_OpenLink, ChatLinkAction.Open, TablerIconKind.ExternalLink));
                 result.Add(new Separator());
-                result.Add(MakeItem(LocaleKey.Common_CopyLink, ChatLinkAction.CopyAddress, LucideIconKind.Copy));
+                result.Add(MakeItem(LocaleKey.Common_CopyLink, ChatLinkAction.CopyAddress, TablerIconKind.Copy));
                 break;
             default:
-                result.Add(MakeItem(LocaleKey.Common_CopyLink, ChatLinkAction.CopyAddress, LucideIconKind.Copy));
+                result.Add(MakeItem(LocaleKey.Common_CopyLink, ChatLinkAction.CopyAddress, TablerIconKind.Copy));
                 break;
         }
 
         result.Add(MakeItem(LocaleKey.Common_CopyLinkText, ChatLinkAction.CopyText));
         return result;
 
-        MenuItem MakeItem(string key, ChatLinkAction action, LucideIconKind? icon = null)
+        MenuItem MakeItem(string key, ChatLinkAction action, TablerIconKind? icon = null)
         {
             var item = new MenuItem();
-            if (icon is { } kind) item.Icon = new LucideIcon { Kind = kind, Size = 16 };
+            if (icon is { } kind) item.Icon = new TablerIcon { Kind = kind, Size = 16 };
             item[!HeaderedSelectingItemsControl.HeaderProperty] = new DynamicLocaleKey(key).ToBinding();
             item.Command = new AsyncRelayCommand(() =>
             {

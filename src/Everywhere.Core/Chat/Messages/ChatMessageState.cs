@@ -1,5 +1,5 @@
-﻿using Everywhere.Chat.Plugins;
-using Lucide.Avalonia;
+using Everywhere.Chat.Plugins;
+using Tabler.Avalonia;
 
 namespace Everywhere.Chat;
 
@@ -59,7 +59,7 @@ public sealed record ChatBackgroundJobNotificationState(
 /// <summary>
 /// A user-triggered action's visible label.
 /// </summary>
-public sealed record ChatUserActionState(LucideIconKind Icon, IDynamicLocaleKey? HeaderKey) : ChatMessageState;
+public sealed record ChatUserActionState(TablerIconKind Icon, IDynamicLocaleKey? HeaderKey) : ChatMessageState;
 
 /// <summary>
 /// A compaction attempt's current timeline status.
@@ -70,7 +70,7 @@ public sealed record ChatCompressionState(IDynamicLocaleKey? HeaderKey, IDynamic
 /// A standalone action's captured status and duration.
 /// </summary>
 public sealed record ChatActionState(
-    LucideIconKind Icon,
+    TablerIconKind Icon,
     IDynamicLocaleKey? HeaderKey,
     IDynamicLocaleKey? ErrorMessageKey,
     bool IsBusy,
@@ -82,7 +82,7 @@ public sealed record ChatActionState(
 /// expanded block presenters capture their own mutable values.
 /// </summary>
 public sealed record ChatFunctionState(
-    LucideIconKind Icon,
+    TablerIconKind Icon,
     IDynamicLocaleKey? HeaderKey,
     string? Content,
     ChatPluginActivityPreview? ActivityPreview,

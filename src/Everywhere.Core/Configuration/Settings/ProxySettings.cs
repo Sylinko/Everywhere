@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Configuration;
 
@@ -10,7 +10,7 @@ public sealed partial class ProxySettings(IServiceProvider serviceProvider) : Se
     public int Index => 4;
 
     [SettingsItemIgnore]
-    public LucideIconKind Icon => LucideIconKind.WifiCog;
+    public TablerIconKind Icon => TablerIconKind.WorldCog;
 
     [SettingsItemIgnore]
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Proxy_Header);

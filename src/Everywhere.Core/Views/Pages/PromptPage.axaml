@@ -42,7 +42,7 @@
           <Button
             Classes="Secondary" DockPanel.Dock="Right"
             VerticalAlignment="Center"
-            shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
             Command="{Binding CreatePromptCommand}"
             Content="{I18N {x:Static LocaleKey.PromptPage_NewPromptButton_Content}}"
             CornerRadius="{DynamicResource FullCornerRadius}"
@@ -144,7 +144,7 @@
         <Button
           Classes="Secondary" Grid.Column="1"
           VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+          shadui:ButtonAssist.Icon="{TablerIconContent Copy}"
           Command="{Binding CopyRenderedPreviewCommand}"
           Content="{I18N {x:Static LocaleKey.Common_Copy}}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_CopyRenderedButton_ToolTip}}">
@@ -155,7 +155,7 @@
         <Button
           Classes="Secondary" Grid.Column="2"
           VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Pencil}"
+          shadui:ButtonAssist.Icon="{TablerIconContent Pencil}"
           Command="{Binding EditSelectedPromptCommand}"
           Content="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_Content}}"
           IsEnabled="{Binding CanEditSelectedPrompt}"
@@ -163,7 +163,7 @@
         <Button
           Classes="Secondary" Grid.Column="3"
           VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
+          shadui:ButtonAssist.Icon="{TablerIconContent Trash}"
           Command="{Binding DeleteSelectedPromptCommand}"
           Content="{I18N {x:Static LocaleKey.Common_Delete}}"
           CornerRadius="{DynamicResource FullCornerRadius}"

@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Headless;
@@ -18,7 +18,7 @@ using Everywhere.I18N;
 using Everywhere.Interop;
 using Everywhere.Views;
 using LiveMarkdown.Avalonia;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Markdig;
 using MessagePack;
 using Microsoft.Extensions.DependencyInjection;
@@ -164,8 +164,8 @@ public sealed class ChatLinkTests
             Assert.That(handler.RequestCount, Is.EqualTo(requestCount));
 
             var directoryPoint = GetLinkPoint(blocks[3], window);
-            await EventuallyAsync(() => blocks[3].GetVisualDescendants().OfType<LucideIcon>().Any(icon => icon.Kind == LucideIconKind.Folder));
-            await EventuallyAsync(() => toolDetails.GetVisualDescendants().OfType<LucideIcon>().Any(icon => icon.Kind == LucideIconKind.Folder));
+            await EventuallyAsync(() => blocks[3].GetVisualDescendants().OfType<TablerIcon>().Any(icon => icon.Kind == TablerIconKind.Folder));
+            await EventuallyAsync(() => toolDetails.GetVisualDescendants().OfType<TablerIcon>().Any(icon => icon.Kind == TablerIconKind.Folder));
             window.MouseMove(directoryPoint);
             window.MouseDown(directoryPoint, MouseButton.Left);
             window.MouseUp(directoryPoint, MouseButton.Left);
@@ -242,14 +242,14 @@ public sealed class ChatLinkTests
     public void FileIcons_ForMarkdownLinksAndToolReferences_UseDirectoryHintsAndMimeCategoriesWithoutFiles()
     {
         var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        (string Name, LucideIconKind Icon, bool IsDirectory)[] cases =
+        (string Name, TablerIconKind Icon, bool IsDirectory)[] cases =
         [
-            ("program.EXE", LucideIconKind.AppWindow, false),
-            ("data.bin", LucideIconKind.File, false),
-            ("unknown.unknown-type", LucideIconKind.File, false),
-            ("image.TIFF", LucideIconKind.FileImage, false),
-            ("folder.TIFF", LucideIconKind.Folder, true),
-            ("no-extension", LucideIconKind.File, false)
+            ("program.EXE", TablerIconKind.AppWindow, false),
+            ("data.bin", TablerIconKind.File, false),
+            ("unknown.unknown-type", TablerIconKind.File, false),
+            ("image.TIFF", TablerIconKind.Photo, false),
+            ("folder.TIFF", TablerIconKind.Folder, true),
+            ("no-extension", TablerIconKind.File, false)
         ];
         var markdown = string.Join("\n\n", cases.Select(entry =>
         {
@@ -262,7 +262,7 @@ public sealed class ChatLinkTests
         var references = cases.Select(entry => new ChatPluginFileReference(Path.Combine(root, entry.Name)) { IsDirectory = entry.IsDirectory });
 
         Assert.That(blocks.Select(block => block.Inlines?.OfType<Link>().Single().Inlines
-                .OfType<InlineUIContainer>().Single().Child is Panel panel ? panel.Children.OfType<LucideIcon>().Single().Kind : null),
+                .OfType<InlineUIContainer>().Single().Child is Panel panel ? panel.Children.OfType<TablerIcon>().Single().Kind : null),
             Is.EqualTo(cases.Select(entry => entry.Icon)));
         Assert.That(references.Select(reference => reference.Icon), Is.EqualTo(cases.Select(entry => entry.Icon)));
     }
@@ -274,7 +274,7 @@ public sealed class ChatLinkTests
         var reference = new ChatPluginFileReference(path) { IsDirectory = true };
         var restored = MessagePackSerializer.Deserialize<ChatPluginFileReference>(MessagePackSerializer.Serialize(reference));
         Assert.That(restored.FullPath, Is.EqualTo(path));
-        Assert.That(restored.Icon, Is.EqualTo(LucideIconKind.Folder));
+        Assert.That(restored.Icon, Is.EqualTo(TablerIconKind.Folder));
 
         var buffer = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(buffer);
@@ -286,7 +286,7 @@ public sealed class ChatLinkTests
 
         var legacy = MessagePackSerializer.Deserialize<ChatPluginFileReference>(buffer.WrittenMemory);
         Assert.That(legacy.FullPath, Is.EqualTo(path));
-        Assert.That(legacy.Icon, Is.EqualTo(LucideIconKind.FileImage));
+        Assert.That(legacy.Icon, Is.EqualTo(TablerIconKind.Photo));
     }
 
     [Test]

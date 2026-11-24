@@ -63,7 +63,7 @@
       <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
     </Style>
 
-    <Style Selector="Button.spinning LucideIcon">
+    <Style Selector="Button.spinning TablerIcon">
       <Style.Animations>
         <Animation
           IterationCount="Infinite" Duration="0:0:1">
@@ -249,8 +249,8 @@
           </Button.CommandParameter>
           <StackPanel
             Orientation="Horizontal" Spacing="7">
-            <LucideIcon
-              VerticalAlignment="Center" Kind="Boxes"
+            <TablerIcon
+              VerticalAlignment="Center" Kind="Packages"
               Size="14"/>
             <TextBlock
               VerticalAlignment="Center"
@@ -268,8 +268,8 @@
           </Button.CommandParameter>
           <StackPanel
             Orientation="Horizontal" Spacing="7">
-            <LucideIcon
-              VerticalAlignment="Center" Kind="SlidersHorizontal"
+            <TablerIcon
+              VerticalAlignment="Center" Kind="AdjustmentsHorizontal"
               Size="14"/>
             <TextBlock
               VerticalAlignment="Center"
@@ -307,7 +307,7 @@
                   Width="28" Height="28"
                   Background="{DynamicResource OobeBrandCyanTintBrush}"
                   CornerRadius="9">
-                  <LucideIcon
+                  <TablerIcon
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     Foreground="{DynamicResource OobeBrandCyanBrush}"
                     Kind="Cloud" Size="15"/>
@@ -328,9 +328,9 @@
                 SelectedItem="{Binding SelectedPresetProvider, Mode=TwoWay}"
                 Theme="{StaticResource OobePillComboBoxTheme}">
                 <ComboBox.Styles>
-                  <Style Selector="ComboBox /template/ LucideIcon#PlaceholderIcon">
+                  <Style Selector="ComboBox /template/ TablerIcon#PlaceholderIcon">
                     <Setter Property="IsVisible" Value="True"/>
-                    <Setter Property="Kind" Value="Boxes"/>
+                    <Setter Property="Kind" Value="Packages"/>
                   </Style>
                 </ComboBox.Styles>
                 <ComboBox.ItemTemplate>
@@ -396,8 +396,8 @@
                 CornerRadius="9"
                 IsVisible="{Binding CanSelectCatalogModel}"
                 ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}">
-                <LucideIcon
-                  Kind="RefreshCcw" Size="14"/>
+                <TablerIcon
+                  Kind="Reload" Size="14"/>
               </Button>
             </StackPanel>
 
@@ -455,12 +455,13 @@
                         TextTrimming="CharacterEllipsis"
                         ToolTip.Tip="{Binding Model.DescriptionKey^, FallbackValue={x:Null}}"/>
 
-                      <LucideIcon
+                      <TablerIcon
                         Grid.Column="2" HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         Foreground="{DynamicResource WarningColor}"
+                        IsFilled="True"
                         IsVisible="{Binding Model.DeprecationDate, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        Kind="TriangleAlert"
+                        Kind="AlertTriangle"
                         Size="{DynamicResource FontSizeL}"
                         ToolTip.Placement="Top">
                         <ToolTip.Tip>
@@ -469,7 +470,7 @@
                               Path="Model.DeprecationDate" StringFormat="{}{0:D}"/>
                           </I18N>
                         </ToolTip.Tip>
-                      </LucideIcon>
+                      </TablerIcon>
 
                       <StackPanel
                         Grid.Column="3" Margin="12,0,0,0"
@@ -480,7 +481,7 @@
                             <Setter Property="Foreground" Value="{DynamicResource BadgeForegroundColor}"/>
                             <Setter Property="Height" Value="{DynamicResource FontSizeXl}"/>
                             <Setter Property="CornerRadius" Value="4"/>
-                            <Style Selector="^ LucideIcon">
+                            <Style Selector="^ TablerIcon">
                               <Setter Property="Size" Value="{DynamicResource FontSizeL}"/>
                             </Style>
                           </Style>
@@ -490,13 +491,13 @@
                           Background="Chocolate"
                           IsVisible="{Binding Model.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
                           ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
-                          <LucideIcon Kind="Eye"/>
+                          <TablerIcon Kind="Eye"/>
                         </shadui:Badge>
                         <shadui:Badge
                           Background="CadetBlue"
                           IsVisible="{Binding Model.SupportsToolCall}"
                           ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
-                          <LucideIcon Kind="Hammer"/>
+                          <TablerIcon Kind="Tool"/>
                         </shadui:Badge>
                         <shadui:Badge
                           Padding="6,0" Background="MediumSlateBlue"
@@ -552,10 +553,10 @@
                       Grid.Column="0" VerticalAlignment="Center"
                       Orientation="Horizontal" Spacing="7"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_Endpoint_Description}}">
-                      <LucideIcon
+                      <TablerIcon
                         VerticalAlignment="Center"
                         Foreground="{DynamicResource OobeBrandCyanBrush}"
-                        Kind="Globe" Size="14"/>
+                        Kind="World" Size="14"/>
                       <TextBlock
                         Classes="Caption Muted" VerticalAlignment="Center"
                         FontWeight="Medium"
@@ -579,7 +580,7 @@
                     <StackPanel
                       Grid.Column="1" Orientation="Horizontal"
                       Spacing="6">
-                      <LucideIcon
+                      <TablerIcon
                         VerticalAlignment="Center"
                         Foreground="{DynamicResource OobeBrandCyanBrush}"
                         IsVisible="{Binding EndpointPreviewText, Converter={x:Static ObjectConverters.IsNotNull}}"
@@ -615,7 +616,7 @@
                     Grid.Column="0" VerticalAlignment="Center"
                     Orientation="Horizontal" Spacing="7"
                     ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_ModelId_Description}}">
-                    <LucideIcon
+                    <TablerIcon
                       VerticalAlignment="Center"
                       Foreground="{DynamicResource OobeOwnAccentBrush}"
                       Kind="Cpu" Size="14"/>
@@ -645,10 +646,10 @@
                     Grid.Column="0" VerticalAlignment="Center"
                     Orientation="Horizontal" Spacing="7"
                     ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_ApiKey_Description}}">
-                    <LucideIcon
+                    <TablerIcon
                       VerticalAlignment="Center"
                       Foreground="{DynamicResource OobeBrandGoldBrush}"
-                      Kind="KeyRound" Size="14"/>
+                      Kind="Key" Size="14"/>
                     <TextBlock
                       Classes="Caption Muted" VerticalAlignment="Center"
                       FontWeight="Medium"
@@ -671,14 +672,14 @@
                           <Button
                             Classes="Ghost Compact" Padding="10,6"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                            shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+                            shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
                             BorderThickness="0"
                             Command="{Binding #CardHost.AddApiKeyCommand}"
                             Content="{I18N {x:Static LocaleKey.ApiKeyComboBox_AddApiKey}}"/>
                           <Button
                             Classes="Ghost Compact" Padding="10,6"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                            shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                            shadui:ButtonAssist.Icon="{TablerIconContent Settings}"
                             BorderThickness="0"
                             Command="{Binding #CardHost.ManageApiKeyCommand}"
                             Content="{I18N {x:Static LocaleKey.ApiKeyComboBox_ManageApiKey}}"/>
@@ -708,10 +709,10 @@
                 <StackPanel Spacing="4">
                   <StackPanel
                     Orientation="Horizontal" Spacing="6">
-                    <LucideIcon
+                    <TablerIcon
                       VerticalAlignment="Center"
                       Foreground="{DynamicResource OobeBrandCyanBrush}"
-                      Kind="SquareMenu" Size="12"/>
+                      Kind="Menu2" Size="12"/>
                     <TextBlock
                       Classes="Caption Muted" VerticalAlignment="Center"
                       Text="{I18N {x:Static LocaleKey.Oobe_Configure_ContextLabel}}"/>
@@ -728,10 +729,10 @@
                 <StackPanel Spacing="4">
                   <StackPanel
                     Orientation="Horizontal" Spacing="6">
-                    <LucideIcon
+                    <TablerIcon
                       VerticalAlignment="Center"
                       Foreground="{DynamicResource OobeBrandPinkBrush}"
-                      Kind="SquareArrowRightExit" Size="12"/>
+                      Kind="DoorExit" Size="12"/>
                     <TextBlock
                       Classes="Caption Muted" VerticalAlignment="Center"
                       Text="{I18N {x:Static LocaleKey.Oobe_Configure_OutputLabel}}"/>
@@ -758,10 +759,10 @@
                         Grid.Column="0" Orientation="Horizontal"
                         Spacing="6"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Description}}">
-                        <LucideIcon
+                        <TablerIcon
                           VerticalAlignment="Center"
                           Foreground="{DynamicResource OobeBrandCyanBrush}"
-                          Kind="SquareMenu" Size="12"/>
+                          Kind="Menu2" Size="12"/>
                         <TextBlock
                           Classes="Caption Muted" VerticalAlignment="Center"
                           Text="{I18N {x:Static LocaleKey.Oobe_Configure_ContextLabel}}"/>
@@ -790,10 +791,10 @@
                         Grid.Column="0" Orientation="Horizontal"
                         Spacing="6"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Description}}">
-                        <LucideIcon
+                        <TablerIcon
                           VerticalAlignment="Center"
                           Foreground="{DynamicResource OobeBrandPinkBrush}"
-                          Kind="SquareArrowRightExit" Size="12"/>
+                          Kind="DoorExit" Size="12"/>
                         <TextBlock
                           Classes="Caption Muted" VerticalAlignment="Center"
                           Text="{I18N {x:Static LocaleKey.Oobe_Configure_OutputLabel}}"/>
@@ -819,10 +820,10 @@
                 <StackPanel
                   Orientation="Horizontal" Spacing="6"
                   ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_InputModalities_Description}}">
-                  <LucideIcon
+                  <TablerIcon
                     VerticalAlignment="Center"
                     Foreground="{DynamicResource MutedColor}"
-                    Kind="Layers" Size="12"/>
+                    Kind="Stack2" Size="12"/>
                   <TextBlock
                     Classes="Caption Muted" VerticalAlignment="Center"
                     Text="{I18N {x:Static LocaleKey.Oobe_Configure_ModalitiesLabel}}"/>
@@ -836,8 +837,8 @@
                     Theme="{StaticResource OobeCapToggleTheme}">
                     <StackPanel
                       Orientation="Horizontal" Spacing="5">
-                      <LucideIcon
-                        VerticalAlignment="Center" Kind="TextInitial"
+                      <TablerIcon
+                        VerticalAlignment="Center" Kind="LetterCase"
                         Size="12"/>
                       <TextBlock
                         VerticalAlignment="Center"
@@ -851,7 +852,7 @@
                     Theme="{StaticResource OobeCapToggleTheme}">
                     <StackPanel
                       Orientation="Horizontal" Spacing="5">
-                      <LucideIcon
+                      <TablerIcon
                         VerticalAlignment="Center" Kind="Eye"
                         Size="12"/>
                       <TextBlock
@@ -866,7 +867,7 @@
                     Theme="{StaticResource OobeCapToggleTheme}">
                     <StackPanel
                       Orientation="Horizontal" Spacing="5">
-                      <LucideIcon
+                      <TablerIcon
                         VerticalAlignment="Center" Kind="Volume2"
                         Size="12"/>
                       <TextBlock
@@ -881,7 +882,7 @@
                     Theme="{StaticResource OobeCapToggleTheme}">
                     <StackPanel
                       Orientation="Horizontal" Spacing="5">
-                      <LucideIcon
+                      <TablerIcon
                         VerticalAlignment="Center" Kind="Video"
                         Size="12"/>
                       <TextBlock
@@ -896,7 +897,7 @@
                     Theme="{StaticResource OobeCapToggleTheme}">
                     <StackPanel
                       Orientation="Horizontal" Spacing="5">
-                      <LucideIcon
+                      <TablerIcon
                         VerticalAlignment="Center" Kind="FileText"
                         Size="12"/>
                       <TextBlock
@@ -912,8 +913,8 @@
                     ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Description}}">
                     <StackPanel
                       Orientation="Horizontal" Spacing="5">
-                      <LucideIcon
-                        VerticalAlignment="Center" Kind="Wrench"
+                      <TablerIcon
+                        VerticalAlignment="Center" Kind="Tool"
                         Size="12"/>
                       <TextBlock
                         VerticalAlignment="Center"
@@ -974,13 +975,13 @@
       IsVisible="{Binding !IsCloudSource}">
       <StackPanel
         Orientation="Horizontal" Spacing="6">
-        <LucideIcon
+        <TablerIcon
           VerticalAlignment="Center" Kind="Cloud"
           Size="14"/>
         <TextBlock
           VerticalAlignment="Center"
           Text="{I18N {x:Static LocaleKey.Oobe_Configure_SwitchToCloud}}"/>
-        <LucideIcon
+        <TablerIcon
           VerticalAlignment="Center" Kind="ArrowUpRight"
           Size="13"/>
       </StackPanel>

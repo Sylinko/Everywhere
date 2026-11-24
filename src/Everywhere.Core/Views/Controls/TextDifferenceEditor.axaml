@@ -20,7 +20,7 @@
             BorderThickness="0,1">
             <Grid
               ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="6">
-              <LucideIcon
+              <TablerIcon
                 Grid.Column="0" VerticalAlignment="Center"
                 Kind="File"
                 Size="{DynamicResource FontSizeL}"/>
@@ -71,14 +71,14 @@
               <Button
                 Classes="Secondary" Grid.Column="1"
                 VerticalAlignment="Center"
-                shadui:ButtonAssist.Icon="{LucideIconContent CheckCheck}"
+                shadui:ButtonAssist.Icon="{TablerIconContent Checks}"
                 Command="{Binding AcceptAllCommand, RelativeSource={RelativeSource TemplatedParent}}"
                 Content="{I18N {x:Static LocaleKey.TextDifferenceEditor_AcceptAllButton_Content}}"
                 CornerRadius="{DynamicResource FullCornerRadius}"/>
               <Button
                 Classes="Secondary" Grid.Column="2"
                 VerticalAlignment="Center"
-                shadui:ButtonAssist.Icon="{LucideIconContent X}"
+                shadui:ButtonAssist.Icon="{TablerIconContent X}"
                 Command="{Binding RejectAllCommand, RelativeSource={RelativeSource TemplatedParent}}"
                 Content="{I18N {x:Static LocaleKey.TextDifferenceEditor_RejectAllButton_Content}}"
                 CornerRadius="{DynamicResource FullCornerRadius}"/>
@@ -86,7 +86,7 @@
               <Button
                 Classes="Primary" Grid.Column="4"
                 VerticalAlignment="Center"
-                shadui:ButtonAssist.Icon="{LucideIconContent Check}"
+                shadui:ButtonAssist.Icon="{TablerIconContent Check}"
                 Command="{Binding ConfirmCommand, RelativeSource={RelativeSource TemplatedParent}}"
                 Content="{I18N {x:Static LocaleKey.TextDifferenceEditor_ConfirmButton_Content}}"
                 CornerRadius="{DynamicResource FullCornerRadius}">
@@ -320,7 +320,7 @@
                             Margin="-12,0" Padding="6,0"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                             shadui:ButtonAssist.HoverBackground="{DynamicResource SecondaryColor50}"
-                            shadui:ButtonAssist.Icon="{LucideIconContent ChevronsUpDown}"
+                            shadui:ButtonAssist.Icon="{TablerIconContent Selector}"
                             shadui:ButtonAssist.IconSize="{DynamicResource FontSizeS}"
                             shadui:ButtonAssist.ShowProgress="{Binding IsLoading, Delay=200}"
                             Background="{DynamicResource SecondaryColor}"
@@ -424,7 +424,7 @@
                                 Content="{I18N {x:Static LocaleKey.TextDifferenceEditor_AcceptButton_Content}}"
                                 IsVisible="{Binding Change.IsAccepted, Converter={x:Static BoolConverters.Not}}">
                                 <shadui:ButtonAssist.Icon>
-                                  <LucideIcon
+                                  <TablerIcon
                                     Foreground="{DynamicResource SuccessColor60}"
                                     Kind="Check"/>
                                 </shadui:ButtonAssist.Icon>
@@ -440,14 +440,14 @@
                                 Content="{I18N {x:Static LocaleKey.TextDifferenceEditor_RejectButton_Content}}"
                                 IsVisible="{Binding Change.IsAccepted}">
                                 <shadui:ButtonAssist.Icon>
-                                  <LucideIcon
+                                  <TablerIcon
                                     Foreground="{DynamicResource ErrorColor60}"
                                     Kind="X"/>
                                 </shadui:ButtonAssist.Icon>
                               </Button>
                               <Button
                                 Classes="Outline Compact"
-                                shadui:ButtonAssist.Icon="{LucideIconContent MessageCircle}"
+                                shadui:ButtonAssist.Icon="{TablerIconContent MessageCircle}"
                                 Content="{I18N {x:Static LocaleKey.TextDifferenceEditor_CommentButton_Content}}">
                                 <Button.Flyout>
                                   <Flyout Placement="BottomEdgeAlignedRight">

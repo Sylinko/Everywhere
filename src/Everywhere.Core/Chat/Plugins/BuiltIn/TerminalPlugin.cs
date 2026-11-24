@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,7 +9,7 @@ using Everywhere.Harness;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Terminal;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 using Porta.Pty;
 
@@ -29,7 +29,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Description);
 
     /// <inheritdoc />
-    public override LucideIconKind? Icon => LucideIconKind.SquareTerminal;
+    public override TablerIconKind? Icon => TablerIconKind.Terminal2;
 
     /// <inheritdoc />
     public override IReadOnlyList<SettingsItem> SettingsItems => _pluginSettings.SettingsItems;

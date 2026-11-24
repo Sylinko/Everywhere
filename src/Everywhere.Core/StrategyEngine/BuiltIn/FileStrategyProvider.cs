@@ -1,5 +1,5 @@
 using Everywhere.StrategyEngine.Conditions;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.StrategyEngine.BuiltIn;
 
@@ -42,7 +42,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-summarize",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_SummarizeCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_SummarizeCommand_Description),
-            Icon = LucideIconKind.FileText,
+            Icon = TablerIconKind.FileText,
             Priority = 100,
             Condition = new FileCondition { MinCount = 1 },
             Body =
@@ -62,7 +62,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-extract-key-points",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_ExtractKeyPointsCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_ExtractKeyPointsCommand_Description),
-            Icon = LucideIconKind.ListChecks,
+            Icon = TablerIconKind.ListCheck,
             Priority = 90,
             Condition = new FileCondition { Extensions = DocumentExtensions, MinCount = 1 },
             Body =
@@ -81,7 +81,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-translate-document",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_TranslateDocumentCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_TranslateDocumentCommand_Description),
-            Icon = LucideIconKind.Languages,
+            Icon = TablerIconKind.Language,
             Priority = 85,
             Condition = new FileCondition { Extensions = DocumentExtensions, MinCount = 1 },
             Body =
@@ -100,7 +100,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-describe-image",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_DescribeImageCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_DescribeImageCommand_Description),
-            Icon = LucideIconKind.Image,
+            Icon = TablerIconKind.Photo,
             Priority = 95,
             Condition = new FileCondition { Extensions = ImageExtensions, MinCount = 1 },
             Body =
@@ -119,7 +119,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-extract-text-ocr",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_ExtractTextCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_ExtractTextCommand_Description),
-            Icon = LucideIconKind.ScanText,
+            Icon = TablerIconKind.TextScan2,
             Priority = 90,
             Condition = new FileCondition { Extensions = ImageExtensions, MinCount = 1 },
             Body =
@@ -137,7 +137,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-analyze-data",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeDataCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeDataCommand_Description),
-            Icon = LucideIconKind.ChartBar,
+            Icon = TablerIconKind.ChartBar,
             Priority = 95,
             Condition = new FileCondition { Extensions = DataExtensions, MinCount = 1 },
             Body =
@@ -156,7 +156,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-visualize-data",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_VisualizeDataCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_VisualizeDataCommand_Description),
-            Icon = LucideIconKind.ChartLine,
+            Icon = TablerIconKind.ChartLine,
             Priority = 85,
             Condition = new FileCondition { Extensions = DataExtensions, MinCount = 1 },
             Body =
@@ -175,7 +175,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-compare",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_CompareCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_CompareCommand_Description),
-            Icon = LucideIconKind.GitCompare,
+            Icon = TablerIconKind.GitCompare,
             Priority = 95,
             Condition = new FileCondition { MinCount = 2 },
             Body =
@@ -195,7 +195,7 @@ public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
             Id = "file-analyze-code",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeCodeCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeCodeCommand_Description),
-            Icon = LucideIconKind.Code,
+            Icon = TablerIconKind.Code,
             Priority = 90,
             Condition = new FileCondition { Extensions = CodeExtensions, MinCount = 1 },
             Body =

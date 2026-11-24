@@ -1,4 +1,4 @@
-﻿using System.Data.Common;
+using System.Data.Common;
 using Everywhere.Core.Tests.Chat;
 using Avalonia.Headless.NUnit;
 using Everywhere.Chat;
@@ -10,7 +10,7 @@ using Everywhere.I18N;
 using Everywhere.Statistics;
 using Everywhere.Statistics.Database;
 using Everywhere.Storage;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -90,7 +90,7 @@ public sealed class StatisticsBackfillerTests
         var assistantNodeId = Guid.CreateVersion7();
         var now = DateTimeOffset.UtcNow;
 
-        var toolMessage = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("read_file"))
+        var toolMessage = new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("read_file"))
         {
             FinishedAt = now.AddMilliseconds(25)
         };

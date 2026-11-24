@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using Avalonia.Media.Imaging;
@@ -10,7 +10,7 @@ using Everywhere.Prompting.Documents;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Serialization;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using Serilog;
 
@@ -23,7 +23,7 @@ namespace Everywhere.Chat;
 [MessagePackUnion(3, typeof(FileAttachment))]
 public abstract partial class ChatAttachment(IDynamicLocaleKey headerKey) : ObservableObject
 {
-    public abstract LucideIconKind Icon { get; }
+    public abstract TablerIconKind Icon { get; }
 
     [Key(0)]
     public virtual IDynamicLocaleKey HeaderKey => headerKey;
@@ -33,7 +33,7 @@ public abstract partial class ChatAttachment(IDynamicLocaleKey headerKey) : Obse
 public partial class VisualElementAttachment : ChatAttachment, IDisposable
 {
     [Key(1)]
-    public override LucideIconKind Icon { get; }
+    public override TablerIconKind Icon { get; }
 
     /// <summary>
     /// The structured model-facing representation of the visual element.
@@ -66,12 +66,12 @@ public partial class VisualElementAttachment : ChatAttachment, IDisposable
     public partial Bitmap? PreviewImage { get; set; }
 
     [SerializationConstructor]
-    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon) : base(headerKey)
+    protected VisualElementAttachment(IDynamicLocaleKey headerKey, TablerIconKind icon) : base(headerKey)
     {
         Icon = icon;
     }
 
-    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon, RemoteVisualAnchor anchor) : base(headerKey)
+    protected VisualElementAttachment(IDynamicLocaleKey headerKey, TablerIconKind icon, RemoteVisualAnchor anchor) : base(headerKey)
     {
         Icon = icon;
         Anchor = anchor;
@@ -107,31 +107,31 @@ public partial class VisualElementAttachment : ChatAttachment, IDisposable
             headerKey,
             elementType switch
             {
-                VisualElementType.Label => LucideIconKind.Type,
-                VisualElementType.TextEdit => LucideIconKind.TextInitial,
-                VisualElementType.Document => LucideIconKind.FileText,
-                VisualElementType.Image => LucideIconKind.Image,
-                VisualElementType.CheckBox => LucideIconKind.SquareCheck,
-                VisualElementType.RadioButton => LucideIconKind.CircleCheckBig,
-                VisualElementType.ComboBox => LucideIconKind.ChevronDown,
-                VisualElementType.ListView => LucideIconKind.List,
-                VisualElementType.ListViewItem => LucideIconKind.List,
-                VisualElementType.TreeView => LucideIconKind.ListTree,
-                VisualElementType.TreeViewItem => LucideIconKind.ListTree,
-                VisualElementType.DataGrid => LucideIconKind.Table,
-                VisualElementType.DataGridItem => LucideIconKind.Table,
-                VisualElementType.TabControl or VisualElementType.TabItem => LucideIconKind.LayoutPanelTop,
-                VisualElementType.Table => LucideIconKind.Table,
-                VisualElementType.TableRow => LucideIconKind.Table,
-                VisualElementType.Menu => LucideIconKind.Menu,
-                VisualElementType.MenuItem => LucideIconKind.Menu,
-                VisualElementType.Slider => LucideIconKind.SlidersHorizontal,
-                VisualElementType.ScrollBar => LucideIconKind.Settings2,
-                VisualElementType.ProgressBar => LucideIconKind.Percent,
-                VisualElementType.Panel => LucideIconKind.Group,
-                VisualElementType.TopLevel => LucideIconKind.AppWindow,
-                VisualElementType.Screen => LucideIconKind.Monitor,
-                _ => LucideIconKind.Component
+                VisualElementType.Label => TablerIconKind.Typography,
+                VisualElementType.TextEdit => TablerIconKind.LetterCase,
+                VisualElementType.Document => TablerIconKind.FileText,
+                VisualElementType.Image => TablerIconKind.Photo,
+                VisualElementType.CheckBox => TablerIconKind.SquareCheck,
+                VisualElementType.RadioButton => TablerIconKind.CircleCheck,
+                VisualElementType.ComboBox => TablerIconKind.ChevronDown,
+                VisualElementType.ListView => TablerIconKind.List,
+                VisualElementType.ListViewItem => TablerIconKind.List,
+                VisualElementType.TreeView => TablerIconKind.ListTree,
+                VisualElementType.TreeViewItem => TablerIconKind.ListTree,
+                VisualElementType.DataGrid => TablerIconKind.Table,
+                VisualElementType.DataGridItem => TablerIconKind.Table,
+                VisualElementType.TabControl or VisualElementType.TabItem => TablerIconKind.LayoutNavbar,
+                VisualElementType.Table => TablerIconKind.Table,
+                VisualElementType.TableRow => TablerIconKind.Table,
+                VisualElementType.Menu => TablerIconKind.Menu,
+                VisualElementType.MenuItem => TablerIconKind.Menu,
+                VisualElementType.Slider => TablerIconKind.AdjustmentsHorizontal,
+                VisualElementType.ScrollBar => TablerIconKind.Settings2,
+                VisualElementType.ProgressBar => TablerIconKind.Percentage,
+                VisualElementType.Panel => TablerIconKind.UsersGroup,
+                VisualElementType.TopLevel => TablerIconKind.AppWindow,
+                VisualElementType.Screen => TablerIconKind.DeviceDesktop,
+                _ => TablerIconKind.Components
             },
             anchor);
     }
@@ -186,7 +186,7 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
     public override IDynamicLocaleKey HeaderKey => base.HeaderKey;
 
     [IgnoreMember]
-    public override LucideIconKind Icon => LucideIconKind.TextCursorInput;
+    public override TablerIconKind Icon => TablerIconKind.Forms;
 
     [Key(0)]
     public string Text { get; }
@@ -196,7 +196,7 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
     public bool IsTextIncomplete { get; }
 
     [SerializationConstructor]
-    public TextSelectionAttachment(string text, bool isTextIncomplete = false) : base(CreateHeaderKey(text), LucideIconKind.TextSelect)
+    public TextSelectionAttachment(string text, bool isTextIncomplete = false) : base(CreateHeaderKey(text), TablerIconKind.Select)
     {
         Text = text;
         IsTextIncomplete = isTextIncomplete;
@@ -209,7 +209,7 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
         RemoteVisualAnchor anchor
     ) : base(
         CreateHeaderKey(text),
-        LucideIconKind.TextSelect,
+        TablerIconKind.Select,
         anchor)
     {
         Text = text;
@@ -277,7 +277,7 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class TextAttachment(IDynamicLocaleKey headerKey, string text) : ChatAttachment(headerKey)
 {
-    public override LucideIconKind Icon => LucideIconKind.TextInitial;
+    public override TablerIconKind Icon => TablerIconKind.LetterCase;
 
     [Key(1)]
     public string Text => text;
@@ -300,7 +300,7 @@ public sealed partial class FileAttachment(
     string? description = null
 ) : ChatAttachment(headerKey)
 {
-    public override LucideIconKind Icon => LucideIconKind.File;
+    public override TablerIconKind Icon => TablerIconKind.File;
 
     [Key(1)]
     public string FilePath

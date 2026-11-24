@@ -1,4 +1,4 @@
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views.Pages;
 
@@ -6,7 +6,7 @@ public partial class HomePage : ReactiveUserControl<HomePageViewModel>, IMainVie
 {
     public int Index => 0;
 
-    public LucideIconKind Icon => LucideIconKind.House;
+    public TablerIconKind Icon => TablerIconKind.Home;
 
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.HomePage_Title);
 

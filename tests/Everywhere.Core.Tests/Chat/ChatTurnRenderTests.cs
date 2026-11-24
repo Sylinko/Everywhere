@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -14,7 +14,7 @@ using Everywhere.Core.I18N;
 using Everywhere.I18N;
 using Everywhere.Storage;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using ShadUI;
 
 namespace Everywhere.Core.Tests.Chat;
@@ -114,7 +114,7 @@ public sealed partial class ChatTurnRenderTests
         var assistant = new AssistantChatMessage { IsBusy = true };
         var text = new AssistantChatMessageTextSpan("## Local history upgrade\n\nI will check the **turn structure**, then verify the saved branches.\n");
         assistant.AddSpan(text);
-        var tool = new FunctionCallChatMessage(LucideIconKind.Database, new DirectLocaleKey("Verify migration")) { IsBusy = true };
+        var tool = new FunctionCallChatMessage(TablerIconKind.Database, new DirectLocaleKey("Verify migration")) { IsBusy = true };
         var progress = tool.DisplaySink.AppendProgress(new DirectLocaleKey("Checking saved branches"));
         assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(tool));
         context.Data.Append(assistant);
@@ -245,7 +245,7 @@ public sealed partial class ChatTurnRenderTests
             await using var context = new RootChatContext(new ChatData(), null);
             context.Data.StartTurn(new UserChatMessage("Inspect the attached image.", []));
             var tool = new FunctionCallChatMessage(
-                LucideIconKind.Image,
+                TablerIconKind.Photo,
                 new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ViewImage_Header))
             {
                 ErrorMessageKey = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_ViewImage_PathCount)

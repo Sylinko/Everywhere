@@ -31,7 +31,7 @@
           </Button.Styles>
 
           <shadui:ButtonAssist.Icon>
-            <LucideIcon Kind="{Binding $parent[v:ToolApprovalSelector].EffectiveItem?.Icon}"/>
+            <TablerIcon Kind="{Binding $parent[v:ToolApprovalSelector].EffectiveItem?.Icon}"/>
           </shadui:ButtonAssist.Icon>
 
           <Button.Flyout>
@@ -72,7 +72,7 @@
                       </Interaction.Behaviors>
 
                       <DockPanel HorizontalSpacing="8">
-                        <LucideIcon
+                        <TablerIcon
                           DockPanel.Dock="Left" VerticalAlignment="Center"
                           Kind="{Binding Icon}"
                           Size="{DynamicResource FontSizeXl}"/>

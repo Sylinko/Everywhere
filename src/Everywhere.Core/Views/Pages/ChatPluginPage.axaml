@@ -28,9 +28,10 @@
         <DataTemplate x:DataType="v:ToolPluginPresentation">
           <Grid
             ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
-            <LucideIcon
-              Grid.Column="0" Margin="0,0,10,0"
-              Kind="{Binding Plugin.Icon}"/>
+            <TablerIcon
+              Grid.Column="0" Margin="0,0,8,0"
+              Kind="{Binding Plugin.Icon}"
+              Size="{DynamicResource FontSizeXl}"/>
             <StackPanel
               Grid.Column="1" VerticalAlignment="Center"
               Spacing="4">
@@ -53,11 +54,12 @@
               </TextBlock>
             </StackPanel>
 
-            <LucideIcon
+            <TablerIcon
               Grid.Column="2"
               Foreground="{DynamicResource WarningColor}"
+              IsFilled="True"
               IsVisible="{Binding !!Plugin.Warnings.Count}"
-              Kind="TriangleAlert"
+              Kind="AlertTriangle"
               Size="{DynamicResource FontSizeL}"
               ToolTip.Placement="Top"
               ToolTip.Tip="{Binding Plugin.Warnings[0].MessageKey^}"/>
@@ -150,7 +152,7 @@
           Orientation="Horizontal">
           <Button
             Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
             Command="{Binding AddMcpPluginCommand}"
             Content="{I18N {x:Static LocaleKey.ChatPluginPage_AddMcpPluginButton_Content}}"/>
 
@@ -158,8 +160,8 @@
             Classes="Secondary"
             Command="{Binding ImportMcpPluginCommand}"
             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginPage_ImportMcpPluginButton_ToolTip}}">
-            <LucideIcon
-              Kind="Import"
+            <TablerIcon
+              Kind="FileImport"
               Size="{DynamicResource FontSizeL}"/>
           </Button>
         </shadui:ControlGroup>
@@ -172,8 +174,9 @@
           <TabItem.Header>
             <StackPanel
               Orientation="Horizontal" Spacing="4">
-              <LucideIcon
-                Kind="Box" Size="14"/>
+              <TablerIcon
+                Kind="Box"
+                Size="{DynamicResource FontSizeL}"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.ChatPluginPage_TabItem_BuiltIn_Header}}"/>
             </StackPanel>
           </TabItem.Header>
@@ -188,11 +191,10 @@
           <TabItem.Header>
             <StackPanel
               Orientation="Horizontal" Spacing="4">
-              <PathIcon
-                Width="{DynamicResource FontSizeM}"
-                Height="{DynamicResource FontSizeM}"
-                Data="{StaticResource McpIconGeometry}"
-                Foreground="{Binding #McpTabItem.Foreground}"/>
+              <TablerIcon
+                Foreground="{Binding #McpTabItem.Foreground}"
+                Kind="Mcp"
+                Size="{DynamicResource FontSizeL}"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.ChatPluginPage_TabItem_MCP_Header}}"/>
             </StackPanel>
           </TabItem.Header>
@@ -215,7 +217,7 @@
           Orientation="Horizontal" Spacing="6">
           <Button
             Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Kind=Play}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Kind=PlayerPlay, IsFilled=True}"
             shadui:ButtonAssist.ShowProgress="{Binding IsBusy}"
             Command="{Binding StartMcpPluginCommand}"
             CommandParameter="{Binding SelectedMcpPlugin}"
@@ -224,7 +226,7 @@
             IsVisible="{Binding !SelectedMcpPlugin?.IsRunning, TargetNullValue={x:False}}"/>
           <Button
             Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Kind=Square}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Kind=Square, IsFilled=True}"
             shadui:ButtonAssist.ShowProgress="{Binding IsBusy}"
             Command="{Binding StopMcpPluginCommand}"
             CommandParameter="{Binding SelectedMcpPlugin}"
@@ -234,14 +236,14 @@
 
           <Button
             Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Kind=SquarePen}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Kind=Edit}"
             Command="{Binding EditMcpPluginCommand}"
             CommandParameter="{Binding SelectedMcpPlugin}"
             Content="{I18N {x:Static LocaleKey.ChatPluginPage_EditMcpPluginButton_Content}}"/>
 
           <Button
             Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Kind=Trash2}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Kind=Trash}"
             Command="{Binding RemoveMcpPluginCommand}"
             CommandParameter="{Binding SelectedMcpPlugin}"
             Content="{I18N {x:Static LocaleKey.ChatPluginPage_RemoveMcpPluginButton_Content}}"
@@ -263,7 +265,7 @@
             md:AsyncImageLoader.Source="{Binding Plugin.BeautifulIcon}"
             IsVisible="{Binding Plugin.BeautifulIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
             Stretch="Uniform"/>
-          <LucideIcon
+          <TablerIcon
             Grid.Row="0" Grid.Column="0"
             VerticalAlignment="Top"
             IsVisible="{Binding Plugin.BeautifulIcon, Converter={x:Static ObjectConverters.IsNull}}"
@@ -368,7 +370,7 @@
                       <DataGridTemplateColumn Width="*">
                         <DataTemplate x:DataType="v:ToolFunctionPresentation">
                           <DockPanel HorizontalSpacing="12">
-                            <LucideIcon
+                            <TablerIcon
                               DockPanel.Dock="Left" VerticalAlignment="Center"
                               IsVisible="{Binding Function.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
                               Kind="{Binding Function.Icon}"
@@ -476,7 +478,7 @@
                         <Button
                           Classes="Ghost Compact" Grid.Column="2"
                           Width="32" HorizontalAlignment="Right"
-                          shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+                          shadui:ButtonAssist.Icon="{TablerIconContent Copy}"
                           Command="{Binding #Self.ViewModel.CopyLogsCommand}"
                           CommandParameter="{Binding LogEntries}"
                           IsEnabled="{Binding !!LogEntries.Count}"

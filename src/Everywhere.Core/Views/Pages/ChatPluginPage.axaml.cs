@@ -1,4 +1,4 @@
-﻿using Lucide.Avalonia;
+﻿using Tabler.Avalonia;
 
 namespace Everywhere.Views.Pages;
 
@@ -6,7 +6,7 @@ public partial class ChatPluginPage : ReactiveUserControl<ChatPluginPageViewMode
 {
     public int Index => 2;
 
-    public LucideIconKind Icon => LucideIconKind.Hammer;
+    public TablerIconKind Icon => TablerIconKind.Tool;
 
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.ChatPluginPage_Title);
 

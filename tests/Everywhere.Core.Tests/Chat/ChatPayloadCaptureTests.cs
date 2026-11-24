@@ -1,8 +1,8 @@
-﻿using Everywhere.Chat;
+using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.I18N;
 using Everywhere.Serialization;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 
 namespace Everywhere.Core.Tests.Chat;
@@ -17,7 +17,7 @@ public sealed class ChatPayloadCaptureTests
         var user = child.StartTurn(new UserChatMessage("child", [file]));
         var alternative = child.CreateBranchOn(user, new UserChatMessage("alternative", []));
         child.SelectChild(child.RootNode, user);
-        using var tool = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("tool"));
+        using var tool = new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("tool"));
         tool.DisplaySink.AppendSubagent(child);
 
         var capture = ChatPayloadCapture.Capture(tool);

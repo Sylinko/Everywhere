@@ -1,9 +1,9 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -201,7 +201,7 @@ public sealed class BusyActivityItemPresentationRow(ChatBusyActivity activity) :
     /// </summary>
     public ChatBusyActivity Activity { get; } = activity;
 
-    public LucideIconKind Icon => _state.Icon;
+    public TablerIconKind Icon => _state.Icon;
 
     public IDynamicLocaleKey HeaderKey => _state.HeaderKey;
 

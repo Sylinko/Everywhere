@@ -23,7 +23,7 @@ using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Storage;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using ModelContextProtocol.Protocol;
@@ -769,7 +769,7 @@ public sealed class ContextPrefixStateTests
     {
         public override IDynamicLocaleKey HeaderKey => new DirectLocaleKey("Probe");
         public override IDynamicLocaleKey DescriptionKey => new DirectLocaleKey("Probe");
-        public override LucideIconKind? Icon => LucideIconKind.Terminal;
+        public override TablerIconKind? Icon => TablerIconKind.Terminal;
         public override bool IsDefaultEnabled => true;
 
         public int ZebraInvocationCount { get; private set; }

@@ -1,9 +1,9 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
 using Everywhere.Interop;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Serilog;
 using ShadUI;
 
@@ -19,7 +19,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     public int Index => 0;
 
     [SettingsItemIgnore]
-    public LucideIconKind Icon => LucideIconKind.Blocks;
+    public TablerIconKind Icon => TablerIconKind.Category;
 
     [SettingsItemIgnore]
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Common_Header);

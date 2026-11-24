@@ -5,7 +5,7 @@ using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Harness;
 using Everywhere.Harness.Providers.Gemini;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using Microsoft.Extensions.AI;
 using NSubstitute;
@@ -181,7 +181,7 @@ public sealed class GeminiGenerateContentClientTests
                 [ReasoningMetadata.DialectKey] = GeminiGenerateContentClient.DialectName,
                 [ReasoningMetadata.ThoughtSignatureKey] = call.AdditionalProperties?[ReasoningMetadata.ThoughtSignatureKey]
             };
-            var toolMsg = new FunctionCallChatMessage(LucideIconKind.Hammer, null);
+            var toolMsg = new FunctionCallChatMessage(TablerIconKind.Hammer, null);
             toolMsg.AddCall(new ToolCallRecord(call.Name, null, call.CallId, call.Arguments?.ToDictionary())
             {
                 Metadata = callMetadata
@@ -235,7 +235,7 @@ public sealed class GeminiGenerateContentClientTests
 
             // Foreign provider tool turn must degrade to portable evidence instead of emitting unsigned native functionCall parts.
             using var foreignAssistant = new AssistantChatMessage();
-            var foreignTool = new FunctionCallChatMessage(LucideIconKind.Hammer, null);
+            var foreignTool = new FunctionCallChatMessage(TablerIconKind.Hammer, null);
             foreignTool.AddCall(new ToolCallRecord("weather", null, "openai-call", new Dictionary<string, object?> { ["city"] = "Berlin" })
             {
                 Metadata = new Dictionary<string, object?> { [ReasoningMetadata.DialectKey] = OpenAIModelSession.DialectName }

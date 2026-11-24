@@ -1,9 +1,9 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using Everywhere.Chat.Permissions;
 using Everywhere.Prompting.Documents;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 using Everywhere.Harness;
 
@@ -13,7 +13,7 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
 {
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_OfficeCLI_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_OfficeCLI_Description);
-    public override LucideIconKind? Icon => LucideIconKind.Coffee;
+    public override TablerIconKind? Icon => TablerIconKind.BrandOffice;
     public override bool IsDefaultEnabled => true;
 
     private readonly ILogger<OfficeCLIPlugin> _logger;

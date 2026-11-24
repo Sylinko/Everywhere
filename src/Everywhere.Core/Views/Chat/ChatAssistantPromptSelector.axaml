@@ -22,10 +22,10 @@
                 Width="Auto" SharedSizeGroup="Chevron"/>
             </Grid.ColumnDefinitions>
 
-            <LucideIcon
+            <TablerIcon
               Grid.Row="0" Grid.RowSpan="2"
               Grid.Column="0" VerticalAlignment="Center"
-              Kind="BookText"
+              Kind="Notes"
               Size="{DynamicResource FontSizeXl}"/>
 
             <TextBlock
@@ -42,7 +42,7 @@
               </Interaction.Behaviors>
             </TextBlock>
 
-            <LucideIcon
+            <TablerIcon
               Grid.Row="0" Grid.RowSpan="2"
               Grid.Column="2" Margin="0,6"
               HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -65,7 +65,7 @@
                 <Button
                   Classes="Ghost LargeIcon" DockPanel.Dock="Bottom"
                   Padding="8" HorizontalContentAlignment="Left"
-                  shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent Settings}"
                   Command="{Binding ManagePromptsCommand, RelativeSource={RelativeSource TemplatedParent}}"
                   Content="{I18N {x:Static LocaleKey.AssistantPromptSelector_ManagePrompts}}"/>
 

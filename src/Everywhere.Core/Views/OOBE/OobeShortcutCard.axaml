@@ -67,7 +67,7 @@
               </Border.Transitions>
               <Grid
                 ColumnDefinitions="28,*,28" ColumnSpacing="10">
-                <LucideIcon
+                <TablerIcon
                   x:Name="ShortcutPrefixIcon" Grid.Column="0"
                   HorizontalAlignment="Center" VerticalAlignment="Center"
                   Foreground="{DynamicResource MutedColor}"
@@ -126,7 +126,7 @@
                   Focusable="False"
                   IsVisible="{Binding !DisplayShortcut.IsEmpty, RelativeSource={RelativeSource TemplatedParent}}"
                   Theme="{StaticResource OobeQuietClearButtonTheme}">
-                  <LucideIcon
+                  <TablerIcon
                     Foreground="{DynamicResource MutedColor}"
                     Kind="X"
                     Size="{DynamicResource FontSizeL}"/>
@@ -144,7 +144,7 @@
           <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
         </Style>
 
-        <Style Selector="^[IsRecording=True] /template/ LucideIcon#ShortcutPrefixIcon">
+        <Style Selector="^[IsRecording=True] /template/ TablerIcon#ShortcutPrefixIcon">
           <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
           <Setter Property="Opacity" Value="1"/>
         </Style>
@@ -266,10 +266,10 @@
       x:Name="ShortcutDisabledHint" HorizontalAlignment="Center"
       IsVisible="{Binding !#CardHost.Flow?.HasValidShortcut, FallbackValue=False}"
       Orientation="Horizontal" Spacing="7">
-      <LucideIcon
+      <TablerIcon
         VerticalAlignment="Center"
         Foreground="{DynamicResource MutedColor}"
-        Kind="CircleAlert" Size="13.5"/>
+        Kind="AlertCircle" Size="13.5"/>
       <TextBlock
         Classes="Muted Caption" VerticalAlignment="Center"
         Text="{I18N {x:Static LocaleKey.Oobe_Shortcut_Disabled}}"

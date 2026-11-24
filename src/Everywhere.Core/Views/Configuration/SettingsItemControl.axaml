@@ -174,8 +174,8 @@
                               Classes="Ghost Compact" DockPanel.Dock="Right"
                               Command="{Binding ResetCommand}"
                               ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Reset}}">
-                              <LucideIcon
-                                Kind="RotateCcw"
+                              <TablerIcon
+                                Kind="Rotate"
                                 Size="{DynamicResource FontSizeL}"/>
                             </Button>
 
@@ -289,7 +289,7 @@
                           IsVisible="{Binding Item?.DocumentUrl, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
                           NavigateUri="{Binding Item?.DocumentUrl, RelativeSource={RelativeSource TemplatedParent}}"
                           ToolTip.Tip="{I18N {x:Static LocaleKey.SettingsItemControl_OpenDocumentHyperlinkButton_Content}}">
-                          <LucideIcon
+                          <TablerIcon
                             VerticalAlignment="Center" Kind="ExternalLink"
                             Size="{DynamicResource FontSizeL}"/>
                         </HyperlinkButton>

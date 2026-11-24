@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:c="using:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
   xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
@@ -162,7 +162,7 @@
                 CornerRadius="{DynamicResource FullCornerRadius}">
                 <StackPanel
                   Orientation="Horizontal" Spacing="4">
-                  <LucideIcon
+                  <TablerIcon
                     VerticalAlignment="Center"
                     Foreground="{DynamicResource PrimaryColor}"
                     Kind="CornerDownRight"
@@ -257,7 +257,7 @@
                     </NumericUpDown>
                     <Button
                       Classes="Ghost Minimal"
-                      shadui:ButtonAssist.Icon="{LucideIconContent SquarePen}"
+                      shadui:ButtonAssist.Icon="{TablerIconContent Edit}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                       Command="{Binding $parent[v:ChatMessageItemsControl].EditMessageNodeCommand}"
                       CommandParameter="{Binding Node, Mode=OneTime}"
@@ -266,7 +266,7 @@
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
                     <Button
                       Classes="Ghost Minimal"
-                      shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+                      shadui:ButtonAssist.Icon="{TablerIconContent Copy}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                       Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageNodeCommand}"
                       CommandParameter="{Binding Node, Mode=OneTime}"
@@ -312,7 +312,7 @@
                 CornerRadius="{DynamicResource FullCornerRadius}">
                 <StackPanel
                   Orientation="Horizontal" Spacing="4">
-                  <LucideIcon
+                  <TablerIcon
                     VerticalAlignment="Center"
                     Foreground="{DynamicResource PrimaryColor}"
                     Kind="CornerDownRight"
@@ -388,7 +388,7 @@
                     </NumericUpDown>
                     <Button
                       Classes="Ghost Minimal"
-                      shadui:ButtonAssist.Icon="{LucideIconContent SquarePen}"
+                      shadui:ButtonAssist.Icon="{TablerIconContent Edit}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                       Command="{Binding $parent[v:ChatMessageItemsControl].EditMessageNodeCommand, Mode=OneTime}"
                       CommandParameter="{Binding Node, Mode=OneTime}"
@@ -397,7 +397,7 @@
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
                     <Button
                       Classes="Ghost Minimal"
-                      shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+                      shadui:ButtonAssist.Icon="{TablerIconContent Copy}"
                       shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
                       Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageNodeCommand, Mode=OneTime}"
                       CommandParameter="{Binding Node, Mode=OneTime}"
@@ -423,7 +423,7 @@
               Classes="ChatBubble" HorizontalAlignment="Right">
               <StackPanel
                 Orientation="Horizontal" Spacing="2">
-                <LucideIcon
+                <TablerIcon
                   Kind="{Binding Icon}"
                   Size="{DynamicResource FontSizeXl}"/>
                 <TextBlock Text="{Binding HeaderKey^, FallbackValue={x:Null}}"/>

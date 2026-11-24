@@ -1,7 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Cloud;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.ViewModels;
 
@@ -95,7 +95,7 @@ public sealed partial class ChatSyncListRow : ObservableObject
         if (Item.Operation != ChatSyncOperation.None)
         {
             return Present(
-                LucideIconKind.RefreshCw,
+                TablerIconKind.Refresh,
                 Item.Operation == ChatSyncOperation.Starting ? LocaleKey.ChatSyncListRow_StartingStatus_Text : LocaleKey.ChatSyncListRow_StoppingStatus_Text,
                 Item.Operation == ChatSyncOperation.Starting ? LocaleKey.Common_StartChatSync : LocaleKey.Common_StopChatSync,
                 Tone.Active);
@@ -104,12 +104,12 @@ public sealed partial class ChatSyncListRow : ObservableObject
         {
             return Item.CanStart ?
                 Present(
-                    LucideIconKind.HardDrive,
+                    TablerIconKind.Server2,
                     LocaleKey.ChatSyncListRow_LocalOnlyStatus_Text,
                     LocaleKey.ChatSyncListRow_LocalOnlyStatus_ToolTip,
                     hasSubtitle: false) :
                 Present(
-                    LucideIconKind.HardDrive,
+                    TablerIconKind.Server2,
                     LocaleKey.ChatSyncListRow_UnconfirmedStatus_Text,
                     LocaleKey.ChatSyncListRow_UnconfirmedStatus_ToolTip);
         }
@@ -119,7 +119,7 @@ public sealed partial class ChatSyncListRow : ObservableObject
         {
             var status = IsActive ?
                 Present(
-                    LucideIconKind.RefreshCw,
+                    TablerIconKind.Refresh,
                     LocaleKey.ChatSyncListRow_SyncingStatus_Text,
                     LocaleKey.ChatSyncListRow_SyncingStatus_ToolTip,
                     Tone.Active) :
@@ -137,14 +137,14 @@ public sealed partial class ChatSyncListRow : ObservableObject
         if (!Item.HasLocalCopy)
         {
             return Present(
-                LucideIconKind.CloudDownload,
+                TablerIconKind.CloudDownload,
                 LocaleKey.ChatSyncListRow_RemoteOnlyStatus_Text,
                 LocaleKey.ChatSyncListRow_RemoteOnlyStatus_ToolTip);
         }
         if (Item.Progress == ChatSyncProgress.Synced)
         {
             return Present(
-                LucideIconKind.CircleCheck,
+                TablerIconKind.CircleCheck,
                 LocaleKey.ChatSyncListRow_SyncedStatus_Text,
                 LocaleKey.ChatSyncListRow_SyncedStatus_ToolTip,
                 Tone.Success);
@@ -152,13 +152,13 @@ public sealed partial class ChatSyncListRow : ObservableObject
         if (Item.Copy is null && Item.LocalDecisionRevision > 0)
         {
             return Present(
-                LucideIconKind.Clock,
+                TablerIconKind.Clock,
                 LocaleKey.ChatSyncListRow_RestartPendingStatus_Text,
                 LocaleKey.ChatSyncListRow_RestartPendingStatus_ToolTip);
         }
 
         var pendingTip = Item.Copy is null ? LocaleKey.ChatSyncListRow_FirstUploadStatus_ToolTip : LocaleKey.ChatSyncListRow_PendingStatus_ToolTip;
-        return Present(LucideIconKind.Clock, LocaleKey.ChatSyncListRow_PendingStatus_Text, pendingTip);
+        return Present(TablerIconKind.Clock, LocaleKey.ChatSyncListRow_PendingStatus_Text, pendingTip);
     }
 
     private StatusPresentation DescribeFailure()
@@ -173,33 +173,33 @@ public sealed partial class ChatSyncListRow : ObservableObject
             case ChatSyncFailureCode.ContentUnavailable:
             case ChatSyncFailureCode.ChatDeleted:
                 return Present(
-                    LucideIconKind.RefreshCw,
+                    TablerIconKind.Refresh,
                     LocaleKey.ChatSyncListRow_CloudCopyChangedStatus_Text,
                     LocaleKey.ChatSync_CopyChanged,
                     Tone.Warning);
             case ChatSyncFailureCode.PayloadConflict:
                 return Present(
-                    LucideIconKind.GitFork,
+                    TablerIconKind.GitFork,
                     LocaleKey.ChatSync_PayloadConflict,
                     LocaleKey.ChatSyncListRow_PayloadConflictStatus_ToolTip,
                     Tone.Error);
             case ChatSyncFailureCode.AccountMismatch:
                 return Present(
-                    LucideIconKind.CircleAlert,
+                    TablerIconKind.AlertCircle,
                     LocaleKey.ChatSyncListRow_FailedStatus_Text,
                     LocaleKey.ChatSyncListRow_AccountMismatchStatus_ToolTip,
                     Tone.Error);
             case ChatSyncFailureCode.SyncDisabled:
                 return Present(
-                    LucideIconKind.CircleAlert,
+                    TablerIconKind.AlertCircle,
                     LocaleKey.ChatSyncListRow_FailedStatus_Text,
                     LocaleKey.ChatSync_Disabled,
                     Tone.Error);
             case ChatSyncFailureCode.MigrationRequired:
-                return Present(LucideIconKind.CircleAlert, LocaleKey.ChatSyncListRow_FailedStatus_Text, LocaleKey.ChatSync_LoadFailed, Tone.Error);
+                return Present(TablerIconKind.AlertCircle, LocaleKey.ChatSyncListRow_FailedStatus_Text, LocaleKey.ChatSync_LoadFailed, Tone.Error);
             default:
                 return Present(
-                    LucideIconKind.CircleAlert,
+                    TablerIconKind.AlertCircle,
                     LocaleKey.ChatSyncListRow_FailedStatus_Text,
                     LocaleKey.ChatSyncListRow_FailedStatus_ToolTip,
                     Tone.Error);
@@ -211,7 +211,7 @@ public sealed partial class ChatSyncListRow : ObservableObject
         if (_usage.LimitBytes == 0)
         {
             return Present(
-                LucideIconKind.CloudAlert,
+                TablerIconKind.CloudExclamation,
                 LocaleKey.ChatSyncListRow_NoCloudStorageStatus_Text,
                 LocaleKey.ChatSync_NoCloudStorage,
                 Tone.Warning);
@@ -221,14 +221,14 @@ public sealed partial class ChatSyncListRow : ObservableObject
         if (shortfall == 0)
         {
             return Present(
-                LucideIconKind.Clock,
+                TablerIconKind.Clock,
                 LocaleKey.ChatSyncListRow_PendingStatus_Text,
                 LocaleKey.ChatSyncListRow_SpaceAvailableStatus_ToolTip);
         }
         if (ChatSyncSpacePlan.ExceedsLimitAlone(Item, _usage, shortfall))
         {
             return Present(
-                LucideIconKind.CloudAlert,
+                TablerIconKind.CloudExclamation,
                 LocaleKey.ChatSyncListRow_ChatExceedsLimitStatus_Text,
                 LocaleKey.ChatSyncListRow_ChatExceedsLimitStatus_ToolTip,
                 Tone.Warning);
@@ -237,11 +237,11 @@ public sealed partial class ChatSyncListRow : ObservableObject
         var size = new DirectLocaleKey(Humanizer.HumanizeBytes(shortfall));
         var label = new FormattedDynamicLocaleKey(LocaleKey.ChatSync_SpaceRequired, size);
         var tip = new FormattedDynamicLocaleKey(LocaleKey.ChatSyncListRow_QuotaExceededStatus_ToolTip, size);
-        return new StatusPresentation(LucideIconKind.CloudAlert, label, tip, Tone.Warning);
+        return new StatusPresentation(TablerIconKind.CloudExclamation, label, tip, Tone.Warning);
     }
 
     private static StatusPresentation Present(
-        LucideIconKind icon,
+        TablerIconKind icon,
         DynamicLocaleKey label,
         string tipKey,
         Tone tone = Tone.Neutral,
@@ -271,7 +271,7 @@ public sealed partial class ChatSyncListRow : ObservableObject
     /// <param name="Color">Semantic tone, resolved to dynamic brushes by the view.</param>
     /// <param name="HasSubtitle">False for ordinary local-only rows, avoiding an empty status line.</param>
     public sealed record StatusPresentation(
-        LucideIconKind Icon,
+        TablerIconKind Icon,
         DynamicLocaleKey LabelKey,
         IDynamicLocaleKey ToolTipKey,
         Tone Color = Tone.Neutral,

@@ -1,4 +1,4 @@
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views.Pages;
 
@@ -6,7 +6,7 @@ public partial class SkillPage : ReactiveUserControl<SkillPageViewModel>, IMainV
 {
     public int Index => 3;
 
-    public LucideIconKind Icon => LucideIconKind.Box;
+    public TablerIconKind Icon => TablerIconKind.Bulb;
 
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SkillPage_Title);
 

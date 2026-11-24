@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
   <ControlTheme
@@ -13,7 +13,7 @@
           <Button
             Classes="Secondary" DockPanel.Dock="Top"
             Margin="0,0,0,6" HorizontalAlignment="Right"
-            shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
             Command="{Binding AddApiKeyCommand, RelativeSource={RelativeSource TemplatedParent}}"
             Content="{I18N {x:Static LocaleKey.ManageApiKeyForm_AddApiKeyButton_Content}}"/>
 
@@ -62,7 +62,7 @@
                     <StackPanel
                       Orientation="Horizontal" Spacing="2">
                       <StackPanel.Styles>
-                        <Style Selector="ToggleButton#ApiKeyVisibleToggleButton:checked LucideIcon">
+                        <Style Selector="ToggleButton#ApiKeyVisibleToggleButton:checked TablerIcon">
                           <Setter Property="Kind" Value="Eye"/>
                         </Style>
                       </StackPanel.Styles>
@@ -71,7 +71,7 @@
                         x:Name="ApiKeyVisibleToggleButton" Classes="Ghost Compact Uniform"
                         DockPanel.Dock="Right" VerticalAlignment="Center"
                         IsChecked="{Binding IsApiKeyVisible, Mode=TwoWay}">
-                        <LucideIcon
+                        <TablerIcon
                           Kind="EyeClosed"
                           Size="{DynamicResource FontSizeL}"/>
                       </ToggleButton>
@@ -79,16 +79,16 @@
                         Classes="Ghost Compact" Margin="2,0,0,0"
                         Command="{Binding CopyApiKeyToClipboardCommand}"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
-                        <LucideIcon
+                        <TablerIcon
                           Kind="Copy"
                           Size="{DynamicResource FontSizeL}"/>
                       </Button>
                       <Button
                         x:Name="DeleteApiKeyButton" Classes="Ghost Compact Uniform"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Delete}}">
-                        <LucideIcon
+                        <TablerIcon
                           Foreground="{DynamicResource DestructiveColor}"
-                          Kind="Trash2"
+                          Kind="Trash"
                           Size="{DynamicResource FontSizeL}"/>
 
                         <Button.Flyout>

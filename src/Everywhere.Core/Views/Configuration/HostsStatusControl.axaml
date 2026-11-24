@@ -24,10 +24,10 @@
     <DataTemplate x:DataType="v:HostStatusPresentation">
       <StackPanel
         Orientation="Horizontal" Spacing="8">
-        <LucideIcon
+        <TablerIcon
           VerticalAlignment="Center"
           Foreground="{DynamicResource WarningColor}"
-          Kind="TriangleAlert"
+          IsFilled="True" Kind="AlertTriangle"
           Size="{DynamicResource FontSizeL}"/>
         <TextBlock
           VerticalAlignment="Center"
@@ -38,10 +38,10 @@
     <DataTemplate x:DataType="v:HostStatusPresentation">
       <StackPanel
         Orientation="Horizontal" Spacing="8">
-        <LucideIcon
+        <TablerIcon
           VerticalAlignment="Center"
           Foreground="{DynamicResource ErrorColor}"
-          Kind="CircleX"
+          IsFilled="True" Kind="CircleX"
           Size="{DynamicResource FontSizeL}"/>
         <TextBlock
           VerticalAlignment="Center"
@@ -66,7 +66,7 @@
               <Button
                 Classes="Outline" DockPanel.Dock="Right"
                 VerticalAlignment="Center"
-                shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+                shadui:ButtonAssist.Icon="{TablerIconContent Refresh}"
                 shadui:ButtonAssist.ShowProgress="{Binding RetryHostsCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"
                 Command="{Binding RetryHostsCommand, RelativeSource={RelativeSource TemplatedParent}}"
                 Content="{I18N {x:Static LocaleKey.HostsStatusControl_Retry_Content}}"
@@ -98,7 +98,7 @@
                 ContentDataBinding="{Binding InputStatus, RelativeSource={RelativeSource TemplatedParent}}"
                 ItemIndex="{Binding InputStatus.State, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:Int32Converters.FromEnum}}"/>
 
-              <LucideIcon
+              <TablerIcon
                 DockPanel.Dock="Left" VerticalAlignment="Center"
                 Kind="Keyboard"
                 Size="{DynamicResource FontSizeL}"/>
@@ -123,9 +123,9 @@
                 ContentDataBinding="{Binding AutomationStatus, RelativeSource={RelativeSource TemplatedParent}}"
                 ItemIndex="{Binding AutomationStatus.State, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:Int32Converters.FromEnum}}"/>
 
-              <LucideIcon
+              <TablerIcon
                 DockPanel.Dock="Left" VerticalAlignment="Center"
-                Kind="Monitor"
+                Kind="DeviceDesktop"
                 Size="{DynamicResource FontSizeL}"/>
               <TextBlock
                 VerticalAlignment="Center"

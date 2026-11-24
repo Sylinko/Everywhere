@@ -1,6 +1,6 @@
-﻿using Avalonia.Input;
+using Avalonia.Input;
 using Everywhere.Interop;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Configuration;
 
@@ -11,7 +11,7 @@ public sealed partial class ShortcutSettings(IServiceProvider serviceProvider) :
     public int Index => 2;
 
     [SettingsItemIgnore]
-    public LucideIconKind Icon => LucideIconKind.Keyboard;
+    public TablerIconKind Icon => TablerIconKind.Keyboard;
 
     [SettingsItemIgnore]
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Shortcut_Header);

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -6,7 +6,7 @@ using Everywhere.Chat;
 using Everywhere.Utilities;
 using Everywhere.Views;
 using LiveMarkdown.Avalonia;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Serilog;
 
 namespace Everywhere.ViewModels;
@@ -35,11 +35,11 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
     [NotifyPropertyChangedFor(nameof(SearchScopeToolTipKey))]
     public partial ChatTextSearchScope SearchScope { get; private set; }
 
-    public LucideIconKind SearchScopeIcon => SearchScope switch
+    public TablerIconKind SearchScopeIcon => SearchScope switch
     {
-        ChatTextSearchScope.User => LucideIconKind.User,
-        ChatTextSearchScope.Assistant => LucideIconKind.Bot,
-        _ => LucideIconKind.MessagesSquare,
+        ChatTextSearchScope.User => TablerIconKind.User,
+        ChatTextSearchScope.Assistant => TablerIconKind.Robot,
+        _ => TablerIconKind.Messages,
     };
 
     public IDynamicLocaleKey SearchScopeToolTipKey => SearchScope switch

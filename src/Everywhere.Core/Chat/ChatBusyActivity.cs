@@ -1,4 +1,4 @@
-﻿using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Chat;
 
@@ -9,7 +9,7 @@ namespace Everywhere.Chat;
 public sealed class ChatBusyActivity : IBusyActivity
 {
     /// <inheritdoc />
-    public LucideIconKind Icon
+    public TablerIconKind Icon
     {
         get => State.Icon;
         set => Update(state => state with { Icon = value });
@@ -62,7 +62,7 @@ public sealed class ChatBusyActivity : IBusyActivity
 
     internal ChatBusyActivity(
         ChatMessageNode? owner,
-        LucideIconKind icon,
+        TablerIconKind icon,
         IDynamicLocaleKey headerKey,
         IDynamicLocaleKey? secondaryHeaderKey,
         bool removeAfterCompletion)
@@ -97,7 +97,7 @@ public sealed class ChatBusyActivity : IBusyActivity
 /// Captured values for a runtime activity; source identity and placement belong to its owner.
 /// </summary>
 public sealed record ChatBusyActivityState(
-    LucideIconKind Icon,
+    TablerIconKind Icon,
     IDynamicLocaleKey HeaderKey,
     IDynamicLocaleKey? SecondaryHeaderKey,
     DateTimeOffset? FinishedAt

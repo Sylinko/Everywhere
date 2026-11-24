@@ -65,7 +65,7 @@
                     </Interaction.Behaviors>
 
                     <DockPanel HorizontalSpacing="4">
-                      <LucideIcon
+                      <TablerIcon
                         x:Name="ReferenceIcon" DockPanel.Dock="Left"
                         VerticalAlignment="Center"
                         Foreground="{DynamicResource MutedColor}"
@@ -102,7 +102,7 @@
               </Interaction.Behaviors>
 
               <DockPanel HorizontalSpacing="4">
-                <LucideIcon
+                <TablerIcon
                   x:Name="SourceIcon" DockPanel.Dock="Left"
                   VerticalAlignment="Center"
                   Foreground="{DynamicResource MutedColor}"
@@ -136,7 +136,7 @@
               </Interaction.Behaviors>
 
               <DockPanel HorizontalSpacing="4">
-                <LucideIcon
+                <TablerIcon
                   x:Name="DestinationIcon" DockPanel.Dock="Left"
                   VerticalAlignment="Center"
                   Foreground="{DynamicResource MutedColor}"
@@ -185,7 +185,7 @@
                     <Panel
                       DockPanel.Dock="Left" Width="12"
                       Height="12">
-                      <LucideIcon
+                      <TablerIcon
                         Foreground="{DynamicResource MutedColor}"
                         Kind="Link" Size="12"/>
                     </Panel>

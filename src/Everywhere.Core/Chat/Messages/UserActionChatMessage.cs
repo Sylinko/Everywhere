@@ -1,4 +1,4 @@
-﻿using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
@@ -17,7 +17,7 @@ public sealed partial class UserActionChatMessage : ChatMessage
     public override ChatRole Role => new("user");
 
     [Key(0)]
-    public LucideIconKind Icon
+    public TablerIconKind Icon
     {
         get;
         set => SetProperty(ref field, value);
@@ -36,7 +36,7 @@ public sealed partial class UserActionChatMessage : ChatMessage
     public override DateTimeOffset CreatedAt { get; }
 
     [SerializationConstructor]
-    private UserActionChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey, string? content, DateTimeOffset createdAt)
+    private UserActionChatMessage(TablerIconKind icon, IDynamicLocaleKey? headerKey, string? content, DateTimeOffset createdAt)
     {
         Icon = icon;
         HeaderKey = headerKey;
@@ -44,7 +44,7 @@ public sealed partial class UserActionChatMessage : ChatMessage
         CreatedAt = createdAt;
     }
 
-    public UserActionChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey, string? content)
+    public UserActionChatMessage(TablerIconKind icon, IDynamicLocaleKey? headerKey, string? content)
     {
         Icon = icon;
         HeaderKey = headerKey;

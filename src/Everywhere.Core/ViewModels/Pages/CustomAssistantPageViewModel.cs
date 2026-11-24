@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Avalonia.Media;
@@ -8,7 +8,7 @@ using Everywhere.AI;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Harness;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Serilog;
 using ShadUI;
 
@@ -104,10 +104,10 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
             Name = LocaleKey.CustomAssistant_Name_Default.I18N(),
             Configuration = new PresetAssistantConfiguration(),
             Icon = new ColoredIcon(
-                ColoredIconType.Lucide,
+                ColoredIconType.Tabler,
                 background: RandomAssistantIconBackgrounds[Random.Shared.Next(RandomAssistantIconBackgrounds.Length)])
             {
-                Kind = LucideIconKind.Bot
+                Kind = TablerIconKind.Robot
             }
         };
         _settings.Model.CustomAssistants.Add(newAssistant);

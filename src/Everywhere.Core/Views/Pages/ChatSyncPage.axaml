@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
   x:Class="Everywhere.Views.Pages.ChatSyncPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
@@ -8,19 +8,21 @@
     <Style Selector="ProgressBar.Constrained">
       <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
     </Style>
-    <Style Selector="LucideIcon.SyncState">
+    <Style Selector="TablerIcon.SyncState">
       <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
     </Style>
-    <Style Selector="LucideIcon.Success">
+    <Style Selector="TablerIcon.Success">
       <Setter Property="Foreground" Value="{DynamicResource SuccessColor}"/>
+      <Setter Property="IsFilled" Value="True"/>
     </Style>
-    <Style Selector="LucideIcon.Active">
+    <Style Selector="TablerIcon.Active">
       <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
     </Style>
-    <Style Selector="LucideIcon.Error">
+    <Style Selector="TablerIcon.Error">
       <Setter Property="Foreground" Value="{DynamicResource ErrorColor}"/>
+      <Setter Property="IsFilled" Value="True"/>
     </Style>
-    <Style Selector="LucideIcon.Warning">
+    <Style Selector="TablerIcon.Warning">
       <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
     </Style>
     <Style Selector="TextBlock.CloudBytes">
@@ -61,7 +63,7 @@
       <Button
         x:Name="Refresh" Classes="Ghost IconButton"
         Grid.Column="1"
-        shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+        shadui:ButtonAssist.Icon="{TablerIconContent Refresh}"
         shadui:ButtonAssist.ShowProgress="{Binding IsSynchronizing}"
         AutomationProperties.Name="{I18N {x:Static LocaleKey.Common_Refresh}}"
         Command="{Binding RefreshCommand}"
@@ -121,7 +123,7 @@
           Margin="16,14" ColumnDefinitions="Auto,*,Auto"
           ColumnSpacing="8" RowDefinitions="Auto,Auto"
           RowSpacing="10">
-          <LucideIcon
+          <TablerIcon
             VerticalAlignment="Center" Kind="Cloud"
             Size="18"/>
           <TextBlock
@@ -304,7 +306,7 @@
             <DataTemplate x:DataType="vm:ChatSyncPageViewModel+SortOption">
               <StackPanel
                 Orientation="Horizontal" Spacing="6">
-                <LucideIcon
+                <TablerIcon
                   VerticalAlignment="Center"
                   Kind="{Binding Icon}"
                   Size="14"/>
@@ -413,7 +415,7 @@
                         HorizontalAlignment="Left" HorizontalSpacing="4"
                         IsVisible="{Binding Status.HasSubtitle}"
                         ToolTip.Tip="{Binding Status.ToolTipKey^}">
-                        <LucideIcon
+                        <TablerIcon
                           Classes="SyncState" Margin="0,2,0,0"
                           VerticalAlignment="Top"
                           Classes.Active="{Binding Status.IsActive}"

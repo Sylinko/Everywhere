@@ -45,7 +45,7 @@
                 <DockPanel
                   Margin="6,0" ClipToBounds="False"
                   HorizontalSpacing="4" LastChildFill="True">
-                  <LucideIcon
+                  <TablerIcon
                     DockPanel.Dock="Left" VerticalAlignment="Center"
                     IsVisible="{Binding Image, Converter={x:Static ObjectConverters.IsNull}}"
                     Kind="{Binding Icon}"
@@ -61,7 +61,7 @@
                     CommandParameter="{Binding}"
                     Focusable="False"
                     ToolTip.Tip="{I18N {x:Static LocaleKey.ChatAttachment_RemoveButton_ToolTip}}">
-                    <LucideIcon
+                    <TablerIcon
                       Foreground="{DynamicResource MutedColor}"
                       Kind="X"
                       Size="{DynamicResource FontSizeS}"/>
@@ -124,7 +124,7 @@
                 <DockPanel
                   Margin="6,0" ClipToBounds="False"
                   HorizontalSpacing="4" LastChildFill="True">
-                  <LucideIcon
+                  <TablerIcon
                     DockPanel.Dock="Left" VerticalAlignment="Center"
                     IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
                     Kind="{Binding Icon}"
@@ -162,7 +162,7 @@
                     CommandParameter="{Binding}"
                     Focusable="False"
                     ToolTip.Tip="{I18N {x:Static LocaleKey.ChatAttachment_RemoveButton_ToolTip}}">
-                    <LucideIcon
+                    <TablerIcon
                       Foreground="{DynamicResource MutedColor}"
                       Kind="X"
                       Size="{DynamicResource FontSizeS}"/>
@@ -202,7 +202,7 @@
                 <DockPanel
                   Margin="6,0" ClipToBounds="False"
                   HorizontalSpacing="4" LastChildFill="True">
-                  <LucideIcon
+                  <TablerIcon
                     DockPanel.Dock="Left" VerticalAlignment="Center"
                     Kind="{Binding Icon}"
                     Size="{DynamicResource FontSizeL}"/>
@@ -217,7 +217,7 @@
                     CommandParameter="{Binding}"
                     Focusable="False"
                     ToolTip.Tip="{I18N {x:Static LocaleKey.ChatAttachment_RemoveButton_ToolTip}}">
-                    <LucideIcon
+                    <TablerIcon
                       Foreground="{DynamicResource MutedColor}"
                       Kind="X"
                       Size="{DynamicResource FontSizeS}"/>

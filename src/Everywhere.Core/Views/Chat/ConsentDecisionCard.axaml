@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:permissions="clr-namespace:Everywhere.Chat.Permissions" xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
@@ -31,8 +31,9 @@
               <!--  Question text  -->
               <DockPanel
                 HorizontalSpacing="4" IsHitTestVisible="False">
-                <LucideIcon
-                  DockPanel.Dock="Left" Kind="BadgeInfo"
+                <TablerIcon
+                  DockPanel.Dock="Left" IsFilled="True"
+                  Kind="InfoHexagon"
                   Size="{DynamicResource FontSizeL}"/>
 
                 <ContentPresenter
@@ -90,7 +91,7 @@
                                     CommandParameter="{Binding Mode=OneTime}"
                                     Header="{Binding HeaderKey^}">
                                     <MenuItem.Icon>
-                                      <LucideIcon
+                                      <TablerIcon
                                         IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}, Mode=OneTime}"
                                         Kind="{Binding Icon, Mode=OneTime}"
                                         Size="{DynamicResource FontSizeL}"/>
@@ -104,7 +105,7 @@
                       </MenuFlyout>
                     </Button.Flyout>
 
-                    <LucideIcon
+                    <TablerIcon
                       Kind="ChevronDown"
                       Size="{DynamicResource FontSizeM}"/>
                   </Button>
@@ -130,7 +131,7 @@
                       </MenuFlyout>
                     </Button.Flyout>
 
-                    <LucideIcon
+                    <TablerIcon
                       Kind="ChevronDown"
                       Size="{DynamicResource FontSizeM}"/>
                   </Button>
@@ -143,7 +144,7 @@
                 IsVisible="{TemplateBinding IsReasonInputVisible}">
                 <Button
                   Classes="Ghost Compact Uniform" DockPanel.Dock="Left"
-                  shadui:ButtonAssist.Icon="{LucideIconContent ArrowLeft}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent ArrowLeft}"
                   Command="{Binding SetIsReasonInputVisibleCommand, RelativeSource={RelativeSource TemplatedParent}}"
                   CommandParameter="{x:False}"/>
 

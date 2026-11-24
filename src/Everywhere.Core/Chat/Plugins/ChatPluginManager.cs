@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
@@ -12,7 +12,7 @@ using Everywhere.Harness;
 using Everywhere.Harness.Mcp;
 using Everywhere.Utilities;
 using FuzzySharp;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -469,7 +469,7 @@ public sealed class ChatPluginManager : IChatPluginManager, IAsyncDisposable
                         LocaleKey.ChatContext_BusyMessage_StartingMcp,
                         new DirectLocaleKey(GetPluginDisplayName(mcpChatPlugin)));
                     activity = await chatContext.DispatchAsync(() => chatContext.Data.StartActivity(
-                        LucideIconKind.Server,
+                        TablerIconKind.Mcp,
                         headerKey,
                         removeAfterCompletion: true,
                         owner: ownerNode.Message));

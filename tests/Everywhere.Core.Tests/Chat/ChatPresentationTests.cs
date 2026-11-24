@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -15,7 +15,7 @@ using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Storage;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using NSubstitute;
 
@@ -64,7 +64,7 @@ public class ChatPresentationTests
     [AvaloniaTest]
     public async Task RunningTurn_PreservesActivityAndOutputOrder()
     {
-        var action = new ActionChatMessage(LucideIconKind.TextSearch, new DirectLocaleKey("Analyze"))
+        var action = new ActionChatMessage(TablerIconKind.ListSearch, new DirectLocaleKey("Analyze"))
         {
             IsBusy = false,
             FinishedAt = DateTimeOffset.UtcNow,
@@ -1051,7 +1051,7 @@ public class ChatPresentationTests
         var presentation = context.Presentation;
         await presentation.PrepareInitialWindowAsync();
         var busyActivity = context.Data.StartActivity(
-            LucideIconKind.Server,
+            TablerIconKind.Server,
             new DirectLocaleKey("Starting MCP"),
             removeAfterCompletion: false);
         Dispatcher.UIThread.RunJobs();
@@ -1102,7 +1102,7 @@ public class ChatPresentationTests
         var presentation = context.Presentation;
         await presentation.PrepareInitialWindowAsync();
         var busyActivity = context.Data.StartActivity(
-            LucideIconKind.Hammer,
+            TablerIconKind.Hammer,
             new DirectLocaleKey("Generating tool call"),
             removeAfterCompletion: true);
         Dispatcher.UIThread.RunJobs();
@@ -1140,7 +1140,7 @@ public class ChatPresentationTests
         var reasoningRow = new ReasoningActivityItemPresentationRow(assistant, reasoning, new DirectLocaleKey("Reasoning"));
         var reasoningMarker = BuildActivityMarker(reasoningRow);
         await using var context = Context(new UserChatMessage("Work", []), assistant);
-        var activity = context.Data.StartActivity(LucideIconKind.Server, new DirectLocaleKey("Starting"), false);
+        var activity = context.Data.StartActivity(TablerIconKind.Server, new DirectLocaleKey("Starting"), false);
         Dispatcher.UIThread.RunJobs();
         await context.Presentation.PrepareInitialWindowAsync();
         var busyRow = context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single()
@@ -1240,8 +1240,8 @@ public class ChatPresentationTests
             var presentation = context.Presentation;
             var owner = (AssistantChatMessage)targets[^1].Node.Message;
             owner.IsBusy = true;
-            var transient = context.Data.StartActivity(LucideIconKind.WifiSync, new DirectLocaleKey("Retry"), true, owner: owner);
-            var retained = context.Data.StartActivity(LucideIconKind.Server, new DirectLocaleKey("Startup"), false, owner: owner);
+            var transient = context.Data.StartActivity(TablerIconKind.Wifi2, new DirectLocaleKey("Retry"), true, owner: owner);
+            var retained = context.Data.StartActivity(TablerIconKind.Server, new DirectLocaleKey("Startup"), false, owner: owner);
             Assert.That(retained, Is.InstanceOf<ChatBusyActivity>());
             var first = targets[0];
             Assert.That(await presentation.RevealAsync(first.Node, first.Span), Is.Not.Null);
@@ -1331,7 +1331,7 @@ public class ChatPresentationTests
 
     private static FunctionCallChatMessage FunctionMessage(string title, int callCount, bool isBusy)
     {
-        var message = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey(title))
+        var message = new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey(title))
         {
             IsBusy = isBusy,
             FinishedAt = DateTimeOffset.UtcNow,
@@ -1559,9 +1559,9 @@ public class ChatPresentationTests
             var fileButton = previewPresenter.GetVisualDescendants().OfType<Button>().Single();
             var fileText = fileButton.GetVisualDescendants().OfType<TextBlock>().Single();
             var commandText = commandPreviewPresenter.GetVisualDescendants().OfType<TextBlock>().Single();
-            var waitingIcon = waitingMarker.Icon as LucideIcon ?? throw new InvalidOperationException();
+            var waitingIcon = waitingMarker.Icon as TablerIcon ?? throw new InvalidOperationException();
             var bgPanel = bgMarker.Icon as Panel ?? throw new InvalidOperationException();
-            var bgIcons = bgPanel.Children.OfType<LucideIcon>().ToArray();
+            var bgIcons = bgPanel.Children.OfType<TablerIcon>().ToArray();
             var headerControl = bgMarker.Header as Control ?? throw new InvalidOperationException();
             var secondaryControl = bgMarker.SecondaryHeader as Control ?? throw new InvalidOperationException();
             var headerOrigin = headerControl.TranslatePoint(default, bgMarker);
@@ -1574,7 +1574,7 @@ public class ChatPresentationTests
                 Assert.That(waitingMarker.IsExpandable, Is.False);
                 Assert.That(waitingMarker.IsSecondaryHeaderVisible, Is.False);
                 Assert.That(waitingMarker.IsRunning, Is.True);
-                Assert.That(waitingIcon.Kind, Is.EqualTo(LucideIconKind.Clock));
+                Assert.That(waitingIcon.Kind, Is.EqualTo(TablerIconKind.Clock));
                 Assert.That(waitingMarker.GetVisualDescendants().OfType<ShadUI.Loading>(), Is.Empty);
 
                 Assert.That(commandText.Text, Is.EqualTo("echo 1 echo 2"));

@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
   x:Class="Everywhere.Views.Pages.SettingsPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:pages="clr-namespace:Everywhere.Views.Pages"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
@@ -34,7 +34,7 @@
               <Grid
                 ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18"
                 RowDefinitions="Auto,*" RowSpacing="4">
-                <LucideIcon
+                <TablerIcon
                   Grid.Row="0" Grid.RowSpan="2"
                   Grid.Column="0" DockPanel.Dock="Right"
                   VerticalAlignment="Center"
@@ -51,7 +51,7 @@
                   Text="{Binding Category.DescriptionKey^, FallbackValue={x:Null}}"
                   TextWrapping="Wrap"/>
 
-                <LucideIcon
+                <TablerIcon
                   Grid.Row="0" Grid.RowSpan="2"
                   Grid.Column="2" DockPanel.Dock="Right"
                   VerticalAlignment="Center" Kind="ChevronRight"

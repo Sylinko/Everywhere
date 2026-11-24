@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.StrategyEngine;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.TextSelection;
 
@@ -45,7 +45,7 @@ public abstract partial class TextSelectionToolbarAction : ObservableValidator
 
     protected static IDynamicLocaleKey UnnamedKey { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionToolbarActions_Unnamed);
 
-    protected static ColoredIcon FallbackIcon => LucideIconKind.Sparkles;
+    protected static ColoredIcon FallbackIcon => TablerIconKind.Sparkles;
 
     /// <summary>
     /// Creates the execution snapshot from the strategies matched against the captured selection.
@@ -84,6 +84,11 @@ public abstract partial class TextSelectionToolbarAction : ObservableValidator
 
     protected static ColoredIcon CopyIcon(ColoredIcon icon)
     {
-        return new ColoredIcon(icon.Type, icon.Foreground, icon.Background) { Kind = icon.Kind, Text = icon.Text };
+        return new ColoredIcon(icon.Type, icon.Foreground, icon.Background)
+        {
+            Kind = icon.Kind,
+            IsFilled = icon.IsFilled,
+            Text = icon.Text
+        };
     }
 }

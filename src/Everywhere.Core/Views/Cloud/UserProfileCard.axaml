@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions" xmlns:notification="clr-namespace:Everywhere.Common.Notification;assembly=Everywhere.Abstractions"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:system="clr-namespace:System;assembly=System.Runtime"
@@ -34,14 +34,14 @@
 
               <Button
                 Classes="Primary" HorizontalAlignment="Stretch"
-                shadui:ButtonAssist.Icon="{LucideIconContent LogIn}"
+                shadui:ButtonAssist.Icon="{TablerIconContent Login}"
                 Command="{Binding LoginCommand, Mode=OneTime}"
                 Content="{I18N {x:Static LocaleKey.UserProfilePresenter_LoginButton_Content}}"
                 IsVisible="{Binding !LoginCommand.IsRunning}"/>
 
               <Button
                 Classes="Secondary" HorizontalAlignment="Stretch"
-                shadui:ButtonAssist.Icon="{LucideIconContent LogIn}"
+                shadui:ButtonAssist.Icon="{TablerIconContent Login}"
                 shadui:ButtonAssist.ShowProgress="True"
                 Command="{Binding LoginCommand.Cancel, Mode=OneTime}"
                 Content="{I18N {x:Static LocaleKey.UserProfilePresenter_CancelLoginButton_Content}}"
@@ -428,14 +428,14 @@
                 <Button
                   Classes="Ghost" HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Left"
-                  shadui:ButtonAssist.Icon="{LucideIconContent House}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent Home}"
                   Command="{Binding OpenDashboardCommand}"
                   Content="{I18N {x:Static LocaleKey.UserProfilePresenter_OpenDashboardButton_Content}}"/>
 
                 <Button
                   Classes="Ghost" HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Left"
-                  shadui:ButtonAssist.Icon="{LucideIconContent MessageCircleQuestionMark}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent MessageCircleQuestion}"
                   Command="{Binding GetSupportCommand}"
                   Content="{I18N {x:Static LocaleKey.UserProfilePresenter_GetSupportButton_Content}}"/>
               </StackPanel>
@@ -464,7 +464,7 @@
                 <Button
                   Classes="Ghost" Margin="0,-4,0,0"
                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                  shadui:ButtonAssist.Icon="{LucideIconContent Cloud}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent Cloud}"
                   Command="{Binding ManageChatSyncCommand}"
                   Content="{I18N {x:Static LocaleKey.UserProfilePresenter_ManageChatSyncButton_Content}}">
                   <Interaction.Behaviors>
@@ -478,7 +478,7 @@
                 <Button
                   Classes="Destructive" HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Left"
-                  shadui:ButtonAssist.Icon="{LucideIconContent LogOut}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent Logout}"
                   Command="{Binding LogoutCommand}"
                   Content="{I18N {x:Static LocaleKey.UserProfilePresenter_LogoutButton_Content}}"/>
               </StackPanel>
@@ -528,21 +528,21 @@
 
               <Button
                 Classes="Primary" HorizontalAlignment="Stretch"
-                shadui:ButtonAssist.Icon="{LucideIconContent RefreshCcw}"
+                shadui:ButtonAssist.Icon="{TablerIconContent Reload}"
                 Command="{Binding LoginCommand, Mode=OneTime}"
                 Content="{I18N {x:Static LocaleKey.Common_Retry}}"
                 IsVisible="{Binding !LoginCommand.IsRunning}"/>
 
               <Button
                 Classes="Secondary" HorizontalAlignment="Stretch"
-                shadui:ButtonAssist.Icon="{LucideIconContent LogOut}"
+                shadui:ButtonAssist.Icon="{TablerIconContent Logout}"
                 Command="{Binding LogoutCommand, Mode=OneTime}"
                 Content="{I18N {x:Static LocaleKey.UserProfilePresenter_LogoutButton_Content}}"
                 IsVisible="{Binding !LoginCommand.IsRunning}"/>
 
               <Button
                 Classes="Secondary" HorizontalAlignment="Stretch"
-                shadui:ButtonAssist.Icon="{LucideIconContent LogIn}"
+                shadui:ButtonAssist.Icon="{TablerIconContent Login}"
                 shadui:ButtonAssist.ShowProgress="True"
                 Command="{Binding LoginCommand.Cancel, Mode=OneTime}"
                 Content="{I18N {x:Static LocaleKey.Common_Cancel}}"

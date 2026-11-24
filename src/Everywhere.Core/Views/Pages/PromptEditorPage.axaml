@@ -28,7 +28,7 @@
       <Button
         Classes="Secondary" Grid.Column="2"
         VerticalAlignment="Center"
-        shadui:ButtonAssist.Icon="{LucideIconContent Pencil}"
+        shadui:ButtonAssist.Icon="{TablerIconContent Pencil}"
         Command="{Binding SwitchToAdvancedCommand}"
         Content="{I18N {x:Static LocaleKey.PromptCreate_SwitchToAdvanced_Content}}"
         CornerRadius="{DynamicResource 2XlCornerRadius}"
@@ -36,7 +36,7 @@
       <Button
         Classes="Secondary" Grid.Column="2"
         VerticalAlignment="Center"
-        shadui:ButtonAssist.Icon="{LucideIconContent Settings2}"
+        shadui:ButtonAssist.Icon="{TablerIconContent Settings2}"
         Command="{Binding SwitchToQuickCommand}"
         Content="{I18N {x:Static LocaleKey.PromptCreate_SwitchToQuick_Content}}"
         CornerRadius="{DynamicResource 2XlCornerRadius}"
@@ -45,7 +45,7 @@
       <Button
         Classes="Primary" Grid.Column="3"
         VerticalAlignment="Center"
-        shadui:ButtonAssist.Icon="{LucideIconContent Save}"
+        shadui:ButtonAssist.Icon="{TablerIconContent DeviceFloppy}"
         Command="{Binding SaveCommand}"
         Content="{I18N {x:Static LocaleKey.PromptEditor_SaveButton_Content}}"
         CornerRadius="{DynamicResource 2XlCornerRadius}"/>
@@ -73,7 +73,7 @@
                     <Style Selector="Grid#EditPanel TextBlock#AdvancedModeDescription">
                       <Setter Property="Opacity" Value="0"/>
                     </Style>
-                    <Style Selector="Grid#EditPanel ScrollViewer#QuickModeScrollViewer">
+                    <Style Selector="Grid#EditPanel v|PromptRecipeEditor#QuickModeEditor">
                       <Setter Property="Opacity" Value="1"/>
                       <Setter Property="IsHitTestVisible" Value="True"/>
                     </Style>
@@ -106,7 +106,7 @@
                     <Style Selector="Grid#EditPanel TextBlock#AdvancedModeDescription">
                       <Setter Property="Opacity" Value="1"/>
                     </Style>
-                    <Style Selector="Grid#EditPanel ScrollViewer#QuickModeScrollViewer">
+                    <Style Selector="Grid#EditPanel v|PromptRecipeEditor#QuickModeEditor">
                       <Setter Property="Opacity" Value="0"/>
                       <Setter Property="IsHitTestVisible" Value="False"/>
                     </Style>
@@ -138,11 +138,9 @@
             TextWrapping="Wrap"/>
         </Grid>
 
-        <ScrollViewer
-          x:Name="QuickModeScrollViewer" Grid.Row="1"
-          HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-          <v:PromptRecipeEditor Editor="{Binding}"/>
-        </ScrollViewer>
+        <v:PromptRecipeEditor
+          x:Name="QuickModeEditor" Grid.Row="1"
+          Editor="{Binding}"/>
 
         <v:PromptAdvancedEditorControl
           x:Name="PromptAdvancedEditorControl" Grid.Row="1"

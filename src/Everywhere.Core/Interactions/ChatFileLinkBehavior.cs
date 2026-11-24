@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -6,7 +6,7 @@ using Avalonia.Xaml.Interactivity;
 using Everywhere.Chat.Links;
 using Everywhere.Chat.Plugins;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Interactions;
 
@@ -24,13 +24,13 @@ public sealed class ChatFileLinkBehavior : Behavior<Button>
         set => SetValue(ReferenceProperty, value);
     }
 
-    public static readonly StyledProperty<LucideIcon?> IconProperty =
-        AvaloniaProperty.Register<ChatFileLinkBehavior, LucideIcon?>(nameof(Icon));
+    public static readonly StyledProperty<TablerIcon?> IconProperty =
+        AvaloniaProperty.Register<ChatFileLinkBehavior, TablerIcon?>(nameof(Icon));
 
     /// <summary>
     /// The icon displayed for this reference, updated when a visible path is identified as a directory.
     /// </summary>
-    public LucideIcon? Icon
+    public TablerIcon? Icon
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
@@ -129,7 +129,7 @@ public sealed class ChatFileLinkBehavior : Behavior<Button>
     private void UpdateVisibleIcon()
     {
         if (!IsEnabled || !_isInViewport || _hasCheckedIcon || Icon is not { } icon || Reference is not { } reference ||
-            reference.Icon == LucideIconKind.Folder || AssociatedObject is not { IsEffectivelyVisible: true } button ||
+            reference.Icon == TablerIconKind.Folder || AssociatedObject is not { IsEffectivelyVisible: true } button ||
             TopLevel.GetTopLevel(button) is not { IsVisible: true })
         {
             return;
@@ -142,7 +142,7 @@ public sealed class ChatFileLinkBehavior : Behavior<Button>
         }
     }
 
-    private async Task UpdateIconAsync(LucideIcon icon, string path)
+    private async Task UpdateIconAsync(TablerIcon icon, string path)
     {
         using var check = new CancellationTokenSource();
         _iconCheck = check;
@@ -150,7 +150,7 @@ public sealed class ChatFileLinkBehavior : Behavior<Button>
         {
             if (await ChatFileIcons.ProbeDirectoryAsync(path, check.Token) && !check.IsCancellationRequested)
             {
-                icon.Kind = LucideIconKind.Folder;
+                icon.Kind = TablerIconKind.Folder;
             }
         }
         finally
@@ -164,7 +164,7 @@ public sealed class ChatFileLinkBehavior : Behavior<Button>
         _iconCheck?.Cancel();
         _iconCheck = null;
         _hasCheckedIcon = false;
-        if (Icon is { } icon) icon.Kind = Reference?.Icon ?? LucideIconKind.File;
+        if (Icon is { } icon) icon.Kind = Reference?.Icon ?? TablerIconKind.File;
     }
 
     private void CloseMenu()

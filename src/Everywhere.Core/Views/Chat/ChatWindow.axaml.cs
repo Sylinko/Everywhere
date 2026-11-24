@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
@@ -18,7 +18,7 @@ using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 using Serilog;
 
@@ -631,7 +631,7 @@ public sealed partial class ChatWindow :
                 }
 
                 e.DragEffects = DragDropEffects.Copy;
-                DragDropIcon.Kind = LucideIconKind.FileUp;
+                DragDropIcon.Kind = TablerIconKind.FileUpload;
                 DragDropText.Text = LocaleKey.ChatWindow_DragDrop_Overlay_DropFilesHere.I18N();
                 DragDropOverlay.IsVisible = true;
                 return;
@@ -642,7 +642,7 @@ public sealed partial class ChatWindow :
         if (hasText)
         {
             e.DragEffects = DragDropEffects.Copy;
-            DragDropIcon.Kind = LucideIconKind.TextCursorInput;
+            DragDropIcon.Kind = TablerIconKind.Forms;
             DragDropText.Text = LocaleKey.ChatWindow_DragDrop_Overlay_DropTextHere.I18N();
             DragDropOverlay.IsVisible = true;
             return;

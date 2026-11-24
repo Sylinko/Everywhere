@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
   x:Class="Everywhere.Views.TextSelectionToolbar" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:ts="clr-namespace:Everywhere.TextSelection" xmlns:v="clr-namespace:Everywhere.Views"
@@ -95,8 +95,8 @@
                     <Binding Path="#Self.CanExcludeApplication"/>
                   </MultiBinding>
                 </Button.IsVisible>
-                <LucideIcon
-                  Kind="EllipsisVertical"
+                <TablerIcon
+                  Kind="DotsVertical"
                   Size="{DynamicResource FontSizeM}"/>
                 <Button.Flyout>
                   <MenuFlyout
@@ -151,7 +151,7 @@
                           Header="{I18N {x:Static LocaleKey.TextSelectionToolbar_ExcludeApplication}}"
                           IsVisible="{Binding #Self.CanExcludeApplication}">
                           <MenuItem.Icon>
-                            <LucideIcon
+                            <TablerIcon
                               Kind="EyeOff"
                               Size="{DynamicResource FontSizeM}"/>
                           </MenuItem.Icon>
@@ -256,7 +256,7 @@
                         Text="{I18N {x:Static LocaleKey.ChatInputArea_NewLine_ToolTip}}"/>
                     </StackPanel>
                   </ToolTip.Tip>
-                  <LucideIcon
+                  <TablerIcon
                     Margin="-1,0,0,-1"
                     Foreground="{DynamicResource PrimaryForegroundColor}"
                     Kind="Send"
@@ -299,7 +299,7 @@
 
                     <StackPanel
                       Orientation="Horizontal" Spacing="4">
-                      <LucideIcon
+                      <TablerIcon
                         VerticalAlignment="Center"
                         Foreground="{DynamicResource ForegroundColor}"
                         Kind="ArrowLeft"
@@ -331,7 +331,7 @@
         CornerRadius="{DynamicResource FullCornerRadius}"
         Focusable="False"
         ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbar_Close}}">
-        <LucideIcon
+        <TablerIcon
           Kind="X"
           Size="{DynamicResource FontSizeS}"/>
       </Button>

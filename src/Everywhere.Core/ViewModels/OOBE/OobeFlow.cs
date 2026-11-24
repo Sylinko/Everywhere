@@ -1,3 +1,4 @@
+using Avalonia.Controls.Primitives;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Common;
@@ -312,6 +313,8 @@ public abstract class OobeStep(int stage, string stageKey, string title, string?
     public virtual bool CanMovePrevious => !IsFinal;
 
     public virtual bool IsSplitLayout => false;
+
+    public virtual ScrollBarVisibility DecisionScrollBarVisibility => ScrollBarVisibility.Auto;
 
     /// <summary>
     /// Returns true only when the current step's required effects have succeeded.

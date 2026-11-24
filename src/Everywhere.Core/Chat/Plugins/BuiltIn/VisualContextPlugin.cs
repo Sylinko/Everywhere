@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Avalonia.Input;
@@ -12,7 +12,7 @@ using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Statistics;
 using Everywhere.Storage;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Everywhere.Harness;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
@@ -21,7 +21,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
 {
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_VisualContext_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_VisualContext_Description);
-    public override LucideIconKind? Icon => LucideIconKind.Component;
+    public override TablerIconKind? Icon => TablerIconKind.ScanEye;
     public override bool IsDefaultEnabled => true;
 
     private readonly IBlobStorage _blobStorage;

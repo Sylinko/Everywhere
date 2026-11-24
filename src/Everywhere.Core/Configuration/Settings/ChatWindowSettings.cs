@@ -1,10 +1,10 @@
-﻿using System.Diagnostics.Metrics;
+using System.Diagnostics.Metrics;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Configuration;
 
@@ -15,7 +15,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     public int Index => 3;
 
     [SettingsItemIgnore]
-    public LucideIconKind Icon => LucideIconKind.MessageCircle;
+    public TablerIconKind Icon => TablerIconKind.MessageCircle;
 
     [SettingsItemIgnore]
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_ChatWindow_Header);

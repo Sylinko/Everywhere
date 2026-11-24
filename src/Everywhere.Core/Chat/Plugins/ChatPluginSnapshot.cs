@@ -1,6 +1,6 @@
 using Everywhere.Harness;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -41,7 +41,7 @@ public abstract class ChatPluginSnapshot : IChatPluginKey
     /// <summary>
     /// Gets the vector icon kind captured from the source plugin, if any.
     /// </summary>
-    public LucideIconKind? Icon { get; }
+    public TablerIconKind? Icon { get; }
 
     /// <summary>
     /// Gets the custom icon source URI or data captured from the source plugin, if any.

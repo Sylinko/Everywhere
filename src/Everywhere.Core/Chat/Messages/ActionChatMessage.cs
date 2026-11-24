@@ -1,5 +1,5 @@
-﻿using System.Text.Json.Serialization;
-using Lucide.Avalonia;
+using System.Text.Json.Serialization;
+using Tabler.Avalonia;
 using MessagePack;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
@@ -18,7 +18,7 @@ public sealed partial class ActionChatMessage : ChatMessage
     public override ChatRole Role => new("action");
 
     [Key(1)]
-    public LucideIconKind Icon
+    public TablerIconKind Icon
     {
         get;
         set => SetProperty(ref field, value);
@@ -61,7 +61,7 @@ public sealed partial class ActionChatMessage : ChatMessage
 
     [SerializationConstructor]
     private ActionChatMessage(
-        LucideIconKind icon,
+        TablerIconKind icon,
         DynamicLocaleKey? headerKey,
         string? content,
         IDynamicLocaleKey? errorMessageKey,
@@ -76,7 +76,7 @@ public sealed partial class ActionChatMessage : ChatMessage
         FinishedAt = finishedAt;
     }
 
-    public ActionChatMessage(LucideIconKind icon, DynamicLocaleKey? headerKey)
+    public ActionChatMessage(TablerIconKind icon, DynamicLocaleKey? headerKey)
     {
         Icon = icon;
         HeaderKey = headerKey;

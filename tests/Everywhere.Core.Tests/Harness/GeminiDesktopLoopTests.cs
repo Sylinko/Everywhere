@@ -333,7 +333,7 @@ public sealed class GeminiDesktopLoopTests
                     // Simulate switching from Anthropic to Gemini on an existing rich MCP tool turn.
                     callSpan.Metadata = callSpan.Metadata.SetItem(ReasoningMetadata.DialectKey, AnthropicModelSession.DialectName);
                     var oldCall = callSpan.Items.Single().Calls.Single();
-                    var foreignGroup = new FunctionCallChatMessage(Lucide.Avalonia.LucideIconKind.Hammer, null);
+                    var foreignGroup = new FunctionCallChatMessage(Tabler.Avalonia.TablerIconKind.Hammer, null);
                     foreignGroup.AddCall(
                         oldCall with
                         {

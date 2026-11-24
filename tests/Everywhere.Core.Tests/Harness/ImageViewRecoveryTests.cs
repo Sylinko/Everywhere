@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Reactive.Disposables;
 using System.Runtime.CompilerServices;
 using Avalonia.Headless.NUnit;
@@ -24,7 +24,7 @@ using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Storage;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -77,7 +77,7 @@ public sealed class ImageViewRecoveryTests
         using var olderStream = new MemoryStream(olderImage.Bytes, writable: false);
         var olderBlob = await blobStorage.StorageBlobAsync(olderStream, olderImage.MimeType);
         var olderPreview = new FileAttachment(attachment.HeaderKey, olderBlob.LocalPath, olderBlob.Sha256, olderImage.MimeType);
-        var earlierTool = new FunctionCallChatMessage(LucideIconKind.Image, new DirectLocaleKey("View images"));
+        var earlierTool = new FunctionCallChatMessage(TablerIconKind.Photo, new DirectLocaleKey("View images"));
         earlierTool.AddCall(new ToolCallRecord("view_image", "essential", "old-view", null));
         earlierTool.AddResult(new ToolResultRecord("view_image", "essential", "old-view", new ViewImageFunctionResult(
         [

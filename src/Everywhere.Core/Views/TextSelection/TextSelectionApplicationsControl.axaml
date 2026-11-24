@@ -7,7 +7,7 @@
       <Button
         Classes="Secondary" DockPanel.Dock="Right"
         VerticalAlignment="Center"
-        shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+        shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
         Content="{I18N {x:Static LocaleKey.TextSelectionApplications_AddApplication}}"
         IsEnabled="{Binding !#Self.Presentation.IsBusy}">
         <Button.Flyout>
@@ -16,7 +16,7 @@
               Click="HandleChooseApplication"
               Header="{I18N {x:Static LocaleKey.TextSelectionApplications_ChooseApplication}}">
               <MenuItem.Icon>
-                <LucideIcon
+                <TablerIcon
                   Kind="FolderOpen"
                   Size="{DynamicResource FontSizeL}"/>
               </MenuItem.Icon>
@@ -25,7 +25,7 @@
               Click="HandlePickWindow"
               Header="{I18N {x:Static LocaleKey.TextSelectionApplications_PickWindow}}">
               <MenuItem.Icon>
-                <LucideIcon
+                <TablerIcon
                   Kind="AppWindow"
                   Size="{DynamicResource FontSizeL}"/>
               </MenuItem.Icon>
@@ -35,8 +35,8 @@
               Click="HandleManualEntry"
               Header="{Binding #Self.Presentation.ManualLabel^}">
               <MenuItem.Icon>
-                <LucideIcon
-                  Kind="TextCursorInput"
+                <TablerIcon
+                  Kind="Forms"
                   Size="{DynamicResource FontSizeL}"/>
               </MenuItem.Icon>
             </MenuItem>
@@ -47,10 +47,10 @@
         <StackPanel
           Orientation="Horizontal" Spacing="6">
           <TextBlock Text="{Binding #Self.HeaderKey^, FallbackValue={x:Null}}"/>
-          <LucideIcon
+          <TablerIcon
             VerticalAlignment="Center"
             IsVisible="{Binding #Self.IsCompatibilityHintVisible}"
-            Kind="CircleQuestionMark"
+            Kind="HelpCircle"
             Size="{DynamicResource FontSizeS}"
             ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionApplications_CompatibilityHint}}"/>
         </StackPanel>
@@ -120,8 +120,8 @@
                 AutomationProperties.Name="{I18N {x:Static LocaleKey.TextSelectionApplications_RemoveApplication}}"
                 Tag="{Binding}"
                 ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionApplications_RemoveApplication}}">
-                <LucideIcon
-                  Kind="Trash2"
+                <TablerIcon
+                  Kind="Trash"
                   Size="{DynamicResource FontSizeM}"/>
                 <Button.Flyout>
                   <Flyout>
@@ -165,7 +165,7 @@
               <Panel
                 DockPanel.Dock="Left" Width="32"
                 Height="32" VerticalAlignment="Center">
-                <LucideIcon
+                <TablerIcon
                   IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNull}}"
                   Kind="AppWindow"
                   Size="{DynamicResource FontSize2Xl}"/>

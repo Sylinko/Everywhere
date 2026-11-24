@@ -13,9 +13,9 @@
             <StackPanel Spacing="6">
               <StackPanel
                 Orientation="Horizontal" Spacing="6">
-                <LucideIcon
+                <TablerIcon
                   Foreground="{DynamicResource SecondaryForegroundColor}"
-                  Kind="TextInitial" Size="14"/>
+                  Kind="LetterCase" Size="14"/>
                 <TextBlock
                   Classes="Muted Caption"
                   Text="{I18N {x:Static LocaleKey.PromptEditor_NameLabel}}"/>
@@ -30,7 +30,7 @@
               Margin="0,4,0,0" Spacing="6">
               <StackPanel
                 Orientation="Horizontal" Spacing="6">
-                <LucideIcon
+                <TablerIcon
                   Foreground="{DynamicResource SecondaryForegroundColor}"
                   Kind="Pencil" Size="14"/>
                 <TextBlock
@@ -50,7 +50,7 @@
             <StackPanel Spacing="6">
               <StackPanel
                 Orientation="Horizontal" Spacing="6">
-                <LucideIcon
+                <TablerIcon
                   Foreground="{DynamicResource SecondaryForegroundColor}"
                   Kind="FileText" Size="14"/>
                 <TextBlock

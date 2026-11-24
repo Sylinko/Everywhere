@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
@@ -48,9 +48,9 @@
                           </I18N>
                         </ToolTip.Tip>
 
-                        <LucideIcon
+                        <TablerIcon
                           Foreground="{DynamicResource SuccessColor60}"
-                          Kind="CircleCheck"
+                          IsFilled="True" Kind="CircleCheck"
                           Size="{DynamicResource FontSizeM}"/>
                       </Border>
                     </DataTemplate>
@@ -62,9 +62,9 @@
                         <v:ConditionalContentControl.TrueContent>
                           <DataTemplate>
                             <Border Background="Transparent" ToolTip.Tip="{Binding $parent[v:TerminalView].State?.FailureReasonKey^}">
-                              <LucideIcon
+                              <TablerIcon
                                 Foreground="{DynamicResource ErrorColor60}"
-                                Kind="CircleX"
+                                IsFilled="True" Kind="CircleX"
                                 Size="{DynamicResource FontSizeM}"/>
                             </Border>
                           </DataTemplate>
@@ -86,9 +86,9 @@
                                 </I18N>
                               </ToolTip.Tip>
 
-                              <LucideIcon
+                              <TablerIcon
                                 Foreground="{DynamicResource ErrorColor60}"
-                                Kind="CircleX"
+                                IsFilled="True" Kind="CircleX"
                                 Size="{DynamicResource FontSizeM}"/>
                             </Border>
                           </DataTemplate>

@@ -8,7 +8,7 @@ using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Messages;
 using Everywhere.Skills;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -629,7 +629,7 @@ public sealed partial class PromptRecipeOptionItem(PromptRecipeOption option) : 
 
     public IDynamicLocaleKey NameKey => option.NameKey;
 
-    public LucideIconKind? Icon => option.Icon;
+    public TablerIconKind? Icon => option.Icon;
 
     [ObservableProperty]
     public partial bool IsSelected { get; set; }

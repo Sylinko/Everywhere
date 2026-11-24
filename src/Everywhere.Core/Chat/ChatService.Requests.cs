@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Everywhere.Harness;
 using Everywhere.Statistics;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
@@ -267,7 +267,7 @@ public sealed partial class ChatService
         if (activity is null)
         {
             return data.StartActivity(
-                LucideIconKind.WifiSync,
+                TablerIconKind.Wifi2,
                 header,
                 true,
                 failed.Failure.Exception.FriendlyMessageKey,

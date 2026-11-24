@@ -2,7 +2,7 @@ using System.Text;
 using Everywhere.Chat.Plugins;
 using Everywhere.Harness;
 using Everywhere.Statistics;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MEAI = Microsoft.Extensions.AI;
 
 namespace Everywhere.Chat;
@@ -125,7 +125,7 @@ partial class ChatService
 
                     await chatContext.DispatchAsync(() =>
                     {
-                        message.Icon = LucideIconKind.X;
+                        message.Icon = TablerIconKind.X;
                         var errorKey = scope is null ?
                             LocaleKey.HandledFunctionInvokingException_FunctionCallingDisabled :
                             LocaleKey.HandledFunctionInvokingException_FunctionNotFound;
@@ -349,7 +349,7 @@ partial class ChatService
             var suggestions = default(IReadOnlyList<string>);
             scope?.TryGetBinding(call.Name, out binding, out suggestions);
             var message = new FunctionCallChatMessage(
-                binding?.Function.Icon ?? binding?.Plugin.Icon ?? LucideIconKind.Hammer,
+                binding?.Function.Icon ?? binding?.Plugin.Icon ?? TablerIconKind.Hammer,
                 binding?.Function.HeaderKey ?? new DirectLocaleKey(call.Name))
             {
                 IsBusy = true

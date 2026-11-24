@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:views="clr-namespace:Everywhere.Views">
@@ -19,7 +19,7 @@
             <Button
               Classes="Secondary" DockPanel.Dock="Right"
               Margin="0,-16,0,0" VerticalAlignment="Top"
-              shadui:ButtonAssist.Icon="{LucideIconContent FileCodeCorner}"
+              shadui:ButtonAssist.Icon="{TablerIconContent FileCode}"
               Command="{Binding OpenMcpJsonFileCommand, RelativeSource={RelativeSource TemplatedParent}}"
               Content="{I18N {x:Static LocaleKey.McpImportForm_OpenButton_Content}}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.McpImportForm_Description}}"/>

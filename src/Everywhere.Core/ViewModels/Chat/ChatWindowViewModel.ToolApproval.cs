@@ -1,4 +1,4 @@
-﻿using System.Reactive.Linq;
+using System.Reactive.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat;
@@ -6,7 +6,7 @@ using Everywhere.Chat.Permissions;
 using Everywhere.Common;
 using Everywhere.Harness;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using ShadUI;
 
 namespace Everywhere.ViewModels;
@@ -20,17 +20,17 @@ partial class ChatWindowViewModel
             ToolApprovalMode.Ask,
             new DynamicLocaleKey(LocaleKey.ToolApproval_Ask),
             new DynamicLocaleKey(LocaleKey.ToolApproval_AskDescription),
-            LucideIconKind.UserCheck),
+            TablerIconKind.UserCheck),
         new(
             ToolApprovalMode.Auto,
             new DynamicLocaleKey(LocaleKey.ToolApproval_Auto),
             new DynamicLocaleKey(LocaleKey.ToolApproval_AutoDescription),
-            LucideIconKind.ShieldCheck),
+            TablerIconKind.ShieldCheck),
         new(
             ToolApprovalMode.FullAccess,
             new DynamicLocaleKey(LocaleKey.ToolApproval_FullAccess),
             new DynamicLocaleKey(LocaleKey.ToolApproval_FullAccessDescription),
-            LucideIconKind.ShieldAlert)
+            TablerIconKind.ShieldExclamation)
     ];
 
     /// <summary>Gets the saved next-turn selection, including while a running turn retains another mode.</summary>

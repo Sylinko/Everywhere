@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
   <ControlTheme
@@ -22,31 +22,31 @@
             ItemSpacing="6" LineSpacing="4">
             <ToggleButton
               Classes="Primary Compact"
-              shadui:ButtonAssist.Icon="{LucideIconContent TextInitial}"
+              shadui:ButtonAssist.Icon="{TablerIconContent LetterCase}"
               Content="{I18N {x:Static LocaleKey.Modalities_Text}}"
               CornerRadius="{DynamicResource XlCornerRadius}"
               IsChecked="{TemplateBinding SupportsText, Mode=TwoWay}"/>
             <ToggleButton
               Classes="Primary Compact"
-              shadui:ButtonAssist.Icon="{LucideIconContent Image}"
+              shadui:ButtonAssist.Icon="{TablerIconContent Photo}"
               Content="{I18N {x:Static LocaleKey.Modalities_Image}}"
               CornerRadius="{DynamicResource XlCornerRadius}"
               IsChecked="{TemplateBinding SupportsImage, Mode=TwoWay}"/>
             <ToggleButton
               Classes="Primary Compact"
-              shadui:ButtonAssist.Icon="{LucideIconContent AudioWaveform}"
+              shadui:ButtonAssist.Icon="{TablerIconContent Waveform}"
               Content="{I18N {x:Static LocaleKey.Modalities_Audio}}"
               CornerRadius="{DynamicResource XlCornerRadius}"
               IsChecked="{TemplateBinding SupportsAudio, Mode=TwoWay}"/>
             <ToggleButton
               Classes="Primary Compact"
-              shadui:ButtonAssist.Icon="{LucideIconContent Video}"
+              shadui:ButtonAssist.Icon="{TablerIconContent Video}"
               Content="{I18N {x:Static LocaleKey.Modalities_Video}}"
               CornerRadius="{DynamicResource FullCornerRadius}"
               IsChecked="{TemplateBinding SupportsVideo, Mode=TwoWay}"/>
             <ToggleButton
               Classes="Primary Compact"
-              shadui:ButtonAssist.Icon="{LucideIconContent FileText}"
+              shadui:ButtonAssist.Icon="{TablerIconContent FileText}"
               Content="{I18N {x:Static LocaleKey.Modalities_Pdf}}"
               CornerRadius="{DynamicResource FullCornerRadius}"
               IsChecked="{TemplateBinding SupportsPdf, Mode=TwoWay}"/>

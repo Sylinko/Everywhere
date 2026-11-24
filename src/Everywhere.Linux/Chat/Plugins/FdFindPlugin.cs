@@ -1,10 +1,10 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using DynamicData;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Everywhere.Harness;
 
 namespace Everywhere.Linux.Chat.Plugins;
@@ -16,7 +16,7 @@ public sealed class FdFindPlugin : BuiltInChatPlugin
 {
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Description);
-    public override LucideIconKind? Icon => LucideIconKind.Search;
+    public override TablerIconKind? Icon => TablerIconKind.FolderSearch;
     public override bool IsDefaultEnabled => false;
 
     private string? _detectedFdCommand;

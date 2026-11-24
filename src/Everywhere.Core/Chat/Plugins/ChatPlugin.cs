@@ -8,7 +8,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Harness;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 
 namespace Everywhere.Chat.Plugins;
@@ -31,7 +31,7 @@ public abstract class ChatPlugin : ObservableObject, IChatPluginKey, IDisposable
     public abstract IDynamicLocaleKey DescriptionKey { get; }
 
     [JsonIgnore]
-    public virtual LucideIconKind? Icon => null;
+    public virtual TablerIconKind? Icon => null;
 
     /// <summary>
     /// Gets the URI or base64 data of the icon.
@@ -228,12 +228,7 @@ public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger
 
     public override DynamicLocaleKey DescriptionKey => new DirectLocaleKey(TransportConfiguration?.Description ?? string.Empty);
 
-    public override LucideIconKind? Icon => TransportConfiguration switch
-    {
-        StdioMcpTransportConfiguration => LucideIconKind.SquareTerminal,
-        HttpMcpTransportConfiguration => LucideIconKind.Server,
-        _ => null
-    };
+    public override TablerIconKind? Icon => TablerIconKind.Mcp;
 
     public override string? BeautifulIcon => _beautifulIcon;
 

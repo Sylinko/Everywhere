@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -10,7 +10,7 @@ using Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Prompting.Documents;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Everywhere.Harness;
@@ -26,7 +26,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
 
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Description);
-    public override LucideIconKind? Icon => LucideIconKind.FileBox;
+    public override TablerIconKind? Icon => TablerIconKind.Folders;
     public override bool IsDefaultEnabled => true;
     public override IReadOnlyList<SettingsItem> SettingsItems => _fileSystemSettings.SettingsItems;
 
@@ -1447,7 +1447,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
             new(
                 FileSystemConsentOption.ExactPaths,
                 new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths),
-                LucideIconKind.FileCheck)
+                TablerIconKind.FileCheck)
         };
         if (commonParentDirectory is not null)
         {
@@ -1457,7 +1457,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
                     new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories,
                         new DirectLocaleKey(commonParentDirectory)),
-                    LucideIconKind.FolderCheck));
+                    TablerIconKind.FolderCheck));
         }
         if (CanPickCustomDirectory())
         {
@@ -1465,7 +1465,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
                 new RequestConsentCustomOption(
                     FileSystemConsentOption.CustomDirectory,
                     new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory),
-                    LucideIconKind.FolderCog));
+                    TablerIconKind.FolderCog));
         }
 
         var consent = await userInterface.RequestConsentAsync(

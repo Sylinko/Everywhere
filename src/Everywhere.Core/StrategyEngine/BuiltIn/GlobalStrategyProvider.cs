@@ -1,4 +1,4 @@
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.StrategyEngine.BuiltIn;
 
@@ -16,7 +16,7 @@ public sealed class GlobalStrategyProvider() : BuiltInStrategyProvider("global")
             Id = "what-is-this",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_WhatIsThisCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_WhatIsThisCommand_Description),
-            Icon = LucideIconKind.Info,
+            Icon = TablerIconKind.InfoCircle,
             Priority = -100,
             Body =
                 """
@@ -35,7 +35,7 @@ public sealed class GlobalStrategyProvider() : BuiltInStrategyProvider("global")
             Id = "summarize",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_SummarizeCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_SummarizeCommand_Description),
-            Icon = LucideIconKind.FileText,
+            Icon = TablerIconKind.FileText,
             Priority = -90,
             Body =
                 """
@@ -52,7 +52,7 @@ public sealed class GlobalStrategyProvider() : BuiltInStrategyProvider("global")
             Id = "help",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_HelpCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_HelpCommand_Description),
-            Icon = LucideIconKind.Sparkles,
+            Icon = TablerIconKind.Sparkles,
             Priority = -80,
             Body =
                 """

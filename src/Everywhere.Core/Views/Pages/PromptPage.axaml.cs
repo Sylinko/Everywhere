@@ -1,4 +1,4 @@
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views.Pages;
 
@@ -6,7 +6,7 @@ public partial class PromptPage : ReactiveUserControl<PromptPageViewModel>, IMai
 {
     public int Index => 1;
 
-    public LucideIconKind Icon => LucideIconKind.BookText;
+    public TablerIconKind Icon => TablerIconKind.Book;
 
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.PromptPage_Title);
 

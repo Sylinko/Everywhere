@@ -1,6 +1,6 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Everywhere.Configuration;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Views.Pages;
@@ -12,7 +12,7 @@ public sealed partial class SettingsPage : UserControl, IMainViewNavigationTopLe
 {
     public int Index => 100;
 
-    public LucideIconKind Icon => LucideIconKind.Cog;
+    public TablerIconKind Icon => TablerIconKind.Settings;
 
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsPage_Title);
 

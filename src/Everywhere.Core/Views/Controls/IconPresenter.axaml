@@ -33,11 +33,12 @@
             ContentDataBinding="{TemplateBinding Icon}"
             ItemIndex="{Binding Icon?.Type, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue=-1}">
             <DataTemplate x:DataType="common:ColoredIcon">
-              <LucideIcon
+              <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                IsFilled="{Binding IsFilled}"
                 Kind="{Binding Kind}"
                 Size="{Binding $parent[v:IconPresenter].IconSize}">
-                <LucideIcon.Foreground>
+                <TablerIcon.Foreground>
                   <MultiBinding Converter="{x:Static vc:CommonConverters.DefaultMultiValue}">
                     <MultiBinding Converter="{x:Static vc:CommonConverters.FirstNotNull}">
                       <Binding
@@ -46,8 +47,8 @@
                       <Binding Path="$parent[v:IconPresenter].Foreground"/>
                     </MultiBinding>
                   </MultiBinding>
-                </LucideIcon.Foreground>
-              </LucideIcon>
+                </TablerIcon.Foreground>
+              </TablerIcon>
             </DataTemplate>
 
             <DataTemplate x:DataType="common:ColoredIcon">

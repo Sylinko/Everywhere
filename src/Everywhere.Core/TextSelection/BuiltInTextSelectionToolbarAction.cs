@@ -102,7 +102,8 @@ public sealed partial class BuiltInTextSelectionToolbarAction : TextSelectionToo
         action.NameOverride = name == _draftDefaultName ? null : name;
         action.PromptOverride = PromptOverride == DefaultStrategy?.Body ? null : PromptOverride;
         action.IconOverride = icon.Type == defaultIcon.Type && icon.Kind == defaultIcon.Kind &&
-            icon.Text == defaultIcon.Text && icon.Foreground == defaultIcon.Foreground && icon.Background == defaultIcon.Background ?
+            icon.IsFilled == defaultIcon.IsFilled && icon.Text == defaultIcon.Text &&
+            icon.Foreground == defaultIcon.Foreground && icon.Background == defaultIcon.Background ?
                 null :
                 CopyIcon(icon);
         action.IsLabelVisible = IsLabelVisible;

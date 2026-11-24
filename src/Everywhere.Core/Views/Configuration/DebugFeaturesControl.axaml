@@ -12,17 +12,17 @@
           Orientation="Horizontal">
           <Button
             Classes="Outline"
-            shadui:ButtonAssist.Icon="{LucideIconContent FileBraces}"
+            shadui:ButtonAssist.Icon="{TablerIconContent FileCode2}"
             Command="{Binding EditSettingsFileCommand, RelativeSource={RelativeSource TemplatedParent}}"
             Content="{I18N {x:Static LocaleKey.DebugFeaturesControl_EditSettingsFileButton_Content}}"/>
           <Button
             Classes="Outline"
-            shadui:ButtonAssist.Icon="{LucideIconContent FolderOpen}"
+            shadui:ButtonAssist.Icon="{TablerIconContent FolderOpen}"
             Command="{Binding OpenLogsFolderCommand, RelativeSource={RelativeSource TemplatedParent}}"
             Content="{I18N {x:Static LocaleKey.DebugFeaturesControl_OpenLogsFolderButton_Content}}"/>
           <Button
             Classes="Outline"
-            shadui:ButtonAssist.Icon="{LucideIconContent Bug}"
+            shadui:ButtonAssist.Icon="{TablerIconContent Bug}"
             Command="{Binding CreateDumpCommand, RelativeSource={RelativeSource TemplatedParent}}"
             Content="{I18N {x:Static LocaleKey.DebugFeaturesControl_CreateDumpButton_Content}}">
             <Button.IsVisible>

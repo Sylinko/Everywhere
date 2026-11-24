@@ -1,5 +1,5 @@
 using Everywhere.StrategyEngine.Conditions;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.StrategyEngine.BuiltIn;
 
@@ -57,7 +57,7 @@ public sealed class CodeEditorStrategyProvcider() : BuiltInStrategyProvider("cod
             Id = "explain",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ExplainCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ExplainCommand_Description),
-            Icon = LucideIconKind.MessageSquareCode,
+            Icon = TablerIconKind.MessageCode,
             Priority = 100,
             Condition = Condition,
             Body =
@@ -78,7 +78,7 @@ public sealed class CodeEditorStrategyProvcider() : BuiltInStrategyProvider("cod
             Id = "review",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ReviewCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ReviewCommand_Description),
-            Icon = LucideIconKind.SearchCode,
+            Icon = TablerIconKind.ZoomCode,
             Priority = 90,
             Condition = Condition,
             Body =
@@ -100,7 +100,7 @@ public sealed class CodeEditorStrategyProvcider() : BuiltInStrategyProvider("cod
             Id = "document",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_DocumentCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_DocumentCommand_Description),
-            Icon = LucideIconKind.FileCode,
+            Icon = TablerIconKind.FileCode,
             Priority = 70,
             Condition = Condition,
             Body =
@@ -121,7 +121,7 @@ public sealed class CodeEditorStrategyProvcider() : BuiltInStrategyProvider("cod
             Id = "find-bugs",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_FindBugsCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_FindBugsCommand_Description),
-            Icon = LucideIconKind.Bug,
+            Icon = TablerIconKind.Bug,
             Priority = 85,
             Condition = Condition,
             Body =
@@ -144,7 +144,7 @@ public sealed class CodeEditorStrategyProvcider() : BuiltInStrategyProvider("cod
             Id = "optimize",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_OptimizeCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_OptimizeCommand_Description),
-            Icon = LucideIconKind.Zap,
+            Icon = TablerIconKind.Bolt,
             Priority = 60,
             Condition = Condition,
             Body =

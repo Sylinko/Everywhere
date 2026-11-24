@@ -8,7 +8,7 @@ using Everywhere.Database;
 using Everywhere.Harness;
 using Everywhere.Harness.Providers.Gemini;
 using Everywhere.Storage;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +43,7 @@ partial class ChatSyncTransferTests
             })
         });
 
-        var callMessage = new FunctionCallChatMessage(LucideIconKind.Wrench, null);
+        var callMessage = new FunctionCallChatMessage(TablerIconKind.Tool, null);
         callMessage.AddCall(new ToolCallRecord("weather", null, "call-1", new Dictionary<string, object?> { ["city"] = "Tokyo" })
         {
             Metadata = new Dictionary<string, object?> { [ReasoningMetadata.DialectKey] = GeminiInteractionsClient.DialectName }

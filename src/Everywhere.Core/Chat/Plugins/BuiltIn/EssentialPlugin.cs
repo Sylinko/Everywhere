@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text;
 using System.Text.Json.Serialization;
 using Everywhere.AI;
@@ -10,7 +10,7 @@ using Everywhere.Configuration;
 using Everywhere.Harness;
 using Everywhere.Statistics;
 using Everywhere.Storage;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -22,7 +22,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
 {
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_Description);
-    public override LucideIconKind? Icon => LucideIconKind.ToolCase;
+    public override TablerIconKind? Icon => TablerIconKind.Tools;
     public override bool IsDefaultEnabled => true;
 
     private readonly SystemAssistantSettings _systemAssistantSettings;
@@ -71,7 +71,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                 new NativeChatFunction(
                     ManageBackgroundJobsAsync,
                     ChatFunctionPermissions.None,
-                    icon: LucideIconKind.Layers,
+                    icon: TablerIconKind.Stack2,
                     isDefaultEnabled: true,
                     isVisible: false,
                     supportsParallelInvoke: true));
@@ -83,7 +83,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                 new NativeChatFunction(
                     ViewImageAsync,
                     ChatFunctionPermissions.FileRead,
-                    LucideIconKind.Image,
+                    TablerIconKind.Photo,
                     requiredModalities: Modalities.Image));
         });
     }

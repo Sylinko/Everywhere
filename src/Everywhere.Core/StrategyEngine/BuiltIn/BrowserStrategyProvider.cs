@@ -1,6 +1,6 @@
 using Everywhere.Chat.Plugins;
 using Everywhere.StrategyEngine.Conditions;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.StrategyEngine.BuiltIn;
 
@@ -38,7 +38,7 @@ public sealed class BrowserStrategyProvider() : BuiltInStrategyProvider("browser
             Id = "translate",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_TranslateCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_TranslateCommand_Description),
-            Icon = LucideIconKind.Languages,
+            Icon = TablerIconKind.Language,
             Priority = 100,
             Condition = Condition,
             Body =
@@ -57,7 +57,7 @@ public sealed class BrowserStrategyProvider() : BuiltInStrategyProvider("browser
             Id = "summarize",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_SummarizePageCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_SummarizePageCommand_Description),
-            Icon = LucideIconKind.FileText,
+            Icon = TablerIconKind.FileText,
             Priority = 90,
             Condition = Condition,
             Body =
@@ -77,7 +77,7 @@ public sealed class BrowserStrategyProvider() : BuiltInStrategyProvider("browser
             Id = "extract-info",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_ExtractInfoCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_ExtractInfoCommand_Description),
-            Icon = LucideIconKind.ListChecks,
+            Icon = TablerIconKind.ListCheck,
             Priority = 80,
             Condition = Condition,
             Body =
@@ -95,7 +95,7 @@ public sealed class BrowserStrategyProvider() : BuiltInStrategyProvider("browser
             Id = "explain",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_ExplainCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_ExplainCommand_Description),
-            Icon = LucideIconKind.GraduationCap,
+            Icon = TablerIconKind.School,
             Priority = 70,
             Condition = Condition,
             Body =
@@ -114,7 +114,7 @@ public sealed class BrowserStrategyProvider() : BuiltInStrategyProvider("browser
             Id = "fact-check",
             NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_FactCheckCommand_Name),
             DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_FactCheckCommand_Description),
-            Icon = LucideIconKind.ShieldCheck,
+            Icon = TablerIconKind.ShieldCheck,
             Priority = 60,
             Condition = Condition,
             ToolPatternRulesets = new ToolPatternRulesets(1)

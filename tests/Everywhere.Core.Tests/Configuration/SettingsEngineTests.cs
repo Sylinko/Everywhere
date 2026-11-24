@@ -9,11 +9,13 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
 using Everywhere.Extensions;
+using Everywhere.TextSelection;
 using Everywhere.Utilities;
 using Everywhere.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Tabler.Avalonia;
 using SettingsDescriptorProviderFactory = Everywhere.Configuration.Engine.SettingsDescriptorProviderFactory;
 
 namespace Everywhere.Core.Tests.Configuration;
@@ -156,6 +158,78 @@ public sealed class SettingsEngineTests
             Assert.That(chatWindow.ContainsKey("Key"), Is.False);
             Assert.That(chatWindow.ContainsKey("Modifiers"), Is.False);
             Assert.That(engine.Diagnostics, Is.Empty);
+        });
+    }
+
+    [Test]
+    public async Task InitializeAsync_MigratesLegacyLucideColoredIconsToTabler()
+    {
+        using var file = TestSettingsFile(
+            """
+            {
+              "Version": "0.9.0-canary.20261123.29",
+              "Model": {
+                "CustomAssistants": [
+                  {
+                    "Id": "11111111-1111-1111-1111-111111111111",
+                    "Name": "Primary",
+                    "Icon": { "Type": "Lucide", "Kind": "Bot" }
+                  },
+                  {
+                    "Id": "22222222-2222-2222-2222-222222222222",
+                    "Name": "SharedAlias",
+                    "Icon": { "Type": "Lucide", "Kind": "Zap" }
+                  },
+                  {
+                    "Id": "33333333-3333-3333-3333-333333333333",
+                    "Name": "Emoji",
+                    "Icon": { "Type": "Text", "Kind": "AArrowDown", "Text": "😀" }
+                  }
+                ]
+              },
+              "TextSelection": {
+                "ToolbarActions": [
+                  {
+                    "$type": "built-in",
+                    "StrategyId": "builtin.text-translate",
+                    "IconOverride": { "Type": "Lucide", "Kind": "GraduationCap" }
+                  },
+                  {
+                    "$type": "custom",
+                    "Name": "Cleanup",
+                    "Prompt": "Clean",
+                    "Icon": { "Type": "Lucide", "Kind": "Trash2" }
+                  }
+                ]
+              }
+            }
+            """);
+        await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var engine = new SettingsEngine(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
+
+        await engine.InitializeAsync(default);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(engine.Diagnostics, Is.Empty);
+
+            Assert.That(engine.Settings.Model.CustomAssistants[0].Icon?.Type, Is.EqualTo(ColoredIconType.Tabler));
+            Assert.That(engine.Settings.Model.CustomAssistants[0].Icon?.Kind, Is.EqualTo(TablerIconKind.Robot));
+
+            Assert.That(engine.Settings.Model.CustomAssistants[1].Icon?.Type, Is.EqualTo(ColoredIconType.Tabler));
+            Assert.That(engine.Settings.Model.CustomAssistants[1].Icon?.Kind, Is.EqualTo(TablerIconKind.Bolt));
+
+            Assert.That(engine.Settings.Model.CustomAssistants[2].Icon?.Type, Is.EqualTo(ColoredIconType.Text));
+            Assert.That(engine.Settings.Model.CustomAssistants[2].Icon?.Kind, Is.EqualTo(TablerIconKind.ArrowDown));
+            Assert.That(engine.Settings.Model.CustomAssistants[2].Icon?.Text, Is.EqualTo("😀"));
+
+            var builtInAction = (BuiltInTextSelectionToolbarAction)engine.Settings.TextSelection.ToolbarActions[0];
+            Assert.That(builtInAction.IconOverride?.Type, Is.EqualTo(ColoredIconType.Tabler));
+            Assert.That(builtInAction.IconOverride?.Kind, Is.EqualTo(TablerIconKind.School));
+
+            var customAction = (CustomTextSelectionToolbarAction)engine.Settings.TextSelection.ToolbarActions[1];
+            Assert.That(customAction.Icon.Type, Is.EqualTo(ColoredIconType.Tabler));
+            Assert.That(customAction.Icon.Kind, Is.EqualTo(TablerIconKind.Trash));
         });
     }
 

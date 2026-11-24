@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -151,11 +152,9 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
         }
     }
 
-    public bool IsUpdateButtonVisible
-    {
-        get => UpdateAction != UpdatePageAction.Hidden &&
-               (!IsTerminalUpdate || UpdateAction is UpdatePageAction.Retry or UpdatePageAction.Cancel);
-    }
+    public bool IsUpdateButtonVisible =>
+        UpdateAction != UpdatePageAction.Hidden &&
+        (!IsTerminalUpdate || UpdateAction is UpdatePageAction.Retry or UpdatePageAction.Cancel);
 
     /// <summary>
     /// Gets whether installation is managed outside the graphical application.
@@ -354,7 +353,7 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
                 {
                     Tag = tag,
                     HtmlUrl = new Uri(match.Groups["url"].Value, UriKind.RelativeOrAbsolute),
-                    PublishedDate = DateTimeOffset.Parse(match.Groups["date"].Value),
+                    PublishedDate = DateTimeOffset.Parse(match.Groups["date"].Value, CultureInfo.InvariantCulture),
                     IsCurrent = IsCurrentVersion(tag)
                 };
                 currentNotes.Clear();

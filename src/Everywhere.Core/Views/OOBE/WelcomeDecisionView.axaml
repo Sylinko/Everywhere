@@ -368,7 +368,7 @@
         </Setter>
       </Style>
 
-      <Style Selector="^ LucideIcon#ActionArrowIcon">
+      <Style Selector="^ TablerIcon#ActionArrowIcon">
         <Setter Property="RenderTransform" Value="translateX(-6px)"/>
         <Setter Property="Transitions">
           <Transitions>
@@ -385,7 +385,7 @@
         <Setter Property="Margin" Value="8,0,0,0"/>
       </Style>
 
-      <Style Selector="^:pointerover:not(.busy):not(:disabled) LucideIcon#ActionArrowIcon">
+      <Style Selector="^:pointerover:not(.busy):not(:disabled) TablerIcon#ActionArrowIcon">
         <Setter Property="RenderTransform" Value="translateX(0px)"/>
       </Style>
     </Style>
@@ -479,7 +479,7 @@
           IsEnabled="{Binding Flow.IsNotBusy}">
           <Grid
             RowDefinitions="Auto,*" RowSpacing="18">
-            <LucideIcon
+            <TablerIcon
               Grid.Row="0" HorizontalAlignment="Left"
               VerticalAlignment="Center"
               Foreground="{DynamicResource PrimaryColor}"
@@ -507,7 +507,7 @@
           IsEnabled="{Binding Flow.IsNotBusy}">
           <Grid
             RowDefinitions="Auto,*" RowSpacing="18">
-            <LucideIcon
+            <TablerIcon
               Grid.Row="0" HorizontalAlignment="Left"
               VerticalAlignment="Center"
               Foreground="{DynamicResource OobeOwnAccentBrush}"
@@ -557,10 +557,10 @@
             Background="{DynamicResource OobeSubtleSurfaceBrush}"
             BorderBrush="{DynamicResource OobeSubtleBorderBrush}"
             BorderThickness="1" CornerRadius="21">
-            <LucideIcon
+            <TablerIcon
               HorizontalAlignment="Center" VerticalAlignment="Center"
               Foreground="{DynamicResource PrimaryColor}"
-              Kind="Laptop" Size="17"/>
+              Kind="DeviceLaptop" Size="17"/>
           </Border>
 
           <!--  Left Dot Stream Bridge  -->
@@ -661,7 +661,7 @@
               BorderBrush="{DynamicResource OobeCardBorderBrush}"
               BorderThickness="1" CornerRadius="30"
               IsVisible="{Binding !Flow.IsSignedIn}">
-              <LucideIcon
+              <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 Foreground="{DynamicResource OobeBrandCyanBrush}"
                 Kind="Cloud" Size="25"/>
@@ -674,7 +674,7 @@
               BorderBrush="{DynamicResource OobeSuccessBorderBrush}"
               BorderThickness="1" CornerRadius="30"
               IsVisible="{Binding Flow.IsSignedIn}">
-              <LucideIcon
+              <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 Foreground="{DynamicResource SuccessColor}"
                 Kind="Cloud" Size="25"/>
@@ -724,10 +724,10 @@
             Background="{DynamicResource OobeSubtleSurfaceBrush}"
             BorderBrush="{DynamicResource OobeSubtleBorderBrush}"
             BorderThickness="1" CornerRadius="21">
-            <LucideIcon
+            <TablerIcon
               HorizontalAlignment="Center" VerticalAlignment="Center"
               Foreground="{DynamicResource OobeBrandCyanBrush}"
-              Kind="Globe" Size="17"/>
+              Kind="World" Size="17"/>
           </Border>
         </StackPanel>
 
@@ -743,10 +743,10 @@
             <StackPanel
               Grid.Column="0" Orientation="Horizontal"
               Spacing="6">
-              <LucideIcon
+              <TablerIcon
                 VerticalAlignment="Center"
                 Foreground="{DynamicResource SuccessColor}"
-                Kind="CheckCheck" Size="14"/>
+                Kind="Checks" Size="14"/>
               <TextBlock
                 Classes="Caption" VerticalAlignment="Center"
                 FontWeight="SemiBold"
@@ -809,10 +809,10 @@
               Classes="OobeIconBadge Gold" Grid.Column="0"
               Width="36" Height="36"
               VerticalAlignment="Center" CornerRadius="10">
-              <LucideIcon
+              <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 Foreground="{DynamicResource OobeBrandGoldBrush}"
-                Kind="Zap" Size="17"/>
+                Kind="Bolt" Size="17"/>
             </Border>
             <StackPanel
               Grid.Column="1" VerticalAlignment="Center"
@@ -845,10 +845,10 @@
               Classes="OobeIconBadge Pink" Grid.Column="0"
               Width="36" Height="36"
               VerticalAlignment="Center" CornerRadius="10">
-              <LucideIcon
+              <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 Foreground="{DynamicResource OobeBrandPinkBrush}"
-                Kind="Type" Size="17"/>
+                Kind="Typography" Size="17"/>
             </Border>
             <StackPanel
               Grid.Column="1" VerticalAlignment="Center"
@@ -921,10 +921,10 @@
               Classes="OobeIconBadge Cyan" Grid.Column="0"
               Width="36" Height="36"
               VerticalAlignment="Center" CornerRadius="10">
-              <LucideIcon
+              <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 Foreground="{DynamicResource OobeBrandCyanBrush}"
-                Kind="Info" Size="17"/>
+                Kind="InfoCircle" Size="17"/>
             </Border>
             <StackPanel
               Grid.Column="1" VerticalAlignment="Center"

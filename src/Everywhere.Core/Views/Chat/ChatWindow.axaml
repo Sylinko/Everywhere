@@ -35,10 +35,10 @@
       <StackPanel
         HorizontalAlignment="Center" VerticalAlignment="Center"
         Spacing="16">
-        <LucideIcon
+        <TablerIcon
           x:Name="DragDropIcon" HorizontalAlignment="Center"
           Foreground="{DynamicResource ForegroundColor}"
-          Kind="FileUp" Size="64"/>
+          Kind="FileUpload" Size="64"/>
         <TextBlock
           x:Name="DragDropText" HorizontalAlignment="Center"
           FontSize="18" FontWeight="SemiBold"
@@ -98,7 +98,7 @@
                 <Setter Property="shadui:ButtonAssist.HoverBackground" Value="#99C42B1C"/>
               </Style>
 
-              <Style Selector="^ LucideIcon">
+              <Style Selector="^ TablerIcon">
                 <Setter Property="HorizontalAlignment" Value="Center"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
               </Style>
@@ -106,7 +106,7 @@
 
             <Style Selector="ToggleButton.TitleBar">
               <Style Selector="^:checked">
-                <Style Selector="^ LucideIcon">
+                <Style Selector="^ TablerIcon">
                   <Setter Property="Kind" Value="Pin"/>
                 </Style>
               </Style>
@@ -114,15 +114,17 @@
               <Style Selector="^:indeterminate">
                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor50}"/>
 
-                <Style Selector="^ LucideIcon">
+                <Style Selector="^ TablerIcon">
+                  <Setter Property="IsFilled" Value="True"/>
                   <Setter Property="Kind" Value="Pin"/>
                   <Setter Property="RenderTransform" Value="rotate(45deg)"/>
                 </Style>
               </Style>
 
               <Style Selector="^:unchecked">
-                <Style Selector="^ LucideIcon">
-                  <Setter Property="Kind" Value="PinOff"/>
+                <Style Selector="^ TablerIcon">
+                  <Setter Property="IsFilled" Value="False"/>
+                  <Setter Property="Kind" Value="PinnedOff"/>
                 </Style>
               </Style>
             </Style>
@@ -149,7 +151,7 @@
               <Style Selector="^ ToggleButton#PART_ToggleButton">
                 <Setter Property="IsEnabled" Value="False"/>
               </Style>
-              <Style Selector="^ LucideIcon#PART_Icon">
+              <Style Selector="^ TablerIcon#PART_Icon">
                 <Setter Property="IsVisible" Value="False"/>
               </Style>
               <Style Selector="^ ContentControl#ContentExpandControlContainer">
@@ -165,13 +167,16 @@
 
           <shadui:AsyncToggleButton
             x:Name="TemporaryChatButton" Classes="TitleBar"
-            Margin="2,0,1,0"
-            shadui:ButtonAssist.Icon="{LucideIconContent Ghost, Size=16}"
-            shadui:ButtonAssist.IconSize="16"
+            Margin="2,0,1,0" shadui:ButtonAssist.IconSize="18"
             shadui:ButtonAssist.ShowProgress="{Binding #TemporaryChatButton.IsBusy}"
             Command="{Binding SetTemporaryChatCommand}"
             IsChecked="{Binding ChatContextManager.Current.Data.Metadata.IsTemporary}"
             WindowDecorationProperties.ElementRole="User">
+            <shadui:ButtonAssist.Icon>
+              <TablerIcon
+                IsFilled="{Binding ChatContextManager.Current.Data.Metadata.IsTemporary, FallbackValue=False}"
+                Kind="Ghost" Size="18"/>
+            </shadui:ButtonAssist.Icon>
             <shadui:AsyncToggleButton.IsVisible>
               <MultiBinding Converter="{x:Static BoolConverters.Or}">
                 <Binding Path="ChatContextManager.Current.Data.Metadata.IsTemporary"/>
@@ -209,7 +214,7 @@
           <Panel>
             <ToggleButton
               x:Name="HistoryButton" Classes="TitleBar"
-              Content="{LucideIconContent History, Size=16}"
+              Content="{TablerIconContent History, Size=16}"
               FlowDirection="LeftToRight"
               IsChecked="{Binding PersistentState.IsChatWindowHistoryOpened, Mode=TwoWay}"
               WindowDecorationProperties.ElementRole="User">
@@ -262,7 +267,7 @@
           <Button
             Classes="TitleBar"
             Command="{Binding ChatContextManager.CreateNewCommand}"
-            Content="{LucideIconContent Plus, Size=20}"
+            Content="{TablerIconContent Plus, Size=20}"
             HotKey="Ctrl+N" WindowDecorationProperties.ElementRole="User">
             <ToolTip.Tip>
               <v:KeyboardShortcutLabel
@@ -282,13 +287,13 @@
                 Text="{I18N {x:Static LocaleKey.ChatWindow_TogglePin_ToolTip}}"/>
             </ToolTip.Tip>
 
-            <LucideIcon Size="15"/>
+            <TablerIcon Size="15"/>
           </ToggleButton>
 
           <Button
             Classes="TitleBar Close"
             Command="{Binding CloseCommand}"
-            Content="{LucideIconContent X, Size=20}"
+            Content="{TablerIconContent X, Size=20}"
             HotKey="Ctrl+W" WindowDecorationProperties.ElementRole="User">
             <ToolTip.Tip>
               <v:KeyboardShortcutLabel
@@ -401,7 +406,7 @@
                     Shortcut="Ctrl+Shift+F"
                     Text="{I18N {x:Static LocaleKey.ChatWindow_History_SearchBox_PlaceholderText}}"/>
                 </ToolTip.Tip>
-                <LucideIcon
+                <TablerIcon
                   Kind="Search"
                   Size="{DynamicResource FontSizeM}"/>
               </ToggleButton>
@@ -411,9 +416,39 @@
                 Background="{DynamicResource TransparentColor}"
                 BorderThickness="0"
                 SelectedIndex="{Binding ChatContextManager.HistoryView, Converter={x:Static vc:Int32Converters.FromEnum}, Mode=TwoWay}">
-                <ComboBoxItem Content="{I18N {x:Static LocaleKey.ChatHistory_Recent}}"/>
-                <ComboBoxItem Content="{I18N {x:Static LocaleKey.ChatHistory_Temporary}}"/>
-                <ComboBoxItem Content="{I18N {x:Static LocaleKey.ChatHistory_Archived}}"/>
+                <ComboBoxItem>
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="4">
+                    <TablerIcon
+                      VerticalAlignment="Center" Kind="Clock"
+                      Size="{DynamicResource FontSizeM}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Text="{I18N {x:Static LocaleKey.ChatHistory_Recent}}"/>
+                  </StackPanel>
+                </ComboBoxItem>
+                <ComboBoxItem>
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="4">
+                    <TablerIcon
+                      VerticalAlignment="Center" Kind="Ghost"
+                      Size="{DynamicResource FontSizeM}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Text="{I18N {x:Static LocaleKey.ChatHistory_Temporary}}"/>
+                  </StackPanel>
+                </ComboBoxItem>
+                <ComboBoxItem>
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="4">
+                    <TablerIcon
+                      VerticalAlignment="Center" Kind="Archive"
+                      Size="{DynamicResource FontSizeM}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Text="{I18N {x:Static LocaleKey.ChatHistory_Archived}}"/>
+                  </StackPanel>
+                </ComboBoxItem>
               </ComboBox>
             </DockPanel>
             <Panel
@@ -425,7 +460,7 @@
                 PlaceholderText="{I18N {x:Static LocaleKey.ChatWindow_History_SearchBox_PlaceholderText}}"
                 Text="{Binding ChatContextManager.HistorySearchQuery, Delay=500, Mode=TwoWay}">
                 <TextBox.InnerLeftContent>
-                  <LucideIcon
+                  <TablerIcon
                     Kind="Search"
                     Size="{DynamicResource FontSizeM}"/>
                 </TextBox.InnerLeftContent>
@@ -443,8 +478,8 @@
                       Focusable="False"
                       IsChecked="{Binding ChatContextManager.HistorySearchIncludesContent, Mode=TwoWay}"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_History_IncludeContentToggleButton_ToolTip}}">
-                      <LucideIcon
-                        Kind="TextSearch"
+                      <TablerIcon
+                        Kind="ListSearch"
                         Size="{DynamicResource FontSizeM}"/>
                     </ToggleButton>
                   </DockPanel>
@@ -617,7 +652,7 @@
                       Command="{Binding TextSearch.CycleSearchScopeCommand}"
                       Focusable="False"
                       ToolTip.Tip="{Binding TextSearch.SearchScopeToolTipKey^}">
-                      <LucideIcon
+                      <TablerIcon
                         Kind="{Binding TextSearch.SearchScopeIcon}"
                         Size="{DynamicResource FontSizeM}"/>
                     </Button>
@@ -660,7 +695,7 @@
                     Shortcut="Shift+Enter"
                     Text="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Previous_ToolTip}}"/>
                 </ToolTip.Tip>
-                <LucideIcon
+                <TablerIcon
                   Kind="ChevronUp"
                   Size="{DynamicResource FontSizeM}"/>
               </Button>
@@ -673,7 +708,7 @@
                     Shortcut="Enter"
                     Text="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Next_ToolTip}}"/>
                 </ToolTip.Tip>
-                <LucideIcon
+                <TablerIcon
                   Kind="ChevronDown"
                   Size="{DynamicResource FontSizeM}"/>
               </Button>
@@ -685,7 +720,7 @@
                     Shortcut="Escape"
                     Text="{I18N {x:Static LocaleKey.ChatWindow_TextSearch_Close_ToolTip}}"/>
                 </ToolTip.Tip>
-                <LucideIcon
+                <TablerIcon
                   Kind="X"
                   Size="{DynamicResource FontSizeM}"/>
               </Button>
@@ -713,7 +748,7 @@
               </MultiBinding>
             </Button.IsVisible>
 
-            <LucideIcon
+            <TablerIcon
               Kind="ArrowDown"
               Size="{DynamicResource FontSizeXl}"/>
           </Button>
@@ -873,7 +908,7 @@
                         Command="{Binding DismissCommand, Mode=OneTime}"
                         CommandParameter="{Binding Mode=OneTime}"
                         IsVisible="{Binding CanDismiss, Mode=OneTime}">
-                        <LucideIcon
+                        <TablerIcon
                           Kind="X"
                           Size="{DynamicResource FontSizeL}"/>
                       </Button>
@@ -896,8 +931,8 @@
                 <Expander.Header>
                   <DockPanel
                     HorizontalSpacing="4" IsHitTestVisible="False">
-                    <LucideIcon
-                      DockPanel.Dock="Left" Kind="ListChecks"
+                    <TablerIcon
+                      DockPanel.Dock="Left" Kind="ListCheck"
                       Size="{DynamicResource FontSizeL}"/>
 
                     <TextBlock VerticalAlignment="Center">
@@ -927,7 +962,7 @@
 
                           <!--  NotStarted  -->
                           <DataTemplate x:DataType="p:ChatPluginTodoItem">
-                            <LucideIcon
+                            <TablerIcon
                               Foreground="{DynamicResource MutedColor}"
                               Kind="Circle"
                               Size="{DynamicResource FontSizeM}"/>
@@ -935,7 +970,7 @@
 
                           <!--  In progress  -->
                           <DataTemplate x:DataType="p:ChatPluginTodoItem">
-                            <LucideIcon
+                            <TablerIcon
                               Foreground="{DynamicResource WarningColor60}"
                               Kind="CircleDashed"
                               Size="{DynamicResource FontSizeM}"/>
@@ -943,9 +978,9 @@
 
                           <!--  Completed  -->
                           <DataTemplate x:DataType="p:ChatPluginTodoItem">
-                            <LucideIcon
+                            <TablerIcon
                               Foreground="{DynamicResource SuccessColor60}"
-                              Kind="CircleCheckBig"
+                              IsFilled="True" Kind="CircleCheck"
                               Size="{DynamicResource FontSizeM}"/>
                           </DataTemplate>
                         </v:LazyIndexedContentControl>
@@ -955,10 +990,10 @@
                           VerticalAlignment="Center"
                           Text="{Binding Title}"/>
 
-                        <LucideIcon
+                        <TablerIcon
                           Grid.Column="2" VerticalAlignment="Center"
                           IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                          Kind="CircleQuestionMark"
+                          Kind="HelpCircle"
                           Size="{DynamicResource FontSizeS}"
                           ToolTip.Tip="{Binding Description}"/>
                       </Grid>
@@ -986,8 +1021,8 @@
 
                   <StackPanel
                     Orientation="Horizontal" Spacing="4">
-                    <LucideIcon
-                      Kind="SquarePen"
+                    <TablerIcon
+                      Kind="Edit"
                       Size="{DynamicResource FontSizeL}"/>
                     <TextBlock
                       Classes="Caption" VerticalAlignment="Center"
@@ -1037,10 +1072,10 @@
                 IsVisible="{Binding !!ChatContextManager.Current.Root.BackgroundJobs.ActiveJobs.Count}">
                 <StackPanel Spacing="4">
                   <DockPanel HorizontalSpacing="6">
-                    <LucideIcon
+                    <TablerIcon
                       DockPanel.Dock="Left" VerticalAlignment="Center"
                       Foreground="{DynamicResource MutedColor}"
-                      Kind="Layers"
+                      Kind="Stack2"
                       Size="{DynamicResource FontSizeM}"/>
                     <TextBlock
                       Classes="Caption Muted" VerticalAlignment="Center"
@@ -1059,7 +1094,7 @@
                             Command="{Binding #Self.ViewModel.StopBackgroundJobCommand}"
                             CommandParameter="{Binding}"
                             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_BackgroundJobs_Stop_ToolTip}}">
-                            <LucideIcon
+                            <TablerIcon
                               Kind="X"
                               Size="{DynamicResource FontSizeS}"/>
                           </Button>
@@ -1131,7 +1166,7 @@
                             Command="{Binding #Self.ViewModel.RemovePendingInputCommand}"
                             CommandParameter="{Binding}"
                             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_Delete_ToolTip}}">
-                            <LucideIcon
+                            <TablerIcon
                               Kind="X"
                               Size="{DynamicResource FontSizeS}"/>
                           </Button>
@@ -1142,8 +1177,8 @@
                             Command="{Binding #Self.ViewModel.WithdrawPendingInputCommand}"
                             CommandParameter="{Binding}"
                             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_Withdraw_ToolTip}}">
-                            <LucideIcon
-                              Kind="SquarePen"
+                            <TablerIcon
+                              Kind="Edit"
                               Size="{DynamicResource FontSizeS}"/>
                           </Button>
                           <Button
@@ -1158,7 +1193,7 @@
                             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_PendingInputs_ToggleMode_ToolTip}}">
                             <StackPanel
                               Orientation="Horizontal" Spacing="4">
-                              <LucideIcon
+                              <TablerIcon
                                 VerticalAlignment="Center"
                                 Foreground="{DynamicResource MutedColor}"
                                 Kind="ArrowLeftRight"
@@ -1399,7 +1434,8 @@
                             CornerRadius="{DynamicResource FullCornerRadius}"
                             Focusable="False"
                             IsEnabled="{Binding IsPrimaryButtonEnabled}"
-                            IsHitTestVisible="{Binding IsPrimaryButtonVisible}">
+                            IsHitTestVisible="{Binding IsPrimaryButtonVisible}"
+                            UseLayoutRounding="False">
                             <Button.Transitions>
                               <Transitions>
                                 <TransformOperationsTransition
@@ -1460,24 +1496,10 @@
                               </v:LazyIndexedContentControl>
                             </ToolTip.Tip>
 
-                            <LucideIcon
-                              Margin="-2,0,0,-2"
-                              Classes.queue="{Binding PrimaryComposerMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:ChatComposerPrimaryMode.Queue}}"
-                              Classes.resume="{Binding PrimaryComposerMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:ChatComposerPrimaryMode.Resume}}"
+                            <TablerIcon
                               Foreground="{DynamicResource PrimaryForegroundColor}"
-                              Kind="Send"
-                              Size="{DynamicResource FontSizeL}">
-                              <LucideIcon.Styles>
-                                <Style Selector="LucideIcon.resume">
-                                  <Setter Property="Kind" Value="Play"/>
-                                  <Setter Property="Margin" Value="2,0,0,0"/>
-                                </Style>
-                                <Style Selector="LucideIcon.queue">
-                                  <Setter Property="Kind" Value="Clock"/>
-                                  <Setter Property="Margin" Value="0"/>
-                                </Style>
-                              </LucideIcon.Styles>
-                            </LucideIcon>
+                              Kind="ArrowUp"
+                              Size="{DynamicResource FontSizeXl}"/>
                           </Button>
                         </Panel>
 
@@ -1563,8 +1585,8 @@
                                   Command="{Binding PickVisualElementCommand}"
                                   Header="{I18N {x:Static LocaleKey.ChatWindow_AddAttachmentMenuItems_PickVisualElement}}">
                                   <MenuItem.Icon>
-                                    <LucideIcon
-                                      Kind="SquareMousePointer"
+                                    <TablerIcon
+                                      Kind="Pointer"
                                       Size="{DynamicResource FontSizeL}"/>
                                   </MenuItem.Icon>
                                 </MenuItem>
@@ -1572,8 +1594,8 @@
                                   Command="{Binding TakeScreenshotCommand}"
                                   Header="{I18N {x:Static LocaleKey.ChatWindow_AddAttachmentMenuItems_TakeScreenshot}}">
                                   <MenuItem.Icon>
-                                    <LucideIcon
-                                      Kind="Fullscreen"
+                                    <TablerIcon
+                                      Kind="ArrowsMaximize"
                                       Size="{DynamicResource FontSizeL}"/>
                                   </MenuItem.Icon>
                                 </MenuItem>
@@ -1581,8 +1603,8 @@
                                   Command="{Binding AddClipboardCommand}"
                                   Header="{I18N {x:Static LocaleKey.ChatWindow_AddAttachmentMenuItems_PasteFromClipboard}}">
                                   <MenuItem.Icon>
-                                    <LucideIcon
-                                      Kind="ClipboardPaste"
+                                    <TablerIcon
+                                      Kind="ClipboardText"
                                       Size="{DynamicResource FontSizeL}"/>
                                   </MenuItem.Icon>
                                 </MenuItem>
@@ -1590,7 +1612,7 @@
                                   Command="{Binding AddFileCommand}"
                                   Header="{I18N {x:Static LocaleKey.ChatWindow_AddAttachmentMenuItems_AttachFile}}">
                                   <MenuItem.Icon>
-                                    <LucideIcon
+                                    <TablerIcon
                                       Kind="File"
                                       Size="{DynamicResource FontSizeL}"/>
                                   </MenuItem.Icon>
@@ -1600,7 +1622,7 @@
                           </Flyout>
                         </Button.Flyout>
 
-                        <LucideIcon
+                        <TablerIcon
                           HorizontalAlignment="Center" VerticalAlignment="Center"
                           Kind="Paperclip"
                           Size="{DynamicResource FontSizeL}"/>

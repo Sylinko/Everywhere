@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia.Headless.NUnit;
 using Everywhere.AI;
@@ -12,7 +12,7 @@ using Everywhere.Configuration;
 using Everywhere.Harness;
 using Everywhere.I18N;
 using Everywhere.Statistics;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -302,7 +302,7 @@ public sealed class ToolApprovalReviewerTests
                 _generation.Services,
                 chatContext,
                 plugin.CreateSnapshot(new(), new(), [function]).Bindings[0],
-                new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")),
+                new FunctionCallChatMessage(TablerIconKind.File, new DirectLocaleKey("test")),
                 new MEAI.FunctionCallContent(Guid.NewGuid().ToString(), function.Function.Name, new Dictionary<string, object?>()),
                 new ObservableToolRulesets(),
                 _generation,

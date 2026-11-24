@@ -1,4 +1,4 @@
-﻿using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views.Pages;
 
@@ -6,7 +6,7 @@ public partial class CustomAssistantPage : ReactiveUserControl<CustomAssistantPa
 {
     public int Index => 0;
 
-    public LucideIconKind Icon => LucideIconKind.Bot;
+    public TablerIconKind Icon => TablerIconKind.MessageChatbot;
 
     public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.CustomAssistantPage_Title);
 

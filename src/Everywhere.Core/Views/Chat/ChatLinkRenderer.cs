@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Primitives.PopupPositioning;
@@ -14,7 +14,7 @@ using Avalonia.VisualTree;
 using Everywhere.Chat.Links;
 using Everywhere.Utilities;
 using LiveMarkdown.Avalonia;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -446,9 +446,9 @@ public class ChatLinkRenderer : MarkdownRenderer
         public ChatLinkTarget? Target { get; private set; }
         public byte[]? Favicon { get; private set; }
 
-        private readonly LucideIcon _placeholder = new()
+        private readonly TablerIcon _placeholder = new()
         {
-            [!LucideIcon.SizeProperty] = new DynamicResourceExtension("FontSizeL")
+            [!TablerIcon.SizeProperty] = new DynamicResourceExtension("FontSizeL")
         };
 
         private Image? _image;
@@ -478,8 +478,8 @@ public class ChatLinkRenderer : MarkdownRenderer
 
             var page = target.Kind == ChatLinkKind.Web ? new Uri(target.Address) : null;
             _sitePage = page is not null && ChatLinkInteraction.IsPreviewable(page) ? page : null;
-            _placeholder.Kind = target.Kind == ChatLinkKind.Web ? LucideIconKind.Globe : ChatFileIcons.FromPath(target.Address);
-            if (_sitePage is not null || target.Kind == ChatLinkKind.Local && _placeholder.Kind != LucideIconKind.Folder)
+            _placeholder.Kind = target.Kind == ChatLinkKind.Web ? TablerIconKind.World : ChatFileIcons.FromPath(target.Address);
+            if (_sitePage is not null || target.Kind == ChatLinkKind.Local && _placeholder.Kind != TablerIconKind.Folder)
             {
                 EffectiveViewportChanged += HandleIconViewportChanged;
             }
@@ -527,7 +527,7 @@ public class ChatLinkRenderer : MarkdownRenderer
                     if (request.IsCancellationRequested) return;
 
                     _hasCheckedDirectory = true;
-                    if (isDirectory) _placeholder.Kind = LucideIconKind.Folder;
+                    if (isDirectory) _placeholder.Kind = TablerIconKind.Folder;
                     return;
                 }
 

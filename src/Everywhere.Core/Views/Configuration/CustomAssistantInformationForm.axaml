@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
   xmlns:vc="clr-namespace:Everywhere.ValueConverters">
@@ -53,7 +53,7 @@
 
                 <Button
                   Classes="Ghost Compact Uniform" VerticalAlignment="Bottom"
-                  shadui:ButtonAssist.Icon="{LucideIconContent PencilLine}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent Pencil}"
                   shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
                   Command="{Binding #PART_NameTextBlock.EnterEditMode}"
                   IsVisible="{Binding !#PART_NameTextBlock.IsEditing}"
@@ -66,7 +66,7 @@
                 <Button
                   Classes="Ghost Muted Compact" DockPanel.Dock="Right"
                   VerticalAlignment="Top"
-                  shadui:ButtonAssist.Icon="{LucideIconContent PencilLine}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent Pencil}"
                   shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
                   Command="{Binding #PART_DescriptionTextBlock.EnterEditMode}"
                   IsVisible="{Binding !#PART_DescriptionTextBlock.IsEditing}"

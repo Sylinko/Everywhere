@@ -36,11 +36,12 @@
                 ToolTip.Tip="{Binding Skill.Description}"/>
             </StackPanel>
 
-            <LucideIcon
+            <TablerIcon
               Grid.Column="1"
               Foreground="{DynamicResource WarningColor}"
+              IsFilled="True"
               IsVisible="{Binding !!Skill.Diagnostics.Count}"
-              Kind="TriangleAlert"
+              Kind="AlertTriangle"
               Size="{DynamicResource FontSizeL}"
               ToolTip.Placement="Top"
               ToolTip.Tip="{Binding Skill.FirstDiagnosticContentKey^, FallbackValue={x:Null}}"/>
@@ -116,7 +117,7 @@
         <Button
           Classes="Ghost Compact" Grid.Row="0"
           Grid.Column="1" HorizontalAlignment="Right"
-          shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+          shadui:ButtonAssist.Icon="{TablerIconContent Refresh}"
           shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
           Command="{Binding RefreshCommand}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_RescanButton_ToolTip}}"/>
@@ -160,7 +161,7 @@
                           TextTrimming="CharacterEllipsis"/>
                         <Button
                           Classes="Ghost Compact" Grid.Column="1"
-                          shadui:ButtonAssist.Icon="{LucideIconContent FolderOpen}"
+                          shadui:ButtonAssist.Icon="{TablerIconContent FolderOpen}"
                           Command="{Binding #Self.ViewModel.OpenFolderCommand}"
                           CommandParameter="{Binding SourceDirectoryPath}"
                           ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_OpenSourceFolderButton_ToolTip}}"/>
@@ -249,7 +250,7 @@
         <Button
           Classes="Secondary" Grid.Column="2"
           VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent FolderOpen}"
+          shadui:ButtonAssist.Icon="{TablerIconContent FolderOpen}"
           Command="{Binding OpenSelectedSkillFolderCommand}"
           Content="{I18N {x:Static LocaleKey.SkillPage_OpenButton_Content}}"
           CornerRadius="{DynamicResource FullCornerRadius}"
@@ -377,7 +378,7 @@
                         IsHitTestVisible="{Binding !$self.IsChecked}"/>
                       <Button
                         Classes="Ghost Compact"
-                        shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+                        shadui:ButtonAssist.Icon="{TablerIconContent Copy}"
                         shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
                         Command="{Binding #Self.ViewModel.CopyMarkdownCommand}"
                         Content="{I18N {x:Static LocaleKey.Common_Copy}}">

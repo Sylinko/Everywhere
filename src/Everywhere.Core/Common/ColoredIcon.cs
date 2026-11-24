@@ -1,18 +1,18 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Common;
 
 public enum ColoredIconType
 {
-    Lucide,
+    Tabler,
     Text,
 }
 
 /// <summary>
 /// Represents an icon.
 /// </summary>
-/// TODO: make this a messagepack object with polymorphism support for Lucide and Text types.
+/// TODO: make this a messagepack object with polymorphism support for Tabler and Text types.
 public partial class ColoredIcon(ColoredIconType type, SerializableColor? foreground = null, SerializableColor? background = null) : ObservableObject
 {
     [ObservableProperty]
@@ -25,7 +25,10 @@ public partial class ColoredIcon(ColoredIconType type, SerializableColor? foregr
     public partial ColoredIconType Type { get; set; } = type;
 
     [ObservableProperty]
-    public partial LucideIconKind Kind { get; set; }
+    public partial TablerIconKind Kind { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsFilled { get; set; }
 
     public string? Text
     {
@@ -33,7 +36,7 @@ public partial class ColoredIcon(ColoredIconType type, SerializableColor? foregr
         set => SetProperty(ref field, value?.SafeSubstring(0, 10));
     }
 
-    public static implicit operator ColoredIcon(LucideIconKind kind) => new(ColoredIconType.Lucide) { Kind = kind };
+    public static implicit operator ColoredIcon(TablerIconKind kind) => new(ColoredIconType.Tabler) { Kind = kind };
 
     public static implicit operator ColoredIcon(string text) => new(ColoredIconType.Text) { Text = text };
 }

@@ -36,7 +36,7 @@
                     Margin="4" Spacing="2">
                     <Button
                       Padding="12,6"
-                      shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+                      shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
                       BorderThickness="0"
                       Content="{I18N {x:Static LocaleKey.AssistantPromptSelector_NewPrompt}}"
                       CornerRadius="6">
@@ -52,7 +52,7 @@
 
                     <Button
                       Padding="12,6"
-                      shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                      shadui:ButtonAssist.Icon="{TablerIconContent Settings}"
                       BorderThickness="0"
                       Content="{I18N {x:Static LocaleKey.AssistantPromptSelector_ManagePrompts}}"
                       CornerRadius="6">

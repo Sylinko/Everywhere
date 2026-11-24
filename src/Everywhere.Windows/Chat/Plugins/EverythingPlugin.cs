@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text;
 using DynamicData;
 using EverythingNet.Core;
@@ -11,7 +11,7 @@ using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Prompting;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 using Everywhere.Harness;
 
@@ -27,7 +27,7 @@ public sealed partial class EverythingPlugin : BuiltInChatPlugin
     public override IDynamicLocaleKey DescriptionKey { get; } =
         new DynamicLocaleKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_Description);
 
-    public override LucideIconKind? Icon => LucideIconKind.Search;
+    public override TablerIconKind? Icon => TablerIconKind.FolderSearch;
 
     public override string BeautifulIcon => "avares://Everywhere/Assets/Icons/Everything.svg";
 

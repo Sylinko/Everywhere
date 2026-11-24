@@ -15,7 +15,7 @@
         <Button
           Classes="Secondary" DockPanel.Dock="Right"
           VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+          shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
           Command="{Binding CreateNewCustomAssistantCommand}"
           Content="{I18N {x:Static LocaleKey.CustomAssistantPage_CreateNewCustomAssistantButton_Content}}"
           CornerRadius="{DynamicResource FullCornerRadius}"
@@ -39,7 +39,7 @@
           <Style Selector="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Margin" Value="0,0,4,0"/>
-            <Style Selector="^:not(:pointerover) LucideIcon#GripIcon">
+            <Style Selector="^:not(:pointerover) TablerIcon#GripIcon">
               <Setter Property="IsVisible" Value="False"/>
             </Style>
           </Style>
@@ -49,7 +49,7 @@
           <DataTemplate DataType="ai:CustomAssistant">
             <DockPanel
               HorizontalSpacing="10" LastChildFill="True">
-              <LucideIcon
+              <TablerIcon
                 x:Name="GripIcon" DockPanel.Dock="Right"
                 Foreground="{DynamicResource MutedColor}"
                 Kind="GripVertical"
@@ -90,7 +90,7 @@
         Orientation="Horizontal" Spacing="6">
         <Button
           Classes="Primary" VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Zap}"
+          shadui:ButtonAssist.Icon="{TablerIconContent Bolt, IsFilled=True}"
           shadui:ButtonAssist.ShowProgress="{Binding CheckConnectivityCommand.IsRunning}"
           Command="{Binding CheckConnectivityCommand}"
           Content="{I18N {x:Static LocaleKey.CustomAssistantPage_CheckConnectivityButton_Content}}"
@@ -99,7 +99,7 @@
 
         <Button
           Classes="Secondary" VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+          shadui:ButtonAssist.Icon="{TablerIconContent Copy}"
           Command="{Binding DuplicateCustomAssistantCommand}"
           Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_Content}}"
           CornerRadius="{DynamicResource FullCornerRadius}"
@@ -107,7 +107,7 @@
 
         <Button
           Classes="Secondary" VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
+          shadui:ButtonAssist.Icon="{TablerIconContent Trash}"
           Command="{Binding DeleteCustomAssistantCommand}"
           Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_Content}}"
           CornerRadius="{DynamicResource FullCornerRadius}"

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text.Json;
 using Everywhere.AI;
 using Everywhere.Chat;
@@ -9,7 +9,7 @@ using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Configuration;
 using Everywhere.Harness;
 using Everywhere.I18N;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -206,7 +206,7 @@ public sealed class GenerationApprovalTests
             generation.Services,
             context,
             plugin.CreateSnapshot(new(), new(), [function]).Bindings[0],
-            new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")),
+            new FunctionCallChatMessage(TablerIconKind.File, new DirectLocaleKey("test")),
             call,
             new ObservableToolRulesets(),
             generation,

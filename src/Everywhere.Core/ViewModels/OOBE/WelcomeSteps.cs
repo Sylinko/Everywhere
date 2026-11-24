@@ -1,3 +1,5 @@
+using Avalonia.Controls.Primitives;
+
 namespace Everywhere.ViewModels;
 
 /// <summary>
@@ -33,7 +35,7 @@ public sealed class WelcomeSourceStep(WelcomeFlow flow)
 public sealed class WelcomeLoginStep(WelcomeFlow flow)
     : WelcomeStep(flow, 2, "login", LocaleKey.Oobe_Login_Title, LocaleKey.Oobe_Login_Description)
 {
-    public override bool IsApplicable => Flow.IsCloudSource && !Flow.IsSignedIn;
+    public override bool IsApplicable => Flow is { IsCloudSource: true, IsSignedIn: false };
     public override bool IsIncludedInProgress => !Flow.IsOwnSource && (!Flow.IsSignedIn || Flow.IsLoginStepInProgressPath(this));
     public override bool CanContinue => Flow.IsSignedIn || Flow.CanLogIn;
 
@@ -73,7 +75,8 @@ public sealed class WelcomePersonalizationStep(WelcomeFlow flow)
     : WelcomeStep(flow, 4, "personalize", LocaleKey.Oobe_Personalize_Title, LocaleKey.Oobe_Personalize_Description)
 {
     public override bool IsSplitLayout => true;
-    public override bool CanContinue => Flow.HasScenarios && Flow.IsConnectivityChecked;
+    public override bool CanContinue => Flow is { HasScenarios: true, IsConnectivityChecked: true };
+    public override ScrollBarVisibility DecisionScrollBarVisibility => ScrollBarVisibility.Disabled;
     public override IDynamicLocaleKey PrimaryLabelKey => new DynamicLocaleKey(LocaleKey.Oobe_SavePreferences);
     public override Task<bool> ContinueAsync(CancellationToken cancellationToken) => Flow.SavePersonalizationAsync(cancellationToken);
 }
@@ -85,7 +88,7 @@ public sealed class WelcomeShortcutStep(WelcomeFlow flow)
     : WelcomeStep(flow, 5, "shortcut", LocaleKey.Oobe_Shortcut_Title, LocaleKey.Oobe_Shortcut_Description)
 {
     public override bool CanContinue =>
-        Flow.HasValidShortcut && Flow.IsConnectivityChecked && Flow.Assistant.SystemPromptId != Guid.Empty;
+        Flow is { HasValidShortcut: true, IsConnectivityChecked: true } && Flow.Assistant.SystemPromptId != Guid.Empty;
 
     public override IDynamicLocaleKey PrimaryLabelKey => new DynamicLocaleKey(LocaleKey.Oobe_Next);
 

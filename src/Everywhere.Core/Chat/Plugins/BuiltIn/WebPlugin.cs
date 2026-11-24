@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using Everywhere.Chat.Permissions;
@@ -7,7 +7,7 @@ using Everywhere.Configuration;
 using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
 using Everywhere.Web;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.Logging;
 using Everywhere.Harness;
 
@@ -17,7 +17,7 @@ public sealed class WebPlugin : BuiltInChatPlugin
 {
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Description);
-    public override LucideIconKind? Icon => LucideIconKind.Globe;
+    public override TablerIconKind? Icon => TablerIconKind.World;
     public override bool IsDefaultEnabled => true;
     public override IReadOnlyList<SettingsItem> SettingsItems => [.._webSearchEngineSettings.SettingsItems, .._webBrowserSettings.SettingsItems];
 
@@ -46,12 +46,14 @@ public sealed class WebPlugin : BuiltInChatPlugin
                 new NativeChatFunction(
                     SearchAsync,
                     ChatFunctionPermissions.NetworkAccess,
+                    icon: TablerIconKind.WorldSearch,
                     supportsParallelInvoke: true,
                     permissionConsentHook: BypassPermissionConsentHook));
             list.Add(
                 new NativeChatFunction(
                     ExtractAsync,
-                    ChatFunctionPermissions.NetworkAccess));
+                    ChatFunctionPermissions.NetworkAccess,
+                    icon: TablerIconKind.WorldDownload));
         });
     }
 

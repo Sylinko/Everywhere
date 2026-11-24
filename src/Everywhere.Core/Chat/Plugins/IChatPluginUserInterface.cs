@@ -1,10 +1,10 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Everywhere.Chat.Permissions;
 using Everywhere.Collections;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -92,7 +92,7 @@ public enum RequestConsentRememberMasks
     All = AllowOnce | AllowSession | AlwaysAllow
 }
 
-public sealed record RequestConsentCustomOption(object Key, IDynamicLocaleKey HeaderKey, LucideIconKind? Icon);
+public sealed record RequestConsentCustomOption(object Key, IDynamicLocaleKey HeaderKey, TablerIconKind? Icon);
 
 /// <summary>
 /// Represents the effective result of a consent request returned to a chat plugin.

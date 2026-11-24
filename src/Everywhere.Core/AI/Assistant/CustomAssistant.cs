@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Avalonia.Data;
@@ -8,7 +8,7 @@ using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.AI;
@@ -24,7 +24,7 @@ public sealed partial class CustomAssistant : Assistant
 
     [ObservableProperty]
     [SettingsItemIgnore]
-    public partial ColoredIcon? Icon { get; set; } = new(ColoredIconType.Lucide) { Kind = LucideIconKind.Bot };
+    public partial ColoredIcon? Icon { get; set; } = new(ColoredIconType.Tabler) { Kind = TablerIconKind.Robot };
 
     [ObservableProperty]
     [SettingsItemIgnore]

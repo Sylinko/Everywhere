@@ -1,4 +1,4 @@
-﻿using Lucide.Avalonia;
+using Tabler.Avalonia;
 
 namespace Everywhere.Chat;
 
@@ -9,7 +9,7 @@ partial class ChatData
     /// execution branch; otherwise the selected tail is used.
     /// </summary>
     public IBusyActivity StartActivity(
-        LucideIconKind icon,
+        TablerIconKind icon,
         IDynamicLocaleKey headerKey,
         bool removeAfterCompletion,
         IDynamicLocaleKey? secondaryHeaderKey = null,

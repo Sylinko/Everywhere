@@ -8,9 +8,9 @@ using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Utilities;
 using FuzzySharp;
-using Lucide.Avalonia;
 using MessagePack;
 using Serilog;
+using Tabler.Avalonia;
 
 namespace Everywhere.Views;
 
@@ -18,6 +18,11 @@ namespace Everywhere.Views;
 public readonly partial record struct EmojiEntry([property: Key(0)] string Emoji, [property: Key(1)] IReadOnlyList<string> Tags);
 
 [TemplatePart(Name = "PART_IconTypeTabControl", Type = typeof(TabControl))]
+[TemplatePart(Name = "PART_OutlineTabItem", Type = typeof(TabItem))]
+[TemplatePart(Name = "PART_FilledTabItem", Type = typeof(TabItem))]
+[TemplatePart(Name = "PART_EmojiTabItem", Type = typeof(TabItem))]
+[TemplatePart(Name = "PART_OutlineListBox", Type = typeof(ListBox))]
+[TemplatePart(Name = "PART_FilledListBox", Type = typeof(ListBox))]
 public sealed class IconEditor : TemplatedControl
 {
     public static readonly StyledProperty<ColoredIcon?> IconProperty = AvaloniaProperty.Register<IconEditor, ColoredIcon?>(nameof(Icon));
@@ -28,12 +33,19 @@ public sealed class IconEditor : TemplatedControl
         set => SetValue(IconProperty, value);
     }
 
-    public static readonly DirectProperty<IconEditor, IReadOnlyBindableList<LucideIconKind>> LucideItemsSourceProperty =
-        AvaloniaProperty.RegisterDirect<IconEditor, IReadOnlyBindableList<LucideIconKind>>(
-            nameof(LucideItemsSource),
-            o => o.LucideItemsSource);
+    public static readonly DirectProperty<IconEditor, IReadOnlyBindableList<TablerIconKind>> OutlineItemsSourceProperty =
+        AvaloniaProperty.RegisterDirect<IconEditor, IReadOnlyBindableList<TablerIconKind>>(
+            nameof(OutlineItemsSource),
+            o => o.OutlineItemsSource);
 
-    public IReadOnlyBindableList<LucideIconKind> LucideItemsSource { get; }
+    public IReadOnlyBindableList<TablerIconKind> OutlineItemsSource { get; }
+
+    public static readonly DirectProperty<IconEditor, IReadOnlyBindableList<TablerIconKind>> FilledItemsSourceProperty =
+        AvaloniaProperty.RegisterDirect<IconEditor, IReadOnlyBindableList<TablerIconKind>>(
+            nameof(FilledItemsSource),
+            o => o.FilledItemsSource);
+
+    public IReadOnlyBindableList<TablerIconKind> FilledItemsSource { get; }
 
     public static readonly DirectProperty<IconEditor, IReadOnlyBindableList<string>> EmojiItemsSourceProperty =
         AvaloniaProperty.RegisterDirect<IconEditor, IReadOnlyBindableList<string>>(
@@ -50,22 +62,30 @@ public sealed class IconEditor : TemplatedControl
         set => SetValue(QueryTextProperty, value);
     }
 
-    private static readonly (LucideIconKind Kind, string Name)[] CachedLucideIcons =
-        Enum.GetValues<LucideIconKind>()
+    private static readonly (TablerIconKind Kind, string Name, bool HasFilled)[] CachedTablerIcons =
+        Enum.GetValues<TablerIconKind>()
             .AsValueEnumerable()
-            .Select(x => (Kind: x, Name: x.ToString()))
+            .Select(x => (Kind: x, Name: x.ToString(), HasFilled: x.HasFilled()))
             .ToArray();
 
-    private readonly BindableList<LucideIconKind> _lucideItemsSource = [];
+    private readonly BindableList<TablerIconKind> _outlineItemsSource = [];
+    private readonly BindableList<TablerIconKind> _filledItemsSource = [];
     private readonly BindableList<string> _emojiItemsSource = [];
 
     private SingleAssignmentDisposable? _queryTextChangedSubscription;
     private IDisposable? _iconTypeTabControlSelectionChangedSubscription;
+    private IDisposable? _outlineListSelectionChangedSubscription;
+    private IDisposable? _filledListSelectionChangedSubscription;
     private TabControl? _iconTypeTabControl;
+    private TabItem? _outlineTabItem;
+    private TabItem? _filledTabItem;
+    private TabItem? _emojiTabItem;
+    private bool _isSyncingUi;
 
     public IconEditor()
     {
-        LucideItemsSource = _lucideItemsSource;
+        OutlineItemsSource = _outlineItemsSource;
+        FilledItemsSource = _filledItemsSource;
         EmojiItemsSource = _emojiItemsSource;
     }
 
@@ -107,17 +127,29 @@ public sealed class IconEditor : TemplatedControl
         });
     }
 
-    private void ApplySearchResults((IEnumerable<LucideIconKind> Lucide, IEnumerable<string> Emoji) results)
+    private void ApplySearchResults((IEnumerable<TablerIconKind> Outline, IEnumerable<TablerIconKind> Filled, IEnumerable<string> Emoji) results)
     {
-        _lucideItemsSource.Reset(Icon?.Kind is { } kind ?
-            [kind, .. results.Lucide.Where(item => item != kind)] :
-            [.. results.Lucide]);
-        _emojiItemsSource.Reset(Icon?.Text is { } text ?
-            [text, .. results.Emoji.Where(item => !item.Equals(text, StringComparison.OrdinalIgnoreCase))] :
-            [.. results.Emoji]);
+        _isSyncingUi = true;
+        try
+        {
+            var currentKind = Icon?.Kind;
+            _outlineItemsSource.Reset(currentKind is { } outlineKind && Enum.IsDefined(outlineKind)
+                ? [outlineKind, .. results.Outline.Where(item => item != outlineKind)]
+                : [.. results.Outline]);
+            _filledItemsSource.Reset(currentKind is { } filledKind && filledKind.HasFilled()
+                ? [filledKind, .. results.Filled.Where(item => item != filledKind)]
+                : [.. results.Filled]);
+            _emojiItemsSource.Reset(Icon?.Text is { } text
+                ? [text, .. results.Emoji.Where(item => !item.Equals(text, StringComparison.OrdinalIgnoreCase))]
+                : [.. results.Emoji]);
+        }
+        finally
+        {
+            _isSyncingUi = false;
+        }
     }
 
-    private async static Task<(IEnumerable<LucideIconKind> Lucide, IEnumerable<string> Emoji)> PerformSearchAsync(
+    private async static Task<(IEnumerable<TablerIconKind> Outline, IEnumerable<TablerIconKind> Filled, IEnumerable<string> Emoji)> PerformSearchAsync(
         string query,
         CancellationToken cancellationToken)
     {
@@ -125,18 +157,22 @@ public sealed class IconEditor : TemplatedControl
 
         if (string.IsNullOrWhiteSpace(query))
         {
-            return (CachedLucideIcons.Select(x => x.Kind), EmojiSearchEngine.Shared.GetDefaultView());
+            var outlineResults = CachedTablerIcons.Select(x => x.Kind);
+            var filledResults = CachedTablerIcons.Where(x => x.HasFilled).Select(x => x.Kind);
+            return (outlineResults, filledResults, EmojiSearchEngine.Shared.GetDefaultView());
         }
 
         return await Task.Run(
             () =>
             {
-                var lucideResults = CachedLucideIcons
+                var matched = CachedTablerIcons
                     .Where(x => x.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
-                    .Select(x => x.Kind);
+                    .ToArray();
+                var outlineResults = matched.Select(x => x.Kind);
+                var filledResults = matched.Where(x => x.HasFilled).Select(x => x.Kind);
                 var emojiResults = EmojiSearchEngine.Shared.Search(query, cancellationToken: cancellationToken);
 
-                return (lucideResults, emojiResults);
+                return (outlineResults, filledResults, emojiResults);
             },
             cancellationToken);
     }
@@ -146,15 +182,76 @@ public sealed class IconEditor : TemplatedControl
         base.OnApplyTemplate(e);
 
         _iconTypeTabControlSelectionChangedSubscription?.Dispose();
+        _outlineListSelectionChangedSubscription?.Dispose();
+        _filledListSelectionChangedSubscription?.Dispose();
+
         _iconTypeTabControl = e.NameScope.Find<TabControl>("PART_IconTypeTabControl").NotNull();
+        _outlineTabItem = e.NameScope.Find<TabItem>("PART_OutlineTabItem").NotNull();
+        _filledTabItem = e.NameScope.Find<TabItem>("PART_FilledTabItem").NotNull();
+        _emojiTabItem = e.NameScope.Find<TabItem>("PART_EmojiTabItem").NotNull();
+        var outlineListBox = e.NameScope.Find<ListBox>("PART_OutlineListBox").NotNull();
+        var filledListBox = e.NameScope.Find<ListBox>("PART_FilledListBox").NotNull();
+
         _iconTypeTabControlSelectionChangedSubscription = _iconTypeTabControl.AddDisposableHandler(
             SelectingItemsControl.SelectionChangedEvent,
             (_, args) =>
             {
-                if (args.AddedItems is [TabItem { Tag: ColoredIconType type }]) Icon?.Type = type;
-            },
-            handledEventsToo: true);
-        SetIconTypeTabControlSelection(Icon?.Type ?? ColoredIconType.Lucide);
+                if (_isSyncingUi || !ReferenceEquals(args.Source, _iconTypeTabControl) || Icon is not { } icon)
+                {
+                    return;
+                }
+
+                if (args.AddedItems is not [TabItem tabItem])
+                {
+                    return;
+                }
+
+                if (ReferenceEquals(tabItem, _outlineTabItem))
+                {
+                    icon.Type = ColoredIconType.Tabler;
+                    icon.IsFilled = false;
+                }
+                else if (ReferenceEquals(tabItem, _filledTabItem))
+                {
+                    icon.Type = ColoredIconType.Tabler;
+                    if (icon.Kind.HasFilled())
+                    {
+                        icon.IsFilled = true;
+                    }
+                }
+                else if (ReferenceEquals(tabItem, _emojiTabItem))
+                {
+                    icon.Type = ColoredIconType.Text;
+                }
+            });
+
+        _outlineListSelectionChangedSubscription = outlineListBox.AddDisposableHandler(
+            SelectingItemsControl.SelectionChangedEvent,
+            (_, args) =>
+            {
+                if (_isSyncingUi || Icon is not { } icon || args.AddedItems is not [TablerIconKind])
+                {
+                    return;
+                }
+
+                icon.Type = ColoredIconType.Tabler;
+                icon.IsFilled = false;
+            });
+
+        _filledListSelectionChangedSubscription = filledListBox.AddDisposableHandler(
+            SelectingItemsControl.SelectionChangedEvent,
+            (_, args) =>
+            {
+                if (_isSyncingUi || Icon is not { } icon || args.AddedItems is not [TablerIconKind])
+                {
+                    return;
+                }
+
+                icon.Type = ColoredIconType.Tabler;
+                icon.IsFilled = true;
+            });
+
+        SetIconTypeTabControlSelection(Icon);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -163,15 +260,31 @@ public sealed class IconEditor : TemplatedControl
 
         if (change.Property == IconProperty)
         {
-            SetIconTypeTabControlSelection(Icon?.Type ?? ColoredIconType.Lucide);
+            SetIconTypeTabControlSelection(Icon);
         }
     }
 
-    private void SetIconTypeTabControlSelection(ColoredIconType type)
+    private void SetIconTypeTabControlSelection(ColoredIcon? icon)
     {
-        if (_iconTypeTabControl?.Items is not IEnumerable items) return;
-        var tabItem = items.OfType<TabItem>().FirstOrDefault(ti => ti.Tag is ColoredIconType t && t == type);
-        if (tabItem != null) _iconTypeTabControl.SelectedItem = tabItem;
+        if (_iconTypeTabControl is null)
+        {
+            return;
+        }
+
+        _isSyncingUi = true;
+        try
+        {
+            _iconTypeTabControl.SelectedItem = icon?.Type switch
+            {
+                ColoredIconType.Text => _emojiTabItem,
+                _ when icon?.IsFilled == true => _filledTabItem,
+                _ => _outlineTabItem
+            };
+        }
+        finally
+        {
+            _isSyncingUi = false;
+        }
     }
 
     private sealed class EmojiSearchEngine

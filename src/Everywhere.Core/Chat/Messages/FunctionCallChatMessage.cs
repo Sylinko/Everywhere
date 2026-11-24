@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text;
@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using Everywhere.Chat.Plugins;
 using Everywhere.Harness;
 using Everywhere.I18N;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
@@ -25,7 +25,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public override ChatRole Role => ChatRole.Tool;
 
     [Key(1)]
-    public LucideIconKind Icon
+    public TablerIconKind Icon
     {
         get;
         set => SetProperty(ref field, value);
@@ -177,7 +177,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 
     [SerializationConstructor]
     private FunctionCallChatMessage(
-        LucideIconKind icon,
+        TablerIconKind icon,
         DynamicLocaleKey? legacyHeaderKey,
         string? content,
         IDynamicLocaleKey? errorMessageKey,
@@ -202,7 +202,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         if (displayBlocks is not null) _displaySink.AppendBlocks(displayBlocks);
     }
 
-    public FunctionCallChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey) : this()
+    public FunctionCallChatMessage(TablerIconKind icon, IDynamicLocaleKey? headerKey) : this()
     {
         Icon = icon;
         HeaderKey = headerKey;

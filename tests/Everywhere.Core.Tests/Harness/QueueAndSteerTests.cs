@@ -31,7 +31,7 @@ using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Storage;
 using Everywhere.Views;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -618,7 +618,7 @@ public sealed class QueueAndSteerTests
         Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> reviewDelegate =
             (ctx, scope, ct) => (Task<ToolApprovalResult>)approvalMethod.Invoke(autoHarness.ChatService, [ctx, scope, ct])!;
 
-        var functionCallMessage = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("probe"));
+        var functionCallMessage = new FunctionCallChatMessage(TablerIconKind.Hammer, new DirectLocaleKey("probe"));
         var callContent = new Microsoft.Extensions.AI.FunctionCallContent("call-auto", "auto_probe");
         var builtInPlugin = autoHarness.Plugins.BuiltInPlugins.First();
         var binding = builtInPlugin.CreateSnapshot(new(), new(), [builtInPlugin.Functions.First()]).Bindings[0];
@@ -750,7 +750,7 @@ public sealed class QueueAndSteerTests
         scope.TryGetBinding("manage_background_jobs", out var jobToolBinding, out _);
         using var jobStopCts = new CancellationTokenSource();
         var ongoingJobTcs = new TaskCompletionSource<(ToolResultRecord Record, Exception? Error)>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var callMsg = new FunctionCallChatMessage(LucideIconKind.Terminal, new DirectLocaleKey("terminal"));
+        var callMsg = new FunctionCallChatMessage(TablerIconKind.Terminal, new DirectLocaleKey("terminal"));
         var run1 = new Everywhere.Terminal.TerminalRun("cmd1");
         run1.Output.ReplaceText(new string('a', 800));
         var run2 = new Everywhere.Terminal.TerminalRun("cmd2");
@@ -1224,7 +1224,7 @@ public sealed class QueueAndSteerTests
     {
         public override IDynamicLocaleKey HeaderKey => new DirectLocaleKey("SteerTest");
         public override IDynamicLocaleKey DescriptionKey => new DirectLocaleKey("SteerTest");
-        public override LucideIconKind? Icon => LucideIconKind.Terminal;
+        public override TablerIconKind? Icon => TablerIconKind.Terminal;
         public override bool IsDefaultEnabled => true;
 
         private readonly Func<CancellationToken, Task<string>>? _onBackgroundTool;

@@ -251,16 +251,6 @@ License:   Apache-2.0
 
 --------------------------------------------------------------------------------
 
-Lucide.Avalonia
-
-Id:        Lucide.Avalonia
-Version:   0.1.61
-Project:   
-Copyright: 
-License:   MIT
-
---------------------------------------------------------------------------------
-
 MessagePack-CSharp
 
 Id:        MessagePack-CSharp

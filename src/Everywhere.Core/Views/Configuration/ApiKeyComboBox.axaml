@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:system="clr-namespace:System;assembly=System.Runtime" xmlns:v="using:Everywhere.Views">
@@ -22,7 +22,7 @@
                 Margin="4" Spacing="2">
                 <Button
                   Padding="12,6"
-                  shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent Plus}"
                   BorderThickness="0"
                   Content="{I18N {x:Static LocaleKey.ApiKeyComboBox_AddApiKey}}">
                   <Interaction.Behaviors>
@@ -37,7 +37,7 @@
 
                 <Button
                   Padding="12,6"
-                  shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                  shadui:ButtonAssist.Icon="{TablerIconContent Settings}"
                   BorderThickness="0"
                   Content="{I18N {x:Static LocaleKey.ApiKeyComboBox_ManageApiKey}}">
                   <Interaction.Behaviors>

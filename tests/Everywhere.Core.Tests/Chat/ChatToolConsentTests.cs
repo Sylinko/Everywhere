@@ -17,7 +17,7 @@ using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Storage;
 using Everywhere.Utilities;
-using Lucide.Avalonia;
+using Tabler.Avalonia;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -217,7 +217,7 @@ public sealed class ChatToolConsentTests
                 _generation.Services,
                 _rootChatContext,
                 binding,
-                new FunctionCallChatMessage(LucideIconKind.File, new DirectLocaleKey("test")),
+                new FunctionCallChatMessage(TablerIconKind.File, new DirectLocaleKey("test")),
                 call,
                 Settings.Plugin.ToolBypassApprovalRulesets,
                 _generation,
