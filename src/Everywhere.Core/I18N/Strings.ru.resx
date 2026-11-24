@@ -778,8 +778,14 @@
     <data name="ChatContext_Metadata_Topic_Header" xml:space="preserve">
         <value>Тема</value>
     </data>
+    <data name="ChatContext_Metadata_Topic_New" xml:space="preserve">
+        <value>Новый чат</value>
+    </data>
     <data name="ChatContext_Temporary" xml:space="preserve">
         <value>Временный чат</value>
+    </data>
+    <data name="ChatContext_Temporary_New" xml:space="preserve">
+        <value>Новый временный чат</value>
     </data>
     <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
         <value>Управление ассистентами</value>

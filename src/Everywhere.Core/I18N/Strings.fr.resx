@@ -778,8 +778,14 @@
     <data name="ChatContext_Metadata_Topic_Header" xml:space="preserve">
         <value>Sujet</value>
     </data>
+    <data name="ChatContext_Metadata_Topic_New" xml:space="preserve">
+        <value>Nouveau chat</value>
+    </data>
     <data name="ChatContext_Temporary" xml:space="preserve">
         <value>Chat temporaire</value>
+    </data>
+    <data name="ChatContext_Temporary_New" xml:space="preserve">
+        <value>Nouveau chat temporaire</value>
     </data>
     <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
         <value>Gérer les assistants</value>

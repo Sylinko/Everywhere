@@ -209,7 +209,6 @@
           <Panel>
             <ToggleButton
               x:Name="HistoryButton" Classes="TitleBar"
-              Command="{Binding ChatContextManager.UpdateRecentHistoryCommand}"
               Content="{LucideIconContent History, Size=16}"
               FlowDirection="LeftToRight"
               IsChecked="{Binding PersistentState.IsChatWindowHistoryOpened, Mode=TwoWay}"
@@ -302,7 +301,7 @@
         <TextBlock
           Classes="Large" Margin="8,0,0,0"
           VerticalAlignment="Center" IsHitTestVisible="False"
-          Text="{Binding ChatContextManager.Current.Data.Metadata.ActualTopic}"
+          Text="{Binding CurrentTitleKey^}"
           TextTrimming="CharacterEllipsis">
           <TextBlock.Transitions>
             <Transitions>

@@ -778,8 +778,14 @@
     <data name="ChatContext_Metadata_Topic_Header" xml:space="preserve">
         <value>Konu</value>
     </data>
+    <data name="ChatContext_Metadata_Topic_New" xml:space="preserve">
+        <value>Yeni Sohbet</value>
+    </data>
     <data name="ChatContext_Temporary" xml:space="preserve">
         <value>Geçici Sohbet</value>
+    </data>
+    <data name="ChatContext_Temporary_New" xml:space="preserve">
+        <value>Yeni Geçici Sohbet</value>
     </data>
     <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
         <value>Asistanları yönet</value>

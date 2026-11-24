@@ -39,19 +39,6 @@ partial class ChatTurnStorage
         return new ChatHistoryPage(items, nextCursor);
     }
 
-    /// <inheritdoc />
-    public async Task<ChatMetadata?> GetMostRecentChatMetadataAsync(CancellationToken cancellationToken = default)
-    {
-        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var row = await db.Chats
-            .AsNoTracking()
-            .Where(row => row.ArchivedAt == null)
-            .OrderByDescending(row => row.UpdatedAt)
-            .ThenByDescending(row => row.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-        return row is null ? null : ChatMetadataMapper.Materialize(row);
-    }
-
     /// <summary>
     /// Updates explicitly changed fields without loading nodes or changing archive state.
     /// An unsaved empty conversation is inserted only with its first actual node batch.

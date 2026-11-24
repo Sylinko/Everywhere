@@ -778,8 +778,14 @@
     <data name="ChatContext_Metadata_Topic_Header" xml:space="preserve">
         <value>话题</value>
     </data>
+    <data name="ChatContext_Metadata_Topic_New" xml:space="preserve">
+        <value>新聊天</value>
+    </data>
     <data name="ChatContext_Temporary" xml:space="preserve">
         <value>临时聊天</value>
+    </data>
+    <data name="ChatContext_Temporary_New" xml:space="preserve">
+        <value>新临时聊天</value>
     </data>
     <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
         <value>管理助手</value>

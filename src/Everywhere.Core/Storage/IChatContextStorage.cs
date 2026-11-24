@@ -77,11 +77,6 @@ public interface IChatContextStorage : IChatTurnLoader
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Reads the most recently modified active conversation, regardless of pinning.
-    /// </summary>
-    Task<ChatMetadata?> GetMostRecentChatMetadataAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Commits a history pin without loading message history or changing activity time.
     /// The caller publishes the new value only after this operation commits.
     /// </summary>

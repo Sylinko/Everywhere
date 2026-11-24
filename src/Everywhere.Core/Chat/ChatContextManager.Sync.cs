@@ -122,6 +122,7 @@ partial class ChatContextManager
                 hasStopped = false;
                 return true;
             }
+            var isAlreadyArchived = _metadataMap.TryGetValue(chatId, out var existingMetadata) && existingMetadata.IsArchived;
             var metadata = _metadataMap.GetOrAdd(chatId, _ => ChatMetadataMapper.Materialize(row));
             if (root is not null)
             {
@@ -144,8 +145,8 @@ partial class ChatContextManager
                 ChatMetadataMapper.Publish(row, metadata);
             }
 
-            Dispatcher.UIThread.PostOnDemand(() => RestartHistoryMaterializationCore(resetRawHistory: true, preserveVisibleItems: true));
-            if (row.ArchivedAt is not null)
+            Dispatcher.UIThread.PostOnDemand(() => PublishSyncedHistoryMetadata(metadata));
+            if (!isAlreadyArchived && row.ArchivedAt is not null)
             {
                 QueueLeaveUnavailableChat(chatId);
             }
@@ -179,6 +180,49 @@ partial class ChatContextManager
         finally
         {
             _commitGate.Release();
+        }
+    }
+
+    private void PublishSyncedHistoryMetadata(ChatMetadata metadata)
+    {
+        if (_isClosing || !_metadataMap.ContainsKey(metadata.Id)) return;
+        if (_normalizedHistorySearchQuery is not null)
+        {
+            RestartHistoryMaterializationCore();
+            return;
+        }
+
+        if (!MatchesHistoryView(metadata))
+        {
+            RemoveHistoryMetadata(metadata);
+            RestartHistoryMaterializationCore(preserveVisibleItems: true);
+            return;
+        }
+
+        bool shouldAddMaterialized;
+        lock (_historyStateLock)
+        {
+            var items = _materializedHistorySource.Items;
+            if (_storageHistoryExhausted)
+            {
+                shouldAddMaterialized = true;
+            }
+            else if (items.Count > 0)
+            {
+                var candidate = new HistoryCandidate(metadata.Id, metadata.IsPinned, metadata.DateModified);
+                shouldAddMaterialized = items.AsValueEnumerable().Any(item =>
+                    CompareHistoryCandidates(candidate, new HistoryCandidate(item.Id, item.IsPinned, item.DateModified)) <= 0);
+            }
+            else
+            {
+                shouldAddMaterialized = false;
+            }
+        }
+
+        RestartHistoryMaterializationCore(preserveVisibleItems: true);
+        if (shouldAddMaterialized)
+        {
+            AddRecentHistoryMetadata(metadata);
         }
     }
 }

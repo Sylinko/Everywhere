@@ -101,6 +101,6 @@ public sealed class ChatHistoryStorageTests
         var page = await storage.ReadHistoryPageAsync(1);
         Assert.That(page.Items.Single().Id, Is.EqualTo(chatId));
         Assert.That(page.Items.Single().DateModified, Is.EqualTo(oldDate));
-        Assert.That((await storage.GetMostRecentChatMetadataAsync())?.Id, Is.EqualTo(recent.Metadata.Id));
+        Assert.That((await storage.ReadHistoryPageAsync(2)).Items.Select(item => item.Id), Is.EqualTo([chatId, recent.Metadata.Id]));
     }
 }
