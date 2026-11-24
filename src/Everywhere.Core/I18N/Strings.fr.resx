@@ -3315,6 +3315,12 @@ Cette action est irréversible.</value>
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>Abandonner les modifications avancées ?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>Affiche en temps réel comment l’assistant répond dans une conversation selon vos préférences.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>Aperçu de conversation</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>L'aperçu rendra en temps réel le contenu des placeholders comme la date et l'heure actuelles.</value>
     </data>
@@ -5211,7 +5217,7 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
         <value>Tester la connexion</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>Sélectionner un modèle</value>
+        <value>↑↑ Sélectionnez d’abord un fournisseur de modèles</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>Fenêtre de contexte</value>

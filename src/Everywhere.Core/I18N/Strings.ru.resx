@@ -3315,6 +3315,12 @@
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>Отменить редактирование расширенного контента?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>Показывает в реальном времени, как ассистент отвечает в диалоге с учётом выбранных настроек.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>Пример диалога</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>Предварительный просмотр будет в реальном времени отображать текущие дату, время и другие содержимое-заполнители.</value>
     </data>
@@ -5211,7 +5217,7 @@
         <value>Проверить подключение</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>Выберите модель</value>
+        <value>↑↑ Сначала выберите поставщика моделей</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>Контекстное окно</value>

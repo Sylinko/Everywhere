@@ -103,10 +103,10 @@
       <Setter Property="MinWidth" Value="120"/>
       <Setter Property="Padding" Value="20,0"/>
       <Setter Property="CornerRadius" Value="22"/>
-      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSurfaceBrush}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+      <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource StudioElevatedSurfaceBrush}"/>
     </Style>
 
     <Style Selector="Button.OobeBackPill">
@@ -301,11 +301,11 @@
           x:Name="SelectionStreamOverlay" Grid.Row="0"
           Grid.Column="0" Grid.ColumnSpan="2"
           IsHitTestVisible="False"
-          PrimaryColor="{DynamicResource OobeBrandCyanColor}"
-          SecondaryColor="{DynamicResource OobeBrandPinkColor}"
+          PrimaryColor="{DynamicResource BrandCyanColor}"
+          SecondaryColor="{DynamicResource BrandPinkColor}"
           SourceVisual="{Binding #CompanionEvy}"
           TargetsRoot="{Binding #DecisionScrollViewer}"
-          TertiaryColor="{DynamicResource OobeBrandGoldColor}"
+          TertiaryColor="{DynamicResource BrandGoldColor}"
           ZIndex="0"/>
 
         <!--  Persistent Companion Orb + Animated Tricolor Halo Shader  -->
@@ -395,10 +395,10 @@
                 Height="192" IsHitTestVisible="False"
                 IsSuccess="{Binding IsSuccessGlowActive}"
                 Opacity="0.95"
-                PrimaryColor="{DynamicResource OobeBrandCyanColor}"
-                SecondaryColor="{DynamicResource OobeBrandPinkColor}"
+                PrimaryColor="{DynamicResource BrandCyanColor}"
+                SecondaryColor="{DynamicResource BrandPinkColor}"
                 SuccessColor="{DynamicResource OobeAmbientSuccessGlowColor}"
-                TertiaryColor="{DynamicResource OobeBrandGoldColor}"/>
+                TertiaryColor="{DynamicResource BrandGoldColor}"/>
 
               <v:Evy
                 x:Name="CompanionEvy" Width="64"

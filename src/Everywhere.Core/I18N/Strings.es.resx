@@ -3315,6 +3315,12 @@ Esta acción no se puede deshacer.</value>
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>¿Descartar contenido de edición avanzada?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>Muestra en tiempo real cómo responde el asistente en una conversación según tus preferencias seleccionadas.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>Vista previa de conversación</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>La vista previa renderizará en tiempo real el contenido de los marcadores de posición como la fecha y la hora actuales.</value>
     </data>
@@ -5211,7 +5217,7 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
         <value>Probar conexión</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>Selecciona un modelo</value>
+        <value>↑↑ Primero selecciona un proveedor de modelos</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>Ventana de contexto</value>

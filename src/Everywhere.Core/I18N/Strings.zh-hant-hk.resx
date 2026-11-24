@@ -3315,6 +3315,12 @@
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>放棄高級編輯內容？</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>根據現時偏好即時呈現助手喺對話入面嘅回覆效果。</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>對話示範</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>預覽會實時渲染當前日期、時間等佔位符內容。</value>
     </data>
@@ -5211,7 +5217,7 @@
         <value>測試連線</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>選擇模型</value>
+        <value>↑↑ 請先選擇模型供應商</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>上下文視窗</value>

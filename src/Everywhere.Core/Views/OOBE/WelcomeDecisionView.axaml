@@ -70,7 +70,7 @@
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
       <Setter Property="VerticalContentAlignment" Value="Stretch"/>
       <Setter Property="CornerRadius" Value="16"/>
-      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSurfaceBrush}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Template">
@@ -155,8 +155,8 @@
     </Style>
 
     <Style Selector="Border.IntroFeatureTile">
-      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource StudioHairlineBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BoxShadow" Value="0 0 0 0 #00000000"/>
       <Setter Property="ClipToBounds" Value="True"/>
@@ -183,7 +183,7 @@
       </Setter>
 
       <Style Selector="^:pointerover">
-        <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource StudioElevatedSurfaceBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
         <Setter Property="BoxShadow" Value="0 10 26 0 #26000000"/>
         <Setter Property="RenderTransform" Value="translateY(-4px) scale(1.016)"/>
@@ -268,7 +268,7 @@
     <Style Selector="Border.NeoCard">
       <Setter Property="Padding" Value="20,18"/>
       <Setter Property="CornerRadius" Value="16"/>
-      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSurfaceBrush}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
     </Style>
@@ -276,7 +276,7 @@
     <Style Selector="Border.PipelineNode">
       <Setter Property="Padding" Value="10,9"/>
       <Setter Property="CornerRadius" Value="10"/>
-      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSurfaceBrush}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource OobeCardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
     </Style>
@@ -285,25 +285,25 @@
     <Style Selector="Border.OobeGlassCard">
       <Setter Property="Padding" Value="24,22"/>
       <Setter Property="CornerRadius" Value="18"/>
-      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource StudioHairlineBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
     </Style>
 
     <Style Selector="Border.OobeIconBadge">
       <Setter Property="CornerRadius" Value="11"/>
-      <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioElevatedSurfaceBrush}"/>
 
       <Style Selector="^.Cyan">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandCyanTintBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandCyanTintBrush}"/>
       </Style>
 
       <Style Selector="^.Pink">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandPinkTintBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandPinkTintBrush}"/>
       </Style>
 
       <Style Selector="^.Gold">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandGoldTintBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandGoldTintBrush}"/>
       </Style>
 
       <Style Selector="^.Success">
@@ -314,19 +314,19 @@
     <Style Selector="Border.OobeStatusPill">
       <Setter Property="CornerRadius" Value="999"/>
       <Setter Property="Padding" Value="11,5"/>
-      <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioElevatedSurfaceBrush}"/>
       <Setter Property="BorderThickness" Value="0"/>
 
       <Style Selector="^.Cyan">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandCyanTintBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandCyanTintBrush}"/>
       </Style>
 
       <Style Selector="^.Pink">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandPinkTintBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandPinkTintBrush}"/>
       </Style>
 
       <Style Selector="^.Gold">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandGoldTintBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandGoldTintBrush}"/>
       </Style>
 
       <Style Selector="^.Success">
@@ -343,10 +343,10 @@
       <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource PrimaryColor75}"/>
 
       <Style Selector="^.Secondary">
-        <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource StudioElevatedSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource StudioHairlineBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource OobeSurfaceBrush}"/>
+        <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource StudioSurfaceBrush}"/>
       </Style>
 
       <Style Selector="^ Panel#ActionArrowHost">
@@ -388,6 +388,13 @@
       <Style Selector="^:pointerover:not(.busy):not(:disabled) TablerIcon#ActionArrowIcon">
         <Setter Property="RenderTransform" Value="translateX(0px)"/>
       </Style>
+    </Style>
+
+    <Style Selector="Button.OobeFinishSegment.Selected">
+      <Setter Property="Background" Value="{DynamicResource ChipPurpleTintBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ChipPurpleBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChipPurpleBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
   </TransitioningContentControl.Styles>
 
@@ -554,7 +561,7 @@
           <Border
             Width="42" Height="42"
             VerticalAlignment="Center"
-            Background="{DynamicResource OobeSubtleSurfaceBrush}"
+            Background="{DynamicResource StudioSubtleSurfaceBrush}"
             BorderBrush="{DynamicResource OobeSubtleBorderBrush}"
             BorderThickness="1" CornerRadius="21">
             <TablerIcon
@@ -570,15 +577,15 @@
             Orientation="Horizontal" Spacing="7">
             <Ellipse
               Width="4.5" Height="4.5"
-              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Fill="{DynamicResource BrandCyanBrush}"
               Opacity="0.24"/>
             <Ellipse
               Width="4.5" Height="4.5"
-              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Fill="{DynamicResource BrandCyanBrush}"
               Opacity="0.5"/>
             <Ellipse
               Width="4.5" Height="4.5"
-              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Fill="{DynamicResource BrandCyanBrush}"
               Opacity="0.85"/>
           </StackPanel>
           <StackPanel
@@ -650,20 +657,20 @@
 
               <Border
                 x:Name="LoginAuraRing"
-                Background="{DynamicResource OobeBrandCyanTintBrush}"
+                Background="{DynamicResource BrandCyanTintBrush}"
                 CornerRadius="52"/>
             </motion:MotionPanel>
 
             <Border
               Width="60" Height="60"
               HorizontalAlignment="Center" VerticalAlignment="Center"
-              Background="{DynamicResource OobeElevatedSurfaceBrush}"
+              Background="{DynamicResource StudioElevatedSurfaceBrush}"
               BorderBrush="{DynamicResource OobeCardBorderBrush}"
               BorderThickness="1" CornerRadius="30"
               IsVisible="{Binding !Flow.IsSignedIn}">
               <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                Foreground="{DynamicResource OobeBrandCyanBrush}"
+                Foreground="{DynamicResource BrandCyanBrush}"
                 Kind="Cloud" Size="25"/>
             </Border>
 
@@ -688,15 +695,15 @@
             Orientation="Horizontal" Spacing="7">
             <Ellipse
               Width="4.5" Height="4.5"
-              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Fill="{DynamicResource BrandCyanBrush}"
               Opacity="0.85"/>
             <Ellipse
               Width="4.5" Height="4.5"
-              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Fill="{DynamicResource BrandCyanBrush}"
               Opacity="0.5"/>
             <Ellipse
               Width="4.5" Height="4.5"
-              Fill="{DynamicResource OobeBrandCyanBrush}"
+              Fill="{DynamicResource BrandCyanBrush}"
               Opacity="0.24"/>
           </StackPanel>
           <StackPanel
@@ -721,12 +728,12 @@
           <Border
             Width="42" Height="42"
             VerticalAlignment="Center"
-            Background="{DynamicResource OobeSubtleSurfaceBrush}"
+            Background="{DynamicResource StudioSubtleSurfaceBrush}"
             BorderBrush="{DynamicResource OobeSubtleBorderBrush}"
             BorderThickness="1" CornerRadius="21">
             <TablerIcon
               HorizontalAlignment="Center" VerticalAlignment="Center"
-              Foreground="{DynamicResource OobeBrandCyanBrush}"
+              Foreground="{DynamicResource BrandCyanBrush}"
               Kind="World" Size="17"/>
           </Border>
         </StackPanel>
@@ -811,7 +818,7 @@
               VerticalAlignment="Center" CornerRadius="10">
               <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                Foreground="{DynamicResource OobeBrandGoldBrush}"
+                Foreground="{DynamicResource BrandGoldBrush}"
                 Kind="Bolt" Size="17"/>
             </Border>
             <StackPanel
@@ -835,7 +842,7 @@
 
           <Border
             Height="1"
-            Background="{DynamicResource OobeHairlineBrush}"
+            Background="{DynamicResource StudioHairlineBrush}"
             Opacity="0.6"/>
 
           <!--  Global Font Size (Maps to Settings Slider Stops 1, 2, 4)  -->
@@ -847,7 +854,7 @@
               VerticalAlignment="Center" CornerRadius="10">
               <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                Foreground="{DynamicResource OobeBrandPinkBrush}"
+                Foreground="{DynamicResource BrandPinkBrush}"
                 Kind="Typography" Size="17"/>
             </Border>
             <StackPanel
@@ -864,8 +871,8 @@
             <Border
               Grid.Column="2" Padding="3"
               VerticalAlignment="Center"
-              Background="{DynamicResource OobeStageWellBrush}"
-              BorderBrush="{DynamicResource OobeHairlineBrush}"
+              Background="{DynamicResource StudioWellBrush}"
+              BorderBrush="{DynamicResource StudioHairlineBrush}"
               BorderThickness="1" CornerRadius="11">
               <UniformGrid
                 ColumnSpacing="3" Columns="3">
@@ -876,7 +883,7 @@
                   Command="{Binding Flow.SelectFontSizeCommand}"
                   Content="{I18N {x:Static LocaleKey.Oobe_Finish_FontSize_Small}}"
                   IsEnabled="{Binding Flow.IsNotBusy}"
-                  Theme="{StaticResource OobeSegmentChipTheme}">
+                  Theme="{StaticResource SegmentChipTheme}">
                   <Button.CommandParameter>
                     <x:Int32>-1</x:Int32>
                   </Button.CommandParameter>
@@ -888,7 +895,7 @@
                   Command="{Binding Flow.SelectFontSizeCommand}"
                   Content="{I18N {x:Static LocaleKey.Oobe_Finish_FontSize_Medium}}"
                   IsEnabled="{Binding Flow.IsNotBusy}"
-                  Theme="{StaticResource OobeSegmentChipTheme}">
+                  Theme="{StaticResource SegmentChipTheme}">
                   <Button.CommandParameter>
                     <x:Int32>0</x:Int32>
                   </Button.CommandParameter>
@@ -900,7 +907,7 @@
                   Command="{Binding Flow.SelectFontSizeCommand}"
                   Content="{I18N {x:Static LocaleKey.Oobe_Finish_FontSize_Large}}"
                   IsEnabled="{Binding Flow.IsNotBusy}"
-                  Theme="{StaticResource OobeSegmentChipTheme}">
+                  Theme="{StaticResource SegmentChipTheme}">
                   <Button.CommandParameter>
                     <x:Int32>2</x:Int32>
                   </Button.CommandParameter>
@@ -911,7 +918,7 @@
 
           <Border
             Height="1"
-            Background="{DynamicResource OobeHairlineBrush}"
+            Background="{DynamicResource StudioHairlineBrush}"
             Opacity="0.6"/>
 
           <!--  Anonymous Diagnostics  -->
@@ -923,7 +930,7 @@
               VerticalAlignment="Center" CornerRadius="10">
               <TablerIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                Foreground="{DynamicResource OobeBrandCyanBrush}"
+                Foreground="{DynamicResource BrandCyanBrush}"
                 Kind="InfoCircle" Size="17"/>
             </Border>
             <StackPanel

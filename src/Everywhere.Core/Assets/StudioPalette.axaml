@@ -1,0 +1,130 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="{x:Static ThemeVariant.Light}">
+      <!--  Everywhere Brand Tricolor Tokens  -->
+      <Color x:Key="BrandCyanColor">#38BDF8</Color>
+      <Color x:Key="BrandPinkColor">#EC4899</Color>
+      <Color x:Key="BrandGoldColor">#EAB308</Color>
+      <SolidColorBrush
+        x:Key="BrandCyanBrush" Color="#0284C7"/>
+      <SolidColorBrush
+        x:Key="BrandPinkBrush" Color="#DB2777"/>
+      <SolidColorBrush
+        x:Key="BrandGoldBrush" Color="#CA8A04"/>
+      <SolidColorBrush
+        x:Key="BrandCyanTintBrush" Color="#160284C7"/>
+      <SolidColorBrush
+        x:Key="BrandPinkTintBrush" Color="#14DB2777"/>
+      <SolidColorBrush
+        x:Key="BrandGoldTintBrush" Color="#18CA8A04"/>
+
+      <!--  Semantic Chip Accent Palette  -->
+      <SolidColorBrush
+        x:Key="ChipBlueBrush" Color="#2563EB"/>
+      <SolidColorBrush
+        x:Key="ChipPurpleBrush" Color="#7C3AED"/>
+      <SolidColorBrush
+        x:Key="ChipIndigoBrush" Color="#4F46E5"/>
+      <SolidColorBrush
+        x:Key="ChipOrangeBrush" Color="#EA580C"/>
+      <SolidColorBrush
+        x:Key="ChipGreenBrush" Color="#059669"/>
+      <SolidColorBrush
+        x:Key="ChipTealBrush" Color="#0D9488"/>
+      <SolidColorBrush
+        x:Key="ChipRedBrush" Color="#DC2626"/>
+      <SolidColorBrush
+        x:Key="ChipBlueTintBrush" Color="#162563EB"/>
+      <SolidColorBrush
+        x:Key="ChipPurpleTintBrush" Color="#167C3AED"/>
+      <SolidColorBrush
+        x:Key="ChipIndigoTintBrush" Color="#164F46E5"/>
+      <SolidColorBrush
+        x:Key="ChipOrangeTintBrush" Color="#16EA580C"/>
+      <SolidColorBrush
+        x:Key="ChipGreenTintBrush" Color="#16059669"/>
+      <SolidColorBrush
+        x:Key="ChipTealTintBrush" Color="#160D9488"/>
+      <SolidColorBrush
+        x:Key="ChipRedTintBrush" Color="#16DC2626"/>
+
+      <!--  Shared Frosted Surfaces, Wells & Hairlines  -->
+      <SolidColorBrush
+        x:Key="StudioSurfaceBrush" Color="#CCFFFFFF"/>
+      <SolidColorBrush
+        x:Key="StudioElevatedSurfaceBrush" Color="#F0FFFFFF"/>
+      <SolidColorBrush
+        x:Key="StudioSubtleSurfaceBrush" Color="#80E4EAF6"/>
+      <SolidColorBrush
+        x:Key="StudioWellBrush" Color="#70E4EAF6"/>
+      <SolidColorBrush
+        x:Key="StudioHairlineBrush" Color="#140F172A"/>
+      <SolidColorBrush
+        x:Key="StudioFieldUnderlineBrush" Color="#3B0F172A"/>
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="{x:Static ThemeVariant.Dark}">
+      <!--  Everywhere Brand Tricolor Tokens  -->
+      <Color x:Key="BrandCyanColor">#4DB8FF</Color>
+      <Color x:Key="BrandPinkColor">#F056B8</Color>
+      <Color x:Key="BrandGoldColor">#DCE65C</Color>
+      <SolidColorBrush
+        x:Key="BrandCyanBrush" Color="#4DB8FF"/>
+      <SolidColorBrush
+        x:Key="BrandPinkBrush" Color="#F056B8"/>
+      <SolidColorBrush
+        x:Key="BrandGoldBrush" Color="#DCE65C"/>
+      <SolidColorBrush
+        x:Key="BrandCyanTintBrush" Color="#1C4DB8FF"/>
+      <SolidColorBrush
+        x:Key="BrandPinkTintBrush" Color="#1CF056B8"/>
+      <SolidColorBrush
+        x:Key="BrandGoldTintBrush" Color="#1CDCE65C"/>
+
+      <!--  Semantic Chip Accent Palette  -->
+      <SolidColorBrush
+        x:Key="ChipBlueBrush" Color="#60A5FA"/>
+      <SolidColorBrush
+        x:Key="ChipPurpleBrush" Color="#A78BFA"/>
+      <SolidColorBrush
+        x:Key="ChipIndigoBrush" Color="#818CF8"/>
+      <SolidColorBrush
+        x:Key="ChipOrangeBrush" Color="#FB923C"/>
+      <SolidColorBrush
+        x:Key="ChipGreenBrush" Color="#34D399"/>
+      <SolidColorBrush
+        x:Key="ChipTealBrush" Color="#2DD4BF"/>
+      <SolidColorBrush
+        x:Key="ChipRedBrush" Color="#F87171"/>
+      <SolidColorBrush
+        x:Key="ChipBlueTintBrush" Color="#1F60A5FA"/>
+      <SolidColorBrush
+        x:Key="ChipPurpleTintBrush" Color="#1FA78BFA"/>
+      <SolidColorBrush
+        x:Key="ChipIndigoTintBrush" Color="#1F818CF8"/>
+      <SolidColorBrush
+        x:Key="ChipOrangeTintBrush" Color="#1FFB923C"/>
+      <SolidColorBrush
+        x:Key="ChipGreenTintBrush" Color="#1F34D399"/>
+      <SolidColorBrush
+        x:Key="ChipTealTintBrush" Color="#1F2DD4BF"/>
+      <SolidColorBrush
+        x:Key="ChipRedTintBrush" Color="#1FF87171"/>
+
+      <!--  Shared Frosted Surfaces, Wells & Hairlines  -->
+      <SolidColorBrush
+        x:Key="StudioSurfaceBrush" Color="#0DFFFFFF"/>
+      <SolidColorBrush
+        x:Key="StudioElevatedSurfaceBrush" Color="#15FFFFFF"/>
+      <SolidColorBrush
+        x:Key="StudioSubtleSurfaceBrush" Color="#08FFFFFF"/>
+      <SolidColorBrush
+        x:Key="StudioWellBrush" Color="#0AFFFFFF"/>
+      <SolidColorBrush
+        x:Key="StudioHairlineBrush" Color="#12FFFFFF"/>
+      <SolidColorBrush
+        x:Key="StudioFieldUnderlineBrush" Color="#34FFFFFF"/>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

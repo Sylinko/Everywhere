@@ -3315,6 +3315,12 @@ Questa azione non può essere annullata.</value>
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>Abbandonare le modifiche avanzate?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>Mostra in tempo reale come risponde l’assistente in una conversazione in base alle preferenze selezionate.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>Anteprima conversazione</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>L'anteprima renderizzerà in tempo reale il contenuto dei segnaposto come data, ora, ecc.</value>
     </data>
@@ -5211,7 +5217,7 @@ La mia intelligenza è fornita da un grande modello linguistico e ho bisogno del
         <value>Testa la connessione</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>Seleziona un modello</value>
+        <value>↑↑ Seleziona prima un provider di modelli</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>Finestra di contesto</value>

@@ -34,8 +34,8 @@
       <Border
         x:Name="SampleDocumentCard" Margin="0,34,0,0"
         Padding="24,22"
-        Background="{DynamicResource OobeSurfaceBrush}"
-        BorderBrush="{DynamicResource OobeHairlineBrush}"
+        Background="{DynamicResource StudioSurfaceBrush}"
+        BorderBrush="{DynamicResource StudioHairlineBrush}"
         BorderThickness="1" CornerRadius="20">
         <SelectableTextBlock
           x:Name="SampleDocumentText" Background="Transparent"

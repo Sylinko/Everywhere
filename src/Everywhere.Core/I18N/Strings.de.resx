@@ -3315,6 +3315,12 @@ Diese Aktion kann nicht rückgängig gemacht werden.</value>
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>Fortschrittliche Bearbeitung verwerfen?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>Zeigt in Echtzeit an, wie der Assistent anhand Ihrer ausgewählten Einstellungen im Gespräch antwortet.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>Gesprächsvorschau</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>Die Vorschau rendert in Echtzeit den aktuellen Datum-, Uhrzeit- und andere Platzhalterinhalte.</value>
     </data>
@@ -5211,7 +5217,7 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
         <value>Verbindung testen</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>Modell auswählen</value>
+        <value>↑↑ Wähle zuerst einen Modellanbieter aus</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>Kontextfenster</value>

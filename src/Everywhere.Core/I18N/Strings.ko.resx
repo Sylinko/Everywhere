@@ -3315,6 +3315,12 @@
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>고급 편집 내용을 포기하시겠습니까?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>선택한 기본 설정에 따라 대화에서 어시스턴트가 응답하는 모습을 실시간으로 미리 봅니다.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>대화 미리보기</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>현재 날짜, 시간 등의 자리 표시자 내용을 실시간으로 렌더링합니다.</value>
     </data>
@@ -5211,7 +5217,7 @@
         <value>연결 테스트</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>모델 선택</value>
+        <value>↑↑ 먼저 모델 제공업체를 선택하세요</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>컨텍스트 길이</value>

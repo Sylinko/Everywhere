@@ -5,19 +5,10 @@
   x:Name="Self" HorizontalAlignment="Stretch"
   VerticalAlignment="Top" x:DataType="vm:PromptEditorViewModel"
   ClipToBounds="False">
-  <UserControl.Resources>
-    <ResourceDictionary>
-      <ResourceDictionary.MergedDictionaries>
-        <ResourceInclude Source="avares://Everywhere.Core/Views/OOBE/WelcomePalette.axaml"/>
-        <ResourceInclude Source="avares://Everywhere.Core/Views/OOBE/OobeCardControls.axaml"/>
-      </ResourceDictionary.MergedDictionaries>
-    </ResourceDictionary>
-  </UserControl.Resources>
-
   <UserControl.Styles>
     <Style Selector="shadui|SmoothBorder.PersonaGlassCard">
-      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource StudioHairlineBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="20"/>
       <Setter Property="ClipToBounds" Value="True"/>
@@ -26,7 +17,7 @@
 
     <!--  Tactile Borderless Frosted Chips for Scenarios, Tone, Persona & Organization  -->
     <Style Selector="Button.RecipeChip">
-      <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioWellBrush}"/>
       <Setter Property="BorderBrush" Value="Transparent"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="10"/>
@@ -78,8 +69,8 @@
 
       <Style Selector="^:pointerover">
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Background" Value="{DynamicResource OobeElevatedSurfaceBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeFieldUnderlineBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource StudioElevatedSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource StudioFieldUnderlineBrush}"/>
         <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
           <Setter Property="Opacity" Value="1"/>
         </Style>
@@ -97,116 +88,116 @@
     <!--  Per-Option Multi-Color Accent Palette (Shared Across Chips & Segmented Track)  -->
     <Style Selector="Button.accent-blue">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipBlueBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipBlueBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeChipBlueTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipBlueBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipBlueBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipBlueTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipBlueBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipBlueBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-cyan">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeBrandCyanBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrandCyanBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandCyanTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandCyanBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeBrandCyanBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandCyanTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BrandCyanBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrandCyanBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-purple">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipPurpleBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipPurpleBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipPurpleTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipPurpleBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipPurpleBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-indigo">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipIndigoBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipIndigoBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeChipIndigoTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipIndigoBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipIndigoBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipIndigoTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipIndigoBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipIndigoBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-pink">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeBrandPinkBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrandPinkBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandPinkTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandPinkBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeBrandPinkBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandPinkTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BrandPinkBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrandPinkBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-orange">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipOrangeBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipOrangeBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeChipOrangeTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipOrangeBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipOrangeBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipOrangeTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipOrangeBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipOrangeBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-gold">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeBrandGoldBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrandGoldBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeBrandGoldTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeBrandGoldBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeBrandGoldBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BrandGoldTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BrandGoldBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrandGoldBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-green">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipGreenBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipGreenBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeChipGreenTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipGreenBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipGreenBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipGreenTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipGreenBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipGreenBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-teal">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipTealBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipTealBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeChipTealTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipTealBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipTealBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipTealTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipTealBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipTealBrush}"/>
       </Style>
     </Style>
 
     <Style Selector="Button.accent-red">
       <Style Selector="^ TablerIcon#OptionIcon">
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipRedBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipRedBrush}"/>
       </Style>
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeChipRedTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipRedBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipRedBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipRedTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipRedBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipRedBrush}"/>
       </Style>
     </Style>
 
     <!--  Seamless Ghost Disclosure Toggle for Optional Preferences  -->
-    <Style Selector="ToggleButton.OobeDisclosureToggle">
+    <Style Selector="ToggleButton.DisclosureToggle">
       <Setter Property="Background" Value="Transparent"/>
       <Setter Property="BorderBrush" Value="Transparent"/>
       <Setter Property="BorderThickness" Value="0"/>
@@ -257,7 +248,7 @@
 
       <Style Selector="^:pointerover">
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource StudioWellBrush}"/>
         <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
           <Setter Property="Opacity" Value="1"/>
         </Style>
@@ -324,11 +315,11 @@
             Orientation="Horizontal" Spacing="6">
             <TablerIcon
               VerticalAlignment="Center"
-              Foreground="{DynamicResource OobeBrandPinkBrush}"
+              Foreground="{DynamicResource BrandPinkBrush}"
               Kind="AlertCircle" Size="13"/>
             <TextBlock
               Classes="Caption" VerticalAlignment="Center"
-              Foreground="{DynamicResource OobeBrandPinkBrush}"
+              Foreground="{DynamicResource BrandPinkBrush}"
               Text="{I18N {x:Static LocaleKey.Oobe_Personalize_ScenarioRequired}}"
               TextWrapping="Wrap"/>
           </StackPanel>
@@ -381,8 +372,8 @@
 
           <Border
             Padding="4"
-            Background="{DynamicResource OobeStageWellBrush}"
-            BorderBrush="{DynamicResource OobeHairlineBrush}"
+            Background="{DynamicResource StudioWellBrush}"
+            BorderBrush="{DynamicResource StudioHairlineBrush}"
             BorderThickness="1" CornerRadius="12">
             <ItemsControl ItemsSource="{Binding DetailOptions}">
               <ItemsControl.ItemsPanel>
@@ -398,7 +389,7 @@
                     Classes.Selected="{Binding IsSelected}"
                     Command="{Binding #Self.Editor?.SelectDetailCommand, FallbackValue={x:Null}}"
                     CommandParameter="{Binding}"
-                    Theme="{StaticResource OobeSegmentChipTheme}">
+                    Theme="{StaticResource SegmentChipTheme}">
                     <StackPanel
                       Orientation="Horizontal" Spacing="6">
                       <TablerIcon
@@ -419,7 +410,7 @@
         <!--  4. Seamless Ghost Disclosure for Optional Preferences  -->
         <StackPanel Spacing="0">
           <ToggleButton
-            x:Name="MorePreferencesToggle" Classes="OobeDisclosureToggle">
+            x:Name="MorePreferencesToggle" Classes="DisclosureToggle">
             <Grid
               ColumnDefinitions="*,Auto" ColumnSpacing="8">
               <TextBlock
@@ -455,7 +446,7 @@
                     x:Name="PromptNameBox"
                     PlaceholderText="{I18N {x:Static LocaleKey.PromptEditor_NamePlaceholder}}"
                     Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+                    Theme="{StaticResource InlineFieldTextBoxTheme}"/>
                 </StackPanel>
 
                 <!--  Persona  -->
@@ -496,7 +487,7 @@
                     x:Name="PreferredUserNameBox"
                     PlaceholderText="{I18N {x:Static LocaleKey.PromptCreate_PreferredUserNamePlaceholder}}"
                     Text="{Binding PreferredUserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+                    Theme="{StaticResource InlineFieldTextBoxTheme}"/>
                 </StackPanel>
 
                 <!--  Organization  -->
@@ -548,7 +539,7 @@
                     PlaceholderText="{I18N {x:Static LocaleKey.PromptCreate_AdditionalRequirementsPlaceholder}}"
                     Text="{Binding AdditionalRequirements, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="Wrap"
-                    Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+                    Theme="{StaticResource InlineFieldTextBoxTheme}"/>
                 </StackPanel>
               </StackPanel>
             </ContentPresenter>

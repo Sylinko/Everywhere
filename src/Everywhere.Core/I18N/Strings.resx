@@ -3315,6 +3315,12 @@ This action cannot be undone.</value>
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>Discard advanced edits?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>Preview how the assistant responds in conversation based on your selected preferences.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>Conversation preview</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>The preview renders placeholders such as current date and time in real time.</value>
     </data>
@@ -5211,7 +5217,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Test connection</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>Select a model</value>
+        <value>↑↑ Select a model provider first</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>Context window</value>

@@ -16,8 +16,8 @@
     <!--  Miniature document context surface  -->
     <Border
       Margin="16,26,16,0" Padding="14,13,14,10"
-      Background="{DynamicResource OobeStageWellBrush}"
-      BorderBrush="{DynamicResource OobeHairlineBrush}"
+      Background="{DynamicResource StudioWellBrush}"
+      BorderBrush="{DynamicResource StudioHairlineBrush}"
       BorderThickness="1,1,1,0" CornerRadius="11,11,0,0">
       <StackPanel Spacing="9">
         <!--  Quiet mini window dots  -->
@@ -50,7 +50,7 @@
               Height="14" HorizontalAlignment="Left"
               VerticalAlignment="Center"
               Background="{DynamicResource OobeCyanSelectedTintBrush}"
-              BorderBrush="{DynamicResource OobeBrandCyanBrush}"
+              BorderBrush="{DynamicResource BrandCyanBrush}"
               BorderThickness="0,0,1.5,0" CornerRadius="3"/>
             <Border
               Width="136" Height="5.5"
@@ -84,7 +84,7 @@
         x:Name="FloatingToolbar" Height="24"
         Padding="8,0"
         Background="{DynamicResource OobeNodeSurfaceBrush}"
-        BorderBrush="{DynamicResource OobeBrandCyanBrush}"
+        BorderBrush="{DynamicResource BrandCyanBrush}"
         BorderThickness="1" CornerRadius="12"
         Opacity="1" RenderTransformOrigin="50%,80%">
         <Border.RenderTransform>
@@ -96,7 +96,7 @@
           <Ellipse
             Width="5" Height="5"
             VerticalAlignment="Center"
-            Fill="{DynamicResource OobeBrandCyanBrush}"/>
+            Fill="{DynamicResource BrandCyanBrush}"/>
           <Border
             Width="15" Height="4"
             VerticalAlignment="Center"
@@ -105,7 +105,7 @@
           <Border
             Width="1" Height="10"
             VerticalAlignment="Center"
-            Background="{DynamicResource OobeHairlineBrush}"/>
+            Background="{DynamicResource StudioHairlineBrush}"/>
           <Border
             Width="14" Height="4"
             VerticalAlignment="Center"

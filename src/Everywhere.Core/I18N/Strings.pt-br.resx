@@ -3315,6 +3315,12 @@ Esta ação não pode ser desfeita.</value>
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>Descartar edição avançada?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>Visualize em tempo real como o assistente responde na conversa com base nas preferências selecionadas.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>Prévia da conversa</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>A prévia renderiza em tempo real o conteúdo dos marcadores como data e hora.</value>
     </data>
@@ -5211,7 +5217,7 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
         <value>Testar conexão</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>Selecione um modelo</value>
+        <value>↑↑ Primeiro, selecione um provedor de modelos</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>Janela de contexto</value>

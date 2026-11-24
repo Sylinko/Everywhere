@@ -21,8 +21,8 @@
 
   <UserControl.Styles>
     <Style Selector="Border.WyCard">
-      <Setter Property="Background" Value="{DynamicResource OobeSurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource StudioHairlineBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="20"/>
       <Setter Property="Padding" Value="24,20"/>
@@ -78,8 +78,8 @@
     </Style>
 
     <Style Selector="Border.OobeModeSegmentedTrack">
-      <Setter Property="Background" Value="{DynamicResource OobeStageWellBrush}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource OobeHairlineBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource StudioWellBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource StudioHairlineBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="20"/>
       <Setter Property="Padding" Value="4"/>
@@ -142,7 +142,7 @@
 
       <Style Selector="^:pointerover">
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Background" Value="{DynamicResource OobeSubtleSurfaceBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource StudioSubtleSurfaceBrush}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
           <Setter Property="Opacity" Value="0.96"/>
@@ -154,9 +154,9 @@
       </Style>
 
       <Style Selector="^.Selected">
-        <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipPurpleBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipPurpleTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipPurpleBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipPurpleBrush}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
           <Setter Property="Opacity" Value="1"/>
@@ -164,9 +164,9 @@
       </Style>
 
       <Style Selector="^.Selected:pointerover">
-        <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OobeChipPurpleBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipPurpleTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ChipPurpleBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipPurpleBrush}"/>
       </Style>
     </Style>
 
@@ -219,8 +219,8 @@
       <Style Selector="^:pointerover">
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Opacity" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource OobeChipPurpleTintBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OobeChipPurpleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ChipPurpleTintBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ChipPurpleBrush}"/>
       </Style>
     </Style>
   </UserControl.Styles>
@@ -305,11 +305,11 @@
                 Orientation="Horizontal" Spacing="8">
                 <Border
                   Width="28" Height="28"
-                  Background="{DynamicResource OobeBrandCyanTintBrush}"
+                  Background="{DynamicResource BrandCyanTintBrush}"
                   CornerRadius="9">
                   <TablerIcon
                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Foreground="{DynamicResource OobeBrandCyanBrush}"
+                    Foreground="{DynamicResource BrandCyanBrush}"
                     Kind="Cloud" Size="15"/>
                 </Border>
                 <TextBlock
@@ -555,7 +555,7 @@
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_Endpoint_Description}}">
                       <TablerIcon
                         VerticalAlignment="Center"
-                        Foreground="{DynamicResource OobeBrandCyanBrush}"
+                        Foreground="{DynamicResource BrandCyanBrush}"
                         Kind="World" Size="14"/>
                       <TextBlock
                         Classes="Caption Muted" VerticalAlignment="Center"
@@ -567,7 +567,7 @@
                       x:Name="AdvancedEndpointBox" Grid.Column="1"
                       PlaceholderText="{Binding AdvancedEndpointPlaceholder}"
                       Text="{Binding AdvancedConfiguration.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                      Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+                      Theme="{StaticResource InlineFieldTextBoxTheme}"/>
                   </Grid>
 
                   <Grid ColumnSpacing="12">
@@ -582,7 +582,7 @@
                       Spacing="6">
                       <TablerIcon
                         VerticalAlignment="Center"
-                        Foreground="{DynamicResource OobeBrandCyanBrush}"
+                        Foreground="{DynamicResource BrandCyanBrush}"
                         IsVisible="{Binding EndpointPreviewText, Converter={x:Static ObjectConverters.IsNotNull}}"
                         Kind="CornerDownRight" Opacity="0.8"
                         Size="12"/>
@@ -630,7 +630,7 @@
                     x:Name="AdvancedModelIdBox" Grid.Column="1"
                     PlaceholderText="{I18N {x:Static LocaleKey.Oobe_Configure_ModelIdPlaceholder}}"
                     Text="{Binding AdvancedConfiguration.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Theme="{StaticResource OobeInlineFieldTextBoxTheme}"/>
+                    Theme="{StaticResource InlineFieldTextBoxTheme}"/>
                 </Grid>
 
                 <!--  3. Ghost API Key Picker (Flush Right Edge Across Preset & Advanced)  -->
@@ -648,7 +648,7 @@
                     ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_ApiKey_Description}}">
                     <TablerIcon
                       VerticalAlignment="Center"
-                      Foreground="{DynamicResource OobeBrandGoldBrush}"
+                      Foreground="{DynamicResource BrandGoldBrush}"
                       Kind="Key" Size="14"/>
                     <TextBlock
                       Classes="Caption Muted" VerticalAlignment="Center"
@@ -665,7 +665,7 @@
                     Theme="{StaticResource OobeInlineComboBoxTheme}">
                     <shadui:ControlAssist.Footer>
                       <Border
-                        BorderBrush="{DynamicResource OobeHairlineBrush}"
+                        BorderBrush="{DynamicResource StudioHairlineBrush}"
                         BorderThickness="0,1,0,0">
                         <StackPanel
                           Margin="4" Spacing="2">
@@ -711,7 +711,7 @@
                     Orientation="Horizontal" Spacing="6">
                     <TablerIcon
                       VerticalAlignment="Center"
-                      Foreground="{DynamicResource OobeBrandCyanBrush}"
+                      Foreground="{DynamicResource BrandCyanBrush}"
                       Kind="Menu2" Size="12"/>
                     <TextBlock
                       Classes="Caption Muted" VerticalAlignment="Center"
@@ -731,7 +731,7 @@
                     Orientation="Horizontal" Spacing="6">
                     <TablerIcon
                       VerticalAlignment="Center"
-                      Foreground="{DynamicResource OobeBrandPinkBrush}"
+                      Foreground="{DynamicResource BrandPinkBrush}"
                       Kind="DoorExit" Size="12"/>
                     <TextBlock
                       Classes="Caption Muted" VerticalAlignment="Center"
@@ -761,7 +761,7 @@
                         ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Description}}">
                         <TablerIcon
                           VerticalAlignment="Center"
-                          Foreground="{DynamicResource OobeBrandCyanBrush}"
+                          Foreground="{DynamicResource BrandCyanBrush}"
                           Kind="Menu2" Size="12"/>
                         <TextBlock
                           Classes="Caption Muted" VerticalAlignment="Center"
@@ -770,7 +770,7 @@
                       <TextBlock
                         Classes="Caption" Grid.Column="1"
                         VerticalAlignment="Center" FontWeight="SemiBold"
-                        Foreground="{DynamicResource OobeBrandCyanBrush}"
+                        Foreground="{DynamicResource BrandCyanBrush}"
                         IsVisible="{Binding ContextLimitText, Converter={x:Static ObjectConverters.IsNotNull}}"
                         Text="{Binding ContextLimitText}"/>
                     </Grid>
@@ -793,7 +793,7 @@
                         ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Description}}">
                         <TablerIcon
                           VerticalAlignment="Center"
-                          Foreground="{DynamicResource OobeBrandPinkBrush}"
+                          Foreground="{DynamicResource BrandPinkBrush}"
                           Kind="DoorExit" Size="12"/>
                         <TextBlock
                           Classes="Caption Muted" VerticalAlignment="Center"
@@ -802,7 +802,7 @@
                       <TextBlock
                         Classes="Caption" Grid.Column="1"
                         VerticalAlignment="Center" FontWeight="SemiBold"
-                        Foreground="{DynamicResource OobeBrandPinkBrush}"
+                        Foreground="{DynamicResource BrandPinkBrush}"
                         IsVisible="{Binding OutputLimitText, Converter={x:Static ObjectConverters.IsNotNull}}"
                         Text="{Binding OutputLimitText}"/>
                     </Grid>

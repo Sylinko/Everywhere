@@ -8,8 +8,8 @@
     <!--  Stationary background application window  -->
     <Border
       Margin="14,22,48,0" Padding="11,10,11,8"
-      Background="{DynamicResource OobeStageWellBrush}"
-      BorderBrush="{DynamicResource OobeHairlineBrush}"
+      Background="{DynamicResource StudioWellBrush}"
+      BorderBrush="{DynamicResource StudioHairlineBrush}"
       BorderThickness="1,1,1,0" CornerRadius="10,10,0,0">
       <StackPanel Spacing="7">
         <StackPanel
@@ -66,7 +66,7 @@
             <Ellipse
               Width="7.5" Height="7.5"
               VerticalAlignment="Center"
-              Fill="{DynamicResource OobeBrandPinkBrush}"/>
+              Fill="{DynamicResource BrandPinkBrush}"/>
             <Border
               Width="38" Height="4"
               VerticalAlignment="Center"

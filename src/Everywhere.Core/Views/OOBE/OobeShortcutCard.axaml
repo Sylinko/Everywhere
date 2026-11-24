@@ -54,7 +54,7 @@
             <Border
               x:Name="PART_InputBox" MinHeight="62"
               Padding="18,12"
-              Background="{DynamicResource OobeSurfaceBrush}"
+              Background="{DynamicResource StudioSurfaceBrush}"
               BorderBrush="{DynamicResource OobeCardBorderBrush}"
               BorderThickness="1" CornerRadius="18"
               Cursor="Hand">
@@ -137,7 +137,7 @@
         </Setter>
 
         <Style Selector="^:pointerover /template/ Border#PART_InputBox">
-          <Setter Property="BorderBrush" Value="{DynamicResource OobeFieldUnderlineBrush}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource StudioFieldUnderlineBrush}"/>
         </Style>
 
         <Style Selector="^[IsRecording=True] /template/ Border#PART_InputBox">

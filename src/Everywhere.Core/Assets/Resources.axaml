@@ -1,5 +1,9 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceInclude Source="avares://Everywhere.Core/Assets/StudioPalette.axaml"/>
+  </ResourceDictionary.MergedDictionaries>
+
   <!--  Global Font Families  -->
   <FontFamily x:Key="MonospaceFontFamily">Maple Mono, Cascadia Mono, Consolas, Menlo, monospace</FontFamily>
 
@@ -26,5 +30,168 @@
     x:Key="{x:Type TablerFilledIcon}"
     TargetType="TablerFilledIcon">
     <Setter Property="Size" Value="{DynamicResource FontSizeL}"/>
+  </ControlTheme>
+
+  <!--  Underlined Inline Field TextBox  -->
+  <ControlTheme
+    x:Key="InlineFieldTextBoxTheme" TargetType="TextBox">
+    <Setter Property="FontSize" Value="13.5"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Cursor" Value="IBeam"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource StudioFieldUnderlineBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,1.5"/>
+    <Setter Property="Padding" Value="2,4,2,5"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="SelectionBrush" Value="{DynamicResource PrimaryColor}"/>
+    <Setter Property="SelectionForegroundBrush" Value="{DynamicResource PrimaryForegroundColor}"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="FocusAdorner" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DataValidationErrors Focusable="False">
+          <Border
+            x:Name="UnderlineBorder"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="BorderBrush"
+                  Duration="0:0:0.16"/>
+              </Transitions>
+            </Border.Transitions>
+            <ScrollViewer
+              x:Name="PART_ScrollViewer" MinHeight="28"
+              HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+              VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+              <Panel x:Name="TextContainer">
+                <TextBlock
+                  x:Name="PlaceholderText"
+                  Margin="{TemplateBinding Padding}"
+                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                  Opacity="0.45"
+                  Text="{TemplateBinding PlaceholderText}"
+                  TextAlignment="{TemplateBinding TextAlignment}">
+                  <TextBlock.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <Binding
+                        Converter="{x:Static StringConverters.IsNullOrEmpty}"
+                        ElementName="PART_TextPresenter" Path="PreeditText"/>
+                      <Binding
+                        Converter="{x:Static StringConverters.IsNullOrEmpty}"
+                        Path="Text"
+                        RelativeSource="{RelativeSource TemplatedParent}"/>
+                    </MultiBinding>
+                  </TextBlock.IsVisible>
+                </TextBlock>
+
+                <TextPresenter
+                  x:Name="PART_TextPresenter"
+                  Margin="{TemplateBinding Padding}"
+                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                  CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                  CaretBrush="{TemplateBinding CaretBrush}"
+                  CaretIndex="{TemplateBinding CaretIndex}"
+                  SelectionBrush="{TemplateBinding SelectionBrush}"
+                  SelectionEnd="{TemplateBinding SelectionEnd}"
+                  SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                  SelectionStart="{TemplateBinding SelectionStart}"
+                  Text="{TemplateBinding Text, Mode=TwoWay}"/>
+              </Panel>
+            </ScrollViewer>
+          </Border>
+        </DataValidationErrors>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#UnderlineBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource MutedColor}"/>
+    </Style>
+
+    <Style Selector="^:focus /template/ Border#UnderlineBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+    </Style>
+
+    <Style Selector="^:error /template/ Border#UnderlineBorder">
+      <Setter Property="BorderBrush" Value="{DynamicResource ErrorColor}"/>
+    </Style>
+  </ControlTheme>
+
+  <!--  Segmented Track Buttons (Shared by PromptRecipeEditor & OOBE)  -->
+  <ControlTheme
+    x:Key="SegmentChipTheme" TargetType="Button">
+    <Setter Property="WindowDecorationProperties.ElementRole" Value="User"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="9"/>
+    <Setter Property="Padding" Value="10,7"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="FocusAdorner" Value="{x:Null}"/>
+    <Setter Property="RenderTransform" Value="scale(1)"/>
+    <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border
+          x:Name="SegmentBorder"
+          Padding="{TemplateBinding Padding}"
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}"
+          CornerRadius="{TemplateBinding CornerRadius}">
+          <Border.Transitions>
+            <Transitions>
+              <BrushTransition
+                Easing="CubicEaseOut" Property="Background"
+                Duration="0:0:0.16"/>
+              <BrushTransition
+                Easing="CubicEaseOut" Property="BorderBrush"
+                Duration="0:0:0.16"/>
+            </Transitions>
+          </Border.Transitions>
+          <ContentPresenter
+            x:Name="PART_ContentPresenter" HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Content="{TemplateBinding Content}"
+            ContentTemplate="{TemplateBinding ContentTemplate}"
+            Opacity="0.76"
+            TextBlock.FontSize="{TemplateBinding FontSize}"
+            TextBlock.FontWeight="{TemplateBinding FontWeight}"
+            TextBlock.Foreground="{TemplateBinding Foreground}"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition
+          Easing="CubicEaseOut" Property="RenderTransform"
+          Duration="0:0:0.14"/>
+      </Transitions>
+    </Setter>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Background" Value="{DynamicResource StudioSubtleSurfaceBrush}"/>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="0.98"/>
+      </Style>
+    </Style>
+
+    <Style Selector="^:pressed">
+      <Setter Property="RenderTransform" Value="scale(0.97)"/>
+    </Style>
+
+    <Style Selector="^.Selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Opacity" Value="1"/>
+    </Style>
   </ControlTheme>
 </ResourceDictionary>

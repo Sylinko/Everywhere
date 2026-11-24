@@ -112,7 +112,14 @@ public sealed partial class PromptEditorViewModel(
     [ObservableProperty]
     public partial IReadOnlyList<PromptTemplateRenderSegment> RenderedPreviewSegments { get; private set; } = [];
 
+    [ObservableProperty]
+    public partial IDynamicLocaleKey PreviewQuestionKey { get; private set; } = new DynamicLocaleKey(LocaleKey.Oobe_Preview_Question_Default);
+
+    [ObservableProperty]
+    public partial IDynamicLocaleKey PreviewReplyKey { get; private set; } = new DynamicLocaleKey(LocaleKey.Oobe_Preview_Reply_Professional_Rich);
+
     private readonly BindableList<PromptDiagnosticItem> _diagnostics = [];
+    private readonly List<PromptRecipeOptionItem> _selectedScenarioOrder = [];
     private bool _isLoadingRecipe;
     private string? _originalName;
     private string _originalTemplate = string.Empty;
@@ -249,6 +256,12 @@ public sealed partial class PromptEditorViewModel(
         }
 
         option.IsSelected = !option.IsSelected;
+        _selectedScenarioOrder.Remove(option);
+        if (option.IsSelected)
+        {
+            _selectedScenarioOrder.Add(option);
+        }
+
         ApplyQuickTemplateIfNeeded();
     }
 
@@ -470,6 +483,8 @@ public sealed partial class PromptEditorViewModel(
         }
 
         RefreshSingleSelectionStates();
+        SyncSelectedScenarioOrder();
+        RefreshRecipePreview();
     }
 
     private PromptRecipeSnapshot CreateSnapshot(bool detached)
@@ -501,7 +516,38 @@ public sealed partial class PromptEditorViewModel(
     {
         _recipeSnapshot = CreateSnapshot(detached: false);
         Template = PromptRecipeCatalog.ComposeTemplate(_recipeSnapshot);
+        RefreshRecipePreview();
         NotifySaveStateChanged();
+    }
+
+    private void SyncSelectedScenarioOrder()
+    {
+        for (var i = _selectedScenarioOrder.Count - 1; i >= 0; i--)
+        {
+            if (!_selectedScenarioOrder[i].IsSelected)
+            {
+                _selectedScenarioOrder.RemoveAt(i);
+            }
+        }
+
+        foreach (var option in ScenarioOptions)
+        {
+            if (option.IsSelected && !_selectedScenarioOrder.Contains(option))
+            {
+                _selectedScenarioOrder.Add(option);
+            }
+        }
+    }
+
+    private void RefreshRecipePreview()
+    {
+        SyncSelectedScenarioOrder();
+        var activeScenarios = _selectedScenarioOrder.AsValueEnumerable().Take(PromptRecipeCatalog.MaximumScenarioCount).ToArray();
+        var primaryScenarioId = activeScenarios.LastOrDefault()?.Id;
+        var previewSnapshot = CreateSnapshot(detached: false);
+        var preview = PromptRecipePreviewBuilder.Build(previewSnapshot, primaryScenarioId);
+        PreviewQuestionKey = preview.QuestionKey;
+        PreviewReplyKey = preview.ReplyKey;
     }
 
     private void RefreshSingleSelectionStates()

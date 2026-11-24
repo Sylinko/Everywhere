@@ -3315,6 +3315,12 @@ Bu işlem geri alınamaz.</value>
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>Gelişmiş düzenlemeleri bırakmak istiyor musunuz?</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>Seçtiğiniz tercihlere göre asistanın sohbette nasıl yanıt verdiğini gerçek zamanlı olarak önizleyin.</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>Sohbet önizlemesi</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>Önizleme, mevcut tarih, saat gibi yer tutucu içeriklerini anlık olarak render eder.</value>
     </data>
@@ -5211,7 +5217,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Bağlantıyı Test Et</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>Bir model seçin</value>
+        <value>↑↑ Önce bir model sağlayıcısı seçin</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>Bağlam Penceresi</value>

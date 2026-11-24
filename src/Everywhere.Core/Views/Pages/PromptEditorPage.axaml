@@ -62,10 +62,10 @@
               <x:Boolean>True</x:Boolean>
             </motion:MotionState.Key>
             <DataTemplate>
-              <Panel>
+              <DockPanel HorizontalSpacing="24">
                 <motion:MotionSlot
-                  x:Name="EditPanel" MaxWidth="600"
-                  HorizontalAlignment="Center">
+                  x:Name="EditPanel" DockPanel.Dock="Left"
+                  MaxWidth="560">
                   <motion:MotionSlot.TargetStyles>
                     <Style Selector="Grid#EditPanel TextBlock#QuickModeDescription">
                       <Setter Property="Opacity" Value="1"/>
@@ -84,9 +84,35 @@
                   </motion:MotionSlot.TargetStyles>
                 </motion:MotionSlot>
                 <motion:MotionSlot
-                  x:Name="PreviewPanel" Margin="600,0,-600,0"
-                  motion:Motion.Presence="0"/>
-              </Panel>
+                  x:Name="PreviewPanel" motion:Motion.Presence="1">
+                  <motion:MotionSlot.TargetStyles>
+                    <Style Selector="DockPanel#PreviewPanel TextBlock#ExamplePreviewTitle">
+                      <Setter Property="Opacity" Value="1"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel TextBlock#LivePreviewTitle">
+                      <Setter Property="Opacity" Value="0"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel TextBlock#ExamplePreviewDescription">
+                      <Setter Property="Opacity" Value="1"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel TextBlock#LivePreviewDescription">
+                      <Setter Property="Opacity" Value="0"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel ScrollViewer#QuickPreviewContainer">
+                      <Setter Property="Opacity" Value="1"/>
+                      <Setter Property="IsHitTestVisible" Value="True"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel Border#AdvancedPreviewContainer">
+                      <Setter Property="Opacity" Value="0"/>
+                      <Setter Property="IsHitTestVisible" Value="False"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel ItemsControl#PreviewDiagnostics">
+                      <Setter Property="Opacity" Value="0"/>
+                      <Setter Property="IsHitTestVisible" Value="False"/>
+                    </Style>
+                  </motion:MotionSlot.TargetStyles>
+                </motion:MotionSlot>
+              </DockPanel>
             </DataTemplate>
           </motion:MotionState>
 
@@ -117,7 +143,34 @@
                   </motion:MotionSlot.TargetStyles>
                 </motion:MotionSlot>
                 <motion:MotionSlot
-                  x:Name="PreviewPanel" motion:Motion.Presence="1"/>
+                  x:Name="PreviewPanel" motion:Motion.Presence="1">
+                  <motion:MotionSlot.TargetStyles>
+                    <Style Selector="DockPanel#PreviewPanel TextBlock#ExamplePreviewTitle">
+                      <Setter Property="Opacity" Value="0"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel TextBlock#LivePreviewTitle">
+                      <Setter Property="Opacity" Value="1"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel TextBlock#ExamplePreviewDescription">
+                      <Setter Property="Opacity" Value="0"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel TextBlock#LivePreviewDescription">
+                      <Setter Property="Opacity" Value="1"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel ScrollViewer#QuickPreviewContainer">
+                      <Setter Property="Opacity" Value="0"/>
+                      <Setter Property="IsHitTestVisible" Value="False"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel Border#AdvancedPreviewContainer">
+                      <Setter Property="Opacity" Value="1"/>
+                      <Setter Property="IsHitTestVisible" Value="True"/>
+                    </Style>
+                    <Style Selector="DockPanel#PreviewPanel ItemsControl#PreviewDiagnostics">
+                      <Setter Property="Opacity" Value="1"/>
+                      <Setter Property="IsHitTestVisible" Value="True"/>
+                    </Style>
+                  </motion:MotionSlot.TargetStyles>
+                </motion:MotionSlot>
               </DockPanel>
             </DataTemplate>
           </motion:MotionState>
@@ -151,9 +204,9 @@
 
       <DockPanel
         x:Name="PreviewPanel" LastChildFill="True"
-        VerticalSpacing="8">
+        VerticalSpacing="12">
         <ItemsControl
-          DockPanel.Dock="Bottom"
+          x:Name="PreviewDiagnostics" DockPanel.Dock="Bottom"
           IsVisible="{Binding !!Diagnostics.Count}"
           ItemsSource="{Binding Diagnostics}">
           <ItemsControl.ItemsPanel>
@@ -175,27 +228,50 @@
 
         <StackPanel
           DockPanel.Dock="Top" Spacing="4">
-          <TextBlock
-            Classes="h1"
-            Text="{I18N {x:Static LocaleKey.PromptCreate_LivePreviewTitle}}"/>
-          <TextBlock
-            Classes="Muted Caption"
-            Text="{I18N {x:Static LocaleKey.PromptCreate_LivePreviewDescription}}"
-            TextWrapping="Wrap"/>
+          <Panel>
+            <TextBlock
+              x:Name="ExamplePreviewTitle" Classes="h1"
+              Text="{I18N {x:Static LocaleKey.PromptCreate_ExamplePreviewTitle}}"/>
+            <TextBlock
+              x:Name="LivePreviewTitle" Classes="h1"
+              Text="{I18N {x:Static LocaleKey.PromptCreate_LivePreviewTitle}}"/>
+          </Panel>
+          <Panel>
+            <TextBlock
+              x:Name="ExamplePreviewDescription" Classes="Muted Caption"
+              Text="{I18N {x:Static LocaleKey.PromptCreate_ExamplePreviewDescription}}"
+              TextWrapping="Wrap"/>
+            <TextBlock
+              x:Name="LivePreviewDescription" Classes="Muted Caption"
+              Text="{I18N {x:Static LocaleKey.PromptCreate_LivePreviewDescription}}"
+              TextWrapping="Wrap"/>
+          </Panel>
         </StackPanel>
 
-        <Border
-          Background="{DynamicResource CardBackgroundColor}"
-          BorderBrush="{DynamicResource BorderColor}"
-          BorderThickness="1" ClipToBounds="True">
-          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-            <v:PromptTemplateTextBlock
-              Margin="28"
-              FontFamily="{StaticResource MonospaceFontFamily}"
-              PromptSegments="{Binding RenderedPreviewSegments}"
-              TextWrapping="Wrap"/>
+        <Panel>
+          <ScrollViewer
+            x:Name="QuickPreviewContainer" HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <v:PromptRecipePreviewCard
+              VerticalAlignment="Top"
+              QuestionKey="{Binding PreviewQuestionKey}"
+              ReplyKey="{Binding PreviewReplyKey}"/>
           </ScrollViewer>
-        </Border>
+
+          <Border
+            x:Name="AdvancedPreviewContainer"
+            Background="{DynamicResource CardBackgroundColor}"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1" ClipToBounds="True">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+              <v:PromptTemplateTextBlock
+                Margin="28"
+                FontFamily="{StaticResource MonospaceFontFamily}"
+                PromptSegments="{Binding RenderedPreviewSegments}"
+                TextWrapping="Wrap"/>
+            </ScrollViewer>
+          </Border>
+        </Panel>
       </DockPanel>
     </motion:MotionPanel>
   </DockPanel>

@@ -1,0 +1,32 @@
+<UserControl
+  x:Class="Everywhere.Views.PromptRecipePreviewCard" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" x:Name="Self"
+  HorizontalAlignment="Stretch" x:DataType="v:PromptRecipePreviewCard"
+  ClipToBounds="False">
+  <shadui:SmoothBorder
+    Padding="22,20"
+    Background="{DynamicResource StudioSurfaceBrush}"
+    BorderBrush="{DynamicResource StudioHairlineBrush}"
+    BorderThickness="1" CornerRadius="20">
+    <StackPanel Spacing="14">
+      <!--  User Query Bubble  -->
+      <shadui:SmoothBorder
+        MaxWidth="320" Padding="14,8"
+        HorizontalAlignment="Right"
+        Background="{DynamicResource PrimaryColor10}"
+        CornerRadius="{DynamicResource 2XlCornerRadius}">
+        <TextBlock
+          LineHeight="20"
+          Text="{Binding #Self.QuestionKey^, FallbackValue={x:Null}}"
+          TextWrapping="Wrap"/>
+      </shadui:SmoothBorder>
+
+      <!--  Assistant Live Reply  -->
+      <TextBlock
+        LineHeight="22"
+        Text="{Binding #Self.ReplyKey^, FallbackValue={x:Null}}"
+        TextWrapping="Wrap"/>
+    </StackPanel>
+  </shadui:SmoothBorder>
+</UserControl>

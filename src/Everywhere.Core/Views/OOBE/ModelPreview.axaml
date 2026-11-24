@@ -18,7 +18,7 @@
       Margin="18,18,18,0" Padding="6"
       VerticalAlignment="Top"
       Background="{DynamicResource OobeNodeSurfaceBrush}"
-      BorderBrush="{DynamicResource OobeHairlineBrush}"
+      BorderBrush="{DynamicResource StudioHairlineBrush}"
       BorderThickness="1" CornerRadius="12">
       <Panel>
         <!--  Positioning host keeps SelectionHighlight relative offset at (0,0,0)  -->

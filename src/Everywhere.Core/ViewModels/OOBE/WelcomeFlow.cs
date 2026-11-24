@@ -7,7 +7,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
-using Everywhere.AI.Prompts;
 using Everywhere.Cloud;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -72,14 +71,9 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
     [ObservableProperty]
     public partial bool IsSelectedCatalogModelUnlisted { get; private set; }
 
-    [ObservableProperty]
-    public partial IReadOnlyList<PromptRecipeOptionItem> SelectedScenarioPreviewItems { get; private set; } = [];
+    public IDynamicLocaleKey PreviewQuestionKey => Personalization.PreviewQuestionKey;
 
-    [ObservableProperty]
-    public partial IDynamicLocaleKey PreviewQuestionKey { get; private set; } = new DynamicLocaleKey(LocaleKey.Oobe_Preview_Question_Default);
-
-    [ObservableProperty]
-    public partial IDynamicLocaleKey PreviewReplyKey { get; private set; } = new DynamicLocaleKey(LocaleKey.Oobe_Preview_Reply_Professional_Rich);
+    public IDynamicLocaleKey PreviewReplyKey => Personalization.PreviewReplyKey;
 
     public bool IsCloudSource => SelectedSource == WelcomeModelSource.Cloud;
     public bool IsOwnSource => SelectedSource == WelcomeModelSource.Own;
@@ -330,7 +324,6 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
     private readonly TextSelectionController? _textSelectionController;
     private readonly BindableList<ApiKey> _availableApiKeys = [];
     private readonly Dictionary<Type, AssistantConfiguration> _configurationDrafts = [];
-    private readonly List<PromptRecipeOptionItem> _selectedScenarioOrder = [];
 
     private AssistantConfiguration _observedConfiguration;
     private AssistantCatalogItem? _selectedCatalogModel;
@@ -401,7 +394,6 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
         }
 
         Personalization.PropertyChanged += HandlePersonalizationChanged;
-        UpdatePersonalizationPreview();
 
         InitializeSteps(
         [
@@ -1015,20 +1007,12 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
 
     private void HandleScenarioOptionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(PromptRecipeOptionItem.IsSelected) ||
-            sender is not PromptRecipeOptionItem option)
+        if (e.PropertyName != nameof(PromptRecipeOptionItem.IsSelected))
         {
             return;
         }
 
         _hasInteractedWithScenarios = true;
-        _selectedScenarioOrder.Remove(option);
-        if (option.IsSelected)
-        {
-            _selectedScenarioOrder.Add(option);
-        }
-
-        UpdatePersonalizationPreview();
         OnPropertyChanged(nameof(HasScenarios));
         OnPropertyChanged(nameof(ShowScenarioRequiredHint));
         RefreshNavigation();
@@ -1036,6 +1020,12 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
 
     private void HandlePersonalizationChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(PromptEditorViewModel.PreviewQuestionKey) or nameof(PromptEditorViewModel.PreviewReplyKey))
+        {
+            OnPropertyChanged(e.PropertyName);
+            return;
+        }
+
         if (e.PropertyName is not (nameof(PromptEditorViewModel.Template)
             or nameof(PromptEditorViewModel.PreferredUserName)
             or nameof(PromptEditorViewModel.SelectedPersonaOption)
@@ -1046,7 +1036,6 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
             return;
         }
 
-        UpdatePersonalizationPreview();
         OnPropertyChanged(nameof(HasScenarios));
         OnPropertyChanged(nameof(ShowScenarioRequiredHint));
         RefreshNavigation();
@@ -1074,117 +1063,6 @@ public sealed partial class WelcomeFlow : OobeFlow, IExceptionHandler
         OnPropertyChanged(nameof(SupportsPdfInput));
         OnPropertyChanged(nameof(SupportsTools));
         OnPropertyChanged(nameof(SupportsReasoning));
-    }
-
-    private void UpdatePersonalizationPreview()
-    {
-        for (var i = _selectedScenarioOrder.Count - 1; i >= 0; i--)
-        {
-            if (!_selectedScenarioOrder[i].IsSelected)
-            {
-                _selectedScenarioOrder.RemoveAt(i);
-            }
-        }
-
-        foreach (var option in Personalization.ScenarioOptions)
-        {
-            if (option.IsSelected && !_selectedScenarioOrder.Contains(option))
-            {
-                _selectedScenarioOrder.Add(option);
-            }
-        }
-
-        var activeScenarios = _selectedScenarioOrder
-            .AsValueEnumerable()
-            .Take(PromptRecipeCatalog.MaximumScenarioCount)
-            .ToArray();
-        SelectedScenarioPreviewItems = activeScenarios;
-
-        var primaryScenarioId = activeScenarios.LastOrDefault()?.Id;
-        var questionKeyName = primaryScenarioId switch
-        {
-            "programming-development" => LocaleKey.Oobe_Preview_Question_Programming,
-            "code-review" => LocaleKey.Oobe_Preview_Question_CodeReview,
-            "writing-editing" => LocaleKey.Oobe_Preview_Question_Writing,
-            "data-analysis" => LocaleKey.Oobe_Preview_Question_DataAnalysis,
-            "learning-education" => LocaleKey.Oobe_Preview_Question_Learning,
-            "translation-language" => LocaleKey.Oobe_Preview_Question_Translation,
-            "product-planning" => LocaleKey.Oobe_Preview_Question_Product,
-            "troubleshooting" => LocaleKey.Oobe_Preview_Question_Troubleshooting,
-            "research-planning" => LocaleKey.Oobe_Preview_Question_Research,
-            _ => LocaleKey.Oobe_Preview_Question_Default
-        };
-        PreviewQuestionKey = new DynamicLocaleKey(questionKeyName);
-
-        var isConcise = string.Equals(Personalization.SelectedDetailOption?.Id, "concise", StringComparison.Ordinal);
-        var isDetailed = string.Equals(Personalization.SelectedDetailOption?.Id, "detailed", StringComparison.Ordinal);
-        var replyKeyName = (Personalization.SelectedToneOption?.Id, isConcise) switch
-        {
-            ("concise-direct", true) => LocaleKey.Oobe_Preview_Reply_ConciseDirect_Concise,
-            ("concise-direct", false) => LocaleKey.Oobe_Preview_Reply_ConciseDirect_Rich,
-            ("socratic-guiding", true) => LocaleKey.Oobe_Preview_Reply_Socratic_Concise,
-            ("socratic-guiding", false) => LocaleKey.Oobe_Preview_Reply_Socratic_Rich,
-            ("formal-business", true) => LocaleKey.Oobe_Preview_Reply_Formal_Concise,
-            ("formal-business", false) => LocaleKey.Oobe_Preview_Reply_Formal_Rich,
-            ("creative-exploratory", true) => LocaleKey.Oobe_Preview_Reply_Creative_Concise,
-            ("creative-exploratory", false) => LocaleKey.Oobe_Preview_Reply_Creative_Rich,
-            ("friendly-patient", true) => LocaleKey.Oobe_Preview_Reply_Friendly_Concise,
-            ("friendly-patient", false) => LocaleKey.Oobe_Preview_Reply_Friendly_Rich,
-            (_, true) => LocaleKey.Oobe_Preview_Reply_Professional_Concise,
-            _ => LocaleKey.Oobe_Preview_Reply_Professional_Rich
-        };
-
-        IDynamicLocaleKey replyKey = new DynamicLocaleKey(replyKeyName);
-
-        var personaWrapKeyName = Personalization.SelectedPersonaOption?.Id switch
-        {
-            "professional" => LocaleKey.Oobe_Preview_Persona_ProfessionalWrap,
-            "programming" => LocaleKey.Oobe_Preview_Persona_ProgrammingWrap,
-            "writing" => LocaleKey.Oobe_Preview_Persona_WritingWrap,
-            "translation" => LocaleKey.Oobe_Preview_Persona_TranslationWrap,
-            "research" => LocaleKey.Oobe_Preview_Persona_ResearchWrap,
-            "learning" => LocaleKey.Oobe_Preview_Persona_LearningWrap,
-            "product" => LocaleKey.Oobe_Preview_Persona_ProductWrap,
-            _ => null
-        };
-        if (personaWrapKeyName is not null)
-        {
-            replyKey = new FormattedDynamicLocaleKey(personaWrapKeyName, replyKey);
-        }
-
-        var organizationWrapKeyName = Personalization.SelectedOrganizationOption?.Id switch
-        {
-            "conclusion-first" => LocaleKey.Oobe_Preview_Organization_ConclusionFirstWrap,
-            "step-by-step" => LocaleKey.Oobe_Preview_Organization_StepByStepWrap,
-            "key-points" => LocaleKey.Oobe_Preview_Organization_KeyPointsWrap,
-            "compare-options" => LocaleKey.Oobe_Preview_Organization_CompareOptionsWrap,
-            "examples-first" => LocaleKey.Oobe_Preview_Organization_ExamplesFirstWrap,
-            "natural-conversation" => LocaleKey.Oobe_Preview_Organization_NaturalWrap,
-            _ => null
-        };
-        if (organizationWrapKeyName is not null)
-        {
-            replyKey = new FormattedDynamicLocaleKey(organizationWrapKeyName, replyKey);
-        }
-
-        if (isDetailed)
-        {
-            replyKey = new FormattedDynamicLocaleKey(
-                LocaleKey.Oobe_Preview_Reply_DetailedWrap,
-                replyKey,
-                new DynamicLocaleKey(LocaleKey.Oobe_Preview_DetailedAddendum));
-        }
-
-        var userName = Personalization.PreferredUserName?.Trim();
-        if (!string.IsNullOrEmpty(userName))
-        {
-            replyKey = new FormattedDynamicLocaleKey(
-                LocaleKey.Oobe_Preview_GreetingWrap,
-                new DirectLocaleKey(userName),
-                replyKey);
-        }
-
-        PreviewReplyKey = replyKey;
     }
 
     private static string? FormatTokenCount(int tokens)

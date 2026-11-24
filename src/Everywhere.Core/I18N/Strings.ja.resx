@@ -3315,6 +3315,12 @@
     <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
         <value>高度な編集内容を放棄しますか？</value>
     </data>
+    <data name="PromptCreate_ExamplePreviewDescription" xml:space="preserve">
+        <value>選択した設定に基づいて、会話におけるアシスタントの応答イメージをリアルタイムに表示します。</value>
+    </data>
+    <data name="PromptCreate_ExamplePreviewTitle" xml:space="preserve">
+        <value>会話プレビュー</value>
+    </data>
     <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
         <value>プレビューは現在の日付、時間などのプレースホルダー内容をリアルタイムでレンダリングします。</value>
     </data>
@@ -5211,7 +5217,7 @@
         <value>接続をテスト</value>
     </data>
     <data name="Oobe_Configure_SelectModelPlaceholder" xml:space="preserve">
-        <value>モデルを選択</value>
+        <value>↑↑ 先にモデルプロバイダーを選択してください</value>
     </data>
     <data name="Oobe_Configure_ContextLabel" xml:space="preserve">
         <value>コンテキストウィンドウ</value>
