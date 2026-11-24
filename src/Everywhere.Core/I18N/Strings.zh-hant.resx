@@ -2710,6 +2710,24 @@
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>你的 AI 助手已準備好在桌面各處工作，連接每個應用的上下文。</value>
     </data>
+    <data name="HomePage_Support_Message" xml:space="preserve">
+        <value>如果 Everywhere 對你有幫助，歡迎在 GitHub 點個 Star 或贊助我們，支持持續開發。非常感謝！</value>
+    </data>
+    <data name="HomePage_Support_StarButton" xml:space="preserve">
+        <value>前往 Star</value>
+    </data>
+    <data name="HomePage_Support_SponsorButton" xml:space="preserve">
+        <value>贊助</value>
+    </data>
+    <data name="HomePage_Support_GitHubSponsors" xml:space="preserve">
+        <value>GitHub Sponsors</value>
+    </data>
+    <data name="HomePage_Support_Afdian" xml:space="preserve">
+        <value>愛發電</value>
+    </data>
+    <data name="HomePage_Support_DismissToolTip" xml:space="preserve">
+        <value>不再顯示</value>
+    </data>
     <data name="HomePage_ThisMonth" xml:space="preserve">
         <value>本月 {0} 次</value>
     </data>

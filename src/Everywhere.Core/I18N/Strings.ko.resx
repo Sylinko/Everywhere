@@ -2710,6 +2710,24 @@
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>당신의 AI 비서가 데스크탑 곳곳에서 작업할 준비가 되어 있으며, 각 애플리케이션의 맥락을 연결합니다.</value>
     </data>
+    <data name="HomePage_Support_Message" xml:space="preserve">
+        <value>Everywhere가 도움이 되었다면 GitHub에서 Star를 눌러 주시거나 후원해 지속적인 개발을 도와주세요. 정말 감사합니다!</value>
+    </data>
+    <data name="HomePage_Support_StarButton" xml:space="preserve">
+        <value>Star 누르기</value>
+    </data>
+    <data name="HomePage_Support_SponsorButton" xml:space="preserve">
+        <value>후원</value>
+    </data>
+    <data name="HomePage_Support_GitHubSponsors" xml:space="preserve">
+        <value>GitHub Sponsors</value>
+    </data>
+    <data name="HomePage_Support_Afdian" xml:space="preserve">
+        <value>Afdian</value>
+    </data>
+    <data name="HomePage_Support_DismissToolTip" xml:space="preserve">
+        <value>다시 보지 않기</value>
+    </data>
     <data name="HomePage_ThisMonth" xml:space="preserve">
         <value>이번 달 {0} 회</value>
     </data>

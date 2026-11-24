@@ -2710,6 +2710,24 @@
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>Il tuo assistente AI è pronto a lavorare ovunque sul desktop, collegando il contesto di ogni applicazione.</value>
     </data>
+    <data name="HomePage_Support_Message" xml:space="preserve">
+        <value>Se Everywhere ti è stato utile, puoi lasciargli una stella su GitHub o sostenerci con una sponsorizzazione per continuare lo sviluppo. Grazie di cuore!</value>
+    </data>
+    <data name="HomePage_Support_StarButton" xml:space="preserve">
+        <value>Metti una stella</value>
+    </data>
+    <data name="HomePage_Support_SponsorButton" xml:space="preserve">
+        <value>Sostieni</value>
+    </data>
+    <data name="HomePage_Support_GitHubSponsors" xml:space="preserve">
+        <value>GitHub Sponsors</value>
+    </data>
+    <data name="HomePage_Support_Afdian" xml:space="preserve">
+        <value>Afdian</value>
+    </data>
+    <data name="HomePage_Support_DismissToolTip" xml:space="preserve">
+        <value>Nascondi</value>
+    </data>
     <data name="HomePage_ThisMonth" xml:space="preserve">
         <value>Questo mese {0} volte</value>
     </data>

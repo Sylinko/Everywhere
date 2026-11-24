@@ -2710,6 +2710,24 @@
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>あなたのAIアシスタントがデスクトップのどこでも作業する準備ができました。各アプリのコンテキストに接続します。</value>
     </data>
+    <data name="HomePage_Support_Message" xml:space="preserve">
+        <value>Everywhere がお役に立てたら、GitHub で Star を付けるか、スポンサーとして継続開発をご支援ください。ありがとうございます！</value>
+    </data>
+    <data name="HomePage_Support_StarButton" xml:space="preserve">
+        <value>Star を付ける</value>
+    </data>
+    <data name="HomePage_Support_SponsorButton" xml:space="preserve">
+        <value>スポンサー</value>
+    </data>
+    <data name="HomePage_Support_GitHubSponsors" xml:space="preserve">
+        <value>GitHub Sponsors</value>
+    </data>
+    <data name="HomePage_Support_Afdian" xml:space="preserve">
+        <value>Afdian</value>
+    </data>
+    <data name="HomePage_Support_DismissToolTip" xml:space="preserve">
+        <value>今後表示しない</value>
+    </data>
     <data name="HomePage_ThisMonth" xml:space="preserve">
         <value>今月 {0} 回</value>
     </data>

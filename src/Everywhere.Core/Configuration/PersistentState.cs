@@ -114,6 +114,15 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
+    /// <summary>
+    /// Gets or sets whether the user dismissed the support (Star / Sponsor) card on the home page.
+    /// </summary>
+    public bool IsHomeSupportCardDismissed
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     private T? Get<T>(T? defaultValue = default, [CallerMemberName] string key = "")
     {
         return storage.Get(key, defaultValue);

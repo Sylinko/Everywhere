@@ -2710,6 +2710,24 @@
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>Seu assistente de IA está pronto para atuar em toda a área de trabalho, conectando o contexto de cada aplicativo.</value>
     </data>
+    <data name="HomePage_Support_Message" xml:space="preserve">
+        <value>Se o Everywhere ajudou você, deixe uma estrela no GitHub ou patrocine nosso trabalho para apoiar o desenvolvimento contínuo. Muito obrigado!</value>
+    </data>
+    <data name="HomePage_Support_StarButton" xml:space="preserve">
+        <value>Dar estrela</value>
+    </data>
+    <data name="HomePage_Support_SponsorButton" xml:space="preserve">
+        <value>Patrocinar</value>
+    </data>
+    <data name="HomePage_Support_GitHubSponsors" xml:space="preserve">
+        <value>GitHub Sponsors</value>
+    </data>
+    <data name="HomePage_Support_Afdian" xml:space="preserve">
+        <value>Afdian</value>
+    </data>
+    <data name="HomePage_Support_DismissToolTip" xml:space="preserve">
+        <value>Dispensar</value>
+    </data>
     <data name="HomePage_ThisMonth" xml:space="preserve">
         <value>{0} vezes este mês</value>
     </data>

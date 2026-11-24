@@ -82,7 +82,8 @@
           </HyperlinkButton.Content>
         </HyperlinkButton>
         <HyperlinkButton
-          Classes="Footer" NavigateUri="https://github.com/Sylinko/Everywhere">
+          Classes="Footer"
+          NavigateUri="{x:Static common:LinkConstants.GitHubRepoUri}">
           <HyperlinkButton.Content>
             <StackPanel
               Orientation="Horizontal" Spacing="6">
@@ -94,7 +95,8 @@
           </HyperlinkButton.Content>
         </HyperlinkButton>
         <HyperlinkButton
-          Classes="Footer" NavigateUri="https://github.com/Sylinko/Everywhere/blob/main/ThirdPartyNotices.txt">
+          Classes="Footer"
+          NavigateUri="{x:Static common:LinkConstants.GitHubOpenSourceLicensesUri}">
           <HyperlinkButton.Content>
             <StackPanel
               Orientation="Horizontal" Spacing="6">
@@ -528,6 +530,101 @@
                 Text="{I18N {x:Static LocaleKey.HomePage_More}}"/>
             </StackPanel>
           </StackPanel>
+        </shadui:SmoothBorder>
+
+        <shadui:SmoothBorder
+          Classes="HomeCard" Padding="16,12"
+          IsVisible="{Binding IsSupportCardVisible}">
+          <DockPanel HorizontalSpacing="12">
+            <StackPanel
+              DockPanel.Dock="Right" VerticalAlignment="Center"
+              Orientation="Horizontal" Spacing="8">
+              <Button
+                Classes="Secondary Compact"
+                shadui:ButtonAssist.Icon="{TablerIconContent BrandGithub, IsFilled=True}"
+                shadui:ButtonAssist.IconSize="15"
+                Command="{Binding OpenUriCommand}"
+                CommandParameter="{x:Static common:LinkConstants.GitHubRepoUri}"
+                Content="{I18N {x:Static LocaleKey.HomePage_Support_StarButton}}"/>
+
+              <Button Classes="Secondary Compact">
+                <Button.Flyout>
+                  <MenuFlyout Placement="BottomEdgeAlignedRight">
+                    <MenuItem
+                      Command="{Binding OpenUriCommand}"
+                      CommandParameter="{x:Static common:LinkConstants.GitHubSponsorsUri}"
+                      Header="{I18N {x:Static LocaleKey.HomePage_Support_GitHubSponsors}}">
+                      <MenuItem.Icon>
+                        <TablerIcon
+                          Kind="BrandGithub" Size="15"/>
+                      </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem
+                      Command="{Binding OpenUriCommand}"
+                      CommandParameter="{x:Static common:LinkConstants.AfdianUri}"
+                      Header="{I18N {x:Static LocaleKey.HomePage_Support_Afdian}}">
+                      <MenuItem.Icon>
+                        <Image
+                          Width="15" Height="15"
+                          Stretch="Uniform">
+                          <Image.Source>
+                            <DrawingImage>
+                              <DrawingImage.Drawing>
+                                <DrawingGroup>
+                                  <GeometryDrawing
+                                    Brush="{DynamicResource ForegroundColor}"
+                                    Geometry="F0 M160,160z M0,0z M64.9999,90.6681C63.4307,90.6681 62.1621,91.9382 62.1621,93.5091 62.1621,95.0836 63.4307,96.3537 64.9999,96.3537 66.5691,96.3537 67.8378,95.0836 67.8378,93.5091 67.8378,91.9382 66.5691,90.6681 64.9999,90.6681z"/>
+                                  <GeometryDrawing
+                                    Brush="{DynamicResource ForegroundColor}"
+                                    Geometry="F0 M160,160z M0,0z M91.7568,99.1965C90.1876,99.1965 88.9189,100.467 88.9189,102.038 88.9189,103.612 90.1876,104.882 91.7568,104.882 93.326,104.882 94.5946,103.612 94.5946,102.038 94.5946,100.467 93.326,99.1965 91.7568,99.1965z"/>
+                                  <GeometryDrawing
+                                    Brush="{DynamicResource ForegroundColor}"
+                                    Geometry="F0 M160,160z M0,0z M133.76,106.376C132.813,106.851 131.453,106.876 130.197,106.441 129.349,106.141 128.434,105.859 127.523,105.578 125.832,105.061 123.006,104.198 122.468,103.545 121.585,102.365 119.908,102.13 118.73,103.021 117.552,103.909 117.317,105.581 118.207,106.762 118.502,107.161 118.901,107.489 119.303,107.806 115.224,113.462 97.3137,124.715 71.985,119.17 60.5719,116.671 52.8897,112.107 49.7641,105.977 47.5106,101.548 48.0233,96.9879 49.1019,94.5097 52.2026,88.0593 74.5837,73.2045 88.8732,64.793 90.1405,64.0406 90.5641,62.4039 89.8166,61.131 89.069,59.8616 87.3638,59.3517 86.1641,60.1825 85.0107,60.86 81.0912,63.192 76.0896,66.3655 74.3986,65.228 71.4759,63.8231 66.7911,63.3631 59.3616,62.625 42.1921,59.341 36.6458,56.9912 32.673,55.3081 23.6557,50.851 25.6528,45.834 26.1156,44.6645 28.2907,42.7711 33.004,40.9668 36.6351,39.5797 40.2484,38.8131 42.9789,38.5065 42.6122,38.6847 42.2562,38.8559 41.9216,39.0199 38.7106,40.5817 35.2076,42.3289 32.8545,44.3935 32.6836,44.2829 32.5056,44.1724 32.3846,44.0512 31.37,42.9886 29.6969,42.9101 28.6147,43.9656 27.5467,44.9854 27.5075,46.6791 28.5292,47.7452 29.4797,48.7436 30.8859,49.496 32.6765,50.0701 32.7442,50.0915 32.8047,50.1236 32.8723,50.1378 39.095,52.0562 50.1592,51.8173 65.7587,51.1969 72.4834,50.933 78.8343,50.6834 84.1314,50.7868 101.692,51.1362 114.889,58.1322 124.479,72.1776 130.371,80.8066 128.246,89.3073 124.875,96.6955 124.472,96.3853 124.042,95.9824 123.718,95.583 122.796,94.4313 121.09,94.2708 119.969,95.1587 118.816,96.0822 118.623,97.7617 119.542,98.9169 120.083,99.6016 122.867,102.807 126.316,102.533 126.38,102.536 126.437,102.529 126.501,102.525 126.605,102.511 126.711,102.529 126.822,102.511 129.178,102.08 130.659,102.194 132.044,103.064 133.878,104.223 134.782,104.914 134.6,105.492 134.493,105.856 134.219,106.116 133.76,106.376z M60.9493,76.5884C60.4189,76.977 59.8991,77.3621 59.3758,77.7472 58.8133,77.1411 58.3648,76.5634 58.1583,76.1427 58.7777,75.9572 59.8101,76.1783 60.9493,76.5884z M134.614,98.3714C133.294,97.5334 131.909,97.1697 130.563,97.02 133.724,89.3002 135.736,79.1949 128.887,69.1574 118.406,53.7998 103.38,45.8198 84.2346,45.4382 78.7809,45.3312 72.3517,45.5844 65.5487,45.8554 57.6493,46.1692 47.1369,46.5793 39.9921,45.9873 41.4161,45.2136 42.9326,44.4719 44.2462,43.8336 49.2728,41.384 53.2314,39.4763 51.9214,36.0925 51.2343,34.117 49.1874,33.0794 45.8233,33.0045 38.7426,32.8441 23.4421,36.9447 20.6903,43.8586 19.1418,47.7524 18.8854,55.2689 34.5668,61.9119 41.0174,64.6503 59.237,67.9879 66.2678,68.6867 68.2542,68.8793 69.7743,69.2822 70.9277,69.7101 69.3151,70.7727 67.6597,71.8888 65.9972,73.0298 63.1102,71.3824 58.3897,69.4391 54.8654,71.846 53.502,72.7695 52.7259,74.1316 52.6903,75.6827 52.6405,77.6117 53.8081,79.498 55.1217,81.017 49.9314,85.1639 45.7343,89.1825 44.2462,92.2811 42.5873,96.0893 41.9109,102.322 45.008,108.402 48.9382,116.118 57.6279,121.499 70.8423,124.394 88.1114,128.17 103.027,124.768 112.895,119.566 118.388,116.671 122.286,113.215 124.18,110.131 124.768,110.317 125.355,110.506 125.96,110.695 126.804,110.951 127.648,111.208 128.438,111.49 131.051,112.395 133.942,112.274 136.167,111.151 136.206,111.133 136.248,111.108 136.291,111.087 137.968,110.202 139.175,108.783 139.705,107.072 141.129,102.458 137.064,99.9082 134.614,98.3714z"/>
+                                </DrawingGroup>
+                              </DrawingImage.Drawing>
+                            </DrawingImage>
+                          </Image.Source>
+                        </Image>
+                      </MenuItem.Icon>
+                    </MenuItem>
+                  </MenuFlyout>
+                </Button.Flyout>
+                <StackPanel
+                  Orientation="Horizontal" Spacing="6">
+                  <TablerIcon
+                    Foreground="#F83860" IsFilled="True"
+                    Kind="Heart" Size="15"/>
+                  <TextBlock
+                    VerticalAlignment="Center"
+                    Text="{I18N {x:Static LocaleKey.HomePage_Support_SponsorButton}}"/>
+                  <TablerIcon
+                    Kind="ChevronDown" Opacity="0.7"
+                    Size="14"/>
+                </StackPanel>
+              </Button>
+
+              <Button
+                Classes="Ghost Compact Muted" Padding="4"
+                VerticalAlignment="Center"
+                Command="{Binding DismissSupportCardCommand}"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.HomePage_Support_DismissToolTip}}">
+                <TablerIcon
+                  Kind="X" Size="14"/>
+              </Button>
+            </StackPanel>
+
+            <DockPanel HorizontalSpacing="10">
+              <TablerIcon
+                DockPanel.Dock="Left" VerticalAlignment="Center"
+                Foreground="{DynamicResource WarningColor}"
+                IsFilled="True" Kind="Star"
+                Size="16"/>
+              <TextBlock
+                Classes="Muted" VerticalAlignment="Center"
+                Text="{I18N {x:Static LocaleKey.HomePage_Support_Message}}"
+                TextWrapping="Wrap"/>
+            </DockPanel>
+          </DockPanel>
         </shadui:SmoothBorder>
       </StackPanel>
     </ScrollViewer>

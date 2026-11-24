@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Cloud;
 using Everywhere.Collections;
 using Everywhere.Common.Notification;
+using Everywhere.Configuration;
 using Everywhere.Messages;
 using Everywhere.Statistics;
 using Everywhere.Utilities;
@@ -52,18 +53,23 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
 
     public ObservableCollection<HeatmapMetricTabItem> HeatmapMetrics { get; } = [];
 
+    public bool IsSupportCardVisible => !_persistentState.IsHomeSupportCardDismissed;
+
     private readonly IStatisticsService _statisticsService;
+    private readonly PersistentState _persistentState;
     private readonly IServiceProvider _serviceProvider;
 
     public HomePageViewModel(
         ICloudClient cloudClient,
         INotificationCenter notificationCenter,
         IStatisticsService statisticsService,
+        PersistentState persistentState,
         IServiceProvider serviceProvider)
     {
         CloudClient = cloudClient;
         Notifications = notificationCenter.Notifications;
         _statisticsService = statisticsService;
+        _persistentState = persistentState;
         _serviceProvider = serviceProvider;
 
         InitializeHeatmapMetrics();
@@ -149,6 +155,16 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
         _serviceProvider.GetRequiredService<MainViewModel>()
             .NavigateTo(_serviceProvider.GetRequiredService<ChangeLogView>());
     }
+
+    [RelayCommand]
+    private void DismissSupportCard()
+    {
+        _persistentState.IsHomeSupportCardDismissed = true;
+        OnPropertyChanged(nameof(IsSupportCardVisible));
+    }
+
+    [RelayCommand]
+    private static Task OpenUriAsync(Uri uri) => App.Launcher.LaunchUriAsync(uri);
 
     private void InitializeHeatmapMetrics()
     {
