@@ -121,7 +121,7 @@ internal sealed class LinkFileOperations(ILogger<LinkFileOperations> logger) : I
                 }
                 else if (notification.IsCompletion)
                 {
-                    responses.Writer.TryComplete(notification.Exception);
+                    responses.Writer.TryComplete(notification.CompletionReason);
                 }
             },
             flags: ObserverFlags.EmitOnConnectionClosed | ObserverFlags.EmitOnOwnerChanged | ObserverFlags.EmitOnReaderFailed);

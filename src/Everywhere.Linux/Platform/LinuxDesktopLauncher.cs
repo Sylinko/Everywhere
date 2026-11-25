@@ -82,7 +82,7 @@ public sealed partial class LinuxDesktopLauncher(ILauncher fallback) : ILauncher
                 }
                 else if (notification.IsCompletion)
                 {
-                    response.TrySetException(notification.Exception);
+                    response.TrySetException(notification.CompletionReason);
                 }
             },
             emitOnCapturedContext: false,

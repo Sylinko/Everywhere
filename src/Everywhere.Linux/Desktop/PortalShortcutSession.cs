@@ -211,7 +211,7 @@ internal sealed partial class PortalShortcutSession : IAsyncDisposable
                 {
                     if (notification.IsCompletion)
                     {
-                        completion.TrySetException(notification.Exception);
+                        completion.TrySetException(notification.CompletionReason);
                     }
                     return;
                 }
