@@ -52,6 +52,7 @@
     <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Microsoft.Extensions.Logging"/>
     <PackageReference Include="ModelContextProtocol"/>
+    <PackageReference Include="Motion.Avalonia"/>
     <PackageReference Include="OllamaSharp"/>
     <PackageReference Include="OpenTelemetry"/>
     <PackageReference Include="OpenTelemetry.Extensions.Hosting"/>
@@ -74,7 +75,6 @@
 
   <ItemGroup>
     <ProjectReference Condition="'$(Configuration)' == 'Debug'" Include="..\..\3rd\ClassicDiagnostics.Avalonia\src\ClassicDiagnostics.Avalonia.csproj"/>
-    <ProjectReference Include="..\..\3rd\Motion.Avalonia\src\Motion.Avalonia\Motion.Avalonia.csproj"/>
     <ProjectReference Include="..\..\3rd\shad-ui\src\ShadUI\ShadUI.csproj"/>
     <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj"/>
     <ProjectReference Include="..\..\patches\Everywhere.Patches.Contracts\Everywhere.Patches.Contracts.csproj"/>

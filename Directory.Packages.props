@@ -91,6 +91,7 @@
     <PackageVersion Include="LiveMarkdown.Avalonia.Math" Version="$(LiveMarkdownVersion)" />
     <PackageVersion Include="LiveMarkdown.Avalonia.Mermaid" Version="$(LiveMarkdownVersion)" />
     <PackageVersion Include="LiveMarkdown.Avalonia.Svg.Skia" Version="$(LiveMarkdownVersion)" />
+    <PackageVersion Include="Motion.Avalonia" Version="1.0.0" />
     <PackageVersion Include="SkiaSharp" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="$(SkiaSharpVersion)" />

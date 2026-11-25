@@ -17,7 +17,6 @@
   </Folder>
   <Folder Name="/3rd/">
     <Project Path="3rd/ClassicDiagnostics.Avalonia/src/ClassicDiagnostics.Avalonia.csproj" />
-    <Project Path="3rd/Motion.Avalonia/src/Motion.Avalonia/Motion.Avalonia.csproj" />
     <Project Path="3rd/shad-ui/src/ShadUI/ShadUI.csproj" />
     <Project Path="3rd/shad-ui/src/Tabler.Avalonia/Tabler.Avalonia.csproj" />
   </Folder>
