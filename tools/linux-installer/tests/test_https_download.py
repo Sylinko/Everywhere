@@ -140,6 +140,24 @@ class HttpsDownloadTests(unittest.TestCase):
         self.assertNotIn('Traceback', result.stderr)
         self.assertNotIn(u.INSTALLER_VERSION, result.stdout)
 
+    def test_bootstrap_prints_package_manager_python_hint_when_python_missing(self):
+        if not sys.platform.startswith('linux'):
+            self.skipTest('The bootstrap requires Linux')
+        bootstrap = ROOT / 'install.sh'
+        if not bootstrap.exists():
+            self.skipTest('Bootstrap is maintained in the standalone installer directory')
+        with tempfile.TemporaryDirectory() as temporary:
+            fake_bin = Path(temporary)
+            (fake_bin / 'uname').symlink_to(shutil.which('uname'))
+            pacman = fake_bin / 'pacman'
+            pacman.write_text('#!/bin/sh\nexit 0\n')
+            pacman.chmod(0o755)
+            result = subprocess.run(['/bin/sh', str(bootstrap)], text=True, capture_output=True,
+                                    timeout=10, env={'PATH': str(fake_bin)})
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('Python 3.9+ is required', result.stderr)
+        self.assertIn('sudo pacman -S --needed python', result.stderr)
+
 
 if __name__ == '__main__':
     unittest.main()

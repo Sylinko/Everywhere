@@ -4,7 +4,10 @@ import io
 import json
 import os
 from pathlib import Path
-import pty
+try:
+    import pty
+except ImportError:
+    pty = None
 import select
 import subprocess
 import sys
@@ -40,11 +43,31 @@ class InstallerTests(unittest.TestCase):
 
     def test_supported_systems_and_unknown_rejected(self):
         with patch.object(u.shutil, 'which', return_value='/bin/tool'), patch.object(u.Path, 'exists', return_value=False):
-            for distro, version, manager in [('arch', '', 'pacman'), ('ubuntu', '24.04', 'apt-get'), ('debian', '14', 'apt-get'), ('fedora', '44', 'dnf')]:
-                self.assertEqual(u.backend({'ID': distro, 'VERSION_ID': version}), manager)
-            for distro in ['nixos', 'alpine', 'unknown']:
+            supported = [
+                ({'ID': 'arch', 'VERSION_ID': ''}, 'pacman'),
+                ({'ID': 'cachyos', 'ID_LIKE': 'arch'}, 'pacman'),
+                ({'ID': 'ubuntu', 'VERSION_ID': '24.04'}, 'apt-get'),
+                ({'ID': 'ubuntu', 'VERSION_ID': '26.04'}, 'apt-get'),
+                ({'ID': 'debian', 'VERSION_ID': '13'}, 'apt-get'),
+                ({'ID': 'debian', 'VERSION_ID': '14'}, 'apt-get'),
+                ({'ID': 'linuxmint', 'VERSION_ID': '22', 'ID_LIKE': 'ubuntu debian'}, 'apt-get'),
+                ({'ID': 'fedora', 'VERSION_ID': '44'}, 'dnf'),
+                ({'ID': 'fedora', 'VERSION_ID': '45'}, 'dnf'),
+            ]
+            for info, manager in supported:
+                self.assertEqual(u.backend(info), manager)
+            rejected = [
+                {'ID': 'ubuntu', 'VERSION_ID': '22.04'},
+                {'ID': 'debian', 'VERSION_ID': '12'},
+                {'ID': 'fedora', 'VERSION_ID': '39'},
+                {'ID': 'opensuse-tumbleweed', 'ID_LIKE': 'opensuse suse'},
+                {'ID': 'nixos'},
+                {'ID': 'alpine'},
+                {'ID': 'unknown'},
+            ]
+            for info in rejected:
                 with self.assertRaises(u.UpdateError):
-                    u.backend({'ID': distro})
+                    u.backend(info)
 
     def test_channel_missing_asset_and_wrong_channel_rejected(self):
         self.assertEqual(u.select_package(catalog(), 'stable', 'x64', 'pacman')[0], '1.2.0')
@@ -87,7 +110,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_installer_refresh_verified_cached_and_exit_code_propagated(self):
         data = b'print("new installer")'
-        manifest = {'schema': 1, 'protocol': 1, 'version': '0.3.0', 'asset': asset(data)}
+        manifest = {'schema': 1, 'protocol': 1, 'version': '99.0.0', 'asset': asset(data)}
         with tempfile.TemporaryDirectory() as temporary, patch.object(u.Path, 'home', return_value=Path(temporary)), \
                 patch.object(u, 'read_json', return_value=manifest), patch.object(u, 'fetch') as fetch, patch.object(u.subprocess, 'run') as run:
             fetch.side_effect = lambda url, path, limit: path.write_bytes(data)
@@ -162,7 +185,7 @@ class InstallerTests(unittest.TestCase):
                                             'everywhere-bin', SOURCE, 2), package)
 
     def test_bad_installer_never_executed(self):
-        manifest = {'schema': 1, 'protocol': 1, 'version': '0.3.0', 'asset': asset()}
+        manifest = {'schema': 1, 'protocol': 1, 'version': '99.0.0', 'asset': asset()}
         with tempfile.TemporaryDirectory() as temporary, patch.object(u.Path, 'home', return_value=Path(temporary)), \
                 patch.object(u, 'read_json', return_value=manifest), patch.object(u, 'fetch') as fetch, patch.object(u.subprocess, 'run') as run:
             fetch.side_effect = lambda url, path, limit: path.write_bytes(b'bad')
@@ -185,7 +208,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_new_installer_download_failure_uses_bundled_without_executing_partial_file(self):
         data = b'new installer'
-        manifest = {'schema': 1, 'protocol': 1, 'version': '0.3.0', 'asset': asset(data)}
+        manifest = {'schema': 1, 'protocol': 1, 'version': '99.0.0', 'asset': asset(data)}
         for error in (u.DownloadError('offline'), u.DownloadError('HTTP 503')):
             with self.subTest(error=str(error)), tempfile.TemporaryDirectory() as temporary, \
                     patch.object(u.Path, 'home', return_value=Path(temporary)), \
@@ -243,6 +266,50 @@ class InstallerTests(unittest.TestCase):
         with patch.object(u, 'probe', side_effect=['other-app', '1.2.0', 'amd64']):
             with self.assertRaises(u.UpdateError):
                 u.validate_package(Path('/tmp/example.deb'), 'apt-get', '1.2.0', 'x64')
+
+    def test_mirror_rewrites_url_and_rejects_insecure_mirror(self):
+        official = 'https://download.sylinko.com/download?product=everywhere&os=linux-x64&type=deb&version=v1.2.0'
+        github_url = 'https://github.com/Sylinko/Everywhere/releases/download/v1.2.0/Everywhere-Linux-x64-v1.2.0.deb'
+        self.assertEqual(u.apply_mirror(official, 'official', '1.2.0', 'x64', 'deb'), official)
+        self.assertEqual(u.apply_mirror(official, 'github', '1.2.0', 'x64', 'deb'), github_url)
+        self.assertEqual(
+            u.apply_mirror(official, 'https://mirror.example.test/', '1.2.0', 'x64', 'deb'),
+            'https://mirror.example.test/' + github_url,
+        )
+        self.assertEqual(
+            u.apply_mirror(official, 'https://mirror.example.test/releases/{tag}/{file}', '1.2.0', 'x64', 'deb'),
+            'https://mirror.example.test/releases/v1.2.0/Everywhere-Linux-x64-v1.2.0.deb',
+        )
+        for bad in ('http://insecure.example.test', 'ftp://bad.example.test', 'https://user:pass@example.test', ''):
+            with self.assertRaises(u.UpdateError):
+                u.apply_mirror(official, bad, '1.2.0', 'x64', 'deb')
+
+    def test_github_api_token_and_rate_limit_error(self):
+        with patch.dict(os.environ, {'EVERYWHERE_UPDATE_TRANSPORT': '', 'GITHUB_TOKEN': 'ghp_test123'}, clear=False), \
+                patch.object(u.urllib.request, 'build_opener') as opener:
+            opener.return_value.open.side_effect = [io.BytesIO(b'[]'), io.BytesIO(b'{}')]
+            self.assertEqual(u.fetch('https://api.github.com/repos/Sylinko/Everywhere/releases'), b'[]')
+            self.assertEqual(u.fetch('https://download.sylinko.com/everywhere/linux/releases.json'), b'{}')
+            github_req = opener.return_value.open.call_args_list[0].args[0]
+            official_req = opener.return_value.open.call_args_list[1].args[0]
+            self.assertEqual(github_req.unredirected_hdrs.get('Authorization'), 'Bearer ghp_test123')
+            self.assertNotIn('Authorization', official_req.unredirected_hdrs)
+            self.assertNotIn('Authorization', official_req.headers)
+        rate_limited = u.urllib.error.HTTPError(
+            'https://api.github.com/repos/Sylinko/Everywhere/releases',
+            403,
+            'Forbidden',
+            {'X-RateLimit-Remaining': '0'},
+            None,
+        )
+        with patch.dict(os.environ, {'EVERYWHERE_UPDATE_TRANSPORT': ''}, clear=False), \
+                patch.object(u.urllib.request, 'build_opener') as opener, \
+                patch.object(u.time, 'sleep') as sleep:
+            opener.return_value.open.side_effect = rate_limited
+            with self.assertRaisesRegex(u.DownloadError, 'GitHub API rate limit exceeded'):
+                u.fetch('https://api.github.com/repos/Sylinko/Everywhere/releases')
+            self.assertEqual(opener.return_value.open.call_count, 1)
+            sleep.assert_not_called()
 
     @unittest.skipUnless(sys.platform.startswith('linux'), 'controlling-terminal acceptance runs on Linux')
     def test_menu_arrows_and_cancel_with_controlling_terminal(self):

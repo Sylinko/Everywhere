@@ -47,7 +47,8 @@ The existing changelog history uses the same source; its graphical installer act
 is disabled on Linux, without changing its view layout.
 
 The application release authority is the official `Sylinko/Everywhere` repository.
-The installer selects published payloads from that repository, independently of
+Discovery and downloads default to the official download service (`https://download.sylinko.com`),
+which serves published payloads from that repository, independently of
 package repositories. The launcher does not inject the application discovery
 repository into script arguments.
 There is no silent official/fork fallback. An incomplete newest Linux release does not
@@ -81,6 +82,7 @@ can select a schema-1 website catalog instead.
 - `ew update --dry-run`: preview without downloading application packages.
 - `ew update --channel stable`: override the channel for this invocation.
 - `ew update --catalog https://HOST/releases.json`: use an explicit website catalog.
+- `ew update --mirror https://HOST/`: override the package download source (`official`, `github`, or an HTTPS prefix).
 - `ew update --no-installer-update`: use the bundled script directly.
 - `ew update --proxy none`: override saved network behavior for this invocation.
 
@@ -111,7 +113,8 @@ can find a release, but the graphical updater does not download or install it.
 Linux tests cover release selection,
 settings precedence, read-only settings loading and the existing proxy behavior.
 
-The installer checks `tools/linux-installer/installer.json` on official main through
-raw.githubusercontent.com. The manifest and script are committed together; no
-installer GitHub Release is required. Increment `INSTALLER_VERSION` and regenerate
-the manifest with `build-manifest.py` when changing the distributed installer.
+The installer checks `https://download.sylinko.com/everywhere/linux/installer.json` and
+consumes the schema-1 catalog at `https://download.sylinko.com/everywhere/linux/releases.json`
+by default. Increment `INSTALLER_VERSION`, regenerate the manifest with
+`build-manifest.py`, and run `sync-bundle.py` when
+changing the distributed installer.

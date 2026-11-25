@@ -54,17 +54,18 @@ runs:
       run: |
         bash src/Everywhere.Linux/packaging_deb.sh linux-x64 "$VERSION" ./publish
 
-    - name: Create Archive
-      working-directory: ${{ inputs.source-directory }}
-      shell: bash
-      run: |
-        tar -I 'zstd -19 -T0' -cf Everywhere-Linux-x64-v${VERSION}.tar.zst -C ./publish .
-
     - name: Build RPM Package
       working-directory: ${{ inputs.source-directory }}
       shell: bash
       run: |
         bash src/Everywhere.Linux/packaging_rpm.sh linux-x64 "$VERSION" ./publish
+
+    - name: Create Archive
+      working-directory: ${{ inputs.source-directory }}
+      shell: bash
+      run: |
+        cp img/Everywhere-icon.png LICENSE ./publish/
+        tar -I 'zstd -19 -T0' -cf Everywhere-Linux-x64-v${VERSION}.tar.zst -C ./publish .
 
     - name: Validate package metadata
       working-directory: ${{ inputs.source-directory }}

@@ -8,17 +8,17 @@ The application package includes a generated snapshot of this installer. `ew upd
 
 The application source is the official **Sylinko/Everywhere** repository. Stable and Canary targets are selected from that repository's published GitHub Releases, including pagination. Package repositories and AUR do not decide the target. Drafts, inconsistent channels and installer-only tags are ignored. The newest release must have the required asset; older releases are not silently substituted. Downloads validate HTTPS, size, SHA256 and native package metadata.
 
-The installer checks the manifest committed in this repository:
+The installer checks the manifest hosted by the official download center:
 
 ```
-https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.json
+https://download.sylinko.com/everywhere/linux/installer.json
 ```
 
-The manifest points to `installer.py` in the same repository directory. There is no installer Release, installer tag, or asset upload. To distribute an update, increment `INSTALLER_VERSION`, run `python3 build-manifest.py`, and commit the script and manifest together to main. The bootstrap is `install.sh` in this directory. These URLs become available after the files reach official main.
+The manifest points to `installer.py` hosted alongside it (and maintained in this directory). To distribute an update, increment `INSTALLER_VERSION`, run `python3 build-manifest.py`, and commit the script and manifest together to main; `download-center` proxies directly from `main`. The bootstrap is `install.sh` in this directory.
 
-GitHub may cache the two raw files independently. If their contents temporarily disagree, checksum verification stops execution; retry after the cache refreshes. An unavailable manifest falls back to the bundled engine for `ew update`; the bootstrap requires a valid manifest.
+An unavailable manifest falls back to the bundled engine for `ew update`; the bootstrap requires a valid manifest.
 
-The future website can serve `install.sh`, `installer.json` and `releases.json`, without changing the installer protocol. Use `--catalog https://HOST/releases.json` to select a website catalog. There is no HTML scraping. Explicit absolute manifest files are also supported for staging; they are trust inputs, not verification bypasses. `EVERYWHERE_INSTALLER_MANIFEST` configures the shell bootstrap's HTTPS manifest location.
+The installer consumes the schema-1 website catalog at `https://download.sylinko.com/everywhere/linux/releases.json` by default. Use `--catalog github:Sylinko/Everywhere` or `--catalog https://HOST/releases.json` to select another source. There is no HTML scraping. Explicit absolute manifest files are also supported for staging; they are trust inputs, not verification bypasses. `EVERYWHERE_INSTALLER_MANIFEST` configures the shell bootstrap's HTTPS manifest location.
 
 ## Usage
 
@@ -26,6 +26,8 @@ The future website can serve `install.sh`, `installer.json` and `releases.json`,
 python3 installer.py install
 python3 installer.py update --channel canary
 python3 installer.py update --dry-run --channel canary
+python3 installer.py install --mirror github
+python3 installer.py install --mirror https://mirror.example.test/
 python3 installer.py --no-installer-update --channel stable
 ```
 
@@ -35,9 +37,9 @@ Existing updates use the application's saved channel, or infer the installed bui
 
 ## Initial backend scope
 
-- Ubuntu 24.04/25.10 and Debian 13/14: local DEB installed with apt, including dependency resolution.
-- Fedora 44: local RPM installed with dnf. Published official releases must actually contain an RPM asset; older tags may not.
-- Arch, EndeavourOS and Manjaro: the verified official tar.zst is repackaged with makepkg and installed with `pacman -U`. No AUR helper, repository-target lookup or full system upgrade. Artwork/license come from release assets or the same official tag's source files. Only regular files/directories are accepted in the application archive; traversal, symlinks and oversized expansion are rejected.
+- Ubuntu 24.04+ (and Ubuntu/Debian-based derivatives such as Linux Mint 22+, Pop!_OS 24+) and Debian 13+: local DEB installed with apt, including dependency resolution.
+- Fedora 40+ (and Fedora-based derivatives): local RPM installed with dnf. Published official releases must actually contain an RPM asset; older tags may not.
+- Arch, EndeavourOS, Manjaro, CachyOS, Garuda and Arch-based derivatives: the verified official tar.zst is repackaged with makepkg and installed with `pacman -U`. No AUR helper, repository-target lookup or full system upgrade. Artwork/license come from release assets, the official tar.zst payload or the same official tag's source files. Only regular files/directories are accepted in the application archive; traversal, symlinks and oversized expansion are rejected.
 - Other releases, architectures without artifacts, immutable systems and NixOS fail explicitly. This list is routing support, not native acceptance on every listed release. Ubuntu/Debian/Fedora require separate native transaction acceptance for this installer revision.
 
 The bootstrap reports a missing Python interpreter rather than installing a runtime without permission. Arch packaging requires makepkg, fakeroot and zstd. makepkg resolves missing application dependencies through its normal --syncdeps transaction. Native package managers retain dependency/signature checks and their ordinary confirmation prompts. Installing through this tool can subsequently be superseded by an explicit package-source operation; this tool does not pin system packages or rewrite repository configuration.

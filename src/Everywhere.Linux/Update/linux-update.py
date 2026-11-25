@@ -2,7 +2,14 @@
 """Independent Everywhere Linux installer (Python 3.9+, standard library)."""
 import argparse
 import contextlib
-import fcntl
+try:
+    import fcntl
+    import termios
+    import tty
+except ImportError:
+    fcntl = None
+    termios = None
+    tty = None
 import hashlib
 import json
 import os
@@ -18,8 +25,6 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import select
-import termios
-import tty
 import tarfile
 
 
@@ -66,12 +71,17 @@ class HTTPSRedirect(urllib.request.HTTPRedirectHandler):
 
 COPY = {
     'title': 'Everywhere',
+    'tagline': 'Context-aware Desktop AI Assistant',
     'channel': 'Release channel',
     'channel_compact': 'Channel',
     'stable': 'Stable',
+    'stable_desc': 'Recommended · Official release',
     'canary': 'Canary',
+    'canary_desc': 'Preview · Experimental build',
     'keys': '↑/↓ Navigate · Enter Select · Esc Cancel',
     'keys_compact': '↑↓  Enter  Esc',
+    'system_label': 'System',
+    'desktop_label': 'Desktop',
     'checking_installer': 'Checking installer',
     'bundled_installer': 'Using bundled installer (check unavailable).',
     'using_installer': 'Installer {version}',
@@ -84,7 +94,9 @@ COPY = {
     'install': 'Installing',
     'installed': 'Installed {version}',
     'updated': 'Updated to {version}',
-    'open': 'Open Everywhere.',
+    'open': 'Open Everywhere from your app menu, or run: Everywhere',
+    'launch_update': 'Run anytime in terminal: ew update',
+    'hyprland_tip': 'Tip: Install grim and wl-clipboard for screenshot & selection support.',
     'restart': 'Restart Everywhere.',
     'current': 'Already up to date.',
     'older': 'No newer version in this channel.',
@@ -92,6 +104,44 @@ COPY = {
     'failed': 'Installation failed: {error}',
     'canceled': 'Canceled.',
 }
+
+BANNER_MASCOT = (
+    '  ╭─────────╮  ',
+    '  │  █   █  │  ',
+    '  │         │  ',
+    '  ╰─────────╯  ',
+)
+
+BANNER_WORD = (
+    '█▀▀▀ █   █ █▀▀▀ █▀▀▄ █   █ █   █ █  █ █▀▀▀ █▀▀▄ █▀▀▀',
+    '█▀▀  ▀▄ ▄▀ █▀▀  █▀▀▄  ▀█▀  █ █ █ █▀▀█ █▀▀  █▀▀▄ █▀▀ ',
+    '▀▀▀▀   ▀   ▀▀▀▀ ▀  ▀   ▀    ▀ ▀  ▀  ▀ ▀▀▀▀ ▀  ▀ ▀▀▀▀',
+)
+
+
+def session_summary(environ=None):
+    env = os.environ if environ is None else environ
+    session_type = env.get('XDG_SESSION_TYPE', '').lower()
+    display = env.get('DISPLAY', '')
+    wayland_display = env.get('WAYLAND_DISPLAY', '')
+    desktops = [item.strip().lower() for item in env.get('XDG_CURRENT_DESKTOP', '').split(':') if item.strip()]
+    hyprland = env.get('HYPRLAND_INSTANCE_SIGNATURE', '')
+    if session_type == 'x11' and display:
+        return 'X11 · Standard integration'
+    if wayland_display:
+        if 'kde' in desktops or 'plasma' in desktops:
+            return 'KDE Plasma (Wayland) · Window & shortcut mode'
+        if 'gnome' in desktops:
+            return 'GNOME (Wayland) · Window & shortcut mode'
+        if 'niri' in desktops:
+            return 'Niri (Wayland) · Window mode'
+        if 'hyprland' in desktops or hyprland:
+            return 'Hyprland (Wayland) · Full integration'
+    if hyprland:
+        return 'Hyprland (Wayland) · Full integration'
+    if display:
+        return 'X11 · Standard integration'
+    return None
 
 
 class TerminalUI:
@@ -101,6 +151,16 @@ class TerminalUI:
         self.stream = stream if stream is not None else sys.stdout
         self.is_interactive = self.stream.isatty() and os.environ.get('TERM') != 'dumb'
         self.has_color = self.is_interactive and 'NO_COLOR' not in os.environ
+        colorterm = os.environ.get('COLORTERM', '').lower()
+        term = os.environ.get('TERM', '').lower()
+        if not self.has_color:
+            self.color_mode = 'none'
+        elif colorterm in ('truecolor', '24bit'):
+            self.color_mode = 'truecolor'
+        elif '256color' in term:
+            self.color_mode = '256'
+        else:
+            self.color_mode = '16'
 
     def style(self, text, role='accent'):
         if not self.has_color:
@@ -108,25 +168,103 @@ class TerminalUI:
         codes = {'accent': '1;36', 'selected': '1;94', 'muted': '90', 'success': '1;32', 'error': '1;31'}
         return '\x1b[%sm%s\x1b[0m' % (codes[role], text)
 
+    def _paint_banner_line(self, line, total_width, mascot_width):
+        if not self.has_color:
+            return line
+        stops_256 = (39, 75, 111, 141, 171, 205)
+        parts = []
+        current_code = None
+        for col, char in enumerate(line):
+            if char == ' ':
+                code = None
+            elif col < mascot_width and char == '█':
+                code = '1;97'
+            else:
+                ratio = col / max(1, total_width - 1)
+                if self.color_mode == 'truecolor':
+                    if ratio < 0.5:
+                        local = ratio * 2
+                        rgb = (int(56 + 83 * local), int(189 - 97 * local), int(248 - 2 * local))
+                    else:
+                        local = (ratio - 0.5) * 2
+                        rgb = (int(139 + 97 * local), int(92 - 20 * local), int(246 - 93 * local))
+                    code = '1;38;2;%d;%d;%d' % rgb
+                elif self.color_mode == '256':
+                    code = '1;38;5;%d' % stops_256[min(len(stops_256) - 1, int(ratio * len(stops_256)))]
+                else:
+                    code = '1;36' if ratio < 0.5 else '1;94'
+            if code != current_code:
+                if current_code is not None:
+                    parts.append('\x1b[0m')
+                if code is not None:
+                    parts.append('\x1b[%sm' % code)
+                current_code = code
+            parts.append(char)
+        if current_code is not None:
+            parts.append('\x1b[0m')
+        return ''.join(parts)
+
     def write(self, text):
         self.stream.write(text + '\n')
         self.stream.flush()
 
-    def header(self):
-        self.write('\n ' + self.style(COPY['title']) + '\n')
+    def header(self, width=None):
+        if width is None:
+            width = shutil.get_terminal_size((80, 24)).columns
+        if width >= 68:
+            lines = [
+                BANNER_MASCOT[0] + BANNER_WORD[0],
+                BANNER_MASCOT[1] + BANNER_WORD[1],
+                BANNER_MASCOT[2] + BANNER_WORD[2],
+            ]
+            total_width = max(len(item) for item in lines)
+            mascot_width = len(BANNER_MASCOT[0])
+            rendered = [self._paint_banner_line(item, total_width, mascot_width) for item in lines]
+            rendered.append(
+                self._paint_banner_line(BANNER_MASCOT[3], total_width, mascot_width)
+                + self.style(COPY['tagline'], 'muted')
+            )
+            self.write('\n' + '\n'.join(rendered) + '\n')
+            return
+        compact = ' ' + self.style(COPY['title'])
+        if width >= 50:
+            compact += '  ' + self.style(COPY['tagline'], 'muted')
+        self.write('\n' + compact + '\n')
 
-    def status(self, key, role='muted', **values):
-        self.write(self.style(COPY[key].format(**values), role))
+    def info_row(self, label_key, value, width=None):
+        if width is None:
+            width = shutil.get_terminal_size((80, 24)).columns
+        label = COPY[label_key].ljust(9)
+        if len(label) + len(value) + 3 > width:
+            available = max(4, width - len(label) - 3)
+            value = value[:available - 1] + '…' if available > 1 else value[:available]
+        self.write('  ' + self.style(label, 'muted') + ' ' + value)
+
+    def environment(self, info, machine, manager, width=None):
+        pretty = info.get('PRETTY_NAME') or info.get('NAME') or info.get('ID') or 'Linux'
+        self.info_row('system_label', '%s (%s) · %s' % (pretty, machine, manager), width=width)
+        desktop = session_summary()
+        if desktop:
+            self.info_row('desktop_label', desktop, width=width)
+        self.write('')
+
+    def status(self, key, role='muted', prefix=None, **values):
+        text = COPY[key].format(**values)
+        if prefix and self.is_interactive:
+            text = '%s %s' % (prefix, text)
+        self.write(self.style(text, role))
 
     def choice(self, selected, width):
         """Render a bounded card; only the two options are interactive."""
-        inner = max(12, min(38, width - 4))
+        inner = max(12, min(50, width - 4))
         title = COPY['channel'] if inner >= 20 else COPY['channel_compact']
         top = '╭─ ' + title + ' ' + '─' * max(0, inner - len(title) - 3) + '╮'
         lines = [self.style(top)]
         for index, key in enumerate(('stable', 'canary')):
-            label = ('❯ ' if index == selected else '  ') + COPY[key]
-            content = label.ljust(inner)
+            marker = '❯ ' if index == selected else '  '
+            name = COPY[key]
+            label = (' %s%-8s %s' % (marker, name, COPY[key + '_desc'])) if inner >= 46 else (marker + name)
+            content = label[:inner].ljust(inner)
             if index == selected:
                 content = self.style(content, 'selected')
             lines.append(self.style('│') + content + self.style('│'))
@@ -260,10 +398,15 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
                     time.sleep(attempt + 1)
             raise DownloadError('Download failed using the application network settings.')
     opener = urllib.request.build_opener(HTTPSRedirect())
+    netloc = urllib.parse.urlsplit(url).netloc
     for attempt in range(3):
         try:
             req = urllib.request.Request(url, headers={
                 'User-Agent': 'Everywhere-Linux-Installer', 'Accept': 'application/vnd.github+json'})
+            if netloc == 'api.github.com':
+                token = (os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN') or '').strip()
+                if token and not any(ch.isspace() for ch in token):
+                    req.add_unredirected_header('Authorization', 'Bearer ' + token)
             with opener.open(req, timeout=30) as response:
                 output_context = open(destination, 'wb') if destination else contextlib.nullcontext()
                 progress_context = DownloadProgress(limit) if destination else contextlib.nullcontext()
@@ -283,6 +426,9 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
                             chunks.append(chunk)
                     return b''.join(chunks)
         except urllib.error.HTTPError as exc:
+            if (exc.code in (403, 429) and netloc == 'api.github.com' and
+                    exc.headers and exc.headers.get('X-RateLimit-Remaining') == '0'):
+                raise DownloadError('GitHub API rate limit exceeded. Use the default catalog or set GITHUB_TOKEN.') from exc
             if exc.code not in (429, 500, 502, 503, 504) or attempt == 2:
                 raise DownloadError('Download HTTP %s: %s' % (exc.code, url)) from exc
         except (urllib.error.URLError, TimeoutError) as exc:
@@ -293,9 +439,9 @@ def fetch(url, destination=None, limit=8 * 1024 * 1024):
         time.sleep(attempt + 1)
 
 
-INSTALLER_VERSION = '0.2.3'
-INSTALLER_URL = 'https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.json'
-CATALOG_URL = 'github:Sylinko/Everywhere'
+INSTALLER_VERSION = '0.3.0'
+INSTALLER_URL = 'https://download.sylinko.com/everywhere/linux/installer.json'
+CATALOG_URL = 'https://download.sylinko.com/everywhere/linux/releases.json'
 
 
 def version_key(value):
@@ -427,20 +573,46 @@ def choose_channel():
 
 def backend(info):
     """Keep system support in the independently released installer."""
-    distro = info.get('ID', '')
-    version = info.get('VERSION_ID', '')
+    raw_distro = info.get('ID', '').strip()
+    raw_version = info.get('VERSION_ID', '').strip()
+    distro = raw_distro.lower()
+    id_like = info.get('ID_LIKE', '').lower().split()
+    major_match = re.match(r'^(\d+)', raw_version)
+    major = int(major_match.group(1)) if major_match else None
     if Path('/run/ostree-booted').exists():
         raise UpdateError('This immutable system is not supported.')
-    if distro in ('arch', 'endeavouros', 'manjaro'):
+    if (not distro or distro in ('nixos', 'guix', 'alpine', 'gentoo', 'void', 'slackware') or
+            'suse' in distro or any('suse' in item for item in id_like)):
+        raise UpdateError('Unsupported system: %s %s.' % (raw_distro, raw_version))
+    if distro in ('arch', 'endeavouros', 'manjaro', 'cachyos', 'garuda', 'artix', 'archcraft',
+                  'arcolinux', 'rebornos') or 'arch' in id_like:
         manager = 'pacman'
-    elif distro == 'ubuntu' and version in ('24.04', '25.10'):
+    elif distro == 'ubuntu':
+        if major is None or major < 24:
+            raise UpdateError('Unsupported system: %s %s.' % (raw_distro, raw_version))
         manager = 'apt-get'
-    elif distro == 'debian' and version in ('13', '14'):
+    elif distro == 'debian':
+        if major is not None and major < 13:
+            raise UpdateError('Unsupported system: %s %s.' % (raw_distro, raw_version))
         manager = 'apt-get'
-    elif distro == 'fedora' and version in ('44',):
+    elif (distro in ('linuxmint', 'pop', 'zorin', 'elementary', 'kali', 'neon', 'tuxedo') or
+          'ubuntu' in id_like or 'debian' in id_like):
+        if ((distro == 'linuxmint' and major is not None and major < 22) or
+                (distro == 'pop' and major is not None and major < 24) or
+                (distro == 'zorin' and major is not None and major < 18)):
+            raise UpdateError('Unsupported system: %s %s.' % (raw_distro, raw_version))
+        manager = 'apt-get'
+    elif distro == 'fedora':
+        if major is not None and major < 40:
+            raise UpdateError('Unsupported system: %s %s.' % (raw_distro, raw_version))
+        manager = 'dnf'
+    elif (distro in ('nobara', 'ultramarine', 'rhel', 'centos', 'rocky', 'almalinux') or
+          'fedora' in id_like):
+        if distro in ('rhel', 'centos', 'rocky', 'almalinux') and (major is None or major < 10):
+            raise UpdateError('Unsupported system: %s %s.' % (raw_distro, raw_version))
         manager = 'dnf'
     else:
-        raise UpdateError('Unsupported system: %s %s.' % (distro, version))
+        raise UpdateError('Unsupported system: %s %s.' % (raw_distro, raw_version))
     if not shutil.which(manager):
         raise UpdateError('Required system tool is missing: ' + manager)
     return manager
@@ -564,7 +736,42 @@ def select_package(catalog, channel, arch, manager):
     return target, asset
 
 
-def prepare_arch(archive, directory, target, name, bundled_script, epoch):
+def apply_mirror(url, mirror, target, arch, extension):
+    if mirror is None:
+        return url
+    value = mirror.strip()
+    if value == 'official':
+        return url
+    filename = 'Everywhere-Linux-%s-v%s.%s' % (arch, target, extension)
+    github_url = 'https://github.com/Sylinko/Everywhere/releases/download/v%s/%s' % (target, filename)
+    if value == 'github':
+        return github_url
+    parts = urllib.parse.urlsplit(value)
+    if parts.scheme != 'https' or not parts.netloc or parts.username or parts.password or any(ch.isspace() for ch in value):
+        raise UpdateError('Mirror must be official, github, or an HTTPS URL.')
+    if any(token in value for token in ('{url}', '{file}', '{tag}', '{version}')):
+        try:
+            resolved = value.format(url=github_url, file=filename, tag='v' + target, version=target)
+        except (KeyError, ValueError, IndexError) as exc:
+            raise UpdateError('Mirror must be official, github, or an HTTPS URL.') from exc
+    else:
+        resolved = value.rstrip('/') + '/' + github_url
+    resolved_parts = urllib.parse.urlsplit(resolved)
+    if resolved_parts.scheme != 'https' or not resolved_parts.netloc:
+        raise UpdateError('Mirror must be official, github, or an HTTPS URL.')
+    return resolved
+
+
+def apply_raw_mirror(raw_url, mirror):
+    if mirror is None:
+        return raw_url
+    value = mirror.strip()
+    if value in ('official', 'github') or any(token in value for token in ('{url}', '{file}', '{tag}', '{version}')):
+        return raw_url
+    return value.rstrip('/') + '/' + raw_url
+
+
+def prepare_arch(archive, directory, target, name, bundled_script, epoch, resource_fallback=None):
     """Repackage the official payload without running code from its archive."""
     if os.geteuid() == 0:
         raise UpdateError('Run the installer as a normal user, without sudo.')
@@ -599,6 +806,12 @@ def prepare_arch(archive, directory, target, name, bundled_script, epoch):
         raise UpdateError('The download is not an Everywhere application archive.')
     # The new local package must retain a working, bundled installer.
     shutil.copyfile(bundled_script, payload / 'linux-update.py')
+    if not (directory / 'icon').is_file() and (payload / 'Everywhere-icon.png').is_file():
+        shutil.copyfile(payload / 'Everywhere-icon.png', directory / 'icon')
+    if not (directory / 'license').is_file() and (payload / 'LICENSE').is_file():
+        shutil.copyfile(payload / 'LICENSE', directory / 'license')
+    if resource_fallback is not None:
+        resource_fallback(directory)
     pkgver = target.replace('-canary.', 'canary.')
     architecture_name = {'x64': 'x86_64', 'arm64': 'aarch64'}[architecture(platform.machine())]
     recipe = """pkgname=%s
@@ -612,7 +825,10 @@ provides=('everywhere')
 conflicts=('everywhere')
 depends=('python' 'glibc' 'gcc-libs' 'zlib' 'openssl' 'icu' 'fontconfig'
          'libx11' 'libice' 'libsm' 'libxext' 'libxcb' 'libxrandr' 'libxrender'
-         'libxi' 'libxcursor' 'wayland' 'libxkbcommon' 'glib2' 'at-spi2-core' 'libsecret' 'xdg-utils')
+         'libxi' 'libxcursor' 'wayland' 'libxkbcommon' 'glib2' 'at-spi2-core' 'libsecret' 'xdg-utils' 'desktop-file-utils')
+optdepends=('grim: Hyprland screenshot capture'
+            'wl-clipboard: Wayland text-selection monitoring'
+            'libnotify: desktop notifications')
 options=('!strip' '!debug')
 package() {
     install -d "$pkgdir/opt/Everywhere" "$pkgdir/usr/bin"
@@ -709,12 +925,15 @@ def main(arguments=None):
     parser.add_argument('--no-installer-update', action='store_true', help='use the current verified installer')
     parser.add_argument('--installer-manifest', default=INSTALLER_URL)
     parser.add_argument('--catalog', default=CATALOG_URL)
+    parser.add_argument('--mirror', help='select official, github, or an HTTPS GitHub mirror prefix')
     parser.add_argument('--proxy', help='override application proxy for this invocation')
     parser.add_argument('--installer-version', action='version', version=INSTALLER_VERSION)
     raw = list(sys.argv[1:] if arguments is None else arguments)
     args = parser.parse_args(raw)
     if platform.system() != 'Linux':
         raise UpdateError('This installer supports Linux only.')
+    if args.mirror is not None:
+        apply_mirror('https://example.invalid', args.mirror, '0.0.0', 'x64', 'deb')
     if args.proxy:
         if not os.environ.get('EVERYWHERE_UPDATE_TRANSPORT'):
             raise UpdateError('Use HTTPS_PROXY for standalone installation; --proxy requires ew update.')
@@ -725,8 +944,10 @@ def main(arguments=None):
         if result is not None:
             return result
     UI.header()
-    manager = backend(distro_info())
+    info = distro_info()
+    manager = backend(info)
     arch = architecture(platform.machine())
+    UI.environment(info, platform.machine(), manager)
     current = installed(manager)
     if args.action == 'update' and not current:
         raise UpdateError('Everywhere is not installed. Run the installer without update first.')
@@ -742,52 +963,70 @@ def main(arguments=None):
     target, asset = select_package(read_catalog(args.catalog), channel, arch, manager)
     if current and version_key(target) <= version_key(normalize_version(current[1], manager)):
         current_version = normalize_version(current[1], manager)
-        UI.status('current' if version_key(target) == version_key(current_version) else 'older', role='success')
+        UI.status('current' if version_key(target) == version_key(current_version) else 'older', role='success', prefix='✓')
         return 0
-    UI.status('target', role='accent', version=target, channel=channel.capitalize())
+    UI.status('target', role='accent', prefix='◆', version=target, channel=channel.capitalize())
     if args.dry_run:
-        UI.status('preview')
+        UI.status('preview', prefix='✓')
         return 0
     with lock(), tempfile.TemporaryDirectory(prefix='everywhere-install-') as temporary:
         directory = Path(temporary)
-        path = directory / ('download.' + {'pacman': 'tar.zst', 'apt-get': 'deb', 'dnf': 'rpm'}[manager])
-        fetch(asset['url'], path, asset['size'])
-        UI.status('verify')
+        extension = {'pacman': 'tar.zst', 'apt-get': 'deb', 'dnf': 'rpm'}[manager]
+        path = directory / ('download.' + extension)
+        download_url = apply_mirror(asset['url'], args.mirror, target, arch, extension)
+        fetch(download_url, path, asset['size'])
+        UI.status('verify', prefix='•')
         verify_file(path, asset)
         if manager == 'pacman':
             for label in ('icon', 'license'):
                 resource = asset.get('resources', {}).get(label)
-                if not resource and args.catalog.startswith('github:'):
-                    # Older fork releases keep artwork/license in the tagged source tree.
-                    filename = 'img/Everywhere-icon.png' if label == 'icon' else 'LICENSE'
-                    repo = args.catalog.removeprefix('github:')
-                    url = 'https://raw.githubusercontent.com/%s/v%s/%s' % (repo, target, filename)
-                    data = fetch(url, limit=4 * 1024 * 1024)
-                    if not data:
-                        raise UpdateError('Missing packaging resource: ' + label)
-                    (directory / label).write_bytes(data)
-                    continue
                 if not resource:
-                    raise UpdateError('The release is missing required packaging resources.')
+                    continue
                 validate_asset(resource)
                 if resource['size'] > 4 * 1024 * 1024:
                     raise UpdateError('Packaging resource is too large.')
                 fetch(resource['url'], directory / label, resource['size'])
                 verify_file(directory / label, resource)
-            UI.status('prepare')
+
+            def fetch_missing_resources(pkg_dir):
+                for label in ('icon', 'license'):
+                    if (pkg_dir / label).is_file():
+                        continue
+                    if args.catalog.startswith('github:') or (args.mirror and args.mirror.strip() != 'official'):
+                        # Older releases keep artwork/license in the tagged source tree.
+                        filename = 'img/Everywhere-icon.png' if label == 'icon' else 'LICENSE'
+                        repo = args.catalog.removeprefix('github:') if args.catalog.startswith('github:') else 'Sylinko/Everywhere'
+                        url = apply_raw_mirror('https://raw.githubusercontent.com/%s/v%s/%s' % (repo, target, filename), args.mirror)
+                    elif args.catalog == CATALOG_URL:
+                        res_name = 'Everywhere-icon.png' if label == 'icon' else 'LICENSE'
+                        url = 'https://download.sylinko.com/everywhere/linux/resources/%s?tag=v%s' % (res_name, target)
+                    else:
+                        raise UpdateError('The release is missing required packaging resources.')
+                    data = fetch(url, limit=4 * 1024 * 1024)
+                    if not data:
+                        raise UpdateError('Missing packaging resource: ' + label)
+                    (pkg_dir / label).write_bytes(data)
+
+            UI.status('prepare', prefix='•')
             epoch = int(current[1].split(':', 1)[0]) if current and ':' in current[1] else 0
             path = prepare_arch(path, directory, target, current[0] if current else 'everywhere-bin',
-                                Path(__file__), epoch)
+                                Path(__file__), epoch, resource_fallback=fetch_missing_resources)
         validate_package(path, manager, target, arch)
         if installed(manager) != current:
             raise UpdateError('Installation changed while downloading; please retry.')
-        UI.status('install')
+        UI.status('install', prefix='•')
         execute(package_command(manager, path), True)
         after = installed(manager)
         if not after or normalize_version(after[1], manager) != target:
             raise UpdateError('Installation completed without the expected version. Check the package manager output.')
-    UI.status('updated' if current else 'installed', role='success', version=target)
-    UI.status('restart' if current else 'open')
+    UI.status('updated' if current else 'installed', role='success', prefix='✓', version=target)
+    if current:
+        UI.status('restart')
+    else:
+        UI.status('open')
+        UI.status('launch_update')
+    if os.environ.get('HYPRLAND_INSTANCE_SIGNATURE') and (not shutil.which('grim') or not shutil.which('wl-paste')):
+        UI.status('hyprland_tip', role='accent')
     return 0
 
 

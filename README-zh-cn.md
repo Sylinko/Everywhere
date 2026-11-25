@@ -14,7 +14,7 @@
     &nbsp;&middot;&nbsp;
     <strong><a href="https://www.bilibili.com/video/BV1mcxvzfESz">观看演示</a></strong>
   </p>
-  <p>Windows &middot; macOS</p>
+  <p>Windows &middot; macOS &middot; Linux</p>
   <p><a href="README.md">English</a> &middot; <strong>简体中文</strong> &middot; <a href="README-ja-jp.md">日本語</a></p>
 </div>
 
@@ -99,7 +99,7 @@
 
 ## 快速开始
 
-1. **下载安装**：前往[下载页面](https://everywhere.sylinko.com/zh/download)，选择对应平台的安装包。Windows 也提供便携版；macOS 提供 Apple Silicon 与 Intel 版本。
+1. **下载安装**：前往[下载页面](https://everywhere.sylinko.com/zh/download)，选择对应平台的安装包。Windows 也提供便携版；macOS 提供 Apple Silicon 与 Intel 版本；Linux 可运行一键终端安装脚本（`curl -fsSL https://aka.sylinko.com/get-everywhere.sh | sh`）或通过 AUR / DEB / RPM 安装。
 2. **连接模型**：按照首次启动向导，选择 Everywhere 云服务、自己的 API 服务或本地模型。
 3. **呼出并开始**：设置呼出快捷键，在正在使用的应用中打开 Everywhere，选取上下文或附加文件，描述你想得到的结果。
 4. **启用所需工具**：执行 Agent 任务时，选择支持工具调用的模型，并启用相关聊天工具。初次使用建议保留默认的「请求批准」模式。
@@ -112,7 +112,7 @@
 | --- | --- | --- |
 | Windows | Windows 10（10.0.19041.0） | x64 安装包 / 便携版 |
 | macOS | macOS Sonoma 14.0 | Apple Silicon / Intel 安装包 |
-| Linux | 开发中 | — |
+| Linux | x64 主流发行版（社区维护，推荐 Hyprland / X11） | 终端脚本 / DEB / RPM / AUR |
 
 <a id="community"></a>
 

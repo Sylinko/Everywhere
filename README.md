@@ -140,10 +140,11 @@
       <td><b>🖥️ Multi-Platform</b></td>
       <td>
         • 🪟 Windows<br>
-        • 🍎 macOS
+        • 🍎 macOS<br>
+        • 🐧 Linux <i>(Community)</i>
       </td>
       <td>
-        • 🐧 Linux
+        • 🐧 More Linux Desktops &amp; ARM64
       </td>
     </tr>
     <tr>
@@ -173,7 +174,7 @@
 | --------- | --------------------------- |
 | 🪟 Windows | Windows 10 (10.0.19041.0)   |
 | 🍎 macOS   | Sonoma 14.0                 |
-| 🐧 Linux   | 🚧 **In Development**        |
+| 🐧 Linux   | 64-bit Ubuntu 24.04+, Debian 13+, Fedora 40+, Arch *(Community maintained; Hyprland / X11 recommended)* |
 
 ## 🚀 Getting Started
 
@@ -189,6 +190,11 @@
 **macOS**
 - `Everywhere-macOS-arm64-vx.x.x.pkg`: For Apple Silicon (M-series) Mac devices.
 - `Everywhere-macOS-x64-vx.x.x.pkg`: For Intel Mac devices.
+
+**Linux *(Community Maintained)***
+- **One-line Terminal Installer** *(Recommended)*: `curl -fsSL https://aka.sylinko.com/get-everywhere.sh | sh` (supports Ubuntu/Debian, Fedora, and Arch Linux; update anytime with `ew update`).
+- **Arch Linux (AUR)**: `paru -S everywhere-bin` or `yay -S everywhere-bin`.
+- **Direct Packages**: `.deb`, `.rpm`, and `.tar.zst` archives are available on the [download page](https://everywhere.sylinko.com/download).
 
 ### Help & Community
 

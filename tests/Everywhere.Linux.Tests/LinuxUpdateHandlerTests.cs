@@ -20,7 +20,7 @@ public sealed class LinuxUpdateHandlerTests
         var handler = new LinuxUpdateHandler(factory);
         var releases = await handler.GetReleasesAsync(UpdateChannel.Stable, CancellationToken.None);
         Assert.That(releases.Select(release => release.Metadata.Tag), Is.EqualTo(new[] { "v99.0.0" }));
-        Assert.That(factory.Requests.All(uri => uri.Host == "api.github.com"), Is.True);
+        Assert.That(factory.Requests.All(uri => uri.Host == "download.sylinko.com"), Is.True);
     }
 
     [Test]

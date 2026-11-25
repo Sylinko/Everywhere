@@ -19,7 +19,7 @@ manifest = {
     'protocol': 1,
     'version': installer.INSTALLER_VERSION,
     'asset': {
-        'url': 'https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.py',
+        'url': 'https://download.sylinko.com/everywhere/linux/installer.py',
         'size': len(data),
         'sha256': hashlib.sha256(data).hexdigest(),
     },

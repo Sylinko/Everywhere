@@ -25,6 +25,30 @@ class TtyOutput(io.StringIO):
 
 
 class PresentationTests(unittest.TestCase):
+    def test_header_renders_evy_banner_and_respects_no_color_and_width(self):
+        with patch.dict(os.environ, {'TERM': 'xterm-256color', 'COLORTERM': 'truecolor'}, clear=True):
+            stream = TtyOutput()
+            ui = u.TerminalUI(stream)
+            ui.header(80)
+            plain = ANSI.sub('', stream.getvalue())
+            self.assertEqual(len(u.BANNER_MASCOT), 4)
+            self.assertIn('╭─────────╮  █▀▀▀', plain)
+            self.assertIn('╰─────────╯  Context-aware Desktop AI Assistant', plain)
+            self.assertNotIn('· Linux', plain)
+            self.assertIn('\x1b[1;38;2;', stream.getvalue())
+        with patch.dict(os.environ, {'NO_COLOR': '', 'TERM': 'xterm'}, clear=True):
+            stream = TtyOutput()
+            u.TerminalUI(stream).header(80)
+            self.assertNotIn('\x1b', stream.getvalue())
+            self.assertIn('╭─────────╮', stream.getvalue())
+        with patch.dict(os.environ, {'TERM': 'xterm'}, clear=True):
+            stream = TtyOutput()
+            u.TerminalUI(stream).header(40)
+            plain = ANSI.sub('', stream.getvalue())
+            self.assertNotIn('╭─────────╮', plain)
+            for line in plain.splitlines():
+                self.assertLessEqual(len(line), 40)
+
     def test_choice_uses_terminal_palette_and_no_installation_method(self):
         with patch.dict(os.environ, {'TERM': 'xterm-256color'}, clear=True):
             ui = u.TerminalUI(TtyOutput())

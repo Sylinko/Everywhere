@@ -42,7 +42,7 @@ def collect_errors(tree, names):
 ui = next(ast.literal_eval(node.value) for node in module.body
           if isinstance(node, ast.Assign) and any(isinstance(name, ast.Name) and name.id == 'COPY'
                                                   for name in node.targets))
-lines = ['# Installer copy review — 0.2.0', '',
+lines = ['# Installer copy review — 0.3.0', '',
          'English text is listed exactly as owned by the installer. Braces mark runtime values.',
          'Native package-manager messages, operating-system exception details and argparse-generated',
          'usage/invalid-argument syntax are supplied by those components, not fixed installer copy.', '',
@@ -75,15 +75,21 @@ for index, (option, text) in enumerate(help_rows, 1):
     lines.append('| H%02d | %s | %s |' % (index, option, text))
 lines += ['', 'Program: `Everywhere installer`. Actions: `install`, `update`.',
           'Channel values: `stable`, `canary`, `auto`. The compatibility `--apply` flag is hidden.', '',
-          '## Interface sample', '', '```text', ' Everywhere', '',
-          '╭─ Release channel ─────────────────────╮',
-          '│❯ Stable                              │',
-          '│  Canary                              │',
-          '╰──────────────────────────────────────╯',
+          '## Interface sample', '', '```text',
+          '  ╭─────────╮  █▀▀▀ █   █ █▀▀▀ █▀▀▄ █   █ █   █ █  █ █▀▀▀ █▀▀▄ █▀▀▀',
+          '  │  █   █  │  █▀▀  ▀▄ ▄▀ █▀▀  █▀▀▄  ▀█▀  █ █ █ █▀▀█ █▀▀  █▀▀▄ █▀▀ ',
+          '  │         │  ▀▀▀▀   ▀   ▀▀▀▀ ▀  ▀   ▀    ▀ ▀  ▀  ▀ ▀▀▀▀ ▀  ▀ ▀▀▀▀',
+          '  ╰─────────╯  Context-aware Desktop AI Assistant', '',
+          '  System    Arch Linux (x86_64) · pacman',
+          '  Desktop   Hyprland (Wayland) · Full integration', '',
+          '╭─ Release channel ──────────────────────────────────╮',
+          '│ ❯ Stable   Recommended · Official release          │',
+          '│   Canary   Preview · Experimental build            │',
+          '╰────────────────────────────────────────────────────╯',
           '↑/↓ Navigate · Enter Select · Esc Cancel', '',
-          'Checking releases', '0.9.0-canary.20261110.31 · Canary',
+          'Checking releases', '◆ 0.9.0-canary.20261110.31 · Canary',
           'Download  ━━━━━━━━━─────   60%  39.4 / 65.7 MiB  4.1 MiB/s  00:06',
-          'Verifying', 'Preparing package', 'Installing', 'Updated to 0.9.0-canary.20261110.31',
+          '• Verifying', '• Preparing package', '• Installing', '✓ Updated to 0.9.0-canary.20261110.31',
           'Restart Everywhere.', '```', '',
           'The sample version and progress values illustrate layout; they are not live download evidence.', '']
 (ROOT / 'COPY-REVIEW.md').write_text('\n'.join(lines))

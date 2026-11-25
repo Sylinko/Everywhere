@@ -140,10 +140,11 @@
       <td><b>🖥️ マルチプラットフォーム</b></td>
       <td>
         • 🪟 Windows<br>
-        • 🍎 macOS
+        • 🍎 macOS<br>
+        • 🐧 Linux <i>（コミュニティ保守）</i>
       </td>
       <td>
-        • 🐧 Linux
+        • 🐧 その他の Linux デスクトップ・ARM64
       </td>
     </tr>
     <tr>
@@ -173,7 +174,7 @@
 | --------------- | ------------------------- |
 | 🪟 Windows       | Windows 10 (10.0.19041.0) |
 | 🍎 macOS         | Sonoma 14.0               |
-| 🐧 Linux         | 🚧 **開発中**              |
+| 🐧 Linux         | 64-bit Ubuntu 24.04+ / Debian 13+ / Fedora 40+ / Arch *（コミュニティ保守）* |
 
 ## 🚀 はじめに
 
@@ -189,6 +190,11 @@
 **macOS**
 - `Everywhere-macOS-arm64-vx.x.x.pkg`: Apple Silicon（M シリーズ）Mac デバイス向け。
 - `Everywhere-macOS-x64-vx.x.x.pkg`: Intel Mac デバイス向け。
+
+**Linux *（コミュニティ保守）***
+- **ターミナルインストールスクリプト** *（推奨）*: `curl -fsSL https://aka.sylinko.com/get-everywhere.sh | sh`（Ubuntu/Debian・Fedora・Arch Linux に対応、`ew update` で更新可能）。
+- **Arch Linux (AUR)**: `paru -S everywhere-bin` または `yay -S everywhere-bin`。
+- **直接パッケージ**: `.deb`・`.rpm`・`.tar.zst` を[ダウンロードページ](https://everywhere.sylinko.com/download)から取得できます。
 
 ### ヘルプとコミュニティ
 

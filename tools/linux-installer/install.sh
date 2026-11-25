@@ -5,12 +5,24 @@ if [ "$(uname -s)" != Linux ]; then
     echo 'Unsupported system. This installer supports Linux only.' >&2
     exit 1
 fi
+print_python_hint() {
+    echo 'Python 3.9+ is required to run the Everywhere installer.' >&2
+    if command -v pacman >/dev/null 2>&1; then
+        echo 'Install it first: sudo pacman -S --needed python' >&2
+    elif command -v apt-get >/dev/null 2>&1; then
+        echo 'Install it first: sudo apt-get update && sudo apt-get install -y python3' >&2
+    elif command -v dnf >/dev/null 2>&1; then
+        echo 'Install it first: sudo dnf install -y python3' >&2
+    else
+        echo 'Install python3 (3.9+) using your system package manager, then run this command again.' >&2
+    fi
+}
 if ! command -v python3 >/dev/null 2>&1; then
-    echo 'Python 3.9+ is required. Install python3 and run this command again.' >&2
+    print_python_hint
     exit 1
 fi
 python3 -c 'import sys; sys.exit(sys.version_info < (3, 9))' || {
-    echo 'Python 3.9+ is required.' >&2
+    print_python_hint
     exit 1
 }
 installer_tmp=$(mktemp -d)
@@ -65,9 +77,14 @@ def get(url, limit, progress=False):
 
 
 def main():
-    print('Checking installer', flush=True)
+    transient = sys.stdout.isatty() and sys.stderr.isatty() and os.environ.get('TERM') != 'dumb'
+    if transient:
+        sys.stderr.write('\r\x1b[2KChecking installer')
+        sys.stderr.flush()
+    else:
+        print('Checking installer', flush=True)
     url = os.environ.get('EVERYWHERE_INSTALLER_MANIFEST',
-                         'https://raw.githubusercontent.com/Sylinko/Everywhere/main/tools/linux-installer/installer.json')
+                         'https://download.sylinko.com/everywhere/linux/installer.json')
     manifest = json.loads(get(url, 65536))
     if not isinstance(manifest, dict) or manifest.get('schema') != 1 or manifest.get('protocol') != 1:
         raise ValueError('Unsupported installer protocol.')
@@ -77,9 +94,16 @@ def main():
             not re.fullmatch(r'[0-9a-f]{64}', asset['sha256'])):
         raise ValueError('Invalid installer metadata.')
     data = get(asset['url'], asset['size'], progress=True)
-    print('Verifying', flush=True)
+    if transient:
+        sys.stderr.write('\r\x1b[2KVerifying')
+        sys.stderr.flush()
+    else:
+        print('Verifying', flush=True)
     if len(data) != asset['size'] or hashlib.sha256(data).hexdigest() != asset['sha256']:
         raise ValueError('Installer checksum mismatch.')
+    if transient:
+        sys.stderr.write('\r\x1b[2K')
+        sys.stderr.flush()
     Path(sys.argv[1]).write_bytes(data)
 
 
