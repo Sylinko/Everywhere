@@ -1,20 +1,20 @@
 <Project>
   <PropertyGroup>
     <MicrosoftPackageVersion>11.0.0</MicrosoftPackageVersion>
-    <MEAIVersion>11.0.0</MEAIVersion>
+    <MEAIVersion>11.0.1</MEAIVersion>
     <EntityFrameworkVersion>11.0.0</EntityFrameworkVersion>
     <OpenTelemetryVersion>1.21.0</OpenTelemetryVersion>
-    <SentryVersion>6.13.0</SentryVersion>
+    <SentryVersion>7.0.1</SentryVersion>
     <AvaloniaVersion>12.2.0</AvaloniaVersion>
     <AvaloniaEditVersion>12.0.0</AvaloniaEditVersion>
     <LiveMarkdownVersion>2.7.0</LiveMarkdownVersion>
-    <SkiaSharpVersion>4.156.0</SkiaSharpVersion>
+    <SkiaSharpVersion>4.157.0</SkiaSharpVersion>
     <XamlBehaviorsVersion>12.2.0</XamlBehaviorsVersion>
     <TikTokenVersion>7.0.0</TikTokenVersion>
     <MessagePackVersion>999.20261115.3</MessagePackVersion>
   </PropertyGroup>
   <ItemGroup Label="Common">
-    <PackageVersion Include="AngleSharp" Version="1.5.2" />
+    <PackageVersion Include="AngleSharp" Version="1.11.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="DiffPlex" Version="1.9.0" />
     <PackageVersion Include="DynamicData" Version="9.5.0" />
@@ -25,7 +25,7 @@
     <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="1.0.0" />
     <PackageVersion Include="JetBrains.Profiler.Api" Version="1.4.14" />
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.12.2" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.12.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(MicrosoftPackageVersion)" />
@@ -38,26 +38,26 @@
     <PackageVersion Include="MonoMod.Patcher" Version="25.0.1" />
     <PackageVersion Include="ObservableCollections" Version="3.3.4" />
     <PackageVersion Include="OpenTelemetry" Version="$(OpenTelemetryVersion)" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
-    <PackageVersion Include="PolySharp" Version="1.17.0" />
+    <PackageVersion Include="PolySharp" Version="1.17.1" />
     <PackageVersion Include="PdfPig" Version="0.1.16" />
     <PackageVersion Include="ReverseMarkdown" Version="6.3.0" />
     <PackageVersion Include="Sentry" Version="$(SentryVersion)" />
-    <PackageVersion Include="Sentry.Extensions.AI" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.OpenTelemetry.Exporter" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Serilog" Version="$(SentryVersion)" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
-    <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Extensions.Logging" Version="11.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="SharpYaml" Version="3.17.0" />
+    <PackageVersion Include="SharpYaml" Version="3.18.0" />
     <PackageVersion Include="System.Drawing.Common" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="System.Reactive" Version="7.0.0" />
     <PackageVersion Include="System.Text.Json" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="ZLinq" Version="1.6.1" />
   </ItemGroup>
   <ItemGroup Label="AI">
-    <PackageVersion Include="Anthropic" Version="13.8.0" />
+    <PackageVersion Include="Anthropic" Version="13.14.0" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="$(MEAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="$(MEAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="$(MEAIVersion)" />
@@ -67,7 +67,7 @@
     <PackageVersion Include="ModelContextProtocol" Version="2.4.0" />
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.4.0" />
     <PackageVersion Include="OllamaSharp" Version="5.5.2" />
-    <PackageVersion Include="PuppeteerSharp" Version="25.15.0" />
+    <PackageVersion Include="PuppeteerSharp" Version="25.18.1" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
   </ItemGroup>
   <ItemGroup Label="Avalonia">
@@ -118,7 +118,7 @@
   </ItemGroup>
   <ItemGroup Label="Linux">
     <PackageVersion Include="Tmds.LibC" Version="0.5.0" />
-    <PackageVersion Include="Tmds.DBus.Protocol" Version="0.94.1" />
+    <PackageVersion Include="Tmds.DBus.Protocol" Version="0.95.2" />
     <PackageVersion Include="X11.Net" Version="1.0.7" />
     <PackageVersion Include="GirCore.GObject-2.0" Version="0.8.1" />
     <PackageVersion Include="GirCore.Secret-1" Version="0.8.1" />
@@ -126,8 +126,8 @@
   <ItemGroup Label="Testing">
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="Bogus" Version="35.6.5" />
-    <PackageVersion Include="CefSharp.WinForms.NETCore" Version="156.0.150" />
-    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
+    <PackageVersion Include="CefSharp.WinForms.NETCore" Version="156.0.300" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="NUnit" Version="5.0.0" />

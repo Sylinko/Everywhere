@@ -5,6 +5,7 @@ using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using PuppeteerSharp;
+using Sentry.Serilog;
 
 namespace Everywhere.Common;
 
@@ -62,13 +63,13 @@ public static partial class Telemetry
         options.Dsn = SentryDsn;
         options.AutoSessionTracking = true;
         options.IsGlobalModeEnabled = true;
-        options.EnableLogs = true;
         options.Environment = EnvironmentName;
         options.Release = RuntimeConstants.Version.ToString();
 #if DEBUG
         options.Debug = true;
 #endif
         options.UseOtlp();
+        options.UseSerilog();
         options.SetBeforeSend(evt =>
             evt.Exception.Segregate()
                 .AsValueEnumerable()

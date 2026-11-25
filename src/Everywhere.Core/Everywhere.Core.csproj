@@ -4,7 +4,7 @@
     <RootNamespace>Everywhere</RootNamespace>
     <EverywhereI18NNamespace>Everywhere.Core.I18N</EverywhereI18NNamespace>
     <IsDeploymentTarget>true</IsDeploymentTarget>
-    <NoWarn>$(NoWarn);SCME0001;SENTRY0001</NoWarn>
+    <NoWarn>$(NoWarn);SCME0001</NoWarn>
     <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
   </PropertyGroup>
 
@@ -55,6 +55,7 @@
     <PackageReference Include="Motion.Avalonia"/>
     <PackageReference Include="OllamaSharp"/>
     <PackageReference Include="OpenTelemetry"/>
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol"/>
     <PackageReference Include="OpenTelemetry.Extensions.Hosting"/>
     <PackageReference Include="PuppeteerSharp"/>
     <PackageReference Include="PdfPig"/>
