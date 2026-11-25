@@ -1215,7 +1215,7 @@
                         IsVisible="{Binding ChatContextManager.Current.Presentation.HasMessages}"
                         Size="{DynamicResource FontSizeL}"
                         StrokeThickness="2"
-                        TrackBrush="{DynamicResource BorderColor}"
+                        TrackBrush="{DynamicResource GhostColor}"
                         Value="{Binding ChatContextManager.Current.ContextUsage.Snapshot.UsageRatio}">
                         <v:ContextUsageRing.Styles>
                           <Style Selector="FlyoutPresenter">

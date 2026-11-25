@@ -11,7 +11,7 @@
     TargetType="v:IconPresenter">
     <Setter Property="CornerRadius" Value="{DynamicResource FullCornerRadius}"/>
     <Setter Property="Background" Value="{DynamicResource PrimaryColor25}"/>
-    <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
+    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
     <Setter Property="Template">
       <ControlTemplate>
         <Border CornerRadius="{TemplateBinding CornerRadius}">
