@@ -155,6 +155,7 @@ public static class Program
         RegisterUrlProtocol();
         return App.CreateBuilder(serviceProvider)
             .UsePlatformDetect()
+            .With(new Win32PlatformOptions { UseCompositionSwapChain = true })
             .RunClassicDesktopAsync(args);
     }
 

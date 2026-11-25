@@ -5,11 +5,11 @@
     <EntityFrameworkVersion>11.0.0</EntityFrameworkVersion>
     <OpenTelemetryVersion>1.21.0</OpenTelemetryVersion>
     <SentryVersion>6.13.0</SentryVersion>
-    <AvaloniaVersion>12.1.6</AvaloniaVersion>
+    <AvaloniaVersion>12.2.0</AvaloniaVersion>
     <AvaloniaEditVersion>12.0.0</AvaloniaEditVersion>
     <LiveMarkdownVersion>2.7.0</LiveMarkdownVersion>
     <SkiaSharpVersion>4.156.0</SkiaSharpVersion>
-    <XamlBehaviorsVersion>12.1.5</XamlBehaviorsVersion>
+    <XamlBehaviorsVersion>12.2.0</XamlBehaviorsVersion>
     <TikTokenVersion>7.0.0</TikTokenVersion>
     <MessagePackVersion>999.20261115.3</MessagePackVersion>
   </PropertyGroup>
@@ -94,7 +94,7 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="$(SkiaSharpVersion)" />
-    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.17" />
+    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.2.0" />
     <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.5" />
     <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="$(XamlBehaviorsVersion)" />
   </ItemGroup>
