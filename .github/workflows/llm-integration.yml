@@ -61,7 +61,7 @@ jobs:
         run: ./tools/test_llm.ps1 -Runtime Docker -Configuration Release -FixturesPath .llm-fixtures -ResultsDirectory artifacts/llm-tests/ci/captured
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: llm-sdk-results
           path: artifacts/llm-tests/ci

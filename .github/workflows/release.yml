@@ -106,7 +106,7 @@ jobs:
           client-id: ${{ secrets.CLIENT_ID }}
           source-directory: ${{ env.SOURCE_DIR }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.runtime }}
           path: ${{ env.SOURCE_DIR }}/release-assets/
@@ -128,7 +128,7 @@ jobs:
           node-version: '24'
       - name: Resolve version
         run: node scripts/resolve-release-tag.mjs "$RELEASE_TAG"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           pattern: release-*
           merge-multiple: true
