@@ -86,6 +86,7 @@
     <PackageVersion Include="Avalonia.Headless" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Headless.NUnit" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="AvaloniaEdit.TextMate" Version="$(AvaloniaEditVersion)" />
+    <PackageVersion Include="ExpressionBinding.Avalonia" Version="1.0.0" />
     <PackageVersion Include="LiveMarkdown.Avalonia" Version="$(LiveMarkdownVersion)" />
     <PackageVersion Include="LiveMarkdown.Avalonia.Math" Version="$(LiveMarkdownVersion)" />
     <PackageVersion Include="LiveMarkdown.Avalonia.Mermaid" Version="$(LiveMarkdownVersion)" />
