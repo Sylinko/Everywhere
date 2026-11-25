@@ -10,6 +10,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CETCompat>false</CETCompat>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RestorePackagesPath Condition="'$(RestorePackagesPath)' == ''">$(MSBuildThisFileDirectory).nuget/packages</RestorePackagesPath>
   </PropertyGroup>
 
   <PropertyGroup>
