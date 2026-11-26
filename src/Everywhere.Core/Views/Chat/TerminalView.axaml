@@ -38,7 +38,7 @@
                     <DataTemplate>
                       <Border Background="Transparent">
                         <ToolTip.Tip>
-                          <I18N Key="{I18N {x:Static LocaleKey.TerminalView_SuccessToolTip_Tip}}">
+                          <I18N Key="{x:Static LocaleKey.TerminalView_SuccessToolTip_Tip}">
                             <Binding
                               Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
                               Path="$parent[v:TerminalView].State?.CreatedAt"/>
@@ -74,7 +74,7 @@
                           <DataTemplate>
                             <Border Background="Transparent">
                               <ToolTip.Tip>
-                                <I18N Key="{I18N {x:Static LocaleKey.TerminalView_ErrorToolTip_Tip}}">
+                                <I18N Key="{x:Static LocaleKey.TerminalView_ErrorToolTip_Tip}">
                                   <Binding
                                     Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
                                     Path="$parent[v:TerminalView].State?.CreatedAt"/>

@@ -419,7 +419,7 @@ ul, ol { padding-left: 2em; }
   <Style Selector="v|PreviewEndpointTextBox">
     <Setter Property="shadui:ControlAssist.Hint">
       <I18N Key="{x:Static LocaleKey.PreviewEndpointTextBox_Hint}">
-        <TemplateBinding Property="PreviewEndpoint"/>
+        <Binding Path="$self.(v:PreviewEndpointTextBox.PreviewEndpoint)"/>
       </I18N>
     </Setter>
   </Style>

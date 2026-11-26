@@ -5,7 +5,7 @@ using Avalonia.Threading;
 namespace Everywhere.Linux.Platform;
 
 /// <summary>
-/// Reusable Wayland input-region bridge for Avalonia 12.1.3 toplevels. Only the
+/// Reusable Wayland input-region bridge for Avalonia 12.2.0 toplevels. Only the
 /// UI-side generated proxy is inspected; protocol objects remain on their worker.
 /// This narrow private-API dependency must be revalidated on an Avalonia upgrade.
 /// </summary>

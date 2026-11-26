@@ -2,13 +2,29 @@
 
   <PropertyGroup>
     <RootNamespace>Everywhere.I18N</RootNamespace>
-    <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
   </PropertyGroup>
+
+  <ItemGroup>
+    <IgnoresAccessChecksTo Include="Avalonia.Base;Avalonia.Controls"/>
+    <!-- Keep protected-internal container overrides protected for our derived controls. -->
+    <IgnoresAccessChecksToExcludeTypeName Include="Avalonia.Controls.ItemsControl;Avalonia.Controls.ListBox;Avalonia.Controls.VirtualizingPanel"/>
+    <IgnoresAccessChecksToExcludeTypeName Include="System.Runtime.CompilerServices.IsExternalInit"/>
+  </ItemGroup>
+
+  <!-- The reference assembly adds an unimplementable abstract member to UntypedBindingExpressionBase.
+       Give the access generator the matching runtime assembly instead. -->
+  <Target Name="UseAvaloniaBaseImplementation" BeforeTargets="ResolveLockFileReferences" DependsOnTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <ResolvedCompileFileDefinitions Remove="@(ResolvedCompileFileDefinitions->WithMetadataValue('Filename', 'Avalonia.Base'))"/>
+      <ResolvedCompileFileDefinitions Include="@(RuntimeCopyLocalItems->WithMetadataValue('Filename', 'Avalonia.Base'))"/>
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="Avalonia"/>
     <PackageReference Include="CommunityToolkit.Mvvm"/>
     <PackageReference Include="DynamicData"/>
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="all"/>
     <PackageReference Include="MessagePack"/>
     <PackageReference Include="MessagePackAnalyzer" PrivateAssets="all"/>
     <PackageReference Include="System.Reactive"/>

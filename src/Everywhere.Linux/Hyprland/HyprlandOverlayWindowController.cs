@@ -39,13 +39,13 @@ public sealed class HyprlandOverlayWindowController : IOverlayWindowController
     /// <inheritdoc />
     public void SetInputRegion(Window window, PixelRect? clickableRegion)
     {
-        // Avalonia 12.1.3's UI-side surface proxy supports whole-surface input or
+        // Avalonia 12.2.0's UI-side surface proxy supports whole-surface input or
         // an empty wl_region. It marshals wl_surface_set_input_region to the owning
         // Wayland worker and reapplies it on reconnect. Do not touch wl_surface from
         // the UI thread, or advertise a finite region that the backend cannot honor.
         if (clickableRegion is { Width: > 0, Height: > 0 })
         {
-            throw new NotSupportedException("Avalonia 12.1.3 supports full-surface or empty input regions, not partial rectangles.");
+            throw new NotSupportedException("Avalonia 12.2.0 supports full-surface or empty input regions, not partial rectangles.");
         }
 
         var state = GetState(window);
