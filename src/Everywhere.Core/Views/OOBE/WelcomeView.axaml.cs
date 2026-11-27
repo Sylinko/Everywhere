@@ -140,6 +140,8 @@ public sealed partial class WelcomeView : UserControl
         Flow.PropertyChanged += HandleFlowPropertyChanged;
         Flow.CelebrationRequested += HandleCelebrationRequested;
         LayoutUpdated += HandleLayoutUpdated;
+        if (CompanionYHost.RenderTransform is TranslateTransform companion) companion.Changed += HandleStreamAnchorMoved;
+        if (LeftDecisionHost.RenderTransform is TranslateTransform cards) cards.Changed += HandleStreamAnchorMoved;
         _isAttached = true;
         ResetCrossLayoutOpacityState(Flow.CurrentStep, Flow.IsSplitLayout, Flow.CompanionLayoutKey);
         UpdateVerticalSlideAndCompanionOffset();
@@ -154,6 +156,8 @@ public sealed partial class WelcomeView : UserControl
             Flow.PropertyChanged -= HandleFlowPropertyChanged;
             Flow.CelebrationRequested -= HandleCelebrationRequested;
             LayoutUpdated -= HandleLayoutUpdated;
+            if (CompanionYHost.RenderTransform is TranslateTransform companion) companion.Changed -= HandleStreamAnchorMoved;
+            if (LeftDecisionHost.RenderTransform is TranslateTransform cards) cards.Changed -= HandleStreamAnchorMoved;
             _isAttached = false;
         }
 
@@ -327,6 +331,9 @@ public sealed partial class WelcomeView : UserControl
     {
         UpdateVerticalSlideAndCompanionOffset();
     }
+
+    // A FLIP transition moves the anchors without causing a layout pass.
+    private void HandleStreamAnchorMoved(object? sender, EventArgs e) => SelectionStreamOverlay.UpdateGeometry();
 
     private void UpdateVerticalSlideAndCompanionOffset()
     {

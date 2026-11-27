@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
-using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
 using SkiaSharp;
 
@@ -86,116 +85,89 @@ public sealed class GlowBorderOverlay : Control
 
     private static readonly Lazy<SKRuntimeEffect> ShaderEffect = new(CreateEffect);
 
-    private TopLevel? _topLevel;
-    private bool _animationStarted;
-    private TimeSpan _animationTime;
-    private TimeSpan? _lastFrameTime;
+    private readonly ShaderVisualHost _host;
 
-    static GlowBorderOverlay()
+    /// <summary>
+    /// Creates an overlay whose glow animates independently of the UI thread.
+    /// </summary>
+    public GlowBorderOverlay()
     {
-        AffectsRender<GlowBorderOverlay>(GlowColorProperty, CornerRadiusProperty, GlowOpacityProperty);
+        _host = new ShaderVisualHost(this, static () => new GlowHandler(), SendState);
     }
 
+    /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-
-        if (change.Property == GlowOpacityProperty || change.Property == AnimationRateProperty || change.Property == IsVisibleProperty)
-            StartAnimation();
-    }
-
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        _topLevel = TopLevel.GetTopLevel(this);
-        StartAnimation();
-    }
-
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        _topLevel = null;
-        _animationStarted = false;
-        _lastFrameTime = null;
-    }
-
-    public override void Render(DrawingContext context)
-    {
-        if (Bounds.Width <= 0 || Bounds.Height <= 0 || GlowOpacity <= 0.001 || GlowColor.A == 0) return;
-        context.Custom(
-            new GlowDrawOperation(
-                new Rect(Bounds.Size),
-                GlowColor,
-                CornerRadius.TopLeft,
-                GlowOpacity,
-                _animationTime.TotalSeconds));
-    }
-
-    private void StartAnimation()
-    {
-        if (_animationStarted || _topLevel is null || !IsVisible || GlowOpacity <= 0.001 || AnimationRate <= 0.001) return;
-
-        _animationStarted = true;
-        _lastFrameTime = null;
-        _topLevel.RequestAnimationFrame(OnAnimationFrame);
-    }
-
-    private void OnAnimationFrame(TimeSpan time)
-    {
-        if (_topLevel is null || !IsVisible || GlowOpacity <= 0.001 || AnimationRate <= 0.001)
+        if (change.Property == GlowColorProperty || change.Property == CornerRadiusProperty ||
+            change.Property == GlowOpacityProperty || change.Property == AnimationRateProperty)
         {
-            _animationStarted = false;
-            _lastFrameTime = null;
-            return;
+            SendState();
+        }
+    }
+
+    private void SendState()
+    {
+        if (_host.IsAttached) _host.Send(new GlowState(GlowColor, CornerRadius.TopLeft, GlowOpacity, AnimationRate));
+    }
+
+    private static SKRuntimeEffect CreateEffect()
+    {
+        return SKRuntimeEffect.CreateShader(ShaderSource, out var errorText)
+            ?? throw new InvalidOperationException("Failed to compile GlowBorder shader: " + errorText);
+    }
+
+    private sealed record GlowState(Color Color, double Radius, double Opacity, double Rate);
+
+    private sealed class GlowHandler : SkiaShaderVisualHandler
+    {
+        protected override bool IsAnimating => _state is { Rate: > 0.001, Opacity: > 0.001, Color.A: > 0 };
+
+        private GlowState? _state;
+        private double _time;
+        private Vector _cachedSize;
+        private bool _hasCachedShader;
+
+        protected override void OnStateChanged(object message)
+        {
+            _state = (GlowState)message;
+            _hasCachedShader = false;
         }
 
-        if (_lastFrameTime is { } lastFrameTime)
+        protected override void Advance(double dt)
         {
-            var elapsed = time - lastFrameTime;
-            if (elapsed > TimeSpan.Zero) _animationTime += elapsed * Math.Max(AnimationRate, 0);
+            if (_state is null) return;
+            _time += dt * _state.Rate;
+            _hasCachedShader = false;
         }
 
-        _lastFrameTime = time;
-        InvalidateVisual();
-        _topLevel.RequestAnimationFrame(OnAnimationFrame);
-    }
-
-    private static SKRuntimeEffect CreateEffect() =>
-        SKRuntimeEffect.CreateShader(ShaderSource, out var errorText) ??
-        throw new InvalidOperationException("Failed to compile GlowBorder shader: " + errorText);
-
-    private sealed class GlowDrawOperation(Rect bounds, Color color, double radius, double opacity, double time) : ICustomDrawOperation
-    {
-        public Rect Bounds { get; } = bounds;
-
-        public void Render(ImmediateDrawingContext context)
+        protected override void Draw(ISkiaSharpApiLease lease, Vector size)
         {
-            if (context.TryGetFeature<ISkiaSharpApiLeaseFeature>() is not { } feature) return;
-            using var lease = feature.Lease();
-            var effect = ShaderEffect.Value;
-            var width = (float)Bounds.Width;
-            var height = (float)Bounds.Height;
-            var clampedRadius = Math.Clamp((float)radius, 0, Math.Min(width, height) * 0.5f);
-            using var uniforms = new SKRuntimeEffectUniforms(effect);
-            uniforms["uSize"] = new[] { width, height };
-            uniforms["uRadius"] = clampedRadius;
-            uniforms["uTime"] = (float)time;
-            uniforms["uOpacity"] = (float)Math.Clamp(opacity, 0, 1);
-            uniforms["uColor"] = new[] { color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f };
-            using var children = new SKRuntimeEffectChildren(effect);
-            using var shader = effect.ToShader(uniforms, children);
-            using var paint = new SKPaint();
-            paint.IsAntialias = true;
-            paint.Shader = shader;
-            paint.BlendMode = SKBlendMode.SrcOver;
+            if (_state is not { Opacity: > 0.001, Color.A: > 0 } state) return;
+            var r = GetResources(ShaderEffect.Value);
+            var width = (float)size.X;
+            var height = (float)size.Y;
+            var radius = Math.Clamp((float)state.Radius, 0, Math.Min(width, height) * 0.5f);
 
-            // Skia owns the rounded silhouette and its device-scale-aware pixel coverage. The
-            // runtime shader deliberately remains responsible only for distance-based interior
-            // color, avoiding the hard one-sample SDF cutoff that previously aliased at corners.
-            lease.SkCanvas.DrawRoundRect(new SKRect(0, 0, width, height), clampedRadius, clampedRadius, paint);
+            if (!_hasCachedShader || _cachedSize != size)
+            {
+                r.Set2("uSize", width, height);
+                r.Uniforms["uRadius"] = radius;
+                r.Uniforms["uTime"] = (float)_time;
+                r.Uniforms["uOpacity"] = (float)Math.Clamp(state.Opacity, 0, 1);
+                r.SetColor("uColor", state.Color);
+                using var shader = ShaderEffect.Value.ToShader(r.Uniforms);
+                // The paint retains the native shader, including its frozen phase when the rate reaches zero.
+                r.Paint.Shader = shader;
+                _hasCachedShader = true;
+                _cachedSize = size;
+            }
+
+            // Skia supplies device-scale-aware rounded edge coverage; the shader colors the interior.
+            r.Paint.IsAntialias = true;
+            r.Paint.Color = SKColors.White.WithAlpha((byte)Math.Round(lease.CurrentOpacity * byte.MaxValue));
+            lease.SkCanvas.DrawRoundRect(new SKRect(0, 0, width, height), radius, radius, r.Paint);
         }
-
-        public bool HitTest(Point p) => false;
-        public bool Equals(ICustomDrawOperation? other) => false;
-        public void Dispose() { }
     }
 
     // Glow depth, intensity, highlight width, and animation speed deliberately remain shader constants.

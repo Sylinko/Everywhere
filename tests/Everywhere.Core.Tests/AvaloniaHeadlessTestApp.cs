@@ -22,7 +22,7 @@ public static class AvaloniaHeadlessTestApp
         return shouldRender ? builder.UseSkia() : builder;
     }
 
-    private static void ResetAppearanceManager()
+    internal static void ResetAppearanceManager()
     {
         var field = typeof(AppearanceManager).GetField("_shared", BindingFlags.Static | BindingFlags.NonPublic);
         field?.SetValue(null, null);

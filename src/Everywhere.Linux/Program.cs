@@ -167,7 +167,9 @@ public static class Program
     private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider)
     {
         var desktop = serviceProvider.GetRequiredService<LinuxDesktopServices>();
-        var builder = App.CreateBuilder(serviceProvider).UsePlatformDetect();
+        var builder = App.CreateBuilder(serviceProvider)
+            .UsePlatformDetect()
+            .With(new X11PlatformOptions { UseXShmFramebuffer = true });
         if (desktop.Kind != LinuxDesktopKind.X11)
         {
             builder = builder.UseWaylandWithFallback();

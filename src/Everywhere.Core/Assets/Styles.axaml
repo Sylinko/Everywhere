@@ -212,15 +212,21 @@ ul, ol { padding-left: 2em; }
   </Style>
 
   <!--  Markdown  -->
-  <Style Selector=":is(v|ChatLinkRenderer) md|Link:pointerover">
+  <Style Selector="md|MarkdownRenderer.ChatLink">
+    <Setter Property="StreamingRevealMode" Value="Character"/>
+  </Style>
+
+  <Style Selector="md|MarkdownRenderer.ChatLink md|Link:pointerover">
     <Setter Property="TextDecorations">
       <TextDecorationCollection>
-        <TextDecoration Location="Underline" StrokeDashArray="2,2" StrokeThickness="1" StrokeThicknessUnit="Pixel"/>
+        <TextDecoration
+          Location="Underline" StrokeDashArray="2,2"
+          StrokeThickness="1" StrokeThicknessUnit="Pixel"/>
       </TextDecorationCollection>
     </Setter>
   </Style>
 
-  <Style Selector="md|MarkdownRenderer">
+  <Style Selector=":is(md|MarkdownRenderer)">
     <Setter Property="CodeBlockColorTheme" Value="{DynamicResource ColorTheme}"/>
 
     <Setter Property="ContextFlyout">

@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Media;
-using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
 using SkiaSharp;
 
@@ -72,211 +71,155 @@ public sealed class OobeOrbHalo : Control
         set => SetValue(IsSuccessProperty, value);
     }
 
-    private const string Shader = """
-                                  uniform float2 uSize;
-                                  uniform float2 uPixelScale;
-                                  uniform float uTime;
-                                  uniform float uOpacity;
-                                  uniform float uSuccessMix;
-                                  layout(color) uniform float4 uColorA;
-                                  layout(color) uniform float4 uColorB;
-                                  layout(color) uniform float4 uColorC;
-                                  layout(color) uniform float4 uSuccessColor;
+    private const string Shader =
+        """
+        uniform float2 uSize;
+        uniform float2 uPixelScale;
+        uniform float uTime;
+        uniform float uOpacity;
+        uniform float uSuccessMix;
+        layout(color) uniform float4 uColorA;
+        layout(color) uniform float4 uColorB;
+        layout(color) uniform float4 uColorC;
+        layout(color) uniform float4 uSuccessColor;
 
-                                  float smootherstep01(float x) {
-                                      x = clamp(x, 0.0, 1.0);
-                                      return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
-                                  }
+        float smootherstep01(float x) {
+            x = clamp(x, 0.0, 1.0);
+            return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
+        }
 
-                                  float hash12(float2 p) {
-                                      float3 p3 = fract(float3(p.xyx) * 0.1031);
-                                      p3 += dot(p3, p3.yzx + 33.33);
-                                      return fract((p3.x + p3.y) * p3.z);
-                                  }
+        float hash12(float2 p) {
+            float3 p3 = fract(float3(p.xyx) * 0.1031);
+            p3 += dot(p3, p3.yzx + 33.33);
+            return fract((p3.x + p3.y) * p3.z);
+        }
 
-                                  float triangularNoise(float2 p) {
-                                      return hash12(p) - hash12(p + 19.19);
-                                  }
+        float triangularNoise(float2 p) {
+            return hash12(p) - hash12(p + 19.19);
+        }
 
-                                  float lobe(float2 uv, float angle, float eccentricity, float focus) {
-                                      float2 dir = float2(cos(angle), sin(angle)) * eccentricity;
-                                      float d = length(uv - dir);
-                                      return exp(-focus * d * d);
-                                  }
+        float lobe(float2 uv, float angle, float eccentricity, float focus) {
+            float2 dir = float2(cos(angle), sin(angle)) * eccentricity;
+            float d = length(uv - dir);
+            return exp(-focus * d * d);
+        }
 
-                                  float4 main(float2 p) {
-                                      float2 size = max(uSize, float2(1.0));
-                                      float2 center = size * 0.5;
-                                      float radius = min(size.x, size.y) * 0.5;
-                                      float2 uv = (p - center) / max(radius, 1.0);
-                                      float t = length(uv);
-                                      if (t >= 1.0) {
-                                          return float4(0.0);
-                                      }
+        float4 main(float2 p) {
+            float2 size = max(uSize, float2(1.0));
+            float2 center = size * 0.5;
+            float radius = min(size.x, size.y) * 0.5;
+            float2 uv = (p - center) / max(radius, 1.0);
+            float t = length(uv);
+            if (t >= 1.0) {
+                return float4(0.0);
+            }
 
-                                      float angle = uTime * 0.42;
-                                      float breathe = 0.90 + 0.10 * sin(uTime * 1.15);
+            float angle = uTime * 0.42;
+            float breathe = 0.90 + 0.10 * sin(uTime * 1.15);
 
-                                      float wA = lobe(uv, angle, 0.24, 4.6);
-                                      float wB = lobe(uv, angle + 2.0943951, 0.24, 4.6);
-                                      float wC = lobe(uv, angle + 4.1887902, 0.24, 4.6);
-                                      float sumW = max(wA + wB + wC, 0.001);
-                                      float3 brandMix = (uColorA.rgb * wA + uColorB.rgb * wB + uColorC.rgb * wC) / sumW;
+            float wA = lobe(uv, angle, 0.24, 4.6);
+            float wB = lobe(uv, angle + 2.0943951, 0.24, 4.6);
+            float wC = lobe(uv, angle + 4.1887902, 0.24, 4.6);
+            float sumW = max(wA + wB + wC, 0.001);
+            float3 brandMix = (uColorA.rgb * wA + uColorB.rgb * wB + uColorC.rgb * wC) / sumW;
 
-                                      float3 successMixColor = mix(uSuccessColor.rgb, uColorA.rgb, 0.28 * (0.5 + 0.5 * sin(uv.x * 3.0 - uTime * 0.9)));
-                                      float3 haloColor = mix(brandMix, successMixColor, uSuccessMix);
+            float3 successMixColor = mix(uSuccessColor.rgb, uColorA.rgb, 0.28 * (0.5 + 0.5 * sin(uv.x * 3.0 - uTime * 0.9)));
+            float3 haloColor = mix(brandMix, successMixColor, uSuccessMix);
 
-                                      float coreLift = exp(-7.2 * dot(uv, uv));
-                                      haloColor = mix(haloColor, float3(1.0), coreLift * 0.22);
+            float coreLift = exp(-7.2 * dot(uv, uv));
+            haloColor = mix(haloColor, float3(1.0), coreLift * 0.22);
 
-                                      float fade = 1.0 - smootherstep01(t);
-                                      float energy = 0.72 + 0.28 * clamp(sumW * 0.65, 0.0, 1.0);
-                                      float alpha = pow(fade, 1.45) * 0.42 * breathe * energy * uOpacity;
+            float fade = 1.0 - smootherstep01(t);
+            float energy = 0.72 + 0.28 * clamp(sumW * 0.65, 0.0, 1.0);
+            float alpha = pow(fade, 1.45) * 0.42 * breathe * energy * uOpacity;
 
-                                      float edgeMask = 1.0 - smoothstep(0.92, 1.0, t);
-                                      float noise = triangularNoise(p * uPixelScale);
-                                      alpha = clamp(alpha + noise * (3.5 / 255.0) * edgeMask, 0.0, 1.0);
+            float edgeMask = 1.0 - smoothstep(0.92, 1.0, t);
+            float noise = triangularNoise(p * uPixelScale);
+            alpha = clamp(alpha + noise * (3.5 / 255.0) * edgeMask, 0.0, 1.0);
 
-                                      float3 premul = haloColor * alpha + noise * (1.25 / 255.0) * edgeMask;
-                                      premul = clamp(premul, float3(0.0), float3(alpha));
-                                      return float4(premul, alpha);
-                                  }
-                                  """;
+            float3 premul = haloColor * alpha + noise * (1.25 / 255.0) * edgeMask;
+            premul = clamp(premul, float3(0.0), float3(alpha));
+            return float4(premul, alpha);
+        }
+        """;
 
     private static readonly Lazy<SKRuntimeEffect> ShaderEffect = new(() =>
         SKRuntimeEffect.CreateShader(Shader, out var error) ??
         throw new InvalidOperationException("Failed to compile OOBE orb halo shader: " + error));
 
-    private readonly OobeShaderClock _clock;
-    private double _successMix;
+    private readonly ShaderVisualHost _host;
 
     static OobeOrbHalo()
     {
         IsHitTestVisibleProperty.OverrideDefaultValue<OobeOrbHalo>(false);
-        AffectsRender<OobeOrbHalo>(PrimaryColorProperty, SecondaryColorProperty, TertiaryColorProperty, SuccessColorProperty, IsSuccessProperty);
     }
 
+    /// <summary>
+    /// Creates the animated companion halo.
+    /// </summary>
     public OobeOrbHalo()
     {
-        _clock = new OobeShaderClock(this, StepSuccessBlend);
-    }
-
-    /// <inheritdoc />
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-        _successMix = IsSuccess ? 1.0 : 0.0;
-        _clock.Attach();
-    }
-
-    /// <inheritdoc />
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        _clock.Detach();
-        base.OnDetachedFromVisualTree(e);
+        _host = new ShaderVisualHost(this, static () => new Handler(), SendState);
     }
 
     /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == IsVisibleProperty || change.Property == OpacityProperty)
+        if (change.Property == PrimaryColorProperty || change.Property == SecondaryColorProperty ||
+            change.Property == TertiaryColorProperty || change.Property == SuccessColorProperty || change.Property == IsSuccessProperty)
         {
-            _clock.Synchronize();
+            SendState();
         }
     }
 
-    /// <inheritdoc />
-    public override void Render(DrawingContext context)
+    private void SendState()
     {
-        if (Bounds.Width <= 0 || Bounds.Height <= 0 || Opacity <= 0.001) return;
-        context.Custom(
-            new HaloDrawOperation(
-                new Rect(Bounds.Size),
-                PrimaryColor,
-                SecondaryColor,
-                TertiaryColor,
-                SuccessColor,
-                _clock.ElapsedSeconds,
-                _successMix));
+        if (_host.IsAttached)
+        {
+            _host.Send(new State(PrimaryColor, SecondaryColor, TertiaryColor, SuccessColor, IsSuccess));
+        }
     }
 
-    private void StepSuccessBlend(double dt)
+    private sealed record State(Color Primary, Color Secondary, Color Tertiary, Color Success, bool IsSuccess);
+
+    private sealed class Handler : SkiaShaderVisualHandler
     {
-        var target = IsSuccess ? 1.0 : 0.0;
-        if (Math.Abs(_successMix - target) <= 0.001)
+        protected override bool IsAnimating => _state is not null;
+
+        private State? _state;
+        private double _elapsedSeconds;
+        private double _successMix;
+
+        protected override void OnStateChanged(object message)
         {
-            _successMix = target;
-            return;
+            var state = (State)message;
+            if (_state is null) _successMix = state.IsSuccess ? 1 : 0;
+            _state = state;
         }
 
-        if (dt <= 0) return;
-
-        var step = Math.Min(1.0, dt * 3.0);
-        _successMix += (target - _successMix) * step;
-    }
-
-    private sealed class HaloDrawOperation(
-        Rect bounds,
-        Color colorA,
-        Color colorB,
-        Color colorC,
-        Color successColor,
-        double time,
-        double successMix
-    ) : ICustomDrawOperation
-    {
-        public Rect Bounds { get; } = bounds;
-
-        public void Render(ImmediateDrawingContext context)
+        protected override void Advance(double dt)
         {
-            if (context.TryGetFeature<ISkiaSharpApiLeaseFeature>() is not { } feature) return;
-            using var lease = feature.Lease();
-            var currentOpacity = (float)lease.CurrentOpacity;
-            if (currentOpacity <= 0.001f) return;
-
-            var canvas = lease.SkCanvas;
-            var width = (float)Bounds.Width;
-            var height = (float)Bounds.Height;
-            var save = canvas.Save();
-            try
-            {
-                canvas.Translate((float)Bounds.X, (float)Bounds.Y);
-                canvas.ClipRect(new SKRect(0, 0, width, height));
-
-                var matrix = canvas.TotalMatrix;
-                var scaleX = MathF.Sqrt(matrix.ScaleX * matrix.ScaleX + matrix.SkewY * matrix.SkewY);
-                var scaleY = MathF.Sqrt(matrix.SkewX * matrix.SkewX + matrix.ScaleY * matrix.ScaleY);
-
-                var effect = ShaderEffect.Value;
-                using var uniforms = new SKRuntimeEffectUniforms(effect);
-                uniforms["uSize"] = new[] { width, height };
-                uniforms["uPixelScale"] = new[] { scaleX, scaleY };
-                uniforms["uTime"] = (float)time;
-                uniforms["uOpacity"] = currentOpacity;
-                uniforms["uSuccessMix"] = (float)successMix;
-                uniforms["uColorA"] = OobeShaderClock.ColorComponents(colorA);
-                uniforms["uColorB"] = OobeShaderClock.ColorComponents(colorB);
-                uniforms["uColorC"] = OobeShaderClock.ColorComponents(colorC);
-                uniforms["uSuccessColor"] = OobeShaderClock.ColorComponents(successColor);
-
-                using var children = new SKRuntimeEffectChildren(effect);
-                using var shader = effect.ToShader(uniforms, children);
-                using var paint = new SKPaint();
-                paint.Shader = shader;
-                paint.BlendMode = SKBlendMode.SrcOver;
-                paint.IsAntialias = false;
-                paint.IsDither = true;
-                canvas.DrawRect(0, 0, width, height, paint);
-            }
-            finally
-            {
-                canvas.RestoreToCount(save);
-            }
+            _elapsedSeconds += dt;
+            var target = _state is { IsSuccess: true } ? 1.0 : 0.0;
+            _successMix = Math.Abs(_successMix - target) <= 0.001 ? target : _successMix + (target - _successMix) * Math.Min(1.0, dt * 3.0);
         }
 
-        public bool HitTest(Point p) => false;
-        public bool Equals(ICustomDrawOperation? other) => false;
-        public void Dispose() { }
+        protected override void Draw(ISkiaSharpApiLease lease, Vector size)
+        {
+            if (_state is not { } state) return;
+
+            var resources = GetResources(ShaderEffect.Value);
+            resources.Set2("uSize", (float)size.X, (float)size.Y);
+            resources.SetPixelScale("uPixelScale", lease.SkCanvas);
+            resources.Uniforms["uTime"] = (float)_elapsedSeconds;
+            resources.Uniforms["uOpacity"] = (float)lease.CurrentOpacity;
+            resources.Uniforms["uSuccessMix"] = (float)_successMix;
+            resources.SetColor("uColorA", state.Primary);
+            resources.SetColor("uColorB", state.Secondary);
+            resources.SetColor("uColorC", state.Tertiary);
+            resources.SetColor("uSuccessColor", state.Success);
+            resources.DrawRect(lease.SkCanvas, size);
+        }
     }
 }
