@@ -3,9 +3,24 @@ name: Notify Update Server
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing GitHub release tag to backfill (for example: v0.9.0)'
+        required: true
+        type: string
+      skip_update_server:
+        description: 'Sync CNB mirror without publishing latest metadata to download-center'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
+
+concurrency:
+  group: update-server-publish-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
 
 jobs:
   notify:
@@ -14,15 +29,67 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        persist-credentials: false
 
     - name: Setup Node
       uses: actions/setup-node@v6
       with:
         node-version: '24'
 
+    - name: Sync release tag to CNB mirror
+      continue-on-error: true
+      env:
+        CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        TARGET_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      run: |
+        set -euo pipefail
+        if [ -z "${CNB_TOKEN:-}" ]; then
+          echo "CNB_TOKEN is not configured; skipping CNB git tag sync."
+          exit 0
+        fi
+        if [ -z "${TARGET_TAG:-}" ]; then
+          echo "Target release tag is empty; skipping CNB git tag sync."
+          exit 0
+        fi
+
+        CNB_REMOTE_URL="https://cnb.cool/sylinko/Everywhere.git"
+        ASKPASS_SCRIPT="$(mktemp "$RUNNER_TEMP/cnb-askpass.XXXXXX")"
+        trap 'rm -f "$ASKPASS_SCRIPT"' EXIT
+        cat <<'EOF' > "$ASKPASS_SCRIPT"
+        #!/usr/bin/env sh
+        case "$1" in
+          *Username*) printf '%s\n' "cnb" ;;
+          *Password*) printf '%s\n' "$CNB_TOKEN" ;;
+          *) printf '%s\n' "" ;;
+        esac
+        EOF
+        chmod 700 "$ASKPASS_SCRIPT"
+
+        export GIT_ASKPASS="$ASKPASS_SCRIPT"
+        export GIT_TERMINAL_PROMPT=0
+
+        git fetch --no-tags origin "refs/tags/${TARGET_TAG}:refs/tags/${TARGET_TAG}"
+
+        # Seed main branch on CNB if the mirror repository still has no refs.
+        if ! git ls-remote --exit-code --heads "$CNB_REMOTE_URL" main >/dev/null 2>&1; then
+          if git show-ref --verify --quiet refs/remotes/origin/main; then
+            git push --no-verify "$CNB_REMOTE_URL" "refs/remotes/origin/main:refs/heads/main"
+          elif git show-ref --verify --quiet refs/heads/main; then
+            git push --no-verify "$CNB_REMOTE_URL" "refs/heads/main:refs/heads/main"
+          fi
+        fi
+
+        git push --no-verify "$CNB_REMOTE_URL" "refs/tags/${TARGET_TAG}:refs/tags/${TARGET_TAG}"
+
     - name: Notify update server
       env:
         UPDATE_SERVER_URL: ${{ vars.UPDATE_SERVER_URL }}
         RELEASE_ADMIN_SECRET: ${{ secrets.RELEASE_ADMIN_SECRET }}
         GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        RELEASE_TAG: ${{ inputs.tag }}
+        SKIP_UPDATE_SERVER: ${{ inputs.skip_update_server || 'false' }}
       run: node scripts/update-server-publish.mjs
