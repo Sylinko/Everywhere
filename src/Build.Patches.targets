@@ -49,6 +49,12 @@
                       OutputItemType="PatchAssembly"
                       PatchTargets="Anthropic"
                       GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Svg.Controls.Skia.Avalonia\Everywhere.Patches.Svg.Controls.Skia.Avalonia.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="Svg.Controls.Skia.Avalonia"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
   </ItemGroup>
 
   <Target Name="WeaveAssemblies" AfterTargets="ResolveAssemblyReferences" Condition="'$(DesignTimeBuild)' != 'true' and '@(PatchAssembly)' != ''">

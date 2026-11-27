@@ -66,17 +66,12 @@
     SelectedItem="{Binding SelectedSkillWrapper, Mode=TwoWay}">
     <shadui:NavigationView.PaneHeader>
       <StackPanel
-        Margin="0,14,0,12" Spacing="12">
+        Margin="0,14,0,10" Spacing="10">
         <TextBlock
           Classes="h1" DockPanel.Dock="Left"
           VerticalAlignment="Center"
           Text="{I18N {x:Static LocaleKey.SkillPage_Title}}"
           TextTrimming="CharacterEllipsis"/>
-
-        <TextBlock
-          Classes="Muted Caption"
-          Text="{I18N {x:Static LocaleKey.SkillPage_Description}}"
-          TextWrapping="Wrap"/>
 
         <DockPanel>
           <ComboBox
@@ -106,7 +101,7 @@
         RowSpacing="10">
         <TextBlock
           Classes="Muted Caption" Grid.Row="0"
-          Grid.Column="0" Grid.ColumnSpan="2">
+          Grid.Column="0" VerticalAlignment="Center">
           <TextBlock.Text>
             <I18N Key="{x:Static LocaleKey.SkillPage_CountText}">
               <Binding Path="FilteredSkillCount"/>

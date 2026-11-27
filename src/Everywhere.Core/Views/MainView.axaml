@@ -77,9 +77,13 @@
       x:Name="TransitioningContentControl" ClipToBounds="False"
       Content="{Binding SelectedItem?.Route}">
       <TransitioningContentControl.PageTransition>
-        <CrossFade
-          FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"
-          FillMode="None" Duration="0:0:0.4"/>
+        <shadui:NavigationViewPageTransition Duration="0:0:0.38">
+          <shadui:NavigationViewPageTransition.FallbackTransition>
+            <CrossFade
+              FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"
+              FillMode="None" Duration="0:0:0.4"/>
+          </shadui:NavigationViewPageTransition.FallbackTransition>
+        </shadui:NavigationViewPageTransition>
       </TransitioningContentControl.PageTransition>
     </TransitioningContentControl>
   </DockPanel>

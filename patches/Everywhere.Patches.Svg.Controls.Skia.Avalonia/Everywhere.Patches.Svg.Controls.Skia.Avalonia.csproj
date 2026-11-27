@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),CS0436,CS0626,CS0649</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoMod.Patcher" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="Svg.Controls.Skia.Avalonia" />
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <IgnoresAccessChecksTo Include="Svg.Controls.Skia.Avalonia" />
+  </ItemGroup>
+
+</Project>
