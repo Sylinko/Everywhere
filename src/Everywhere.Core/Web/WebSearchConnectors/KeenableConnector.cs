@@ -1,7 +1,5 @@
-using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.SemanticKernel.Data;
 
 namespace Everywhere.Web;
 
@@ -52,7 +50,7 @@ public sealed partial class KeenableConnector(string? apiKey, HttpClient httpCli
         [JsonPropertyName("results")]
         public IReadOnlyList<Result>? Results { get; init; }
 
-        public IEnumerable<TextSearchResult> ToResults()
+        public IEnumerable<WebSearchResult> ToResults()
         {
             if (Results is null)
             {
@@ -61,7 +59,7 @@ public sealed partial class KeenableConnector(string? apiKey, HttpClient httpCli
 
             return Results
                 .Where(x => !x.Url.IsNullOrWhiteSpace())
-                .Select(x => new TextSearchResult(x.Snippet ?? x.Description ?? "")
+                .Select(x => new WebSearchResult(x.Snippet ?? x.Description ?? "")
                 {
                     Name = x.Title,
                     Link = x.Url,
