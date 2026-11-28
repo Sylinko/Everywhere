@@ -613,17 +613,17 @@ public sealed partial class ChatContextManager :
     }
 
     /// <summary>
-    /// Removes empty chat workspaces under UTC date directories older than three days, then removes empty date directories.
+    /// Removes empty chat workspaces under UTC date directories older than today, then removes empty date directories.
     /// Nonempty workspaces and historical shared tool directories are preserved.
     /// </summary>
     private void CleanupUnusedWorkingDirectories()
     {
         // TODO: Replace automatic startup scanning, whose cost grows with workspace count, with a unified
         // storage usage and user-initiated cleanup entry point. Treat workspace outputs separately from disposable caches.
-        var workspacesDirectory = Path.Combine(RuntimeConstants.WritableFolderPath, "workspaces");
+        var workspacesDirectory = RuntimeConstants.GetUserFolderPath("workspaces");
         if (!Directory.Exists(workspacesDirectory)) return;
 
-        var cutoff = DateTime.UtcNow.AddDays(-3);
+        var cutoff = DateTime.UtcNow.Date;
         foreach (var dateDirectory in Directory.EnumerateDirectories(workspacesDirectory))
         {
             var dateName = Path.GetFileName(dateDirectory);
@@ -650,11 +650,31 @@ public sealed partial class ChatContextManager :
     }
 
     /// <summary>
+    /// Best-effort removes an empty workspace directory and its parent date bucket when a chat is deleted permanently.
+    /// </summary>
+    private void TryCleanupDeletedWorkingDirectory(ChatMetadata metadata)
+    {
+        var workspaceDirectory = RootChatContext.GetWorkingDirectoryPath(metadata);
+        if (!Directory.Exists(workspaceDirectory)) return;
+
+        CleanupEmptyWorkingDirectory(workspaceDirectory);
+
+        var workspacesRoot = RuntimeConstants.GetUserFolderPath("workspaces");
+        if (Path.GetDirectoryName(workspaceDirectory) is { } dateDirectory &&
+            PathUtilities.IsResolvedPathInsideDirectory(dateDirectory, workspacesRoot))
+        {
+            CleanupEmptyWorkingDirectory(dateDirectory);
+        }
+    }
+
+    /// <summary>
     /// Deletes one empty workspace directory without following links or recursively deleting files.
     /// A concurrent write makes deletion fail safely and leaves the directory in place.
     /// </summary>
     private void CleanupEmptyWorkingDirectory(string directory)
     {
+        if (!Directory.Exists(directory)) return;
+
         try
         {
             if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) return;
@@ -968,6 +988,7 @@ public sealed partial class ChatContextManager :
                 }
 
                 await RemoveDeletedChatAsync(metadata.Id, root).ConfigureAwait(false);
+                TryCleanupDeletedWorkingDirectory(metadata);
                 SyncRequested?.Invoke(this, EventArgs.Empty);
             }
             finally

@@ -149,7 +149,7 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
             DateName => DateTime.Now.ToString("D"),
             OSName => Environment.OSVersion.ToString(),
             SystemLanguageName => LocaleManager.CurrentLocale.ToEnglishName(),
-            WorkingDirectoryName => context.WorkingDirectoryResolver?.Invoke() ?? RuntimeConstants.WritableFolderPath,
+            WorkingDirectoryName => context.WorkingDirectoryResolver?.Invoke() ?? RuntimeConstants.UserFolderPath,
             _ => null
         };
 
