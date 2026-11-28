@@ -292,6 +292,39 @@ public sealed class ChatMarkdownPresentationTests
         }
     }
 
+    [AvaloniaTest]
+    public async Task DocumentUpdate_WhenAppendingReferenceDefinition_PublishesFullUpdateAndResolvesEarlierLink()
+    {
+        // Reference links authored before their "[id]: url" definition parse as literal text until
+        // the definition arrives at the tail; publishing Full refreshes the earlier block too.
+        var source = new ChatTextBuffer().Append("See [docs][1].\n\nSecond paragraph.");
+        using var presentation = new ChatMarkdownPresentation(source);
+        await presentation.PrepareAsync(CancellationToken.None);
+
+        var renderer = new MarkdownRenderer { DocumentUpdate = presentation.DocumentUpdate };
+        var initialBlocks = renderer.GetVisualDescendants().OfType<MarkdownTextBlock>().ToArray();
+        Assert.That(initialBlocks, Has.Length.EqualTo(2));
+        Assert.That(initialBlocks[0].Inlines?.OfType<Link>(), Is.Empty);
+
+        source.Append("\n\n[1]: https://exam");
+        await presentation.PrepareAsync(CancellationToken.None);
+        Assert.That(presentation.DocumentUpdate, Is.TypeOf<MarkdownDocumentUpdate.Full>());
+
+        source.Append("ple.com");
+        await presentation.PrepareAsync(CancellationToken.None);
+        Assert.That(presentation.DocumentUpdate, Is.TypeOf<MarkdownDocumentUpdate.Full>());
+
+        renderer.DocumentUpdate = presentation.DocumentUpdate;
+        var updatedFirstBlock = renderer.GetVisualDescendants().OfType<MarkdownTextBlock>().First();
+        var resolvedLinks = updatedFirstBlock.Inlines?.OfType<Link>().ToArray() ?? [];
+        Assert.That(resolvedLinks, Has.Length.EqualTo(1));
+        Assert.That(resolvedLinks[0].HRef, Is.EqualTo(new Uri("https://example.com")));
+
+        source.Append("\n\nTrailing plain paragraph.");
+        await presentation.PrepareAsync(CancellationToken.None);
+        Assert.That(presentation.DocumentUpdate, Is.TypeOf<MarkdownDocumentUpdate.Incremental>());
+    }
+
     private static Task GetParseTask(ChatMarkdownPresentation presentation)
     {
         var field = typeof(ChatMarkdownPresentation).GetField("_parseTask", BindingFlags.Instance | BindingFlags.NonPublic);

@@ -16,6 +16,8 @@ public class ScanVisualElementParticle : UserControl, IVisualElementParticle
     public bool IsSelfAnimating => true;
 
     private const double DurationMs = 1600d;
+    // Allow compositor startup latency and >100 ms delta clamping to settle before recycling via UI fallback.
+    private const double FallbackTimeoutMs = DurationMs + 800d;
     private readonly ShaderVisualHost _host;
 
     private VisualEffectImage<SKImage>? _windowMaskRef;
@@ -101,7 +103,7 @@ public class ScanVisualElementParticle : UserControl, IVisualElementParticle
         {
             _fallbackTimer = new DispatcherTimer(DispatcherPriority.Render)
             {
-                Interval = TimeSpan.FromMilliseconds(DurationMs)
+                Interval = TimeSpan.FromMilliseconds(FallbackTimeoutMs)
             };
             _fallbackTimer.Tick += HandleFallbackTimerTick;
         }

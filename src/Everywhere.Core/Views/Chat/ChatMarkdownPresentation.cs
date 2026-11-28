@@ -147,7 +147,11 @@ public sealed partial class ChatMarkdownPresentation(ChatTextBuffer source) : Ob
         _epoch = snapshot.Epoch;
         _committedLength = length;
         _lastCommitTimestamp = Stopwatch.GetTimestamp();
-        if (previous is not null && isAppend)
+
+        // Appending or editing reference definitions (e.g. "[1]: https://...") changes earlier
+        // blocks that referenced the label while it was still unresolved plain text, so emit a Full
+        // update instead of an append-only Incremental range.
+        if (previous is not null && isAppend && !HasChangedReferenceDefinitions(previous.Document, document))
         {
             var change = new ObservableStringBuilderChangedEventArgs(start, length - start, length, snapshot.Version);
             DocumentUpdate = new MarkdownDocumentUpdate.Incremental(previous, document, change);
@@ -156,6 +160,49 @@ public sealed partial class ChatMarkdownPresentation(ChatTextBuffer source) : Ob
         {
             DocumentUpdate = new MarkdownDocumentUpdate.Full(document, snapshot.Version);
         }
+    }
+
+    private static bool HasChangedReferenceDefinitions(MarkdownDocument previous, MarkdownDocument current)
+    {
+        var previousLinks = GetLinkReferenceDefinitions(previous)?.Links;
+        var currentLinks = GetLinkReferenceDefinitions(current)?.Links;
+
+        var previousCount = previousLinks?.Count ?? 0;
+        var currentCount = currentLinks?.Count ?? 0;
+        if (previousCount != currentCount)
+        {
+            return true;
+        }
+
+        if (currentCount == 0 || previousLinks is null || currentLinks is null)
+        {
+            return false;
+        }
+
+        foreach (var (label, currentDefinition) in currentLinks)
+        {
+            if (!previousLinks.TryGetValue(label, out var previousDefinition) ||
+                !string.Equals(previousDefinition.Url, currentDefinition.Url, StringComparison.Ordinal) ||
+                !string.Equals(previousDefinition.Title, currentDefinition.Title, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static LinkReferenceDefinitionGroup? GetLinkReferenceDefinitions(MarkdownDocument document)
+    {
+        for (var i = document.Count - 1; i >= 0; i--)
+        {
+            if (document[i] is LinkReferenceDefinitionGroup blockGroup)
+            {
+                return blockGroup;
+            }
+        }
+
+        return null;
     }
 
     private async Task ParseAsync(ChatTextSnapshot snapshot)
