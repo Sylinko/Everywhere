@@ -33,8 +33,14 @@ public static class Disposable
         public void Dispose()
         {
             var dispose = Interlocked.Exchange(ref _dispose, null);
-            dispose?.Invoke(_state);
+            if (dispose is null)
+            {
+                return;
+            }
+
+            var state = _state;
             _state = default!;
+            dispose(state);
         }
     }
 
