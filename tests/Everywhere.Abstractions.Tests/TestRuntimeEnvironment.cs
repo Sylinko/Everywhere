@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 
 namespace Everywhere.Abstractions.Tests;
 
@@ -13,6 +14,11 @@ internal static class TestRuntimeEnvironment
     [ModuleInitializer]
     internal static void Initialize()
     {
+        if (AssemblyLoadContext.GetLoadContext(typeof(TestRuntimeEnvironment).Assembly) != AssemblyLoadContext.Default)
+        {
+            return;
+        }
+
         var rootDirectory = Path.Combine(
             Path.GetTempPath(),
             "Everywhere.Tests",

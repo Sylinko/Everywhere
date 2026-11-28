@@ -451,6 +451,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         }
 
         var items = new List<ViewImageItem>(paths.Length);
+        string? workingDirectory = null;
         foreach (var path in paths)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -463,7 +464,8 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
             var localPath = path;
             try
             {
-                localPath = LocalFileHandler.ExpandLocalPath(localPath, chatContext.WorkingDirectory);
+                workingDirectory ??= chatContext.WorkingDirectory;
+                localPath = LocalFileHandler.ExpandLocalPath(localPath, workingDirectory);
                 var image = ChatImage.Read(localPath);
                 using var stream = new MemoryStream(image.Bytes, writable: false);
                 var blob = await _blobStorage.StorageBlobAsync(stream, image.MimeType, cancellationToken: cancellationToken);

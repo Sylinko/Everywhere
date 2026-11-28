@@ -111,13 +111,12 @@ public static partial class RuntimeConstants
     /// </summary>
     /// <param name="category">Single-segment session category name (e.g. <c>mod-host</c>).</param>
     /// <param name="sessionId">Single-segment session identifier.</param>
-    /// <param name="relativePaths">Optional subdirectory segments inside the session folder.</param>
     /// <returns>The ensured full directory path.</returns>
-    public static string EnsureSessionFolderPath(string category, string sessionId, params ReadOnlySpan<string> relativePaths)
+    public static string EnsureSessionFolderPath(string category, string sessionId)
     {
         ValidatePathSegment(category, nameof(category));
         ValidatePathSegment(sessionId, nameof(sessionId));
-        return EnsureDirectory(Path.GetFullPath(Path.Combine([UserFolderPath, "sessions", category, sessionId, ..relativePaths])));
+        return EnsureDirectory(Path.GetFullPath(Path.Combine(UserFolderPath, "sessions", category, sessionId)));
     }
 
     private static void ValidatePathSegment(string value, string paramName)

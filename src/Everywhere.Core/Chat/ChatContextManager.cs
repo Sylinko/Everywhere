@@ -624,6 +624,7 @@ public sealed partial class ChatContextManager :
         if (!Directory.Exists(workspacesDirectory)) return;
 
         var cutoff = DateTime.UtcNow.Date;
+        var activeWorkingDirectories = CaptureActiveWorkingDirectories();
         foreach (var dateDirectory in Directory.EnumerateDirectories(workspacesDirectory))
         {
             var dateName = Path.GetFileName(dateDirectory);
@@ -637,6 +638,8 @@ public sealed partial class ChatContextManager :
 
                 foreach (var workspaceDirectory in Directory.EnumerateDirectories(dateDirectory))
                 {
+                    if (activeWorkingDirectories.Contains(Path.GetFullPath(workspaceDirectory))) continue;
+
                     CleanupEmptyWorkingDirectory(workspaceDirectory);
                 }
 
@@ -647,6 +650,24 @@ public sealed partial class ChatContextManager :
                 _logger.LogWarning(ex, "Failed to inspect workspace date directory: {Directory}", dateDirectory);
             }
         }
+    }
+
+    private HashSet<string> CaptureActiveWorkingDirectories()
+    {
+        var activeDirectories = new HashSet<string>(PathUtilities.SystemPathComparer);
+        using (_rootsLock.EnterScope())
+        {
+            foreach (var weakReference in _roots.Values)
+            {
+                if (weakReference.Target is { } liveRoot)
+                {
+                    // Compute the path without calling WorkingDirectory to avoid materializing untouched workspaces.
+                    activeDirectories.Add(RootChatContext.GetWorkingDirectoryPath(liveRoot.Data.Metadata));
+                }
+            }
+        }
+
+        return activeDirectories;
     }
 
     /// <summary>

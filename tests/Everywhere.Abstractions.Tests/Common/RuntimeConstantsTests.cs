@@ -8,8 +8,8 @@ public sealed class RuntimeConstantsTests
     [Test]
     public void EnsureSessionFolderPath_ValidCategoryAndSessionId_CreatesExpectedDirectoryUnderUserFolder()
     {
-        var path = RuntimeConstants.EnsureSessionFolderPath("mod-host", "session-123", "logs");
-        var expected = Path.GetFullPath(Path.Combine(RuntimeConstants.UserFolderPath, "sessions", "mod-host", "session-123", "logs"));
+        var path = RuntimeConstants.EnsureSessionFolderPath("mod-host", "session-123");
+        var expected = Path.GetFullPath(Path.Combine(RuntimeConstants.UserFolderPath, "sessions", "mod-host", "session-123"));
 
         using (Assert.EnterMultipleScope())
         {

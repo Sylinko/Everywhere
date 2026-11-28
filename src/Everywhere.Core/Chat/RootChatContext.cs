@@ -19,14 +19,15 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     public override RootChatContext Root => this;
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Ensures the workspace directory exists on disk on each access so that consumers never observe a missing path
+    /// even if the directory was removed externally. Do not call this property from hot paths or loops without caching.
+    /// </remarks>
     public override string WorkingDirectory
     {
         get
         {
-            if (Volatile.Read(ref _isWorkingDirectoryEnsured)) return _workingDirectory;
-
             Directory.CreateDirectory(_workingDirectory);
-            Volatile.Write(ref _isWorkingDirectoryEnsured, true);
             return _workingDirectory;
         }
     }
@@ -76,7 +77,6 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     private readonly Dictionary<ChatData, NestedChatContext> _children = new(ReferenceEqualityComparer.Instance);
     private readonly string _workingDirectory;
 
-    private bool _isWorkingDirectoryEnsured;
     private CancellationTokenSource _lifetimeCancellation = new();
     private bool _isStopping;
     private Task? _disposeTask;

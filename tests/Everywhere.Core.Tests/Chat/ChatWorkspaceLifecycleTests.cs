@@ -31,11 +31,50 @@ public sealed class ChatWorkspaceLifecycleTests
         var workingDirectory = context.WorkingDirectory;
         var expectedPrefix = RuntimeConstants.GetUserFolderPath("workspaces");
 
-        using (Assert.EnterMultipleScope())
+        try
         {
-            Assert.That(workingDirectory, Is.EqualTo(RootChatContext.GetWorkingDirectoryPath(data.Metadata)));
-            Assert.That(PathUtilities.IsResolvedPathInsideDirectory(workingDirectory, expectedPrefix), Is.True);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(workingDirectory, Is.EqualTo(RootChatContext.GetWorkingDirectoryPath(data.Metadata)));
+                Assert.That(PathUtilities.IsResolvedPathInsideDirectory(workingDirectory, expectedPrefix), Is.True);
+                Assert.That(Directory.Exists(workingDirectory), Is.True);
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(workingDirectory))
+            {
+                Directory.Delete(workingDirectory, recursive: true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task RootChatContext_WorkingDirectory_RecreatesDirectoryIfRemovedExternally()
+    {
+        var data = new ChatData();
+        await using var context = new RootChatContext(data, null);
+
+        var workingDirectory = context.WorkingDirectory;
+        try
+        {
             Assert.That(Directory.Exists(workingDirectory), Is.True);
+            Directory.Delete(workingDirectory);
+            Assert.That(Directory.Exists(workingDirectory), Is.False);
+
+            var ensuredAgain = context.WorkingDirectory;
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(ensuredAgain, Is.EqualTo(workingDirectory));
+                Assert.That(Directory.Exists(ensuredAgain), Is.True);
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(workingDirectory))
+            {
+                Directory.Delete(workingDirectory, recursive: true);
+            }
         }
     }
 
@@ -48,7 +87,9 @@ public sealed class ChatWorkspaceLifecycleTests
             storage,
             NullLogger<ChatContextManager>.Instance);
 
-        var data = new ChatData();
+        // Use a dedicated UTC date so concurrent or sequential UtcNow tests cannot leave siblings in this bucket.
+        var isolatedDate = new DateTimeOffset(2020, 1, 15, 0, 0, 0, TimeSpan.Zero);
+        var data = new ChatData(new ChatMetadata(Guid.CreateVersion7(), isolatedDate, isolatedDate, null));
         await using var context = new RootChatContext(data, null);
         var workspaceDir = context.WorkingDirectory;
         var dateDir = Path.GetDirectoryName(workspaceDir);

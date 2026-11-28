@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 
 namespace Everywhere.Core.Tests;
 
@@ -14,6 +15,13 @@ internal static class TestRuntimeEnvironment
     [ModuleInitializer]
     internal static void Initialize()
     {
+        // Tests load this assembly inside collectible AssemblyLoadContexts; attaching ProcessExit from a
+        // collectible ALC would root the delegate globally and prevent the ALC from ever unloading.
+        if (AssemblyLoadContext.GetLoadContext(typeof(TestRuntimeEnvironment).Assembly) != AssemblyLoadContext.Default)
+        {
+            return;
+        }
+
         var rootDirectory = Path.Combine(
             Path.GetTempPath(),
             "Everywhere.Tests",
