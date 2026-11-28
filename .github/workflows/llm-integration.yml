@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Initialize production dependency sources
-        run: git submodule update --init --depth 1 3rd/shad-ui 3rd/Motion.Avalonia 3rd/skills
+        run: git submodule update --init --depth 1 3rd/shad-ui 3rd/skills
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
