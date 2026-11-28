@@ -128,12 +128,10 @@ public sealed partial class DirectLocaleKey(object? key) : DynamicLocaleKey(key)
 {
     public static DirectLocaleKey Empty { get; } = new(null);
 
-    private static readonly IDisposable NullDisposable = Disposable.Empty;
-
     public override IDisposable Subscribe(IObserver<object?> observer)
     {
         observer.OnNext(Key);
-        return NullDisposable;
+        return Disposable.Empty;
     }
 
     /// <summary>
