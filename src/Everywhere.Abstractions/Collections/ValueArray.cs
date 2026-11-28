@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using MessagePack;
 using MessagePack.Formatters;
@@ -100,6 +101,7 @@ public sealed class ValueArrayJsonConverterFactory : JsonConverterFactory
         return typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(ValueArray<>);
     }
 
+    [RequiresUnreferencedCode("The generic type argument may be trimmed, which would break deserialization of the array elements.")]
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         var elementType = typeToConvert.GetGenericArguments()[0];
@@ -116,6 +118,7 @@ public sealed class ValueArrayJsonConverter<T> : JsonConverter<ValueArray<T>>
         return new ValueArray<T>(array);
     }
 
+    [RequiresUnreferencedCode("The generic type argument may be trimmed, which would break serialization of the array elements.")]
     public override void Write(Utf8JsonWriter writer, ValueArray<T> value, JsonSerializerOptions options)
     {
         writer.WriteStartArray();
