@@ -4,9 +4,6 @@
 [submodule "3rd/ClassicDiagnostics.Avalonia"]
 	path = 3rd/ClassicDiagnostics.Avalonia
 	url = https://github.com/Sylinko/ClassicDiagnostics.Avalonia
-[submodule "3rd/Motion.Avalonia"]
-	path = 3rd/Motion.Avalonia
-	url = https://github.com/Sylinko/Motion.Avalonia
 [submodule "3rd/skills"]
 	path = 3rd/skills
 	url = https://github.com/Sylinko/skills

@@ -1,8 +1,10 @@
-﻿using Avalonia.Threading;
+﻿using System.Diagnostics;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
 using LiveMarkdown.Avalonia;
 using Markdig;
+using Markdig.Syntax;
 using Serilog;
 
 namespace Everywhere.Views;
@@ -23,7 +25,15 @@ public sealed partial class ChatMarkdownPresentation(ChatTextBuffer source) : Ob
     [ObservableProperty]
     public partial MarkdownDocumentUpdate? DocumentUpdate { get; private set; }
 
+    /// <summary>
+    /// Prevents excessive refreshes when many tokens arrive in a short time. The first parse of a new version
+    /// </summary>
+    private static readonly TimeSpan RefreshInterval = TimeSpan.FromMilliseconds(33);
+
     private Task? _parseTask;
+    private DispatcherTimer? _refreshTimer;
+    private long _lastCommitTimestamp;
+    private int _committedLength;
     private bool _isDisposed;
     private long _epoch = source.Epoch;
 
@@ -38,9 +48,33 @@ public sealed partial class ChatMarkdownPresentation(ChatTextBuffer source) : Ob
         }
 
         InvalidateReplacedDocument();
-        if (DocumentUpdate?.Version == source.Version)
+        if (DocumentUpdate?.Version == source.Version || _parseTask is { IsCompleted: false } || _refreshTimer is { IsEnabled: true })
         {
             return;
+        }
+
+        if (DocumentUpdate is not null)
+        {
+            var remaining = RefreshInterval - Stopwatch.GetElapsedTime(_lastCommitTimestamp);
+            if (remaining > TimeSpan.Zero)
+            {
+                // Sample the latest snapshot when the timer fires. More tokens do not postpone it.
+                if (_refreshTimer is null)
+                {
+                    _refreshTimer = new DispatcherTimer(DispatcherPriority.Render);
+                    _refreshTimer.Tick += delegate
+                    {
+                        if (!_isDisposed)
+                        {
+                            GetOrStartParse();
+                        }
+                    };
+                }
+
+                _refreshTimer.Interval = remaining;
+                _refreshTimer.Start();
+                return;
+            }
         }
 
         GetOrStartParse();
@@ -73,12 +107,16 @@ public sealed partial class ChatMarkdownPresentation(ChatTextBuffer source) : Ob
         if (_epoch != source.Epoch)
         {
             _epoch = source.Epoch;
+            _refreshTimer?.Stop();
+            _committedLength = 0;
             DocumentUpdate = null;
         }
     }
 
     private Task GetOrStartParse()
     {
+        // Preparation comes here directly, bypassing any scheduled streaming refresh.
+        _refreshTimer?.Stop();
         if (_parseTask is { IsCompleted: false })
         {
             return _parseTask;
@@ -90,24 +128,87 @@ public sealed partial class ChatMarkdownPresentation(ChatTextBuffer source) : Ob
         return task;
     }
 
-    private void Commit(ChatTextSnapshot snapshot, MarkdownDocumentUpdate update)
+    private void Commit(ChatTextSnapshot snapshot, MarkdownDocument document)
     {
         if (_isDisposed || source.Epoch != snapshot.Epoch)
         {
             return;
         }
 
-        if (_epoch != snapshot.Epoch || DocumentUpdate is null || DocumentUpdate.Version < update.Version)
+        var previous = DocumentUpdate;
+        if (previous is not null && _epoch == snapshot.Epoch && previous.Version >= snapshot.Version)
         {
-            _epoch = snapshot.Epoch;
-            DocumentUpdate = update;
+            return;
         }
+
+        var start = _committedLength;
+        var length = snapshot.Text.Length;
+        var isAppend = _epoch == snapshot.Epoch && length >= start;
+        _epoch = snapshot.Epoch;
+        _committedLength = length;
+        _lastCommitTimestamp = Stopwatch.GetTimestamp();
+
+        // Appending or editing reference definitions (e.g. "[1]: https://...") changes earlier
+        // blocks that referenced the label while it was still unresolved plain text, so emit a Full
+        // update instead of an append-only Incremental range.
+        if (previous is not null && isAppend && !HasChangedReferenceDefinitions(previous.Document, document))
+        {
+            var change = new ObservableStringBuilderChangedEventArgs(start, length - start, length, snapshot.Version);
+            DocumentUpdate = new MarkdownDocumentUpdate.Incremental(previous, document, change);
+        }
+        else
+        {
+            DocumentUpdate = new MarkdownDocumentUpdate.Full(document, snapshot.Version);
+        }
+    }
+
+    private static bool HasChangedReferenceDefinitions(MarkdownDocument previous, MarkdownDocument current)
+    {
+        var previousLinks = GetLinkReferenceDefinitions(previous)?.Links;
+        var currentLinks = GetLinkReferenceDefinitions(current)?.Links;
+
+        var previousCount = previousLinks?.Count ?? 0;
+        var currentCount = currentLinks?.Count ?? 0;
+        if (previousCount != currentCount)
+        {
+            return true;
+        }
+
+        if (currentCount == 0 || previousLinks is null || currentLinks is null)
+        {
+            return false;
+        }
+
+        foreach (var (label, currentDefinition) in currentLinks)
+        {
+            if (!previousLinks.TryGetValue(label, out var previousDefinition) ||
+                !string.Equals(previousDefinition.Url, currentDefinition.Url, StringComparison.Ordinal) ||
+                !string.Equals(previousDefinition.Title, currentDefinition.Title, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static LinkReferenceDefinitionGroup? GetLinkReferenceDefinitions(MarkdownDocument document)
+    {
+        for (var i = document.Count - 1; i >= 0; i--)
+        {
+            if (document[i] is LinkReferenceDefinitionGroup blockGroup)
+            {
+                return blockGroup;
+            }
+        }
+
+        return null;
     }
 
     private async Task ParseAsync(ChatTextSnapshot snapshot)
     {
         var document = await Task.Run(() => Markdown.Parse(snapshot.Text, MarkdownUpdateProducer.DefaultPipeline)).ConfigureAwait(false);
-        await Dispatcher.UIThread.InvokeAsync(() => Commit(snapshot, new MarkdownDocumentUpdate.Full(document, snapshot.Version)));
+        await Dispatcher.UIThread.InvokeAsync(() => Commit(snapshot, document));
     }
 
     private async Task ObserveParseAsync(Task task)
@@ -130,6 +231,8 @@ public sealed partial class ChatMarkdownPresentation(ChatTextBuffer source) : Ob
     public void Dispose()
     {
         _isDisposed = true;
+        _refreshTimer?.Stop();
+        _committedLength = 0;
         DocumentUpdate = null;
     }
 }

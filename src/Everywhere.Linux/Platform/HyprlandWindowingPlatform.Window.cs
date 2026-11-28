@@ -5,10 +5,11 @@ using Avalonia.Input;
 using Avalonia.Input.Raw;
 using Avalonia.Input.TextInput;
 using Avalonia.Platform;
+using Avalonia.Platform.Storage;
 using Avalonia.Platform.Surfaces;
 using Avalonia.Rendering.Composition;
 using Avalonia.Threading;
-using Everywhere.Linux.Hyprland;
+using Everywhere.Interop;
 
 namespace Everywhere.Linux.Platform;
 
@@ -24,11 +25,7 @@ partial class HyprlandWindowingPlatform
         private readonly HyprlandWindowState _state;
         private readonly HyprlandWindowingPlatform _owner;
         private readonly bool _isWayland;
-        private Action<PixelPoint>? _positionChanged;
-        private Action<Size, WindowResizeReason>? _resized;
-        private Action<WindowState>? _windowStateChanged;
-        private Action? _activated;
-        private Action? _deactivated;
+
         private bool _isActive;
         private bool _isApplicationResize;
         private bool _canResize = true;
@@ -44,13 +41,13 @@ partial class HyprlandWindowingPlatform
                 innerWindow,
                 _isWayland,
                 id,
-                point => _positionChanged?.Invoke(point),
-                state => _windowStateChanged?.Invoke(state));
+                point => PositionChanged?.Invoke(point),
+                state => WindowStateChanged?.Invoke(state));
             Inner.PositionChanged = point =>
             {
                 if (!_isWayland)
                 {
-                    _positionChanged?.Invoke(point);
+                    PositionChanged?.Invoke(point);
                 }
             };
             Inner.Resized = HandleResized;
@@ -62,7 +59,7 @@ partial class HyprlandWindowingPlatform
             {
                 if (!_isWayland)
                 {
-                    _windowStateChanged?.Invoke(state);
+                    WindowStateChanged?.Invoke(state);
                 }
             };
         }
@@ -71,14 +68,14 @@ partial class HyprlandWindowingPlatform
         {
             // HyperlinkButton and TopLevel.Launcher must use the same desktop
             // route as login and other links launched outside a native window.
-            if (featureType == typeof(Everywhere.Interop.IWindowPresentation))
+            if (featureType == typeof(IWindowPresentation))
             {
                 return _state;
             }
 
-            if (featureType == typeof(Avalonia.Platform.Storage.ILauncher))
+            if (featureType == typeof(ILauncher))
             {
-                return Everywhere.Interop.BetterBclLauncher.Shared;
+                return BetterBclLauncher.Shared;
             }
 
             return featureType == typeof(HyprlandWindowState) ? _state : Inner.TryGetFeature(featureType);
@@ -137,8 +134,8 @@ partial class HyprlandWindowingPlatform
 
         public Action<PixelPoint>? PositionChanged
         {
-            get => _positionChanged;
-            set => _positionChanged = value;
+            get;
+            set;
         }
 
         public Action<RawInputEventArgs>? Input
@@ -147,7 +144,7 @@ partial class HyprlandWindowingPlatform
             set => Inner.Input = value;
         }
 
-        public Action<Rect>? Paint
+        public Action<ITopLevelImpl.PaintOptions?>? Paint
         {
             get => Inner.Paint;
             set => Inner.Paint = value;
@@ -155,8 +152,8 @@ partial class HyprlandWindowingPlatform
 
         public Action<Size, WindowResizeReason>? Resized
         {
-            get => _resized;
-            set => _resized = value;
+            get;
+            set;
         }
 
         public Action<double>? ScalingChanged
@@ -185,14 +182,14 @@ partial class HyprlandWindowingPlatform
 
         public Action? Activated
         {
-            get => _activated;
-            set => _activated = value;
+            get;
+            set;
         }
 
         public Action? Deactivated
         {
-            get => _deactivated;
-            set => _deactivated = value;
+            get;
+            set;
         }
 
         public Action? GotInputWhenDisabled
@@ -215,8 +212,8 @@ partial class HyprlandWindowingPlatform
 
         public Action<WindowState>? WindowStateChanged
         {
-            get => _windowStateChanged;
-            set => _windowStateChanged = value;
+            get;
+            set;
         }
 
         public Action<bool>? ExtendClientAreaToDecorationsChanged
@@ -233,13 +230,14 @@ partial class HyprlandWindowingPlatform
 
         public void Show(bool activate, bool isDialog)
         {
-            if (!_state.CanActivate && !_state.IsHitTestVisible)
+            if (_state is { CanActivate: false, IsHitTestVisible: false })
             {
-                _state.SetOverlayBounds(new PixelRect(
-                    Position,
-                    new PixelSize(
-                        (int)Math.Round(ClientSize.Width * DesktopScaling),
-                        (int)Math.Round(ClientSize.Height * DesktopScaling))));
+                _state.SetOverlayBounds(
+                    new PixelRect(
+                        Position,
+                        new PixelSize(
+                            (int)Math.Round(ClientSize.Width * DesktopScaling),
+                            (int)Math.Round(ClientSize.Height * DesktopScaling))));
             }
 
             var restoredSize = _hiddenClientSize ?? ClientSize;
@@ -253,7 +251,7 @@ partial class HyprlandWindowingPlatform
                 // replace the existing Chat geometry or be saved as a user resize.
                 if (_isWayland && _state.IsFloating)
                 {
-                    Inner.Resize(restoredSize, WindowResizeReason.Application);
+                    Inner.Resize(restoredSize);
                 }
 
                 // Set the native input region immediately, before the first geometry
@@ -335,9 +333,9 @@ partial class HyprlandWindowingPlatform
 
         public PixelPoint PointToScreen(Point point)
         {
-            return _isWayland ?
-                new PixelPoint(Position.X + (int)Math.Round(point.X), Position.Y + (int)Math.Round(point.Y)) :
-                Inner.PointToScreen(point);
+            return _isWayland
+                ? new PixelPoint(Position.X + (int)Math.Round(point.X), Position.Y + (int)Math.Round(point.Y))
+                : Inner.PointToScreen(point);
         }
 
         public void Resize(Size clientSize, WindowResizeReason reason = WindowResizeReason.Application)
@@ -362,7 +360,7 @@ partial class HyprlandWindowingPlatform
         private void HandleActivated()
         {
             _isActive = true;
-            _activated?.Invoke();
+            Activated?.Invoke();
             if (!_isWayland)
             {
                 return;
@@ -371,19 +369,21 @@ partial class HyprlandWindowingPlatform
             // Hyprland deactivates the IME on text-input leave but retains the
             // protocol's enabled state. Re-entering with enable alone then cannot
             // reactivate it. Reset after queued enter events restores the session.
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (_isActive)
+            Dispatcher.UIThread.Post(
+                () =>
                 {
-                    Inner.TryGetFeature<ITextInputMethodImpl>()?.Reset();
-                }
-            }, DispatcherPriority.Input);
+                    if (_isActive)
+                    {
+                        Inner.TryGetFeature<ITextInputMethodImpl>()?.Reset();
+                    }
+                },
+                DispatcherPriority.Input);
         }
 
         private void HandleDeactivated()
         {
             _isActive = false;
-            _deactivated?.Invoke();
+            Deactivated?.Invoke();
         }
 
         private void HandleResized(Size size, WindowResizeReason reason)
@@ -402,7 +402,7 @@ partial class HyprlandWindowingPlatform
                 reason = WindowResizeReason.User;
             }
 
-            _resized?.Invoke(size, reason);
+            Resized?.Invoke(size, reason);
         }
 
         public void SetParent(IWindowImpl? parent) => Inner.SetParent(parent is WindowImpl wrapped ? wrapped.Inner : parent);

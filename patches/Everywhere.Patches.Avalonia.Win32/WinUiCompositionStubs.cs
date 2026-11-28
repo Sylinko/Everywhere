@@ -261,3 +261,36 @@ namespace Avalonia.Win32.WinRT.Composition
         }
     }
 }
+
+namespace Avalonia.Win32.DirectX
+{
+    [MonoModIgnore]
+    internal interface ISwapchainVisualHost;
+
+    [MonoModPatch("Avalonia.Win32.DirectX.CompositionSwapchainRenderTarget")]
+    internal class patch_CompositionSwapchainRenderTarget
+    {
+        [MonoModIgnore]
+        private readonly ISwapchainVisualHost _host = null!;
+
+        public extern IDirect3D11TextureRenderTargetRenderSession orig_BeginDraw(IRenderTarget.RenderTargetSceneInfo sceneInfo);
+
+        public IDirect3D11TextureRenderTargetRenderSession BeginDraw(IRenderTarget.RenderTargetSceneInfo sceneInfo)
+        {
+            // The session holds the host's composition transaction until it is disposed.
+            var session = orig_BeginDraw(sceneInfo);
+            try
+            {
+                if (_host is WinRT.Composition.patch_WinUiCompositedWindow window)
+                    window.UpdateEverywhereComposition(sceneInfo.Size, sceneInfo.Scaling);
+
+                return session;
+            }
+            catch
+            {
+                session.Dispose();
+                throw;
+            }
+        }
+    }
+}

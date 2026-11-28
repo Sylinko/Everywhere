@@ -16,6 +16,7 @@
     <Project Path="patches/Everywhere.Patches.OllamaSharp/Everywhere.Patches.OllamaSharp.csproj" />
     <Project Path="patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI.csproj" />
     <Project Path="patches/Everywhere.Patches.Anthropic/Everywhere.Patches.Anthropic.csproj" />
+    <Project Path="patches/Everywhere.Patches.Svg.Controls.Skia.Avalonia/Everywhere.Patches.Svg.Controls.Skia.Avalonia.csproj" />
   </Folder>
   <Project Path="src/Everywhere.Abstractions/Everywhere.Abstractions.csproj" />
   <Project Path="src/Everywhere.Automation/Everywhere.Automation.csproj" />

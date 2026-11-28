@@ -277,7 +277,7 @@ public sealed class ConditionalContentControl : TransitioningContentControl
         Content = control;
     }
 
-    // Avalonia 12.1.3 has no public cancellation API. Keep these version-sensitive accesses
+    // Avalonia 12.2.0 has no public cancellation API. Keep these version-sensitive accesses
     // together rather than duplicating TransitioningContentControl's presenter lifecycle.
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_currentTransition")]
     private static extern ref CancellationTokenSource? CurrentTransition(TransitioningContentControl control);

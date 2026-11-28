@@ -33,4 +33,16 @@ public interface IVisualElementParticle
     /// <param name="deltaTimeMs"></param>
     /// <returns></returns>
     bool Update(double deltaTimeMs);
+
+    /// <summary>
+    /// Gets whether the particle advances on the compositor and signals completion via
+    /// <see cref="RegisterCompletionCallback"/> instead of relying on per-frame UI updates.
+    /// </summary>
+    bool IsSelfAnimating => false;
+
+    /// <summary>
+    /// Registers the host callback invoked on the UI thread when a self-animating particle finishes.
+    /// </summary>
+    /// <param name="callback"></param>
+    void RegisterCompletionCallback(Action? callback) { }
 }

@@ -1,10 +1,14 @@
-﻿namespace Everywhere.Common;
+﻿using System.Buffers;
+
+namespace Everywhere.Common;
 
 /// <summary>
-/// Provides runtime constants and utility methods for managing writable data paths and database paths.
+/// Provides runtime constants and utility methods for managing application-internal data, cache, and user-facing paths.
 /// </summary>
 public static partial class RuntimeConstants
 {
+    private static readonly SearchValues<char> InvalidFileNameChars = SearchValues.Create(Path.GetInvalidFileNameChars());
+
     /// <summary>
     /// Get a unique device identifier for the current machine with length of 36 characters (GUID format).
     /// The device ID is generated once and stored in the writable data path, ensuring that it remains consistent across application sessions on the same machine.
@@ -13,8 +17,8 @@ public static partial class RuntimeConstants
     public static string DeviceId { get; }
 
     /// <summary>
-    /// Gets the writable data path for the application, ensuring that the directory exists.
-    /// This path is typically used for storing application data, such as databases, logs, and other files that need to be persisted across sessions.
+    /// Gets the writable data path for application-internal state, ensuring that the directory exists.
+    /// This path stores internal files such as databases, logs, blobs, and runtime binaries that users do not normally access directly.
     /// </summary>
     public static string WritableFolderPath { get; }
 
@@ -24,27 +28,40 @@ public static partial class RuntimeConstants
     public static string BinFolderPath { get; }
 
     /// <summary>
-    /// Gets the cache path for the application. This path is intended for storing temporary files and cache data that can be safely deleted without affecting the application's core functionality.
+    /// Gets the cache path for the application.
+    /// This path holds disposable caches and temporary downloads that can be deleted at any time without corrupting user or application state.
     /// </summary>
     public static string CacheFolderPath { get; }
 
     /// <summary>
-    /// Gets the configuration path for the application.
-    /// This folder is intended to store small and user-editable configuration files, such as JSON or YAML files, that the application can read and write to manage user settings and preferences.
+    /// Gets the user- and agent-facing root folder (<c>~/.everywhere</c> by default), ensuring that the directory exists.
+    /// This folder holds short-path artifacts meant for users and agents, such as skills, chat workspaces, and isolated sessions.
     /// </summary>
-    public static string ConfigurationFolderPath { get; }
+    public static string UserFolderPath { get; }
 
     static RuntimeConstants()
     {
         DeviceId = EnsureDeviceId();
-        WritableFolderPath = EnsureDirectory(Path.Combine(
-            Environment.GetFolderPath(
-                Environment.SpecialFolder.ApplicationData,
-                Environment.SpecialFolderOption.DoNotVerify),
-            "Everywhere"));
+        WritableFolderPath = EnsureDirectory(
+            GetOverriddenPath("EVERYWHERE_DATA_DIR") ??
+            Path.Combine(
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.ApplicationData,
+                    Environment.SpecialFolderOption.DoNotVerify),
+                "Everywhere"));
         BinFolderPath = EnsureDirectory(Path.Combine(WritableFolderPath, "bin"));
-        CacheFolderPath = EnsureDirectory(Path.Combine(WritableFolderPath, "cache"));
-        ConfigurationFolderPath = EnsureDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".everywhere"));
+        CacheFolderPath = EnsureDirectory(
+            GetOverriddenPath("EVERYWHERE_CACHE_DIR") ??
+            Path.Combine(WritableFolderPath, "cache"));
+        UserFolderPath = EnsureDirectory(
+            GetOverriddenPath("EVERYWHERE_USER_DIR") ??
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".everywhere"));
+    }
+
+    private static string? GetOverriddenPath(string variableName)
+    {
+        var value = Environment.GetEnvironmentVariable(variableName);
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     /// <summary>
@@ -68,13 +85,50 @@ public static partial class RuntimeConstants
     }
 
     /// <summary>
-    /// Ensures that the specified relative path within the configuration folder exists and returns the full path.
+    /// Gets the full path for the specified relative segments within <see cref="UserFolderPath"/>
+    /// without creating directories on disk.
     /// </summary>
-    /// <param name="relativePaths"></param>
-    /// <returns></returns>
-    public static string EnsureConfigurationFolderPath(params ReadOnlySpan<string> relativePaths)
+    /// <param name="relativePaths">Relative path segments beneath <see cref="UserFolderPath"/>.</param>
+    /// <returns>The resolved full path.</returns>
+    public static string GetUserFolderPath(params ReadOnlySpan<string> relativePaths)
     {
-        return EnsureDirectory(Path.GetFullPath(Path.Combine([ConfigurationFolderPath, ..relativePaths])));
+        return Path.GetFullPath(Path.Combine([UserFolderPath, ..relativePaths]));
+    }
+
+    /// <summary>
+    /// Ensures that the specified relative path within <see cref="UserFolderPath"/> exists and returns the full path.
+    /// </summary>
+    /// <param name="relativePaths">Relative path segments beneath <see cref="UserFolderPath"/>.</param>
+    /// <returns>The ensured full directory path.</returns>
+    public static string EnsureUserFolderPath(params ReadOnlySpan<string> relativePaths)
+    {
+        return EnsureDirectory(GetUserFolderPath(relativePaths));
+    }
+
+    /// <summary>
+    /// Ensures that an isolated session folder under <c>sessions/&lt;category&gt;/&lt;sessionId&gt;</c>
+    /// within <see cref="UserFolderPath"/> exists and returns the full path.
+    /// </summary>
+    /// <param name="category">Single-segment session category name (e.g. <c>mod-host</c>).</param>
+    /// <param name="sessionId">Single-segment session identifier.</param>
+    /// <returns>The ensured full directory path.</returns>
+    public static string EnsureSessionFolderPath(string category, string sessionId)
+    {
+        ValidatePathSegment(category, nameof(category));
+        ValidatePathSegment(sessionId, nameof(sessionId));
+        return EnsureDirectory(Path.GetFullPath(Path.Combine(UserFolderPath, "sessions", category, sessionId)));
+    }
+
+    private static void ValidatePathSegment(string value, string paramName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
+        if (value is "." or ".." ||
+            value.Contains('/') ||
+            value.Contains('\\') ||
+            value.AsSpan().ContainsAny(InvalidFileNameChars))
+        {
+            throw new ArgumentException($"'{value}' is not a valid single path segment.", paramName);
+        }
     }
 
     /// <summary>

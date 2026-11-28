@@ -51,6 +51,11 @@ public abstract partial class ChatContext : ObservableObject
     /// <summary>
     /// Gets the common working directory for this root and every nested context.
     /// </summary>
+    /// <remarks>
+    /// Accessing this property ensures the underlying workspace directory exists on disk (performing filesystem I/O).
+    /// Do not bind UI elements to this property or read it repeatedly in tight loops; capture it in a local variable
+    /// when resolving multiple paths within a single operation.
+    /// </remarks>
     public abstract string WorkingDirectory { get; }
 
     /// <summary>

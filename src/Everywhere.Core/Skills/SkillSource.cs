@@ -59,7 +59,7 @@ public sealed class SkillSource : IDisposable
         yield return new SkillRoot(
             SkillSourceRoot.Everywhere,
             "Everywhere",
-            RuntimeConstants.EnsureConfigurationFolderPath("skills"));
+            RuntimeConstants.EnsureUserFolderPath("skills"));
 
         foreach (var root in GetOptionalRoots())
         {

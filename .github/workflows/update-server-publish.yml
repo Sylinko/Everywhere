@@ -3,9 +3,24 @@ name: Notify Update Server
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing GitHub release tag to backfill (for example: v0.9.0)'
+        required: true
+        type: string
+      skip_update_server:
+        description: 'Sync CNB mirror without publishing latest metadata to download-center'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
+
+concurrency:
+  group: update-server-publish-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
 
 jobs:
   notify:
@@ -14,15 +29,96 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        persist-credentials: false
 
     - name: Setup Node
       uses: actions/setup-node@v6
       with:
         node-version: '24'
 
+    - name: Resolve and validate GitHub release
+      id: resolve_release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        RELEASE_TAG: ${{ inputs.tag }}
+      run: node scripts/update-server-publish.mjs --resolve-only
+
+    - name: Sync release tag to CNB mirror
+      id: cnb_git_sync
+      continue-on-error: true
+      env:
+        CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        TARGET_TAG: ${{ steps.resolve_release.outputs.tag_name }}
+        EXPECTED_TAG_COMMIT: ${{ steps.resolve_release.outputs.tag_commit }}
+      run: |
+        set -euo pipefail
+        if [ -z "${CNB_TOKEN:-}" ]; then
+          echo "CNB_TOKEN is not configured; skipping CNB git tag sync."
+          exit 0
+        fi
+        if [ -z "${TARGET_TAG:-}" ] || [ -z "${EXPECTED_TAG_COMMIT:-}" ]; then
+          echo "Validated release tag or commit is empty; skipping CNB git tag sync."
+          exit 0
+        fi
+        if ! git check-ref-format "refs/tags/${TARGET_TAG}"; then
+          echo "::warning::Invalid git tag ref format '${TARGET_TAG}'; skipping CNB git tag sync."
+          exit 1
+        fi
+
+        CNB_REMOTE_URL="https://cnb.cool/sylinko/Everywhere.git"
+        ASKPASS_SCRIPT="$(mktemp "$RUNNER_TEMP/cnb-askpass.XXXXXX")"
+        trap 'rm -f "$ASKPASS_SCRIPT"' EXIT
+        cat <<'EOF' > "$ASKPASS_SCRIPT"
+        #!/usr/bin/env sh
+        case "$1" in
+          *Username*) printf '%s\n' "cnb" ;;
+          *Password*) printf '%s\n' "$CNB_TOKEN" ;;
+          *) printf '%s\n' "" ;;
+        esac
+        EOF
+        chmod 700 "$ASKPASS_SCRIPT"
+
+        export GIT_ASKPASS="$ASKPASS_SCRIPT"
+        export GIT_TERMINAL_PROMPT=0
+
+        git fetch --no-tags origin "refs/tags/${TARGET_TAG}:refs/tags/${TARGET_TAG}"
+        LOCAL_TAG_COMMIT="$(git rev-parse "refs/tags/${TARGET_TAG}^{commit}")"
+        if [ "$LOCAL_TAG_COMMIT" != "$EXPECTED_TAG_COMMIT" ]; then
+          echo "::warning::Fetched tag '${TARGET_TAG}' resolves to ${LOCAL_TAG_COMMIT}, expected ${EXPECTED_TAG_COMMIT}."
+          exit 1
+        fi
+
+        # Seed main branch on CNB if the mirror repository still has no refs.
+        if ! git ls-remote --exit-code --heads "$CNB_REMOTE_URL" main >/dev/null 2>&1; then
+          if git show-ref --verify --quiet refs/remotes/origin/main; then
+            git push --no-verify "$CNB_REMOTE_URL" "refs/remotes/origin/main:refs/heads/main"
+          elif git show-ref --verify --quiet refs/heads/main; then
+            git push --no-verify "$CNB_REMOTE_URL" "refs/heads/main:refs/heads/main"
+          fi
+        fi
+
+        git push --no-verify "$CNB_REMOTE_URL" "refs/tags/${TARGET_TAG}:refs/tags/${TARGET_TAG}"
+
+        LS_REMOTE_OUTPUT="$(git ls-remote "$CNB_REMOTE_URL" "refs/tags/${TARGET_TAG}" "refs/tags/${TARGET_TAG}^{}")"
+        CNB_TAG_COMMIT="$(printf '%s\n' "$LS_REMOTE_OUTPUT" | awk -v ref="refs/tags/${TARGET_TAG}" '$2 == ref "^{}" { peeled = $1 } $2 == ref { direct = $1 } END { if (peeled != "") print peeled; else print direct }')"
+        if [ "$CNB_TAG_COMMIT" != "$EXPECTED_TAG_COMMIT" ]; then
+          echo "::warning::CNB tag '${TARGET_TAG}' resolves to '${CNB_TAG_COMMIT:-missing}', expected '${EXPECTED_TAG_COMMIT}'."
+          exit 1
+        fi
+        printf 'cnb_tag_commit=%s\n' "$CNB_TAG_COMMIT" >> "$GITHUB_OUTPUT"
+
     - name: Notify update server
       env:
         UPDATE_SERVER_URL: ${{ vars.UPDATE_SERVER_URL }}
         RELEASE_ADMIN_SECRET: ${{ secrets.RELEASE_ADMIN_SECRET }}
         GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        RELEASE_TAG: ${{ steps.resolve_release.outputs.tag_name }}
+        EXPECTED_TAG_COMMIT: ${{ steps.resolve_release.outputs.tag_commit }}
+        CNB_TAG_COMMIT: ${{ steps.cnb_git_sync.outputs.cnb_tag_commit }}
+        SKIP_UPDATE_SERVER: ${{ inputs.skip_update_server || 'false' }}
       run: node scripts/update-server-publish.mjs

@@ -1,18 +1,44 @@
-﻿using Avalonia.Controls;
-using Avalonia.Media;
-using Avalonia.Rendering.SceneGraph;
+using Avalonia.Controls;
 using Avalonia.Skia;
+using Avalonia.Threading;
 using Everywhere.Utilities;
 using Serilog;
 using SkiaSharp;
 
 namespace Everywhere.Views;
 
+/// <summary>
+/// Draws a 1.6-second scan over a captured window mask.
+/// </summary>
 public class ScanVisualElementParticle : UserControl, IVisualElementParticle
 {
-    private VisualEffectImage<SKImage>? _windowMaskRef;
-    private double _animationProgress;
+    /// <inheritdoc />
+    public bool IsSelfAnimating => true;
 
+    private const double DurationMs = 1600d;
+    // Allow compositor startup latency and >100 ms delta clamping to settle before recycling via UI fallback.
+    private const double FallbackTimeoutMs = DurationMs + 800d;
+    private readonly ShaderVisualHost _host;
+
+    private VisualEffectImage<SKImage>? _windowMaskRef;
+    private double _elapsedMs;
+    private long _generation;
+    private long _fallbackTimerGeneration;
+    private DispatcherTimer? _fallbackTimer;
+    private Action? _onCompleted;
+
+    /// <summary>
+    /// Creates a particle that can be recycled across successive screen captures.
+    /// </summary>
+    public ScanVisualElementParticle()
+    {
+        _host = new ShaderVisualHost(this, () => new Handler(OnCompositorCompleted), SendState);
+    }
+
+    /// <inheritdoc />
+    public void RegisterCompletionCallback(Action? callback) => _onCompleted = callback;
+
+    /// <inheritdoc />
     public void Spawn(
         VisualElementEffectWindow owner,
         Point startPosition,
@@ -21,6 +47,8 @@ public class ScanVisualElementParticle : UserControl, IVisualElementParticle
         object? endContent,
         Size startSize)
     {
+        var generation = ++_generation;
+        DisposeHelper.DisposeToDefault(ref _windowMaskRef);
         _windowMaskRef = startContent.NotNull<VisualEffectImage<SKImage>>();
         _windowMaskRef.AddRef();
 
@@ -29,46 +57,102 @@ public class ScanVisualElementParticle : UserControl, IVisualElementParticle
         Canvas.SetLeft(this, startPosition.X - startSize.Width / 2d);
         Canvas.SetTop(this, startPosition.Y - startSize.Height / 2d);
 
-        _animationProgress = 0d;
+        _elapsedMs = 0;
+        RestartFallbackTimer(generation);
+        SendState();
     }
 
+    /// <inheritdoc />
     public void Recycle()
     {
+        _generation++;
+        _fallbackTimer?.Stop();
         DisposeHelper.DisposeToDefault(ref _windowMaskRef);
+        SendState();
     }
 
+    /// <inheritdoc />
     public bool Update(double deltaTimeMs)
     {
         if (_windowMaskRef is null) return true;
-        if (deltaTimeMs <= 0) return false;
-
-        _animationProgress += deltaTimeMs / 1600d;
-        InvalidateVisual();
-
-        return _animationProgress >= 1d;
+        if (deltaTimeMs > 0) _elapsedMs += deltaTimeMs;
+        return _elapsedMs >= DurationMs;
     }
 
-    public override void Render(DrawingContext context)
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        if (_windowMaskRef is null) return;
-        if (Bounds is not { Width: > 16d and < 5120, Height: > 16d and < 5120 }) return;
-
-        context.Custom(
-            new FluidScanDrawOperation(
-                this,
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d));
+        _fallbackTimer?.Stop();
+        base.OnDetachedFromVisualTree(e);
     }
 
+    private void SendState()
+    {
+        if (!_host.IsAttached) return;
+
+        // The pool can attach before or after Spawn. Transfer a separate reference with each
+        // start message: a recycle on the UI thread must not invalidate a queued render.
+        _windowMaskRef?.AddRef();
+        _host.Send(new ScanState(_windowMaskRef, _elapsedMs, _generation));
+    }
+
+    private void RestartFallbackTimer(long generation)
+    {
+        _fallbackTimerGeneration = generation;
+        if (_fallbackTimer is null)
+        {
+            _fallbackTimer = new DispatcherTimer(DispatcherPriority.Render)
+            {
+                Interval = TimeSpan.FromMilliseconds(FallbackTimeoutMs)
+            };
+            _fallbackTimer.Tick += HandleFallbackTimerTick;
+        }
+        else
+        {
+            _fallbackTimer.Stop();
+        }
+
+        _fallbackTimer.Start();
+    }
+
+    private void HandleFallbackTimerTick(object? sender, EventArgs e)
+    {
+        _fallbackTimer?.Stop();
+        CompleteIfCurrent(_fallbackTimerGeneration);
+    }
+
+    private void OnCompositorCompleted(long generation) => CompleteIfCurrent(generation);
+
+    private void CompleteIfCurrent(long generation)
+    {
+        if (generation != _generation || _windowMaskRef is null) return;
+
+        _fallbackTimer?.Stop();
+        _elapsedMs = DurationMs;
+        _onCompleted?.Invoke();
+    }
+
+    private sealed record ScanState(VisualEffectImage<SKImage>? Mask, double ElapsedMs, long Generation);
 
     /// <summary>
-    /// A custom drawing operation that renders a fluid scanline effect over a target window bounds.
-    /// It uses a captured screenshot of the window as an alpha mask to perfectly match the window's shape/rounded corners.
+    /// Uses the captured screenshot's alpha to follow the target window's shape and rounded corners.
     /// </summary>
-    private sealed class FluidScanDrawOperation : ICustomDrawOperation
+    private sealed class Handler(Action<long> onCompleted) : SkiaShaderVisualHandler
     {
-        private static readonly SKRuntimeEffect? FluidEffect;
+        private static readonly Lazy<SKRuntimeEffect?> FluidEffect = new(CreateEffect);
 
-        static FluidScanDrawOperation()
+        protected override bool IsAnimating => _windowMaskRef is not null && _elapsedMs < DurationMs;
+
+        private VisualEffectImage<SKImage>? _windowMaskRef;
+        private SKShader? _maskShader;
+        private SKPaint? _maskPaint;
+        private SKPaint? _layerPaint;
+        private Vector _maskSize;
+        private double _elapsedMs;
+        private long _generation;
+        private bool _hasNotifiedCompletion;
+
+        private static SKRuntimeEffect? CreateEffect()
         {
             const string sksl =
                 """
@@ -171,89 +255,93 @@ public class ScanVisualElementParticle : UserControl, IVisualElementParticle
                 }
                 """;
 
-            FluidEffect = SKRuntimeEffect.CreateShader(sksl, out var errors);
-            if (FluidEffect == null)
+            var effect = SKRuntimeEffect.CreateShader(sksl, out var errors);
+            if (effect is null) Log.ForContext<Handler>().Error("Failed to compile SkSL shader: {Errors}", errors);
+            return effect;
+        }
+
+        protected override void OnStateChanged(object message)
+        {
+            var state = (ScanState)message;
+            ReleaseResources();
+            _windowMaskRef = state.Mask;
+            _elapsedMs = state.ElapsedMs;
+            _generation = state.Generation;
+            _hasNotifiedCompletion = false;
+        }
+
+        protected override void Advance(double dt)
+        {
+            _elapsedMs = Math.Min(_elapsedMs + dt * 1000d, DurationMs);
+            if (_elapsedMs >= DurationMs && !_hasNotifiedCompletion)
             {
-                Log.ForContext<FluidScanDrawOperation>().Error("Failed to compile SkSL shader: {Errors}", errors);
+                _hasNotifiedCompletion = true;
+                var generation = _generation;
+                Dispatcher.UIThread.Post(() => onCompleted(generation));
             }
         }
 
-        private readonly float _timeSeconds;
-        private readonly Rect _bounds;
-        private readonly VisualEffectImage<SKImage>? _windowMaskRef;
-        private readonly float _progress;
-
-        /// <summary>
-        /// Creates a new frame of the fluid scan operation.
-        /// </summary>
-        /// <param name="owner"></param>
-        /// <param name="timeSeconds">The continuously increasing time in seconds (for fluid swirling).</param>
-        public FluidScanDrawOperation(ScanVisualElementParticle owner, double timeSeconds)
+        protected override void Draw(ISkiaSharpApiLease lease, Vector size)
         {
-            _timeSeconds = (float)timeSeconds;
-            _bounds = new Rect(0d, 0d, owner.Width, owner.Height);
-            _windowMaskRef = owner._windowMaskRef;
-            _progress = (float)owner._animationProgress * 1.2f;
-            _windowMaskRef?.AddRef();
-        }
+            if (_elapsedMs >= DurationMs ||
+                size is not { X: > 16 and < 5120, Y: > 16 and < 5120 } ||
+                _windowMaskRef?.Image is not { } mask || FluidEffect.Value is not { } effect)
+            {
+                return;
+            }
 
-        public Rect Bounds => _bounds;
+            var resources = GetResources(effect);
+            if (_maskPaint is null)
+            {
+                _maskPaint = new SKPaint { IsAntialias = true };
 
-        public void Render(ImmediateDrawingContext context)
-        {
-            if (FluidEffect is null) return;
-            if (_windowMaskRef is not { Image: { } windowMask }) return;
+                // SKPaint retains the native filter until ReleaseResources disposes the paint.
+                using var blur = SKImageFilter.CreateBlur(5f, 5f);
+                resources.Paint.ImageFilter = blur;
+                resources.Paint.BlendMode = SKBlendMode.SrcIn;
+                resources.Paint.IsAntialias = true;
+            }
 
-            var leaseFeature = context.TryGetFeature<ISkiaSharpApiLeaseFeature>();
-            if (leaseFeature is null) return;
+            if (_maskSize != size)
+            {
+                _maskShader?.Dispose();
+                var scale = SKMatrix.CreateScale((float)(size.X / mask.Width), (float)(size.Y / mask.Height));
+                _maskShader = mask.ToShader(SKShaderTileMode.Decal, SKShaderTileMode.Decal, scale);
+                _maskPaint.Shader = _maskShader;
+                resources.Children["u_mask"] = _maskShader;
+                resources.Set2("u_resolution", (float)size.X, (float)size.Y);
+                _maskSize = size;
+            }
 
-            using var lease = leaseFeature.Lease();
+            resources.Uniforms["u_time"] = (float)(_elapsedMs / 1000d);
+            resources.Uniforms["u_progress"] = (float)(_elapsedMs / DurationMs) * 1.2f;
+            using var shader = effect.ToShader(resources.Uniforms, resources.Children);
+            resources.Paint.Shader = shader;
+
+            var rect = new SKRect(0, 0, (float)size.X, (float)size.Y);
             var canvas = lease.SkCanvas;
-
-            var saveCount = canvas.Save();
-            canvas.Translate((float)_bounds.X, (float)_bounds.Y);
-
-            var drawRect = new SKRect(0, 0, (float)_bounds.Width, (float)_bounds.Height);
-
-            using var saveLayerPaint = new SKPaint();
-            canvas.SaveLayer(drawRect, saveLayerPaint);
-
-            var scaleX = (float)(_bounds.Width / windowMask.Width);
-            var scaleY = (float)(_bounds.Height / windowMask.Height);
-            var localMatrix = SKMatrix.CreateScale(scaleX, scaleY);
-            using var maskShader = windowMask.ToShader(SKShaderTileMode.Decal, SKShaderTileMode.Decal, localMatrix);
-
-            using var maskPaint = new SKPaint();
-            maskPaint.Shader = maskShader;
-            maskPaint.IsAntialias = true;
-            canvas.DrawRect(drawRect, maskPaint);
-
-            using var uniforms = new SKRuntimeEffectUniforms(FluidEffect);
-            uniforms.Add("u_resolution", new[] { (float)_bounds.Width, (float)_bounds.Height });
-            uniforms.Add("u_time", _timeSeconds);
-            uniforms.Add("u_progress", _progress);
-
-            using var children = new SKRuntimeEffectChildren(FluidEffect);
-            children.Add("u_mask", maskShader);
-
-            using (var fluidShader = FluidEffect.ToShader(uniforms, children))
-            using (var blurFilter = SKImageFilter.CreateBlur(5f, 5f))
-            using (var fluidPaint = new SKPaint())
+            var layerPaint = _layerPaint ??= new SKPaint();
+            layerPaint.ColorF = new SKColorF(1f, 1f, 1f, (float)lease.CurrentOpacity);
+            var saveCount = canvas.SaveLayer(rect, layerPaint);
+            try
             {
-                fluidPaint.Shader = fluidShader;
-                fluidPaint.ImageFilter = blurFilter;
-                fluidPaint.BlendMode = SKBlendMode.SrcIn;
-                fluidPaint.IsAntialias = true;
-                canvas.DrawRect(drawRect, fluidPaint);
+                canvas.DrawRect(rect, _maskPaint);
+                canvas.DrawRect(rect, resources.Paint);
             }
-
-            canvas.RestoreToCount(saveCount);
+            finally
+            {
+                canvas.RestoreToCount(saveCount);
+            }
         }
 
-        public bool HitTest(Point p) => false;
-
-        public bool Equals(ICustomDrawOperation? other) => false;
-
-        public void Dispose() => _windowMaskRef?.Dispose();
+        protected override void ReleaseResources()
+        {
+            base.ReleaseResources();
+            DisposeHelper.DisposeToDefault(ref _maskPaint);
+            DisposeHelper.DisposeToDefault(ref _layerPaint);
+            DisposeHelper.DisposeToDefault(ref _maskShader);
+            DisposeHelper.DisposeToDefault(ref _windowMaskRef);
+            _maskSize = default;
+        }
     }
 }

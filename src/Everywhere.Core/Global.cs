@@ -9,6 +9,8 @@ global using System.Runtime.InteropServices;
 global using Avalonia;
 global using DynamicData;
 global using DynamicData.Binding;
+global using Disposable = Everywhere.Utilities.Disposable;
+global using AsyncDisposable = Everywhere.Utilities.AsyncDisposable;
 global using Everywhere.Extensions;
 global using Everywhere.I18N;
 global using LocaleKey = Everywhere.Core.I18N.LocaleKey;

@@ -43,6 +43,7 @@ public class ChatLinkRenderer : MarkdownRenderer
 
     public ChatLinkRenderer()
     {
+        Classes.Add("ChatLink");
         // Register before a detached renderer can receive its first DocumentUpdate.
         // The renderer owns this scope; node release removes per-link resources.
         NodeHooks.Register<LinkInlineNode>(

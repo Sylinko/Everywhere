@@ -10,15 +10,16 @@
     <File Path=".github/ISSUE_TEMPLATE/feature-request.yml" />
   </Folder>
   <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/aur-publish.yml" />
+    <File Path=".github/workflows/cla.yml" />
     <File Path=".github/workflows/close-stale-issues.yml" />
-    <File Path=".github/workflows/llm-integration.yml" />
+    <File Path=".github/workflows/linux-packaging-check.yml" />
     <File Path=".github/workflows/release.yml" />
     <File Path=".github/workflows/sync-i18n.yml" />
+    <File Path=".github/workflows/update-server-publish.yml" />
   </Folder>
   <Folder Name="/3rd/">
     <Project Path="3rd/ClassicDiagnostics.Avalonia/src/ClassicDiagnostics.Avalonia.csproj" />
-    <Project Path="3rd/ExpressionBinding.Avalonia/src/ExpressionBinding.Avalonia/ExpressionBinding.Avalonia.csproj" />
-    <Project Path="3rd/Motion.Avalonia/src/Motion.Avalonia/Motion.Avalonia.csproj" />
     <Project Path="3rd/shad-ui/src/ShadUI/ShadUI.csproj" />
     <Project Path="3rd/shad-ui/src/Tabler.Avalonia/Tabler.Avalonia.csproj" />
   </Folder>
@@ -54,6 +55,7 @@
     <Project Path="patches/Everywhere.Patches.OllamaSharp/Everywhere.Patches.OllamaSharp.csproj" />
     <Project Path="patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI.csproj" />
     <Project Path="patches/Everywhere.Patches.Anthropic/Everywhere.Patches.Anthropic.csproj" />
+    <Project Path="patches/Everywhere.Patches.Svg.Controls.Skia.Avalonia/Everywhere.Patches.Svg.Controls.Skia.Avalonia.csproj" />
   </Folder>
   <Folder Name="/Targets/">
     <File Path="src/Build.Generate.Cloud.targets" />

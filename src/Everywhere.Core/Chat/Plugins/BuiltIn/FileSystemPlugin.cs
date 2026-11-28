@@ -345,8 +345,9 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
     {
         LogOperationFileFromSourceToDestination(operation, source, destination);
 
-        source = LocalFileHandler.ExpandLocalPath(source, chatContext.WorkingDirectory);
-        destination = LocalFileHandler.ExpandLocalPath(destination, chatContext.WorkingDirectory);
+        var workingDirectory = chatContext.WorkingDirectory;
+        source = LocalFileHandler.ExpandLocalPath(source, workingDirectory);
+        destination = LocalFileHandler.ExpandLocalPath(destination, workingDirectory);
         if (operation is not FileTransferOperation.Copy and not FileTransferOperation.Move)
         {
             throw new HandledException(
@@ -480,7 +481,7 @@ public sealed partial class FileSystemPlugin : BuiltInChatPlugin
         var workingDirectory = chatContext.WorkingDirectory;
         var targets = paths
             .AsValueEnumerable()
-            .Select(path => LocalFileHandler.ExpandLocalPath(path, chatContext.WorkingDirectory))
+            .Select(path => LocalFileHandler.ExpandLocalPath(path, workingDirectory))
             .Select(path => ResolveFileOperationPath(path, PathResolutionMode.PreserveFinalComponent))
             .Distinct(PathUtilities.SystemPathComparer)
             .Select(path => PrepareDeleteTarget(path, workingDirectory, recursive, cancellationToken))

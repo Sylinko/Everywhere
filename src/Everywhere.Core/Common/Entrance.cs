@@ -151,7 +151,8 @@ public static class Entrance
             .WriteTo.File(
                 new JsonFormatter(),
                 Path.Combine(RuntimeConstants.EnsureWritableDataFolderPath("logs"), ".jsonl"),
-                rollingInterval: RollingInterval.Day)
+                rollingInterval: RollingInterval.Day,
+                shared: true)
             .WriteTo.Logger(lc => lc
                 .Filter.ByIncludingOnly(logEvent =>
                     logEvent.Properties.TryGetValue("SourceContext", out var sourceContextValue) &&

@@ -13,6 +13,9 @@
 # Repository-local macOS development signing identity
 /.macos-signing/
 
+# Repository-local NuGet package cache
+/.nuget/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

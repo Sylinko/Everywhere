@@ -1105,7 +1105,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         {
             var previousIndent = _indent;
             _indent += "    ";
-            return new DisposableAction(() => _indent = previousIndent);
+            return new AnonymousDisposable(() => _indent = previousIndent);
         }
 
         public IndentedStringBuilder Append(string text)
@@ -1202,9 +1202,18 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 
         public override string ToString() => _stringBuilder.ToString();
 
-        private sealed class DisposableAction(Action action) : IDisposable
+        /// <summary>
+        /// A disposable that invokes a specified action when disposed.
+        /// </summary>
+        private sealed class AnonymousDisposable(Action dispose) : IDisposable
         {
-            public void Dispose() => action();
+            private Action? _dispose = dispose;
+
+            public void Dispose()
+            {
+                var dispose = Interlocked.Exchange(ref _dispose, null);
+                dispose?.Invoke();
+            }
         }
     }
 

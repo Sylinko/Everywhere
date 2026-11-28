@@ -8,8 +8,10 @@ namespace Everywhere.Views;
 /// </summary>
 public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int maxPoolSize) : Canvas where T : Control, IVisualElementParticle, new()
 {
-    // A list to hold all currently animating particles
+    // All currently running particles (both frame-driven and compositor-driven).
     private readonly List<T> _activeParticles = [];
+    private readonly List<T> _frameDrivenParticles = [];
+    private readonly HashSet<T> _pendingFirstFrame = [];
 
     // A bounded object pool to reuse particles and avoid GC pressure
     private readonly Stack<T> _particlePool = new(maxPoolSize);
@@ -48,6 +50,7 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
         catch
         {
             particle.IsVisible = false;
+            particle.RegisterCompletionCallback(null);
             particle.Recycle();
             if (_particlePool.Count < maxPoolSize) _particlePool.Push(particle);
             else Children.Remove(particle);
@@ -56,7 +59,16 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
         particle.Opacity = 1d;
         _activeParticles.Add(particle);
 
-        StartAnimationLoop();
+        if (particle.IsSelfAnimating)
+        {
+            particle.RegisterCompletionCallback(() => CompleteParticle(particle));
+        }
+        else
+        {
+            _frameDrivenParticles.Add(particle);
+            _pendingFirstFrame.Add(particle);
+            StartAnimationLoop();
+        }
     }
 
     /// <summary>
@@ -67,6 +79,7 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
     {
         foreach (var particle in _activeParticles)
         {
+            particle.RegisterCompletionCallback(null);
             particle.IsVisible = false;
             particle.Recycle();
             if (_particlePool.Count < maxPoolSize)
@@ -80,7 +93,35 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
         }
 
         _activeParticles.Clear();
+        _frameDrivenParticles.Clear();
+        _pendingFirstFrame.Clear();
         _isAnimating = false;
+    }
+
+    private void CompleteParticle(T particle)
+    {
+        if (!_activeParticles.Remove(particle)) return;
+
+        particle.RegisterCompletionCallback(null);
+        _frameDrivenParticles.Remove(particle);
+        _pendingFirstFrame.Remove(particle);
+        particle.IsVisible = false;
+        particle.Recycle();
+
+        if (_particlePool.Count < maxPoolSize)
+        {
+            _particlePool.Push(particle);
+        }
+        else
+        {
+            // Pool is full, destroy the excess control
+            Children.Remove(particle);
+        }
+
+        if (_activeParticles.Count == 0)
+        {
+            owner.HandleHostIdle();
+        }
     }
 
     /// <summary>
@@ -106,33 +147,20 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
         if (!_isAnimating) return;
 
         if (_lastFrameTime == TimeSpan.Zero) _lastFrameTime = time;
-        var deltaTimeMs = (time - _lastFrameTime).TotalMilliseconds;
+        var deltaTimeMs = Math.Clamp((time - _lastFrameTime).TotalMilliseconds, 0d, 100d);
         _lastFrameTime = time;
 
-        for (var i = _activeParticles.Count - 1; i >= 0; i--)
+        for (var i = _frameDrivenParticles.Count - 1; i >= 0; i--)
         {
-            var particle = _activeParticles[i];
-            if (particle.Update(deltaTimeMs))
+            var particle = _frameDrivenParticles[i];
+            var frameDelta = _pendingFirstFrame.Remove(particle) ? 0d : deltaTimeMs;
+            if (particle.Update(frameDelta))
             {
-                // Particle has reached the end of its lifecycle
-                particle.IsVisible = false;
-                particle.Recycle();
-
-                if (_particlePool.Count < maxPoolSize)
-                {
-                    _particlePool.Push(particle);
-                }
-                else
-                {
-                    // Pool is full, destroy the excess control
-                    Children.Remove(particle);
-                }
-
-                _activeParticles.RemoveAt(i);
+                CompleteParticle(particle);
             }
         }
 
-        if (_activeParticles.Count > 0)
+        if (_frameDrivenParticles.Count > 0)
         {
             // Schedule next frame if still active
             owner.RequestAnimationFrame(OnAnimationFrame);
@@ -140,7 +168,6 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
         else
         {
             _isAnimating = false;
-            owner.HandleHostIdle();
         }
     }
 }

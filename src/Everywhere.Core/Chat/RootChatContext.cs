@@ -19,7 +19,18 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     public override RootChatContext Root => this;
 
     /// <inheritdoc />
-    public override string WorkingDirectory { get; }
+    /// <remarks>
+    /// Ensures the workspace directory exists on disk on each access so that consumers never observe a missing path
+    /// even if the directory was removed externally. Do not call this property from hot paths or loops without caching.
+    /// </remarks>
+    public override string WorkingDirectory
+    {
+        get
+        {
+            Directory.CreateDirectory(_workingDirectory);
+            return _workingDirectory;
+        }
+    }
 
     internal IChatTurnLoader? Loader { get; }
 
@@ -64,6 +75,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     private readonly Dictionary<ChatContext, Operation> _foregroundOperations = new();
     private readonly HashSet<Operation> _operations = [];
     private readonly Dictionary<ChatData, NestedChatContext> _children = new(ReferenceEqualityComparer.Instance);
+    private readonly string _workingDirectory;
 
     private CancellationTokenSource _lifetimeCancellation = new();
     private bool _isStopping;
@@ -77,7 +89,7 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     {
         Loader = loader;
         Reference = new ResilientReference<RootChatContext>(this, isActive: false);
-        WorkingDirectory = EnsureWorkingDirectory(data.Metadata);
+        _workingDirectory = GetWorkingDirectoryPath(data.Metadata);
         SharedUserInterfaceBroker = new ChatPluginUserInterfaceBroker(SetHasNotification);
         BackgroundJobs = new ChatBackgroundJobManager(this);
         foreach (var node in data.GetAllNodes().Where(node => node.IsMessageLoaded))
@@ -93,17 +105,18 @@ public sealed partial class RootChatContext : ChatContext, IAsyncDisposable
     }
 
     /// <summary>
-    /// Gets or creates this chat's persistent workspace using its UTC creation date and the last 12 hexadecimal ID characters.
+    /// Computes this chat's persistent workspace path under <see cref="RuntimeConstants.UserFolderPath"/>
+    /// using its UTC creation date and the last 12 hexadecimal ID characters, without creating it on disk.
     /// </summary>
     /// <remarks>
     /// The path is stable across restarts and time zones. The shortened ID accepts a small collision risk within each date;
     /// it is a directory name, not a replacement for the full chat ID. Historical shared workspaces are not moved here.
     /// </remarks>
-    private static string EnsureWorkingDirectory(ChatMetadata metadata)
+    internal static string GetWorkingDirectoryPath(ChatMetadata metadata)
     {
         var date = metadata.DateCreated.UtcDateTime.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
         var directoryName = metadata.Id.ToString("N")[^12..];
-        return RuntimeConstants.EnsureWritableDataFolderPath("workspaces", date, directoryName);
+        return RuntimeConstants.GetUserFolderPath("workspaces", date, directoryName);
     }
 
     internal bool TryStartOperation(
