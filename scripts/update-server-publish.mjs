@@ -11,6 +11,7 @@ export const DEFAULT_GITHUB_API_BASE_URL = "https://api.github.com";
 function parseCliArgs(argv) {
   let tag;
   let skipUpdateServer = false;
+  let resolveOnly = false;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -20,12 +21,36 @@ function parseCliArgs(argv) {
       tag = arg.slice("--tag=".length);
     } else if (arg === "--skip-update-server") {
       skipUpdateServer = true;
+    } else if (arg === "--resolve-only") {
+      resolveOnly = true;
     } else if (arg && !arg.startsWith("-") && !tag) {
       tag = arg;
     }
   }
 
-  return { tag, skipUpdateServer };
+  return { tag, skipUpdateServer, resolveOnly };
+}
+
+function isFullCommitSha(value) {
+  return typeof value === "string" && /^[0-9a-f]{40}$/i.test(value.trim());
+}
+
+async function resolveGitHubTagCommit({ githubApiBase, githubRepo, tagName, githubToken, fetchImpl }) {
+  const refUrl = `${githubApiBase}/repos/${githubRepo}/git/ref/tags/${encodeURIComponent(tagName)}`;
+  const ref = await fetchGitHubJson(refUrl, { githubToken, fetchImpl });
+
+  let object = ref?.object;
+  for (let depth = 0; depth < 5 && object?.type === "tag" && object?.sha; depth++) {
+    const tagUrl = `${githubApiBase}/repos/${githubRepo}/git/tags/${encodeURIComponent(object.sha)}`;
+    const tagObject = await fetchGitHubJson(tagUrl, { githubToken, fetchImpl });
+    object = tagObject?.object;
+  }
+
+  if (object?.type !== "commit" || !isFullCommitSha(object?.sha)) {
+    throw new Error(`Could not resolve GitHub tag '${tagName}' to a commit SHA.`);
+  }
+
+  return object.sha.trim().toLowerCase();
 }
 
 function createGitHubHeaders(githubToken) {
@@ -69,9 +94,10 @@ export async function runUpdateServerPublish({
   const cli = parseCliArgs(argv);
   const explicitTag = (cli.tag || env.RELEASE_TAG || "").trim();
   const skipUpdateServer = cli.skipUpdateServer || env.SKIP_UPDATE_SERVER === "true";
+  const resolveOnly = cli.resolveOnly;
 
   const requiredEnv = ["GITHUB_TOKEN"];
-  if (!skipUpdateServer) {
+  if (!skipUpdateServer && !resolveOnly) {
     requiredEnv.push("UPDATE_SERVER_URL", "RELEASE_ADMIN_SECRET");
   }
   if (!explicitTag) {
@@ -122,11 +148,46 @@ export async function runUpdateServerPublish({
     throw new Error("Published release must contain at least one asset.");
   }
 
+  const expectedTagCommit = isFullCommitSha(env.EXPECTED_TAG_COMMIT)
+    ? env.EXPECTED_TAG_COMMIT.trim().toLowerCase()
+    : await resolveGitHubTagCommit({
+        githubApiBase,
+        githubRepo,
+        tagName: release.tag_name,
+        githubToken,
+        fetchImpl,
+      });
+
+  if (resolveOnly) {
+    if (env.GITHUB_OUTPUT) {
+      await fs.appendFile(
+        env.GITHUB_OUTPUT,
+        `tag_name=${release.tag_name}\ntag_commit=${expectedTagCommit}\n`,
+        "utf8",
+      );
+    }
+
+    logger.log(
+      `Validated GitHub release '${release.tag_name}' (${parsedTag.channel} ${parsedTag.version}, commit ${expectedTagCommit}).`,
+    );
+    return {
+      resolvedOnly: true,
+      tagName: release.tag_name,
+      tagCommit: expectedTagCommit,
+      channel: parsedTag.channel,
+      version: parsedTag.version,
+    };
+  }
+
   const cnbSyncResult = await syncReleaseAssetsToCnb({
     release,
     assets,
     cnbToken: env.CNB_TOKEN,
     githubToken,
+    expectedTagCommit,
+    cnbTagCommit: env.CNB_TAG_COMMIT,
+    makeLatest: !skipUpdateServer && !release.prerelease,
+    timeoutMs: Number(env.CNB_SYNC_TIMEOUT_MS) > 0 ? Number(env.CNB_SYNC_TIMEOUT_MS) : undefined,
     cnbRepo: env.CNB_REPO,
     apiBaseUrl: env.CNB_API_BASE_URL,
     webBaseUrl: env.CNB_WEB_BASE_URL,
@@ -167,6 +228,11 @@ export async function runUpdateServerPublish({
   };
 
   if (skipUpdateServer) {
+    if (cnbSyncResult.verifiedMirrors.size === 0) {
+      const detail = cnbSyncResult.error || cnbSyncResult.reason || "no assets verified";
+      throw new Error(`Mirror-only CNB publish failed for '${release.tag_name}': ${detail}.`);
+    }
+
     logger.log(
       `Skipped update server publish for ${parsedTag.channel} ${parsedTag.version} (${cnbSyncResult.verifiedMirrors.size} verified CNB mirrors).`,
     );
